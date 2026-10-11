@@ -2,7 +2,8 @@
 
 | | |
 |---|---|
-| Status | Draft v0.4 — synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied |
+| Status | Draft v0.5 — synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D18) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
 | Source of truth | [`docs/design/handoff/Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) |
@@ -65,13 +66,15 @@ Known conflicts where the handoff overrides the design system:
 | Lint/format | **Biome** | Replaces ESLint and Prettier. `biome check` runs in CI and pre-commit |
 | Styling | **StyleX** via `@stylexjs/babel-plugin` + `@stylexjs/postcss-plugin` | The official Next.js setup (works with Webpack and Turbopack from Next 16.0.3): `babel.config.js` with `next/babel` + the StyleX plugin, `postcss.config.js` sharing that config, and `app/globals.css` containing `@stylex;`. No CSS modules and no Tailwind |
 | Database | **SQLite** | Accessed only from Next.js Route Handlers (`app/api/**/route.ts`), never from the client. Driver: `better-sqlite3` (synchronous, mature, and already in Next's default `serverExternalPackages`). Run in WAL mode |
-| API | Route Handlers, JSON | `/api/events`, `/api/notes`, `/api/photos`, `/api/settings`, `/api/weather` (server proxy to the provider), `/api/auth/*`, `/api/sync` (change stream) |
+| API | Route Handlers, JSON | `/api/events`, `/api/notes`, `/api/photos`, `/api/settings`, `/api/weather` (server proxy to the provider), `/api/auth/*`, `/api/sync` (pull) + `/api/sync/stream` (SSE change ping) |
+| Client data | **Local-first store** on IndexedDB (Dexie) | Screens read local data only. Writes go to IndexedDB plus an outbox, and a sync engine pushes and pulls ([tech design](tech-design.md) D4, §5) |
+| Validation | **Valibot** | Schemas in `src/domain` are the runtime contract for the §7 types, on the client and in Route Handlers |
 
 **Consequences of these choices:**
-- **No `output: 'export'`.** SQLite needs a running Node server, so the app ships as `next build && next start` (or a standalone output in a container) on a host with a **persistent disk**. Serverless hosts with ephemeral filesystems (e.g. Vercel functions) are ruled out unless SQLite moves to a hosted variant (Turso/libSQL). **[Open]** hosting target.
+- **No `output: 'export'`.** SQLite needs a running Node server, so the app ships as `next build && next start` (or a standalone output in a container) on a host with a **persistent disk**. Serverless hosts with ephemeral filesystems (e.g. Vercel functions) are ruled out unless SQLite moves to a hosted variant (Turso/libSQL). Hosting (decided): one Docker container (`output: 'standalone'`) on a VPS or home server, volume at `/data`.
 - **"SPA" here means:** after the first load, view changes never trigger a full page load, and the shell's timers (clock, idle, slideshow, sync) keep running across views. Deep links like `/calendar` still work because each view is a real route.
-- **Data flow:** client repositories (§11) call the API. The client caches data in IndexedDB for offline use (§9.5). The server is the source of truth.
-- **Migrations:** plain versioned SQL files applied at startup (`db/migrations/NNN_*.sql`, tracked with `PRAGMA user_version`). An ORM is optional and not assumed. **[Open]** add Drizzle if you want typed queries.
+- **Data flow:** screens read and write through client repositories (§11) backed by IndexedDB. A sync engine pushes queued writes to the API and pulls changes (§9.7). The server is the source of truth.
+- **Migrations:** plain versioned SQL files applied at startup (`db/migrations/NNN_*.sql`, tracked with `PRAGMA user_version`). No ORM (decided): raw SQL with small typed helpers.
 - **Icons:** Lucide **0.460.0** (`lucide-react` pinned to the same version). Stroke 1.75, or 1.25–1.5 at sizes ≥ 48.
 - **Fonts:** Geist and Geist Mono, variable 100–900 (fine weights 320/330/340/480/540 are required). Self-host for offline use rather than loading from Google Fonts at runtime.
 - **Offline:** service worker plus local persistence (IndexedDB) are required by §9.
@@ -283,7 +286,8 @@ interface Display { id: string; accountId: string; }  // one signed-in screen, n
 
 ```sql
 CREATE TABLE accounts  (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-                        name TEXT, created_at TEXT NOT NULL);              -- name NULL until the first-sign-in step
+                        name TEXT, time_zone TEXT NOT NULL,                -- IANA zone from the first display's browser
+                        created_at TEXT NOT NULL);                         -- name NULL until the first-sign-in step
 CREATE TABLE displays  (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         last_seen_at TEXT);
 CREATE TABLE sessions  (token_hash TEXT PRIMARY KEY, display_id TEXT NOT NULL REFERENCES displays(id),
@@ -293,25 +297,31 @@ CREATE TABLE magic_links (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, pend
 CREATE TABLE events    (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         title TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT, location TEXT,
                         tone TEXT NOT NULL DEFAULT '1', updated_at TEXT NOT NULL, deleted_at TEXT,
+                        version INTEGER NOT NULL,
                         CHECK (end_at IS NULL OR end_at > start_at));  -- plus same local day, enforced in the API (TPK-07)
 CREATE TABLE notes     (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         text TEXT NOT NULL, author TEXT NOT NULL DEFAULT 'Guest', tone TEXT NOT NULL,
-                        rotation REAL NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT);
+                        rotation REAL NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT,
+                        version INTEGER NOT NULL);
 CREATE TABLE photos    (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         title TEXT NOT NULL, taken_on TEXT, place TEXT, file_path TEXT NOT NULL,
-                        created_at TEXT NOT NULL);
+                        created_at TEXT NOT NULL, version INTEGER NOT NULL);
 CREATE TABLE settings  (account_id TEXT PRIMARY KEY REFERENCES accounts(id),
-                        json TEXT NOT NULL, updated_at TEXT NOT NULL);     -- AccountSettings as JSON
+                        json TEXT NOT NULL, updated_at TEXT NOT NULL,
+                        version INTEGER NOT NULL);                         -- AccountSettings as JSON
 CREATE TABLE weather_cache (account_id TEXT PRIMARY KEY, location TEXT NOT NULL,
                         json TEXT NOT NULL, fetched_at TEXT NOT NULL);
+CREATE TABLE sync_state (id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL);  -- global change counter
 CREATE INDEX events_account_start ON events(account_id, start_at);
 CREATE INDEX notes_account_created ON notes(account_id, created_at);
 ```
 
-- Timestamps are ISO-8601 UTC strings. Display uses the browser's local time zone. **[Open]** store an account time zone for the server-side note-expiry job.
+- IDs are UUIDv7 generated on the client, so items created offline keep their ID after sync.
+- Timestamps are ISO-8601 UTC strings. Display uses the browser's local time zone. Server jobs use `accounts.time_zone` (decided).
+- `updated_at` and `version` are always stamped by the server. Every write bumps `sync_state.version` in the same transaction and copies it to the row. `/api/sync?since=` returns rows with a higher `version` (§9.7).
 - Soft deletes (`deleted_at`) let other displays receive deletions through `/api/sync`.
-- Photo files are stored on disk (`data/photos/{account}/{id}.{ext}`) and served through an authenticated route. Only metadata goes in SQLite.
-- Note expiry (NOTE-08) runs server-side on a timer: soft-delete notes older than `noteExpiry`.
+- Photo files are stored on disk (`/data/photos/{account}/{id}.{orig|display|thumb}`) and served through an authenticated route. On upload, `sharp` makes a display copy (≤ 2560 px) and a thumb (≤ 640 px) in WebP. Only metadata goes in SQLite.
+- Note expiry (NOTE-08) runs server-side on an hourly timer: soft-delete notes older than `noteExpiry`, in the account's time zone.
 
 Defaults: season Auto, 12-hour, Fahrenheit, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week.
 
@@ -341,7 +351,7 @@ One flow for sign-up and sign-in (account model §7). The screen that asks for t
 | SIGNIN-01 | **Email form**, the same for new and returning families: eyebrow "One account per family", title "Sign in or get started", body "Enter your email. We'll send a link that signs this screen in. New here? The same link sets up your family's Glance." Email field (placeholder `name@example.com`), primary "Send sign-in link" (→ icon), ghost "Continue as demo". |
 | SIGNIN-02 | Validation `name@domain.tld`. Invalid → "Enter a valid email address", cleared on the next keystroke. |
 | SIGNIN-03 | **Sending:** after a valid "Send sign-in link", the button reads "Sending…" and is disabled, the email can't be edited, a soft tile reads "Sending a link to {email}" with a slow-pulsing mail icon, and "Continue as demo" hides. It clears when the server accepts the request → Check your email. If the request fails while online: back to the form with the email kept and the field error "Couldn't send. Try again." (not drawn). [Mock] 1.4 s. |
-| SIGNIN-04 | **Check your email**, identical for new and known emails (never reveals whether an account exists): title "Check your email", "We sent a link to **{email}**. Open it and this screen signs in by itself.", info tile (mail icon) "Link expires in 10 minutes", ghost "Use a different email" (returns to the form, email kept). The waiting screen polls or gets a push until the link is opened, then moves to SIGNIN-06, SIGNIN-09 or SIGNIN-07. "I opened the link" is **dev only** [Mock]. |
+| SIGNIN-04 | **Check your email**, identical for new and known emails (never reveals whether an account exists): title "Check your email", "We sent a link to **{email}**. Open it and this screen signs in by itself.", info tile (mail icon) "Link expires in 10 minutes", ghost "Use a different email" (returns to the form, email kept). The waiting screen polls `/api/auth/status` every 2 s until the link is opened, then moves to SIGNIN-06, SIGNIN-09 or SIGNIN-07. "I opened the link" is **dev only** [Mock]. |
 | SIGNIN-05 | "Continue as demo" opens Today with demo (fixture) data. **Dev/demo builds only** (decided), hidden in production. |
 | SIGNIN-06 | **First sign-in · "What's your name?"**, only when a new email opens its link, on the device that opened it, before Today. Returning sign-ins skip it. Eyebrow "New family account", title "What's your name?", body "This is the first sign-in for {email}. Your name shows in Settings." One field "Your name" (placeholder "First name is fine"), primary "Continue". Empty → "Add your name" (clears on the next keystroke). The name is trimmed and saved to `accounts.name`. |
 | SIGNIN-07 | **Finish on your phone:** when the link opened on another device and the account has no name yet, the waiting screen shows "Finish on your phone" · "The link opened on another device. Add your name there and this screen signs in by itself." with a "Waiting for your name" tile. It signs in by itself once the name is saved. "I finished on my phone" is dev only [Mock]. |
@@ -447,7 +457,7 @@ Left: soft block with featured image (radius 8), eyebrow "{date} · {place}", ti
 | PHOTO-06 | **Uploading:** each chosen file appears first in the grid right away: image at 60%, an 8 px progress bar inside the frame, mono "{n}%" ("Waiting" at 0). A soft row above the grid reads "Uploading {name}" (one) or "Uploading {n} photos" (several) + average %. Each tile becomes a normal photo at 100%. The row leaves when nothing is uploading. |
 | PHOTO-07 | Uploading **never blocks the slideshow**: the featured photo and the 8 s timer use finished photos only. On a first upload, the featured frame reads "Your photos show here once they finish uploading." |
 | PHOTO-08 | **Failure per file** (only that tile changes): "Too large · 20 MB max", "Not a photo", "Didn't upload" (network). Network failures get "Try again" (restarts at 0%) and "Remove". Too large and not a photo get "Remove" only, since a retry would fail again. Row reads "{n} photo(s) didn't upload". |
-| PHOTO-09 | **Offline:** Upload buttons are disabled with the offline pill pattern (black pill, wifi-off) "Offline · upload when back online". Uploads in progress pause ("Paused") and resume on reconnect. Row reads "Offline · {n} upload paused until back online". |
+| PHOTO-09 | **Offline:** Upload buttons are disabled with the offline pill pattern (black pill, wifi-off) "Offline · upload when back online". Uploads in progress pause ("Paused") and resume on reconnect. Paused uploads are held in memory only and are lost if the page reloads (decided for v1). Row reads "Offline · {n} upload paused until back online". |
 
 ### 8.7 Settings & Background — `SET`, `BG`
 Settings apply instantly. There is no Save button.
@@ -527,8 +537,8 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 
 ### 9.7 Sync — `SYNC`
 - SYNC-01: Settings, notes, events, photos and background are saved to the **account** in SQLite and sync to every display signed in to that account (the prototype persists nothing).
-- SYNC-02: Transport: `GET /api/sync?since={cursor}` served as Server-Sent Events from a Route Handler, falling back to polling every 30 s. Each change carries `{entity, id, updated_at}`. The client refetches or applies it.
-- SYNC-03: Conflicts: last write wins on `updated_at`. Offline edits (OFF-04) replay in order on reconnect.
+- SYNC-02: Transport (decided, [tech design](tech-design.md) §5). **Push:** each write is saved in IndexedDB together with an outbox entry. The sync engine sends outbox entries in order as idempotent `PUT`/`DELETE /api/{entity}/{id}`. **Pull:** `GET /api/sync?since={version}` returns every changed row, deletions included, plus the new cursor. `GET /api/sync/stream` (SSE) only signals that the account changed, which triggers a pull. Without SSE the client polls every 30 s. A pull never overwrites a row that still has a pending outbox entry.
+- SYNC-03: Conflicts: last write **to reach the server** wins. The server stamps `updated_at` and `version`, so display clock drift doesn't matter. Offline edits (OFF-04) replay in order on reconnect.
 
 ### 9.8 Accessibility — `A11Y`
 - Every IconButton has `aria-label`. Swatches use `aria-pressed` and color names. Sheets use `role="dialog"` with a label.
@@ -574,7 +584,7 @@ Voice check for family copy: short words, no jargon ("display" → "screen" in u
 | **4. System states** | Skeletons, per-source failure and retry, offline pill and queue, keyboard handling | `net=loading\|offline\|wxerror` and `kb=1` frames match the System states board |
 | **5. Real data** | SQLite schema and migrations (§7.0), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline cache (SW + IndexedDB), designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | Fixtures swapped for API adapters behind the same interfaces (§7) |
 
-Phases 0–4 need no backend: each data source sits behind a repository interface (`EventsRepo`, `NotesRepo`, `PhotosRepo`, `WeatherRepo`, `SettingsRepo`) with a fixture implementation first. Phase 5 adds an `Api*Repo` implementation that calls the Route Handlers. Screens never import a repo implementation directly.
+Phases 0–4 need no backend: each data source sits behind a repository interface (`EventsRepo`, `NotesRepo`, `PhotosRepo`, `WeatherRepo`, `SettingsRepo`). Repos always read and write the local IndexedDB store. Phases 0–4 use a `FixtureTransport` that seeds the store with Appendix A data and accepts pushes locally. Phase 5 swaps in an `HttpTransport` that calls the Route Handlers. Screens never import a repo implementation or a transport directly.
 
 ---
 
@@ -597,14 +607,17 @@ Phases 0–4 need no backend: each data source sits behind a repository interfac
 | 12 | Account model | **One account per family, one email, no members.** Magic link for sign-up and sign-in. First sign-in asks for the person's name. Events, notes, photos and settings are per account |
 | 13 | Screen label | **"Glance"** on the Today hero footer and Ambient. No family or screen name is stored |
 
+| 14 | Hosting | One Docker container (`output: 'standalone'`) on a VPS or home server, volume at `/data` |
+| 15 | Weather provider | Open-Meteo (forecast + geocoding), behind a `WeatherProvider` adapter |
+| 16 | Time zone for server jobs | IANA zone stored on `accounts`, taken from the first display's browser |
+| 17 | Query layer | Raw SQL with small typed helpers, no ORM. Runtime validation with Valibot |
+| 18 | Magic-link email | Nodemailer over SMTP, configured by env vars |
+| 19 | Client data and sync | Local-first IndexedDB store with an outbox. Server-stamped versions, last write to reach the server wins (§9.7) |
+
+The full technical decision list (D1–D18) is in [`tech-design.md`](tech-design.md).
+
 ### 12.2 Still open
-| # | Question | Needed by | Proposed default |
-|---|---|---|---|
-| A | Hosting target (needs a persistent disk for SQLite and photos) | Phase 5 | Single container (Docker) on a VPS or home server, volume at `/data` |
-| B | Weather provider | Phase 5 | Open-Meteo (free, no API key, geocoding included) |
-| C | Account time zone for server jobs (note expiry) | Phase 5 | Store an IANA zone on `accounts`, taken from the first display's browser |
-| D | Typed query layer on SQLite | Phase 5 | Raw SQL + small typed helpers. Add Drizzle only if queries grow |
-| E | Magic-link email sender | Phase 5 | Any SMTP provider, configured by env var |
+No technical items are open. The remaining **[Open]** markers are product and design questions: note character limit (§7), burn-in protection (§8.8) and focus order in sheets (§8.9).
 
 ## Appendix A — Fixture data
 Family fixtures for Phases 1–4, **identical to the handoff v3 mock data**, so screens can be compared pixel for pixel with the frames. Frozen now: **Fri Oct 9 2026, 10:41 AM** (Ambient 7:12 PM). Account: maria@example.com (the known account), name "Maria". Any other email is a new account. Screen label "Glance". Upload fixtures (`upload=error`): "IMG_3307" too large, "Recipe card" not a photo, "Halloween costumes" network failure. Place search fixtures: "Portland" → Portland, OR / Portland, ME; "Springfield" → IL / MA / MO. The mock accepts any 5-digit ZIP or any query containing a comma, and treats anything else it doesn't know as unknown (`wx=unknown` uses "Pordland"). Weather location "Portland, OR".
