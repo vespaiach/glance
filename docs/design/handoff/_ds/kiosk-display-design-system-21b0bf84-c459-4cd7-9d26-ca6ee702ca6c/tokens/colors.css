@@ -1,0 +1,20 @@
+:root{
+/* Monochrome core */
+--black:#000000;--white:#ffffff;
+--hairline:#e6e6e6;--hairline-soft:#f1f1f1;--surface-soft-base:#f7f7f5;
+/* Pastel block family (source) */
+--block-lime:#dceeb1;--block-lilac:#c5b0f4;--block-cream:#f4ecd6;--block-pink:#efd4d4;--block-mint:#c8e6cd;--block-coral:#f3c9b6;--block-navy:#1f1d3d;
+--accent-magenta:#ff3d8b;
+/* Seasonal extensions (added for Summer / Fall / Winter) */
+--block-sun:#f6e3a1;--block-sky:#bfdff0;--block-sea:#0e3a46;--accent-tangerine:#ff6b2c;
+--block-amber:#f0c987;--block-rust:#e3a684;--block-sage:#d6dcc0;--block-bark:#3b2418;--accent-ember:#e0472a;
+--block-ice:#d5e4f1;--block-frost:#e9edf3;--block-glacier:#b9cde6;--block-midnight:#16213d;--accent-cobalt:#3d63ff;
+/* Semantic */
+--success:#1ea64a;--danger:#d92d20;--scrim:rgba(0,0,0,.6);--on-inverse-soft:rgba(255,255,255,.16);
+/* Semantic aliases */
+--text-primary:var(--black);--text-inverse:var(--white);
+--surface-canvas:var(--white);--surface-inverse:var(--black);--surface-soft:var(--surface-soft-base);
+--border-hairline:var(--hairline);--border-hairline-soft:var(--hairline-soft);
+--action-primary:var(--black);--on-action-primary:var(--white);
+--focus-ring:var(--black);
+}

@@ -1,0 +1,5 @@
+html{-webkit-font-smoothing:antialiased;font-feature-settings:"kern"}
+body{margin:0;background:var(--surface-canvas);color:var(--text-primary);font-family:var(--font-sans);font-weight:var(--type-body-weight)}
+a{color:var(--text-primary);text-decoration:underline;text-underline-offset:3px;font-weight:480}
+a:hover{text-decoration-thickness:2px}
+@keyframes kiosk-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}

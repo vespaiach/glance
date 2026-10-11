@@ -1,0 +1,3 @@
+/* Substitutes for the proprietary figmaSans / figmaMono named in the source DESIGN.md.
+   Geist + Geist Mono are variable fonts (100–900) so the fine weights 320/330/340/480/540 resolve. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
