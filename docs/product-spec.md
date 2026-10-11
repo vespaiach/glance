@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.5 — synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Status | Draft v0.7 — no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D18) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
@@ -77,7 +77,7 @@ Known conflicts where the handoff overrides the design system:
 - **Migrations:** plain versioned SQL files applied at startup (`db/migrations/NNN_*.sql`, tracked with `PRAGMA user_version`). No ORM (decided): raw SQL with small typed helpers.
 - **Icons:** Lucide **0.460.0** (`lucide-react` pinned to the same version). Stroke 1.75, or 1.25–1.5 at sizes ≥ 48.
 - **Fonts:** Geist and Geist Mono, variable 100–900 (fine weights 320/330/340/480/540 are required). Self-host for offline use rather than loading from Google Fonts at runtime.
-- **Offline:** service worker plus local persistence (IndexedDB) are required by §9.
+- **Offline:** service worker plus local persistence (IndexedDB) are required by §9. The app is an **installable PWA** that cold-starts offline (OFF-06). Serving it needs HTTPS. On iPad kiosks, install it to the home screen so the browser doesn't evict saved data. See [tech design](tech-design.md) D16, §4.5.
 - `support.js` and `archive/` in the handoff are **not** part of the build.
 
 ---
@@ -361,6 +361,8 @@ One flow for sign-up and sign-in (account model §7). The screen that asks for t
 | SIGNIN-11 | Settings › Account › "Sign out" signs out **this screen only** (caption "Signs out this screen only."). Other screens with the same email stay signed in. No confirm step. Returns to the email form, empty. |
 | SIGNIN-12 | **Link rules:** passwordless magic link for sign-up and sign-in. Opening a valid link for an unknown email creates the account; for a known email it signs in. Each link works **once, for 10 minutes**. Sending a new link voids older ones, so only the newest works. On the device that opened a stale link: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". "Send a new link" → Sending → Check your email (on that device). |
 
+| SIGNIN-13 | **Session no longer valid:** if the server stops accepting this screen's session, the screen returns to the email form. Changes not yet synced are kept and sent if the same account signs in again. If a different account signs in, they're discarded. **Design requested** ([prompt 4](prompts/04-session-ended.md)): until it lands, use the SIGNIN-01 form as-is. |
+
 Out of scope: changing the name or email, deleting the account, more than one email per account.
 
 ### 8.2 Today — `TODAY`
@@ -441,7 +443,7 @@ White panel: eyebrow count, title "Notice board", "Add note". Grid `auto-fill mi
 | NOTE-05 | Primary "Post note" / "Save" / "Save for later". Delete → inline confirm "Delete note". |
 | NOTE-06 | Count "{n} notes" / "1 note" / "No notes". Caption "Notes are removed after {1 day\|1 week}" or "Notes stay until deleted". |
 | NOTE-07 | Empty board: "No notes yet" / "Leave a note for the family. Notes show on Today. {They're removed after X. \| They stay until someone deletes them.}" |
-| NOTE-08 | Notes are deleted automatically after the expiry setting. **[Mock]** |
+| NOTE-08 | Notes are deleted automatically after the expiry setting. **[Mock]** The server deletes them. Each screen also hides expired notes on its own, so they disappear even while offline. |
 | NOTE-09 | Anyone at the display can edit or delete any note. Many notes: the board scrolls (decided). Moderation and character limit remain out of scope. |
 
 ### 8.6 Photos — `PHOTO`
@@ -527,6 +529,8 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 - OFF-03: Weather older than 1 hour → "Forecast from {time}" banner.
 - OFF-04: Edits queue locally. The sheet shows an offline banner, save reads "Save for later", and new notes show "Waiting to post" until synced.
 - OFF-05: Ambient shows the same message in its top row (white mono).
+- OFF-06: **Cold start offline.** A signed-in screen that reloads or restarts while offline opens Today from saved data, and every view works. Photos already synced to the account (background, slideshow, picture of the day) show even if this screen never displayed them.
+- OFF-07: **Updates** to the app apply only while the screen is idle (Ambient, or Today after the idle timeout) and nothing is waiting to sync. The screen reloads itself once.
 
 ### 9.6 On-screen keyboard — `KB`
 - KB-01: Use the OS keyboard. Build on `visualViewport` resize (or `interactive-widget=resizes-content`), not fixed heights.
@@ -579,7 +583,7 @@ Voice check for family copy: short words, no jargon ("display" → "screen" in u
 |---|---|---|
 | **0. Foundations** | Next.js + TS strict + Biome + StyleX scaffold (§3). Tokens as StyleX vars and season themes, `next/font/local`, Lucide, 15 DS components + shared pieces (§4.2), gallery route | DS-01 passes. Components match DS cards in all 4 seasons |
 | **1. Shell & fixtures** | Routing, breakpoints, nav bar, season provider, `now` provider, fixture store loaded from the family fixtures (Appendix A), URL fixture params (§6) | Every route renders at the 6 board sizes |
-| **2. Screens (static states)** | Family copy (§10). Today, Calendar, Weather, Notes, Photos, Settings, Background, Ambient, Sign in, Sheets — every state in §8 from fixtures | **Visual parity** with each `Glance Frames - *` board at 1920×1080, 1440×900, 1280×800, 1180×820, 820×1180, 390×844 (screenshot review; optionally Playwright visual snapshots) |
+| **2. Screens (static states)** | Family copy (§10). Today, Calendar, Weather, Notes, Photos, Settings, Background, Ambient, Sign in, Sheets — every state in §8 from fixtures | **Visual parity** with each `Glance Frames - *` board at 1920×1080, 1440×900, 1280×800, 1180×820, 820×1180, 390×844 (screenshot review) |
 | **3. Interactions (local)** | Create/edit/delete events and notes, validation, calendar navigation, photo slideshow and upload (local), settings applied live, idle timeout, ambient schedule | Behavior notes reproduced end to end. Includes TimeField/TimePicker and the TPK rules (§8.3.1). Unit tests for status, time formatting, season mapping, temp conversion |
 | **4. System states** | Skeletons, per-source failure and retry, offline pill and queue, keyboard handling | `net=loading\|offline\|wxerror` and `kb=1` frames match the System states board |
 | **5. Real data** | SQLite schema and migrations (§7.0), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline cache (SW + IndexedDB), designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | Fixtures swapped for API adapters behind the same interfaces (§7) |
