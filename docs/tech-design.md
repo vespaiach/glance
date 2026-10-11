@@ -339,10 +339,12 @@ CI: `biome check` → `tsc --noEmit` → Vitest → `next build`.
 
 ## 8. Mapping to delivery phases
 
+Task breakdown with dependencies: [`execution-plan.md`](execution-plan.md).
+
 | Phase (spec §11) | Technical work |
 |---|---|
 | 0 | Scaffold (npm, Next, StyleX, Biome, Vitest), `theme/`, `ui/`, gallery |
-| 1 | `shell/` providers, routes, `data/db.ts` + `data/meta.ts` + repos, the `Transport` interface + `FixtureTransport`, `engine.ts` core (outbox drain, pull/apply, status in `meta`) run inline by `host.ts`, fixture params, `app/manifest.ts` |
+| 1 | `shell/` providers, routes, `data/db.ts` + `data/meta.ts` + repos, the `Transport` interface + `FixtureTransport`, `engine.ts` core (outbox drain, pull/apply, weather refresh, status in `meta`) run inline by `host.ts`, fixture params, `app/manifest.ts` |
 | 2–4 | `features/*` against Dexie fixture data. Offline, failures and mock delays simulated by `FixtureTransport` |
 | 5 | `server/*`, migrations, `HttpTransport`, SSE, auth, photos, weather, Docker image. `sync.worker.ts` + the `glance-sync` lock (the inline host stays as the fallback). Serwist SW strategies (§4.5), photo warming, the idle update flow |
 
