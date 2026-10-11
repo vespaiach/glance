@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | Draft v0.7 — no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
-| Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D18) |
+| Status | Draft v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D19) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
 | Source of truth | [`docs/design/handoff/Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) |
@@ -29,7 +29,7 @@ Requirement IDs (`TODAY-03`, `NOTE-05` …) are meant to be cited in tickets, PR
 3. The display stays readable and useful when offline, when a data source fails, and during quiet hours (Ambient).
 
 ### 1.2 Non-goals for v1 (not designed)
-Calendar sync (Google/Outlook) · recurring, all-day and multi-day events · note moderation, character limit, board overflow · photo delete, rename, albums · upload from a phone · weather alert rules, forecast-day detail · changing the weather location from Settings · guided setup, multi-display management, roles (e.g. parent vs. child permissions) · per-person colors or filters · session expiry, kiosk lock · burn-in protection.
+Calendar sync (Google/Outlook) · recurring, all-day and multi-day events · note moderation, character limit, board overflow · photo delete, rename, albums · photo upload on phones (future: hidden in v1, §5.4) · weather alert rules, forecast-day detail · changing the weather location from Settings · guided setup, multi-display management, roles (e.g. parent vs. child permissions) · per-person colors or filters · session expiry, kiosk lock · burn-in protection.
 
 ---
 
@@ -200,6 +200,7 @@ Ambient overrides: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls
 - Hourly forecast `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways.
 - Month cell = `max(36, floor((vw − 108) / 7))`.
 - Photos: featured 260 px, thumbs 2 col. Background thumbs 2 col.
+- **No photo upload on phone (decided, future feature).** Hide every upload entry point: Photos "Upload" (PHOTO-03) and "Upload photos" (PHOTO-05), Background "Upload photo" tile (BG-02) and Today's "Upload" link (TODAY-07). Copy stays the same. This deviates from the 390×844 frames that show them.
 - Nav buttons 44 px with a 4 px gap so all six fit.
 - EventRow columns `56px 10px 1fr auto`, gap 12, padding `12px 8px` (other sizes: `84px 14px 1fr auto`, padding `14px 16px`).
 - Offline pill sits 84 px from the bottom (12 px elsewhere).
@@ -231,10 +232,13 @@ Fixture params: `bg=photo`, `sheet=event|newevent|note|newnote`, `time=start|end
 type Tone = 1 | 2 | 3 | 4 | 'soft' | 'accent';      // 'accent' = Alert, events only
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 
+// Synced rows (events, notes, photos, settings) also carry server fields:
+type Synced<T> = T & { updatedAt: string; version: number; deletedAt?: string };  // stamped by the server
+
 interface CalendarEvent {
   id: string;
-  start: string;  // ISO timestamp (the prototype stores minutes of the day) [Mock]
-  end?: string;   // ISO, optional ("No end time"); must be after start on the same day (TPK-07)
+  startAt: string;  // ISO timestamp, UTC (the prototype stores minutes of the day) [Mock]
+  endAt?: string;   // ISO, optional ("No end time"); must be after startAt on the same local day (TPK-07, checked on the screen)
   title: string;  // required
   location?: string;
   tone: Tone;     // default 1
@@ -247,10 +251,11 @@ interface Note {
   createdAt: string;     // ISO
   tone: Exclude<Tone, 'accent'>;
   rotation: number;      // degrees, cycles −2, 1.5, −1, 2.5
-  syncState: 'synced' | 'pending';   // pending → "Waiting to post"
 }
+// "Waiting to post" (pending) is derived from the local outbox, never stored (tech design §4.1).
 
-interface Photo { id: string; title: string; date: string; place: string; url: string; }
+interface Photo { id: string; title: string; takenOn: string; place?: string; createdAt: string; }
+// The image URL is derived: /api/photos/{id}/file?v=display|thumb|orig
 
 interface Weather {
   location: string;
@@ -271,7 +276,7 @@ interface AccountSettings {           // persisted PER ACCOUNT (decided): every 
   idleTimeout: 60 | 180 | 300 | null; // default 3 min
   noteExpiry: '1d' | '1w' | null;     // default 1 week
   ambientHours: { start: '18:00'; end: '07:30' };   // not editable in v1
-  weatherLocation?: string;
+  weatherLocation?: { name: string; region: string; lat: number; lon: number };  // the place picked in WX-04/09
 }
 
 interface Account { id: string; email: string; name: string | null; /* person's name, "Maria"; null until first sign-in completes */ }
@@ -286,19 +291,20 @@ interface Display { id: string; accountId: string; }  // one signed-in screen, n
 
 ```sql
 CREATE TABLE accounts  (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-                        name TEXT, time_zone TEXT NOT NULL,                -- IANA zone from the first display's browser
+                        name TEXT, time_zone TEXT NOT NULL,                -- IANA zone sent by the waiting screen with the link request
                         created_at TEXT NOT NULL);                         -- name NULL until the first-sign-in step
 CREATE TABLE displays  (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         last_seen_at TEXT);
 CREATE TABLE sessions  (token_hash TEXT PRIMARY KEY, display_id TEXT NOT NULL REFERENCES displays(id),
                         created_at TEXT NOT NULL);                       -- account comes from the display
-CREATE TABLE magic_links (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, pending_display_id TEXT,
+CREATE TABLE magic_links (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL,
+                        pending_id TEXT NOT NULL, time_zone TEXT NOT NULL, -- waiting screen's cookie id; its display row is created on verify
                         expires_at TEXT NOT NULL, used_at TEXT);           -- 10-minute expiry, single use; a new link voids older ones for that email (SIGNIN-12)
 CREATE TABLE events    (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         title TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT, location TEXT,
                         tone TEXT NOT NULL DEFAULT '1', updated_at TEXT NOT NULL, deleted_at TEXT,
                         version INTEGER NOT NULL,
-                        CHECK (end_at IS NULL OR end_at > start_at));  -- plus same local day, enforced in the API (TPK-07)
+                        CHECK (end_at IS NULL OR end_at > start_at));  -- same local day is checked on the screen (TPK-07); the API also rejects spans ≥ 24 h
 CREATE TABLE notes     (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
                         text TEXT NOT NULL, author TEXT NOT NULL DEFAULT 'Guest', tone TEXT NOT NULL,
                         rotation REAL NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT,
@@ -309,7 +315,7 @@ CREATE TABLE photos    (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES
 CREATE TABLE settings  (account_id TEXT PRIMARY KEY REFERENCES accounts(id),
                         json TEXT NOT NULL, updated_at TEXT NOT NULL,
                         version INTEGER NOT NULL);                         -- AccountSettings as JSON
-CREATE TABLE weather_cache (account_id TEXT PRIMARY KEY, location TEXT NOT NULL,
+CREATE TABLE weather_cache (account_id TEXT PRIMARY KEY, location TEXT NOT NULL,  -- "lat,lon" the cache was fetched for
                         json TEXT NOT NULL, fetched_at TEXT NOT NULL);
 CREATE TABLE sync_state (id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL);  -- global change counter
 CREATE INDEX events_account_start ON events(account_id, start_at);
@@ -358,7 +364,7 @@ One flow for sign-up and sign-in (account model §7). The screen that asks for t
 | SIGNIN-08 | **Expired link, waiting screen:** 10 minutes with no open → "This link has expired" · "Sign-in links work for 10 minutes. Send a new one to {email}." Actions "Send a new link" and "Use a different email". |
 | SIGNIN-09 | **Signed in:** on the waiting screen (or the device that opened the link), check icon, eyebrow "Signed in", title "Welcome, {first name}" (new account) or "Welcome back, {first name}" (returning), body "Opening Today…". Today opens after **2.2 s**, with no action needed. First name = the first word of `accounts.name`. |
 | SIGNIN-10 | **Offline (form):** soft banner "You're offline" · "A link can't be sent right now. Sending turns back on when the screen reconnects." The send button is disabled and the email can still be typed. It clears on reconnect. Nothing is queued: the person taps Send again. Offline while waiting: keep Check your email and resume polling on reconnect. |
-| SIGNIN-11 | Settings › Account › "Sign out" signs out **this screen only** (caption "Signs out this screen only."). Other screens with the same email stay signed in. No confirm step. Returns to the email form, empty. |
+| SIGNIN-11 | Settings › Account › "Sign out" signs out **this screen only** (caption "Signs out this screen only."). Other screens with the same email stay signed in. No confirm step. Returns to the email form, empty. Changes still waiting to sync on this screen are discarded (accepted for v1). |
 | SIGNIN-12 | **Link rules:** passwordless magic link for sign-up and sign-in. Opening a valid link for an unknown email creates the account; for a known email it signs in. Each link works **once, for 10 minutes**. Sending a new link voids older ones, so only the newest works. On the device that opened a stale link: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". "Send a new link" → Sending → Check your email (on that device). |
 
 | SIGNIN-13 | **Session no longer valid:** if the server stops accepting this screen's session, the screen returns to the email form. Changes not yet synced are kept and sent if the same account signs in again. If a different account signs in, they're discarded. **Design requested** ([prompt 4](prompts/04-session-ended.md)): until it lands, use the SIGNIN-01 form as-is. |
@@ -453,7 +459,7 @@ Left: soft block with featured image (radius 8), eyebrow "{date} · {place}", ti
 |---|---|
 | PHOTO-01 | Tapping a thumb features it. Chevrons step through and wrap at both ends. |
 | PHOTO-02 | Slideshow auto-advances every **8 s** while Photos is open. Pause ↔ Play toggles it. Chevrons and thumbs keep it playing. |
-| PHOTO-03 | Upload opens the system file picker (`image/*`, multiple). New photos go first, titled by file name without the extension, dated "Just now". |
+| PHOTO-03 | Upload opens the system file picker (`image/*`, multiple). New photos go first, titled by file name without the extension, dated "Just now". Once saved, a photo's date is its EXIF date (or the upload date) and it has no place, so the eyebrow shows the date alone. |
 | PHOTO-04 | Production upload: files are saved to disk via `/api/photos` (§7.0) with real progress. Size (≤ **20 MB**) and type (image) checks run **before** upload starts. |
 | PHOTO-05 | Empty: soft block centered, image icon, eyebrow "Family photos · 0", "No photos yet", "Upload family photos to show them here, as the picture of the day and as a background." + "Upload photos". |
 | PHOTO-06 | **Uploading:** each chosen file appears first in the grid right away: image at 60%, an 8 px progress bar inside the frame, mono "{n}%" ("Waiting" at 0). A soft row above the grid reads "Uploading {name}" (one) or "Uploading {n} photos" (several) + average %. Each tile becomes a normal photo at 100%. The row leaves when nothing is uploading. |
@@ -488,7 +494,7 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 |---|---|
 | AMB-01 | Top row: season icon + "{Season} · {Month}"; right: offline notice (if offline) and the screen label "Glance". |
 | AMB-02 | Giant Clock (clamp 84–300 px). |
-| AMB-03 | Bottom grid (hairline 20% white top): current weather "{temp}° · {condition}" / "Low {low}° overnight · {next notable day}", and "Next event": "Tomorrow" or "{Wkd}, {Mon} {d}" · {start} · {title}, {where} — or "Nothing scheduled". |
+| AMB-03 | Bottom grid (hairline 20% white top): current weather "{temp}° · {condition}" / "Low {low}° overnight · {next notable day}". Next notable day (decided): the first of the next 6 days with precip ≥ 50% → "{Wkd} {p}% rain" (e.g. "Sat 80% rain"). None → "Low {low}° overnight" alone. Next to it, "Next event": "Tomorrow" or "{Wkd}, {Mon} {d}" · {start} · {title}, {where} — or "Nothing scheduled". |
 | AMB-04 | Caption "Click or tap anywhere to wake". Tap anywhere → Today. The whole screen is one button with `aria-label` "Wake screen". |
 | AMB-05 | Enters automatically at the schedule start and leaves at its end. After a wake tap during hours, it returns after the idle timeout. |
 | — | Burn-in drift and screen dimming are recommended, not designed **[Open]**. |
@@ -517,6 +523,7 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 - LOAD-01: Each source (calendar, weather, notes, photos) loads on its own. Zones fill in as they arrive. Clock, season and the "Glance" screen label are local and never wait.
 - LOAD-02: Skeletons keep the final shape (no layout shift) and pulse 1.2 s. Shown only on first load with no saved data. Later refreshes swap in silently.
 - LOAD-03: Over 10 s → that zone shows its failure state.
+- Sources read saved data on the screen. "Loading" means nothing is saved yet and the first sync hasn't finished. "Failure" means that first sync, or the weather fetch, failed. Once data is saved, a failed sync only adds "Updated {time}" (FAIL-02). See [tech design](tech-design.md) §4.4.
 
 ### 9.4 Source failure (online) — `FAIL`
 - FAIL-01: Only the failing zone changes: icon, "{Source} unavailable", retry countdown, "Try again".
@@ -530,7 +537,7 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 - OFF-04: Edits queue locally. The sheet shows an offline banner, save reads "Save for later", and new notes show "Waiting to post" until synced.
 - OFF-05: Ambient shows the same message in its top row (white mono).
 - OFF-06: **Cold start offline.** A signed-in screen that reloads or restarts while offline opens Today from saved data, and every view works. Photos already synced to the account (background, slideshow, picture of the day) show even if this screen never displayed them.
-- OFF-07: **Updates** to the app apply only while the screen is idle (Ambient, or Today after the idle timeout) and nothing is waiting to sync. The screen reloads itself once.
+- OFF-07: **Updates** to the app apply only while the screen is idle (Ambient, or Today after the idle timeout) and nothing is waiting to sync. The screen reloads itself once. Exception: if the server no longer accepts this version, the update applies at the next idle even with changes waiting. They're kept and sent by the new version.
 
 ### 9.6 On-screen keyboard — `KB`
 - KB-01: Use the OS keyboard. Build on `visualViewport` resize (or `interactive-widget=resizes-content`), not fixed heights.
@@ -542,7 +549,7 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 ### 9.7 Sync — `SYNC`
 - SYNC-01: Settings, notes, events, photos and background are saved to the **account** in SQLite and sync to every display signed in to that account (the prototype persists nothing).
 - SYNC-02: Transport (decided, [tech design](tech-design.md) §5). **Push:** each write is saved in IndexedDB together with an outbox entry. The sync engine sends outbox entries in order as idempotent `PUT`/`DELETE /api/{entity}/{id}`. **Pull:** `GET /api/sync?since={version}` returns every changed row, deletions included, plus the new cursor. `GET /api/sync/stream` (SSE) only signals that the account changed, which triggers a pull. Without SSE the client polls every 30 s. A pull never overwrites a row that still has a pending outbox entry.
-- SYNC-03: Conflicts: last write **to reach the server** wins. The server stamps `updated_at` and `version`, so display clock drift doesn't matter. Offline edits (OFF-04) replay in order on reconnect.
+- SYNC-03: Conflicts: last write **to reach the server** wins. The server stamps `updated_at` and `version`, so display clock drift doesn't matter. Offline edits (OFF-04) replay in order on reconnect. **Delete wins:** an edit to an event or note that another screen deleted doesn't bring it back. Settings are one record: if two screens change settings at the same moment, the later one replaces the whole set (accepted for v1).
 
 ### 9.8 Accessibility — `A11Y`
 - Every IconButton has `aria-label`. Swatches use `aria-pressed` and color names. Sheets use `role="dialog"` with a label.
@@ -586,9 +593,9 @@ Voice check for family copy: short words, no jargon ("display" → "screen" in u
 | **2. Screens (static states)** | Family copy (§10). Today, Calendar, Weather, Notes, Photos, Settings, Background, Ambient, Sign in, Sheets — every state in §8 from fixtures | **Visual parity** with each `Glance Frames - *` board at 1920×1080, 1440×900, 1280×800, 1180×820, 820×1180, 390×844 (screenshot review) |
 | **3. Interactions (local)** | Create/edit/delete events and notes, validation, calendar navigation, photo slideshow and upload (local), settings applied live, idle timeout, ambient schedule | Behavior notes reproduced end to end. Includes TimeField/TimePicker and the TPK rules (§8.3.1). Unit tests for status, time formatting, season mapping, temp conversion |
 | **4. System states** | Skeletons, per-source failure and retry, offline pill and queue, keyboard handling | `net=loading\|offline\|wxerror` and `kb=1` frames match the System states board |
-| **5. Real data** | SQLite schema and migrations (§7.0), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline cache (SW + IndexedDB), designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | Fixtures swapped for API adapters behind the same interfaces (§7) |
+| **5. Real data** | SQLite schema and migrations (§7.0), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline shell (service worker) and sync worker, designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | `FixtureTransport` swapped for `HttpTransport`. Repos and screens unchanged |
 
-Phases 0–4 need no backend: each data source sits behind a repository interface (`EventsRepo`, `NotesRepo`, `PhotosRepo`, `WeatherRepo`, `SettingsRepo`). Repos always read and write the local IndexedDB store. Phases 0–4 use a `FixtureTransport` that seeds the store with Appendix A data and accepts pushes locally. Phase 5 swaps in an `HttpTransport` that calls the Route Handlers. Screens never import a repo implementation or a transport directly.
+Phases 0–4 need no backend: each data source sits behind a repository interface (`EventsRepo`, `NotesRepo`, `PhotosRepo`, `WeatherRepo`, `SettingsRepo`). Repos always read and write the local IndexedDB store. Phases 0–4 use a `FixtureTransport` that seeds the store with Appendix A data, accepts pushes locally, and simulates weather, place search, sign-in and upload with the [Mock] delays. Phase 5 swaps in an `HttpTransport` that calls the Route Handlers. Screens never import a repo implementation or a transport directly.
 
 ---
 
@@ -618,7 +625,7 @@ Phases 0–4 need no backend: each data source sits behind a repository interfac
 | 18 | Magic-link email | Nodemailer over SMTP, configured by env vars |
 | 19 | Client data and sync | Local-first IndexedDB store with an outbox. Server-stamped versions, last write to reach the server wins (§9.7) |
 
-The full technical decision list (D1–D18) is in [`tech-design.md`](tech-design.md).
+The full technical decision list (D1–D19) is in [`tech-design.md`](tech-design.md).
 
 ### 12.2 Still open
 No technical items are open. The remaining **[Open]** markers are product and design questions: note character limit (§7), burn-in protection (§8.8) and focus order in sheets (§8.9).
