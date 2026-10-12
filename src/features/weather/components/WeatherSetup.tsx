@@ -2,6 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, ChevronRight, CloudSun, Search } from "lucide-react";
+import type { FormEvent } from "react";
 import { copy } from "@/copy";
 import type { WeatherLocation } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -155,6 +156,12 @@ type WeatherSetupProps = {
 export function WeatherSetup({ state, onType, onSubmit, onPick }: WeatherSetupProps) {
   const error = state.step === "editing" && state.error && copy.weather.setup.error[state.error];
 
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+
+    if (state.step === "editing") onSubmit();
+  };
+
   return (
     <WeatherBlock>
       <Icon icon={CloudSun} size={64} strokeWidth={1.25} />
@@ -163,7 +170,7 @@ export function WeatherSetup({ state, onType, onSubmit, onPick }: WeatherSetupPr
         <div {...stylex.props(styles.title)}>{copy.weather.setup.title}</div>
         <span {...stylex.props(styles.body)}>{copy.weather.setup.body}</span>
       </div>
-      <div {...stylex.props(styles.form)}>
+      <form noValidate onSubmit={submit} {...stylex.props(styles.form)}>
         <TextInput
           label={copy.weather.setup.label}
           placeholder={copy.weather.setup.placeholder}
@@ -175,12 +182,12 @@ export function WeatherSetup({ state, onType, onSubmit, onPick }: WeatherSetupPr
         {state.step === "choosing" && <Matches matches={state.matches} onPick={onPick} />}
         {state.step === "editing" && (
           <div {...stylex.props(styles.actions)}>
-            <Button iconRight={ArrowRight} onClick={onSubmit}>
+            <Button type="submit" iconRight={ArrowRight}>
               {copy.weather.setup.submit}
             </Button>
           </div>
         )}
-      </div>
+      </form>
     </WeatherBlock>
   );
 }

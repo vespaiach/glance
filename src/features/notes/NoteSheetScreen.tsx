@@ -3,6 +3,7 @@
 import { copy } from "@/copy";
 import { useNote, useNotes, useNotesRepo } from "@/data/repos";
 import type { Note } from "@/domain/schemas";
+import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -54,6 +55,7 @@ function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps)
       onClose={close}
       onDelete={onDelete}
       onSave={onSave}
+      keyboardInset={useKeyboardInset()}
     />
   );
 }

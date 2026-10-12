@@ -1,3 +1,5 @@
+"use client";
+
 import * as stylex from "@stylexjs/stylex";
 import {
   ArrowRight,
@@ -8,15 +10,16 @@ import {
   Smartphone,
   WifiOff,
 } from "lucide-react";
-import type { FormEvent } from "react";
+import { type FormEvent, useRef } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
 import { firstName } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
-import { colors, sizes } from "@/theme/tokens.stylex";
+import { colors, motion, sizes } from "@/theme/tokens.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
+import { useFieldInView } from "@/ui/fieldInView";
 import { Icon } from "@/ui/Icon";
 import { TextInput } from "@/ui/TextInput";
 import { signInLayout } from "../layout";
@@ -36,19 +39,28 @@ type SignInViewProps = {
   onDemo: () => void;
   onOpenedLink: () => void;
   onFinishedOnPhone: () => void;
+  keyboardInset?: number;
   xstyle?: stylex.StyleXStyles;
 };
 
-type StepProps = Omit<SignInViewProps, "season" | "time" | "clock" | "breakpoint" | "xstyle">;
+type StepProps = Omit<
+  SignInViewProps,
+  "season" | "time" | "clock" | "breakpoint" | "keyboardInset" | "xstyle"
+>;
 
 const styles = stylex.create({
   root: {
     height: "100vh",
     display: "flex",
     flexDirection: "column",
+    boxSizing: "border-box",
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
+    transitionProperty: "padding-bottom",
+    transitionDuration: motion.durBase,
+    transitionTimingFunction: motion.easeOut,
   },
+  aboveKeyboard: (inset: number) => ({ paddingBottom: inset }),
   main: {
     flexGrow: 1,
     minHeight: 0,
@@ -279,12 +291,24 @@ function SignInStep(props: StepProps) {
   }
 }
 
-export function SignInView({ season, time, clock, breakpoint, xstyle, ...step }: SignInViewProps) {
+export function SignInView({
+  season,
+  time,
+  clock,
+  breakpoint,
+  keyboardInset = 0,
+  xstyle,
+  ...step
+}: SignInViewProps) {
   const tall = breakpoint === "wide" || breakpoint === "mid";
 
+  const main = useRef<HTMLElement>(null);
+
+  useFieldInView(main, keyboardInset);
+
   return (
-    <div {...stylex.props(styles.root, xstyle)}>
-      <main {...stylex.props(styles.main, signInLayout(breakpoint))}>
+    <div {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
+      <main ref={main} {...stylex.props(styles.main, signInLayout(breakpoint))}>
         <SignInHero season={season} time={time} clock={clock} xstyle={tall && styles.heroTall} />
         <div {...stylex.props(styles.panel)}>
           <SignInStep {...step} />

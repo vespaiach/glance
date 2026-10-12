@@ -31,6 +31,7 @@ type EventSheetProps = {
   swatches: readonly SwatchOption[];
   offline: boolean;
   compact?: boolean;
+  keyboardInset?: number;
   onClose: () => void;
   onDelete: () => void;
   onSave: (draft: EventDraft) => void;
@@ -195,6 +196,7 @@ export function EventSheet({
   onClose,
   onDelete,
   onSave,
+  keyboardInset,
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
 
@@ -227,6 +229,7 @@ export function EventSheet({
       onClose={onClose}
       startActions={startActions}
       endActions={endActions}
+      keyboardInset={keyboardInset}
     >
       {offline && (
         <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />

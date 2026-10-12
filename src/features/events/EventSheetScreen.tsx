@@ -6,6 +6,7 @@ import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
 import { formatDayTitle, parseLocalDate } from "@/domain/time";
 import { useBreakpoint } from "@/shell/breakpoint";
+import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -60,6 +61,7 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
       onClose={close}
       onDelete={onDelete}
       onSave={onSave}
+      keyboardInset={useKeyboardInset()}
     />
   );
 }
