@@ -101,7 +101,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | V05 | ✅ ([#28](https://github.com/vespaiach/glance/pull/28)) | **Notes:** board, note sheet, counts and captions | — | NOTE-01..07 |
 | V06 | ✅ ([#29](https://github.com/vespaiach/glance/pull/29)) | **Photos:** featured, thumbs, empty, upload tile states; upload hidden on phone | — | PHOTO-01, 05..09 (states), spec §5.4 |
 | V07 | ✅ ([#30](https://github.com/vespaiach/glance/pull/30)) | **Settings + Background:** rows, account card, background picker and preview | — | SET-01..08, BG-01..05 |
-| V08 | ⬜ | **Ambient** | — | AMB-01..04 |
+| V08 | ✅ ([#31](https://github.com/vespaiach/glance/pull/31)) | **Ambient** | — | AMB-01..04, AMB-06 |
 | V09 | ⬜ | **Sign in:** all `signin=` states, hero, lock footer; SIGNIN-13 uses the SIGNIN-01 form | — | SIGNIN-01..12 (states), SIGNIN-13 fallback |
 | V10 | ⬜ | **Photo background mode** across views | V01, V07 | SHELL-05, BG-06, TODAY-10 |
 

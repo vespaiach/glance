@@ -7,6 +7,7 @@ import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { PillTabs } from "@/ui/PillTabs";
+import { photoLayer } from "@/ui/photoLayer";
 
 type Background = AccountSettings["background"];
 
@@ -79,12 +80,6 @@ const styles = stylex.create({
     textWrap: "pretty",
   },
 });
-
-function photoLayer(dim: Background["dim"], src: string): string {
-  const shade = `rgba(0, 0, 0, ${dim})`;
-
-  return `linear-gradient(${shade}, ${shade}), url("${src}")`;
-}
 
 function caption(shown: ShownBackground): string {
   const text = copy.background.caption;

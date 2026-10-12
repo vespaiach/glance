@@ -1,10 +1,12 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
+import { inAmbientHours } from "@/domain/idle";
 import { photoTitle, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
 import { localDateKey } from "@/domain/time";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
   FIXTURE_NOTES,
   FIXTURE_NOW,
@@ -57,6 +59,12 @@ function onPhoto(settings: AccountSettings): AccountSettings {
   return { ...settings, background: { ...settings.background, mode: "photo" } };
 }
 
+function fixtureWeather(params: FixtureParams): Weather {
+  const evening = params.now && inAmbientHours(FIXTURE_SETTINGS.ambientHours, params.now);
+
+  return evening ? FIXTURE_AMBIENT_WEATHER : FIXTURE_WEATHER;
+}
+
 function fixtureSeed(params: FixtureParams): Seed | undefined {
   if (params.net === "loading") return undefined;
 
@@ -64,7 +72,7 @@ function fixtureSeed(params: FixtureParams): Seed | undefined {
 
   if (params.wx) return { settings: unlocated(FIXTURE_SETTINGS), withRows: true };
 
-  const weather = params.net === "wxerror" ? undefined : FIXTURE_WEATHER;
+  const weather = params.net === "wxerror" ? undefined : fixtureWeather(params);
 
   const settings = params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS;
 
@@ -186,7 +194,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
       online(async () => {
         if (loading) return never();
 
-        return params.net === "wxerror" ? err("server") : ok(FIXTURE_WEATHER);
+        return params.net === "wxerror" ? err("server") : ok(fixtureWeather(params));
       }),
     places: (query) =>
       online(async () => {
