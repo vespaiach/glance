@@ -50,4 +50,17 @@ describe("nextStatus", () => {
     expect(failed).toEqual({ ...SYNCED, error: "server", retryAt: RETRY_AT });
     expect(nextStatus(failed, { type: "synced", at: AT })).toEqual(SYNCED);
   });
+
+  it.each(["unauthorized", "outdated"] as const)(
+    "SIGNIN-13 a restart clears the %s halt the last session left",
+    (error) => {
+      expect(nextStatus({ ...SYNCED, error }, { type: "restarted" })).toEqual(SYNCED);
+    },
+  );
+
+  it("SIGNIN-13 a restart keeps a server failure and its retry time", () => {
+    const failed: SyncStatus = { ...SYNCED, error: "server", retryAt: RETRY_AT };
+
+    expect(nextStatus(failed, { type: "restarted" })).toEqual(failed);
+  });
 });

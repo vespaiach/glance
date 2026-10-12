@@ -2,14 +2,7 @@ import { err, ok, type Result } from "@/domain/result";
 import { retryDelayMs } from "@/domain/retry";
 import type { WeatherLocation } from "@/domain/schemas";
 import { CURSOR_KEY, type GlanceDb, type OutboxEntry, type SyncedEntity } from "../db";
-import {
-  INITIAL_STATUS,
-  nextStatus,
-  STATUS_KEY,
-  type StatusEvent,
-  type SyncError,
-  type SyncStatus,
-} from "./status";
+import { recordStatus, type StatusEvent, type SyncError } from "./status";
 import type { Change, PullResponse, Transport, TransportError } from "./transport";
 
 export const WEATHER_REFRESH_MS = 15 * 60_000;
@@ -21,6 +14,7 @@ export type SyncEngine = {
   nudge(): Promise<SyncResult>;
   resync(): Promise<SyncResult>;
   refreshWeather(): Promise<SyncResult>;
+  retrying(): boolean;
   stop(): void;
 };
 
@@ -133,12 +127,7 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
   let fetchedPlace: string | undefined;
 
-  const record = (event: StatusEvent) =>
-    db.transaction("rw", db.meta, async () => {
-      const current = (await db.meta.get(STATUS_KEY))?.value as SyncStatus | undefined;
-
-      await db.meta.put({ key: STATUS_KEY, value: nextStatus(current ?? INITIAL_STATUS, event) });
-    });
+  const record = (event: StatusEvent) => recordStatus(db, event);
 
   const clearWeatherTimer = () => {
     clearTimeout(weatherTimer);
@@ -319,6 +308,7 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
       return nudge();
     },
     refreshWeather,
+    retrying: () => syncTimer !== undefined,
     stop: () => {
       stopped = true;
 

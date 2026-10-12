@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createSettingsRepo } from "@/data/repos";
-import { type Harness, openHarness } from "@/data/repos/testHarness";
+import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import type { AccountSettings } from "@/domain/schemas";
 import { SheetHost, useSheetHost } from "../SheetHost";
 import { IdleProvider } from "./idle";
@@ -45,7 +45,11 @@ function SheetProbe() {
   );
 }
 
-async function renderIdle(start: string, settings: Partial<AccountSettings> = {}) {
+async function renderIdle(
+  start: string,
+  settings: Partial<AccountSettings> = {},
+  reload?: (path: string) => void,
+) {
   await createSettingsRepo(store).update({ idleTimeout: 60, ...settings });
 
   vi.useFakeTimers({ now: new Date(`2026-10-09T${start}`), shouldAdvanceTime: true });
@@ -55,7 +59,7 @@ async function renderIdle(start: string, settings: Partial<AccountSettings> = {}
   const tree = () => (
     <Shell>
       <SheetHost>
-        <IdleProvider>
+        <IdleProvider reload={reload}>
           <SheetProbe />
         </IdleProvider>
       </SheetHost>
@@ -90,6 +94,35 @@ describe("IdleProvider", () => {
 
     expect(navigation.push).toHaveBeenCalledWith("/today");
     expect(screen.getByText("no sheet")).toBeInTheDocument();
+  });
+
+  it("OFF-07 after a 426 the next idle reloads into the new version, even on Today", async () => {
+    navigation.pathname = "/today";
+
+    await putSyncStatus(store, { online: true, weather: { state: "idle" }, error: "outdated" });
+
+    const reload = vi.fn<(path: string) => void>();
+
+    await renderIdle("10:41:00", {}, reload);
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    await waitFor(() => expect(reload).toHaveBeenCalledWith("/today"));
+
+    expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it("OFF-07 without a 426 idle navigates in place", async () => {
+    const reload = vi.fn<(path: string) => void>();
+
+    await renderIdle("10:41:00", {}, reload);
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledWith("/today");
+    expect(reload).not.toHaveBeenCalled();
   });
 
   it("IDLE-01 a touch restarts the timer", async () => {

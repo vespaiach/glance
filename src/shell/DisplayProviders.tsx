@@ -16,6 +16,7 @@ import { NetworkProvider } from "./providers/network";
 import { NowProvider, useNowStore } from "./providers/now";
 import { SeasonProvider } from "./providers/season";
 import { SettingsProvider } from "./providers/settings";
+import { SessionGuard } from "./SessionGuard";
 import { SheetHost } from "./SheetHost";
 
 const SIGN_IN = "/signin";
@@ -44,17 +45,19 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
 
   return (
     <RepoProvider store={boot.store}>
-      <SettingsProvider overrides={options.overrides}>
-        <SeasonProvider>
-          <NetworkProvider pillDelayMs={options.pillDelayMs}>
-            <SheetHost initial={fixtureSheet(params, localDateKey(get()))}>
-              <FixtureParamsProvider params={params}>
-                <IdleProvider>{children}</IdleProvider>
-              </FixtureParamsProvider>
-            </SheetHost>
-          </NetworkProvider>
-        </SeasonProvider>
-      </SettingsProvider>
+      <SessionGuard>
+        <SettingsProvider overrides={options.overrides}>
+          <SeasonProvider>
+            <NetworkProvider pillDelayMs={options.pillDelayMs}>
+              <SheetHost initial={fixtureSheet(params, localDateKey(get()))}>
+                <FixtureParamsProvider params={params}>
+                  <IdleProvider>{children}</IdleProvider>
+                </FixtureParamsProvider>
+              </SheetHost>
+            </NetworkProvider>
+          </SeasonProvider>
+        </SettingsProvider>
+      </SessionGuard>
     </RepoProvider>
   );
 }

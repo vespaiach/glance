@@ -20,8 +20,9 @@ import {
   saveSignedInAccount,
 } from "../meta";
 import { createFixtureAuth, createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
-import { createInlineSyncHost } from "../sync/host";
+import { createInlineSyncHost, createWorkerSyncHost, spawnSyncWorker } from "../sync/host";
 import { createHttpTransport } from "../sync/httpTransport";
+import { recordStatus } from "../sync/status";
 import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import type { PhotoVariant, RepoStore } from "./store";
@@ -57,8 +58,6 @@ type BootOptions = { demo: boolean; params: FixtureParams; now: () => Date };
 type OpenedDisplay = { boot: DisplayBoot; close(): void };
 
 const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {} };
-
-const noNudge = () => {};
 
 const notConnected = async () => err("network" as const);
 
@@ -171,7 +170,13 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   const db = openGlanceDb(accountDbName(account.accountId));
 
+  await recordStatus(db, { type: "restarted" });
+
   const transport = createHttpTransport();
+
+  const host = createWorkerSyncHost({ db, spawn: spawnSyncWorker });
+
+  void host.start(account.accountId);
 
   const store = {
     db,
@@ -179,15 +184,20 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     account: { name: account.name, email: account.email },
     now,
     startedAt: now(),
-    nudge: noNudge,
-    refreshWeather: noNudge,
+    nudge: host.nudge,
+    refreshWeather: host.refreshWeather,
     photoSrc: apiPhotoSrc,
     upload: transport.upload,
     places: transport.places,
     signOut: signOutWith(offlineAuth.signout),
   };
 
-  return { boot: { kind: "ready", store }, close: () => db.close() };
+  const close = () => {
+    host.stop();
+    db.close();
+  };
+
+  return { boot: { kind: "ready", store }, close };
 }
 
 export function useDisplayBoot({ demo, params, now }: BootOptions): DisplayBoot {

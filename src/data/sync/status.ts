@@ -1,3 +1,4 @@
+import type { GlanceDb } from "../db";
 import type { TransportError } from "./transport";
 
 export const STATUS_KEY = "status";
@@ -22,7 +23,8 @@ export type StatusEvent =
   | { type: "failed"; error: Exclude<TransportError, "invalid">; retryAt?: string }
   | { type: "weather-loading"; at: string }
   | { type: "weather-loaded" }
-  | { type: "weather-failed"; retryAt: string };
+  | { type: "weather-failed"; retryAt: string }
+  | { type: "restarted" };
 
 export const INITIAL_STATUS: SyncStatus = { online: true, weather: { state: "idle" } };
 
@@ -53,5 +55,17 @@ export function nextStatus(status: SyncStatus, event: StatusEvent): SyncStatus {
       return { ...status, weather: { state: "idle" } };
     case "weather-failed":
       return { ...status, weather: { state: "failed", retryAt: event.retryAt } };
+    case "restarted":
+      return status.error === "unauthorized" || status.error === "outdated"
+        ? withoutError(status)
+        : status;
   }
+}
+
+export function recordStatus(db: GlanceDb, event: StatusEvent): Promise<void> {
+  return db.transaction("rw", db.meta, async () => {
+    const current = (await db.meta.get(STATUS_KEY))?.value as SyncStatus | undefined;
+
+    await db.meta.put({ key: STATUS_KEY, value: nextStatus(current ?? INITIAL_STATUS, event) });
+  });
 }
