@@ -28,6 +28,7 @@ export default defineConfig({
   ],
   resolve: {
     tsconfigPaths: true,
+    alias: { "server-only": path.join(root, "node_modules/server-only/empty.js") },
   },
   test: {
     environment: "jsdom",
