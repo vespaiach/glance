@@ -74,6 +74,7 @@ function NoteSheetDemo({
       offline={demo.offline ?? false}
       onClose={onClose}
       onDelete={onClose}
+      onSave={onClose}
     />
   );
 }

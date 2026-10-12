@@ -10,7 +10,13 @@ import { Button } from "@/ui/Button";
 import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
 import { Sheet } from "@/ui/Sheet";
 import { TextInput } from "@/ui/TextInput";
-import { type NoteSheetState, type NoteSwatchOption, noteSheetReducer } from "../noteSheet";
+import {
+  canSave,
+  type NoteDraft,
+  type NoteSheetState,
+  type NoteSwatchOption,
+  noteSheetReducer,
+} from "../noteSheet";
 
 type NoteSheetProps = {
   mode: "new" | "edit";
@@ -20,6 +26,7 @@ type NoteSheetProps = {
   offline: boolean;
   onClose: () => void;
   onDelete: () => void;
+  onSave: (draft: NoteDraft) => void;
 };
 
 const words = copy.notes.sheet;
@@ -68,17 +75,20 @@ export function NoteSheet({
   offline,
   onClose,
   onDelete,
+  onSave,
 }: NoteSheetProps) {
   const [state, dispatch] = useReducer(noteSheetReducer, initial);
 
   const { draft } = state;
+
+  const save = () => (canSave(draft) ? onSave(draft) : dispatch({ type: "save" }));
 
   const endActions = (
     <>
       <Button variant="secondary" onClick={onClose} xstyle={styles.cancel}>
         {words.cancel}
       </Button>
-      <Button>{primaryLabel(mode, offline)}</Button>
+      <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
     </>
   );
 
@@ -107,6 +117,7 @@ export function NoteSheet({
         placeholder={words.messagePlaceholder}
         value={draft.text}
         onChange={(value) => dispatch({ type: "text", value })}
+        error={state.textError ? words.writeMessage : undefined}
         multiline
         rows={3}
       />

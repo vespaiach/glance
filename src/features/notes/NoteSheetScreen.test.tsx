@@ -126,3 +126,66 @@ test("tech§4.3 an event request renders no note sheet", () => {
 
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
+
+test("NOTE-03 Post note queues a Guest note stamped now with the first tilt and closes", async () => {
+  renderSheet({ kind: "newnote" });
+
+  await userEvent.type(await screen.findByLabelText("Message"), "Back at 6");
+  await userEvent.click(screen.getByRole("button", { name: "Post note" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+
+  const [saved] = await store.db.notes.toArray();
+
+  expect(saved).toMatchObject({
+    text: "Back at 6",
+    author: "Guest",
+    tone: 1,
+    rotation: -2,
+    createdAt: NOW.toISOString(),
+  });
+  expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
+});
+
+test("NOTE-04 a new note's tilt follows the number of notes on the board", async () => {
+  await store.db.notes.put(synced(WIFI));
+
+  renderSheet({ kind: "newnote" });
+
+  await userEvent.type(await screen.findByLabelText("Message"), "Back at 6");
+  await userEvent.click(screen.getByRole("button", { name: "Post note" }));
+
+  await waitFor(async () => expect(await store.db.notes.count()).toBe(2));
+
+  const saved = (await store.db.notes.toArray()).find((note) => note.id !== WIFI.id);
+
+  expect(saved?.rotation).toBe(1.5);
+});
+
+test("NOTE-09 Save keeps the note's id, time and tilt", async () => {
+  await store.db.notes.put(synced(WIFI));
+
+  renderSheet({ kind: "note", id: WIFI.id });
+
+  await userEvent.clear(await screen.findByLabelText("Your name"));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await waitFor(async () =>
+    expect(await store.db.notes.get(WIFI.id)).toMatchObject({
+      ...WIFI,
+      author: "Guest",
+      version: 1,
+    }),
+  );
+});
+
+test("NOTE-03 a failed Post note keeps the sheet open and writes nothing", async () => {
+  renderSheet({ kind: "newnote" });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Post note" }));
+
+  expect(screen.getByRole("dialog", { name: "New note" })).toBeInTheDocument();
+  expect(await store.db.notes.count()).toBe(0);
+});

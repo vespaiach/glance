@@ -1,10 +1,10 @@
 "use client";
 
 import { copy } from "@/copy";
-import { useNote, useNotesRepo } from "@/data/repos";
+import { useNote, useNotes, useNotesRepo } from "@/data/repos";
 import type { Note } from "@/domain/schemas";
 import { useNetwork } from "@/shell/providers/network";
-import { useNow } from "@/shell/providers/now";
+import { useNow, useNowStore } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useSheetHost } from "@/shell/SheetHost";
@@ -12,9 +12,12 @@ import { NoteSheet } from "./components/NoteSheet";
 import {
   draftFromNote,
   initialNoteSheet,
+  type NoteBase,
   type NoteDraft,
   type NoteSheetState,
+  newNoteBase,
   newNoteDraft,
+  noteFromDraft,
   noteSwatches,
 } from "./noteSheet";
 import { noteStampText } from "./stamp";
@@ -23,15 +26,23 @@ type SheetFrameProps = {
   mode: "new" | "edit";
   eyebrow: string;
   initial: NoteSheetState;
+  base: () => NoteBase;
   onDelete: () => void;
 };
 
-function SheetFrame({ mode, eyebrow, initial, onDelete }: SheetFrameProps) {
+function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
+
+  const notes = useNotesRepo();
 
   const season = useSeason();
 
   const { online } = useNetwork();
+
+  const onSave = (draft: NoteDraft) => {
+    close();
+    void notes.put(noteFromDraft(draft, base()));
+  };
 
   return (
     <NoteSheet
@@ -42,6 +53,7 @@ function SheetFrame({ mode, eyebrow, initial, onDelete }: SheetFrameProps) {
       offline={!online}
       onClose={close}
       onDelete={onDelete}
+      onSave={onSave}
     />
   );
 }
@@ -65,6 +77,7 @@ function EditNoteSheet({ note }: { note: Note }) {
       mode="edit"
       eyebrow={copy.notes.sheet.eyebrow(note.author, noteStampText(note, now, clock))}
       initial={initialNoteSheet(draftFromNote(note))}
+      base={() => note}
       onDelete={onDelete}
     />
   );
@@ -77,11 +90,16 @@ function LoadedNoteSheet({ id }: { id: string }) {
 }
 
 function NewNoteSheet({ draft }: { draft?: Pick<NoteDraft, "text" | "tone"> }) {
+  const nowStore = useNowStore();
+
+  const shown = useNotes(useNow("minute"));
+
   return (
     <SheetFrame
       mode="new"
       eyebrow={copy.notes.board}
       initial={initialNoteSheet(newNoteDraft(draft))}
+      base={() => newNoteBase(nowStore.get(), shown?.length ?? 0)}
       onDelete={() => {}}
     />
   );

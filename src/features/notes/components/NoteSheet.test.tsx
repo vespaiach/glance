@@ -1,6 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { draftFromNote, initialNoteSheet, newNoteDraft, noteSwatches } from "../noteSheet";
+import {
+  draftFromNote,
+  initialNoteSheet,
+  type NoteDraft,
+  newNoteDraft,
+  noteSwatches,
+} from "../noteSheet";
 import { NoteSheet } from "./NoteSheet";
 
 const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad", tone: 1 } as const;
@@ -10,6 +16,7 @@ type Options = {
   offline?: boolean;
   onClose?: () => void;
   onDelete?: () => void;
+  onSave?: (draft: NoteDraft) => void;
 };
 
 function renderSheet(options: Options = {}) {
@@ -24,6 +31,7 @@ function renderSheet(options: Options = {}) {
       offline={options.offline ?? false}
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
+      onSave={options.onSave ?? (() => {})}
     />,
   );
 }
@@ -139,4 +147,26 @@ test("SHEET Cancel closes the sheet", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
   expect(onClose).toHaveBeenCalledOnce();
+});
+
+test("NOTE-03 Post note with an empty message shows Write a message and posts nothing", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ mode: "new", onSave });
+
+  await userEvent.click(screen.getByRole("button", { name: "Post note" }));
+
+  expect(onSave).not.toHaveBeenCalled();
+  expect(screen.getByLabelText("Message")).toHaveAccessibleDescription("Write a message");
+});
+
+test("NOTE-05 Save hands the edited draft over", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ onSave });
+
+  await userEvent.click(screen.getByRole("button", { name: "Rust" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(onSave).toHaveBeenCalledWith({ ...WIFI, tone: 2 });
 });
