@@ -1,5 +1,13 @@
 import type { FixtureUpload } from "@/data/repos";
-import { initialUploads, type UploadTile, uploadSummary } from "./uploads";
+import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
+import {
+  chosenTile,
+  initialUploads,
+  type UploadTile,
+  uploadFailure,
+  uploadSummary,
+  uploads,
+} from "./uploads";
 
 const uploading = (title: string, percent: number): UploadTile => ({
   id: title,
@@ -103,5 +111,96 @@ describe("initialUploads", () => {
     expect(initialUploads("offline", FIXTURES)).toEqual([
       { id: "upload-0", title: "IMG_2041", state: "paused", percent: 40 },
     ]);
+  });
+});
+
+const file = (name: string, type: string, size = 1_000) => ({ name, type, size });
+
+describe("chosenTile", () => {
+  it("PHOTO-03 a chosen photo is titled by its file name and waits at 0%", () => {
+    expect(chosenTile("a", file("IMG_2041.jpeg", "image/jpeg"), "blob:a")).toEqual({
+      id: "a",
+      title: "IMG_2041",
+      preview: "blob:a",
+      state: "uploading",
+      percent: 0,
+    });
+  });
+
+  it("PHOTO-04 a file over 20 MB fails as too large before the upload starts", () => {
+    expect(chosenTile("a", file("big.jpg", "image/jpeg", MAX_PHOTO_BYTES + 1))).toEqual({
+      id: "a",
+      title: "big",
+      state: "failed",
+      reason: "too-large",
+    });
+  });
+
+  it("PHOTO-04 a file that isn't an image fails as not a photo before the upload starts", () => {
+    expect(chosenTile("a", file("Recipe card.pdf", "application/pdf"))).toMatchObject({
+      state: "failed",
+      reason: "not-a-photo",
+    });
+  });
+});
+
+describe("uploadFailure", () => {
+  it("PHOTO-08 the server's size and type checks keep their reason", () => {
+    expect([uploadFailure("too-large"), uploadFailure("not-a-photo")]).toEqual([
+      "too-large",
+      "not-a-photo",
+    ]);
+  });
+
+  it("PHOTO-08 every other transport error is a network failure that can be retried", () => {
+    expect(
+      (["network", "server", "unauthorized", "invalid", "outdated"] as const).map(uploadFailure),
+    ).toEqual(["network", "network", "network", "network", "network"]);
+  });
+});
+
+describe("uploads", () => {
+  const running = uploading("a", 40);
+
+  it("PHOTO-06 chosen files go first, before the tiles already there", () => {
+    const added = [uploading("b", 0), uploading("c", 0)];
+
+    expect(uploads([running], { type: "add", tiles: added })).toEqual([...added, running]);
+  });
+
+  it("PHOTO-06 progress moves only that tile", () => {
+    expect(
+      uploads([running, uploading("b", 10)], { type: "progress", id: "b", percent: 18 }),
+    ).toEqual([running, uploading("b", 18)]);
+  });
+
+  it("PHOTO-06 a finished upload leaves the tiles, since it is a normal photo now", () => {
+    expect(uploads([running, uploading("b", 96)], { type: "done", id: "b" })).toEqual([running]);
+  });
+
+  it("PHOTO-08 a failure changes only that tile", () => {
+    expect(
+      uploads([running, uploading("b", 50)], { type: "fail", id: "b", reason: "network" }),
+    ).toEqual([running, failed("b")]);
+  });
+
+  it("PHOTO-08 progress for a tile that already failed is ignored", () => {
+    expect(uploads([failed("a")], { type: "progress", id: "a", percent: 60 })).toEqual([
+      failed("a"),
+    ]);
+  });
+
+  it("PHOTO-08 Try again restarts a network failure at 0%", () => {
+    expect(uploads([failed("a")], { type: "retry", id: "a" })).toEqual([uploading("a", 0)]);
+  });
+
+  it("PHOTO-08 Try again leaves too large and not a photo failed", () => {
+    const tooLarge: UploadTile = { id: "a", title: "a", state: "failed", reason: "too-large" };
+
+    expect(uploads([tooLarge], { type: "retry", id: "a" })).toEqual([tooLarge]);
+  });
+
+  it("PHOTO-08 Remove drops the tile", () => {
+    expect(uploads([running, failed("b")], { type: "remove", id: "b" })).toEqual([running]);
   });
 });

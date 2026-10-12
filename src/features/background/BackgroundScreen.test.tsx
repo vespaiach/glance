@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import type { FixtureParams } from "@/data/repos";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import { ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
@@ -38,6 +39,9 @@ beforeEach(() => {
     addEventListener: () => {},
     removeEventListener: () => {},
   }));
+
+  URL.createObjectURL = vi.fn(() => "blob:preview");
+  URL.revokeObjectURL = vi.fn();
 });
 
 afterEach(async () => {
@@ -111,4 +115,25 @@ test("BG-01 the back link opens Settings", async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Settings" }));
 
   expect(navigation.push).toHaveBeenCalledWith("/settings");
+});
+
+test("BG-02 Upload photo opens the picker and a finished upload joins the background list", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  store.upload.mockResolvedValue(ok(synced(photo(3, "IMG_2041", "2026-10-09T17:41:00.000Z"))));
+
+  renderBackground();
+
+  const picker = await screen.findByLabelText("Choose photos");
+
+  const click = vi.spyOn(picker, "click");
+
+  await userEvent.click(await screen.findByRole("button", { name: "Upload photo" }));
+
+  await userEvent.upload(picker, new File(["x"], "IMG_2041.jpg", { type: "image/jpeg" }));
+
+  expect(click).toHaveBeenCalled();
+  expect(
+    await screen.findByRole("button", { name: "Use IMG_2041 as background" }),
+  ).toBeInTheDocument();
 });

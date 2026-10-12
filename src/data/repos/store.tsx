@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { Account } from "@/domain/schemas";
 import type { GlanceDb } from "../db";
+import type { Transport } from "../sync/transport";
 
 export type PhotoVariant = "display" | "thumb" | "orig";
 
@@ -13,6 +14,7 @@ export type RepoStore = {
   now: () => Date;
   nudge: () => unknown;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
+  upload: Transport["upload"];
 };
 
 const RepoContext = createContext<RepoStore | undefined>(undefined);

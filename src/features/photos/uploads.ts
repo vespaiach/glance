@@ -1,5 +1,5 @@
-import type { FixtureParams, FixtureUpload } from "@/data/repos";
-import type { UploadProblem } from "@/domain/photoUpload";
+import type { FixtureParams, FixtureUpload, UploadError } from "@/data/repos";
+import { photoTitle, type UploadProblem, uploadProblem } from "@/domain/photoUpload";
 
 export type UploadFailure = UploadProblem | "network";
 
@@ -9,6 +9,16 @@ export type UploadTile =
   | (TileBase & { state: "uploading"; percent: number })
   | (TileBase & { state: "paused"; percent: number })
   | (TileBase & { state: "failed"; reason: UploadFailure });
+
+export type UploadAction =
+  | { type: "add"; tiles: readonly UploadTile[] }
+  | { type: "progress"; id: string; percent: number }
+  | { type: "done"; id: string }
+  | { type: "fail"; id: string; reason: UploadFailure }
+  | { type: "retry"; id: string }
+  | { type: "remove"; id: string };
+
+type ChosenFile = { name: string; type: string; size: number };
 
 export type UploadSummary =
   | { kind: "none" }
@@ -70,4 +80,46 @@ export function initialUploads(
   fixtures: FixtureUploads,
 ): UploadTile[] {
   return fixture ? fixtures[fixture].map(tileFrom) : [];
+}
+
+export function chosenTile(id: string, file: ChosenFile, preview?: string): UploadTile {
+  const base = { id, title: photoTitle(file.name), ...(preview && { preview }) };
+
+  const problem = uploadProblem(file);
+
+  if (problem) return { ...base, state: "failed", reason: problem };
+
+  return { ...base, state: "uploading", percent: 0 };
+}
+
+export function uploadFailure(error: UploadError): UploadFailure {
+  return error === "too-large" || error === "not-a-photo" ? error : "network";
+}
+
+function changed(tile: UploadTile, action: UploadAction): UploadTile {
+  if (action.type === "progress" && tile.state === "uploading")
+    return { ...tile, percent: action.percent };
+
+  if (action.type === "fail" && tile.state === "uploading") {
+    const { percent: _percent, ...base } = tile;
+
+    return { ...base, state: "failed", reason: action.reason };
+  }
+
+  if (action.type === "retry" && tile.state === "failed" && tile.reason === "network") {
+    const { reason: _reason, ...base } = tile;
+
+    return { ...base, state: "uploading", percent: 0 };
+  }
+
+  return tile;
+}
+
+export function uploads(tiles: readonly UploadTile[], action: UploadAction): UploadTile[] {
+  if (action.type === "add") return [...action.tiles, ...tiles];
+
+  if (action.type === "done" || action.type === "remove")
+    return tiles.filter((tile) => tile.id !== action.id);
+
+  return tiles.map((tile) => (tile.id === action.id ? changed(tile, action) : tile));
 }
