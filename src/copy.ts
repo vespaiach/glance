@@ -441,6 +441,7 @@ export const copy = {
       sendingTo: "Sending a link to ",
       demo: "Continue as demo",
       invalid: "Enter a valid email address",
+      failed: "Couldn’t send. Try again.",
       offlineTitle: "You’re offline",
       offlineBody:
         "A link can’t be sent right now. Sending turns back on when the screen reconnects.",
@@ -463,6 +464,7 @@ export const copy = {
       placeholder: "First name is fine",
       submit: "Continue",
       empty: "Add your name",
+      failed: "Couldn’t save. Try again.",
     },
     phone: {
       title: "Finish on your phone",

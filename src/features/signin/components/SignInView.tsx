@@ -82,7 +82,7 @@ function FormStep({ state, online, demo, onAction, onDemo }: StepProps) {
 
   const email = state.step === "form" || sending ? state.email : "";
 
-  const error = state.step === "form" && state.error ? copy.signIn.form.invalid : undefined;
+  const error = state.step === "form" && state.error ? copy.signIn.form[state.error] : undefined;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -192,10 +192,10 @@ function NameStep({
           placeholder={name.placeholder}
           value={state.draft}
           onChange={(draft) => onAction({ type: "name", draft })}
-          error={state.error && name.empty}
+          error={state.error && name[state.error]}
         />
         <Actions>
-          <Button type="submit" iconRight={ArrowRight}>
+          <Button type="submit" iconRight={ArrowRight} disabled={state.saving}>
             {name.submit}
           </Button>
         </Actions>

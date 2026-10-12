@@ -1,11 +1,12 @@
-import type { FixtureParams } from "@/data/repos";
+import type { AuthStatus, FixtureParams } from "@/data/repos";
+import type { Account } from "@/domain/schemas";
 import { isValidEmail } from "@/domain/signIn";
 
 export type SignInState =
-  | { step: "form"; email: string; error?: "invalid" }
+  | { step: "form"; email: string; error?: "invalid" | "failed" }
   | { step: "sending"; email: string }
   | { step: "sent"; email: string }
-  | { step: "name"; email: string; draft: string; error?: "empty" }
+  | { step: "name"; email: string; draft: string; error?: "empty" | "failed"; saving?: true }
   | { step: "phone"; email: string }
   | { step: "expired"; email: string; onLink: boolean }
   | { step: "done"; name: string; returning: boolean };
@@ -15,11 +16,17 @@ export type SignInAction =
   | { type: "send" }
   | { type: "back" }
   | { type: "name"; draft: string }
-  | { type: "submit-name" };
+  | { type: "submit-name" }
+  | { type: "link-sent" }
+  | { type: "link-failed" }
+  | { type: "status"; status: AuthStatus }
+  | { type: "opened-link" }
+  | { type: "named"; account: Account }
+  | { type: "name-failed" };
 
 export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct">;
 
-export type FixtureAccount = { email: string; name: string };
+export type FixtureAccount = Account & { name: string };
 
 function send(state: SignInState): SignInState {
   if (state.step === "expired") return { step: "sending", email: state.email };
@@ -38,9 +45,54 @@ function back(state: SignInState): SignInState {
 }
 
 function submitName(state: SignInState): SignInState {
-  if (state.step !== "name" || state.draft.trim() !== "") return state;
+  if (state.step !== "name" || state.saving) return state;
 
-  return { ...state, error: "empty" };
+  if (state.draft.trim() === "") return { ...state, error: "empty" };
+
+  return { step: "name", email: state.email, draft: state.draft, saving: true };
+}
+
+function linkAnswered(state: SignInState, sent: boolean): SignInState {
+  if (state.step !== "sending") return state;
+
+  if (sent) return { step: "sent", email: state.email };
+
+  return { step: "form", email: state.email, error: "failed" };
+}
+
+function signedIn(account: Account, returning: boolean): SignInState {
+  return { step: "done", name: account.name ?? "", returning };
+}
+
+function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
+  if (state.step !== "sent" && state.step !== "phone") return state;
+
+  switch (status.state) {
+    case "waiting":
+      return state;
+    case "expired":
+      return { step: "expired", email: state.email, onLink: false };
+    case "needs-name-elsewhere":
+      return state.step === "phone" ? state : { step: "phone", email: state.email };
+    case "signed-in":
+      return signedIn(status.account, status.returning);
+  }
+}
+
+function named(state: SignInState, account: Account): SignInState {
+  return state.step === "name" && state.saving ? signedIn(account, false) : state;
+}
+
+function nameFailed(state: SignInState): SignInState {
+  if (state.step !== "name" || !state.saving) return state;
+
+  return { step: "name", email: state.email, draft: state.draft, error: "failed" };
+}
+
+function typeName(state: SignInState, draft: string): SignInState {
+  if (state.step !== "name" || state.saving) return state;
+
+  return { step: "name", email: state.email, draft };
 }
 
 export function signInReducer(state: SignInState, action: SignInAction): SignInState {
@@ -52,11 +104,21 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
     case "back":
       return back(state);
     case "name":
-      return state.step === "name"
-        ? { step: "name", email: state.email, draft: action.draft }
-        : state;
+      return typeName(state, action.draft);
     case "submit-name":
       return submitName(state);
+    case "link-sent":
+      return linkAnswered(state, true);
+    case "link-failed":
+      return linkAnswered(state, false);
+    case "status":
+      return statusAnswered(state, action.status);
+    case "opened-link":
+      return state.step === "sent" ? { step: "name", email: state.email, draft: "" } : state;
+    case "named":
+      return named(state, action.account);
+    case "name-failed":
+      return nameFailed(state);
   }
 }
 

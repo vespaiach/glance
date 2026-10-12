@@ -1,3 +1,5 @@
+export type { AuthStatus } from "../sync/transport";
+export { SignInAuthProvider, useSignInAuth } from "./auth";
 export {
   createEventsRepo,
   type EventsRepo,
@@ -33,6 +35,8 @@ export {
   fixtureSignIn,
   fixtureUploads,
   fixtureWeatherSearch,
+  type SignInAuth,
+  signInAuthFor,
   useDisplayBoot,
 } from "./session";
 export { createSettingsRepo, type SettingsRepo, useSettings, useSettingsRepo } from "./settings";
@@ -43,5 +47,6 @@ export {
   type RepoStore,
   type StoreAccount,
   useAccount,
+  useSignOut,
 } from "./store";
 export { createWeatherRepo, useWeather, useWeatherRepo, type WeatherRepo } from "./weather";
