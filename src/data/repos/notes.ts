@@ -1,0 +1,58 @@
+import { useLiveQuery } from "dexie-react-hooks";
+import { useMemo } from "react";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
+import { noteExpired } from "@/domain/notes";
+import type { AccountSettings, Note } from "@/domain/schemas";
+import type { GlanceDb, StoredNote } from "../db";
+import { isLive, pendingIds, putQueued, removeQueued } from "./outbox";
+import { type RepoStore, useRepoStore } from "./store";
+
+export type ShownNote = StoredNote & { pending: boolean };
+
+export interface NotesRepo {
+  put(note: Note): Promise<void>;
+  remove(id: string): Promise<void>;
+}
+
+type NotesRead = {
+  notes: StoredNote[];
+  pending: Set<string>;
+  expiry: AccountSettings["noteExpiry"];
+};
+
+export function createNotesRepo(store: RepoStore): NotesRepo {
+  return {
+    put: (note) => putQueued<Note>(store, "notes", note.id, () => note),
+    remove: (id) => removeQueued(store, "notes", id),
+  };
+}
+
+export function useNotesRepo(): NotesRepo {
+  const store = useRepoStore();
+
+  return useMemo(() => createNotesRepo(store), [store]);
+}
+
+async function readNotes(db: GlanceDb, accountId: string): Promise<NotesRead> {
+  const notes = await db.notes.orderBy("createdAt").filter(isLive).toArray();
+
+  const pending = await pendingIds(db, "notes");
+
+  const settings = await db.settings.get(accountId);
+
+  return { notes, pending, expiry: (settings ?? DEFAULT_SETTINGS).noteExpiry };
+}
+
+function shownNotes({ notes, pending, expiry }: NotesRead, now: Date): ShownNote[] {
+  return notes
+    .filter((note) => !noteExpired(note, expiry, now))
+    .map((note) => ({ ...note, pending: pending.has(note.id) }));
+}
+
+export function useNotes(now: Date): ShownNote[] | undefined {
+  const { db, accountId } = useRepoStore();
+
+  const read = useLiveQuery(() => readNotes(db, accountId), [db, accountId]);
+
+  return useMemo(() => read && shownNotes(read, now), [read, now]);
+}
