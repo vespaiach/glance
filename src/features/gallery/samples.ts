@@ -10,13 +10,13 @@ import type {
   WeatherIcon,
   WeatherLocation,
 } from "@/domain/schemas";
-import { deviceTimeZone, zonedInstant } from "@/domain/zone";
+import { zonedInstant } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import type { UploadTile } from "@/features/photos";
 
 export const SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
 
-export const GALLERY_TZ = deviceTimeZone();
+export const GALLERY_TZ = "America/Los_Angeles";
 
 export const octoberAt = (day: number, hour: number, minute = 0) =>
   zonedInstant(GALLERY_TZ, { year: 2026, month: 10, day }, hour * 60 + minute);

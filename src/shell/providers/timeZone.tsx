@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, type ReactNode, useContext } from "react";
-import { deviceTimeZone } from "@/domain/zone";
+import { deviceTimeZone, displayTimeZone } from "@/domain/zone";
+import { useAccountSettings } from "./settings";
 
 const TimeZoneContext = createContext<string | undefined>(undefined);
 
@@ -12,7 +13,13 @@ export function TimeZoneProvider({
   timeZone?: string;
   children: ReactNode;
 }) {
-  return <TimeZoneContext value={timeZone ?? deviceTimeZone()}>{children}</TimeZoneContext>;
+  const settings = useAccountSettings();
+
+  return (
+    <TimeZoneContext value={timeZone ?? displayTimeZone(settings, deviceTimeZone())}>
+      {children}
+    </TimeZoneContext>
+  );
 }
 
 export function useTimeZone(): string {

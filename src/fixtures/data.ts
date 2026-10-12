@@ -9,13 +9,15 @@ import type {
   WeatherIcon,
   WeatherLocation,
 } from "@/domain/schemas";
-import { deviceTimeZone, zonedInstant } from "@/domain/zone";
+import { zonedInstant } from "@/domain/zone";
 
 const fixtureId = (group: number, n: number) =>
   `0000000${group}-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
+export const FIXTURE_TIME_ZONE = "America/Los_Angeles";
+
 const octoberAt = (day: number, hour: number, minute = 0) =>
-  zonedInstant(deviceTimeZone(), { year: 2026, month: 10, day }, hour * 60 + minute);
+  zonedInstant(FIXTURE_TIME_ZONE, { year: 2026, month: 10, day }, hour * 60 + minute);
 
 const at = (day: number, hour: number, minute = 0) => octoberAt(day, hour, minute).toISOString();
 
@@ -187,6 +189,7 @@ const PORTLAND_OR: WeatherLocation = {
   region: "Oregon",
   lat: 45.5152,
   lon: -122.6784,
+  timeZone: FIXTURE_TIME_ZONE,
 };
 
 export const FIXTURE_SETTINGS: AccountSettings = {
@@ -250,26 +253,31 @@ export const FIXTURE_AMBIENT_WEATHER: Weather = {
   current: { ...FIXTURE_WEATHER.current, temp: 56, condition: "lightRain", icon: "cloud-rain" },
 };
 
-const place = (name: string, region: string, lat: number, lon: number): WeatherLocation => ({
-  name,
-  region,
-  lat,
-  lon,
-});
+const place = (
+  name: string,
+  region: string,
+  lat: number,
+  lon: number,
+  timeZone: string,
+): WeatherLocation => ({ name, region, lat, lon, timeZone });
+
+const NEW_YORK = "America/New_York";
+
+const CHICAGO = "America/Chicago";
 
 export const FIXTURE_PLACES: Readonly<Record<string, readonly WeatherLocation[]>> = {
-  portland: [PORTLAND_OR, place("Portland", "Maine", 43.6591, -70.2568)],
+  portland: [PORTLAND_OR, place("Portland", "Maine", 43.6591, -70.2568, NEW_YORK)],
   springfield: [
-    place("Springfield", "Illinois", 39.7817, -89.6501),
-    place("Springfield", "Missouri", 37.2089, -93.2923),
-    place("Springfield", "Massachusetts", 42.1015, -72.5898),
+    place("Springfield", "Illinois", 39.7817, -89.6501, CHICAGO),
+    place("Springfield", "Missouri", 37.2089, -93.2923, CHICAGO),
+    place("Springfield", "Massachusetts", 42.1015, -72.5898, NEW_YORK),
   ],
-  seattle: [place("Seattle", "Washington", 47.6062, -122.3321)],
-  boston: [place("Boston", "Massachusetts", 42.3601, -71.0589)],
-  chicago: [place("Chicago", "Illinois", 41.8781, -87.6298)],
-  austin: [place("Austin", "Texas", 30.2672, -97.7431)],
-  denver: [place("Denver", "Colorado", 39.7392, -104.9903)],
-  "new york": [place("New York", "New York", 40.7128, -74.006)],
+  seattle: [place("Seattle", "Washington", 47.6062, -122.3321, FIXTURE_TIME_ZONE)],
+  boston: [place("Boston", "Massachusetts", 42.3601, -71.0589, NEW_YORK)],
+  chicago: [place("Chicago", "Illinois", 41.8781, -87.6298, CHICAGO)],
+  austin: [place("Austin", "Texas", 30.2672, -97.7431, CHICAGO)],
+  denver: [place("Denver", "Colorado", 39.7392, -104.9903, "America/Denver")],
+  "new york": [place("New York", "New York", 40.7128, -74.006, NEW_YORK)],
   "97214": [PORTLAND_OR],
 };
 
