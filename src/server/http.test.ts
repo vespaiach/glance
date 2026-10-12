@@ -2,7 +2,14 @@ import { NextRequest } from "next/server";
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
 import { FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { CalendarEventSchema } from "@/domain/schemas";
-import { outdatedClient, readCursor, readRow, readUpload, readVariant } from "./http";
+import {
+  outdatedClient,
+  readCursor,
+  readPlaceQuery,
+  readRow,
+  readUpload,
+  readVariant,
+} from "./http";
 
 const URL_BASE = "https://glance.example.com/api/events/x";
 
@@ -153,5 +160,23 @@ describe("readVariant", () => {
 
   it.each(["", "?v=", "?v=large"])("tech§6.3 rejects the variant query %s", (query) => {
     expect(readVariant(file(query))).toEqual({ ok: false, error: "invalid" });
+  });
+});
+
+describe("readPlaceQuery", () => {
+  function search(query: string): NextRequest {
+    return new NextRequest(`https://glance.example.com/api/weather/places${query}`);
+  }
+
+  it("WX-07 reads the trimmed place query", () => {
+    expect(readPlaceQuery(search("?q=%20Portland%2C%20OR%20"))).toEqual({
+      ok: true,
+      value: "Portland, OR",
+    });
+  });
+
+  it("WX-04 refuses a missing or blank query", () => {
+    expect(readPlaceQuery(search(""))).toEqual({ ok: false, error: "invalid" });
+    expect(readPlaceQuery(search("?q=%20%20"))).toEqual({ ok: false, error: "invalid" });
   });
 });
