@@ -22,21 +22,29 @@
 <span style="font-size:24px;font-weight:540;letter-spacing:-0.4px">Glance</span>
 <div style="display:flex;align-items:center;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="20" hint-size="20px,20px"></x-import><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">{{ seasonLabel }}</span></div>
 </div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="2026-10-09T10:41:00" hour12="{{ hour12 }}" hint-size="100%,140px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="{{ clockTime }}" hour12="{{ hour12 }}" hint-size="100%,140px"></x-import>
 <div style="font-size:clamp(22px,2vw,28px);font-weight:340;line-height:1.3;letter-spacing:-0.3px;max-width:520px;text-wrap:pretty">Calendar, weather, notes and photos for your family. Sign in to manage them.</div>
 </x-import>
 <div style="display:flex;flex-direction:column;justify-content:center;gap:32px;padding:clamp(8px,3vw,48px);box-sizing:border-box;min-width:0;max-width:560px;width:100%;justify-self:center">
 <sc-if value="{{ si.form }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ si.ended }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" role="status" icon="log-out" title="This screen was signed out" body="{{ si.endBody }}" tone="soft" hint-size="100%,96px"></x-import></sc-if>
 <div style="display:flex;flex-direction:column;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">One account per family</x-import>
+<sc-if value="{{ si.notEnded }}" hint-placeholder-val="{{ true }}">
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Sign in or get started</div>
 <div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Enter your email. We’ll send a link that signs this screen in. New here? The same link sets up your family’s Glance.</div>
+</sc-if>
+<sc-if value="{{ si.ended }}" hint-placeholder-val="{{ false }}">
+<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Sign in again</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Check your family’s email below. We’ll send a link that signs this screen back in.</div>
+</sc-if>
 </div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Email" placeholder="name@example.com" value="{{ email }}" on-change="{{ setEmail }}" error="{{ emailErr }}" hint-size="100%,84px"></x-import>
+<sc-if value="{{ si.switchWarn }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;flex-direction:column;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px;margin-top:-16px"><div style="display:flex;align-items:flex-start;gap:12px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="info" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0;overflow-wrap:anywhere">Changes waiting on this screen belong to <strong style="font-weight:540">{{ si.prevEmail }}</strong>. They’ll be removed from this screen if a different email signs in.</span></div><div style="display:flex;margin-left:18px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="undo-2" on-click="{{ usePrevEmail }}" hint-size="240px,44px">Use {{ si.prevEmail }}</x-import></div></div></sc-if>
 <sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="A link can’t be sent right now. Sending turns back on when the screen reconnects." tone="soft" hint-size="100%,80px"></x-import></sc-if>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="{{ si.sendIcon }}" disabled="{{ si.sendOff }}" on-click="{{ sendLink }}" hint-size="200px,44px">{{ si.sendLabel }}</x-import>
-<sc-if value="{{ si.notSending }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ demoSignIn }}" hint-size="200px,44px">Continue as demo</x-import></sc-if>
+<sc-if value="{{ si.showDemo }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ demoSignIn }}" hint-size="200px,44px">Continue as guests</x-import></sc-if>
 </div>
 <sc-if value="{{ si.sending }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Sending a link to <strong style="font-weight:540">{{ emailShown }}</strong></span></div></sc-if>
 <div style="display:flex;align-items:center;gap:10px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="lock" size="18" hint-size="18px,18px"></x-import><span style="font-size:15px;font-weight:330;line-height:1.45">Only your family can see its calendar, notes and photos.</span></div>
@@ -62,13 +70,34 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Your name" placeholder="First name is fine" value="{{ nameDraft }}" on-change="{{ setNameDraft }}" error="{{ nameErr }}" hint-size="100%,84px"></x-import>
 <div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="arrow-right" on-click="{{ submitName }}" hint-size="140px,44px">Continue</x-import></div>
 </sc-if>
+<sc-if value="{{ si.location }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">New family account</x-import>
+<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Where is this screen?</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">The weather and the clock’s time zone follow this place. You can change it later in Settings.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="City or ZIP code" placeholder="Portland, OR" value="{{ wxDraft }}" on-change="{{ setWxDraft }}" error="{{ wxErr }}" hint-size="100%,84px"></x-import>
+<sc-if value="{{ wxs.searching }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;min-height:44px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="search" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:17px;font-weight:330">Looking for {{ wxs.q }}…</span></div></sc-if>
+<sc-if value="{{ wxs.locating }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;min-height:44px"><span style="display:flex;flex:none;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="locate-fixed" size="22" hint-size="22px,22px"></x-import></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:17px;font-weight:330">Finding where this screen is…</span><span style="font-size:15px;font-weight:330">If the browser asks, choose Allow.</span></span></div></sc-if>
+<sc-if value="{{ wxs.fail }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:flex-start;gap:12px;background:var(--surface-soft);border-radius:8px;padding:14px 16px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ wxs.failIcon }}" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0">{{ wxs.failText }}</span></div></sc-if>
+<sc-if value="{{ wxs.choose }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ wxs.chooseLabel }}</x-import>
+<sc-for list="{{ wxs.matches }}" as="m" hint-placeholder-count="2"><button type="button" onClick="{{ m.pick }}" style="min-height:64px;width:100%;border:0;border-radius:8px;background:var(--surface-soft);padding:12px 16px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">{{ m.name }}</span><span style="font-size:15px;font-weight:330">{{ m.region }}</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ wxs.showBtn }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="arrow-right" on-click="{{ saveWx }}" hint-size="140px,44px">Continue</x-import><sc-if value="{{ wxs.canLocate }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="locate-fixed" on-click="{{ locate }}" style="box-shadow:var(--shadow-1)" hint-size="200px,44px">Use my location</x-import></sc-if></div></sc-if>
+</div>
+<div style="display:flex;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ skipLoc }}" style="margin-left:-16px" hint-size="140px,44px">Skip for now</x-import></div>
+</sc-if>
 <sc-if value="{{ si.phone }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Sign in</x-import>
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Finish on your phone</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">The link opened on another device. Add your name there and this screen signs in by itself.</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself.</div>
 </div>
-<div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="smartphone" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Waiting for your name</span></div>
+<div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="smartphone" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Waiting for your phone</span></div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" on-click="{{ phoneDone }}" hint-size="220px,44px">I finished on my phone</x-import>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import>
@@ -113,10 +142,11 @@
 <div style="display:flex;align-items:center;gap:10px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="24" stroke-width="1.5" hint-size="24px,24px"></x-import><span style="font-family:var(--font-mono);font-size:16px;letter-spacing:0.54px;text-transform:uppercase">{{ seasonLabel }}</span></div>
 <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
 <sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:16px;letter-spacing:0.54px;text-transform:uppercase"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="wifi-off" size="20" hint-size="20px,20px"></x-import>Offline · showing saved data</span></sc-if>
+<sc-if value="{{ si.ended }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:16px;letter-spacing:0.54px;text-transform:uppercase"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="log-out" size="20" hint-size="20px,20px"></x-import>Signed out · tap to sign in</span></sc-if>
 <span style="font-family:var(--font-mono);font-size:16px;letter-spacing:0.54px;text-transform:uppercase">Glance</span>
 </div>
 </div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="2026-10-09T19:12:00" hour12="{{ hour12 }}" hint-size="100%,300px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="{{ clockTimeAmb }}" hour12="{{ hour12 }}" hint-size="100%,300px"></x-import>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;border-top:1px solid rgba(255,255,255,.2);padding-top:28px">
 <sc-if value="{{ wxSet }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;gap:20px">
@@ -142,7 +172,7 @@
 <sc-if value="{{ is.today }}" hint-placeholder-val="{{ true }}">
 <div style="min-height:{{ L.minH }};display:grid;grid-template-columns:{{ L.cols }};grid-template-areas:{{ L.areas }};grid-template-rows:{{ L.rows }};gap:24px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="1" padding="clamp(24px,2.6vw,40px)" dc-props="{{ heroToday }}" hint-size="100%,400px">
-<div style="display:flex;flex-direction:column;gap:16px"><div style="display:flex;align-items:center;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="20" hint-size="20px,20px"></x-import><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">{{ seasonLabel }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="2026-10-09T10:41:00" hour12="{{ hour12 }}" hint-size="100%,140px"></x-import></div>
+<div style="display:flex;flex-direction:column;gap:16px"><div style="display:flex;align-items:center;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="20" hint-size="20px,20px"></x-import><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">{{ seasonLabel }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="{{ clockTime }}" hour12="{{ hour12 }}" hint-size="100%,140px"></x-import></div>
 <sc-if value="{{ nowEvent.has }}" hint-placeholder-val="{{ true }}">
 <button onClick="{{ nowEvent.open }}" style="border:0;background:transparent;padding:0;text-align:left;font-family:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:10px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ nowEvent.eyebrow }}</x-import>
@@ -231,7 +261,7 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="48" stroke-width="1.25" hint-size="48px,48px"></x-import>
 <div style="display:flex;flex-direction:column;gap:6px">
 <span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.15">Weather needs a location</span>
-<span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">Set the city once and the forecast stays current.</span>
+<span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">Set the city once. The forecast and the clock follow it.</span>
 </div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon-right="arrow-right" on-click="{{ go.weather }}" hint-size="160px,44px">Set location</x-import>
 </x-import>
@@ -327,18 +357,20 @@
 <div style="display:flex;flex-direction:column;gap:10px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Weather · setup</x-import>
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Where is this screen?</div>
-<span style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">The forecast on Today, Weather and the ambient screen uses this location.</span>
+<span style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">The forecast and the clock’s time zone follow this place. You can change it later in Settings.</span>
 </div>
 <div style="background:var(--surface-canvas);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:16px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="City or ZIP code" placeholder="Portland, OR" value="{{ wxDraft }}" on-change="{{ setWxDraft }}" error="{{ wxErr }}" hint-size="100%,84px"></x-import>
 <sc-if value="{{ wxs.searching }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;min-height:44px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="search" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:17px;font-weight:330">Looking for {{ wxs.q }}…</span></div></sc-if>
+<sc-if value="{{ wxs.locating }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;min-height:44px"><span style="display:flex;flex:none;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="locate-fixed" size="22" hint-size="22px,22px"></x-import></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:17px;font-weight:330">Finding where this screen is…</span><span style="font-size:15px;font-weight:330">If the browser asks, choose Allow.</span></span></div></sc-if>
+<sc-if value="{{ wxs.fail }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:flex-start;gap:12px;background:var(--surface-soft);border-radius:8px;padding:14px 16px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ wxs.failIcon }}" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0">{{ wxs.failText }}</span></div></sc-if>
 <sc-if value="{{ wxs.choose }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:8px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ wxs.chooseLabel }}</x-import>
 <sc-for list="{{ wxs.matches }}" as="m" hint-placeholder-count="2"><button type="button" onClick="{{ m.pick }}" style="min-height:64px;width:100%;border:0;border-radius:8px;background:var(--surface-soft);padding:12px 16px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">{{ m.name }}</span><span style="font-size:15px;font-weight:330">{{ m.region }}</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button></sc-for>
 </div>
 </sc-if>
-<sc-if value="{{ wxs.showBtn }}" hint-placeholder-val="{{ true }}"><div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="arrow-right" on-click="{{ saveWx }}" hint-size="180px,44px">Show weather</x-import></div></sc-if>
+<sc-if value="{{ wxs.showBtn }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="arrow-right" on-click="{{ saveWx }}" hint-size="180px,44px">Show weather</x-import><sc-if value="{{ wxs.canLocate }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="locate-fixed" on-click="{{ locate }}" style="box-shadow:var(--shadow-1)" hint-size="200px,44px">Use my location</x-import></sc-if></div></sc-if>
 </div>
 </x-import>
 </div>
@@ -507,6 +539,7 @@
 <span style="font-size:17px;font-weight:330">Signed in as <span style="font-weight:540">{{ userName }}</span> · {{ emailShown }}</span>
 </div>
 <div style="display:flex;flex-direction:column">
+<button onClick="{{ go.location }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Location</span><span style="font-size:15px;font-weight:330">Sets the weather and the time zone</span></div><div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:17px;font-weight:330">{{ locInfo.summary }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Season</span><span style="font-size:15px;font-weight:330">{{ seasonSub }}</span></div><div style="max-width:100%;overflow-x:auto;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ opts.season }}" value="{{ seasonPick }}" on-change="{{ set.seasonPick }}" style="background:var(--surface-soft)" hint-size="440px,48px"></x-import></div></div>
 <button onClick="{{ go.background }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Background</span><span style="font-size:15px;font-weight:330">Photo, slideshow or the plain season palette</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:330">{{ bgSummary }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Clock</span><span style="font-size:15px;font-weight:330">Used for every time on the screen</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ opts.clock }}" value="{{ clockFmt }}" on-change="{{ set.clockFmt }}" style="background:var(--surface-soft)" hint-size="220px,48px"></x-import></div>
@@ -517,7 +550,7 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="soft" padding="clamp(20px,2.4vw,32px)" dc-props="{{ colGap24 }}" hint-size="100%,360px">
 <div style="display:flex;flex-direction:column;gap:10px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Schedule</x-import>
-<div style="background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px"><div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Ambient screen</span><span style="font-size:15px;font-weight:330">{{ ambientHours }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="moon" on-click="{{ go.ambient }}" style="box-shadow:var(--shadow-1)" hint-size="120px,44px">Preview</x-import></div>
+<button type="button" onClick="{{ go.quiet }}" style="border:0;width:100%;min-height:72px;background:var(--surface-canvas);border-radius:8px;padding:16px 20px;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Ambient screen</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ ambientHours }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button>
 </div>
 <div style="display:flex;flex-direction:column;gap:10px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Back to Today after</x-import>
@@ -543,6 +576,144 @@
 </div>
 </div>
 </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.quiet }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-items:start">
+<div style="background:var(--surface-canvas);border-radius:24px;padding:clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;gap:28px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" style="margin-left:-16px" hint-size="120px,44px">Settings</x-import></div>
+<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1">Ambient screen</div>
+<span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty;max-width:640px">During these hours the screen dims to the clock, weather and next event. A touch wakes it.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Schedule</x-import>
+<div style="max-width:100%;overflow-x:auto;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ amb.modes }}" value="{{ amb.mode }}" on-change="{{ amb.setMode }}" style="background:var(--surface-soft)" hint-size="440px,48px"></x-import></div>
+</div>
+<sc-if value="{{ amb.on }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ amb.groups }}" as="g" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:12px">
+<sc-if value="{{ g.hasTitle }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ g.title }}</x-import></sc-if>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+<sc-for list="{{ g.fields }}" as="f" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">{{ f.label }}</span><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;white-space:nowrap">{{ f.dur }}</span></div>
+<button type="button" onClick="{{ f.toggle }}" aria-expanded="{{ f.open }}" aria-label="{{ f.aria }}" style="min-height:56px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 10px 14px;box-sizing:border-box;background:var(--surface-canvas);border:1px solid {{ f.border }};border-radius:var(--radius-md);box-shadow:{{ f.ring }};font-family:inherit;color:var(--text-primary);cursor:pointer;text-align:left;transition:transform 120ms ease-out,box-shadow 180ms" style-active="transform:scale(.97)">
+<span style="display:flex;align-items:baseline;gap:6px;min-width:0;flex-wrap:wrap"><span style="font-size:{{ amb.fs }};font-weight:340;letter-spacing:-0.2px;font-variant-numeric:tabular-nums;line-height:1.2">{{ f.time }}</span><span style="font-family:var(--font-mono);font-size:15px;letter-spacing:0.5px">{{ f.mer }}</span></span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ f.chev }}" size="20" hint-size="20px,20px"></x-import>
+</button>
+<sc-if value="{{ f.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;color:var(--danger)">{{ f.err }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ g.tp.open }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="{{ g.tp.aria }}" style="background:var(--surface-soft);border-radius:24px;padding:{{ g.tp.pad }};display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:56px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="140px,20px">{{ g.tp.eyebrow }}</x-import>
+<sc-if value="{{ g.tp.h12 }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ g.tp.merOpts }}" value="{{ g.tp.mer }}" on-change="{{ g.tp.setMer }}" hint-size="180px,64px"></x-import></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Hour</span>
+<div style="display:grid;grid-template-columns:{{ g.tp.cols }};gap:6px"><sc-for list="{{ g.tp.hours }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ g.tp.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:20px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Minutes</span>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px"><sc-for list="{{ g.tp.mins }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ g.tp.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:20px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for></div>
+</div>
+<div style="display:flex;justify-content:flex-end"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" on-click="{{ g.tp.done }}" hint-size="100px,44px">Done</x-import></div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</sc-if>
+<sc-if value="{{ amb.isOff }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--surface-soft);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sun" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span><span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">The screen stays bright all day and night.</span></div>
+</sc-if>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="soft" padding="clamp(20px,2.4vw,32px)" dc-props="{{ colGap24 }}" hint-size="100%,320px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Over 24 hours</x-import>
+<sc-if value="{{ amb.on }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:20px">
+<sc-for list="{{ amb.strips }}" as="st" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 12px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">{{ st.title }}</span><span style="font-size:17px;font-weight:330;font-variant-numeric:tabular-nums">{{ st.range }}</span></div>
+<div role="img" aria-label="{{ st.aria }}" style="position:relative;height:40px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden">
+<sc-for list="{{ st.segs }}" as="sg" hint-placeholder-count="1"><div style="position:absolute;top:0;bottom:0;left:{{ sg.left }};width:{{ sg.width }};background:var(--surface-deep)"></div></sc-for>
+</div>
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:12px;letter-spacing:0.6px;text-transform:uppercase"><span>Noon</span><span>6 PM</span><span>Midnight</span><span>6 AM</span><span>Noon</span></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ amb.isOff }}" hint-placeholder-val="{{ false }}"><span style="font-size:17px;font-weight:330;line-height:1.45">No ambient hours.</span></sc-if>
+<span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">{{ amb.wakeLine }}</span>
+<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="moon" on-click="{{ go.ambient }}" style="box-shadow:var(--shadow-1)" hint-size="120px,44px">Preview</x-import></div>
+</x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.location }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-items:start">
+<div style="background:var(--surface-canvas);border-radius:24px;padding:clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;gap:24px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" style="margin-left:-16px" hint-size="120px,44px">Settings</x-import></div>
+<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1">Location</div>
+</div>
+<div style="background:var(--surface-soft);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px">
+<span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ locInfo.icon }}" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span>
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Now set to</x-import>
+<span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.15">{{ locInfo.title }}</span>
+<span style="font-size:16px;font-weight:330;text-wrap:pretty">{{ locInfo.sub }}</span>
+</div>
+</div>
+<sc-if value="{{ wxs.notTz }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ locInfo.changeLabel }}</x-import>
+<div style="background:var(--surface-canvas);border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);padding:20px;display:flex;flex-direction:column;gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="City or ZIP code" placeholder="Portland, OR" value="{{ wxDraft }}" on-change="{{ setWxDraft }}" error="{{ wxErr }}" hint-size="100%,84px"></x-import>
+<sc-if value="{{ wxs.searching }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;min-height:44px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="search" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:17px;font-weight:330">Looking for {{ wxs.q }}…</span></div></sc-if>
+<sc-if value="{{ wxs.locating }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;min-height:44px"><span style="display:flex;flex:none;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="locate-fixed" size="22" hint-size="22px,22px"></x-import></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:17px;font-weight:330">Finding where this screen is…</span><span style="font-size:15px;font-weight:330">If the browser asks, choose Allow.</span></span></div></sc-if>
+<sc-if value="{{ wxs.fail }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:flex-start;gap:12px;background:var(--surface-soft);border-radius:8px;padding:14px 16px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ wxs.failIcon }}" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0">{{ wxs.failText }}</span></div></sc-if>
+<sc-if value="{{ wxs.choose }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ wxs.chooseLabel }}</x-import>
+<sc-for list="{{ wxs.matches }}" as="m" hint-placeholder-count="2"><button type="button" onClick="{{ m.pick }}" style="min-height:64px;width:100%;border:0;border-radius:8px;background:var(--surface-soft);padding:12px 16px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">{{ m.name }}</span><span style="font-size:15px;font-weight:330">{{ m.region }}</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ wxs.showBtn }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="arrow-right" on-click="{{ saveWx }}" hint-size="130px,44px">Search</x-import><sc-if value="{{ wxs.canLocate }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="locate-fixed" on-click="{{ locate }}" style="box-shadow:var(--shadow-1)" hint-size="200px,44px">Use my location</x-import></sc-if></div></sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ wxs.tz }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="{{ tzc.title }}" style="background:var(--season-block-4);border-radius:24px;padding:clamp(20px,2.4vw,32px);box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Time zone change</x-import>
+<span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.15">{{ tzc.title }}</span>
+<span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">{{ tzc.body }}</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+<div style="background:var(--surface-canvas);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-family:var(--font-mono);font-size:12px;letter-spacing:0.6px;text-transform:uppercase">Now · {{ tzc.fromZone }}</span><span style="font-size:clamp(26px,2.4vw,36px);font-weight:300;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.1">{{ tzc.fromT }}</span></div>
+<div style="background:var(--surface-canvas);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-family:var(--font-mono);font-size:12px;letter-spacing:0.6px;text-transform:uppercase">After · {{ tzc.toZone }}</span><span style="font-size:clamp(26px,2.4vw,36px);font-weight:300;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.1">{{ tzc.toT }}</span></div>
+</div>
+<sc-if value="{{ tzc.hasEx }}" hint-placeholder-val="{{ true }}"><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">{{ tzc.example }}</span></sc-if>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" on-click="{{ confirmTz }}" hint-size="220px,44px">{{ tzc.confirmLabel }}</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" on-click="{{ keepTz }}" hint-size="200px,44px">{{ tzc.keepLabel }}</x-import>
+</div>
+</div>
+</sc-if>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="soft" padding="clamp(20px,2.4vw,32px)" dc-props="{{ colGap24 }}" hint-size="100%,360px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">What the location sets</x-import>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Weather</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">The forecast on Today, Weather and the ambient screen</span></div></div>
+<div style="background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;align-items:center;gap:16px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Time zone</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ locInfo.zoneLine }}</span></div></div>
+</div>
+<div style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">{{ locInfo.caption }}</div>
+<span style="font-family:var(--font-mono);font-size:12px;letter-spacing:0.6px;text-transform:uppercase">Shared by every screen on this account</span>
+</x-import>
 </div>
 </sc-if>
 
@@ -764,8 +935,8 @@ class Component extends DCLogic {
     const sn = q.get('season');
     if (sq === 'note') sheet = { kind: 'note', id: 'n1', draft: { ...notes[0] }, confirm: false, err: '' };
     if (sq === 'newnote') sheet = { kind: 'note', id: null, draft: { text: 'Has anyone seen my blue umbr', author: '', tone: 2 }, confirm: false, err: '' };
-    const siq = q.get('signin'), upq = q.get('upload'), wxq = q.get('wx');
-    const SIS = { form: 'form', sending: 'sending', sent: 'sent', name: 'name', phone: 'phone', expired: 'expired', offline: 'form', done: 'done' };
+    const siq = q.get('signin'), upq = q.get('upload'), wxq = q.get('wx'), sub = q.get('sub'), geo = q.get('geo') || 'ok';
+    const SIS = { form: 'form', sending: 'sending', sent: 'sent', name: 'name', location: 'location', phone: 'phone', expired: 'expired', offline: 'form', done: 'done', ended: 'form' };
     const pic = (n) => `https://picsum.photos/seed/kiosk-up${n}/600/450`;
     const UPM = {
       one: [{ id: 'm1', title: 'IMG_2041', url: pic(1), st: 'up', pct: 64, hold: true }],
@@ -773,14 +944,19 @@ class Component extends DCLogic {
       error: [{ id: 'm4', title: 'IMG_3307', st: 'err', err: 'big', pct: 0 }, { id: 'm5', title: 'Recipe card', st: 'err', err: 'type', pct: 0 }, { id: 'm6', title: 'Halloween costumes', url: pic(6), st: 'err', err: 'net', pct: 0 }],
       offline: [{ id: 'm1', title: 'IMG_2041', url: pic(1), st: 'paused', pct: 40, hold: true }],
     };
-    const WXS = { searching: { wxStep: 'searching', wxDraft: 'Portland', wxQ: 'Portland' }, unknown: { wxStep: 'unknown', wxDraft: 'Pordland', wxErr: Component.WX_UNKNOWN }, choose: { wxStep: 'choose', wxDraft: 'Portland', wxMatches: Component.WX_MULTI.portland } }[wxq] || {};
+    const WXS = { searching: { wxStep: 'searching', wxDraft: 'Portland', wxQ: 'Portland' }, unknown: { wxStep: 'unknown', wxDraft: 'Pordland', wxErr: Component.WX_UNKNOWN }, choose: { wxStep: 'choose', wxDraft: 'Portland', wxMatches: Component.WX_MULTI.portland },
+      locating: { wxStep: 'locating' }, denied: { wxStep: 'denied', geoOff: true }, outside: { wxStep: 'outside' }, unavailable: { wxStep: 'unavailable' }, lookup: { wxStep: 'lookup' },
+      tz: { wxStep: 'tz', wxPending: 'Portland, ME' }, savefail: { wxDraft: 'Portland, OR', wxErr: 'Couldn’t save. Try again.' } }[wxq] || {};
+    const ended = siq === 'ended', sw = ended && q.get('switch') === '1';
+    const view0 = sub === 'location' ? 'location' : sub === 'ambient' ? 'quiet' : q.get('view') || (ended && sheet ? 'today' : siq ? 'signin' : upq ? 'photos' : wxq ? 'weather' : 'today');
     let net = q.get('net') || 'online'; if (siq === 'offline' || upq === 'offline') net = 'offline';
     return {
       net, kb: q.get('kb') === '1', vh: window.innerHeight,
-      view: q.get('view') || (siq ? 'signin' : upq ? 'photos' : wxq ? 'weather' : 'today'), vw: window.innerWidth,
+      amb: { mode: { split: 'Weekends differ', off: 'Off' }[q.get('amb')] || 'Every night', all: { s: 1080, e: 450 }, wknd: { s: 1260, e: 540 }, ...(q.get('amb') === 'same' ? { all: { s: 1080, e: 1080 } } : {}) }, ambPick: q.get('pick') || null,
+      view: view0, vw: window.innerWidth, geo, geoOff: false, wxPending: '',
       signinStep: SIS[siq] || 'form', linkSide: q.get('on') === 'link', acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
-      email: siq && siq !== 'form' ? 'maria@example.com' : '', emailErr: '', wxStep: '', wxMatches: [], wxQ: '',
-      events, notes, selDay: 9, sheet, photoIdx: 0, empty, wxLoc: empty || wxq ? '' : 'Portland, OR', wxDraft: '', wxErr: '', hasPhotos: !empty,
+      email: sw ? 'sam.lee@example.com' : siq && siq !== 'form' ? 'maria@example.com' : '', emailErr: '', ended, pendingN: ended ? Math.max(0, parseInt(q.get('pending'), 10) || 0) : 0, endedEmail: 'maria@example.com', wxStep: '', wxMatches: [], wxQ: '',
+      events, notes, selDay: 9, sheet, photoIdx: 0, empty, wxLoc: empty || siq === 'location' || siq === 'name' || (wxq && view0 !== 'location') ? '' : 'Portland, OR', wxDraft: '', wxErr: '', hasPhotos: !empty,
       bgMode: q.get('bg') === 'photo' ? 'Photo' : 'Season color', bgId: 'coast', dim: 'Light', rotate: 'Daily',
       seasonPick: sn ? sn[0].toUpperCase() + sn.slice(1) : 'Auto', clockFmt: q.get('clock') === '24' ? '24-hour' : '12-hour', tempUnit: 'Fahrenheit', idle: '3 min', noteKeep: '1 week', calYM: 2026 * 12 + 9, playing: true, uploads: UPM[upq] || [], ...WXS,
     };
@@ -789,6 +965,20 @@ class Component extends DCLogic {
   static WX_UNKNOWN = 'We couldn’t find that place. Try a city and state, like Austin, TX';
   static WX_MULTI = { portland: [['Portland', 'Oregon', 'Portland, OR'], ['Portland', 'Maine', 'Portland, ME']], springfield: [['Springfield', 'Illinois', 'Springfield, IL'], ['Springfield', 'Missouri', 'Springfield, MO'], ['Springfield', 'Massachusetts', 'Springfield, MA']] };
   static WX_ONE = { seattle: 'Seattle, WA', boston: 'Boston, MA', chicago: 'Chicago, IL', austin: 'Austin, TX', denver: 'Denver, CO', 'new york': 'New York, NY', '97214': 'Portland, OR' };
+  static ZONES = { Eastern: 180, Central: 120, Mountain: 60, Arizona: 0, Pacific: 0, Alaska: -60, Hawaii: -180 };
+  static ST = (() => { const m = {}; Object.entries({ Eastern: 'ME NH VT MA RI CT NY NJ PA DE MD DC VA WV NC SC GA FL OH MI IN KY', Central: 'AL MS TN IL WI MN IA MO AR LA TX OK KS NE SD ND', Mountain: 'MT WY CO NM UT ID', Arizona: 'AZ', Pacific: 'WA OR CA NV', Alaska: 'AK', Hawaii: 'HI' }).forEach(([z, s]) => s.split(' ').forEach((k) => { m[k] = z; })); return m; })();
+  static zoneOf(loc) {
+    if (!loc) return '';
+    const t = loc.trim();
+    if (/^\d{5}$/.test(t)) return ['Eastern', 'Eastern', 'Eastern', 'Eastern', 'Eastern', 'Central', 'Central', 'Central', 'Mountain', 'Pacific'][+t[0]];
+    return Component.ST[(t.split(',')[1] || '').trim().toUpperCase()] || 'Pacific';
+  }
+  static FAILS = {
+    denied: ['map-pin-off', 'Location is off for this screen. Type a city or ZIP instead.'],
+    unavailable: ['locate-off', 'Couldn’t find where this screen is. Try again, or type a city or ZIP.'],
+    outside: ['globe', 'This screen seems to be outside the US. Glance works for US places only. Type a US city or ZIP.'],
+    lookup: ['search-x', 'Couldn’t look up this place. Try again, or type a city or ZIP.'],
+  };
   static newDraft(day, ym) {
     const s = Math.min(Math.floor(Component.NOW / 30) * 30 + 30, 23 * 60 + 30);
     return { title: '', start: s, end: Math.min(s + 60, 1435), location: '', tone: 1, day, ym };
@@ -842,7 +1032,8 @@ class Component extends DCLogic {
     this.setState({ signinStep: 'sending', linkSide: false, emailErr: '' });
     this.later(1400, () => this.setState({ signinStep: 'sent' }));
   }
-  finishSignIn() { this.setState({ signinStep: 'done' }); this.later(2200, () => { this.setState({ signinStep: 'form' }); this.go('today'); }); }
+  endNow(add = 0) { this.setState((s) => ({ pendingN: s.pendingN + add })); this.go('signin'); }
+  finishSignIn() { this.setState({ signinStep: 'done', ended: false, pendingN: 0 }); this.later(2200, () => { this.setState({ signinStep: 'form' }); this.go('today'); }); }
   findWx() {
     const q = this.state.wxDraft.trim();
     if (!q) return this.setState({ wxErr: 'Enter a city or ZIP code' });
@@ -852,12 +1043,31 @@ class Component extends DCLogic {
       if (tok !== this.wxTok) return;
       const k = q.toLowerCase().replace(/\s+/g, ' '), M = Component.WX_MULTI[k], one = Component.WX_ONE[k];
       if (M) this.setState({ wxStep: 'choose', wxMatches: M });
-      else if (one || /^\d{5}$/.test(k) || k.includes(',')) this.setState({ wxStep: '', wxLoc: one || q });
+      else if (one || /^\d{5}$/.test(k) || k.includes(',')) this.commitLoc(one || q);
       else this.setState({ wxStep: 'unknown', wxErr: Component.WX_UNKNOWN });
     });
   }
+  locate() {
+    const tok = this.wxTok = (this.wxTok || 0) + 1;
+    this.setState({ wxStep: 'locating', wxErr: '', wxMatches: [] });
+    this.later(2600, () => {
+      if (tok !== this.wxTok) return;
+      const g = this.state.geo;
+      if (Component.FAILS[g]) return this.setState({ wxStep: g, geoOff: g === 'denied' });
+      this.commitLoc('Portland, OR');
+    });
+  }
+  commitLoc(loc) {
+    const S = this.state, clear = { wxStep: '', wxMatches: [], wxErr: '' };
+    if (S.view === 'signin') { this.setState({ ...clear, wxLoc: loc }); return this.finishSignIn(); }
+    if (S.view === 'location') {
+      if (S.wxLoc && Component.zoneOf(loc) !== Component.zoneOf(S.wxLoc)) return this.setState({ ...clear, wxStep: 'tz', wxPending: loc });
+      this.setState({ wxLoc: loc }); return this.go('settings');
+    }
+    this.setState({ ...clear, wxLoc: loc });
+  }
   shiftMonth(d) { this.setState((s) => { const ym = s.calYM + d; return { calYM: ym, selDay: ym === 2026 * 12 + 9 ? 9 : 1 }; }); }
-  go(view) { this.setState({ view, sheet: null }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
+  go(view) { this.wxTok = (this.wxTok || 0) + 1; this.setState({ view, ambPick: null, sheet: null, wxStep: '', wxDraft: '', wxErr: '', wxMatches: [], wxPending: '' }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
   openEvent(ev) { this.setState({ sheet: { kind: 'event', id: ev ? ev.id : null, draft: ev ? { ...ev } : Component.newDraft(this.state.selDay, this.state.calYM), confirm: false, err: '' } }); }
   revealTimes() {
     try {
@@ -895,7 +1105,7 @@ class Component extends DCLogic {
     } else {
       if (!d.text.trim()) return this.setState({ sheet: { ...s, err: 'Write a message' } });
       const n = { ...d, text: d.text.trim(), author: d.author.trim() || 'Guest' };
-      this.setState((st) => ({ sheet: null, notes: s.id ? st.notes.map((x) => x.id === s.id ? n : x) : [{ ...n, id: 'n' + Date.now(), time: st.net === 'offline' ? 'Waiting to post' : 'Just now', rotate: [-2, 1.5, -1, 2.5][st.notes.length % 4] }].concat(st.notes) }));
+      this.setState((st) => ({ sheet: null, notes: s.id ? st.notes.map((x) => x.id === s.id ? n : x) : [{ ...n, id: 'n' + Date.now(), time: st.net === 'offline' || st.ended ? 'Waiting to post' : 'Just now', rotate: [-2, 1.5, -1, 2.5][st.notes.length % 4] }].concat(st.notes) }));
     }
   }
   del() {
@@ -923,6 +1133,8 @@ class Component extends DCLogic {
       case 'calendar': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'auto minmax(0,1fr)', cell: W ? 60 : M ? 54 : 84 };
       case 'weather': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : W ? 'minmax(380px,0.85fr) minmax(0,1.4fr)' : 'minmax(340px,0.8fr) minmax(0,1.2fr)', minH: bp === 'narrow' ? '0' : '100%' };
       case 'photos': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.6fr) minmax(300px,1fr)', minH: bp === 'narrow' ? '0' : '100%', photoH: bp === 'narrow' ? '440px' : '320px', thumbCols: bp === 'narrow' ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))' };
+      case 'location':
+      case 'quiet':
       case 'settings': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.4fr) minmax(320px,1fr)' };
       case 'background': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.4fr) minmax(320px,1fr)', thumbCols: W ? 'repeat(4,minmax(0,1fr))' : 'repeat(3,minmax(0,1fr))' };
       case 'signin': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(0,1fr)' };
@@ -933,7 +1145,7 @@ class Component extends DCLogic {
     const S = this.state, NS = window.KioskDisplayDesignSystem_21b0bf || {}, h = React.createElement;
     const bp = S.vw >= 1200 ? 'wide' : S.vw >= 1000 ? 'mid' : S.vw >= 600 ? 'narrow' : 'phone';
     const view = S.view;
-    const go = {}; ['today', 'calendar', 'weather', 'notes', 'photos', 'settings', 'background', 'ambient'].forEach((v) => { go[v] = () => this.go(v); });
+    const go = {}; ['today', 'calendar', 'weather', 'notes', 'photos', 'settings', 'background', 'location', 'ambient', 'quiet'].forEach((v) => { go[v] = () => this.go(v); });
     const sp = S.seasonPick;
     const season = sp === 'Auto' ? (this.props.season ?? 'fall') : sp.toLowerCase();
     const SI = { spring: ['flower-2', 'Spring'], summer: ['sun', 'Summer'], fall: ['leaf', 'Fall'], winter: ['snowflake', 'Winter'] }[season] || ['leaf', 'Fall'];
@@ -944,7 +1156,7 @@ class Component extends DCLogic {
     const nb = PH1 ? { size: 'md', style: { width: 44, height: 44 } } : { size: 'touch' };
     const bar = NS.IconButton ? h(React.Fragment, null,
       h('nav', { style: { display: 'flex', gap: PH1 ? 4 : 8 } }, VIEWS.map(([k, label, ic]) => h(NS.IconButton, { key: k, icon: ic, label, active: view === k, onClick: () => this.go(k), ...nb }))),
-      h(NS.IconButton, { icon: 'settings', label: 'Settings', active: view === 'settings' || view === 'background', onClick: () => this.go('settings'), ...nb }),
+      h(NS.IconButton, { icon: 'settings', label: 'Settings', active: view === 'settings' || view === 'background' || view === 'location' || view === 'quiet', onClick: () => this.go('settings'), ...nb }),
       ) : null;
 
     const OCT = 2026 * 12 + 9, ymOf = (e) => e.ym ?? OCT;
@@ -954,8 +1166,11 @@ class Component extends DCLogic {
     const h12 = S.clockFmt === '12-hour';
     const fmtT = (m, ap) => { const hh = Math.floor(m / 60), mm = String(m % 60).padStart(2, '0'); return h12 ? `${hh % 12 || 12}:${mm}${ap ? (hh < 12 ? ' AM' : ' PM') : ''}` : `${String(hh).padStart(2, '0')}:${mm}`; };
     const savedAt = h12 ? '9:32 AM' : '09:32';
+    const zone = Component.zoneOf(S.wxLoc), tzSh = Component.ZONES[zone] || 0, zn = (z) => z + ' time';
+    const lt = (m, s = tzSh) => (((m + s) % 1440) + 1440) % 1440;
+    const isoT = (m) => `2026-10-09T${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}:00`;
     const rowsFor = (ym, day) => S.events.filter((e) => ymOf(e) === ym && e.day === day).sort((a, b) => toMin(a.start) - toMin(b.start))
-      .map((e) => ({ start: fmtT(toMin(e.start)), end: e.end != null ? fmtT(toMin(e.end)) : undefined, title: e.title, location: e.location, status: statusOf(e), dot: toneBg(e.tone), onClick: () => this.openEvent(e), style: bp === 'phone' ? { gridTemplateColumns: '56px 10px minmax(0,1fr) auto', columnGap: 12, padding: '12px 8px' } : { gridTemplateColumns: '84px 14px minmax(0,1fr) auto', padding: '14px 16px' } }));
+      .map((e) => ({ start: fmtT(lt(toMin(e.start))), end: e.end != null ? fmtT(lt(toMin(e.end))) : undefined, title: e.title, location: e.location, status: statusOf(e), dot: toneBg(e.tone), onClick: () => this.openEvent(e), style: bp === 'phone' ? { gridTemplateColumns: '56px 10px minmax(0,1fr) auto', columnGap: 12, padding: '12px 8px' } : { gridTemplateColumns: '84px 14px minmax(0,1fr) auto', padding: '14px 16px' } }));
     const todayEvents = rowsFor(OCT, 9);
     const nowEv = S.events.find((e) => e.id === 'e2' && ymOf(e) === OCT && e.day === 9);
     const nextEv = nowEv ? null : S.events.filter((e) => ymOf(e) === OCT && e.day === 9 && statusOf(e) === 'upcoming').sort((a, b) => toMin(a.start) - toMin(b.start))[0];
@@ -971,7 +1186,7 @@ class Component extends DCLogic {
     });
 
     const details = [{ label: 'Wind', value: '8 mph NW', icon: 'wind' }, { label: 'Humidity', value: '62%', icon: 'droplets' }, { label: 'UV index', value: '3', icon: 'sun' }, { label: 'Sunset', value: fmtT(18 * 60 + 42, true), icon: 'sunset' }];
-    const hourly = [[11, 'cloud-sun', 64], [12, 'cloud-sun', 66], [13, 'cloud', 67], [14, 'cloud', 68], [15, 'cloud-drizzle', 65], [16, 'cloud-rain', 61], [17, 'cloud-rain', 58], [18, 'cloud', 56]].map(([hr, icon, temp]) => ({ t: h12 ? `${hr % 12 || 12} ${hr < 12 ? 'AM' : 'PM'}` : `${String(hr).padStart(2, '0')}:00`, icon, temp: T(temp) }));
+    const hourly = [[11, 'cloud-sun', 64], [12, 'cloud-sun', 66], [13, 'cloud', 67], [14, 'cloud', 68], [15, 'cloud-drizzle', 65], [16, 'cloud-rain', 61], [17, 'cloud-rain', 58], [18, 'cloud', 56]].map(([hr0, icon, temp]) => { const hr = (hr0 + tzSh / 60 + 24) % 24; return { t: h12 ? `${hr % 12 || 12} ${hr < 12 ? 'AM' : 'PM'}` : `${String(hr).padStart(2, '0')}:00`, icon, temp: T(temp) }; });
     const forecast = [
       { day: 'Today', icon: 'cloud-sun', high: 68, low: 51, precip: 20, active: true }, { day: 'Sat', icon: 'cloud-rain', high: 59, low: 48, precip: 80 },
       { day: 'Sun', icon: 'cloud', high: 61, low: 47, precip: 30 }, { day: 'Mon', icon: 'sun', high: 66, low: 49 },
@@ -1032,8 +1247,41 @@ class Component extends DCLogic {
         done: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null } })), noEnd: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null, endErr: '', err: '', draft: { ...s.sheet.draft, end: null } } })) };
     }
     const tf = { fields: [fieldOf('start'), fieldOf('end')], fs: PHN ? '19px' : '22px' };
+
+    const AMS = S.amb, ambOn = AMS.mode !== 'Off', split = AMS.mode === 'Weekends differ';
+    const rng = (t) => `${spoken(t.s)} – ${spoken(t.e)}`;
+    const ambDefs = split ? [['all', 'Sun – Thu nights'], ['wknd', 'Fri & Sat nights']] : [['all', '']];
+    const setAmb = (g, k, m) => this.setState((s) => ({ amb: { ...s.amb, [g]: { ...s.amb[g], [k]: m } } }));
+    const pos = (m) => ((m - 720 + 1440) % 1440) / 14.4;
+    const ambGroups = ambDefs.map(([g, title]) => {
+      const t = AMS[g], same = t.s === t.e;
+      const fields = ['s', 'e'].map((k) => {
+        const key = g + '.' + k, open = S.ambPick === key, err = k === 'e' && same ? 'Same as dim time' : '', p = parts(t[k]), label = k === 's' ? 'Dims at' : 'Wakes at';
+        return { label, time: p.time, mer: p.mer, dur: k === 'e' && !same ? durTxt((t.e - t.s + 1440) % 1440) : '', open, chev: open ? 'chevron-up' : 'chevron-down', hasErr: !!err, err,
+          border: err ? 'var(--danger)' : open ? 'var(--black)' : 'var(--border-hairline)', ring: open ? '0 0 0 2px ' + (err ? 'var(--danger)' : 'var(--focus-ring)') : 'none',
+          aria: `${title ? title + ', ' : ''}${label} ${spoken(t[k])}. Change`, toggle: () => this.setState({ ambPick: open ? null : key }) };
+      });
+      const pk = S.ambPick && S.ambPick.split('.')[0] === g ? S.ambPick.split('.')[1] : null;
+      let tp = { open: false, hours: [], mins: [], merOpts: ['AM', 'PM'] };
+      if (pk) {
+        const pv = t[pk], H = Math.floor(pv / 60), M = pv % 60, pm = H >= 12, set = (m) => setAmb(g, pk, m);
+        const hours = h12 ? [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => { const hr = (x % 12) + (pm ? 12 : 0); return { label: String(x), aria: x + (pm ? ' PM' : ' AM'), sel: hr === H, ...cell(hr === H), tap: () => set(hr * 60 + M) }; })
+          : Array.from({ length: 24 }, (_, hr) => ({ label: String(hr).padStart(2, '0'), aria: String(hr).padStart(2, '0') + ' hundred', sel: hr === H, ...cell(hr === H), tap: () => set(hr * 60 + M) }));
+        const mins = [0, 15, 30, 45].map((mm) => ({ label: String(mm).padStart(2, '0'), aria: mm + ' minutes', sel: mm === M, ...cell(mm === M), tap: () => set(H * 60 + mm) }));
+        tp = { open: true, h12, mer: pm ? 'PM' : 'AM', merOpts: ['AM', 'PM'], setMer: (x) => set((pv % 720) + (x === 'PM' ? 720 : 0)), hours, mins,
+          cols: PHN ? 'repeat(4,minmax(0,1fr))' : 'repeat(6,minmax(0,1fr))', cellH: PHN ? '48px' : '56px', pad: PHN ? '12px' : '16px',
+          eyebrow: `${pk === 's' ? 'Dims at' : 'Wakes at'} · ${spoken(pv)}`, aria: pk === 's' ? 'Dim time' : 'Wake time', done: () => this.setState({ ambPick: null }) };
+      }
+      const a = pos(t.s), b = pos(t.e);
+      const segs = same ? [] : a < b ? [{ left: a + '%', width: (b - a) + '%' }] : [{ left: a + '%', width: (100 - a) + '%' }, { left: '0%', width: b + '%' }];
+      return { title, hasTitle: !!title, fields, tp, strip: { title: title || 'Every night', range: same ? 'Not set' : rng(t), aria: `${title || 'Every night'}: ambient ${rng(t)}`, segs } };
+    });
+    const ambientHours = !ambOn ? 'Off' : split ? `Sun – Thu ${rng(AMS.all)} · Fri & Sat ${rng(AMS.wknd)}` : rng(AMS.all);
+    const amb = { modes: ['Every night', 'Weekends differ', 'Off'], mode: AMS.mode, setMode: (v) => this.setState((s) => ({ amb: { ...s.amb, mode: v }, ambPick: null })),
+      on: ambOn, isOff: !ambOn, groups: ambGroups, strips: ambGroups.map((g) => g.strip), fs: PHN ? '19px' : '22px',
+      wakeLine: !ambOn ? 'Touch-to-wake and the idle timer work as usual.' : S.idle === 'Never' ? 'After a touch it stays awake until the next ambient start.' : `After a touch it dims again when nobody has touched it for ${S.idle}.` };
     const setK = {}; ['seasonPick', 'clockFmt', 'tempUnit', 'idle', 'noteKeep', 'bgMode', 'dim', 'rotate'].forEach((k) => { setK[k] = (v) => this.setState({ [k]: v }); });
-    const labels = { signin: 'Sign in', today: 'Today', calendar: 'Calendar', weather: 'Weather', notes: 'Notes', photos: 'Photos', settings: 'Settings', background: 'Background', ambient: 'Ambient' };
+    const labels = { location: 'Location', signin: 'Sign in', today: 'Today', calendar: 'Calendar', weather: 'Weather', notes: 'Notes', photos: 'Photos', settings: 'Settings', background: 'Background', ambient: 'Ambient', quiet: 'Ambient screen' };
 
     const ld = S.net === 'loading', off = S.net === 'offline', wxFail = S.net === 'wxerror';
     const kbH = S.kb ? Math.round(Math.min(380, Math.max(260, S.vh * 0.36))) : 0;
@@ -1046,7 +1294,10 @@ class Component extends DCLogic {
       { inset: '0', keys: [K('123', { fn: true, flex: 1.5 }), K('Dictate', { icon: 'mic', fn: true }), K('space', { flex: 7, aria: 'Space' }), K('123', { fn: true, flex: 1.5 }), K('Hide keyboard', { icon: 'keyboard', fn: true, flex: 1.5, tap: hideKb })] },
     ];
     const st = S.signinStep, first = S.userName.trim().split(/\s+/)[0] || 'Maria';
-    const si = { form: st === 'form' || st === 'sending', sending: st === 'sending', notSending: st !== 'sending', sent: st === 'sent', name: st === 'name', phone: st === 'phone', expired: st === 'expired' && !S.linkSide, expiredLink: st === 'expired' && S.linkSide, done: st === 'done',
+    const si = { form: st === 'form' || st === 'sending', sending: st === 'sending', notSending: st !== 'sending', sent: st === 'sent', name: st === 'name', location: st === 'location', phone: st === 'phone', expired: st === 'expired' && !S.linkSide, expiredLink: st === 'expired' && S.linkSide, done: st === 'done',
+      ended: S.ended, notEnded: !S.ended, showDemo: st !== 'sending' && !S.ended, prevEmail: S.endedEmail,
+      endBody: 'Sign in again to keep the calendar, notes and photos up to date.' + (S.pendingN ? ` Changes waiting on this screen: ${S.pendingN}.` + (S.email.trim().toLowerCase() === S.endedEmail ? ' They’ll be sent after you sign in.' : '') : ''),
+      switchWarn: S.ended && S.pendingN > 0 && !!S.email.trim() && S.email.trim().toLowerCase() !== S.endedEmail,
       sendOff: off || st === 'sending', sendLabel: st === 'sending' ? 'Sending…' : 'Send sign-in link', sendIcon: st === 'sending' ? undefined : 'arrow-right', welcome: (S.acctNew ? 'Welcome, ' : 'Welcome back, ') + first };
     const pend = S.uploads.filter((u) => u.st && u.st !== 'done');
     const ERR = { big: ['file-warning', 'Too large · 20 MB max'], type: ['file-x', 'Not a photo'], net: ['cloud-off', 'Didn’t upload'] };
@@ -1062,26 +1313,43 @@ class Component extends DCLogic {
     if (off) up = { show: true, icon: 'wifi-off', text: nPaused ? `Offline · ${nPaused} upload${nPaused > 1 ? 's' : ''} paused until back online` : 'Offline · upload when back online', meta: '', hasMeta: false, bg: 'var(--surface-inverse)', fg: 'var(--text-inverse)', r: '9999px', w: 480 };
     else if (upAct.length) up = { ...soft, show: true, icon: 'upload', text: (upAct.length === 1 ? 'Uploading ' + upAct[0].title : `Uploading ${upAct.length} photos`) + (failTxt ? ' · ' + failTxt : ''), meta: Math.round(upAct.reduce((a, u) => a + u.pct, 0) / upAct.length) + '%', hasMeta: true };
     else if (nFail) up = { ...soft, show: true, icon: 'alert-circle', text: failTxt, meta: '', hasMeta: false };
-    const wxs = { searching: S.wxStep === 'searching', choose: S.wxStep === 'choose', showBtn: S.wxStep !== 'searching' && S.wxStep !== 'choose', q: S.wxQ,
+    const fk = Component.FAILS[S.wxStep];
+    const wxs = { searching: S.wxStep === 'searching', choose: S.wxStep === 'choose', locating: S.wxStep === 'locating', tz: S.wxStep === 'tz', notTz: S.wxStep !== 'tz',
+      showBtn: !['searching', 'choose', 'locating', 'tz'].includes(S.wxStep), canLocate: S.geo !== 'none' && !S.geoOff, q: S.wxQ,
+      fail: !!fk, failIcon: fk ? fk[0] : 'map-pin', failText: fk ? fk[1] : '',
       chooseLabel: S.wxMatches.length ? `${S.wxMatches.length} places called ${S.wxMatches[0][0]}` : '',
-      matches: S.wxMatches.map(([name, region, loc]) => ({ name, region: region + ', United States', pick: () => this.setState({ wxLoc: loc, wxStep: '', wxMatches: [] }) })) };
+      matches: S.wxMatches.map(([name, region, loc]) => ({ name, region: `${region}, United States · ${zn(Component.zoneOf(loc))}`, pick: () => this.commitLoc(loc) })) };
+    const NOW0 = 10 * 60 + 41, toZ = Component.zoneOf(S.wxPending), dMin = (Component.ZONES[toZ] || 0) - tzSh, nH = Math.abs(dMin) / 60;
+    const exEv = S.events.find((e) => e.id === 'e5' && ymOf(e) === OCT && e.day === 9) || S.events.find((e) => ymOf(e) === OCT && e.day === 9 && statusOf(e) === 'upcoming');
+    const tzc = { title: `Switch to ${zn(toZ)}?`, fromZone: zn(zone), toZone: zn(toZ), fromT: fmtT(lt(NOW0), true), toT: fmtT(lt(NOW0, tzSh + dMin), true),
+      body: dMin ? `${S.wxPending} is in ${zn(toZ)}. The clock moves ${nH} hour${nH === 1 ? '' : 's'} ${dMin > 0 ? 'ahead' : 'back'}, and event times change to match on every screen.` : `${S.wxPending} is in ${zn(toZ)}. The time is the same right now, but it can differ later in the year.`,
+      hasEx: !!exEv && !!dMin, example: exEv ? `${exEv.title} at ${fmtT(lt(toMin(exEv.start)), true)} will show at ${fmtT(lt(toMin(exEv.start), tzSh + dMin), true)}.` : '',
+      confirmLabel: `Switch to ${zn(toZ)}`, keepLabel: `Keep ${zn(zone || 'Pacific')}` };
+    const locInfo = { icon: S.wxLoc ? 'map-pin' : 'map-pin-off', title: S.wxLoc || 'Not set', summary: S.wxLoc ? `${S.wxLoc} · ${zn(zone)}` : 'Not set',
+      sub: S.wxLoc ? `${zn(zone)} · ${fmtT(lt(NOW0), true)}` : 'Times follow this device’s own clock', changeLabel: S.wxLoc ? 'Change location' : 'Set location',
+      zoneLine: S.wxLoc ? `${zn(zone)} for the clock, Today, the calendar and event times` : 'The clock, Today, the calendar and event times',
+      caption: S.wxLoc ? `The clock and event times follow ${zn(zone)}, even if this device is set to a different time.` : 'Until a location is set, times follow this device’s own clock.' };
     const out = {
-      si, wxs, pending, up, upTile: { dis: off, icon: off ? 'wifi-off' : 'upload', label: off ? 'Upload when online' : 'Upload photo' },
+      si, wxs, tzc, locInfo, pending, up, clockTime: isoT(lt(10 * 60 + 41)), clockTimeAmb: isoT(lt(19 * 60 + 12)),
+      locate: () => this.locate(),
+      skipLoc: () => { this.wxTok = (this.wxTok || 0) + 1; this.setState({ wxStep: '', wxErr: '', wxMatches: [] }); this.finishSignIn(); },
+      confirmTz: () => { this.setState({ wxLoc: S.wxPending }); this.go('settings'); },
+      keepTz: () => this.setState({ wxStep: '', wxPending: '' }), upTile: { dis: off, icon: off ? 'wifi-off' : 'upload', label: off ? 'Upload when online' : 'Upload photo' },
       userName: S.userName, userInitial: (S.userName.trim()[0] || 'M').toUpperCase(),
       nameDraft: S.nameDraft, nameErr: S.nameErr || undefined,
       setNameDraft: (v) => this.setState({ nameDraft: v, nameErr: '' }),
-      submitName: () => { const n = S.nameDraft.trim(); if (!n) return this.setState({ nameErr: 'Add your name' }); this.setState({ userName: n, acctNew: true }); this.finishSignIn(); },
+      submitName: () => { const n = S.nameDraft.trim(); if (!n) return this.setState({ nameErr: 'Add your name' }); this.setState({ userName: n, acctNew: true, signinStep: 'location', wxLoc: '', wxDraft: '', wxErr: '', wxStep: '', wxMatches: [] }); },
       openedLink: () => { if (S.email.trim().toLowerCase() === 'maria@example.com') { this.setState({ acctNew: false, userName: 'Maria' }); this.finishSignIn(); } else this.setState({ signinStep: 'name', nameDraft: '', nameErr: '' }); },
       phoneDone: () => { this.setState({ acctNew: true }); this.finishSignIn(); },
       resend: () => this.sendLink(),
       ld, off, online: !off, wxFail, retry: () => this.setState({ net: 'online' }),
-      savedAt, rainTitle: `Rain moving in after ${h12 ? '4 PM' : '16:00'}`, ambientHours: h12 ? '6:00 PM – 7:30 AM' : '18:00 – 07:30',
+      savedAt, rainTitle: `Rain moving in after ${h12 ? '4 PM' : '16:00'}`, ambientHours, amb,
       offPill: off && view !== 'signin' && view !== 'ambient', showSavedAt: bp !== 'narrow' && bp !== 'phone' && view !== 'weather',
       ldRows: [{ w: '62%' }, { w: '48%' }, { w: '70%' }, { w: '40%' }, { w: '56%' }],
       kb: S.kb, kbPad: kbH + 'px', kbRows,
       season, seasonIcon: SI[0], seasonLabel: SI[1] + ' · October', screenLabel: labels[view] + ' · ' + bp,
       hour12: S.clockFmt === '12-hour',
-      is: { signin: view === 'signin', ambient: view === 'ambient', app: view !== 'signin' && view !== 'ambient',
+      is: { quiet: view === 'quiet', location: view === 'location', signin: view === 'signin', ambient: view === 'ambient', app: view !== 'signin' && view !== 'ambient',
         today: view === 'today', calendar: view === 'calendar', weather: view === 'weather', notes: view === 'notes', photos: view === 'photos', settings: view === 'settings', background: view === 'background' },
       L: this.fitLayout(view, bp), go, bar, barH: 72,
       email: S.email, emailErr: S.emailErr || undefined, emailShown: S.email || 'maria@example.com',
@@ -1090,7 +1358,8 @@ class Component extends DCLogic {
       backToForm: () => this.setState({ signinStep: 'form', linkSide: false }),
       demoSignIn: () => { this.setState({ signinStep: 'form' }); this.go('today'); },
       signOut: () => { this.setState({ signinStep: 'form', email: '' }); this.go('signin'); },
-      wake: () => this.go('today'),
+      wake: () => this.go(S.ended ? 'signin' : 'today'),
+      usePrevEmail: () => this.setState({ email: S.endedEmail, emailErr: '' }),
       heroBlock: { style: { display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32, minHeight: bp === 'narrow' || bp === 'phone' ? 'auto' : '100%' } },
       heroToday: { style: { gridArea: 'hero', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32, minWidth: 0 } },
       wxToday: { tone: 3, style: { gridArea: 'wx', padding: 'clamp(24px,2.4vw,32px)', minWidth: 0 } },
@@ -1098,7 +1367,7 @@ class Component extends DCLogic {
       colGap24: { style: { display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 } },
       forecastGrid: { style: { display: 'grid', gridTemplateColumns: bp === 'phone' ? 'repeat(7, 64px)' : 'repeat(7, minmax(0,1fr))', gap: 4, height: '100%', overflowX: 'auto' } },
       pillBottom: bp === 'phone' ? '84px' : '12px',
-      nowEvent: { none: !heroEv, has: !!heroEv, eyebrow: nowEv ? 'Happening now' : 'Up next', title: heroEv ? heroEv.title : '', meta: nowEv ? (nowEv.end != null ? `${nowEv.location} · until ${fmtT(toMin(nowEv.end))}` : `${nowEv.location} · started ${fmtT(toMin(nowEv.start), true)}`) : nextEv ? `${nextEv.location} · ${fmtT(toMin(nextEv.start), true)}` : '', open: () => heroEv && this.openEvent(heroEv), noneTitle: todayEvents.length ? 'Nothing else today' : 'Nothing scheduled', noneBody: todayEvents.length ? 'Today’s events have ended.' : 'Events show here while they happen.' },
+      nowEvent: { none: !heroEv, has: !!heroEv, eyebrow: nowEv ? 'Happening now' : 'Up next', title: heroEv ? heroEv.title : '', meta: nowEv ? (nowEv.end != null ? `${nowEv.location} · until ${fmtT(lt(toMin(nowEv.end)))}` : `${nowEv.location} · started ${fmtT(lt(toMin(nowEv.start)), true)}`) : nextEv ? `${nextEv.location} · ${fmtT(lt(toMin(nextEv.start)), true)}` : '', open: () => heroEv && this.openEvent(heroEv), noneTitle: todayEvents.length ? 'Nothing else today' : 'Nothing scheduled', noneBody: todayEvents.length ? 'Today’s events have ended.' : 'Events show here while they happen.' },
       todayEvents, todayLabel: todayEvents.length ? `Today · ${todayEvents.length} events` : 'Today · No events',
       todayHas: todayEvents.length > 0, todayNone: todayEvents.length === 0, hasEvents: S.events.length > 0,
       calFirst: S.events.length === 0, dayEmptyNormal: dayEvents.length === 0 && S.events.length > 0,
@@ -1117,7 +1386,7 @@ class Component extends DCLogic {
       saveWx: () => this.findWx(),
       wxSetupBlock: { style: { width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 28, boxSizing: 'border-box' } },
       wxEmptyToday: { style: { gridArea: 'wx', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24 } },
-      ambientNext: (() => { const key = (e) => ymOf(e) * 100 + e.day; const nx = S.events.filter((e) => key(e) > OCT * 100 + 9).sort((a, b) => key(a) - key(b) || toMin(a.start) - toMin(b.start))[0]; if (!nx) return 'Nothing scheduled'; const ny = ymOf(nx); const dn = key(nx) === OCT * 100 + 10 ? 'Tomorrow' : `${DOW[new Date(Math.floor(ny / 12), ny % 12, nx.day).getDay()].slice(0, 3)}, ${MONTHS[ny % 12].slice(0, 3)} ${nx.day}`; return `${dn} · ${fmtT(toMin(nx.start), true)} · ${nx.title}, ${nx.location}`; })(),
+      ambientNext: (() => { const key = (e) => ymOf(e) * 100 + e.day; const nx = S.events.filter((e) => key(e) > OCT * 100 + 9).sort((a, b) => key(a) - key(b) || toMin(a.start) - toMin(b.start))[0]; if (!nx) return 'Nothing scheduled'; const ny = ymOf(nx); const dn = key(nx) === OCT * 100 + 10 ? 'Tomorrow' : `${DOW[new Date(Math.floor(ny / 12), ny % 12, nx.day).getDay()].slice(0, 3)}, ${MONTHS[ny % 12].slice(0, 3)} ${nx.day}`; return `${dn} · ${fmtT(lt(toMin(nx.start)), true)} · ${nx.title}, ${nx.location}`; })(),
       addEventToday: () => this.setState({ selDay: 9, calYM: OCT }, () => this.openEvent(null)),
       addEvent: () => this.openEvent(null),
       selDay: S.selDay, marked, selectDay: (d) => this.setState({ selDay: d }),
@@ -1157,7 +1426,8 @@ class Component extends DCLogic {
         offBody: sh && sh.kind === 'note' ? 'The note saves on this screen and posts when the connection is back.' : 'Changes save on this screen and sync when the connection is back.',
       },
       draft: sh ? sh.draft : {}, edit, swatches, tf, tp,
-      closeSheet: () => this.setState({ sheet: null }), saveSheet: () => this.save(),
+      closeSheet: () => { this.setState({ sheet: null }); if (S.ended) this.endNow(); },
+      saveSheet: () => { this.save(); if (S.ended) this.later(0, () => { if (!this.state.sheet) this.endNow(1); }); },
       askDelete: () => this.setState((s) => ({ sheet: { ...s.sheet, confirm: true } })), doDelete: () => this.del(),
     };
     if (ld) Object.assign(out, { nowEvent: { ...out.nowEvent, has: false, none: false }, todayEvents: [], todayHas: false, todayNone: false, todayLabel: 'Today · Loading', hasPhotos: false, noPhotos: false, wxSet: false, wxNone: false, notesNone: false, notesTwo: [], notesLabel: 'Notes' });

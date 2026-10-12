@@ -37,7 +37,24 @@
 class Component extends DCLogic {
   renderVals() {
     const sizes = [['Large display · 1920×1080', 1920, 1080], ['Desktop · 1440×900', 1440, 900], ['Laptop · Android tablet · 1280×800', 1280, 800], ['iPad landscape · 1180×820', 1180, 820], ['iPad portrait · 820×1180', 820, 1180], ['Phone · 390×844', 390, 844]];
-    const screens = [['A', 'Settings', 'view=settings'], ['B', 'Background picker (photo)', 'view=background&bg=photo']];
+    const screens = [['A', 'Settings · Location row first', 'view=settings'], ['B', 'Background picker (photo)', 'view=background&bg=photo'],
+      ['C', 'Location page · Fall', 'view=settings&sub=location'],
+      ['D', 'Location page · Spring', 'view=settings&sub=location&season=spring'],
+      ['E', 'Location page · Summer', 'view=settings&sub=location&season=summer'],
+      ['F', 'Location page · Winter', 'view=settings&sub=location&season=winter'],
+      ['G', 'Location page · not set', 'view=settings&sub=location&empty=1'],
+      ['H', 'Location page · searching', 'view=settings&sub=location&wx=searching'],
+      ['I', 'Location page · several matches (with time zone)', 'view=settings&sub=location&wx=choose'],
+      ['J', 'Location page · locating', 'view=settings&sub=location&wx=locating'],
+      ['K', 'Location page · location is off', 'view=settings&sub=location&wx=denied'],
+      ['L', 'Location page · outside the US', 'view=settings&sub=location&wx=outside'],
+      ['M', 'Location page · new time zone, confirm', 'view=settings&sub=location&wx=tz'],
+      ['N', 'Ambient screen · every night', 'sub=ambient'],
+      ['O', 'Ambient screen · picking the dim time', 'sub=ambient&pick=all.s'],
+      ['P', 'Ambient screen · weekends differ', 'sub=ambient&amb=split&pick=wknd.e'],
+      ['Q', 'Ambient screen · same start and end', 'sub=ambient&amb=same'],
+      ['R', 'Ambient screen · off', 'sub=ambient&amb=off'],
+    ];
     return {
       screens: screens.map(([id, name, q]) => ({
         id, name,

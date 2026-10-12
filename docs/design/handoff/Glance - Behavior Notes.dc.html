@@ -44,7 +44,7 @@
 <li><strong>Mock</strong>: date and time are fixed to Fri Oct 9, 2026, 10:41 AM. Production: clock ticks every second; event status recomputes every minute.</li>
 <li>Season “Auto” maps month → season (Mar–May Spring, Jun–Aug Summer, Sep–Nov Fall, Dec–Feb Winter) and re-checks at midnight.</li>
 <li><strong>Mock</strong>: nothing persists on reload. Production: settings, notes, events, photos and background save to the one family account (one email) and sync to every screen signed in with it.</li>
-<li>Frames are opened via URL: <code>view=</code>, <code>bg=photo</code>, <code>sheet=event|newevent|note|newnote</code>, <code>time=…</code>, <code>clock=24</code>, <code>season=</code>, <code>empty=1</code>, <code>net=loading|offline|wxerror</code>, <code>kb=1</code>, <code>signin=…</code>, <code>upload=…</code>, <code>wx=…</code> (see each section).</li>
+<li>Frames are opened via URL: <code>view=</code>, <code>bg=photo</code>, <code>sheet=event|newevent|note|newnote</code>, <code>time=…</code>, <code>clock=24</code>, <code>season=</code>, <code>empty=1</code>, <code>net=loading|offline|wxerror</code>, <code>kb=1</code>, <code>signin=…</code>, <code>upload=…</code>, <code>wx=…</code>, <code>sub=location</code>, <code>geo=…</code> (see each section).</li>
 </ul></div>
 </div>
 </section>
@@ -57,10 +57,11 @@
 <li>Same form for new and returning families. Eyebrow “One account per family”, title “Sign in or get started”, body “Enter your email. We’ll send a link that signs this screen in. New here? The same link sets up your family’s Glance.”</li>
 <li>Hero: “Calendar, weather, notes and photos for your family. Sign in to manage them.”</li>
 <li>Email must match name@domain.tld, else “Enter a valid email address” (clears on the next keystroke). The lock footer (“Only your family can see its calendar, notes and photos.”) stays in every form state.</li>
-<li>“Continue as demo” skips sign-in and opens Today (prototype only).</li>
+<li>“Continue as guests” skips sign-in and opens Today (prototype only). Hidden on the signed-out form (9).</li>
+<li>Signed-out variant: when the server stops accepting this screen’s sign-in, the same form shows with a banner, the title “Sign in again” and the email prefilled. See 9. Board frames S–X.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">2 · Sending</span><ul>
-<li>Trigger: “Send sign-in link” with a valid email. Button reads “Sending…” and is disabled; the email can’t be edited; a soft tile reads “Sending a link to {email}” with a slow-pulsing mail icon. “Continue as demo” hides.</li>
+<li>Trigger: “Send sign-in link” with a valid email. Button reads “Sending…” and is disabled; the email can’t be edited; a soft tile reads “Sending a link to {email}” with a slow-pulsing mail icon. “Continue as guests” hides.</li>
 <li>Clears when the server accepts the request → Check your email. <strong>Mock</strong>: 1.4 s.</li>
 <li>Request fails (online): back to the form with the email kept; field error “Couldn’t send. Try again.” Not drawn.</li>
 </ul></div>
@@ -72,9 +73,18 @@
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">4 · First sign-in · What’s your name?</span><ul>
 <li>Shown only when a new email opens its link, on the device that opened it, before Today. Returning sign-ins skip it.</li>
 <li>Eyebrow “New family account”, title “What’s your name?”, body “This is the first sign-in for {email}. Your name shows in Settings.” One field “Your name” (placeholder “First name is fine”), primary “Continue”.</li>
-<li>Required: empty → “Add your name” (clears on the next keystroke). Name is trimmed.</li>
+<li>Required: empty → “Add your name” (clears on the next keystroke). Name is trimmed. “Continue” → Where is this screen? (new accounts only).</li>
 <li>With the keyboard open, the page pads by the keyboard height and scrolls the field to 24 px below the top of the scroll area (same rule as other full-page forms).</li>
-<li>If the link opened on a phone, the waiting screen shows “Finish on your phone” · “The link opened on another device. Add your name there and this screen signs in by itself.” with a “Waiting for your name” tile. It signs in by itself when the name is saved. <strong>Mock</strong>: “I finished on my phone”.</li>
+<li>If the link opened on a phone, the name and location steps run on the phone (its location is usually home; it can still type a city). The waiting screen shows “Finish on your phone” · “The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself.” with a “Waiting for your phone” tile. It signs in by itself when the name is saved. <strong>Mock</strong>: “I finished on my phone”.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">4b · First sign-in · Where is this screen?</span><ul>
+<li>After the name step, new accounts only, on the device that opened the link. Same hero, full-page form and keyboard rule as the name step.</li>
+<li>Eyebrow “New family account”, title “Where is this screen?”, body “The weather and the clock’s time zone follow this place. You can change it later in Settings.”</li>
+<li>City or ZIP field, primary “Continue”, secondary “Use my location”; below a hairline, ghost “Skip for now”. Searching, several matches, locating and every failure behave as in Location and time zone.</li>
+<li>A found place (single match, picked match, or located) saves → Signed in. No time zone confirm here: the first place always sets the zone.</li>
+<li>Skip for now → Signed in. Cancels any search or locating. Weather then shows the usual setup card; Settings › Location reads “Not set”.</li>
+<li>Saving fails → stays on the step, the place kept in the field, field error “Couldn’t save. Try again.” Continue retries.</li>
+<li>URL: <code>signin=location</code> with <code>wx=locating|choose|denied|savefail</code>, <code>kb=1</code>.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">5 · Expired or used link</span><ul>
 <li>Waiting screen: after 10 minutes with no open → “This link has expired” · “Sign-in links work for 10 minutes. Send a new one to {email}.” Actions: “Send a new link”, “Use a different email”.</li>
@@ -95,8 +105,20 @@
 <li>“Sign out” signs out this screen only; other screens with the same email stay signed in. Caption “Signs out this screen only.” No confirm step. Returns to the email form, empty.</li>
 <li>Out of scope: changing name or email, deleting the account, more than one email per account.</li>
 </ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">9 · Signed out by the server</span><ul>
+<li>Trigger: the screen is online and the server no longer accepts its sign-in (for example, the family’s account was reset). Rare: sign-ins don’t expire in v1, and Sign out on another screen signs out only that screen. Never while offline; an offline screen keeps working from saved data and checks again on reconnect. No reason is shown.</li>
+<li>Shows the normal email form (same hero, lock footer, no nav bar) with a soft banner on top: “This screen was signed out” · “Sign in again to keep the calendar, notes and photos up to date.” Title “Sign in again”, body “Check your family’s email below. We’ll send a link that signs this screen back in.” “Continue as guests” is hidden.</li>
+<li>Email is prefilled with the account’s last email and stays editable. Send sign-in link → Sending → Check your email → Signed in work as usual.</li>
+<li>Waiting changes (events or notes saved but not synced, shown as “Waiting to post”): the banner adds “Changes waiting on this screen: {n}. They’ll be sent after you sign in.” Same wording for 1 and for n. They stay on this screen until sign-in finishes.</li>
+<li>Different email: inline, no confirm step. When the field holds a different address and changes are waiting, a soft tile under the field reads “Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in.” with ghost “Use {previous email}” (restores the email). The banner drops “They’ll be sent…”. Sending stays allowed; nothing is removed until the other email actually signs in, so going back is always possible before that.</li>
+<li>Timing: never interrupts an edit. If an event or note sheet is open or a field is focused, the current view stays as it is. Save or Post keeps the change on this screen as “Waiting to post” and adds it to the count; Cancel discards as usual. The form shows as soon as the sheet closes, or at the normal idle timeout (which pauses while a field is focused, and discards open sheets as it does today).</li>
+<li>Ambient (quiet hours): Ambient stays, with “Signed out · tap to sign in” in the top row (same style as the offline message). The clock and saved weather keep showing. The next wake tap opens the form instead of Today.</li>
+<li>Signed in again: the normal “Welcome back, {first name}” confirmation, then Today. Same email: waiting changes sync as usual, no extra screen. Different email: waiting changes are removed from this screen when its sign-in finishes; a new email goes through the name and location steps.</li>
+<li>Clears only when a sign-in finishes (any email). Reload, Use a different email and an expired link keep the screen signed out and the notice on the form.</li>
+<li>URL: <code>signin=ended</code>, <code>&amp;pending=3</code>, <code>&amp;switch=1</code> (different email entered), <code>&amp;sheet=newnote</code> (sheet open when it happens), <code>view=ambient&amp;signin=ended</code>.</li>
+</ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">URL</span><ul>
-<li><code>signin=form|sending|sent|name|phone|expired|offline|done</code>. <code>on=link</code> with <code>expired</code> = device that opened the link. <code>acct=returning</code> with <code>done</code> = “Welcome back”. <code>kb=1</code> adds the keyboard.</li>
+<li><code>signin=form|sending|sent|name|location|phone|expired|offline|done|ended</code>. <code>on=link</code> with <code>expired</code> = device that opened the link. <code>acct=returning</code> with <code>done</code> = “Welcome back”. <code>kb=1</code> adds the keyboard.</li>
 <li>URL states are snapshots: timers only run after a tap.</li>
 </ul></div>
 </div>
@@ -116,7 +138,7 @@
 <li>Rows: past (struck through, grey dot), now (season fill, NOW pill), upcoming.</li>
 <li>Eyebrow: “Today · {n} events” or “Today · No events”.</li>
 <li>Picture of the day only when photos exist; otherwise an Upload prompt.</li>
-<li>Weather with no location → “Weather needs a location” → Set location.</li>
+<li>Weather with no location → “Weather needs a location” · “Set the city once. The forecast and the clock follow it.” → Set location opens the Weather setup card (decided: stays on Weather, not Settings › Location; it’s the zone being fixed, and the card has the same search and Use my location).</li>
 <li>On photo background: picture of the day is dropped. Schedule and notes always sit on white panels, so they read on either background.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Not visible</span><ul>
@@ -165,7 +187,7 @@
 <li>Empty day: “Nothing scheduled. A free day.” Empty calendar: “The calendar is empty”.</li>
 <li>Events on other days always render as upcoming.</li>
 <li>Chevrons step one month (the year rolls over and is shown outside 2026). The selected day becomes the 1st, or today in the current month. The today ring and dots show only in their month.</li>
-<li>Recurring, all-day and multi-day events, time zones and calendar-source sync (Google/Outlook) are not designed. <strong>Mock</strong>: “now” is fixed at 10:41 AM for defaults; production uses the device clock. Production needs real timestamps.</li>
+<li>Event times show in the location’s time zone (see Location and time zone). Recurring, all-day and multi-day events and calendar-source sync (Google/Outlook) are not designed. <strong>Mock</strong>: “now” is fixed at 10:41 AM for defaults; production uses the device clock. Production needs real timestamps.</li>
 </ul></div>
 </div>
 </section>
@@ -179,17 +201,62 @@
 <li>Precip % appears only on days that have it.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul>
-<li>No location → setup “Where is this screen?” with city/ZIP input.</li>
+<li>No location → setup “Where is this screen?” · “The forecast and the clock’s time zone follow this place. You can change it later in Settings.” City/ZIP input, primary “Show weather”, secondary “Use my location” (see Location and time zone).</li>
 <li>Empty input → “Enter a city or ZIP code”. Valid → forecast shows on Weather, Today and Ambient.</li>
 <li><strong>Searching</strong>: after “Show weather”, the button is replaced by “Looking for {query}…” with a slow-pulsing search icon. Typing cancels the search. <strong>Mock</strong>: 1.2 s.</li>
 <li><strong>Unknown place</strong>: error on the input “We couldn’t find that place. Try a city and state, like Austin, TX”. Clears on the next keystroke.</li>
 <li><strong>Several matches</strong> (e.g. “Portland”): eyebrow “2 places called Portland”, one 64 px row per match (city · state, United States). Tap a row to set the location; there is no extra confirm. Typing clears the list and brings back “Show weather”.</li>
-<li>URL: <code>wx=searching|unknown|choose</code>.</li>
+<li>Match rows add the place’s time zone: “Maine, United States · Eastern time”.</li>
+<li>URL: <code>wx=searching|unknown|choose|locating|denied|unavailable|outside|lookup</code>.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Not visible</span><ul>
 <li>Refresh interval is not designed. Loading, failure and stale data are in Loading, offline and keyboard.</li>
-<li>Changing the location later has no entry point in Settings yet.</li>
 <li>Alert banner trigger rules and forecast-day detail are not defined.</li>
+</ul></div>
+</div>
+</section>
+
+<section id="location" style="display:flex;flex-direction:column;gap:14px;padding:28px 32px;background:#fff;border-radius:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 24px/1.2 var(--font-sans)">Location and time zone</h2><span style="display:flex;gap:16px;flex-wrap:wrap"><a href="Glance%20Frames%20-%20Weather.dc.html#E" style="font:500 13px ui-monospace,Menlo,monospace">Weather board →</a><a href="Glance%20Frames%20-%20Settings.dc.html#C" style="font:500 13px ui-monospace,Menlo,monospace">Settings board →</a><a href="Glance%20Frames%20-%20Account.dc.html#M" style="font:500 13px ui-monospace,Menlo,monospace">Account board →</a></span></div>
+<p style="margin:0;max-width:820px;text-wrap:pretty">One place per account sets the <strong>weather</strong> and the <strong>time zone</strong>. The clock, Today, the calendar, event times, hourly forecast and ambient screen all follow the place’s time zone, even when the device’s own clock is set to another one (for example a wall screen left on UTC). US places only. The same setup card appears in three spots: Weather setup, Settings › Location and first sign-in.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Setup card</span><ul>
+<li>Field “City or ZIP code”, then one row: the primary (“Show weather” on Weather, “Search” in Settings, “Continue” at sign-in) and secondary “Use my location” (locate icon).</li>
+<li>Use my location shows only when the device can locate itself: the browser offers location and its permission isn’t already blocked. Otherwise the card is exactly as before.</li>
+<li>Typed search: Searching, Unknown place and Several matches as in Weather. A single match saves at once.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Locating · timing rule</span><ul>
+<li>Tap → the button row is replaced at once by “Finding where this screen is…” · “If the browser asks, choose Allow.” with a slow-pulsing locate icon.</li>
+<li>The browser’s permission question is not timed: we wait while it’s open. Once allowed, the position has 10 s (low accuracy; a reading up to 10 min old is fine). The place lookup then has 5 s. Past either limit → the matching failure.</li>
+<li>The field stays editable. Typing cancels locating (the late result is dropped) and brings the buttons back. Leaving the page or Skip for now also cancels.</li>
+<li>Found → saved at once, same as a single search match: the forecast loads on Weather; Settings returns to Settings (or shows the time zone confirm); sign-in goes to Signed in. <strong>Mock</strong>: 2.6 s, always Portland, OR; <code>geo=denied|unavailable|outside|lookup|none</code> makes the tap fail or hides the button.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Failures</span><ul>
+<li>Each returns to the card with the draft kept, as a soft row under the field (not a red field error, since the field wasn’t at fault). It clears on the next keystroke.</li>
+<li><strong>Permission denied</strong> (map-pin-off): “Location is off for this screen. Type a city or ZIP instead.” Use my location hides from then on, since the browser won’t ask again.</li>
+<li><strong>Position unavailable or timed out</strong> (locate-off): “Couldn’t find where this screen is. Try again, or type a city or ZIP.”</li>
+<li><strong>Outside the US</strong> (globe): “This screen seems to be outside the US. Glance works for US places only. Type a US city or ZIP.”</li>
+<li><strong>Lookup failed</strong> (search-x): “Couldn’t look up this place. Try again, or type a city or ZIP.”</li>
+<li>“Try again” = tap Use my location again. Only the card changes; the rest of the screen and the saved location stay as they were.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Settings › Location</span><ul>
+<li>Row: first in the Settings panel. “Location” · “Sets the weather and the time zone” · summary “Portland, OR · Pacific time” or “Not set”.</li>
+<li>Page (like Background: “Settings” back button, white panel): “Now set to” tile with the place and “Pacific time · 10:41 AM” (or “Not set” · “Times follow this device’s own clock”), then “Change location” with the setup card. Right column: what the location sets (Weather, Time zone) and “The clock and event times follow Pacific time, even if this device is set to a different time.”</li>
+<li>Same time zone → saves at once and returns to Settings; the row summary updates.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">New time zone · confirm</span><ul>
+<li>Decided: confirm, but only when the new place is in a different time zone. Reasons: it moves the clock and every event on every screen of the account, and the likeliest cause is a wrong pick from “2 places called Portland” (Oregon vs Maine = 3 hours).</li>
+<li>The card is replaced in place by a highlight block: “Time zone change” · “Switch to Eastern time?” · “Portland, ME is in Eastern time. The clock moves 3 hours ahead, and event times change to match on every screen.” Two tiles: “Now · Pacific time 10:41 AM” and “After · Eastern time 1:41 PM”, plus one example: “Soccer practice at 3:30 PM will show at 6:30 PM.”</li>
+<li>Primary “Switch to Eastern time” saves and returns to Settings; the clock jumps right away (no animation). Secondary “Keep Pacific time” goes back to the card with the draft kept.</li>
+<li>Zones that match today but split later in the year (Arizona vs Pacific in October): same confirm, body “The time is the same right now, but it can differ later in the year.”</li>
+<li>Not asked on first set (Weather setup, sign-in): the first place always sets the zone, even if the clock jumps from the device’s zone.</li>
+<li>Events are saved as moments in time, so they keep their moment and show at the new local time.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Naming the time zone</span><ul>
+<li>Always “{Name} time”, the way families say it: Eastern time, Central time, Mountain time, Arizona time (most of Arizona, no clock change), Pacific time, Alaska time, Hawaii time. Territories: Atlantic time (Puerto Rico, US Virgin Islands), Chamorro time (Guam, Northern Mariana Islands), Samoa time.</li>
+<li>No abbreviations (PT, PDT), no offsets, no “standard” or “daylight”, no technical zone IDs. The name doesn’t change twice a year.</li>
+<li>Where it shows: the Settings row summary, the Location page, the confirm, and match rows (“Oregon, United States · Pacific time”). Nowhere else; the clock itself carries no zone label.</li>
+<li>Until a place is set, times follow the device’s clock.</li>
 </ul></div>
 </div>
 </section>
@@ -247,10 +314,11 @@
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 24px/1.2 var(--font-sans)">Settings and background</h2><a href="Glance%20Frames%20-%20Settings.dc.html" style="font:500 13px ui-monospace,Menlo,monospace">Open board →</a></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Settings (apply instantly, no Save)</span><ul>
+<li>Location (first row): “Sets the weather and the time zone”, summary “Portland, OR · Pacific time” or “Not set” → Location page. First because it changes the clock and every time on the screen.</li>
 <li>Season: Auto · Spring · Summer · Fall · Winter. Subtitle reads “Follows the month · now Fall” or “Fixed to {season}”. Every color block cross-fades.</li>
 <li>Clock: 12-hour · 24-hour. Changes every displayed time: clock, event rows, hero, forecast hours, sunset, ambient schedule, sync time. 12-hour event rows omit AM/PM.</li>
 <li>Temperature: Fahrenheit · Celsius.</li>
-<li>Ambient schedule 6:00 PM – 7:30 AM; Preview opens Ambient.</li>
+<li>Schedule › Ambient screen: tile shows the hours (“6:00 PM – 7:30 AM”, “Sun – Thu 6:00 PM – 7:30 AM · Fri &amp; Sat 9:00 PM – 9:00 AM” or “Off”) → Ambient screen page.</li>
 <li>Back to Today after: 1 · 3 · 5 min · Never.</li>
 <li>Remove notes after: 1 day · 1 week · Never (also changes the Notes caption).</li>
 </ul></div>
@@ -261,10 +329,20 @@
 <li>Change photo (Slideshow only): Hourly · Daily · Weekly.</li>
 <li>Caption and preview update with every choice.</li>
 </ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Ambient screen page</span><ul>
+<li>Same shell as Location and Background: “Settings” back button, white panel, soft block on the right. Settings stays active in the bar. URL <code>sub=ambient</code>.</li>
+<li>Schedule: Every night · Weekends differ · Off. Default Every night 6:00 PM – 7:30 AM. Weekends differ splits into “Sun – Thu nights” and “Fri &amp; Sat nights” (default 9:00 PM – 9:00 AM); a night belongs to the day it starts. Switching modes keeps both sets of times.</li>
+<li>Each set: two fields, “Dims at” and “Wakes at”. Wakes at shows the length (“13 hr 30 min”); a wake time earlier than the dim time means the next morning.</li>
+<li>Tapping a field opens the time picker under its set (same as the event sheet): AM/PM, hour cells, minutes 00 · 15 · 30 · 45, “Done”. One picker open at a time; tapping the open field closes it. 24-hour clock shows 24 hour cells, no AM/PM.</li>
+<li>Same dim and wake time: Wakes at gets the error “Same as dim time” and the bar for that set reads “Not set”. Ambient doesn’t run for that set until fixed.</li>
+<li>Off: times are hidden, tile “The screen stays bright all day and night.”</li>
+<li>Right block “Over 24 hours”: one bar per set, noon to noon, dark fill = ambient. Line under it follows Back to Today after: “After a touch it dims again when nobody has touched it for {n} min.” (Never → “stays awake until the next ambient start”). Preview opens Ambient.</li>
+<li>Changes apply instantly, like the other settings. URL: <code>amb=split|off|same</code>, <code>pick=all.s|all.e|wknd.s|wknd.e</code>.</li>
+</ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Not visible</span><ul>
 <li>Idle timeout: after no touch for the chosen time, any view returns to Today and open sheets are discarded.</li>
 <li>Slideshow rotation runs on the chosen interval with a 600 ms cross-fade.</li>
-<li><strong>Mock</strong>: ambient hours aren’t editable. The Upload photo tile opens the same file picker as Photos.</li>
+<li><strong>Mock</strong>: ambient hours don’t switch the screen into Ambient on their own. The Upload photo tile opens the same file picker as Photos.</li>
 <li>Settings belong to the family account (decided): every screen signed in with the same email shows the same settings.</li>
 </ul></div>
 </div>
@@ -275,15 +353,16 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Behavior</span><ul>
 <li>Full-screen clock, season, current weather, next event. No bar.</li>
-<li>Click or tap anywhere → Today.</li>
+<li>Click or tap anywhere → Today. If the screen was signed out by the server: → the signed-out email form instead (Sign in and account, 9).</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul>
 <li>Season deep color, or photo with dim of at least 0.5.</li>
 <li>Next event: “Tomorrow” or “{Wkd}, Oct {d}” · start time · title, place. None upcoming → “Nothing scheduled”.</li>
 <li>Offline: “Offline · showing saved data” in the top row.</li>
+<li>Signed out by the server: Ambient stays; “Signed out · tap to sign in” in the top row, same style. Clock and saved weather keep showing.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Not visible</span><ul>
-<li>Enters automatically at the schedule start, leaves at its end. After a wake tap during hours, it returns after the idle timeout.</li>
+<li>Enters automatically at the dim time set in Settings › Ambient screen (Sun – Thu or Fri &amp; Sat set when weekends differ), leaves at the wake time. Never when the schedule is Off. After a wake tap during hours, it returns after the idle timeout.</li>
 <li>Burn-in protection (slow content drift) and screen dimming are recommended, not designed.</li>
 </ul></div>
 </div>
@@ -294,6 +373,7 @@
 <ul>
 <li>Empty states are per zone, not per app: each clears independently once its data exists (first event, first note, first photo, location set).</li>
 <li>Every empty state has one action. It opens the matching sheet, or goes to the screen that holds the setup (Set location → Weather, Upload → Photos).</li>
+<li>New accounts are asked for the location once, at sign-in (“Where is this screen?”, skippable). Skipping leaves Weather’s setup card in place.</li>
 <li>Not designed: a guided setup that chains location → first event → photos. A new screen joins the family by signing in with the account email.</li>
 </ul>
 </section>
@@ -318,11 +398,12 @@
 <li>Weather older than 1 hour shows “Forecast from {time}” banner.</li>
 <li>Edits queue locally: sheet shows an offline banner, save reads “Save for later”, new notes show “Waiting to post” until synced.</li>
 <li>Ambient: same message in the top row, white mono text.</li>
+<li>A screen is never signed out by the server while offline. Queued edits stay queued; if the server rejects the sign-in on reconnect, see Sign in and account, 9.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">On-screen keyboard</span><ul>
 <li>The keyboard is the OS one (drawn as a mock). It opens when a field is focused and covers ~36% of the height (260–380 px).</li>
 <li>The sheet’s area shrinks to the space above the keyboard (280 ms); the sheet re-centers there and scrolls inside. The action row is sticky so Save stays reachable.</li>
-<li>Full-page forms (Sign in email, First sign-in name, Weather setup) pad the page by the keyboard height and scroll the focused field into view, 24 px below the top of the scroll area. Rows size to content, so the page scrolls instead of squeezing the hero.</li>
+<li>Full-page forms (Sign in email, First sign-in name and location, Weather setup, Settings › Location) pad the page by the keyboard height and scroll the focused field into view, 24 px below the top of the scroll area. Rows size to content, so the page scrolls instead of squeezing the hero.</li>
 <li>Build with <code>visualViewport</code> resize (or <code>interactive-widget=resizes-content</code>), not fixed heights.</li>
 <li>Hide-keyboard key or tapping outside a field closes it. Return in single-line fields moves to the next field; in Message it adds a line.</li>
 <li>Idle timeout pauses while a field is focused.</li>
@@ -333,7 +414,7 @@
 <section style="display:flex;flex-direction:column;gap:14px;padding:28px 32px;background:#fff;border-radius:12px">
 <h2 style="margin:0;font:600 24px/1.2 var(--font-sans)">Not designed anywhere</h2>
 <ul>
-<li>Session expiry while unattended, and kiosk lock (prevent leaving the app).</li>
+<li>Session expiry rules (sign-ins don’t expire in v1), and kiosk lock (prevent leaving the app).</li>
 <li>Multi-screen management and roles (who can change Settings).</li>
 <li>Accessibility: focus order inside sheets. (Color swatches are named by season color, e.g. Amber, Rust, Sage, Coral, Cream, and use aria-pressed.)</li>
 </ul>

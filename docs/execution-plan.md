@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.3 — Phase 6 location and time zone (L00–L08), D02 design for it · v1.2 — branch from latest main · v1.1: task status tracking · v1.0: first plan |
+| Status | v1.4 — D01/D02 design handoff v4: L04, L06–L08 rows follow it, new Phase 7 (H01–H03: signed-out form, editable ambient schedule) · v1.3 — Phase 6 location and time zone (L00–L08), D02 design for it · v1.2 — branch from latest main · v1.1: task status tracking · v1.0: first plan |
 | Date | 2026-10-12 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.32) · [`tech-design.md`](tech-design.md) (v1.59) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.33) · [`tech-design.md`](tech-design.md) (v1.60) |
 
 Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 
@@ -51,6 +51,8 @@ graph LR
   L00 --> D02[D02 design, prompt 5] --> L06
   L04 & L06 --> L07
   L06 --> L08
+  C03 & D01[D01 design, prompt 4] --> H01
+  L02 --> H02 --> H03
 ```
 
 **Critical path:** F01 → F02 → F03 → F07 → F09 → S07 → V01 → I01 → Y01 → C01 → C02 → C04 → Q01.
@@ -180,7 +182,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 ## Phase 6 — Location and time zone
 
-The location sets the weather and the screen's time zone (spec §9.9). L01–L05 have no new UI and can start once L00 is done. L06–L08 wait for the prompt 5 design (D02).
+The location sets the weather and the screen's time zone (spec §9.9). L01–L05 have no new UI and can start once L00 is done. L06–L08 build the prompt 5 design, delivered in handoff v4 (D02).
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
@@ -188,13 +190,27 @@ The location sets the weather and the screen's time zone (spec §9.9). L01–L05
 | L01 | ⬜ | **Zone primitives:** pure `domain/zone.ts` (`wallTime`, `zonedInstant`, `dayNumber`, `dateKey`, `parseDateKey`, `addDays`, `dayStart`, `displayTimeZone`). Nothing calls it yet | L00 | LOC-06 (DST rule), D15 |
 | L02 | ⬜ | **Zone through the client:** every time helper and domain rule takes `tz`, `repos/events.ts` day ranges use `dayStart`, `TimeZoneProvider` + `useTimeZone()` (device zone, so nothing changes on screen), screens pass `tz` down, guard test against local-zone `Date` getters, Vitest on a pinned `TZ`. Split into L02a (domain and repos) / L02b (shell and UI) if too big | L01 | TIME-01..03, LOC-06, D15, tech §4.3 |
 | L03 | ⬜ | **Place carries its zone (server):** optional `WeatherLocation.timeZone`, `places.ts` reads the geocoding `timezone`, `accountTimeZone` for `uploadDay` | L00 | LOC-05, LOC-07, tech §6.4 |
-| L04 | ⬜ | **Display follows the location:** `TimeZoneProvider` gives the location's zone, else the device's | L02, L03 | LOC-06 |
+| L04 | ⬜ | **Display follows the location:** `TimeZoneProvider` gives the location's zone, else the device's. Fixture place gets `America/Los_Angeles` and the fixture clock and events become Pacific instants (Fri Oct 9 2026, 10:41 AM Pacific), so the v4 frames ("Portland, OR · Pacific time") match in any device zone (tech §4.4) | L02, L03 | LOC-06, spec Appendix A |
 | L05 | ⬜ | **Place from coordinates:** `server/weather/census.ts`, Open-Meteo `timeZoneAt`, `locatePlace`, `GET /api/weather/locate`, `Transport.weather.locate`, repo `locate` | L03 | LOC-04, D13, D20, tech §6.1 |
-| L06 | ⬜ | **"Use my location":** `locating` state and failures in the setup reducer, shared `useWeatherSetup`, `data/repos/position.ts`, button and status in `WeatherSetup`, `wx=locating\|denied\|outside`, gallery. Brings the prompt 5 handoff into the spec | L05, D02 | LOC-01..03, WX-04, D20 |
-| L07 | ⬜ | **Settings › Location:** SET-09 row, `/settings/location` page reusing the setup | L04, L06 | SET-09, WX-06 |
-| L08 | ⬜ | **Sign-in location step:** `location` step after the name for a new account, Skip for now, `POST /api/auth/location` → `saveLocation`, `signin=location` | L06 | SIGNIN-14, LOC-07, tech §6.1 |
+| L06 | ⬜ | **"Use my location":** `locating` state and failures in the setup reducer, shared `useWeatherSetup`, `data/repos/position.ts`, button and status in `WeatherSetup`, `wx=locating\|denied\|unavailable\|outside\|lookup`, soft-row failures, the button hides once denied (and when the permission is already blocked), gallery in four seasons. Matches Weather board frames E–M | L05, D02 | LOC-01..03, WX-04, D20 |
+| L07 | ⬜ | **Settings › Location:** SET-09 row first in the panel, `/settings/location` page reusing the setup ("Now set to", "What the location sets"), `domain/zoneName.ts` (`timeZoneName`, `zoneChange`), the `confirm-zone` state (`wx=tz`), zone names on WX-09 rows. Matches Settings board frames A, C–M | L04, L06 | SET-09, LOC-08, LOC-09, WX-06, WX-09 |
+| L08 | ⬜ | **Sign-in location step:** `location` step after the name for a new account, Skip for now, `POST /api/auth/location` → `saveLocation`, "Couldn’t save. Try again.", the SIGNIN-07 phone copy, `signin=location` (+ `wx=locating\|choose\|denied\|savefail`, `kb=1`). Matches Account board frames E, M–R | L06 | SIGNIN-07, SIGNIN-14, LOC-07, tech §6.1 |
 
-**Phase 6 exit:** with the device clock set to UTC and the location in Portland, OR, the clock, Today, the calendar and event times show Pacific time; "Use my location" works and fails as LOC-01..03 say; L06–L08 match the prompt 5 boards at the 6 sizes.
+**Phase 6 exit:** with the device clock set to UTC and the location in Portland, OR, the clock, Today, the calendar and event times show Pacific time; "Use my location" works and fails as LOC-01..03 say; L06–L08 match the handoff v4 Weather, Settings and Account boards at the 6 sizes.
+
+---
+
+## Phase 7 — Handoff v4 follow-ups
+
+The rest of handoff v4: the signed-out form (prompt 4) and the editable ambient schedule the designer added (spec SET-10, decision 22).
+
+| ID | Status | Task | Depends on | Covers |
+|---|---|---|---|---|
+| H01 | ⬜ | **Signed out by the server:** `signedOut` on the `glance-meta` entry, `SessionGuard` waits for open sheets and focused fields (or the idle timeout), `ended` sign-in state (banner, "Sign in again", prefilled email, waiting count from the outbox, different-email tile with "Use {previous email}"), Ambient notice and wake → `/signin`; fixtures `signin=ended`, `pending=`, `switch=1`, `view=ambient&signin=ended`, gallery. The Account board has no frames for it: compare with the prototype at the 6 sizes | C03, D01 | SIGNIN-13, AMB-04, AMB-07, tech §4.5 |
+| H02 | ⬜ | **Ambient schedule rules:** `AccountSettings.ambient` (`mode`, `all`, `wknd`) replaces `ambientHours`, read with a default so old rows parse, minimum build raised; `ambientSetFor(night)` (a night belongs to the day it starts), `inAmbient(ambient, now, tz)` with "Not set" and Off; `IdleProvider` uses it. Table tests for Fri/Sat nights, past midnight, same start and end | L02 | SET-10 (rules), AMB-05, §7, tech §9 entry 40 |
+| H03 | ⬜ | **Ambient screen page:** SET-06 tile summary, `/settings/ambient` (Every night · Weekends differ · Off, Dims at / Wakes at TimeFields with the length, "Same as dim time", the "Over 24 hours" bars, Preview), `TimePicker` `minuteStep` 15; fixtures `sub=ambient`, `amb=`, `pick=`, gallery. Matches Settings board frames N–R | H02 | SET-06, SET-10, TPK-02/03 |
+
+**Phase 7 exit:** a 401 while a note sheet is open keeps the sheet until it closes, then shows the signed-out form with the waiting count; signing in with the same email sends the changes. Ambient follows the Sun – Thu / Fri & Sat sets in the location's time zone.
 
 ---
 
@@ -202,5 +218,5 @@ The location sets the weather and the screen's time zone (spec §9.9). L01–L05
 
 | ID | Status | Item | Blocks | Fallback |
 |---|---|---|---|---|
-| D01 | 🔄 ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | Final SIGNIN-13 screen (follow-up to C03) | SIGNIN-01 form as-is (spec §8.1) |
+| D01 | 🔄 ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | H01 (final SIGNIN-13 screen) | SIGNIN-01 form as-is (spec §8.1) |
 | D02 | 🔄 ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |

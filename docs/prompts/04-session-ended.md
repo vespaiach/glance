@@ -1,4 +1,4 @@
-# Prompt 4 — Session no longer valid (SIGNIN-13) ⏳ requested
+# Prompt 4 — Session no longer valid (SIGNIN-13) ✅ delivered (v4)
 
 [← All prompts](../design-prompts.md)
 

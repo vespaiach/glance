@@ -1,4 +1,4 @@
-# Prompt 5 — Location and time zone (LOC, SET-09, SIGNIN-14) ⏳ requested
+# Prompt 5 — Location and time zone (LOC, SET-09, SIGNIN-14) ✅ delivered (v4)
 
 [← All prompts](../design-prompts.md)
 

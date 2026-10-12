@@ -42,6 +42,15 @@ class Component extends DCLogic {
       ['B', 'Location · searching', 'view=weather&wx=searching'],
       ['C', 'Location · unknown place', 'view=weather&wx=unknown'],
       ['D', 'Location · several matches', 'view=weather&wx=choose'],
+      ['E', 'Setup card · Use my location · Fall', 'view=weather'],
+      ['F', 'Setup card · Spring', 'view=weather&season=spring'],
+      ['G', 'Setup card · Summer', 'view=weather&season=summer'],
+      ['H', 'Setup card · Winter', 'view=weather&season=winter'],
+      ['I', 'Use my location · locating', 'view=weather&wx=locating'],
+      ['J', 'Use my location · location is off (button hides)', 'view=weather&wx=denied'],
+      ['K', 'Use my location · couldn’t find the screen (no position or timed out)', 'view=weather&wx=unavailable'],
+      ['L', 'Use my location · outside the US', 'view=weather&wx=outside'],
+      ['M', 'Use my location · lookup failed', 'view=weather&wx=lookup'],
     ];
     return {
       screens: screens.map(([id, name, q]) => ({
