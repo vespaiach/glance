@@ -30,3 +30,17 @@ export function useBreakpoint(): Breakpoint {
     () => "wide",
   );
 }
+
+function subscribeResize(listener: () => void) {
+  window.addEventListener("resize", listener);
+
+  return () => window.removeEventListener("resize", listener);
+}
+
+export function useViewportWidth(): number {
+  return useSyncExternalStore(
+    subscribeResize,
+    () => window.innerWidth,
+    () => 0,
+  );
+}

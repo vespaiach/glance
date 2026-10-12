@@ -1,5 +1,6 @@
 import {
   formatClock,
+  formatDayTitle,
   formatHour,
   formatLength,
   formatLongDate,
@@ -93,5 +94,12 @@ describe("time", () => {
 
   it("TODAY-01 the season eyebrow names the month in full", () => {
     expect(formatMonth(new Date(2026, 9, 9))).toBe("October");
+  });
+
+  it.each([
+    [new Date(2026, 9, 9), "Friday, Oct 9"],
+    [new Date(2027, 0, 14), "Thursday, Jan 14"],
+  ])("CAL-01 the day heading of %s reads %s", (date, expected) => {
+    expect(formatDayTitle(date)).toBe(expected);
   });
 });

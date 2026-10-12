@@ -4,6 +4,7 @@ export {
   useEventsInMonth,
   useEventsOnDay,
   useEventsRepo,
+  useHasEvents,
 } from "./events";
 export { createNotesRepo, type NotesRepo, type ShownNote, useNotes, useNotesRepo } from "./notes";
 export { usePhotoSrc, usePhotos } from "./photos";
