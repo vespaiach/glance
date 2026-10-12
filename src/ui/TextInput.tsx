@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { useId } from "react";
+import { type KeyboardEvent, useId } from "react";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 
@@ -79,6 +79,31 @@ const styles = stylex.create({
   },
 });
 
+const FIELDS = "input:not([disabled]):not([type=hidden]), textarea:not([disabled])";
+
+function nextField(input: HTMLInputElement): HTMLElement | undefined {
+  const scope = input.form ?? input.closest('[role="dialog"]') ?? document.body;
+
+  const fields = [...scope.querySelectorAll<HTMLElement>(FIELDS)];
+
+  return fields[fields.indexOf(input) + 1];
+}
+
+function onReturn(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+
+  const input = event.currentTarget;
+
+  const next = nextField(input);
+
+  if (!next && input.form) return;
+
+  event.preventDefault();
+
+  if (next) next.focus();
+  else input.blur();
+}
+
 export function TextInput({
   label,
   value,
@@ -115,7 +140,7 @@ export function TextInput({
       {multiline ? (
         <textarea {...fieldProps} rows={rows} onChange={(e) => onChange(e.target.value)} />
       ) : (
-        <input {...fieldProps} onChange={(e) => onChange(e.target.value)} />
+        <input {...fieldProps} onChange={(e) => onChange(e.target.value)} onKeyDown={onReturn} />
       )}
       {invalid && (
         <span id={errorId} {...stylex.props(styles.error)}>

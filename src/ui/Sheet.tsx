@@ -8,9 +8,10 @@ import {
   useId,
   useRef,
 } from "react";
-import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "./Eyebrow";
+import { useFieldInView } from "./fieldInView";
 import { IconButton } from "./IconButton";
 
 type SheetProps = {
@@ -21,6 +22,7 @@ type SheetProps = {
   children: ReactNode;
   startActions?: ReactNode;
   endActions?: ReactNode;
+  keyboardInset?: number;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -36,7 +38,11 @@ const styles = stylex.create({
     placeItems: "center",
     padding: space.lg,
     boxSizing: "border-box",
+    transitionProperty: "bottom",
+    transitionDuration: motion.durBase,
+    transitionTimingFunction: motion.easeOut,
   },
+  aboveKeyboard: (inset: number) => ({ bottom: inset }),
   scrim: {
     position: "absolute",
     inset: 0,
@@ -136,12 +142,15 @@ export function Sheet({
   children,
   startActions,
   endActions,
+  keyboardInset = 0,
   xstyle,
 }: SheetProps) {
   const titleId = useId();
   const dialog = useRef<HTMLDivElement>(null);
 
   useFocusOnOpen(dialog);
+
+  useFieldInView(dialog, keyboardInset);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") return onClose();
@@ -157,7 +166,7 @@ export function Sheet({
   };
 
   return (
-    <div {...stylex.props(styles.overlay)}>
+    <div {...stylex.props(styles.overlay, styles.aboveKeyboard(keyboardInset))}>
       <button
         type="button"
         tabIndex={-1}

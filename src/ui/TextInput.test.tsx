@@ -57,3 +57,63 @@ test("spec§4.2 TextInput without an error is not marked invalid", () => {
   expect(input).not.toHaveAttribute("aria-invalid");
   expect(input).not.toHaveAttribute("aria-describedby");
 });
+
+describe("Return", () => {
+  it("KB-04 in a single-line field moves to the next field", async () => {
+    render(
+      <div role="dialog">
+        <TextInput label="Title" value="" onChange={() => {}} />
+        <button type="button">Starts</button>
+        <TextInput label="Where" value="" onChange={() => {}} />
+      </div>,
+    );
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Title" }), "{Enter}");
+
+    expect(screen.getByRole("textbox", { name: "Where" })).toHaveFocus();
+  });
+
+  it("KB-04 in a multiline field adds a line", async () => {
+    const onChange = vi.fn();
+    render(
+      <div role="dialog">
+        <TextInput label="Message" value="Hi" onChange={onChange} multiline />
+        <TextInput label="Name" value="" onChange={() => {}} />
+      </div>,
+    );
+
+    const message = screen.getByRole("textbox", { name: "Message" });
+    await userEvent.type(message, "{Enter}");
+
+    expect(message).toHaveFocus();
+    expect(onChange).toHaveBeenLastCalledWith("Hi\n");
+  });
+
+  it("KB-04 in the last field of a form submits it", async () => {
+    const onSubmit = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <TextInput label="Email" value="" onChange={() => {}} />
+        <button type="submit">Send</button>
+      </form>,
+    );
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Email" }), "{Enter}");
+
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it("KB-04 in the last field of a sheet hides the keyboard", async () => {
+    render(
+      <div role="dialog">
+        <TextInput label="Message" value="" onChange={() => {}} multiline />
+        <TextInput label="Name" value="" onChange={() => {}} />
+      </div>,
+    );
+
+    const name = screen.getByRole("textbox", { name: "Name" });
+    await userEvent.type(name, "{Enter}");
+
+    expect(name).not.toHaveFocus();
+  });
+});

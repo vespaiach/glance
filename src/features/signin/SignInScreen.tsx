@@ -5,6 +5,7 @@ import { fixtureSignIn, useSignInAuth } from "@/data/repos";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { DEMO_BUILD } from "@/shell/demo";
 import { useFixtureParams } from "@/shell/fixtureOptions";
+import { useFixtureFieldFocus, useKeyboardInset } from "@/shell/keyboard";
 import { useBrowserOnline } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -28,6 +29,8 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
 
   const online = useBrowserOnline() && params.signin !== "offline";
 
+  useFixtureFieldFocus();
+
   return (
     <SignInView
       state={flow.state}
@@ -35,6 +38,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       time={useNow("minute")}
       clock={useAccountSettings().clock}
       breakpoint={useBreakpoint()}
+      keyboardInset={useKeyboardInset()}
       online={online}
       demo={demo}
       onAction={flow.act}

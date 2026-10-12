@@ -24,6 +24,7 @@ type NoteSheetProps = {
   initial: NoteSheetState;
   swatches: readonly NoteSwatchOption[];
   offline: boolean;
+  keyboardInset?: number;
   onClose: () => void;
   onDelete: () => void;
   onSave: (draft: NoteDraft) => void;
@@ -76,6 +77,7 @@ export function NoteSheet({
   onClose,
   onDelete,
   onSave,
+  keyboardInset,
 }: NoteSheetProps) {
   const [state, dispatch] = useReducer(noteSheetReducer, initial);
 
@@ -108,6 +110,7 @@ export function NoteSheet({
       onClose={onClose}
       startActions={startActions}
       endActions={endActions}
+      keyboardInset={keyboardInset}
     >
       {offline && (
         <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />

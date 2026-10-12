@@ -100,3 +100,11 @@ test("WX-09 tapping a row picks that place", async () => {
 
   expect(onPick).toHaveBeenCalledWith(PORTLANDS[1]);
 });
+
+test("KB-04 Return in the city field submits it", async () => {
+  const { onSubmit } = renderSetup({ step: "editing", draft: "Portland" });
+
+  await userEvent.type(screen.getByLabelText("City or ZIP code"), "{Enter}");
+
+  expect(onSubmit).toHaveBeenCalledTimes(1);
+});

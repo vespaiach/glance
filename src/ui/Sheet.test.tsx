@@ -123,3 +123,19 @@ test("SHEET focus returns to the opener when the sheet closes", () => {
 
   expect(screen.getByRole("button", { name: "Open" })).toHaveFocus();
 });
+
+test("KB-02 with the keyboard up, the sheet scrolls inside to the focused field", () => {
+  render(
+    <Sheet title="New note" closeLabel="Close" onClose={() => {}} keyboardInset={300}>
+      <TextInput label="Message" value="" onChange={() => {}} multiline />
+    </Sheet>,
+  );
+
+  const dialog = screen.getByRole("dialog", { name: "New note" });
+  dialog.getBoundingClientRect = () => ({ top: 40 }) as DOMRect;
+  screen.getByText("Message").getBoundingClientRect = () => ({ top: 300 }) as DOMRect;
+
+  screen.getByRole("textbox", { name: "Message" }).focus();
+
+  expect(dialog.scrollTop).toBe(300 - 40 - 24);
+});
