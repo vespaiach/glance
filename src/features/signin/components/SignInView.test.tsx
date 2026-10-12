@@ -273,3 +273,70 @@ test("SIGNIN-14 the setup card's primary reads Continue", () => {
   expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Use my location" })).toBeInTheDocument();
 });
+
+const SIGNED_OUT = { email: EMAIL, pending: 0 };
+
+const WAITING = { email: EMAIL, pending: 3 };
+
+const OTHER = "sam.lee@example.com";
+
+test("SIGNIN-13 the signed-out form shows the notice, Sign in again and no guests", () => {
+  renderView({ step: "form", email: EMAIL }, { signedOut: SIGNED_OUT });
+
+  expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
+  expect(
+    screen.getByText("Sign in again to keep the calendar, notes and photos up to date."),
+  ).toBeInTheDocument();
+  expect(screen.getByText("One account per family")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Sign in again" })).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Check your family’s email below. We’ll send a link that signs this screen back in.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
+  expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
+  expect(screen.getByText(LOCK)).toBeInTheDocument();
+});
+
+test("SIGNIN-13 waiting changes add the count and that they'll be sent", () => {
+  renderView({ step: "form", email: EMAIL }, { signedOut: WAITING });
+
+  expect(
+    screen.getByText(
+      "Sign in again to keep the calendar, notes and photos up to date. Changes waiting on this screen: 3. They’ll be sent after you sign in.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: `Use ${EMAIL}` })).not.toBeInTheDocument();
+});
+
+test("SIGNIN-13 another email with changes waiting warns inline and offers the previous email", async () => {
+  const { onAction } = renderView({ step: "form", email: OTHER }, { signedOut: WAITING });
+
+  expect(
+    screen.getByText(
+      "Sign in again to keep the calendar, notes and photos up to date. Changes waiting on this screen: 3.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getAllByRole("status")[1]).toHaveTextContent(
+    `Changes waiting on this screen belong to ${EMAIL}. They’ll be removed from this screen if a different email signs in.`,
+  );
+  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
+
+  await userEvent.click(screen.getByRole("button", { name: `Use ${EMAIL}` }));
+
+  expect(onAction).toHaveBeenCalledWith({ type: "email", email: EMAIL });
+});
+
+test("SIGNIN-13 another email with nothing waiting shows no warning", () => {
+  renderView({ step: "form", email: OTHER }, { signedOut: SIGNED_OUT });
+
+  expect(screen.queryByRole("button", { name: `Use ${EMAIL}` })).not.toBeInTheDocument();
+});
+
+test("SIGNIN-13 the notice stays while the link is sending", () => {
+  renderView({ step: "sending", email: EMAIL }, { signedOut: SIGNED_OUT });
+
+  expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
+});

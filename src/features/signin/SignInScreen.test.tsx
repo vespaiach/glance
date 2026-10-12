@@ -5,6 +5,8 @@ import {
   type AuthStatus,
   type FixtureParams,
   fixtureSignIn,
+  type SignedOutAccount,
+  SignedOutAccountProvider,
   type SignInAuth,
   SignInAuthProvider,
 } from "@/data/repos";
@@ -78,14 +80,20 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-function renderScreen(params: FixtureParams = {}, auth: FakeAuth = fakeAuth()) {
+function renderScreen(
+  params: FixtureParams = {},
+  auth: FakeAuth = fakeAuth(),
+  signedOut?: SignedOutAccount,
+) {
   render(
     <NowProvider frozenAt={NOW}>
       <DefaultSettingsProvider>
         <SeasonProvider>
           <FixtureParamsProvider params={params}>
             <SignInAuthProvider auth={auth}>
-              <SignInScreen demo />
+              <SignedOutAccountProvider account={signedOut}>
+                <SignInScreen demo />
+              </SignedOutAccountProvider>
             </SignInAuthProvider>
           </FixtureParamsProvider>
         </SeasonProvider>
@@ -114,6 +122,24 @@ test("SIGNIN-01 opens on the empty email form", () => {
 
   expect(screen.getByRole("heading", { name: "Sign in or get started" })).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveValue("");
+});
+
+test("SIGNIN-13 a screen signed out by the server opens the form with its email and waiting count", () => {
+  renderScreen({}, fakeAuth(), { email: MARIA.email, pending: 2 });
+
+  expect(screen.getByRole("heading", { name: "Sign in again" })).toBeInTheDocument();
+  expect(screen.getByLabelText("Email")).toHaveValue(MARIA.email);
+  expect(screen.getByText(/Changes waiting on this screen: 2\./)).toBeInTheDocument();
+});
+
+test("SIGNIN-13 Use a different email from Check your email keeps the signed-out notice", async () => {
+  renderScreen({}, fakeAuth(), { email: MARIA.email, pending: 0 });
+
+  await user().click(screen.getByRole("button", { name: "Send sign-in link" }));
+
+  await user().click(await screen.findByRole("button", { name: "Use a different email" }));
+
+  expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
 });
 
 test("SIGNIN-02 an invalid email shows the error until the next keystroke", async () => {

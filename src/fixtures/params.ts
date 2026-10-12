@@ -6,7 +6,18 @@ const CHOICES = {
   time: ["start", "end", "error", "noend"],
   season: ["spring", "summer", "fall", "winter"],
   net: ["loading", "offline", "wxerror"],
-  signin: ["form", "sending", "sent", "name", "location", "phone", "expired", "offline", "done"],
+  signin: [
+    "form",
+    "sending",
+    "sent",
+    "name",
+    "location",
+    "phone",
+    "expired",
+    "offline",
+    "done",
+    "ended",
+  ],
   on: ["link"],
   acct: ["returning"],
   upload: ["one", "progress", "error", "offline"],
@@ -35,6 +46,8 @@ export type FixtureParams = ChoiceParams & {
   kb?: true;
   keepPlace?: true;
   now?: Date;
+  pending?: number;
+  switch?: true;
 };
 
 const PLACE_PAGE = "/settings/location";
@@ -84,7 +97,12 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("clock") === "24" && { clock: "24h" }),
     ...(query.get("empty") === "1" && { empty: true }),
     ...(query.get("kb") === "1" && { kb: true }),
+    ...(query.get("switch") === "1" && { switch: true }),
   };
+}
+
+function parseCount(value: string | null): number | undefined {
+  return value !== null && /^\d+$/.test(value) ? Number(value) : undefined;
 }
 
 export function parseFixtureParams(search: string | URLSearchParams, pathname = ""): FixtureParams {
@@ -94,10 +112,13 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
 
   const keepPlace = pathname === PLACE_PAGE;
 
+  const pending = parseCount(query.get("pending"));
+
   return {
     ...readChoices(query),
     ...readFlags(query),
     ...(now && { now }),
     ...(keepPlace && { keepPlace }),
+    ...(pending !== undefined && { pending }),
   };
 }

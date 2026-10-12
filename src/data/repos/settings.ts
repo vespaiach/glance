@@ -30,7 +30,7 @@ export function useSettingsRepo(): SettingsRepo {
   return useMemo(() => createSettingsRepo(store), [store]);
 }
 
-function accountSettings(row: StoredSettings | undefined): AccountSettings {
+export function accountSettings(row: StoredSettings | undefined): AccountSettings {
   if (row === undefined) return DEFAULT_SETTINGS;
 
   const {

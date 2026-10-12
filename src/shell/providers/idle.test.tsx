@@ -16,6 +16,12 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: navigation.push }),
 }));
 
+const UNAUTHORIZED = {
+  online: true,
+  weather: { state: "idle" },
+  error: "unauthorized",
+} as const;
+
 let store: Harness;
 
 beforeEach(() => {
@@ -338,5 +344,58 @@ describe("IdleProvider", () => {
 
     expect(navigation.push).toHaveBeenCalledTimes(1);
     expect(navigation.push).toHaveBeenCalledWith("/ambient");
+  });
+
+  it("SIGNIN-13 signed out by the server, idle opens the signed-out form", async () => {
+    await putSyncStatus(store, UNAUTHORIZED);
+
+    await renderIdle("10:41:00");
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledExactlyOnceWith("/signin");
+  });
+
+  it("SIGNIN-13 signed out by the server, idle during ambient hours goes to Ambient", async () => {
+    await putSyncStatus(store, UNAUTHORIZED);
+
+    await renderIdle("21:00:00");
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledExactlyOnceWith("/ambient");
+  });
+
+  it("AMB-07 signed out by the server, the schedule end leaves Ambient for the signed-out form", async () => {
+    navigation.pathname = "/ambient";
+
+    await putSyncStatus(store, UNAUTHORIZED);
+
+    await renderIdle("07:29:00", { idleTimeout: null });
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    await waitFor(() => expect(navigation.push).toHaveBeenCalledWith("/signin"));
+  });
+
+  it("SIGNIN-13 signed out by the server, idle leaves the open sheet for the route change to discard", async () => {
+    await putSyncStatus(store, UNAUTHORIZED);
+
+    await renderIdle("10:41:00");
+
+    fireEvent.click(screen.getByRole("button", { name: "open" }));
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledWith("/signin");
+    expect(screen.getByText("newnote")).toBeInTheDocument();
   });
 });

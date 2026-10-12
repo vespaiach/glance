@@ -40,6 +40,10 @@ export function useSyncStatus(): SyncStatus | undefined {
   return useLiveQuery(() => readStatus(db), [db]);
 }
 
+export function useSignedOut(): boolean {
+  return useSyncStatus()?.error === "unauthorized";
+}
+
 export function useOutboxEmpty(): boolean | undefined {
   const { db } = useRepoStore();
 

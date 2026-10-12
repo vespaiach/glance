@@ -5,16 +5,19 @@ import {
   ArrowRight,
   ChevronLeft,
   CircleCheck,
+  Info,
+  LogOut,
   Mail,
   RotateCw,
   Smartphone,
+  Undo2,
   WifiOff,
 } from "lucide-react";
 import { type FormEvent, useRef } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
-import { firstName } from "@/domain/signIn";
+import { firstName, isSwitchingEmail } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
 import { PlaceForm, type WeatherSetupFlow } from "@/features/weather";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
@@ -26,10 +29,13 @@ import { TextInput } from "@/ui/TextInput";
 import { signInLayout } from "../layout";
 import type { SignInAction, SignInState } from "../signIn";
 import { SignInHero } from "./SignInHero";
-import { Actions, Email, Heading, LockFooter, StatusTile } from "./SignInParts";
+import { Actions, Email, Heading, LockFooter, StatusTile, SwitchTile } from "./SignInParts";
+
+type SignedOut = { email: string; pending: number };
 
 type SignInViewProps = {
   state: SignInState;
+  signedOut?: SignedOut;
   setup: WeatherSetupFlow;
   season: Season;
   time: Date;
@@ -100,12 +106,48 @@ const styles = stylex.create({
   },
 });
 
-function FormStep({ state, online, demo, onAction, onDemo }: StepProps) {
+function endedNotice({ pending }: SignedOut, switching: boolean): string {
+  const { ended } = copy.signIn;
+
+  if (pending === 0) return ended.noticeBody;
+
+  const waiting = `${ended.noticeBody} ${ended.waiting(pending)}`;
+
+  return switching ? waiting : `${waiting} ${ended.sentAfter}`;
+}
+
+function FormHeading({ signedOut }: { signedOut?: SignedOut }) {
+  const { form, ended } = copy.signIn;
+
+  return (
+    <Heading eyebrow={form.eyebrow} title={signedOut ? ended.title : form.title}>
+      {signedOut ? ended.body : form.body}
+    </Heading>
+  );
+}
+
+function EndedBanner({ signedOut, switching }: { signedOut: SignedOut; switching: boolean }) {
+  return (
+    <div role="status">
+      <Banner
+        tone="soft"
+        icon={LogOut}
+        title={copy.signIn.ended.notice}
+        body={endedNotice(signedOut, switching)}
+      />
+    </div>
+  );
+}
+
+function FormStep({ state, signedOut, online, demo, onAction, onDemo }: StepProps) {
   const sending = state.step === "sending";
 
   const email = state.step === "form" || sending ? state.email : "";
 
   const error = state.step === "form" && state.error ? copy.signIn.form[state.error] : undefined;
+
+  const switching =
+    signedOut !== undefined && isSwitchingEmail(signedOut.email, email, signedOut.pending);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -115,9 +157,8 @@ function FormStep({ state, online, demo, onAction, onDemo }: StepProps) {
 
   return (
     <>
-      <Heading eyebrow={copy.signIn.form.eyebrow} title={copy.signIn.form.title}>
-        {copy.signIn.form.body}
-      </Heading>
+      {signedOut && <EndedBanner signedOut={signedOut} switching={switching} />}
+      <FormHeading signedOut={signedOut} />
       <form noValidate onSubmit={submit} {...stylex.props(styles.form)}>
         <TextInput
           label={copy.signIn.form.label}
@@ -126,6 +167,26 @@ function FormStep({ state, online, demo, onAction, onDemo }: StepProps) {
           onChange={(value) => onAction({ type: "email", email: value })}
           error={error}
         />
+        {signedOut && switching && (
+          <SwitchTile
+            icon={Info}
+            action={
+              <Button
+                variant="ghost"
+                icon={Undo2}
+                onClick={() => onAction({ type: "email", email: signedOut.email })}
+              >
+                {copy.signIn.ended.previousEmail(signedOut.email)}
+              </Button>
+            }
+          >
+            <Email
+              before={copy.signIn.ended.switchBefore}
+              email={signedOut.email}
+              after={copy.signIn.ended.switchAfter}
+            />
+          </SwitchTile>
+        )}
         {!online && (
           <Banner
             tone="soft"
@@ -142,7 +203,7 @@ function FormStep({ state, online, demo, onAction, onDemo }: StepProps) {
           >
             {sending ? copy.signIn.form.sending : copy.signIn.form.send}
           </Button>
-          {demo && !sending && (
+          {demo && !sending && !signedOut && (
             <Button variant="ghost" onClick={onDemo}>
               {copy.signIn.form.demo}
             </Button>

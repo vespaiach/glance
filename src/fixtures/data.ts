@@ -33,6 +33,8 @@ export const FIXTURE_ACCOUNT: Account = {
   name: "Maria",
 };
 
+export const FIXTURE_OTHER_EMAIL = "sam.lee@example.com";
+
 export const FIXTURE_EVENTS: CalendarEvent[] = [
   {
     id: fixtureId(1, 1),

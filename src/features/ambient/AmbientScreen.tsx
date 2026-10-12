@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useNextEventAfter, useWeather } from "@/data/repos";
+import { useNextEventAfter, useSignedOut, useWeather } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
 import type { CalendarEvent } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
@@ -14,6 +14,8 @@ import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import { AmbientView } from "./components/AmbientView";
+
+const SIGN_IN = "/signin";
 
 function eventRows(event: CalendarEvent | null | undefined): CalendarEvent[] | undefined {
   if (event === undefined) return undefined;
@@ -40,6 +42,8 @@ export function AmbientScreen() {
 
   const photo = useBackgroundPhoto();
 
+  const signedOut = useSignedOut();
+
   return (
     <AmbientView
       season={season}
@@ -47,12 +51,13 @@ export function AmbientScreen() {
       clock={settings.clock}
       tz={tz}
       offline={showOfflinePill}
+      signedOut={signedOut}
       weather={weather.state}
       unit={settings.tempUnit}
       nextEvent={nextEvent.state}
       photoSrc={photo?.src}
       dim={ambientDim(settings.background.dim)}
-      onWake={() => router.push(viewPath("today"))}
+      onWake={() => router.push(signedOut ? SIGN_IN : viewPath("today"))}
     />
   );
 }

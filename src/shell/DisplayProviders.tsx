@@ -54,21 +54,21 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
 
   return (
     <RepoProvider store={boot.store}>
-      <SessionGuard>
-        <SettingsProvider overrides={options.overrides}>
-          <TimeZoneProvider>
-            <SeasonProvider>
-              <NetworkProvider pillDelayMs={options.pillDelayMs}>
-                <FixtureSheetHost params={params}>
-                  <FixtureParamsProvider params={params}>
-                    <IdleProvider>{children}</IdleProvider>
-                  </FixtureParamsProvider>
-                </FixtureSheetHost>
-              </NetworkProvider>
-            </SeasonProvider>
-          </TimeZoneProvider>
-        </SettingsProvider>
-      </SessionGuard>
+      <SettingsProvider overrides={options.overrides}>
+        <TimeZoneProvider>
+          <SeasonProvider>
+            <NetworkProvider pillDelayMs={options.pillDelayMs}>
+              <FixtureSheetHost params={params}>
+                <FixtureParamsProvider params={params}>
+                  <IdleProvider>
+                    <SessionGuard>{children}</SessionGuard>
+                  </IdleProvider>
+                </FixtureParamsProvider>
+              </FixtureSheetHost>
+            </NetworkProvider>
+          </SeasonProvider>
+        </TimeZoneProvider>
+      </SettingsProvider>
     </RepoProvider>
   );
 }

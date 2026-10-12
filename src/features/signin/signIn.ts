@@ -1,4 +1,4 @@
-import type { AuthStatus, FixtureParams } from "@/data/repos";
+import { type AuthStatus, type FixtureParams, fixtureOtherEmail } from "@/data/repos";
 import type { Account } from "@/domain/schemas";
 import { isValidEmail } from "@/domain/signIn";
 
@@ -30,7 +30,7 @@ export type SignInAction =
   | { type: "skip-failed" }
   | { type: "setup-done" };
 
-export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct">;
+export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct" | "switch">;
 
 export type FixtureAccount = Account & { name: string };
 
@@ -187,10 +187,14 @@ export function initialSignIn(
   fixture: SignInFixture,
   account: FixtureAccount,
   link?: OpenedLink,
+  signedOut?: { email: string },
 ): SignInState {
   const { email, name } = account;
 
   if (link) return { step: "opening" };
+
+  if (signedOut)
+    return { step: "form", email: fixture.switch ? fixtureOtherEmail : signedOut.email };
 
   switch (fixture.signin) {
     case "sending":

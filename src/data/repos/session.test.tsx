@@ -1,11 +1,24 @@
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import Dexie from "dexie";
 import { vi } from "vitest";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW, FIXTURE_PHOTOS } from "@/fixtures/data";
 import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
-import { deleteMetaDb, openMetaDb, readSignedInAccount, saveSignedInAccount } from "../meta";
+import {
+  deleteMetaDb,
+  markSignedOut,
+  openMetaDb,
+  readSignedInAccount,
+  saveSignedInAccount,
+} from "../meta";
 import { INITIAL_STATUS, STATUS_KEY, type SyncStatus } from "../sync/status";
-import { type DisplayBoot, fixtureParamsFor, signInAuthFor, useDisplayBoot } from "./session";
+import {
+  type DisplayBoot,
+  fixtureParamsFor,
+  signedOutAccountFor,
+  signInAuthFor,
+  useDisplayBoot,
+} from "./session";
 
 const ACCOUNT = {
   accountId: "0195f0a0-0000-7000-8000-00000000000a",
@@ -55,7 +68,7 @@ function stubServer() {
 async function queueChange(accountId: string) {
   const db = openGlanceDb(accountDbName(accountId));
 
-  await db.outbox.add(PENDING);
+  await db.outbox.add({ ...PENDING });
 
   db.close();
 }
@@ -110,6 +123,40 @@ describe("useDisplayBoot", () => {
 
     expect(store.accountId).toBe(ACCOUNT.accountId);
     expect(store.db.name).toBe(accountDbName(ACCOUNT.accountId));
+  });
+
+  it("SIGNIN-13 a screen signed out by the server boots to the form without syncing", async () => {
+    const fetch = stubServer();
+
+    await signIn();
+
+    await signOutByServer();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("signed-out"));
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("SIGNIN-13 a signed-in display marks glance-meta signed out, keeping the email", async () => {
+    await signIn();
+
+    await (await bootSignedIn()).markSignedOut();
+
+    expect(await storedAccount()).toEqual({ ...ACCOUNT, signedOut: true });
+  });
+
+  it("SIGNIN-13 the fixture display leaves glance-meta alone when signed out", async () => {
+    await signIn();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    await readyStore(result.current).markSignedOut();
+
+    expect(await storedAccount()).toEqual(ACCOUNT);
   });
 
   it("SIGNIN-13 opening a signed-in display clears the halt the last session left", async () => {
@@ -195,6 +242,14 @@ async function storedAccount() {
   return account;
 }
 
+async function signOutByServer() {
+  const meta = openMetaDb();
+
+  await markSignedOut(meta);
+
+  meta.close();
+}
+
 async function signIn() {
   const meta = openMetaDb();
 
@@ -276,6 +331,20 @@ describe("signInAuthFor", () => {
     expect(await storedAccount()).toEqual(ACCOUNT);
   });
 
+  it("SIGNIN-13 a finished sign-in clears signed out", async () => {
+    await signIn();
+
+    await signOutByServer();
+
+    await signInAuthFor(false, params).remember({
+      id: ACCOUNT.accountId,
+      name: "Maria",
+      email: ACCOUNT.email,
+    });
+
+    expect(await storedAccount()).toEqual(ACCOUNT);
+  });
+
   it("tech§6.5 a demo build signs in through the fixture transport", async () => {
     expect(await signInAuthFor(true, { signin: "phone" }).status()).toEqual({
       ok: true,
@@ -345,6 +414,74 @@ describe("signInAuthFor", () => {
       });
 
     expect(persist).toHaveBeenCalledOnce();
+  });
+});
+
+describe("signedOutAccountFor", () => {
+  it("SIGNIN-13 reads the email, the waiting count and the settings from the kept account DB", async () => {
+    await signIn();
+
+    await queueChange(ACCOUNT.accountId);
+    await queueChange(ACCOUNT.accountId);
+
+    const db = openGlanceDb(accountDbName(ACCOUNT.accountId));
+    await db.settings.put({
+      ...DEFAULT_SETTINGS,
+      clock: "24h",
+      accountId: ACCOUNT.accountId,
+      updatedAt: "2026-10-01T09:00:00.000Z",
+      version: 1,
+    });
+    db.close();
+
+    await signOutByServer();
+
+    expect(await signedOutAccountFor(false, params)).toEqual({
+      email: ACCOUNT.email,
+      pending: 2,
+      settings: { ...DEFAULT_SETTINGS, clock: "24h" },
+    });
+  });
+
+  it("SIGNIN-13 a signed-in screen has no signed-out account", async () => {
+    await signIn();
+
+    expect(await signedOutAccountFor(false, params)).toBeUndefined();
+  });
+
+  it("SIGNIN-13 a screen with no glance-meta entry has no signed-out account", async () => {
+    expect(await signedOutAccountFor(false, params)).toBeUndefined();
+  });
+
+  it("SIGNIN-13 reading it leaves no account DB behind for a signed-out entry with none", async () => {
+    await signIn();
+
+    await signOutByServer();
+
+    expect(await signedOutAccountFor(false, params)).toEqual({
+      email: ACCOUNT.email,
+      pending: 0,
+      settings: DEFAULT_SETTINGS,
+    });
+    expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
+  });
+
+  it("SIGNIN-13 signin=ended&pending=3 gives the fixture account with 3 waiting", async () => {
+    expect(await signedOutAccountFor(true, { signin: "ended", pending: 3 })).toEqual({
+      email: FIXTURE_ACCOUNT.email,
+      pending: 3,
+    });
+  });
+
+  it("SIGNIN-13 signin=ended alone has nothing waiting", async () => {
+    expect(await signedOutAccountFor(true, { signin: "ended" })).toEqual({
+      email: FIXTURE_ACCOUNT.email,
+      pending: 0,
+    });
+  });
+
+  it("SIGNIN-13 other demo fixtures are not signed out", async () => {
+    expect(await signedOutAccountFor(true, { pending: 3 })).toBeUndefined();
   });
 });
 

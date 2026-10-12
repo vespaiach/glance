@@ -138,6 +138,11 @@ function onlineOnly(offline: boolean) {
     offline ? err<TransportError>("network") : answer();
 }
 
+function signedInOnly(ended: boolean) {
+  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
+    ended ? err<TransportError>("unauthorized") : answer();
+}
+
 function authStatus(params: FixtureParams): AuthStatus {
   if (params.signin === "phone") return { state: "finishing-elsewhere" };
 
@@ -255,6 +260,8 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
 
   const online = onlineOnly(offline);
 
+  const signedIn = signedInOnly(params.signin === "ended");
+
   const uploaded = (file: File): StoredPhoto => ({
     id: crypto.randomUUID(),
     title: photoTitle(file.name),
@@ -264,9 +271,11 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
   });
 
   return {
-    push: (entry) => online(() => acceptPush(db, entry, stamp, now)),
+    push: (entry) => online(() => signedIn(() => acceptPush(db, entry, stamp, now))),
     pull: () =>
-      online(async () => (loading ? never() : ok({ cursor: FIXTURE_CURSOR, changes: [] }))),
+      online(() =>
+        signedIn(async () => (loading ? never() : ok({ cursor: FIXTURE_CURSOR, changes: [] }))),
+      ),
     weather: () =>
       online(async () => {
         if (loading) return never();

@@ -47,6 +47,26 @@ describe("sign-in reducer", () => {
     });
   });
 
+  it("SIGNIN-13 a screen signed out by the server opens the form with its last email", () => {
+    expect(initialSignIn({}, ACCOUNT, undefined, { email: "maria@example.com" })).toEqual(
+      form("maria@example.com"),
+    );
+  });
+
+  it("SIGNIN-13 switch=1 opens the signed-out form with another email entered", () => {
+    expect(
+      initialSignIn({ signin: "ended", switch: true }, ACCOUNT, undefined, {
+        email: "maria@example.com",
+      }),
+    ).toEqual(form("sam.lee@example.com"));
+  });
+
+  it("SIGNIN-13 an opened link still checks the link on a signed-out screen", () => {
+    expect(initialSignIn({}, ACCOUNT, "opened", { email: "maria@example.com" })).toEqual({
+      step: "opening",
+    });
+  });
+
   it("SIGNIN-01 typing updates the email", () => {
     expect(signInReducer(form("mar"), { type: "email", email: "mari" })).toEqual(form("mari"));
   });

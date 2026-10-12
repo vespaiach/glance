@@ -21,6 +21,7 @@ export type RepoStore = {
   places: Transport["places"];
   locate: Transport["locate"];
   signOut: () => Promise<void>;
+  markSignedOut: () => Promise<void>;
 };
 
 const RepoContext = createContext<RepoStore | undefined>(undefined);
@@ -43,4 +44,8 @@ export function useAccount(): StoreAccount {
 
 export function useSignOut(): RepoStore["signOut"] {
   return useRepoStore().signOut;
+}
+
+export function useMarkSignedOut(): RepoStore["markSignedOut"] {
+  return useRepoStore().markSignedOut;
 }

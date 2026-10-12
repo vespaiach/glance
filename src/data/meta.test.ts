@@ -1,6 +1,7 @@
 import {
   clearSignedInAccount,
   deleteMetaDb,
+  markSignedOut,
   openMetaDb,
   readSignedInAccount,
   saveSignedInAccount,
@@ -68,6 +69,36 @@ describe("glance-meta", () => {
     await clearSignedInAccount(db);
 
     expect(await readSignedInAccount(db)).toBeUndefined();
+    db.close();
+  });
+
+  it("SIGNIN-13 signed out by the server keeps the entry with its email", async () => {
+    const db = openMetaDb();
+    await saveSignedInAccount(db, ACCOUNT);
+
+    await markSignedOut(db);
+
+    expect(await readSignedInAccount(db)).toEqual({ ...ACCOUNT, signedOut: true });
+    db.close();
+  });
+
+  it("SIGNIN-13 signed out with no entry stays empty", async () => {
+    const db = openMetaDb();
+
+    await markSignedOut(db);
+
+    expect(await readSignedInAccount(db)).toBeUndefined();
+    db.close();
+  });
+
+  it("SIGNIN-13 a finished sign-in clears signed out", async () => {
+    const db = openMetaDb();
+    await saveSignedInAccount(db, ACCOUNT);
+    await markSignedOut(db);
+
+    await saveSignedInAccount(db, ACCOUNT);
+
+    expect(await readSignedInAccount(db)).toEqual(ACCOUNT);
     db.close();
   });
 });

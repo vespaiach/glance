@@ -44,6 +44,33 @@ const styles = stylex.create({
     paddingInline: 20,
   },
   icon: { display: "flex", flexShrink: 0 },
+  switchTile: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    marginTop: -16,
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: radii.md,
+    paddingBlock: space.md,
+    paddingInline: 20,
+  },
+  switchRow: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  switchText: {
+    minWidth: 0,
+    fontSize: 16,
+    fontWeight: 330,
+    lineHeight: 1.45,
+    textWrap: "pretty",
+    overflowWrap: "anywhere",
+  },
+  switchAction: {
+    display: "flex",
+    marginLeft: 18,
+  },
   pulse: {
     animationName: pulse,
     animationDuration: "1.2s",
@@ -118,6 +145,28 @@ export function StatusTile({
         <Icon icon={icon} size={22} />
       </span>
       <span {...stylex.props(styles.tileText)}>{children}</span>
+    </div>
+  );
+}
+
+export function SwitchTile({
+  icon,
+  action,
+  children,
+}: {
+  icon: LucideIcon;
+  action: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div role="status" {...stylex.props(styles.switchTile)}>
+      <div {...stylex.props(styles.switchRow)}>
+        <span {...stylex.props(styles.icon)}>
+          <Icon icon={icon} size={22} />
+        </span>
+        <span {...stylex.props(styles.switchText)}>{children}</span>
+      </div>
+      <div {...stylex.props(styles.switchAction)}>{action}</div>
     </div>
   );
 }

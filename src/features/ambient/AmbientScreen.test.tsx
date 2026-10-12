@@ -1,7 +1,13 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { type Harness, markSynced, openHarness, synced } from "@/data/repos/testHarness";
+import {
+  type Harness,
+  markSynced,
+  openHarness,
+  putSyncStatus,
+  synced,
+} from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { AccountSettings, CalendarEvent, Weather } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
@@ -118,6 +124,20 @@ test("AMB-04 the whole screen is one Wake screen button that opens Today", async
 
   expect(screen.getAllByRole("button")).toHaveLength(1);
   expect(navigation.push).toHaveBeenCalledWith("/today");
+});
+
+test("AMB-07 signed out by the server, the wake tap opens the signed-out form", async () => {
+  await seed([TODAY_EVENT]);
+  await putSyncStatus(store, { online: true, weather: { state: "idle" }, error: "unauthorized" });
+
+  renderAmbient();
+
+  expect(await screen.findByText("Signed out · tap to sign in")).toBeInTheDocument();
+  expect(screen.getByText("56° · Light rain")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Wake screen" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/signin");
 });
 
 test("AMB-03 shows the current weather, the overnight low with the next rainy day and the next event", async () => {

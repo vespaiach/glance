@@ -49,6 +49,7 @@ const styles = stylex.create({
 const DEMOS: readonly Demo[] = [
   { key: "evening" },
   { key: "offline", offline: true },
+  { key: "signed-out", signedOut: true },
   { key: "photo", ...(COAST && { photoSrc: galleryPhotoSrc(COAST.id) }) },
   { key: "celsius", clock: "24h", unit: "C" },
   { key: "nothing", weather: { kind: "empty" }, nextEvent: { kind: "empty" } },
@@ -63,6 +64,7 @@ function ambientBase(season: Season): AmbientProps {
     clock: "12h",
     tz: GALLERY_TZ,
     offline: false,
+    signedOut: false,
     weather: { kind: "ready", data: [AMBIENT_WEATHER] },
     unit: "F",
     nextEvent: { kind: "ready", data: [CONFERENCE] },

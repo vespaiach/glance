@@ -11,6 +11,7 @@ const BASE: ComponentProps<typeof AmbientView> = {
   clock: "12h",
   tz,
   offline: false,
+  signedOut: false,
   weather: { kind: "empty" },
   unit: "F",
   nextEvent: { kind: "empty" },
@@ -36,4 +37,17 @@ test("AMB-04 the caption invites a wake tap", () => {
   render(<AmbientView {...BASE} />);
 
   expect(screen.getByText("Click or tap anywhere to wake")).toBeInTheDocument();
+});
+
+test("AMB-07 signed out by the server shows the notice in the top row", () => {
+  render(<AmbientView {...BASE} signedOut />);
+
+  expect(screen.getByText("Signed out · tap to sign in")).toBeInTheDocument();
+  expect(screen.getByText("Glance")).toBeInTheDocument();
+});
+
+test("AMB-07 a signed-in screen has no signed-out notice", () => {
+  render(<AmbientView {...BASE} />);
+
+  expect(screen.queryByText("Signed out · tap to sign in")).not.toBeInTheDocument();
 });

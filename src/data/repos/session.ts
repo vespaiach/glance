@@ -1,9 +1,11 @@
+import Dexie from "dexie";
 import { useEffect, useState } from "react";
-import type { Account } from "@/domain/schemas";
+import type { Account, AccountSettings } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_NEW_NOTE_DRAFT,
+  FIXTURE_OTHER_EMAIL,
   FIXTURE_OTHER_ZONE_PLACE,
   FIXTURE_PLACES,
   FIXTURE_SHEET_TARGETS,
@@ -18,6 +20,7 @@ import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "..
 import {
   clearSignedInAccount,
   type MetaDb,
+  markSignedOut,
   openMetaDb,
   readSignedInAccount,
   type SignedInAccount,
@@ -35,6 +38,7 @@ import { recordStatus } from "../sync/status";
 import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import { appServiceWorker } from "./serviceWorker";
+import { accountSettings } from "./settings";
 import type { PhotoVariant, RepoStore } from "./store";
 import type { WeatherRepo } from "./weather";
 
@@ -58,6 +62,14 @@ export const fixtureUploads = FIXTURE_UPLOADS;
 export const fixtureTimeZone = FIXTURE_TIME_ZONE;
 
 export const fixtureSignIn = { ...FIXTURE_ACCOUNT, name: FIXTURE_ACCOUNT.name ?? "" };
+
+export const fixtureOtherEmail = FIXTURE_OTHER_EMAIL;
+
+export type SignedOutAccount = {
+  email: string;
+  pending: number;
+  settings?: AccountSettings;
+};
 
 export type SignInAuth = Pick<Transport["auth"], "link" | "status" | "name" | "location"> &
   Pick<WeatherRepo, "searchPlaces" | "locate"> & {
@@ -107,6 +119,48 @@ async function rememberSignedIn(account: Account): Promise<void> {
   await replaceSignedIn(meta, entry).finally(() => meta.close());
 
   keepStorage();
+}
+
+async function readMeta<T>(read: (meta: MetaDb) => Promise<T>): Promise<T> {
+  const meta = openMetaDb();
+
+  return read(meta).finally(() => meta.close());
+}
+
+async function keptAccount(accountId: string) {
+  const name = accountDbName(accountId);
+
+  if (!(await Dexie.exists(name))) return { pending: 0, settings: accountSettings(undefined) };
+
+  const db = openGlanceDb(name);
+
+  const read = async () => ({
+    pending: await db.outbox.count(),
+    settings: accountSettings(await db.settings.get(accountId)),
+  });
+
+  return read().finally(() => db.close());
+}
+
+async function signedOutAccount(): Promise<SignedOutAccount | undefined> {
+  const entry = await readMeta(readSignedInAccount);
+
+  if (!entry?.signedOut) return undefined;
+
+  return { email: entry.email, ...(await keptAccount(entry.accountId)) };
+}
+
+function fixtureSignedOut(params: FixtureParams): SignedOutAccount | undefined {
+  if (params.signin !== "ended") return undefined;
+
+  return { email: FIXTURE_ACCOUNT.email, pending: params.pending ?? 0 };
+}
+
+export async function signedOutAccountFor(
+  demo: boolean,
+  params: FixtureParams,
+): Promise<SignedOutAccount | undefined> {
+  return demo ? fixtureSignedOut(params) : signedOutAccount();
 }
 
 async function forgetSignedIn(): Promise<void> {
@@ -203,6 +257,7 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
     places: transport.places,
     locate: transport.locate,
     signOut: signOutWith(transport.auth.signout),
+    markSignedOut: async () => {},
     ...keepUploadedImages(transport),
   };
 
@@ -214,7 +269,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   const account = await readSignedInAccount(meta).finally(() => meta.close());
 
-  if (account === undefined) return SIGNED_OUT;
+  if (account === undefined || account.signedOut) return SIGNED_OUT;
 
   const db = openGlanceDb(accountDbName(account.accountId));
 
@@ -252,6 +307,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
       await deleteAccountData(account.accountId);
     },
+    markSignedOut: () => readMeta(markSignedOut),
   };
 
   return { boot: { kind: "ready", store }, close };

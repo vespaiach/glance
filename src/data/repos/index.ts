@@ -1,5 +1,10 @@
 export type { AuthStatus, LocateError } from "../sync/transport";
-export { SignInAuthProvider, useSignInAuth } from "./auth";
+export {
+  SignedOutAccountProvider,
+  SignInAuthProvider,
+  useSignedOutAccount,
+  useSignInAuth,
+} from "./auth";
 export {
   createEventsRepo,
   type EventsRepo,
@@ -37,13 +42,16 @@ export {
   type DisplayBoot,
   type FixtureParams,
   type FixtureUpload,
+  fixtureOtherEmail,
   fixtureParamsFor,
   fixtureSheetTargets,
   fixtureSignIn,
   fixtureTimeZone,
   fixtureUploads,
   fixtureWeatherSearch,
+  type SignedOutAccount,
   type SignInAuth,
+  signedOutAccountFor,
   signInAuthFor,
   useDisplayBoot,
 } from "./session";
@@ -54,6 +62,7 @@ export {
   type SyncStatus,
   useOutboxEmpty,
   useRetry,
+  useSignedOut,
   useSourceStatus,
   useSyncStatus,
   type WeatherStatus,
@@ -64,6 +73,7 @@ export {
   type RepoStore,
   type StoreAccount,
   useAccount,
+  useMarkSignedOut,
   useSignOut,
 } from "./store";
 export { createWeatherRepo, useWeather, useWeatherRepo, type WeatherRepo } from "./weather";

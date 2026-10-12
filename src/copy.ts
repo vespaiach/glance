@@ -501,6 +501,7 @@ export const copy = {
     wake: "Wake screen",
     caption: "Click or tap anywhere to wake",
     offline: "Offline · showing saved data",
+    signedOut: "Signed out · tap to sign in",
     now: (temp: number, condition: string) => `${temp}° · ${condition}`,
     low: (low: number) => `Low ${low}° overnight`,
     rain: (weekday: string, precip: number) => `${weekday} ${precip}% rain`,
@@ -531,6 +532,17 @@ export const copy = {
       offlineTitle: "You’re offline",
       offlineBody:
         "A link can’t be sent right now. Sending turns back on when the screen reconnects.",
+    },
+    ended: {
+      notice: "This screen was signed out",
+      noticeBody: "Sign in again to keep the calendar, notes and photos up to date.",
+      waiting: (count: number) => `Changes waiting on this screen: ${count}.`,
+      sentAfter: "They’ll be sent after you sign in.",
+      title: "Sign in again",
+      body: "Check your family’s email below. We’ll send a link that signs this screen back in.",
+      switchBefore: "Changes waiting on this screen belong to ",
+      switchAfter: ". They’ll be removed from this screen if a different email signs in.",
+      previousEmail: (email: string) => `Use ${email}`,
     },
     eyebrow: "Sign in",
     sent: {

@@ -210,6 +210,13 @@ describe("FixtureTransport pull", () => {
     });
   });
 
+  it("SIGNIN-13 signin=ended fails as signed out by the server", async () => {
+    expect(await transport({ signin: "ended" }).pull(FIXTURE_CURSOR)).toEqual({
+      ok: false,
+      error: "unauthorized",
+    });
+  });
+
   it("LOAD-02 net=loading never answers", async () => {
     useTimers();
 
@@ -315,6 +322,19 @@ describe("FixtureTransport push", () => {
 
     expect(result).toEqual({ ok: false, error: "network" });
   });
+
+  it("SIGNIN-13 signin=ended keeps the write unsent as signed out by the server", async () => {
+    const result = await transport({ signin: "ended" }).push({
+      seq: 1,
+      entity: "notes",
+      entityId: NOTE.id,
+      op: "put",
+      payload: NOTE,
+      attempts: 0,
+    });
+
+    expect(result).toEqual({ ok: false, error: "unauthorized" });
+  });
 });
 
 describe("FixtureTransport weather", () => {
@@ -327,6 +347,10 @@ describe("FixtureTransport weather", () => {
       ok: true,
       value: FIXTURE_AMBIENT_WEATHER,
     });
+  });
+
+  it("AMB-07 signin=ended still answers, as the saved forecast", async () => {
+    expect((await transport({ signin: "ended" }).weather()).ok).toBe(true);
   });
 
   it("FAIL-01 net=wxerror fails as a server error, not offline", async () => {
