@@ -146,7 +146,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
-| B01 | ⬜ | **DB and runtime:** `server/env.ts`, connection (WAL, foreign keys), `migrate.ts`, `001_init.sql`, `instrumentation.ts` | F05 | spec §7.0, tech §6.4/6.5, D7 |
+| B01 | 🔄 ([#47](https://github.com/vespaiach/glance/pull/47)) | **DB and runtime:** `server/env.ts`, connection (WAL, foreign keys), `migrate.ts`, `001_init.sql`, `instrumentation.ts` | F05 | spec §7.0, tech §6.4/6.5, D7 |
 | B02 | ⬜ | **Auth:** link (rate limit, `pending_id` cookie, time zone), verify, status, name, signout, `requireDisplay`, Origin check, Nodemailer | B01 | SIGNIN-04..12, tech §6.1/6.2, D11, D14 |
 | B03 | ⬜ | **Entity services + routes:** events, notes, settings `PUT`/`DELETE`, version stamping, delete wins, 426 build check, server validation | B02 | SYNC-01/03, tech §5, §6.1 |
 | B04 | ⬜ | **Sync routes:** `/api/sync` pull, `server/bus`, `/api/sync/stream` SSE + 25 s heartbeat | B03 | SYNC-02, tech §5 |
