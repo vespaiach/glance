@@ -11,5 +11,6 @@ export default function nextConfig(phase: string): NextConfig {
   return {
     output: "standalone",
     pageExtensions: demo ? DEMO_PAGE_EXTENSIONS : PAGE_EXTENSIONS,
+    redirects: async () => [{ source: "/", destination: "/today", permanent: false }],
   };
 }

@@ -2,7 +2,7 @@ import { act, render, renderHook, screen, waitFor } from "@testing-library/react
 import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import { useAccountSettings } from "./settings";
+import { DefaultSettingsProvider, useAccountSettings } from "./settings";
 import { shellWrapper } from "./testShell";
 
 let store: Harness;
@@ -46,5 +46,19 @@ describe("SettingsProvider", () => {
     expect(screen.queryByText("ready")).toBeNull();
 
     expect(await screen.findByText("ready")).toBeInTheDocument();
+  });
+});
+
+describe("DefaultSettingsProvider", () => {
+  it("SET-02 signed-out screens use the default settings with fixture overrides", () => {
+    const { result } = renderHook(() => useAccountSettings(), {
+      wrapper: ({ children }) => (
+        <DefaultSettingsProvider overrides={{ season: "winter" }}>
+          {children}
+        </DefaultSettingsProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ ...DEFAULT_SETTINGS, season: "winter" });
   });
 });

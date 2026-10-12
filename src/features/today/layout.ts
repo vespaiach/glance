@@ -1,0 +1,37 @@
+import * as stylex from "@stylexjs/stylex";
+import type { Breakpoint } from "@/domain/breakpoint";
+
+const grids = stylex.create({
+  wide: {
+    gridTemplateColumns: "minmax(300px, 0.95fr) minmax(0, 1.35fr) minmax(320px, 1fr)",
+    gridTemplateAreas: '"hero sched wx" "hero sched notes"',
+    gridTemplateRows: "auto minmax(0, 1fr)",
+    minHeight: "100%",
+  },
+  mid: {
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.3fr)",
+    gridTemplateAreas: '"hero sched" "wx notes"',
+    gridTemplateRows: "auto auto",
+  },
+  narrow: {
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+    gridTemplateAreas: '"hero wx" "sched sched" "notes notes"',
+    gridTemplateRows: "auto",
+  },
+  phone: {
+    gridTemplateColumns: "minmax(0, 1fr)",
+    gridTemplateAreas: '"hero" "wx" "sched" "notes"',
+    gridTemplateRows: "auto",
+  },
+});
+
+export const todayAreas = stylex.create({
+  hero: { gridArea: "hero" },
+  sched: { gridArea: "sched" },
+  wx: { gridArea: "wx" },
+  notes: { gridArea: "notes" },
+});
+
+export function todayLayout(breakpoint: Breakpoint): stylex.StyleXStyles {
+  return grids[breakpoint];
+}

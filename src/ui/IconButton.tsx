@@ -13,6 +13,7 @@ type IconButtonProps = {
   variant?: IconButtonVariant;
   size?: IconButtonSize;
   active?: boolean;
+  current?: "page";
   onClick?: () => void;
   xstyle?: stylex.StyleXStyles;
 };
@@ -61,6 +62,7 @@ export function IconButton({
   variant = "soft",
   size = "md",
   active,
+  current,
   onClick,
   xstyle,
 }: IconButtonProps) {
@@ -68,6 +70,7 @@ export function IconButton({
     <button
       type="button"
       aria-label={label}
+      aria-current={current}
       onClick={onClick}
       {...stylex.props(
         styles.base,

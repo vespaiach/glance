@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useContext, useMemo } from "react";
 import { useSettings } from "@/data/repos";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { AccountSettings } from "@/domain/schemas";
 
 const SettingsContext = createContext<AccountSettings | undefined>(undefined);
@@ -18,6 +19,18 @@ export function SettingsProvider({
   const settings = useMemo(() => saved && { ...saved, ...overrides }, [saved, overrides]);
 
   if (settings === undefined) return null;
+
+  return <SettingsContext value={settings}>{children}</SettingsContext>;
+}
+
+export function DefaultSettingsProvider({
+  overrides,
+  children,
+}: {
+  overrides?: Partial<AccountSettings>;
+  children: ReactNode;
+}) {
+  const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...overrides }), [overrides]);
 
   return <SettingsContext value={settings}>{children}</SettingsContext>;
 }
