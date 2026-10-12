@@ -9,11 +9,19 @@ export const copy = {
     fall: "Fall",
     winter: "Winter",
   } satisfies Record<Season, string>,
+  events: {
+    now: "Now",
+  },
   notes: {
     guestAuthor: "Guest",
     justNow: "Just now",
   },
   weather: {
+    range: {
+      high: "H",
+      low: "L",
+      feelsLike: "Feels like",
+    },
     condition: {
       clear: "Clear",
       mostlyClear: "Mostly clear",

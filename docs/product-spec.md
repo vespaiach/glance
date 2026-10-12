@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Status | Draft v0.11 — DS display components from F08: Clock takes a `Date` and never ticks itself, EventRow `compact` (phone columns) and `nowLabel`, WeatherNow `labels` and no `unit`, weather icons as keys, tappable ForecastDay/StickyNote (§4.2) · v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D19) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
@@ -118,9 +118,9 @@ Rebuild these as typed React components with the props below (taken from `_ds_bu
 
 | Component | Props | Notes |
 |---|---|---|
-| `Clock` | `time, hour12=true, showDate=true, size='xl', align` | Tabular numerals. Must accept a live `Date` |
-| `EventRow` | `start, end, title, location, status: 'past'\|'now'\|'upcoming', dot, onClick` | Past = struck through, grey dot. Now = season fill and NOW pill |
-| `MonthGrid` | `year, month, selected, today, marked[], onSelect, showTitle, cell` | Selected = black. Today = ring. Marked = dot |
+| `Clock` | `time: Date, hour12=true, showDate=true, size: 'xl'\|'lg', align: 'left'\|'center'` | Tabular numerals. `time` is the live `Date` from `useNow()`; the Clock has no timer of its own. Date line "Friday, October 9" |
+| `EventRow` | `start, end, title, location, status: 'past'\|'now'\|'upcoming', dot: Tone, nowLabel, compact, onClick` | Past = struck through, grey dot. Now = season fill and NOW pill (`nowLabel`). `compact` = the phone columns (§5.4). With `onClick` the row is a button |
+| `MonthGrid` | `year, month (0-11), selected, today, marked[], onSelect, showTitle, cell` | Selected = black (`aria-pressed`). Today = ring (`aria-current="date"`). Marked = dot. Day buttons are labelled with the full date |
 | `Button` | `variant: primary\|secondary\|ghost\|accent\|inverse, size: md\|lg, icon, iconRight, fullWidth, disabled` | Always a pill (radius 50) |
 | `IconButton` | `icon, variant: soft\|canvas\|solid\|inverse, size: md\|touch\|lg, label, active` | `md` = 40, `touch` = 56, `lg` = 72 px. `active` = black |
 | `PillTabs` | `options[], value, onChange, size` | Segmented control used for every Settings choice |
@@ -129,15 +129,15 @@ Rebuild these as typed React components with the props below (taken from `_ds_bu
 | `ColorBlock` | `tone: 1-4\|soft, padding, radius` | Never shadowed |
 | `Card` | `variant: hairline\|soft\|canvas\|elevated, title, eyebrow, onClick` | With `onClick` the card is a button |
 | `Banner` | `icon, title, body, actionLabel, onAction, tone` | |
-| `WeatherNow` | `location, temp, unit, condition, icon, high, low, feelsLike, details[], tone=3` | |
-| `ForecastDay` | `day, icon, high, low, precip?, active` | |
-| `StickyNote` | `children, author, time, tone, rotate, width, minHeight, onClick` | Radius 6, shadow-2 |
+| `WeatherNow` | `location, temp, condition, icon, high, low, feelsLike, details[], labels, tone=3` | Temperatures arrive already in the display unit, so there is no `unit` prop (WX-02). `labels` = the "H" / "L" / "Feels like" copy. `tone` also takes `deep` |
+| `ForecastDay` | `day, icon, high, low, precip?, active, onClick?` | With `onClick` the tile is a button |
+| `StickyNote` | `children, author, time, tone: NoteTone, rotate, width, minHeight, onClick` | Radius 6, shadow-2. With `onClick` the note is a button |
 | `Eyebrow`, `Icon` | — | Mono uppercase label. Lucide wrapper |
 | `Ticker` | — | **Not used** in Glance |
 
 New components designed in handoff v2 (not in the DS bundle): **`TimeField`**, **`TimePicker`** (§8.3.1). Other shared pieces the screens need (not in the DS): `Skeleton` (pulse 1.2 s, opacity 0.06–0.1), `EmptyState` (icon · title · body · one action), `SourceFailure` (icon · "{Source} unavailable" · retry countdown · Try again), `Sheet` (modal over a 60% scrim, radius 32, max-width 560), `ColorSwatchPicker`, `OfflinePill`, `SettingsRow`.
 
-Components live in `src/ui/` and are styled only with StyleX. Each accepts an optional `xstyle` prop (a StyleX style) for layout overrides from the caller, in place of the prototype's `style` prop.
+Components live in `src/ui/` and are styled only with StyleX. Each accepts an optional `xstyle` prop (a StyleX style) for layout overrides from the caller, in place of the prototype's `style` prop. `ui` can't import `copy.ts`, so any words a component shows (NOW, H/L) come in as props from the screen. Weather `icon` props take the domain `WeatherIcon` key.
 
 **Acceptance (DS-01):** a dev-only gallery route (`/dev/gallery`, excluded from production builds) renders every component in all 4 seasons, side by side with the DS cards.
 
