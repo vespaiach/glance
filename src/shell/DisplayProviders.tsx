@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 import { type FixtureParams, RepoProvider, useDisplayBoot } from "@/data/repos";
+import { localDateKey } from "@/domain/time";
 import { DEMO_BUILD } from "./demo";
-import { type ShellOptions, useShellSetup } from "./fixtureOptions";
+import { fixtureSheet, type ShellOptions, useShellSetup } from "./fixtureOptions";
 import { IdleProvider } from "./providers/idle";
 import { NetworkProvider } from "./providers/network";
 import { NowProvider, useNowStore } from "./providers/now";
@@ -41,7 +42,7 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
       <SettingsProvider overrides={options.overrides}>
         <SeasonProvider>
           <NetworkProvider pillDelayMs={options.pillDelayMs}>
-            <SheetHost>
+            <SheetHost initial={fixtureSheet(params, localDateKey(get()))}>
               <IdleProvider>{children}</IdleProvider>
             </SheetHost>
           </NetworkProvider>

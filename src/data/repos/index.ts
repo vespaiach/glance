@@ -1,6 +1,7 @@
 export {
   createEventsRepo,
   type EventsRepo,
+  useEvent,
   useEventsInMonth,
   useEventsOnDay,
   useEventsRepo,
@@ -12,6 +13,7 @@ export {
   type DisplayBoot,
   type FixtureParams,
   fixtureParamsFor,
+  fixtureSheetTargets,
   useDisplayBoot,
 } from "./session";
 export { createSettingsRepo, type SettingsRepo, useSettings, useSettingsRepo } from "./settings";

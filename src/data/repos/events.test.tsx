@@ -1,6 +1,12 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { CalendarEvent } from "@/domain/schemas";
-import { createEventsRepo, useEventsInMonth, useEventsOnDay, useHasEvents } from "./events";
+import {
+  createEventsRepo,
+  useEvent,
+  useEventsInMonth,
+  useEventsOnDay,
+  useHasEvents,
+} from "./events";
 import { type Harness, openHarness, synced, TEST_NOW, wrapperFor } from "./testHarness";
 
 const at = (month: number, day: number, hour: number) =>
@@ -113,6 +119,18 @@ describe("event hooks", () => {
     await act(() => createEventsRepo(store).remove(NEXT_DAY.id));
 
     await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([SOCCER.id]));
+  });
+
+  it("EVT-01 useEvent reads one live event and null once it is removed", async () => {
+    await store.db.events.put(synced(SOCCER));
+
+    const { result } = renderHook(() => useEvent(SOCCER.id), { wrapper: wrapperFor(store) });
+
+    await waitFor(() => expect(result.current?.title).toBe("Soccer practice"));
+
+    await act(() => createEventsRepo(store).remove(SOCCER.id));
+
+    await waitFor(() => expect(result.current).toBeNull());
   });
 
   it("CAL-04 useHasEvents is false with no live events and true once one is saved", async () => {

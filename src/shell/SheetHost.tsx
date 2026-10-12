@@ -2,10 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
+import type { FixtureParams } from "@/data/repos";
+
+export type TimeFixture = NonNullable<FixtureParams["time"]>;
 
 export type SheetRequest =
-  | { kind: "event"; id: string }
-  | { kind: "newevent"; day: string }
+  | { kind: "event"; id: string; time?: TimeFixture }
+  | { kind: "newevent"; day: string; time?: TimeFixture }
   | { kind: "note"; id: string }
   | { kind: "newnote" };
 
@@ -17,10 +20,15 @@ export type SheetHostValue = {
 
 const SheetHostContext = createContext<SheetHostValue | undefined>(undefined);
 
-export function SheetHost({ children }: { children: ReactNode }) {
+type SheetHostProps = {
+  initial?: SheetRequest | null;
+  children: ReactNode;
+};
+
+export function SheetHost({ initial = null, children }: SheetHostProps) {
   const pathname = usePathname();
 
-  const [sheet, setSheet] = useState<SheetRequest | null>(null);
+  const [sheet, setSheet] = useState<SheetRequest | null>(initial);
 
   const [shownOn, setShownOn] = useState(pathname);
 
