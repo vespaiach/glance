@@ -158,7 +158,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
-| C01 | 🔄 ([#54](https://github.com/vespaiach/glance/pull/54)) | **HttpTransport:** all methods, XHR upload with progress, build id header, `Result` error mapping | S03, B04, B05, B06 | tech §4.2, §6.3 |
+| C01 | ✅ ([#54](https://github.com/vespaiach/glance/pull/54)) | **HttpTransport:** all methods, XHR upload with progress, build id header, `Result` error mapping | S03, B04, B05, B06 | tech §4.2, §6.3 |
 | C02 | ⬜ | **Sync worker:** `sync.worker.ts`, Comlink, `glance-sync` lock, SSE + 30 s polling, backoff, `versionchange` restart, 401/426 handling in the page | C01, S04 | D19, tech §4.6, §5 |
 | C03 | ⬜ | **Auth wiring:** real sign-in, `navigator.storage.persist()`, 401 → `/signin` with the outbox kept, account switch deletes the old DB, sign-out cleanup | C01, I09 | SIGNIN-11, SIGNIN-13, tech §4.5 Gaps 2/3/5 |
 | C04 | ⬜ | **Service worker:** Serwist precache, navigation/RSC strategies, photo cache + warming, idle update flow | C02, S07 | D16, OFF-06, OFF-07, tech §4.5 |
