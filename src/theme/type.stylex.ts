@@ -1,8 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 
 export const type = stylex.defineVars({
-  fontSans: "'Geist','SF Pro Display',system-ui,helvetica,sans-serif",
-  fontMono: "'Geist Mono','SF Mono',menlo,monospace",
+  fontSans: "var(--font-geist-sans),'SF Pro Display',system-ui,helvetica,sans-serif",
+  fontMono: "var(--font-geist-mono),'SF Mono',menlo,monospace",
   clockSize: "clamp(84px, 7.4vw, 112px)",
   clockWeight: "300",
   clockLh: "0.9",
