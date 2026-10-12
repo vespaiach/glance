@@ -291,3 +291,52 @@ test("WX-07 typing during the search ignores its answer", async () => {
   expect(await savedLocation()).toBeUndefined();
   expect(screen.getByRole("button", { name: "Show weather" })).toBeInTheDocument();
 });
+
+function stubDevicePosition() {
+  vi.stubGlobal("isSecureContext", true);
+  vi.stubGlobal("navigator", {
+    onLine: true,
+    geolocation: {
+      getCurrentPosition: (
+        success: (position: { coords: { latitude: number; longitude: number } }) => void,
+      ) => success({ coords: { latitude: 45.5152, longitude: -122.6784 } }),
+    },
+  });
+}
+
+test("LOC-01 Use my location saves the place found and loads its forecast", async () => {
+  stubDevicePosition();
+  store.locate.mockResolvedValue(ok(PORTLAND));
+
+  renderWeather();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Use my location" }));
+
+  await waitFor(async () => expect(await savedLocation()).toEqual(PORTLAND));
+  expect(store.locate).toHaveBeenCalledWith({ lat: 45.5152, lon: -122.6784 });
+  expect(await screen.findByRole("status", { name: "Loading weather" })).toBeInTheDocument();
+});
+
+test("LOC-03 a lookup the server can't answer keeps the card with the lookup notice", async () => {
+  stubDevicePosition();
+
+  renderWeather();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Use my location" }));
+
+  expect(
+    await screen.findByText("Couldn’t look up this place. Try again, or type a city or ZIP."),
+  ).toBeInTheDocument();
+  expect(await savedLocation()).toBeUndefined();
+});
+
+test("LOC-03 wx=denied opens on the location-off notice without Use my location", async () => {
+  stubDevicePosition();
+
+  renderWeather({ wx: "denied" });
+
+  expect(
+    await screen.findByText("Location is off for this screen. Type a city or ZIP instead."),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Use my location" })).not.toBeInTheDocument();
+});

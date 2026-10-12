@@ -11,7 +11,14 @@ const PORTLANDS: WeatherLocation[] = [
   { name: "Portland", region: "Maine", lat: 43.6591, lon: -70.2568 },
 ];
 
-const SEARCH = { query: "Portland", unknown: "Pordland", matches: PORTLANDS };
+const LOCATED = PORTLANDS[0] as WeatherLocation;
+
+const SEARCH = {
+  query: "Portland",
+  unknown: "Pordland",
+  matches: PORTLANDS,
+  located: { draft: "Portland, OR", place: LOCATED },
+};
 
 const editing = (draft: string): WeatherSetupState => ({ step: "editing", draft });
 
@@ -144,6 +151,113 @@ describe("weather setup reducer", () => {
       step: "choosing",
       draft: "Portland",
       matches: PORTLANDS,
+    });
+  });
+
+  it("LOC-02 Use my location starts locating and keeps the draft", () => {
+    expect(weatherSetupReducer(editing("Port"), { type: "locate" })).toEqual({
+      step: "locating",
+      draft: "Port",
+    });
+  });
+
+  it("LOC-02 Use my location from the list of matches starts locating", () => {
+    const choosing: WeatherSetupState = { step: "choosing", draft: "Portland", matches: PORTLANDS };
+
+    expect(weatherSetupReducer(choosing, { type: "locate" })).toEqual({
+      step: "locating",
+      draft: "Portland",
+    });
+  });
+
+  it("LOC-02 Use my location is ignored while a search runs", () => {
+    const state = searching("Portland");
+
+    expect(weatherSetupReducer(state, { type: "locate" })).toBe(state);
+  });
+
+  it("LOC-02 typing cancels locating", () => {
+    expect(
+      weatherSetupReducer({ step: "locating", draft: "" }, { type: "type", draft: "P" }),
+    ).toEqual(editing("P"));
+  });
+
+  it("LOC-03 a failure returns to the card with a notice and the draft kept", () => {
+    expect(
+      weatherSetupReducer(
+        { step: "locating", draft: "Port" },
+        { type: "locate-failed", reason: "outside" },
+      ),
+    ).toEqual({ step: "editing", draft: "Port", notice: "outside" });
+  });
+
+  it("LOC-03 a failure that arrives after typing is ignored", () => {
+    const state = editing("P");
+
+    expect(weatherSetupReducer(state, { type: "locate-failed", reason: "lookup" })).toBe(state);
+  });
+
+  it("LOC-03 the next keystroke clears the notice", () => {
+    const failed: WeatherSetupState = { step: "editing", draft: "", notice: "denied" };
+
+    expect(weatherSetupReducer(failed, { type: "type", draft: "P" })).toEqual(editing("P"));
+  });
+
+  it("tech§4.4 a failed save shows the error and keeps the draft and the place", () => {
+    expect(
+      weatherSetupReducer({ step: "locating", draft: "" }, { type: "save-failed", place: LOCATED }),
+    ).toEqual({ step: "editing", draft: "", error: "save-failed", place: LOCATED });
+  });
+
+  it("tech§4.4 the primary after a failed save clears the error and keeps the place", () => {
+    const failed: WeatherSetupState = {
+      step: "editing",
+      draft: "Portland, OR",
+      error: "save-failed",
+      place: LOCATED,
+    };
+
+    expect(weatherSetupReducer(failed, { type: "submit" })).toEqual({
+      step: "editing",
+      draft: "Portland, OR",
+      place: LOCATED,
+    });
+  });
+
+  it("tech§4.4 typing after a failed save drops the kept place", () => {
+    const failed: WeatherSetupState = {
+      step: "editing",
+      draft: "Portland, OR",
+      error: "save-failed",
+      place: LOCATED,
+    };
+
+    expect(weatherSetupReducer(failed, { type: "type", draft: "Portland, O" })).toEqual(
+      editing("Portland, O"),
+    );
+  });
+
+  it("LOC-02 wx=locating starts locating with an empty field", () => {
+    expect(initialWeatherSetup("locating", SEARCH)).toEqual({ step: "locating", draft: "" });
+  });
+
+  it.each(["denied", "no-position", "outside", "lookup"] as const)(
+    "LOC-03 wx=%s starts on that failure's notice",
+    (reason) => {
+      expect(initialWeatherSetup(reason, SEARCH)).toEqual({
+        step: "editing",
+        draft: "",
+        notice: reason,
+      });
+    },
+  );
+
+  it("tech§4.4 wx=savefail starts on the failed save of the found place", () => {
+    expect(initialWeatherSetup("savefail", SEARCH)).toEqual({
+      step: "editing",
+      draft: "Portland, OR",
+      error: "save-failed",
+      place: LOCATED,
     });
   });
 });
