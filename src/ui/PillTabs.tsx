@@ -8,6 +8,7 @@ type PillTabsProps<T extends string> = {
   options: readonly PillOption<T>[];
   value: T;
   onChange: (value: T) => void;
+  label?: string;
   size?: "md" | "lg";
   xstyle?: stylex.StyleXStyles;
 };
@@ -60,11 +61,12 @@ export function PillTabs<T extends string>({
   options,
   value,
   onChange,
+  label,
   size = "md",
   xstyle,
 }: PillTabsProps<T>) {
   return (
-    <div role="tablist" {...stylex.props(styles.list, xstyle)}>
+    <div role="tablist" aria-label={label} {...stylex.props(styles.list, xstyle)}>
       {options.map(normalize).map((option) => {
         const selected = option.value === value;
 

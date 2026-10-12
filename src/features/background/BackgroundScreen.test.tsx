@@ -1,0 +1,114 @@
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import type { FixtureParams } from "@/data/repos";
+import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import type { Photo } from "@/domain/schemas";
+import { FixtureParamsProvider } from "@/shell/fixtureOptions";
+import { NetworkProvider } from "@/shell/providers/network";
+import { shellWrapper } from "@/shell/providers/testShell";
+import { BackgroundScreen } from "./BackgroundScreen";
+
+const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigation.push }) }));
+
+const NOW = new Date(2026, 9, 9, 10, 41);
+
+const photo = (n: number, title: string, createdAt: string): Photo => ({
+  id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
+  title,
+  takenOn: "2026-09-06",
+  createdAt,
+});
+
+const FOREST = photo(1, "Forest Park trail", "2026-10-05T19:00:00.000Z");
+
+const COAST = photo(2, "Cannon Beach", "2026-10-05T19:05:00.000Z");
+
+let store: Harness;
+
+beforeEach(() => {
+  store = openHarness("glance-background-screen-test");
+
+  navigation.push.mockReset();
+
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+});
+
+afterEach(async () => {
+  cleanup();
+  vi.unstubAllGlobals();
+
+  await store.close();
+});
+
+function renderBackground(params: FixtureParams = {}) {
+  const Shell = shellWrapper(store, { frozenAt: NOW });
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <Shell>
+      <NetworkProvider>
+        <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
+      </NetworkProvider>
+    </Shell>
+  );
+
+  return render(<BackgroundScreen />, { wrapper });
+}
+
+test("BG-02 the newest upload is listed first", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+
+  renderBackground();
+
+  await screen.findByRole("button", { name: "Use Cannon Beach as background" });
+
+  expect(
+    screen
+      .getAllByRole("button", { name: /^Use .* as background$/ })
+      .map((thumb) => thumb.ariaLabel),
+  ).toEqual(["Use Cannon Beach as background", "Use Forest Park trail as background"]);
+});
+
+test("BG-03 tapping a thumb saves it as the background in Photo mode", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+
+  renderBackground();
+
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Use Forest Park trail as background" }),
+  );
+
+  await waitFor(async () =>
+    expect((await store.db.settings.get(store.accountId))?.background).toMatchObject({
+      mode: "photo",
+      photoId: FOREST.id,
+    }),
+  );
+  expect(
+    await screen.findByText(
+      "Forest Park trail is the background on every screen. Panels stay solid on top.",
+    ),
+  ).toBeInTheDocument();
+});
+
+test("BG-02 upload=one puts the uploading tile first", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderBackground({ upload: "one" });
+
+  expect(await screen.findByRole("progressbar")).toBeInTheDocument();
+});
+
+test("BG-01 the back link opens Settings", async () => {
+  renderBackground();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Settings" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/settings");
+});

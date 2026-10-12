@@ -1,4 +1,5 @@
+export { PendingUpload } from "./components/PendingUpload";
 export { PhotosView } from "./components/PhotosView";
 export { PhotosScreen } from "./PhotosScreen";
-export { photoMeta } from "./slideshow";
-export type { UploadTile } from "./uploads";
+export { newestFirst, photoMeta } from "./slideshow";
+export { initialUploads, type UploadTile } from "./uploads";

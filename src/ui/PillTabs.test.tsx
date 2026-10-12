@@ -33,3 +33,9 @@ test("spec§4.2 PillTabs accepts plain strings as options", async () => {
   expect(screen.getByRole("tab", { name: "12h" })).toHaveAttribute("aria-selected", "true");
   expect(onChange).toHaveBeenCalledWith("24h");
 });
+
+test("A11Y PillTabs names its tab list with the label", () => {
+  render(<PillTabs label="Temperature" options={units} value="c" onChange={() => {}} />);
+
+  expect(screen.getByRole("tablist", { name: "Temperature" })).toBeInTheDocument();
+});

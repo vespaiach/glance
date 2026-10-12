@@ -1,0 +1,179 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
+import type { Photo } from "@/domain/schemas";
+import { SettingsView } from "./SettingsView";
+
+type Props = ComponentProps<typeof SettingsView>;
+
+const COAST: Photo = {
+  id: "0195f0a0-0000-7000-8000-000000000001",
+  title: "Cannon Beach",
+  takenOn: "2026-09-06",
+  createdAt: "2026-10-05T19:00:00.000Z",
+};
+
+function renderView(overrides: Partial<Props> = {}) {
+  const props: Props = {
+    account: { name: "Maria", email: "maria@example.com" },
+    settings: DEFAULT_SETTINGS,
+    season: "fall",
+    background: { mode: "season" },
+    breakpoint: "wide",
+    onChange: vi.fn(),
+    onOpenBackground: vi.fn(),
+    onPreviewAmbient: vi.fn(),
+    onSignOut: vi.fn(),
+    ...overrides,
+  };
+
+  render(<SettingsView {...props} />);
+
+  return props;
+}
+
+function tabs(name: string) {
+  return within(screen.getByRole("tablist", { name }));
+}
+
+function selectedTab(name: string) {
+  return tabs(name)
+    .getAllByRole("tab")
+    .find((tab) => tab.ariaSelected === "true")?.textContent;
+}
+
+test("SET-01 the header names the signed-in person and email", () => {
+  renderView();
+
+  expect(screen.getByText("Screen settings")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+  expect(screen.getByText(/^Signed in as/).textContent).toBe(
+    "Signed in as Maria · maria@example.com",
+  );
+});
+
+test("SET-02 Auto follows the month and names the season now", () => {
+  renderView();
+
+  expect(selectedTab("Season")).toBe("Auto");
+  expect(screen.getByText("Follows the month · now Fall")).toBeInTheDocument();
+});
+
+test("SET-02 a fixed season reads Fixed to that season", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, season: "winter" }, season: "winter" });
+
+  expect(selectedTab("Season")).toBe("Winter");
+  expect(screen.getByText("Fixed to Winter")).toBeInTheDocument();
+});
+
+test("SET-02 choosing a season saves it", async () => {
+  const props = renderView();
+
+  await userEvent.click(tabs("Season").getByRole("tab", { name: "Spring" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ season: "spring" });
+});
+
+test.each([
+  [{ mode: "season" }, "Season color"],
+  [{ mode: "photo", photo: COAST }, "Photo · Cannon Beach"],
+  [{ mode: "slideshow", photo: COAST, rotate: "daily" }, "Slideshow · daily"],
+] as const)("SET-03 the Background row summarizes %o as %s", (background, summary) => {
+  renderView({ background });
+
+  expect(screen.getByRole("button", { name: /^Background/ })).toHaveTextContent(summary);
+});
+
+test("SET-03 the Background row opens the Background page", async () => {
+  const props = renderView();
+
+  await userEvent.click(screen.getByRole("button", { name: /Background/ }));
+
+  expect(props.onOpenBackground).toHaveBeenCalled();
+});
+
+test("SET-04 the clock tabs save 12-hour or 24-hour", async () => {
+  const props = renderView();
+
+  expect(selectedTab("Clock")).toBe("12-hour");
+  expect(screen.getByText("Used for every time on the screen")).toBeInTheDocument();
+
+  await userEvent.click(tabs("Clock").getByRole("tab", { name: "24-hour" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ clock: "24h" });
+});
+
+test("SET-05 the temperature tabs save Fahrenheit or Celsius", async () => {
+  const props = renderView();
+
+  expect(selectedTab("Temperature")).toBe("Fahrenheit");
+  expect(screen.getByText("Weather is shown without a unit letter")).toBeInTheDocument();
+
+  await userEvent.click(tabs("Temperature").getByRole("tab", { name: "Celsius" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
+});
+
+test("SET-06 the Ambient tile shows the hours in the clock format and previews Ambient", async () => {
+  const props = renderView();
+
+  expect(screen.getByText("Ambient screen")).toBeInTheDocument();
+  expect(screen.getByText("6:00 PM – 7:30 AM")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Preview" }));
+
+  expect(props.onPreviewAmbient).toHaveBeenCalled();
+});
+
+test("SET-06 the Ambient hours follow the 24-hour clock", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, clock: "24h" } });
+
+  expect(screen.getByText("18:00 – 07:30")).toBeInTheDocument();
+});
+
+test("SET-07 Back to Today after saves the idle timeout, Never as none", async () => {
+  const props = renderView();
+
+  expect(selectedTab("Back to Today after")).toBe("3 min");
+
+  await userEvent.click(tabs("Back to Today after").getByRole("tab", { name: "1 min" }));
+  await userEvent.click(tabs("Back to Today after").getByRole("tab", { name: "Never" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: 60 });
+  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: null });
+});
+
+test("SET-07 Remove notes after saves the note expiry, Never as none", async () => {
+  const props = renderView({ settings: { ...DEFAULT_SETTINGS, noteExpiry: null } });
+
+  expect(selectedTab("Remove notes after")).toBe("Never");
+
+  await userEvent.click(tabs("Remove notes after").getByRole("tab", { name: "1 day" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: "1d" });
+});
+
+test("SET-08 the account card shows the initial, name and email and signs out", async () => {
+  const props = renderView();
+
+  const card = within(screen.getByRole("region", { name: "Account" }));
+
+  expect(card.getByText("M")).toBeInTheDocument();
+  expect(card.getByText("Maria")).toBeInTheDocument();
+  expect(card.getByText("maria@example.com")).toBeInTheDocument();
+  expect(card.getByText("Signs out this screen only.")).toBeInTheDocument();
+
+  await userEvent.click(card.getByRole("button", { name: "Sign out" }));
+
+  expect(props.onSignOut).toHaveBeenCalled();
+});
+
+test("SET-08 with no name yet the card falls back to the email", () => {
+  renderView({ account: { name: null, email: "maria@example.com" } });
+
+  const card = within(screen.getByRole("region", { name: "Account" }));
+
+  expect(card.getByText("m")).toBeInTheDocument();
+  expect(screen.getByText(/^Signed in as/).textContent).toBe("Signed in as maria@example.com");
+});

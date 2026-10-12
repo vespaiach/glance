@@ -82,6 +82,7 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
   const store = {
     db,
     accountId: FIXTURE_ACCOUNT.id,
+    account: FIXTURE_ACCOUNT,
     now,
     nudge: host.nudge,
     photoSrc: fixturePhotoSrc,
@@ -102,6 +103,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
   const store = {
     db,
     accountId: account.accountId,
+    account: { name: account.name, email: account.email },
     now,
     nudge: noNudge,
     photoSrc: apiPhotoSrc,
