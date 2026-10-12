@@ -12,7 +12,7 @@ test("SET-04 SettingsRow shows its title, description and control", () => {
 
   expect(screen.getByText("Clock")).toBeInTheDocument();
   expect(screen.getByText("Used for every time on the screen")).toBeInTheDocument();
-  expect(screen.getByRole("tablist")).toBeInTheDocument();
+  expect(screen.getByRole("group")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Clock/ })).not.toBeInTheDocument();
 });
 

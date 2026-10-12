@@ -97,6 +97,19 @@ test("spec§8.6 the panel counts the photos and lists a thumb per photo with its
   );
 });
 
+test("A11Y-02 the featured photo's thumb is pressed", () => {
+  renderView({ selected: 2 });
+
+  expect(screen.getByRole("button", { name: "Show Cannon Beach" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: "Show Apple picking" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+});
+
 test("PHOTO-01 tapping a thumb features it", async () => {
   const props = renderView();
 

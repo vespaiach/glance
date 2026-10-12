@@ -12,7 +12,7 @@ export const summer = stylex.createTheme(season, {
   deep: colors.blockSea,
   onDeep: colors.white,
   accent: colors.accentTangerine,
-  onAccent: colors.white,
+  onAccent: colors.black,
 });
 
 export const fall = stylex.createTheme(season, {
@@ -24,7 +24,7 @@ export const fall = stylex.createTheme(season, {
   deep: colors.blockBark,
   onDeep: colors.white,
   accent: colors.accentEmber,
-  onAccent: colors.white,
+  onAccent: colors.black,
 });
 
 export const winter = stylex.createTheme(season, {

@@ -10,6 +10,7 @@ import { weatherIcons } from "./weatherIcons";
 type ForecastDayProps = {
   day: string;
   icon: WeatherIcon;
+  iconLabel?: string;
   high: number;
   low: number;
   precip?: number;
@@ -74,6 +75,7 @@ const styles = stylex.create({
 export function ForecastDay({
   day,
   icon,
+  iconLabel,
   high,
   low,
   precip,
@@ -86,7 +88,7 @@ export function ForecastDay({
   const content = (
     <>
       <span {...stylex.props(styles.day)}>{day}</span>
-      <Icon icon={weatherIcons[icon]} size={48} />
+      <Icon icon={weatherIcons[icon]} size={48} label={iconLabel} />
       <span {...stylex.props(styles.temps)}>
         <span {...stylex.props(styles.high)}>{high}°</span>
         <span {...stylex.props(styles.low)}>{low}°</span>

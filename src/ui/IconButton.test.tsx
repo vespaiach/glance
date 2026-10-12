@@ -34,3 +34,17 @@ test("A11Y IconButton with current marks itself as the current page", () => {
 
   expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-current", "page");
 });
+
+test("A11Y-02 IconButton with active reports its pressed state", () => {
+  render(
+    <>
+      <IconButton icon={Settings} label="On" active />
+      <IconButton icon={Settings} label="Off" active={false} />
+      <IconButton icon={Settings} label="Plain" />
+    </>,
+  );
+
+  expect(screen.getByRole("button", { name: "On" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Off" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.getByRole("button", { name: "Plain" })).not.toHaveAttribute("aria-pressed");
+});

@@ -71,6 +71,7 @@ export function IconButton({
       type="button"
       aria-label={label}
       aria-current={current}
+      aria-pressed={active}
       onClick={onClick}
       {...stylex.props(
         styles.base,

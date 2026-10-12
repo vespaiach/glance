@@ -51,8 +51,8 @@ test("TPK-03 TimePicker is a group named for its field with a '{label} · {time}
 test("TPK-03 12-hour TimePicker shows AM/PM tabs with the current half selected", () => {
   render(<TimePicker {...starts} value={at(14, 30)} />);
 
-  expect(screen.getByRole("tab", { name: "PM" })).toHaveAttribute("aria-selected", "true");
-  expect(screen.getByRole("tab", { name: "AM" })).toHaveAttribute("aria-selected", "false");
+  expect(screen.getByRole("button", { name: "PM" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "AM" })).toHaveAttribute("aria-pressed", "false");
 });
 
 test("TPK-03 12-hour hour grid reads 12, 1 … 11 and presses the current hour", () => {
@@ -84,12 +84,12 @@ test("TPK-03 12-hour hour grid reads 12, 1 … 11 and presses the current hour",
   );
 });
 
-test("TPK-03 24-hour TimePicker has no AM/PM tabs and an hour grid of 00 … 23", () => {
+test("TPK-03 24-hour TimePicker has no AM/PM buttons and an hour grid of 00 … 23", () => {
   render(<TimePicker {...starts} clock="24h" value={at(9, 5)} />);
 
   const cells = within(hourGroup()).getAllByRole("button");
 
-  expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "AM" })).not.toBeInTheDocument();
   expect(cells).toHaveLength(24);
   expect(cells[0]).toHaveTextContent("00");
   expect(cells[23]).toHaveTextContent("23");
@@ -153,7 +153,7 @@ test("TPK-03 tapping AM keeps the clock hour and minutes", async () => {
   const onChange = vi.fn();
   render(<TimePicker {...starts} value={at(14, 30)} onChange={onChange} />);
 
-  await userEvent.click(screen.getByRole("tab", { name: "AM" }));
+  await userEvent.click(screen.getByRole("button", { name: "AM" }));
 
   expect(onChange).toHaveBeenCalledWith(at(2, 30));
 });

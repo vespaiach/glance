@@ -124,6 +124,7 @@ function Thumb({ photo, src, selected, onSelect }: ThumbProps) {
     <button
       type="button"
       aria-label={copy.photos.show(photo.title)}
+      aria-pressed={selected}
       onClick={onSelect}
       {...stylex.props(styles.thumb)}
     >

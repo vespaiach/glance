@@ -268,3 +268,33 @@ test("TPK-09 offline Save for later saves the same way", async () => {
 
   expect(onSave).toHaveBeenCalledWith(DRAFT);
 });
+
+async function tabOrder(count: number) {
+  const visited: Element[] = [];
+
+  for (let step = 0; step < count; step += 1) {
+    await userEvent.tab();
+    visited.push(document.activeElement as Element);
+  }
+
+  return visited;
+}
+
+test("A11Y-04 Tab moves through Close, the fields in visual order, the swatches, then the actions, and wraps", async () => {
+  renderSheet();
+
+  const swatches = within(screen.getByRole("group", { name: "Color" })).getAllByRole("button");
+
+  expect(await tabOrder(15)).toEqual([
+    screen.getByRole("button", { name: "Close" }),
+    screen.getByLabelText("Title"),
+    screen.getByRole("button", { name: /^Starts/ }),
+    screen.getByRole("button", { name: /^Ends/ }),
+    screen.getByLabelText("Where"),
+    ...swatches,
+    screen.getByRole("button", { name: "Delete" }),
+    screen.getByRole("button", { name: "Cancel" }),
+    screen.getByRole("button", { name: "Save" }),
+    screen.getByRole("button", { name: "Close" }),
+  ]);
+});
