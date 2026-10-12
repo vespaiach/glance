@@ -235,6 +235,20 @@ describe("triggers", () => {
     await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(2));
   });
 
+  it("tech§5 pulls when the stream first opens after a start that couldn't reach the server", async () => {
+    useTimers();
+
+    const transport = fakeTransport();
+
+    transport.pull.mockImplementationOnce(async () => err<TransportError>("network"));
+
+    const { streams } = await started({ transport });
+
+    open(streams.opened[0]);
+
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(2));
+  });
+
   it("SYNC-02 polls every 30 s while the stream is closed, and not while it is open", async () => {
     useTimers();
 
