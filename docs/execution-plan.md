@@ -152,7 +152,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | B04 | ✅ ([#50](https://github.com/vespaiach/glance/pull/50)) | **Sync routes:** `/api/sync` pull, `server/bus`, `/api/sync/stream` SSE + 25 s heartbeat | B03 | SYNC-02, tech §5 |
 | B05 | ✅ ([#51](https://github.com/vespaiach/glance/pull/51)) | **Photos:** streamed `POST`, size/type checks, `sharp` variants, EXIF date, file route `?v=` | B03 | PHOTO-04, D12, tech §6.3 |
 | B06 | ✅ ([#52](https://github.com/vespaiach/glance/pull/52)) | **Weather:** Open-Meteo adapter, per-account cache (15 min), `/api/weather`, `/api/weather/places` | B02 | WX-01..09 data, D13 |
-| B07 | ⬜ | **Jobs:** note expiry (account time zone), link cleanup, nightly backup | B03 | NOTE-08, SIGNIN-12, tech §6.4 |
+| B07 | 🔄 ([#53](https://github.com/vespaiach/glance/pull/53)) | **Jobs:** note expiry (account time zone), link cleanup, nightly backup | B03 | NOTE-08, SIGNIN-12, tech §6.4 |
 
 ### Client integration
 
