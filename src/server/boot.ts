@@ -1,6 +1,7 @@
 import "server-only";
 import { getDb } from "./db/connection";
 import { MIGRATIONS_DIR, migrate, readMigrations } from "./db/migrate";
+import { startJobs } from "./jobs";
 
 export function bootServer(): void {
   try {
@@ -9,4 +10,6 @@ export function bootServer(): void {
     console.error(error);
     process.exit(1);
   }
+
+  startJobs();
 }
