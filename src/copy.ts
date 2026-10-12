@@ -177,6 +177,7 @@ export const copy = {
       close: "Close",
       message: "Message",
       messagePlaceholder: "Leave a note for the family",
+      writeMessage: "Write a message",
       name: "Your name",
       namePlaceholder: "Optional",
       color: "Color",
