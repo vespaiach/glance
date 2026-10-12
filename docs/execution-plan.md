@@ -202,5 +202,5 @@ The location sets the weather and the screen's time zone (spec §9.9). L01–L05
 
 | ID | Status | Item | Blocks | Fallback |
 |---|---|---|---|---|
-| D01 | ⬜ | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | Final SIGNIN-13 screen (follow-up to C03) | SIGNIN-01 form as-is (spec §8.1) |
-| D02 | ⬜ | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |
+| D01 | 🔄 ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | Final SIGNIN-13 screen (follow-up to C03) | SIGNIN-01 form as-is (spec §8.1) |
+| D02 | 🔄 ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |
