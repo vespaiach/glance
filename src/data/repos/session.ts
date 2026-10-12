@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { err } from "@/domain/result";
+import type { Account } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_NEW_NOTE_DRAFT,
@@ -12,8 +13,13 @@ import {
 } from "@/fixtures/data";
 import { type FixtureParams, parseFixtureParams } from "@/fixtures/params";
 import { accountDbName, FIXTURE_DB_NAME, openGlanceDb } from "../db";
-import { openMetaDb, readSignedInAccount } from "../meta";
-import { createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
+import {
+  clearSignedInAccount,
+  openMetaDb,
+  readSignedInAccount,
+  saveSignedInAccount,
+} from "../meta";
+import { createFixtureAuth, createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
 import { createInlineSyncHost } from "../sync/host";
 import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
@@ -34,9 +40,10 @@ export const fixtureWeatherSearch = {
 
 export const fixtureUploads = FIXTURE_UPLOADS;
 
-export const fixtureSignIn = {
-  email: FIXTURE_ACCOUNT.email,
-  name: FIXTURE_ACCOUNT.name ?? "",
+export const fixtureSignIn = { ...FIXTURE_ACCOUNT, name: FIXTURE_ACCOUNT.name ?? "" };
+
+export type SignInAuth = Pick<Transport["auth"], "link" | "status" | "name"> & {
+  remember(account: Account): Promise<void>;
 };
 
 export type DisplayBoot =
@@ -53,6 +60,41 @@ const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {
 const noNudge = () => {};
 
 const notConnected = async () => err("network" as const);
+
+const offlineAuth: Transport["auth"] = {
+  link: notConnected,
+  status: notConnected,
+  name: notConnected,
+  signout: notConnected,
+};
+
+async function rememberSignedIn(account: Account): Promise<void> {
+  const meta = openMetaDb();
+
+  const entry = { accountId: account.id, name: account.name, email: account.email };
+
+  await saveSignedInAccount(meta, entry).finally(() => meta.close());
+}
+
+async function forgetSignedIn(): Promise<void> {
+  const meta = openMetaDb();
+
+  await clearSignedInAccount(meta).finally(() => meta.close());
+}
+
+function signOutWith(signout: Transport["auth"]["signout"]) {
+  return async () => {
+    await signout();
+
+    await forgetSignedIn();
+  };
+}
+
+export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
+  const auth = demo ? createFixtureAuth(params) : offlineAuth;
+
+  return { link: auth.link, status: auth.status, name: auth.name, remember: rememberSignedIn };
+}
 
 const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
   fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
@@ -110,6 +152,7 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
     now,
     nudge: host.nudge,
     places: transport.places,
+    signOut: signOutWith(transport.auth.signout),
     ...keepUploadedImages(transport),
   };
 
@@ -134,6 +177,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     photoSrc: apiPhotoSrc,
     upload: notConnected,
     places: notConnected,
+    signOut: signOutWith(offlineAuth.signout),
   };
 
   return { boot: { kind: "ready", store }, close: () => db.close() };

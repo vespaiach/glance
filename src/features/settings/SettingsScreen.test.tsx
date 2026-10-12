@@ -8,9 +8,14 @@ import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { SettingsScreen } from "./SettingsScreen";
 
-const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
+const navigation = vi.hoisted(() => ({
+  push: vi.fn<(path: string) => void>(),
+  replace: vi.fn<(path: string) => void>(),
+}));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigation.push }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: navigation.push, replace: navigation.replace }),
+}));
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
@@ -27,6 +32,7 @@ beforeEach(() => {
   store = openHarness("glance-settings-screen-test");
 
   navigation.push.mockReset();
+  navigation.replace.mockReset();
 
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
@@ -98,4 +104,13 @@ test("SET-06 Preview opens Ambient", async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Preview" }));
 
   expect(navigation.push).toHaveBeenCalledWith("/ambient");
+});
+
+test("SIGNIN-11 Sign out signs this screen out and returns to the email form", async () => {
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+
+  expect(store.signOut).toHaveBeenCalledOnce();
+  await waitFor(() => expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/signin"));
 });

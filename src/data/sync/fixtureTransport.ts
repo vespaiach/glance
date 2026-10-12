@@ -109,6 +109,11 @@ function isOffline(params: FixtureParams): boolean {
   return params.net === "offline" || params.signin === "offline" || params.upload === "offline";
 }
 
+function onlineOnly(offline: boolean) {
+  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
+    offline ? err<TransportError>("network") : answer();
+}
+
 function authStatus(params: FixtureParams): AuthStatus {
   if (params.signin === "phone") return { state: "needs-name-elsewhere" };
 
@@ -162,6 +167,22 @@ async function reportProgress(onProgress: (percent: number) => void): Promise<vo
   }
 }
 
+export function createFixtureAuth(params: FixtureParams): Transport["auth"] {
+  const online = onlineOnly(isOffline(params));
+
+  return {
+    link: () =>
+      online(async () => {
+        await wait(SIGN_IN_DELAY_MS);
+
+        return ok(undefined);
+      }),
+    status: () => online(async () => ok(authStatus(params))),
+    name: (name) => online(async () => ok({ ...FIXTURE_ACCOUNT, name: name.trim() })),
+    signout: () => online(async () => ok(undefined)),
+  };
+}
+
 export function createFixtureTransport({ db, params, now }: Options): Transport {
   const offline = isOffline(params);
 
@@ -175,8 +196,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
     return { updatedAt: now().toISOString(), version };
   };
 
-  const online = async <T>(answer: () => Promise<Result<T, TransportError>>) =>
-    offline ? err<TransportError>("network") : answer();
+  const online = onlineOnly(offline);
 
   const uploaded = (file: File): StoredPhoto => ({
     id: crypto.randomUUID(),
@@ -202,17 +222,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
 
         return ok(matchPlaces(query));
       }),
-    auth: {
-      link: () =>
-        online(async () => {
-          await wait(SIGN_IN_DELAY_MS);
-
-          return ok(undefined);
-        }),
-      status: () => online(async () => ok(authStatus(params))),
-      name: (name) => online(async () => ok({ ...FIXTURE_ACCOUNT, name: name.trim() })),
-      signout: () => online(async () => ok(undefined)),
-    },
+    auth: createFixtureAuth(params),
     upload: async (file, onProgress): Promise<Result<StoredPhoto, UploadError>> => {
       const problem = uploadProblem(file);
 

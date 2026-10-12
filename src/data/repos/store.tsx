@@ -16,6 +16,7 @@ export type RepoStore = {
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   upload: Transport["upload"];
   places: Transport["places"];
+  signOut: () => Promise<void>;
 };
 
 const RepoContext = createContext<RepoStore | undefined>(undefined);
@@ -34,4 +35,8 @@ export function useRepoStore(): RepoStore {
 
 export function useAccount(): StoreAccount {
   return useRepoStore().account;
+}
+
+export function useSignOut(): RepoStore["signOut"] {
+  return useRepoStore().signOut;
 }

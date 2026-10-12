@@ -1,8 +1,18 @@
 import { initialSignIn, type SignInState, signInReducer } from "./signIn";
 
-const ACCOUNT = { email: "maria@example.com", name: "Maria" };
+const ACCOUNT = {
+  id: "0195f0a0-0000-7000-8000-00000000000a",
+  email: "maria@example.com",
+  name: "Maria",
+};
 
 const form = (email: string): SignInState => ({ step: "form", email });
+
+const sending: SignInState = { step: "sending", email: "maria@example.com" };
+
+const sent: SignInState = { step: "sent", email: "maria@example.com" };
+
+const phone: SignInState = { step: "phone", email: "maria@example.com" };
 
 describe("sign-in reducer", () => {
   it("SIGNIN-01 starts on the empty email form", () => {
@@ -113,6 +123,114 @@ describe("sign-in reducer", () => {
       step: "name",
       email: "maria@example.com",
       draft: "M",
+    });
+  });
+
+  it("SIGNIN-04 the server accepting the link opens Check your email", () => {
+    expect(signInReducer(sending, { type: "link-sent" })).toEqual(sent);
+  });
+
+  it("SIGNIN-03 a failed send returns to the form with the email kept", () => {
+    expect(signInReducer(sending, { type: "link-failed" })).toEqual({
+      step: "form",
+      email: "maria@example.com",
+      error: "failed",
+    });
+  });
+
+  it("SIGNIN-03 link answers are ignored outside Sending", () => {
+    const typing = form("ana@example.com");
+
+    expect(signInReducer(typing, { type: "link-sent" })).toBe(typing);
+    expect(signInReducer(typing, { type: "link-failed" })).toBe(typing);
+  });
+
+  it("SIGNIN-04 a waiting answer keeps Check your email", () => {
+    expect(signInReducer(sent, { type: "status", status: { state: "waiting" } })).toBe(sent);
+  });
+
+  it("SIGNIN-08 an expired answer shows the expired waiting screen", () => {
+    expect(signInReducer(sent, { type: "status", status: { state: "expired" } })).toEqual({
+      step: "expired",
+      email: "maria@example.com",
+      onLink: false,
+    });
+  });
+
+  it("SIGNIN-07 a link opened elsewhere on a new account shows Finish on your phone", () => {
+    expect(
+      signInReducer(sent, { type: "status", status: { state: "needs-name-elsewhere" } }),
+    ).toEqual({ step: "phone", email: "maria@example.com" });
+  });
+
+  it.each([sent, phone])("SIGNIN-09 a signed-in answer welcomes the account ($step)", (state) => {
+    const status = { state: "signed-in", account: ACCOUNT, returning: true } as const;
+
+    expect(signInReducer(state, { type: "status", status })).toEqual({
+      step: "done",
+      name: "Maria",
+      returning: true,
+    });
+  });
+
+  it("SIGNIN-04 status answers are ignored once the person left the waiting screen", () => {
+    const typing = form("maria@example.com");
+
+    expect(signInReducer(typing, { type: "status", status: { state: "expired" } })).toBe(typing);
+  });
+
+  it("SIGNIN-06 the link opened on this screen for a new email asks for a name", () => {
+    expect(signInReducer(sent, { type: "opened-link" })).toEqual({
+      step: "name",
+      email: "maria@example.com",
+      draft: "",
+    });
+  });
+
+  it("SIGNIN-06 Continue with a name starts saving it", () => {
+    const naming: SignInState = { step: "name", email: "maria@example.com", draft: "Ana" };
+
+    expect(signInReducer(naming, { type: "submit-name" })).toEqual({ ...naming, saving: true });
+  });
+
+  it("SIGNIN-06 the name can't be edited while it saves", () => {
+    const saving: SignInState = {
+      step: "name",
+      email: "maria@example.com",
+      draft: "Ana",
+      saving: true,
+    };
+
+    expect(signInReducer(saving, { type: "name", draft: "x" })).toBe(saving);
+    expect(signInReducer(saving, { type: "submit-name" })).toBe(saving);
+  });
+
+  it("SIGNIN-09 a saved name welcomes the new account", () => {
+    const saving: SignInState = {
+      step: "name",
+      email: "ana@example.com",
+      draft: "Ana Lee",
+      saving: true,
+    };
+
+    expect(
+      signInReducer(saving, { type: "named", account: { ...ACCOUNT, name: "Ana Lee" } }),
+    ).toEqual({ step: "done", name: "Ana Lee", returning: false });
+  });
+
+  it("SIGNIN-06 a failed name save keeps the name and says so", () => {
+    const saving: SignInState = {
+      step: "name",
+      email: "ana@example.com",
+      draft: "Ana",
+      saving: true,
+    };
+
+    expect(signInReducer(saving, { type: "name-failed" })).toEqual({
+      step: "name",
+      email: "ana@example.com",
+      draft: "Ana",
+      error: "failed",
     });
   });
 

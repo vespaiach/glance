@@ -1,8 +1,8 @@
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW, FIXTURE_PHOTOS } from "@/fixtures/data";
 import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME } from "../db";
-import { deleteMetaDb, openMetaDb, saveSignedInAccount } from "../meta";
-import { type DisplayBoot, fixtureParamsFor, useDisplayBoot } from "./session";
+import { deleteMetaDb, openMetaDb, readSignedInAccount, saveSignedInAccount } from "../meta";
+import { type DisplayBoot, fixtureParamsFor, signInAuthFor, useDisplayBoot } from "./session";
 
 const ACCOUNT = {
   accountId: "0195f0a0-0000-7000-8000-00000000000a",
@@ -102,6 +102,75 @@ describe("useDisplayBoot", () => {
     unmount();
 
     await waitFor(() => expect(store.db.isOpen()).toBe(false));
+  });
+});
+
+async function storedAccount() {
+  const meta = openMetaDb();
+
+  const account = await readSignedInAccount(meta);
+
+  meta.close();
+
+  return account;
+}
+
+async function signIn() {
+  const meta = openMetaDb();
+
+  await saveSignedInAccount(meta, ACCOUNT);
+
+  meta.close();
+}
+
+describe("sign out", () => {
+  it("SIGNIN-11 signing out the fixture display forgets the signed-in account", async () => {
+    await signIn();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    await readyStore(result.current).signOut();
+
+    expect(await storedAccount()).toBeUndefined();
+  });
+
+  it("SIGNIN-11 a signed-in display signs out even when the server can't be reached", async () => {
+    await signIn();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    await readyStore(result.current).signOut();
+
+    expect(await storedAccount()).toBeUndefined();
+  });
+});
+
+describe("signInAuthFor", () => {
+  it("tech§4.5 remembering a signed-in account writes glance-meta", async () => {
+    await signInAuthFor(false, params).remember({
+      id: ACCOUNT.accountId,
+      name: "Maria",
+      email: "maria@example.com",
+    });
+
+    expect(await storedAccount()).toEqual(ACCOUNT);
+  });
+
+  it("tech§6.5 a demo build signs in through the fixture transport", async () => {
+    expect(await signInAuthFor(true, { signin: "phone" }).status()).toEqual({
+      ok: true,
+      value: { state: "needs-name-elsewhere" },
+    });
+  });
+
+  it("tech§4.2 outside demo builds sign-in can't reach a server until HttpTransport", async () => {
+    expect(
+      await signInAuthFor(false, params).link({ email: "maria@example.com", timeZone: "UTC" }),
+    ).toEqual({ ok: false, error: "network" });
   });
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAccount, usePhotos, useSettingsRepo } from "@/data/repos";
+import { useAccount, usePhotos, useSettingsRepo, useSignOut } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
@@ -13,7 +13,7 @@ const BACKGROUND_PATH = "/settings/background";
 
 const AMBIENT_PATH = "/ambient";
 
-const notYet = () => {};
+const SIGN_IN_PATH = "/signin";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -32,6 +32,8 @@ export function SettingsScreen() {
 
   const repo = useSettingsRepo();
 
+  const signOut = useSignOut();
+
   return (
     <SettingsView
       account={account}
@@ -42,7 +44,7 @@ export function SettingsScreen() {
       onChange={(change) => repo.update(change)}
       onOpenBackground={() => router.push(BACKGROUND_PATH)}
       onPreviewAmbient={() => router.push(AMBIENT_PATH)}
-      onSignOut={notYet}
+      onSignOut={() => void signOut().then(() => router.replace(SIGN_IN_PATH))}
     />
   );
 }
