@@ -28,3 +28,9 @@ test("spec§4.2 IconButton sizes its glyph to 45% of the button", () => {
 
   expect(svg).toHaveAttribute("width", "25");
 });
+
+test("A11Y IconButton with current marks itself as the current page", () => {
+  render(<IconButton icon={Settings} label="Settings" active current="page" />);
+
+  expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-current", "page");
+});

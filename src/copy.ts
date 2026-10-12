@@ -9,6 +9,20 @@ export const copy = {
     fall: "Fall",
     winter: "Winter",
   } satisfies Record<Season, string>,
+  nav: {
+    label: "Views",
+    view: {
+      today: "Today",
+      calendar: "Calendar",
+      weather: "Weather",
+      notes: "Notes",
+      photos: "Photos",
+      settings: "Settings",
+    },
+    background: "Background",
+    signIn: "Sign in",
+    ambient: "Ambient",
+  },
   events: {
     now: "Now",
     time: {
