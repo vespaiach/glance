@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Status | Draft v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D19) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
@@ -332,7 +332,7 @@ CREATE INDEX notes_account_created ON notes(account_id, created_at);
 Defaults: season Auto, 12-hour, Fahrenheit, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week.
 
 ### 7.1 Derived event status (STATUS-01)
-For each event on today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, otherwise `upcoming`. Recompute every minute. Events on other days: past days → `past` (struck through, decided), future days → `upcoming`. The prototype rendered every non-today event as upcoming.
+For each event on today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, otherwise `upcoming`. An event with no end (TPK-08) is `now` from its start to the end of its day. Recompute every minute. Events on other days: past days → `past` (struck through, decided), future days → `upcoming`. The prototype rendered every non-today event as upcoming.
 
 ### 7.2 Time formatting (TIME-01)
 | Context | 12-hour | 24-hour |
@@ -382,7 +382,7 @@ Zones: **hero** (block-1), **schedule** (white panel), **weather** (block-3), **
 | TODAY-04 | Schedule eyebrow "Today · {n} events" / "Today · No events". Buttons: ghost "Add event" (+, only when the day has events) → New event on today. Ghost "Full calendar" → Calendar. |
 | TODAY-05 | Rows move past → now → upcoming in real time. The hero swaps at each start and end (STATUS-01). |
 | TODAY-06 | Empty schedule: soft tile, calendar icon, "No events yet" / "Add the first one. It shows here and on the calendar." + "Add event". |
-| TODAY-07 | Picture of the day under the schedule (only when photos exist and the background is Season color): image + eyebrow "Picture of the day", title, "{date} · {place}". No photos → hairline tile "Picture of the day" / "Appears once someone uploads a photo." + ghost "Upload" → Photos. Selection: deterministic daily rotation by local date (decided). |
+| TODAY-07 | Picture of the day under the schedule (only when photos exist and the background is Season color): image + eyebrow "Picture of the day", title, "{date} · {place}". No photos → hairline tile "Picture of the day" / "Appears once someone uploads a photo." + ghost "Upload" → Photos. Selection: deterministic daily rotation by local date (decided): photos ordered oldest upload first, index = days since 1970-01-01 (local date) mod photo count. |
 | TODAY-08 | Weather: `WeatherNow` (location, temp, condition, high/low, feels like). No location → "Weather needs a location" / "Set the city once and the forecast stays current." + "Set location" → Weather. |
 | TODAY-09 | Notes eyebrow "Notes · {n}", ghost "All notes" → Notes. Shows only the **first two** notes. Tap → Edit note. Empty → "No notes yet" + "Add note". |
 | TODAY-10 | On a photo background, Picture of the day is dropped. |
@@ -445,7 +445,7 @@ White panel: eyebrow count, title "Notice board", "Add note". Grid `auto-fill mi
 | NOTE-01 | "Add note" → New note (eyebrow "Notice board"). Tap a note → Edit note (eyebrow "{author} · {time}"). |
 | NOTE-02 | Fields: Message* (multiline, 3 rows, "Leave a note for the family"), Your name ("Optional"). Color: 5 swatches (no Alert). |
 | NOTE-03 | Empty message → "Write a message". Blank name → "Guest". |
-| NOTE-04 | New notes go first, stamped "Just now". Tilt cycles −2°, 1.5°, −1°, 2.5°. "Just now" ages into a time, then a weekday. |
+| NOTE-04 | New notes go first, stamped "Just now". Tilt cycles −2°, 1.5°, −1°, 2.5°. "Just now" ages into a time, then a weekday: "Just now" for the first 5 minutes, then the time (TIME-01 clock format) on the same day, the short weekday ("Tue") within the last 6 days, then "{Mon} {d}". |
 | NOTE-05 | Primary "Post note" / "Save" / "Save for later". Delete → inline confirm "Delete note". |
 | NOTE-06 | Count "{n} notes" / "1 note" / "No notes". Caption "Notes are removed after {1 day\|1 week}" or "Notes stay until deleted". |
 | NOTE-07 | Empty board: "No notes yet" / "Leave a note for the family. Notes show on Today. {They're removed after X. \| They stay until someone deletes them.}" |
