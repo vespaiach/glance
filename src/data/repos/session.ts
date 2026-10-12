@@ -21,6 +21,7 @@ import {
 } from "../meta";
 import { createFixtureAuth, createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
 import { createInlineSyncHost } from "../sync/host";
+import { createHttpTransport } from "../sync/httpTransport";
 import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import type { PhotoVariant, RepoStore } from "./store";
@@ -170,6 +171,8 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   const db = openGlanceDb(accountDbName(account.accountId));
 
+  const transport = createHttpTransport();
+
   const store = {
     db,
     accountId: account.accountId,
@@ -179,8 +182,8 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     nudge: noNudge,
     refreshWeather: noNudge,
     photoSrc: apiPhotoSrc,
-    upload: notConnected,
-    places: notConnected,
+    upload: transport.upload,
+    places: transport.places,
     signOut: signOutWith(offlineAuth.signout),
   };
 
