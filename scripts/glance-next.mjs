@@ -6,6 +6,7 @@
 //
 // Reads only origin/main (after a git fetch) and the open PRs, so any worktree gives the same answer.
 // On main a row is ⬜ or ✅. Work in progress is an open PR on a feat/<ID>-* branch.
+// Rows of a table with no "Depends on" column (External dependency) are deps only, never tasks.
 //
 //   {"action":"start","id","title","phase"}          first ⬜ row with no open PR whose deps are all ✅
 //   {"action":"resume","id","branch","pr","url"}     a task PR is open and still a draft
@@ -54,13 +55,14 @@ function parsePlan(text) {
       depsColumn = row.findIndex((name) => name === "Depends on" || name === "Extra deps");
       continue;
     }
-    if (depsColumn === -1 || !/^[A-Z]\d{2}[a-z]?$/.test(row[0])) continue;
+    if (!/^[A-Z]\d{2}[a-z]?$/.test(row[0])) continue;
     rows.push({
       id: row[0],
+      external: depsColumn === -1,
       done: row[1].startsWith("✅"),
       title: row[2].match(/\*\*(.+?)\*\*/)?.[1].replace(/[:.]$/, "") ?? row[2],
       phase,
-      rawDeps: row[depsColumn],
+      rawDeps: row[depsColumn] ?? "",
       sharedDeps,
     });
   }
@@ -106,7 +108,9 @@ const prs = JSON.parse(
 );
 const prOf = (id) => prs.find((pr) => pr.headRefName.startsWith(`feat/${id}-`));
 
-for (const row of rows.filter((r) => !r.done)) {
+const tasks = rows.filter((row) => !row.external);
+
+for (const row of tasks.filter((r) => !r.done)) {
   const pr = prOf(row.id);
   if (!pr) continue;
   if (pr.isDraft)
@@ -114,7 +118,7 @@ for (const row of rows.filter((r) => !r.done)) {
   finish({ action: "merge", id: row.id, pr: pr.number, url: pr.url });
 }
 
-const todo = rows.filter((row) => !row.done);
+const todo = tasks.filter((row) => !row.done);
 if (todo.length === 0) finish({ action: "done" });
 
 const next = todo.find((row) => row.deps.every((id) => known.get(id).done));
