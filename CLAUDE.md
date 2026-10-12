@@ -33,8 +33,8 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 - Each server service that touches account data has a test proving another account's rows can't be read or written.
 - Test names start with the spec ID (`TPK-07 rejects an end before the start`), or the tech-design ID when there is none (`D10 …`, `tech§5 …`).
 - Order, no steps skipped:
-  1. List the planned tests (name, what it asserts, ID). **Stop for owner approval.**
-  2. Write and run them. Confirm each fails for the expected reason. **Stop for owner approval.**
+  1. List the planned tests (name, what it asserts, ID).
+  2. Write and run them. Confirm each fails for the expected reason.
   3. Write the minimum code to pass, then refactor while green.
 - A task with no testable behavior (scaffold, config, docs, pure styling) says so at the start and skips steps 1–2.
 
