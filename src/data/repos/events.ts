@@ -1,7 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import type { CalendarEvent } from "@/domain/schemas";
-import { parseLocalDate } from "@/domain/time";
+import { addDays, dayStart } from "@/domain/zone";
 import type { GlanceDb, StoredEvent } from "../db";
 import { isLive, putQueued, removeQueued } from "./outbox";
 import { type RepoStore, useRepoStore } from "./store";
@@ -42,34 +42,42 @@ export function useEvent(id: string): StoredEvent | null | undefined {
   }, [db, id]);
 }
 
-export function useEventsOnDay(dayKey: string): StoredEvent[] | undefined {
-  const { db } = useRepoStore();
-
-  return useLiveQuery(() => {
-    const day = parseLocalDate(dayKey);
-
-    const next = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
-
-    return startingBetween(db, day, next);
-  }, [db, dayKey]);
+function firstOfMonth(year: number, month: number): string {
+  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
 }
 
-export function useEventsInMonth(year: number, month: number): StoredEvent[] | undefined {
+export function useEventsOnDay(dayKey: string, tz: string): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(
-    () => startingBetween(db, new Date(year, month, 1), new Date(year, month + 1, 1)),
-    [db, year, month],
+    () => startingBetween(db, dayStart(dayKey, tz), dayStart(addDays(dayKey, 1), tz)),
+    [db, dayKey, tz],
   );
 }
 
-export function useNextEventAfter(dayKey: string): StoredEvent | null | undefined {
+export function useEventsInMonth(
+  year: number,
+  month: number,
+  tz: string,
+): StoredEvent[] | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(
+    () =>
+      startingBetween(
+        db,
+        dayStart(firstOfMonth(year, month), tz),
+        dayStart(firstOfMonth(year, month + 1), tz),
+      ),
+    [db, year, month, tz],
+  );
+}
+
+export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | null | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(async () => {
-    const day = parseLocalDate(dayKey);
-
-    const next = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+    const next = dayStart(addDays(dayKey, 1), tz);
 
     const first = await db.events
       .where("startAt")
@@ -78,7 +86,7 @@ export function useNextEventAfter(dayKey: string): StoredEvent | null | undefine
       .first();
 
     return first ?? null;
-  }, [db, dayKey]);
+  }, [db, dayKey, tz]);
 }
 
 export function useHasEvents(): boolean | undefined {

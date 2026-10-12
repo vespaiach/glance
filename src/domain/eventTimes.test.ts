@@ -11,6 +11,9 @@ import {
   withMeridiem,
   withMinute,
 } from "./eventTimes";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const at = (h: number, m: number) => h * 60 + m;
 const today = (h: number, m: number) => new Date(2026, 9, 9, h, m);
@@ -25,7 +28,7 @@ describe("eventTimes", () => {
     [today(23, 30), at(23, 30)],
     [today(23, 59), at(23, 30)],
   ])("TPK-05 next half hour after %s is minute %i, capped at 11:30 PM", (now, expected) => {
-    expect(nextHalfHour(now)).toBe(expected);
+    expect(nextHalfHour(now, tz)).toBe(expected);
   });
 
   it.each([
@@ -33,7 +36,7 @@ describe("eventTimes", () => {
     [today(23, 10), { start: at(23, 30), end: at(23, 55) }],
     [today(23, 45), { start: at(23, 30), end: at(23, 55) }],
   ])("TPK-05 a new event at %s defaults to %o", (now, expected) => {
-    expect(defaultTimes(now)).toEqual(expected);
+    expect(defaultTimes(now, tz)).toEqual(expected);
   });
 
   it.each([
@@ -110,5 +113,18 @@ describe("eventTimes", () => {
 
   it("TPK-03 the minute grid steps by 5 from 00 to 55", () => {
     expect(PICKER_MINUTES).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+  });
+});
+
+describe("default times in a zone", () => {
+  const LA = "America/Los_Angeles";
+  const morning = new Date("2026-10-09T17:41:00Z");
+
+  it("TPK-05 the next half hour is read in the given zone", () => {
+    expect(nextHalfHour(morning, LA)).toBe(11 * 60);
+  });
+
+  it("TPK-05 default times start at the next half hour in the given zone", () => {
+    expect(defaultTimes(morning, LA)).toEqual({ start: 11 * 60, end: 12 * 60 });
   });
 });

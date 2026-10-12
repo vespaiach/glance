@@ -7,6 +7,9 @@ import {
   stepMonth,
   weekdayInitials,
 } from "./month";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 describe("month", () => {
   it("CAL-01 October 2026 starts on Thursday and fills five whole weeks", () => {
@@ -47,11 +50,11 @@ describe("month", () => {
   });
 
   it("CAL-03 the month heading names the month alone in the current year", () => {
-    expect(monthTitle(2026, 9, new Date(2026, 9, 9))).toBe("October");
+    expect(monthTitle(2026, 9, new Date(2026, 9, 9), tz)).toBe("October");
   });
 
   it("CAL-03 the month heading adds the year outside the current year", () => {
-    expect(monthTitle(2027, 0, new Date(2026, 9, 9))).toBe("January 2027");
+    expect(monthTitle(2027, 0, new Date(2026, 9, 9), tz)).toBe("January 2027");
   });
 
   it("CAL-02 marked days list each local day with an event once, in order", () => {
@@ -63,7 +66,7 @@ describe("month", () => {
       { startAt: startAt(2, 19) },
     ];
 
-    expect(markedDays(events)).toEqual([2, 9]);
+    expect(markedDays(events, tz)).toEqual([2, 9]);
   });
 
   const NOW = new Date(2026, 9, 9, 10, 41);
@@ -74,7 +77,7 @@ describe("month", () => {
     ["2026-12-25", 1, "2027-01-01"],
     ["2027-01-25", -1, "2026-12-01"],
   ] as const)("CAL-03 stepping from %s by %i selects the 1st, %s", (selected, delta, expected) => {
-    expect(stepMonth(selected, delta, NOW)).toBe(expected);
+    expect(stepMonth(selected, delta, NOW, tz)).toBe(expected);
   });
 
   it.each([
@@ -83,12 +86,12 @@ describe("month", () => {
   ] as const)(
     "CAL-03 stepping from %s by %i into the current month selects today",
     (selected, delta) => {
-      expect(stepMonth(selected, delta, NOW)).toBe("2026-10-09");
+      expect(stepMonth(selected, delta, NOW, tz)).toBe("2026-10-09");
     },
   );
 
   it("CAL-03 stepping into this month in another year selects the 1st", () => {
-    expect(stepMonth("2027-11-01", -1, NOW)).toBe("2027-10-01");
+    expect(stepMonth("2027-11-01", -1, NOW, tz)).toBe("2027-10-01");
   });
 
   it.each(["2026-10-14", "2028-02-29"])("CAL-01 ?date=%s opens on that day", (value) => {
@@ -101,4 +104,20 @@ describe("month", () => {
       expect(readDateParam(value)).toBeUndefined();
     },
   );
+});
+
+describe("month in a zone", () => {
+  const LA = "America/Los_Angeles";
+
+  it("LOC-06 the month heading reads the current year in the given zone", () => {
+    expect(monthTitle(2027, 0, new Date("2027-01-01T06:00:00Z"), LA)).toBe("January 2027");
+  });
+
+  it("LOC-06 marked days are the days in the given zone", () => {
+    expect(markedDays([{ startAt: "2026-10-10T06:30:00Z" }], LA)).toEqual([9]);
+  });
+
+  it("LOC-06 stepping into the current month selects today in the given zone", () => {
+    expect(stepMonth("2026-09-14", 1, new Date("2026-10-10T06:30:00Z"), LA)).toBe("2026-10-09");
+  });
 });

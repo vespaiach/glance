@@ -3,6 +3,7 @@ import {
   dateKey,
   dayNumber,
   dayStart,
+  deviceTimeZone,
   displayTimeZone,
   parseDateKey,
   wallTime,
@@ -136,5 +137,14 @@ describe("zone", () => {
   it("LOC-06 the display zone falls back to the device's without a located zone", () => {
     expect(displayTimeZone({}, NY)).toBe(NY);
     expect(displayTimeZone({ weatherLocation: {} }, NY)).toBe(NY);
+  });
+});
+
+describe("device zone", () => {
+  it("D15 Vitest pins the device zone to one no fixture uses", () => {
+    const instant = new Date("2026-10-09T17:41:00Z");
+
+    expect(process.env.TZ).toBe(KOLKATA);
+    expect(wallTime(instant, deviceTimeZone())).toEqual(wallTime(instant, KOLKATA));
   });
 });

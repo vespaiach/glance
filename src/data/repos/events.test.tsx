@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { CalendarEvent } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import {
   createEventsRepo,
   useEvent,
@@ -9,6 +10,8 @@ import {
   useNextEventAfter,
 } from "./events";
 import { type Harness, openHarness, synced, TEST_NOW, wrapperFor } from "./testHarness";
+
+const tz = deviceTimeZone();
 
 const at = (month: number, day: number, hour: number) =>
   new Date(2026, month, day, hour).toISOString();
@@ -93,7 +96,7 @@ describe("event hooks", () => {
   it("EVT-07 useEventsOnDay lists the day's events by start and updates after a put", async () => {
     await store.db.events.bulkPut([synced(SOCCER), synced(NEXT_DAY)]);
 
-    const { result } = renderHook(() => useEventsOnDay("2026-10-09"), {
+    const { result } = renderHook(() => useEventsOnDay("2026-10-09", tz), {
       wrapper: wrapperFor(store),
     });
 
@@ -109,7 +112,7 @@ describe("event hooks", () => {
   it("CAL-02 useEventsInMonth lists the month's events and drops a removed one", async () => {
     await store.db.events.bulkPut([synced(SOCCER), synced(NEXT_DAY), synced(NEXT_MONTH)]);
 
-    const { result } = renderHook(() => useEventsInMonth(2026, 9), {
+    const { result } = renderHook(() => useEventsInMonth(2026, 9, tz), {
       wrapper: wrapperFor(store),
     });
 
@@ -156,7 +159,7 @@ describe("event hooks", () => {
       { ...synced(later), deletedAt: TEST_NOW.toISOString() },
     ]);
 
-    const { result } = renderHook(() => useNextEventAfter("2026-10-09"), {
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09", tz), {
       wrapper: wrapperFor(store),
     });
 
@@ -166,10 +169,50 @@ describe("event hooks", () => {
   it("AMB-03 useNextEventAfter is null with nothing after the day", async () => {
     await store.db.events.put(synced(SOCCER));
 
-    const { result } = renderHook(() => useNextEventAfter("2026-10-09"), {
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09", tz), {
       wrapper: wrapperFor(store),
     });
 
     await waitFor(() => expect(result.current).toBeNull());
+  });
+});
+
+describe("event hooks in a zone", () => {
+  const LA = "America/Los_Angeles";
+
+  const FRIDAY_NIGHT = event(6, "2026-10-10T06:30:00.000Z");
+
+  const FRIDAY_MORNING_KOLKATA = event(7, "2026-10-09T06:30:00.000Z");
+
+  const HALLOWEEN_NIGHT = event(8, "2026-11-01T06:30:00.000Z");
+
+  it("LOC-06 useEventsOnDay reads the day from the given zone's midnight", async () => {
+    await store.db.events.bulkPut([synced(FRIDAY_NIGHT), synced(FRIDAY_MORNING_KOLKATA)]);
+
+    const { result } = renderHook(() => useEventsOnDay("2026-10-09", LA), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([FRIDAY_NIGHT.id]));
+  });
+
+  it("LOC-06 useEventsInMonth reads the month in the given zone", async () => {
+    await store.db.events.bulkPut([synced(HALLOWEEN_NIGHT)]);
+
+    const { result } = renderHook(() => useEventsInMonth(2026, 9, LA), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([HALLOWEEN_NIGHT.id]));
+  });
+
+  it("LOC-06 useNextEventAfter starts at the next midnight in the given zone", async () => {
+    await store.db.events.bulkPut([synced(FRIDAY_NIGHT), synced(NEXT_MONTH)]);
+
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09", LA), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe(NEXT_MONTH.id));
   });
 });

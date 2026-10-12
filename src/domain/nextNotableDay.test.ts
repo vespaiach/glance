@@ -1,4 +1,7 @@
 import { nextNotableDay } from "./nextNotableDay";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const day = (date: string, precip?: number) => ({
   date,
@@ -22,13 +25,13 @@ describe("nextNotableDay", () => {
       day("2026-10-15", 70),
     ];
 
-    expect(nextNotableDay(daily, now)).toEqual(daily[1]);
+    expect(nextNotableDay(daily, now, tz)).toEqual(daily[1]);
   });
 
   it("AMB-03 exactly 50% counts", () => {
     const daily = [day("2026-10-09"), day("2026-10-10", 49), day("2026-10-11", 50)];
 
-    expect(nextNotableDay(daily, now)?.date).toBe("2026-10-11");
+    expect(nextNotableDay(daily, now, tz)?.date).toBe("2026-10-11");
   });
 
   it("AMB-03 none in the next 6 days gives nothing", () => {
@@ -43,12 +46,22 @@ describe("nextNotableDay", () => {
       day("2026-10-16", 90),
     ];
 
-    expect(nextNotableDay(daily, now)).toBeUndefined();
+    expect(nextNotableDay(daily, now, tz)).toBeUndefined();
   });
 
   it("AMB-03 days from a stale forecast that are today or earlier are skipped", () => {
     const daily = [day("2026-10-08", 90), day("2026-10-09", 90), day("2026-10-10", 60)];
 
-    expect(nextNotableDay(daily, now)?.date).toBe("2026-10-10");
+    expect(nextNotableDay(daily, now, tz)?.date).toBe("2026-10-10");
+  });
+});
+
+describe("nextNotableDay in a zone", () => {
+  it("LOC-06 today is the day in the given zone", () => {
+    const friday = new Date("2026-10-10T06:30:00Z");
+
+    expect(nextNotableDay([day("2026-10-10", 80)], friday, "America/Los_Angeles")?.date).toBe(
+      "2026-10-10",
+    );
   });
 });

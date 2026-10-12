@@ -1,5 +1,5 @@
 import type { CalendarEvent } from "./schemas";
-import { localDayNumber } from "./time";
+import { dayNumber } from "./zone";
 
 export type EventStatus = "past" | "now" | "upcoming";
 
@@ -13,8 +13,8 @@ function statusToday({ startAt, endAt }: EventSpan, now: Date): EventStatus {
   return Date.parse(startAt) <= time ? "now" : "upcoming";
 }
 
-export function eventStatus(event: EventSpan, now: Date): EventStatus {
-  const dayOffset = localDayNumber(new Date(event.startAt)) - localDayNumber(now);
+export function eventStatus(event: EventSpan, now: Date, tz: string): EventStatus {
+  const dayOffset = dayNumber(new Date(event.startAt), tz) - dayNumber(now, tz);
 
   if (dayOffset < 0) return "past";
 

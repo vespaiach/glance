@@ -1,12 +1,6 @@
 import type { AccountSettings, Note } from "./schemas";
-import {
-  type Clock,
-  formatClock,
-  formatMonthDay,
-  formatWeekday,
-  localDayNumber,
-  minutesOfDay,
-} from "./time";
+import { type Clock, formatClock, formatMonthDay, formatWeekday, minutesOfDay } from "./time";
+import { dayNumber } from "./zone";
 
 export type BoardNote = Note & { waiting?: boolean };
 
@@ -26,20 +20,20 @@ export function noteTilt(noteCount: number): number {
   return TILTS[(noteCount % TILTS.length) as TiltIndex];
 }
 
-function stampText(created: Date, now: Date, clock: Clock): string {
-  const daysAgo = localDayNumber(now) - localDayNumber(created);
+function stampText(created: Date, now: Date, clock: Clock, tz: string): string {
+  const daysAgo = dayNumber(now, tz) - dayNumber(created, tz);
 
-  if (daysAgo === 0) return formatClock(minutesOfDay(created), clock);
+  if (daysAgo === 0) return formatClock(minutesOfDay(created, tz), clock);
 
-  return daysAgo < 7 ? formatWeekday(created) : formatMonthDay(created);
+  return daysAgo < 7 ? formatWeekday(created, tz) : formatMonthDay(created, tz);
 }
 
-export function noteStamp(createdAt: string, now: Date, clock: Clock): NoteStamp {
+export function noteStamp(createdAt: string, now: Date, clock: Clock, tz: string): NoteStamp {
   const created = new Date(createdAt);
 
   if (now.getTime() - created.getTime() < JUST_NOW_MS) return { kind: "justNow" };
 
-  return { kind: "at", text: stampText(created, now, clock) };
+  return { kind: "at", text: stampText(created, now, clock, tz) };
 }
 
 export function noteExpired(

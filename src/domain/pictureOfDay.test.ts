@@ -1,5 +1,8 @@
 import { pictureOfDay } from "./pictureOfDay";
 import type { Photo } from "./schemas";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const photo = (id: string, createdAt: string): Photo => ({
   id,
@@ -16,12 +19,12 @@ const photos = [
 
 describe("pictureOfDay", () => {
   it("TODAY-07 no photos means no picture", () => {
-    expect(pictureOfDay([], new Date(2026, 9, 9, 10, 41))).toBeUndefined();
+    expect(pictureOfDay([], new Date(2026, 9, 9, 10, 41), tz)).toBeUndefined();
   });
 
   it("TODAY-07 the same local day always picks the same photo", () => {
-    const morning = pictureOfDay(photos, new Date(2026, 9, 9, 0, 1));
-    const night = pictureOfDay(photos, new Date(2026, 9, 9, 23, 59));
+    const morning = pictureOfDay(photos, new Date(2026, 9, 9, 0, 1), tz);
+    const night = pictureOfDay(photos, new Date(2026, 9, 9, 23, 59), tz);
 
     expect(night).toBe(morning);
   });
@@ -29,12 +32,24 @@ describe("pictureOfDay", () => {
   it("TODAY-07 the input order doesn't change the pick", () => {
     const now = new Date(2026, 9, 9, 10, 41);
 
-    expect(pictureOfDay([...photos].reverse(), now)).toBe(pictureOfDay(photos, now));
+    expect(pictureOfDay([...photos].reverse(), now, tz)).toBe(pictureOfDay(photos, now, tz));
   });
 
   it("TODAY-07 consecutive days step through the photos oldest upload first", () => {
-    const days = [9, 10, 11, 12].map((d) => pictureOfDay(photos, new Date(2026, 9, d, 12))?.id);
+    const days = [9, 10, 11, 12].map((d) => pictureOfDay(photos, new Date(2026, 9, d, 12), tz)?.id);
 
     expect(days).toEqual(["c", "a", "b", "c"]);
+  });
+});
+
+describe("pictureOfDay in a zone", () => {
+  it("LOC-06 the picture changes with the day in the given zone", () => {
+    const two = [photo("a", "2026-09-01T00:00:00.000Z"), photo("b", "2026-09-02T00:00:00.000Z")];
+
+    const friday = Date.UTC(2026, 9, 9) / 86_400_000;
+
+    expect(pictureOfDay(two, new Date("2026-10-10T06:30:00Z"), "America/Los_Angeles")?.id).toBe(
+      two[friday % 2]?.id,
+    );
   });
 });

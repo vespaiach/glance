@@ -99,7 +99,7 @@ export function addDays(key: string, n: number): string {
   return new Date(parseDateKey(key).getTime() + n * DAY_MS).toISOString().slice(0, 10);
 }
 
-function calendarDate(key: string): CalendarDate {
+export function calendarDate(key: string): CalendarDate {
   const date = parseDateKey(key);
 
   return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() };
@@ -114,4 +114,8 @@ export function displayTimeZone(
   fallback: string,
 ): string {
   return settings.weatherLocation?.timeZone ?? fallback;
+}
+
+export function deviceTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

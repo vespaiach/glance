@@ -6,6 +6,8 @@ import { defineConfig } from "vitest/config";
 
 const root = import.meta.dirname;
 
+process.env.TZ = "Asia/Kolkata";
+
 export default defineConfig({
   plugins: [
     react(),

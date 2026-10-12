@@ -1,18 +1,26 @@
-import { localDateKey, parseLocalDate } from "./time";
+import { dateKey, parseDateKey, wallTime } from "./zone";
 
-const monthYearFormat = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
+const monthYearFormat = new Intl.DateTimeFormat("en-US", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
-const monthNameFormat = new Intl.DateTimeFormat("en-US", { month: "long" });
+const monthNameFormat = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" });
 
-const initialFormat = new Intl.DateTimeFormat("en-US", { weekday: "narrow" });
+const initialFormat = new Intl.DateTimeFormat("en-US", { weekday: "narrow", timeZone: "UTC" });
 
 const WEEK = 7;
 
-const A_SUNDAY = new Date(2026, 9, 4);
+const A_SUNDAY = Date.UTC(2026, 9, 4);
+
+const DAY_MS = 86_400_000;
+
+const firstOf = (year: number, month: number) => new Date(Date.UTC(year, month, 1));
 
 export function monthCells(year: number, month: number): (number | null)[] {
-  const leading = new Date(year, month, 1).getDay();
-  const length = new Date(year, month + 1, 0).getDate();
+  const leading = firstOf(year, month).getUTCDay();
+  const length = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   const trailing = (WEEK - ((leading + length) % WEEK)) % WEEK;
 
   const days = Array.from({ length }, (_, index) => index + 1);
@@ -21,25 +29,23 @@ export function monthCells(year: number, month: number): (number | null)[] {
 }
 
 export function formatMonthYear(year: number, month: number): string {
-  return monthYearFormat.format(new Date(year, month, 1));
+  return monthYearFormat.format(firstOf(year, month));
 }
 
 export function weekdayInitials(): string[] {
   return Array.from({ length: WEEK }, (_, offset) =>
-    initialFormat.format(
-      new Date(A_SUNDAY.getFullYear(), A_SUNDAY.getMonth(), A_SUNDAY.getDate() + offset),
-    ),
+    initialFormat.format(new Date(A_SUNDAY + offset * DAY_MS)),
   );
 }
 
-export function monthTitle(year: number, month: number, now: Date): string {
-  if (year !== now.getFullYear()) return formatMonthYear(year, month);
+export function monthTitle(year: number, month: number, now: Date, tz: string): string {
+  if (year !== wallTime(now, tz).year) return formatMonthYear(year, month);
 
-  return monthNameFormat.format(new Date(year, month, 1));
+  return monthNameFormat.format(firstOf(year, month));
 }
 
-export function markedDays(events: readonly { startAt: string }[]): number[] {
-  const days = new Set(events.map((event) => new Date(event.startAt).getDate()));
+export function markedDays(events: readonly { startAt: string }[], tz: string): number[] {
+  const days = new Set(events.map((event) => wallTime(new Date(event.startAt), tz).day));
 
   return [...days].sort((a, b) => a - b);
 }
@@ -49,16 +55,17 @@ const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 export function readDateParam(value: string | null): string | undefined {
   if (value === null || !DATE_KEY.test(value)) return undefined;
 
-  return localDateKey(parseLocalDate(value)) === value ? value : undefined;
+  return dateKey(parseDateKey(value), "UTC") === value ? value : undefined;
 }
 
-export function stepMonth(selected: string, delta: -1 | 1, now: Date): string {
-  const day = parseLocalDate(selected);
+export function stepMonth(selected: string, delta: -1 | 1, now: Date, tz: string): string {
+  const day = parseDateKey(selected);
 
-  const first = new Date(day.getFullYear(), day.getMonth() + delta, 1);
+  const first = firstOf(day.getUTCFullYear(), day.getUTCMonth() + delta);
 
-  const isCurrentMonth =
-    first.getFullYear() === now.getFullYear() && first.getMonth() === now.getMonth();
+  const today = dateKey(now, tz);
 
-  return localDateKey(isCurrentMonth ? now : first);
+  const isCurrentMonth = dateKey(first, "UTC").slice(0, 7) === today.slice(0, 7);
+
+  return isCurrentMonth ? today : dateKey(first, "UTC");
 }

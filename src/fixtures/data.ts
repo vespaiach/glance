@@ -9,16 +9,19 @@ import type {
   WeatherIcon,
   WeatherLocation,
 } from "@/domain/schemas";
+import { deviceTimeZone, zonedInstant } from "@/domain/zone";
 
 const fixtureId = (group: number, n: number) =>
   `0000000${group}-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-const at = (day: number, hour: number, minute = 0) =>
-  new Date(2026, 9, day, hour, minute).toISOString();
+const octoberAt = (day: number, hour: number, minute = 0) =>
+  zonedInstant(deviceTimeZone(), { year: 2026, month: 10, day }, hour * 60 + minute);
 
-export const FIXTURE_NOW = new Date(2026, 9, 9, 10, 41);
+const at = (day: number, hour: number, minute = 0) => octoberAt(day, hour, minute).toISOString();
 
-export const FIXTURE_AMBIENT_NOW = new Date(2026, 9, 9, 19, 12);
+export const FIXTURE_NOW = octoberAt(9, 10, 41);
+
+export const FIXTURE_AMBIENT_NOW = octoberAt(9, 19, 12);
 
 export const FIXTURE_SAVED_AT = at(9, 9, 32);
 
