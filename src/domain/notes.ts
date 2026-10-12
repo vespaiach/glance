@@ -8,6 +8,8 @@ import {
   minutesOfDay,
 } from "./time";
 
+export type BoardNote = Note & { waiting?: boolean };
+
 export type NoteStamp = { kind: "justNow" } | { kind: "at"; text: string };
 
 const TILTS = [-2, 1.5, -1, 2.5] as const;
@@ -48,4 +50,8 @@ export function noteExpired(
   if (expiry === null) return false;
 
   return now.getTime() - Date.parse(note.createdAt) > EXPIRY_MS[expiry];
+}
+
+export function noteWaitingToPost(note: { pending: boolean; version: number }): boolean {
+  return note.pending && note.version === 0;
 }

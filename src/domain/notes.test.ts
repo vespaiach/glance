@@ -1,4 +1,4 @@
-import { noteExpired, noteStamp, noteTilt } from "./notes";
+import { noteExpired, noteStamp, noteTilt, noteWaitingToPost } from "./notes";
 
 const now = new Date(2026, 9, 9, 10, 41);
 const iso = (d: number, h: number, m: number) => new Date(2026, 9, d, h, m).toISOString();
@@ -44,4 +44,12 @@ describe("notes", () => {
       expect(noteExpired({ createdAt }, expiry, now)).toBe(expected);
     },
   );
+
+  it.each([
+    [true, 0, true],
+    [true, 3, false],
+    [false, 0, false],
+  ])("OFF-04 a note pending %s at version %s waits to post: %s", (pending, version, waiting) => {
+    expect(noteWaitingToPost({ pending, version })).toBe(waiting);
+  });
 });

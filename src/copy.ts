@@ -15,6 +15,10 @@ export const copy = {
     fall: "Fall",
     winter: "Winter",
   } satisfies Record<Season, string>,
+  offline: {
+    label: "Offline · showing saved data",
+    saved: (time: string) => `Saved ${time}`,
+  },
   nav: {
     label: "Views",
     view: {
@@ -155,6 +159,7 @@ export const copy = {
   notes: {
     guestAuthor: "Guest",
     justNow: "Just now",
+    waitingToPost: "Waiting to post",
     board: "Notice board",
     count: (count: number) => {
       if (count === 0) return "No notes";

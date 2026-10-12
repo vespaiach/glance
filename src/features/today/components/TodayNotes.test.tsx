@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { BoardNote } from "@/domain/notes";
 import type { Note } from "@/domain/schemas";
 import type { ZoneState } from "@/domain/zoneState";
 import { TodayNotes } from "./TodayNotes";
@@ -39,7 +40,7 @@ type Handlers = {
   onOpenNotes: () => void;
 };
 
-function renderNotes(state: ZoneState<Note>, handlers: Partial<Handlers> = {}) {
+function renderNotes(state: ZoneState<BoardNote>, handlers: Partial<Handlers> = {}) {
   return render(
     <TodayNotes
       retryIn={1}
@@ -70,6 +71,15 @@ test("NOTE-04 each note shows its author and stamp", () => {
 
   expect(screen.getByText("Mom")).toBeInTheDocument();
   expect(screen.getByText("9:05 AM")).toBeInTheDocument();
+});
+
+test("OFF-04 a new note waiting to post says so instead of its stamp", () => {
+  const [first, ...rest] = NOTES as [Note, ...Note[]];
+
+  renderNotes({ kind: "ready", data: [{ ...first, waiting: true }, ...rest] });
+
+  expect(screen.getByText("Waiting to post")).toBeInTheDocument();
+  expect(screen.queryByText("9:05 AM")).not.toBeInTheDocument();
 });
 
 test("TODAY-09 tapping a note opens it", async () => {

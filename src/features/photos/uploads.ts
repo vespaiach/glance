@@ -16,6 +16,9 @@ export type UploadAction =
   | { type: "done"; id: string }
   | { type: "fail"; id: string; reason: UploadFailure }
   | { type: "retry"; id: string }
+  | { type: "pause" }
+  | { type: "resume"; id: string }
+  | { type: "restart"; id: string }
   | { type: "remove"; id: string };
 
 type ChosenFile = { name: string; type: string; size: number };
@@ -112,7 +115,16 @@ function changed(tile: UploadTile, action: UploadAction): UploadTile {
     return { ...base, state: "uploading", percent: 0 };
   }
 
+  if (action.type === "resume" && tile.state === "paused") return { ...tile, state: "uploading" };
+
+  if (action.type === "restart" && tile.state === "paused")
+    return { ...tile, state: "uploading", percent: 0 };
+
   return tile;
+}
+
+function paused(tile: UploadTile): UploadTile {
+  return tile.state === "uploading" ? { ...tile, state: "paused" } : tile;
 }
 
 export function uploads(tiles: readonly UploadTile[], action: UploadAction): UploadTile[] {
@@ -120,6 +132,8 @@ export function uploads(tiles: readonly UploadTile[], action: UploadAction): Upl
 
   if (action.type === "done" || action.type === "remove")
     return tiles.filter((tile) => tile.id !== action.id);
+
+  if (action.type === "pause") return tiles.map(paused);
 
   return tiles.map((tile) => (tile.id === action.id ? changed(tile, action) : tile));
 }

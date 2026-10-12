@@ -54,7 +54,7 @@ const base = {
   unit: "F",
   clock: "12h",
   today: TODAY,
-  offline: false,
+  stale: false,
   breakpoint: "wide",
 } as const;
 
@@ -123,8 +123,8 @@ test("WX-03 no banner when the next 8 hours stay dry", () => {
   expect(screen.queryByText(/Rain moving in/)).not.toBeInTheDocument();
 });
 
-test("WX-03 offline shows when the forecast is from instead of the rain banner", () => {
-  render(<WeatherForecast {...base} offline />);
+test("WX-03 a stale offline forecast says when it is from instead of the rain banner", () => {
+  render(<WeatherForecast {...base} stale />);
 
   expect(screen.getByText("Forecast from 10:30 AM")).toBeInTheDocument();
   expect(

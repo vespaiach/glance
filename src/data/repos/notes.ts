@@ -1,13 +1,13 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import { noteExpired } from "@/domain/notes";
+import { noteExpired, noteWaitingToPost } from "@/domain/notes";
 import type { AccountSettings, Note } from "@/domain/schemas";
 import type { GlanceDb, StoredNote } from "../db";
 import { isLive, pendingIds, putQueued, removeQueued } from "./outbox";
 import { type RepoStore, useRepoStore } from "./store";
 
-export type ShownNote = StoredNote & { pending: boolean };
+export type ShownNote = StoredNote & { waiting: boolean };
 
 export interface NotesRepo {
   put(note: Note): Promise<void>;
@@ -56,7 +56,10 @@ async function readNotes(db: GlanceDb, accountId: string): Promise<NotesRead> {
 function shownNotes({ notes, pending, expiry }: NotesRead, now: Date): ShownNote[] {
   return notes
     .filter((note) => !noteExpired(note, expiry, now))
-    .map((note) => ({ ...note, pending: pending.has(note.id) }));
+    .map((note) => ({
+      ...note,
+      waiting: noteWaitingToPost({ pending: pending.has(note.id), version: note.version }),
+    }));
 }
 
 export function useNotes(now: Date): ShownNote[] | undefined {

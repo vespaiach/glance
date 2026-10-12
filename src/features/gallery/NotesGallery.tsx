@@ -33,6 +33,10 @@ const DEMOS: readonly Demo[] = [
 
 const WIFI = BOARD_NOTES[1];
 
+const WAITING_NOTES = BOARD_NOTES.map((note, index) =>
+  index === 0 ? { ...note, waiting: true } : note,
+);
+
 const ignore = () => {};
 
 const styles = stylex.create({
@@ -94,6 +98,9 @@ export function NotesGallery({ season }: { season: Season }) {
       <GalleryGroup title={gallery.groups.notesView}>
         <div {...stylex.props(styles.view)}>
           <NoteBoard state={{ kind: "ready", data: BOARD_NOTES }} expiry="1w" {...board} />
+        </div>
+        <div {...stylex.props(styles.view)}>
+          <NoteBoard state={{ kind: "ready", data: WAITING_NOTES }} expiry="1w" {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
           <NoteBoard state={{ kind: "empty" }} expiry="1w" {...board} />

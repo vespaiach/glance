@@ -87,7 +87,7 @@ describe("useNotes", () => {
     );
   });
 
-  it("OFF-04 a new note is pending until its outbox entry drains", async () => {
+  it("OFF-04 a new note waits to post until its outbox entry drains", async () => {
     await store.db.notes.put(synced(FRESH));
 
     const { result } = renderNotes();
@@ -95,15 +95,26 @@ describe("useNotes", () => {
     await act(() => createNotesRepo(store).put(NEW));
 
     await waitFor(() =>
-      expect(result.current?.map(({ id, pending }) => ({ id, pending }))).toEqual([
-        { id: NEW.id, pending: true },
-        { id: FRESH.id, pending: false },
+      expect(result.current?.map(({ id, waiting }) => ({ id, waiting }))).toEqual([
+        { id: NEW.id, waiting: true },
+        { id: FRESH.id, waiting: false },
       ]),
     );
 
     await act(() => store.db.outbox.clear());
 
-    await waitFor(() => expect(result.current?.every((row) => !row.pending)).toBe(true));
+    await waitFor(() => expect(result.current?.every((row) => !row.waiting)).toBe(true));
+  });
+
+  it("OFF-04 an edit to a posted note doesn't wait to post", async () => {
+    await store.db.notes.put(synced(FRESH));
+
+    const { result } = renderNotes();
+
+    await act(() => createNotesRepo(store).put({ ...FRESH, text: "Edited" }));
+
+    await waitFor(() => expect(result.current?.[0]?.text).toBe("Edited"));
+    expect(result.current?.[0]?.waiting).toBe(false);
   });
 
   it("NOTE-08 hides notes past the expiry setting, even offline", async () => {
