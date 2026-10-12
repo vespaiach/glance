@@ -3,6 +3,8 @@ import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import type { CalendarEvent, Note } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_AMBIENT_NOW,
+  FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
   FIXTURE_NOTES,
   FIXTURE_NOW,
@@ -125,6 +127,15 @@ describe("seedFixtureDb", () => {
     expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.background).toEqual({
       ...FIXTURE_SETTINGS.background,
       mode: "photo",
+    });
+  });
+
+  it("AMB-03 now= during ambient hours seeds the Appendix A ambient forecast", async () => {
+    await seedFixtureDb(db, { now: FIXTURE_AMBIENT_NOW });
+
+    expect(await db.weather.get(FIXTURE_ACCOUNT.id)).toEqual({
+      ...FIXTURE_AMBIENT_WEATHER,
+      accountId: FIXTURE_ACCOUNT.id,
     });
   });
 
@@ -262,6 +273,13 @@ describe("FixtureTransport push", () => {
 describe("FixtureTransport weather", () => {
   it("WX-01 answers with the Appendix A forecast", async () => {
     expect(await transport().weather()).toEqual({ ok: true, value: FIXTURE_WEATHER });
+  });
+
+  it("AMB-03 now= during ambient hours answers with the Appendix A ambient forecast", async () => {
+    expect(await transport({ now: FIXTURE_AMBIENT_NOW }).weather()).toEqual({
+      ok: true,
+      value: FIXTURE_AMBIENT_WEATHER,
+    });
   });
 
   it("FAIL-01 net=wxerror fails as a server error, not offline", async () => {

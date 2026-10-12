@@ -1,5 +1,4 @@
 import * as stylex from "@stylexjs/stylex";
-import { Flower2, Leaf, type LucideIcon, Snowflake, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { Season } from "@/domain/schemas";
@@ -9,6 +8,7 @@ import { type } from "@/theme/type.stylex";
 import { Clock } from "@/ui/Clock";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Icon } from "@/ui/Icon";
+import { seasonIcons } from "@/ui/seasonIcons";
 
 type TodayHeroProps = {
   season: Season;
@@ -16,13 +16,6 @@ type TodayHeroProps = {
   clock: ClockSetting;
   children: ReactNode;
   xstyle?: stylex.StyleXStyles;
-};
-
-const SEASON_ICONS: Record<Season, LucideIcon> = {
-  spring: Flower2,
-  summer: Sun,
-  fall: Leaf,
-  winter: Snowflake,
 };
 
 const styles = stylex.create({
@@ -54,7 +47,7 @@ export function TodayHero({ season, time, clock, children, xstyle }: TodayHeroPr
     <ColorBlock tone={1} padding="clamp(24px, 2.6vw, 40px)" xstyle={[styles.root, xstyle]}>
       <div {...stylex.props(styles.top)}>
         <span {...stylex.props(styles.label)}>
-          <Icon icon={SEASON_ICONS[season]} size={20} />
+          <Icon icon={seasonIcons[season]} size={20} />
           {copy.today.seasonMonth(copy.season[season], formatMonth(time))}
         </span>
         <Clock time={time} hour12={clock === "12h"} />

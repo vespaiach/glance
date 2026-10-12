@@ -6,6 +6,7 @@ import {
   useEventsInMonth,
   useEventsOnDay,
   useHasEvents,
+  useNextEventAfter,
 } from "./events";
 import { type Harness, openHarness, synced, TEST_NOW, wrapperFor } from "./testHarness";
 
@@ -143,5 +144,32 @@ describe("event hooks", () => {
     await act(() => createEventsRepo(store).put(NEXT_MONTH));
 
     await waitFor(() => expect(result.current).toBe(true));
+  });
+
+  it("AMB-03 useNextEventAfter reads the first live event after the day, skipping removed ones", async () => {
+    const later = event(5, at(9, 10, 8));
+
+    await store.db.events.bulkPut([
+      synced(SOCCER),
+      synced(NEXT_MONTH),
+      synced(NEXT_DAY),
+      { ...synced(later), deletedAt: TEST_NOW.toISOString() },
+    ]);
+
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09"), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe(NEXT_DAY.id));
+  });
+
+  it("AMB-03 useNextEventAfter is null with nothing after the day", async () => {
+    await store.db.events.put(synced(SOCCER));
+
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09"), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current).toBeNull());
   });
 });

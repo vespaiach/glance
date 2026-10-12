@@ -408,4 +408,20 @@ export const copy = {
       thunderstormHail: "Thunderstorm with hail",
     } satisfies Record<WmoCondition, string>,
   },
+  ambient: {
+    wake: "Wake screen",
+    caption: "Click or tap anywhere to wake",
+    offline: "Offline · showing saved data",
+    now: (temp: number, condition: string) => `${temp}° · ${condition}`,
+    low: (low: number) => `Low ${low}° overnight`,
+    rain: (weekday: string, precip: number) => `${weekday} ${precip}% rain`,
+    nextEvent: "Next event",
+    nothing: "Nothing scheduled",
+    tomorrow: "Tomorrow",
+    day: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,
+    event: (day: string, start: string, title: string, where?: string) =>
+      `${day} · ${start} · ${where ? `${title}, ${where}` : title}`,
+    loadingWeather: "Loading weather",
+    loadingEvent: "Loading next event",
+  },
 } as const;

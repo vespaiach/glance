@@ -63,6 +63,24 @@ export function useEventsInMonth(year: number, month: number): StoredEvent[] | u
   );
 }
 
+export function useNextEventAfter(dayKey: string): StoredEvent | null | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => {
+    const day = parseLocalDate(dayKey);
+
+    const next = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+
+    const first = await db.events
+      .where("startAt")
+      .aboveOrEqual(next.toISOString())
+      .filter(isLive)
+      .first();
+
+    return first ?? null;
+  }, [db, dayKey]);
+}
+
 export function useHasEvents(): boolean | undefined {
   const { db } = useRepoStore();
 

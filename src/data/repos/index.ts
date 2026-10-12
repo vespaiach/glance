@@ -6,6 +6,7 @@ export {
   useEventsOnDay,
   useEventsRepo,
   useHasEvents,
+  useNextEventAfter,
 } from "./events";
 export {
   createNotesRepo,

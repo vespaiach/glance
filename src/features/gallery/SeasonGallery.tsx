@@ -41,6 +41,7 @@ import { TextInput } from "@/ui/TextInput";
 import { TopBar } from "@/ui/TopBar";
 import { WeatherNow } from "@/ui/WeatherNow";
 import { Zone } from "@/ui/Zone";
+import { AmbientGallery } from "./AmbientGallery";
 import { CalendarGallery } from "./CalendarGallery";
 import { EventSheetGallery } from "./EventSheetGallery";
 import { GalleryGroup } from "./GalleryGroup";
@@ -500,6 +501,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <NotesGallery season={season} />
       <PhotosGallery />
       <SettingsGallery season={season} />
+      <AmbientGallery season={season} />
     </>
   );
 }
