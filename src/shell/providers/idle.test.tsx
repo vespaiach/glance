@@ -52,17 +52,24 @@ async function renderIdle(start: string, settings: Partial<AccountSettings> = {}
 
   const Shell = shellWrapper(store);
 
-  render(
+  const tree = () => (
     <Shell>
       <SheetHost>
         <IdleProvider>
           <SheetProbe />
         </IdleProvider>
       </SheetHost>
-    </Shell>,
+    </Shell>
   );
 
+  const { rerender } = render(tree());
+
   await screen.findByText("no sheet");
+
+  return (pathname: string) => {
+    navigation.pathname = pathname;
+    rerender(tree());
+  };
 }
 
 const seconds = (n: number) => act(() => vi.advanceTimersByTime(n * 1000));
@@ -181,5 +188,46 @@ describe("IdleProvider", () => {
     seconds(30);
 
     expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it("IDLE-03 after a wake tap during ambient hours, idle returns to Ambient", async () => {
+    navigation.pathname = "/ambient";
+
+    const showPath = await renderIdle("21:00:00");
+
+    seconds(30);
+
+    fireEvent.pointerDown(document.body);
+
+    showPath("/today");
+
+    seconds(59);
+
+    expect(navigation.push).not.toHaveBeenCalled();
+
+    seconds(1);
+
+    expect(navigation.push).toHaveBeenCalledWith("/ambient");
+  });
+
+  it("SET-06 a previewed Ambient returns to Today after the idle timeout outside ambient hours", async () => {
+    navigation.pathname = "/ambient";
+
+    await renderIdle("10:41:00");
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledWith("/today");
+  });
+
+  it("AMB-05 the schedule start goes to Ambient once when idle is due at the same moment", async () => {
+    navigation.pathname = "/today";
+
+    await renderIdle("17:59:00");
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledTimes(1);
+    expect(navigation.push).toHaveBeenCalledWith("/ambient");
   });
 });

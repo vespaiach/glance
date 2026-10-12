@@ -62,7 +62,10 @@ export function IdleProvider({ children }: { children: ReactNode }) {
     const go = (path: string) => {
       latest.current.close();
 
-      if (latest.current.pathname !== path) latest.current.navigate(path);
+      if (latest.current.pathname === path) return;
+
+      latest.current.navigate(path);
+      latest.current.pathname = path;
     };
 
     const onTick = () => {
