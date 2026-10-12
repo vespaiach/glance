@@ -1,10 +1,12 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useEventsInMonth, useEventsOnDay, useHasEvents } from "@/data/repos";
-import { markedDays, monthTitle } from "@/domain/month";
+import { markedDays, monthTitle, readDateParam, stepMonth } from "@/domain/month";
 import type { CalendarEvent } from "@/domain/schemas";
-import { formatDayTitle, localDateKey } from "@/domain/time";
+import { formatDayTitle, localDateKey, parseLocalDate } from "@/domain/time";
 import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
@@ -30,6 +32,14 @@ function dayState(
   return hasEvents === undefined ? { kind: "loading" } : readZoneState(events);
 }
 
+function todayInMonth(now: Date, year: number, month: number): number | undefined {
+  return now.getFullYear() === year && now.getMonth() === month ? now.getDate() : undefined;
+}
+
+function dayKey(year: number, month: number, day: number): string {
+  return localDateKey(new Date(year, month, day));
+}
+
 export function CalendarScreen() {
   const sheets = useSheetHost();
 
@@ -41,9 +51,14 @@ export function CalendarScreen() {
 
   const now = useNow("minute");
 
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const day = localDateKey(now);
+  const searchParams = useSearchParams();
+
+  const [picked, setPicked] = useState(() => readDateParam(searchParams.get("date")));
+
+  const day = picked ?? localDateKey(now);
+  const selected = parseLocalDate(day);
+  const year = selected.getFullYear();
+  const month = selected.getMonth();
 
   const events = useEventsOnDay(day);
 
@@ -57,14 +72,17 @@ export function CalendarScreen() {
         title={monthTitle(year, month, now)}
         year={year}
         month={month}
-        today={now.getDate()}
-        selected={now.getDate()}
+        today={todayInMonth(now, year, month)}
+        selected={selected.getDate()}
         marked={markedDays(monthEvents ?? [])}
         cell={calendarCell(breakpoint, width)}
+        onPreviousMonth={() => setPicked(stepMonth(day, -1, now))}
+        onNextMonth={() => setPicked(stepMonth(day, 1, now))}
+        onSelectDay={(date) => setPicked(dayKey(year, month, date))}
       />
       <DayPanel
         state={dayState(events, hasEvents)}
-        title={formatDayTitle(now)}
+        title={formatDayTitle(selected)}
         calendarEmpty={hasEvents === false}
         now={now}
         clock={settings.clock}

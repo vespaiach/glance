@@ -1,3 +1,5 @@
+import { localDateKey, parseLocalDate } from "./time";
+
 const monthYearFormat = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 
 const monthNameFormat = new Intl.DateTimeFormat("en-US", { month: "long" });
@@ -40,4 +42,23 @@ export function markedDays(events: readonly { startAt: string }[]): number[] {
   const days = new Set(events.map((event) => new Date(event.startAt).getDate()));
 
   return [...days].sort((a, b) => a - b);
+}
+
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+export function readDateParam(value: string | null): string | undefined {
+  if (value === null || !DATE_KEY.test(value)) return undefined;
+
+  return localDateKey(parseLocalDate(value)) === value ? value : undefined;
+}
+
+export function stepMonth(selected: string, delta: -1 | 1, now: Date): string {
+  const day = parseLocalDate(selected);
+
+  const first = new Date(day.getFullYear(), day.getMonth() + delta, 1);
+
+  const isCurrentMonth =
+    first.getFullYear() === now.getFullYear() && first.getMonth() === now.getMonth();
+
+  return localDateKey(isCurrentMonth ? now : first);
 }

@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { CalendarScreen } from "@/features/calendar";
 
 export default function CalendarPage() {
-  return <CalendarScreen />;
+  return (
+    <Suspense>
+      <CalendarScreen />
+    </Suspense>
+  );
 }
