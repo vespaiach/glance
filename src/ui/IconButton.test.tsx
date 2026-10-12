@@ -1,0 +1,30 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { Settings } from "lucide-react";
+import { IconButton } from "./IconButton";
+
+test("A11Y IconButton is named by its label and reports clicks", async () => {
+  const onClick = vi.fn();
+  render(<IconButton icon={Settings} label="Settings" onClick={onClick} />);
+
+  await userEvent.click(screen.getByRole("button", { name: "Settings" }));
+
+  expect(onClick).toHaveBeenCalledTimes(1);
+});
+
+test("A11Y IconButton hides its glyph from assistive tech", () => {
+  render(<IconButton icon={Settings} label="Settings" />);
+
+  const button = screen.getByRole("button", { name: "Settings" });
+
+  expect(button).toHaveAttribute("type", "button");
+  expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+});
+
+test("spec§4.2 IconButton sizes its glyph to 45% of the button", () => {
+  render(<IconButton icon={Settings} label="Settings" size="touch" />);
+
+  const svg = screen.getByRole("button", { name: "Settings" }).querySelector("svg");
+
+  expect(svg).toHaveAttribute("width", "25");
+});
