@@ -39,7 +39,11 @@ const settings = {
   background: { mode: "season", dim: 0.2, rotate: "daily" },
   idleTimeout: 180,
   noteExpiry: "1w",
-  ambientHours: { start: "18:00", end: "07:30" },
+  ambient: {
+    mode: "same",
+    all: { start: "18:00", end: "07:30" },
+    wknd: { start: "21:00", end: "09:00" },
+  },
 };
 
 const hour = { time: "2026-10-09T18:00:00.000Z", icon: "cloud-sun", temp: 64 };
@@ -167,10 +171,24 @@ describe("AccountSettingsSchema", () => {
     expect(accepts(AccountSettingsSchema, { ...settings, weatherLocation })).toBe(true);
   });
 
-  it("SET-06 rejects ambient hours other than 6:00 PM – 7:30 AM", () => {
-    const ambientHours = { start: "20:00", end: "07:30" };
+  it.each(["same", "split", "off"])("SET-10 accepts the %s schedule", (mode) => {
+    const ambient = { ...settings.ambient, mode };
 
-    expect(accepts(AccountSettingsSchema, { ...settings, ambientHours })).toBe(false);
+    expect(accepts(AccountSettingsSchema, { ...settings, ambient })).toBe(true);
+  });
+
+  it.each(["20:10", "24:00", "7:30", "late"])("SET-10 rejects the dim time %s", (start) => {
+    const ambient = { ...settings.ambient, all: { start, end: "07:30" } };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, ambient })).toBe(false);
+  });
+
+  it("tech§9-40 settings saved with ambientHours parse to the default schedule", () => {
+    const { ambient: _, ...rest } = settings;
+
+    const saved = { ...rest, ambientHours: { start: "18:00", end: "07:30" } };
+
+    expect(v.parse(AccountSettingsSchema, saved)).toEqual({ ...rest, ambient: settings.ambient });
   });
 
   it("BG-04 rejects a dim outside Off, Light and Strong", () => {

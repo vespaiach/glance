@@ -9,7 +9,7 @@ import {
   useSignedOut,
   useSyncStatus,
 } from "@/data/repos";
-import { idleDue, inAmbientHours } from "@/domain/idle";
+import { idleDue, inAmbient } from "@/domain/idle";
 import { useSheetHost } from "../SheetHost";
 import { type NowStore, useNowStore } from "./now";
 import { useAccountSettings } from "./settings";
@@ -73,7 +73,7 @@ export function IdleProvider({
   updates = appServiceWorker(),
   children,
 }: IdleProps) {
-  const { idleTimeout, ambientHours } = useAccountSettings();
+  const { idleTimeout, ambient: schedule } = useAccountSettings();
 
   const store = useNowStore();
 
@@ -115,7 +115,7 @@ export function IdleProvider({
   useEffect(() => {
     let lastActivity = store.get();
 
-    let ambient = inAmbientHours(ambientHours, lastActivity, tz);
+    let ambient = inAmbient(schedule, lastActivity, tz);
 
     const awake = () => (latest.current.signedOut ? SIGN_IN : TODAY);
 
@@ -137,7 +137,7 @@ export function IdleProvider({
     const onTick = () => {
       const now = store.get();
 
-      const nowAmbient = inAmbientHours(ambientHours, now, tz);
+      const nowAmbient = inAmbient(schedule, now, tz);
 
       if (isTextField(document.activeElement)) lastActivity = now;
 
@@ -164,7 +164,7 @@ export function IdleProvider({
       stopWatching();
       unsubscribe();
     };
-  }, [store, idleTimeout, ambientHours, tz]);
+  }, [store, idleTimeout, schedule, tz]);
 
   return children;
 }

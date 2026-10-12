@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import { inAmbientHours } from "@/domain/idle";
+import { inAmbient } from "@/domain/idle";
 import { photoTitle, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
@@ -73,8 +73,7 @@ function onPhoto(settings: AccountSettings): AccountSettings {
 }
 
 function fixtureWeather(params: FixtureParams): Weather {
-  const evening =
-    params.now && inAmbientHours(FIXTURE_SETTINGS.ambientHours, params.now, FIXTURE_TIME_ZONE);
+  const evening = params.now && inAmbient(FIXTURE_SETTINGS.ambient, params.now, FIXTURE_TIME_ZONE);
 
   return evening ? FIXTURE_AMBIENT_WEATHER : FIXTURE_WEATHER;
 }

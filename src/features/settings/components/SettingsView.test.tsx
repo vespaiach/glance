@@ -133,6 +133,46 @@ test("SET-06 the Ambient hours follow the 24-hour clock", () => {
   expect(screen.getByText("18:00 – 07:30")).toBeInTheDocument();
 });
 
+function ambientTileText() {
+  return screen.getByText("Ambient screen").nextElementSibling?.textContent;
+}
+
+const WEEKENDS_DIFFER = {
+  mode: "split",
+  all: { start: "18:00", end: "07:30" },
+  wknd: { start: "21:00", end: "09:00" },
+} as const;
+
+test("SET-06 Weekends differ shows both sets", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, ambient: WEEKENDS_DIFFER } });
+
+  expect(
+    screen.getByText("Sun – Thu 6:00 PM – 7:30 AM · Fri & Sat 9:00 PM – 9:00 AM"),
+  ).toBeInTheDocument();
+});
+
+test("SET-06 a set with the same dim and wake time reads Not set", () => {
+  const all = { start: "18:00", end: "18:00" };
+
+  renderView({ settings: { ...DEFAULT_SETTINGS, ambient: { ...WEEKENDS_DIFFER, all } } });
+
+  expect(screen.getByText("Sun – Thu Not set · Fri & Sat 9:00 PM – 9:00 AM")).toBeInTheDocument();
+});
+
+test("SET-06 every night with the same dim and wake time reads Not set", () => {
+  const all = { start: "18:00", end: "18:00" };
+
+  renderView({ settings: { ...DEFAULT_SETTINGS, ambient: { ...DEFAULT_SETTINGS.ambient, all } } });
+
+  expect(ambientTileText()).toBe("Not set");
+});
+
+test("SET-06 Off reads Off", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, ambient: { ...WEEKENDS_DIFFER, mode: "off" } } });
+
+  expect(ambientTileText()).toBe("Off");
+});
+
 test("SET-07 Back to Today after saves the idle timeout, Never as none", async () => {
   const props = renderView();
 

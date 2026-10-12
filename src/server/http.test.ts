@@ -42,6 +42,10 @@ describe("outdatedClient", () => {
     expect(response?.status).toBe(426);
     expect(await response?.json()).toEqual({ error: "outdated" });
   });
+
+  it("tech§9-40 answers 426 to build 1, which still writes ambientHours", () => {
+    expect(outdatedClient(request({ [BUILD_HEADER]: "1" }))?.status).toBe(426);
+  });
 });
 
 describe("readRow", () => {

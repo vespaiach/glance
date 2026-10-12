@@ -17,7 +17,7 @@ import {
 } from "./services/photos";
 import type { Coordinates } from "./weather/provider";
 
-const MIN_CLIENT_BUILD = 1;
+const MIN_CLIENT_BUILD = 2;
 
 const DAY_S = 24 * 60 * 60;
 
