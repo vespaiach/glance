@@ -52,7 +52,7 @@ const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {
 
 const noNudge = () => {};
 
-const notConnected: Transport["upload"] = async () => err("network");
+const notConnected = async () => err("network" as const);
 
 const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
   fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
@@ -109,6 +109,7 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
     account: FIXTURE_ACCOUNT,
     now,
     nudge: host.nudge,
+    places: transport.places,
     ...keepUploadedImages(transport),
   };
 
@@ -132,6 +133,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     nudge: noNudge,
     photoSrc: apiPhotoSrc,
     upload: notConnected,
+    places: notConnected,
   };
 
   return { boot: { kind: "ready", store }, close: () => db.close() };

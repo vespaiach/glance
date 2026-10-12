@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { FIXTURE_WEATHER } from "@/fixtures/data";
 import { type Harness, openHarness, TEST_ACCOUNT, wrapperFor } from "./testHarness";
-import { useWeather } from "./weather";
+import { createWeatherRepo, useWeather } from "./weather";
 
 let store: Harness;
 
@@ -28,5 +28,19 @@ describe("useWeather", () => {
     const { result } = renderHook(() => useWeather(), { wrapper: wrapperFor(store) });
 
     await waitFor(() => expect(result.current).toBeNull());
+  });
+});
+
+describe("WeatherRepo", () => {
+  it("WX-07 searchPlaces asks the transport for the places matching the query", async () => {
+    const places = [{ name: "Austin", region: "Texas", lat: 30.2672, lon: -97.7431 }];
+
+    store.places.mockResolvedValue({ ok: true, value: places });
+
+    expect(await createWeatherRepo(store).searchPlaces("Austin")).toEqual({
+      ok: true,
+      value: places,
+    });
+    expect(store.places).toHaveBeenCalledWith("Austin");
   });
 });

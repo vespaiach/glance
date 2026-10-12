@@ -15,6 +15,7 @@ export type RepoStore = {
   nudge: () => unknown;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   upload: Transport["upload"];
+  places: Transport["places"];
 };
 
 const RepoContext = createContext<RepoStore | undefined>(undefined);

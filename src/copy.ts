@@ -381,6 +381,7 @@ export const copy = {
       error: {
         empty: "Enter a city or ZIP code",
         unknown: "We couldn’t find that place. Try a city and state, like Austin, TX",
+        unavailable: "Place search isn’t responding. Try again in a moment.",
       },
     },
     range: {

@@ -96,17 +96,19 @@ async function readLocation(db: GlanceDb, accountId: string) {
   return (await db.settings.get(accountId))?.weatherLocation;
 }
 
-function applyPull(db: GlanceDb, accountId: string, response: PullResponse): Promise<boolean> {
+async function serverPlace(db: GlanceDb, accountId: string): Promise<string | undefined> {
+  if (await isPending(db, "settings", accountId)) return undefined;
+
+  return placeKey(await readLocation(db, accountId));
+}
+
+function applyPull(db: GlanceDb, response: PullResponse): Promise<void> {
   const tables = [db.events, db.notes, db.photos, db.settings, db.outbox, db.meta];
 
   return db.transaction("rw", tables, async () => {
-    const before = placeKey(await readLocation(db, accountId));
-
     for (const change of response.changes) await applyChange(db, change);
 
     await db.meta.put({ key: CURSOR_KEY, value: response.cursor });
-
-    return placeKey(await readLocation(db, accountId)) !== before;
   });
 }
 
@@ -124,6 +126,8 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
   let weatherTimer: ReturnType<typeof setTimeout> | undefined;
 
   let weatherFailures = 0;
+
+  let fetchedPlace: string | undefined;
 
   const record = (event: StatusEvent) =>
     db.transaction("rw", db.meta, async () => {
@@ -189,13 +193,11 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
     if (!answer.ok) return answer;
 
-    const locationChanged = await applyPull(db, accountId, answer.value);
+    await applyPull(db, answer.value);
 
     fromScratch = false;
 
     await record({ type: "synced", at: now().toISOString() });
-
-    if (locationChanged) await refreshWeather();
 
     return DONE;
   };
@@ -213,10 +215,14 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
     if (!result.ok) await fail(result.error);
 
+    await refreshMovedWeather();
+
     return result;
   };
 
-  const fetchWeather = async (): Promise<SyncResult> => {
+  const fetchWeather = async (place: WeatherLocation): Promise<SyncResult> => {
+    fetchedPlace = placeKey(place);
+
     await record({ type: "weather-loading" });
 
     const answer = await transport.weather();
@@ -255,10 +261,18 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
       clearWeatherTimer();
 
-      if (!(await readLocation(db, accountId))) return DONE;
+      const place = await readLocation(db, accountId);
 
-      return fetchWeather();
+      if (!place) return DONE;
+
+      return fetchWeather(place);
     });
+
+  const refreshMovedWeather = async () => {
+    const place = await serverPlace(db, accountId);
+
+    if (place !== undefined && place !== fetchedPlace) await refreshWeather();
+  };
 
   const nudge = () => syncQueue(sync);
 

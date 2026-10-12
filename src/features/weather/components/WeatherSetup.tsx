@@ -2,7 +2,6 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, ChevronRight, CloudSun, Search } from "lucide-react";
-import { useReducer } from "react";
 import { copy } from "@/copy";
 import type { WeatherLocation } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -12,7 +11,7 @@ import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { press } from "@/ui/press";
 import { TextInput } from "@/ui/TextInput";
-import { type WeatherSetupState, weatherSetupReducer } from "../weatherSetup";
+import type { WeatherSetupState } from "../weatherSetup";
 import { WeatherBlock } from "./WeatherBlock";
 
 const pulse = stylex.keyframes({
@@ -106,7 +105,12 @@ const styles = stylex.create({
   actions: { display: "flex" },
 });
 
-function Matches({ matches }: { matches: readonly WeatherLocation[] }) {
+type MatchesProps = {
+  matches: readonly WeatherLocation[];
+  onPick: (place: WeatherLocation) => void;
+};
+
+function Matches({ matches, onPick }: MatchesProps) {
   const city = matches[0]?.name ?? "";
 
   return (
@@ -116,6 +120,7 @@ function Matches({ matches }: { matches: readonly WeatherLocation[] }) {
         <button
           key={`${place.lat},${place.lon}`}
           type="button"
+          onClick={() => onPick(place)}
           {...stylex.props(styles.match, press.scale)}
         >
           <span {...stylex.props(styles.place)}>
@@ -140,9 +145,14 @@ function Searching({ query }: { query: string }) {
   );
 }
 
-export function WeatherSetup({ initial }: { initial: WeatherSetupState }) {
-  const [state, dispatch] = useReducer(weatherSetupReducer, initial);
+type WeatherSetupProps = {
+  state: WeatherSetupState;
+  onType: (draft: string) => void;
+  onSubmit: () => void;
+  onPick: (place: WeatherLocation) => void;
+};
 
+export function WeatherSetup({ state, onType, onSubmit, onPick }: WeatherSetupProps) {
   const error = state.step === "editing" && state.error && copy.weather.setup.error[state.error];
 
   return (
@@ -158,14 +168,14 @@ export function WeatherSetup({ initial }: { initial: WeatherSetupState }) {
           label={copy.weather.setup.label}
           placeholder={copy.weather.setup.placeholder}
           value={state.draft}
-          onChange={(draft) => dispatch({ type: "type", draft })}
+          onChange={onType}
           error={error || undefined}
         />
         {state.step === "searching" && <Searching query={state.query} />}
-        {state.step === "choosing" && <Matches matches={state.matches} />}
+        {state.step === "choosing" && <Matches matches={state.matches} onPick={onPick} />}
         {state.step === "editing" && (
           <div {...stylex.props(styles.actions)}>
-            <Button iconRight={ArrowRight} onClick={() => dispatch({ type: "submit" })}>
+            <Button iconRight={ArrowRight} onClick={onSubmit}>
               {copy.weather.setup.submit}
             </Button>
           </div>

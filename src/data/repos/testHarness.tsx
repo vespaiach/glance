@@ -13,6 +13,7 @@ export const TEST_NOW = new Date("2026-10-09T17:41:00.000Z");
 export type Harness = RepoStore & {
   nudge: Mock<() => void>;
   upload: Mock<Transport["upload"]>;
+  places: Mock<Transport["places"]>;
   close(): Promise<void>;
 };
 
@@ -27,6 +28,7 @@ export function openHarness(name: string): Harness {
     nudge: vi.fn<() => void>(),
     photoSrc: (photoId, variant) => `/photos/${photoId}/${variant}`,
     upload: vi.fn<Transport["upload"]>(async () => err("network")),
+    places: vi.fn<Transport["places"]>(async () => err("network")),
     close: async () => {
       db.close();
 
