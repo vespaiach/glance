@@ -150,7 +150,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | B02 | ✅ ([#48](https://github.com/vespaiach/glance/pull/48)) | **Auth:** link (rate limit, `pending_id` cookie, time zone), verify, status, name, signout, `requireDisplay`, Origin check, Nodemailer | B01 | SIGNIN-04..12, tech §6.1/6.2, D11, D14 |
 | B03 | ✅ ([#49](https://github.com/vespaiach/glance/pull/49)) | **Entity services + routes:** events and notes `PUT`/`DELETE`, settings `PUT`, version stamping, delete wins, 426 build check, server validation | B02 | SYNC-01/03, tech §5, §6.1 |
 | B04 | ✅ ([#50](https://github.com/vespaiach/glance/pull/50)) | **Sync routes:** `/api/sync` pull, `server/bus`, `/api/sync/stream` SSE + 25 s heartbeat | B03 | SYNC-02, tech §5 |
-| B05 | 🔄 ([#51](https://github.com/vespaiach/glance/pull/51)) | **Photos:** streamed `POST`, size/type checks, `sharp` variants, EXIF date, file route `?v=` | B03 | PHOTO-04, D12, tech §6.3 |
+| B05 | ✅ ([#51](https://github.com/vespaiach/glance/pull/51)) | **Photos:** streamed `POST`, size/type checks, `sharp` variants, EXIF date, file route `?v=` | B03 | PHOTO-04, D12, tech §6.3 |
 | B06 | ⬜ | **Weather:** Open-Meteo adapter, per-account cache (15 min), `/api/weather`, `/api/weather/places` | B02 | WX-01..09 data, D13 |
 | B07 | ⬜ | **Jobs:** note expiry (account time zone), link cleanup, nightly backup | B03 | NOTE-08, SIGNIN-12, tech §6.4 |
 
