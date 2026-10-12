@@ -1,4 +1,7 @@
 import { eventStatus } from "./eventStatus";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const now = new Date(2026, 9, 9, 10, 41);
 const iso = (d: number, h: number, m: number) => new Date(2026, 9, d, h, m).toISOString();
@@ -16,6 +19,16 @@ describe("eventStatus", () => {
     ["on an earlier day with no end", iso(8, 9, 0), undefined, "past"],
     ["on a later day", iso(14, 16, 0), iso(14, 16, 30), "upcoming"],
   ] as const)("STATUS-01 an event %s is %s", (_, startAt, endAt, expected) => {
-    expect(eventStatus({ startAt, endAt }, now)).toBe(expected);
+    expect(eventStatus({ startAt, endAt }, now, tz)).toBe(expected);
+  });
+});
+
+describe("eventStatus in a zone", () => {
+  it("LOC-06 an event on the day before in the given zone is past", () => {
+    const event = { startAt: "2026-10-10T06:30:00Z" };
+
+    expect(eventStatus(event, new Date("2026-10-10T16:00:00Z"), "America/Los_Angeles")).toBe(
+      "past",
+    );
   });
 });

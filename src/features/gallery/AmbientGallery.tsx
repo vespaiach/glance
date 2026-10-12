@@ -3,7 +3,14 @@ import type { ComponentProps } from "react";
 import type { CalendarEvent, Season } from "@/domain/schemas";
 import { AmbientView } from "@/features/ambient";
 import { GalleryGroup } from "./GalleryGroup";
-import { FULL_WEATHER, GALLERY_PHOTOS, gallery, galleryPhotoSrc } from "./samples";
+import {
+  FULL_WEATHER,
+  GALLERY_PHOTOS,
+  GALLERY_TZ,
+  gallery,
+  galleryPhotoSrc,
+  octoberAt,
+} from "./samples";
 
 type AmbientProps = ComponentProps<typeof AmbientView>;
 
@@ -11,13 +18,13 @@ type Demo = { key: string; phone?: boolean } & Partial<AmbientProps>;
 
 const ignore = () => {};
 
-const EVENING = new Date(2026, 9, 9, 19, 12);
+const EVENING = octoberAt(9, 19, 12);
 
 const CONFERENCE: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-0000000000a1",
   title: "Parent-teacher conference",
   location: "Lincoln Elementary",
-  startAt: new Date(2026, 9, 14, 16, 0).toISOString(),
+  startAt: octoberAt(14, 16).toISOString(),
   tone: 4,
 };
 
@@ -54,6 +61,7 @@ function ambientBase(season: Season): AmbientProps {
     season,
     time: EVENING,
     clock: "12h",
+    tz: GALLERY_TZ,
     offline: false,
     weather: { kind: "ready", data: [AMBIENT_WEATHER] },
     unit: "F",

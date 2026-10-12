@@ -1,4 +1,7 @@
 import { noteExpired, noteStamp, noteTilt, noteWaitingToPost } from "./notes";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const now = new Date(2026, 9, 9, 10, 41);
 const iso = (d: number, h: number, m: number) => new Date(2026, 9, d, h, m).toISOString();
@@ -24,11 +27,11 @@ describe("notes", () => {
     ["six days ago", iso(3, 9, 0), { kind: "at", text: "Sat" }],
     ["seven days ago", iso(2, 9, 0), { kind: "at", text: "Oct 2" }],
   ] as const)("NOTE-04 a note posted %s is stamped %o", (_, createdAt, expected) => {
-    expect(noteStamp(createdAt, now, "12h")).toEqual(expected);
+    expect(noteStamp(createdAt, now, "12h", tz)).toEqual(expected);
   });
 
   it("NOTE-04 a same-day stamp follows the 24-hour clock", () => {
-    expect(noteStamp(iso(9, 8, 12), now, "24h")).toEqual({ kind: "at", text: "08:12" });
+    expect(noteStamp(iso(9, 8, 12), now, "24h", tz)).toEqual({ kind: "at", text: "08:12" });
   });
 
   it.each([
@@ -51,5 +54,29 @@ describe("notes", () => {
     [false, 0, false],
   ])("OFF-04 a note pending %s at version %s waits to post: %s", (pending, version, waiting) => {
     expect(noteWaitingToPost({ pending, version })).toBe(waiting);
+  });
+});
+
+describe("note stamp in a zone", () => {
+  it("LOC-06 a note from yesterday in the given zone shows the weekday", () => {
+    const stamp = noteStamp(
+      "2026-10-10T06:30:00Z",
+      new Date("2026-10-10T16:00:00Z"),
+      "12h",
+      "America/Los_Angeles",
+    );
+
+    expect(stamp).toEqual({ kind: "at", text: "Fri" });
+  });
+
+  it("LOC-06 a note from today shows its time in the given zone", () => {
+    const stamp = noteStamp(
+      "2026-10-10T15:00:00Z",
+      new Date("2026-10-10T16:00:00Z"),
+      "12h",
+      "America/Los_Angeles",
+    );
+
+    expect(stamp).toEqual({ kind: "at", text: "8:00 AM" });
   });
 });

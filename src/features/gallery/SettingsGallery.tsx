@@ -6,7 +6,14 @@ import type { Season } from "@/domain/schemas";
 import { BackgroundView } from "@/features/background";
 import { SettingsView } from "@/features/settings";
 import { GalleryGroup } from "./GalleryGroup";
-import { GALLERY_PHOTOS, gallery, galleryPhotoSrc, NOW, UPLOAD_SAMPLES } from "./samples";
+import {
+  GALLERY_PHOTOS,
+  GALLERY_TZ,
+  gallery,
+  galleryPhotoSrc,
+  NOW,
+  UPLOAD_SAMPLES,
+} from "./samples";
 
 type SettingsProps = ComponentProps<typeof SettingsView>;
 
@@ -27,6 +34,7 @@ const SLIDESHOW = changeBackground(
   GALLERY_PHOTOS,
   { mode: "slideshow", rotate: "weekly" },
   NOW,
+  GALLERY_TZ,
 );
 
 const styles = stylex.create({
@@ -84,6 +92,7 @@ const BACKGROUND_BASE: BackgroundProps = {
   onRetrySync: ignore,
   background: DEFAULT_SETTINGS.background,
   now: NOW,
+  tz: GALLERY_TZ,
   uploads: [],
   online: true,
   canUpload: true,

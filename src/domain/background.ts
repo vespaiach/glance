@@ -1,5 +1,5 @@
 import type { AccountSettings, Photo } from "./schemas";
-import { localDayNumber } from "./time";
+import { dayNumber, wallTime } from "./zone";
 
 type Background = AccountSettings["background"];
 
@@ -21,10 +21,10 @@ function wrap(index: number, count: number): number {
   return ((index % count) + count) % count;
 }
 
-export function rotationStep(rotate: Background["rotate"], now: Date): number {
-  const day = localDayNumber(now);
+export function rotationStep(rotate: Background["rotate"], now: Date, tz: string): number {
+  const day = dayNumber(now, tz);
 
-  if (rotate === "hourly") return day * 24 + now.getHours();
+  if (rotate === "hourly") return day * 24 + wallTime(now, tz).hour;
 
   if (rotate === "daily") return day;
 
@@ -38,8 +38,13 @@ function anchorIndex(ordered: readonly Photo[], photoId: string | undefined): nu
   );
 }
 
-function slideshowPhoto(ordered: readonly Photo[], background: Background, now: Date): Photo {
-  const index = anchorIndex(ordered, background.photoId) + rotationStep(background.rotate, now);
+function slideshowPhoto(
+  ordered: readonly Photo[],
+  background: Background,
+  now: Date,
+  tz: string,
+): Photo {
+  const index = anchorIndex(ordered, background.photoId) + rotationStep(background.rotate, now, tz);
 
   return ordered[wrap(index, ordered.length)] as Photo;
 }
@@ -48,6 +53,7 @@ export function shownBackground(
   background: Background,
   photos: readonly Photo[],
   now: Date,
+  tz: string,
 ): ShownBackground {
   const ordered = uploadOrder(photos);
 
@@ -58,7 +64,7 @@ export function shownBackground(
 
   return {
     mode: "slideshow",
-    photo: slideshowPhoto(ordered, background, now),
+    photo: slideshowPhoto(ordered, background, now, tz),
     rotate: background.rotate,
   };
 }
@@ -67,8 +73,9 @@ function photoOnScreen(
   background: Background,
   photos: readonly Photo[],
   now: Date,
+  tz: string,
 ): string | undefined {
-  const shown = shownBackground(background, photos, now);
+  const shown = shownBackground(background, photos, now, tz);
 
   return shown.mode === "season" ? background.photoId : shown.photo.id;
 }
@@ -78,10 +85,11 @@ function slideshowAnchor(
   photoId: string,
   rotate: Background["rotate"],
   now: Date,
+  tz: string,
 ): string | undefined {
   const ordered = uploadOrder(photos);
 
-  const index = ordered.findIndex((each) => each.id === photoId) - rotationStep(rotate, now);
+  const index = ordered.findIndex((each) => each.id === photoId) - rotationStep(rotate, now, tz);
 
   return ordered[wrap(index, ordered.length)]?.id;
 }
@@ -91,14 +99,15 @@ export function changeBackground(
   photos: readonly Photo[],
   change: Partial<Background>,
   now: Date,
+  tz: string,
 ): Background {
   const next = { ...background, ...change };
 
-  const photoId = change.photoId ?? photoOnScreen(background, photos, now);
+  const photoId = change.photoId ?? photoOnScreen(background, photos, now, tz);
 
   if (photoId === undefined || next.mode !== "slideshow") return { ...next, photoId };
 
-  return { ...next, photoId: slideshowAnchor(photos, photoId, next.rotate, now) ?? photoId };
+  return { ...next, photoId: slideshowAnchor(photos, photoId, next.rotate, now, tz) ?? photoId };
 }
 
 export function pickPhoto(mode: Background["mode"], photoId: string): Partial<Background> {

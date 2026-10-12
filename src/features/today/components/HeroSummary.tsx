@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { copy } from "@/copy";
 import type { CalendarEvent } from "@/domain/schemas";
-import { type Clock, formatClock, minutesOfDay, timeParts } from "@/domain/time";
+import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
 import type { TodayHero } from "@/domain/todayHero";
 import { radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -12,6 +12,7 @@ import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 type HeroSummaryProps = {
   hero: TodayHero<CalendarEvent>;
   clock: Clock;
+  tz: string;
   onOpenEvent: (id: string) => void;
 };
 
@@ -49,19 +50,24 @@ const styles = stylex.create({
   },
 });
 
-const clockAt = (iso: string, clock: Clock) => formatClock(minutesOfDay(new Date(iso)), clock);
+const timeAt = (iso: string, clock: Clock, tz: string) =>
+  timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
-const timeAt = (iso: string, clock: Clock) => timeParts(minutesOfDay(new Date(iso)), clock).time;
+function runningMeta({ startAt, endAt }: CalendarEvent, clock: Clock, tz: string): string {
+  if (endAt === undefined) return copy.today.hero.started(clockAt(startAt, clock, tz));
 
-function runningMeta({ startAt, endAt }: CalendarEvent, clock: Clock): string {
-  if (endAt === undefined) return copy.today.hero.started(clockAt(startAt, clock));
-
-  return copy.today.hero.until(timeAt(endAt, clock));
+  return copy.today.hero.until(timeAt(endAt, clock, tz));
 }
 
-function eventMeta(hero: Extract<TodayHero<CalendarEvent>, { event: unknown }>, clock: Clock) {
+function eventMeta(
+  hero: Extract<TodayHero<CalendarEvent>, { event: unknown }>,
+  clock: Clock,
+  tz: string,
+) {
   const when =
-    hero.kind === "now" ? runningMeta(hero.event, clock) : clockAt(hero.event.startAt, clock);
+    hero.kind === "now"
+      ? runningMeta(hero.event, clock, tz)
+      : clockAt(hero.event.startAt, clock, tz);
 
   return [hero.event.location, when].filter(Boolean).join(" · ");
 }
@@ -76,7 +82,7 @@ function HeroMessage({ title, body }: { title: string; body: string }) {
   );
 }
 
-export function HeroSummary({ hero, clock, onOpenEvent }: HeroSummaryProps) {
+export function HeroSummary({ hero, clock, tz, onOpenEvent }: HeroSummaryProps) {
   if (hero.kind === "ended") {
     return <HeroMessage title={copy.today.hero.endedTitle} body={copy.today.hero.endedBody} />;
   }
@@ -93,7 +99,7 @@ export function HeroSummary({ hero, clock, onOpenEvent }: HeroSummaryProps) {
     >
       <Eyebrow>{hero.kind === "now" ? copy.today.hero.now : copy.today.hero.next}</Eyebrow>
       <span {...stylex.props(styles.title)}>{hero.event.title}</span>
-      <span {...stylex.props(styles.body)}>{eventMeta(hero, clock)}</span>
+      <span {...stylex.props(styles.body)}>{eventMeta(hero, clock, tz)}</span>
     </button>
   );
 }

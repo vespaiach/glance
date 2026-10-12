@@ -2,8 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { BoardNote } from "@/domain/notes";
 import type { AccountSettings, Note } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { NoteBoard } from "./NoteBoard";
+
+const tz = deviceTimeZone();
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
@@ -35,6 +38,7 @@ type Options = {
 function renderBoard(options: Options = {}) {
   return render(
     <NoteBoard
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       state={options.state ?? { kind: "ready", data: [NEWEST, WIFI] }}
@@ -94,6 +98,7 @@ test("NOTE-06 the caption names the expiry setting", () => {
 
   rerender(
     <NoteBoard
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       state={{ kind: "ready", data: [WIFI] }}

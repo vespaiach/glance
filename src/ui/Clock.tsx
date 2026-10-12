@@ -6,6 +6,7 @@ import { Eyebrow } from "./Eyebrow";
 
 type ClockProps = {
   time: Date;
+  tz: string;
   hour12?: boolean;
   showDate?: boolean;
   size?: "xl" | "lg";
@@ -49,18 +50,19 @@ const styles = stylex.create({
 
 export function Clock({
   time,
+  tz,
   hour12 = true,
   showDate = true,
   size = "xl",
   align = "left",
   xstyle,
 }: ClockProps) {
-  const reading = timeParts(minutesOfDay(time), hour12 ? "12h" : "24h");
+  const reading = timeParts(minutesOfDay(time, tz), hour12 ? "12h" : "24h");
   const xl = size === "xl";
 
   return (
     <div {...stylex.props(styles.root, align === "center" && styles.center, xstyle)}>
-      {showDate && <Eyebrow>{formatLongDate(time)}</Eyebrow>}
+      {showDate && <Eyebrow>{formatLongDate(time, tz)}</Eyebrow>}
       <div {...stylex.props(styles.reading)}>
         <span {...stylex.props(styles.time, xl ? styles.timeXl : styles.timeLg)}>
           {reading.time}

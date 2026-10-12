@@ -3,7 +3,7 @@ import { Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
 import type { BoardNote } from "@/domain/notes";
 import type { AccountSettings } from "@/domain/schemas";
-import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
+import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -25,6 +25,7 @@ type NoteBoardProps = {
   expiry: Expiry;
   now: Date;
   clock: Clock;
+  tz: string;
   onOpenNote: (id: string) => void;
   onAddNote: () => void;
   xstyle?: stylex.StyleXStyles;
@@ -108,7 +109,7 @@ const styles = stylex.create({
 
 const keepKey = (expiry: Expiry) => expiry ?? "never";
 
-function countFor(state: ZoneState<BoardNote>, clock: Clock): string {
+function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
   if (state.kind === "loading") return copy.notes.loadingCount;
 
   if (state.kind === "failed") return copy.notes.failedCount;
@@ -119,7 +120,7 @@ function countFor(state: ZoneState<BoardNote>, clock: Clock): string {
 
   if (state.updatedAt === undefined) return count;
 
-  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
 }
 
 function BoardSkeleton() {
@@ -153,6 +154,7 @@ export function NoteBoard({
   expiry,
   now,
   clock,
+  tz,
   onOpenNote,
   onAddNote,
   xstyle,
@@ -161,7 +163,7 @@ export function NoteBoard({
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <div {...stylex.props(styles.heading)}>
-          <Eyebrow>{countFor(state, clock)}</Eyebrow>
+          <Eyebrow>{countFor(state, clock, tz)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{copy.notes.board}</h2>
         </div>
         <Button icon={Plus} onClick={onAddNote}>
@@ -191,7 +193,7 @@ export function NoteBoard({
                   tone={note.tone}
                   rotate={note.rotation}
                   author={note.author}
-                  time={noteStampText(note, now, clock)}
+                  time={noteStampText(note, now, clock, tz)}
                   width="100%"
                   minHeight={200}
                   onClick={() => onOpenNote(note.id)}

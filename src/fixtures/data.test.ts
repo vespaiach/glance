@@ -14,6 +14,7 @@ import {
 } from "@/domain/schemas";
 import { formatClock, minutesOfDay } from "@/domain/time";
 import { rainStart } from "@/domain/weather";
+import { deviceTimeZone } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_AMBIENT_NOW,
@@ -29,6 +30,8 @@ import {
   FIXTURE_WEATHER,
   fixturePhotoImage,
 } from "./data";
+
+const tz = deviceTimeZone();
 
 const publicDir = path.join(import.meta.dirname, "..", "..", "public");
 
@@ -60,7 +63,7 @@ describe("Appendix A fixtures", () => {
   });
 
   it("STATUS-01 Oct 9 runs one past, one now and three upcoming events at 10:41", () => {
-    const rows = onDay(9).map((event) => [event.title, eventStatus(event, FIXTURE_NOW)]);
+    const rows = onDay(9).map((event) => [event.title, eventStatus(event, FIXTURE_NOW, tz)]);
 
     expect(rows).toEqual([
       ["School drop-off", "past"],
@@ -82,8 +85,8 @@ describe("Appendix A fixtures", () => {
 
   it("Appendix A event times match the handoff", () => {
     const times = FIXTURE_EVENTS.map((event) => [
-      formatClock(minutesOfDay(new Date(event.startAt)), "12h"),
-      event.endAt && formatClock(minutesOfDay(new Date(event.endAt)), "12h"),
+      formatClock(minutesOfDay(new Date(event.startAt), tz), "12h"),
+      event.endAt && formatClock(minutesOfDay(new Date(event.endAt), tz), "12h"),
       event.tone,
     ]);
 
@@ -103,7 +106,7 @@ describe("Appendix A fixtures", () => {
   it("NOTE-04 notes are stamped 8:12 AM, 9:05 AM, Mon, Tue and Tue with their tilts", () => {
     const rows = FIXTURE_NOTES.map((note) => [
       note.author,
-      noteStamp(note.createdAt, FIXTURE_NOW, "12h"),
+      noteStamp(note.createdAt, FIXTURE_NOW, "12h", tz),
       note.tone,
       note.rotation,
     ]);
@@ -122,7 +125,7 @@ describe("Appendix A fixtures", () => {
   });
 
   it("TODAY-07 Cannon Beach is the picture of the day on Oct 9", () => {
-    expect(pictureOfDay(FIXTURE_PHOTOS, FIXTURE_NOW)?.title).toBe("Cannon Beach");
+    expect(pictureOfDay(FIXTURE_PHOTOS, FIXTURE_NOW, tz)?.title).toBe("Cannon Beach");
   });
 
   it("BG-01 Cannon Beach is the default background photo", () => {

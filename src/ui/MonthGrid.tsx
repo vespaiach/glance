@@ -117,7 +117,7 @@ export function MonthGrid({
             <button
               key={day}
               type="button"
-              aria-label={formatLongDate(new Date(year, month, day))}
+              aria-label={formatLongDate(new Date(Date.UTC(year, month, day)), "UTC")}
               aria-pressed={day === selected}
               aria-current={day === today ? "date" : undefined}
               onClick={() => onSelect?.(day)}

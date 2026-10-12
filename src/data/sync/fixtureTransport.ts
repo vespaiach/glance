@@ -3,7 +3,7 @@ import { inAmbientHours } from "@/domain/idle";
 import { photoTitle, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
-import { localDateKey } from "@/domain/time";
+import { dateKey, deviceTimeZone } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_AMBIENT_WEATHER,
@@ -69,7 +69,8 @@ function onPhoto(settings: AccountSettings): AccountSettings {
 }
 
 function fixtureWeather(params: FixtureParams): Weather {
-  const evening = params.now && inAmbientHours(FIXTURE_SETTINGS.ambientHours, params.now);
+  const evening =
+    params.now && inAmbientHours(FIXTURE_SETTINGS.ambientHours, params.now, deviceTimeZone());
 
   return evening ? FIXTURE_AMBIENT_WEATHER : FIXTURE_WEATHER;
 }
@@ -220,7 +221,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
   const uploaded = (file: File): StoredPhoto => ({
     id: crypto.randomUUID(),
     title: photoTitle(file.name),
-    takenOn: localDateKey(now()),
+    takenOn: dateKey(now(), deviceTimeZone()),
     createdAt: now().toISOString(),
     ...stamp(),
   });

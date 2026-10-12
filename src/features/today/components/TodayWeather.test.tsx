@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Weather } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import { TodayWeather } from "./TodayWeather";
+
+const tz = deviceTimeZone();
 
 const WEATHER = {
   location: "Portland, OR",
@@ -26,6 +29,7 @@ const WEATHER = {
 test("TODAY-08 shows location, temperature, condition words, high/low and feels like", () => {
   render(
     <TodayWeather
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       clock="12h"
@@ -44,6 +48,7 @@ test("TODAY-08 shows location, temperature, condition words, high/low and feels 
 test("WX-02 temperatures follow the Celsius setting", () => {
   render(
     <TodayWeather
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       clock="12h"
@@ -62,6 +67,7 @@ test("TODAY-08 with no location Set location goes to Weather", async () => {
 
   render(
     <TodayWeather
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       clock="12h"
@@ -82,6 +88,7 @@ test("TODAY-08 with no location Set location goes to Weather", async () => {
 test("LOAD-02 weather still loading shows a skeleton", () => {
   render(
     <TodayWeather
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       clock="12h"

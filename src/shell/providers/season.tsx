@@ -7,6 +7,7 @@ import { seasonFor } from "@/domain/season";
 import { fall, summer, winter } from "@/theme/themes";
 import { useNow } from "./now";
 import { useAccountSettings } from "./settings";
+import { useTimeZone } from "./timeZone";
 
 const THEMES = { spring: null, summer, fall, winter } satisfies Record<Season, unknown>;
 
@@ -23,7 +24,9 @@ export function SeasonProvider({ children }: { children: ReactNode }) {
 
   const today = useNow("day");
 
-  const season = seasonFor(settings.season, today);
+  const tz = useTimeZone();
+
+  const season = seasonFor(settings.season, today, tz);
 
   return (
     <SeasonContext value={season}>

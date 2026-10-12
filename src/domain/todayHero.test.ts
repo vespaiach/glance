@@ -1,4 +1,7 @@
 import { todayHero } from "./todayHero";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 const at = (h: number, m: number) => new Date(2026, 9, 9, h, m);
@@ -12,27 +15,27 @@ const day = [lunch, call, dropOff];
 
 describe("todayHero", () => {
   it("TODAY-02 a running event is happening now", () => {
-    expect(todayHero(day, at(10, 41))).toEqual({ kind: "now", event: call });
+    expect(todayHero(day, at(10, 41), tz)).toEqual({ kind: "now", event: call });
   });
 
   it("TODAY-02 with nothing running the next event is up next", () => {
-    expect(todayHero(day, at(9, 45))).toEqual({ kind: "next", event: call });
+    expect(todayHero(day, at(9, 45), tz)).toEqual({ kind: "next", event: call });
   });
 
   it("TODAY-02 once every event ended there is nothing else today", () => {
-    expect(todayHero(day, at(13, 0))).toEqual({ kind: "ended" });
+    expect(todayHero(day, at(13, 0), tz)).toEqual({ kind: "ended" });
   });
 
   it("TODAY-02 a day with no events has nothing scheduled", () => {
-    expect(todayHero([], at(10, 41))).toEqual({ kind: "none" });
+    expect(todayHero([], at(10, 41), tz)).toEqual({ kind: "none" });
   });
 
   it("TODAY-02 an event with no end stays happening now for the rest of the day", () => {
-    expect(todayHero([garden], at(23, 59))).toEqual({ kind: "now", event: garden });
+    expect(todayHero([garden], at(23, 59), tz)).toEqual({ kind: "now", event: garden });
   });
 
   it("TODAY-02 of two running events the one that started last is shown", () => {
-    expect(todayHero([garden, call], at(10, 41))).toEqual({ kind: "now", event: call });
+    expect(todayHero([garden, call], at(10, 41), tz)).toEqual({ kind: "now", event: call });
   });
 
   it.each([
@@ -41,6 +44,16 @@ describe("todayHero", () => {
     [at(11, 14), "now"],
     [at(11, 15), "next"],
   ] as const)("TODAY-05 the hero swaps at each start and end (%s → %s)", (now, kind) => {
-    expect(todayHero(day, now).kind).toBe(kind);
+    expect(todayHero(day, now, tz).kind).toBe(kind);
+  });
+});
+
+describe("todayHero in a zone", () => {
+  it("LOC-06 an open event from the day before in the given zone has ended", () => {
+    const late = { id: "late", startAt: "2026-10-10T06:30:00Z" };
+
+    expect(todayHero([late], new Date("2026-10-10T16:00:00Z"), "America/Los_Angeles")).toEqual({
+      kind: "ended",
+    });
   });
 });

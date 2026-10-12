@@ -1,4 +1,5 @@
 import type { CalendarEvent } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import {
   canSave,
   draftFromEvent,
@@ -9,6 +10,8 @@ import {
   initialEventSheet,
   newEventDraft,
 } from "./eventSheet";
+
+const tz = deviceTimeZone();
 
 const LUNCH: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000003",
@@ -25,7 +28,7 @@ const closed: EventSheetState = initialEventSheet(DRAFT);
 
 describe("event sheet drafts", () => {
   it("EVT-02 an existing event fills the draft in minutes of its day", () => {
-    expect(draftFromEvent(LUNCH)).toEqual({
+    expect(draftFromEvent(LUNCH, tz)).toEqual({
       title: "Lunch with Aunt Rosa",
       start: 720,
       end: 780,
@@ -37,11 +40,11 @@ describe("event sheet drafts", () => {
   it("TPK-08 an event with no end leaves the draft end empty", () => {
     const { endAt: _, ...noEnd } = LUNCH;
 
-    expect(draftFromEvent(noEnd).end).toBeUndefined();
+    expect(draftFromEvent(noEnd, tz).end).toBeUndefined();
   });
 
   it("EVT-02 a new event is blank with color 1 and the TPK-05 default times", () => {
-    expect(newEventDraft(new Date(2026, 9, 9, 10, 41))).toEqual({
+    expect(newEventDraft(new Date(2026, 9, 9, 10, 41), tz)).toEqual({
       title: "",
       start: 660,
       end: 720,
@@ -211,12 +214,12 @@ describe("event sheet save", () => {
 });
 
 describe("event from draft", () => {
-  const DAY = new Date(2026, 9, 12);
+  const DAY = "2026-10-12";
 
   const ID = "0195f0a0-0000-7000-8000-000000000009";
 
   it("EVT-07 the saved event places the draft times on the sheet's day", () => {
-    expect(eventFromDraft(DRAFT, DAY, ID)).toEqual({
+    expect(eventFromDraft(DRAFT, DAY, ID, tz)).toEqual({
       id: ID,
       title: "Lunch",
       startAt: new Date(2026, 9, 12, 12, 0).toISOString(),
@@ -227,7 +230,7 @@ describe("event from draft", () => {
   });
 
   it("EVT-07 the saved event trims the title and Where and drops a blank Where", () => {
-    const event = eventFromDraft({ ...DRAFT, title: " Picnic ", location: "  " }, DAY, ID);
+    const event = eventFromDraft({ ...DRAFT, title: " Picnic ", location: "  " }, DAY, ID, tz);
 
     expect(event.title).toBe("Picnic");
     expect(event).not.toHaveProperty("location");
@@ -236,6 +239,30 @@ describe("event from draft", () => {
   it("TPK-08 a draft with no end saves no endAt", () => {
     const { end: _, ...noEnd } = DRAFT;
 
-    expect(eventFromDraft(noEnd, DAY, ID)).not.toHaveProperty("endAt");
+    expect(eventFromDraft(noEnd, DAY, ID, tz)).not.toHaveProperty("endAt");
+  });
+});
+
+describe("event sheet in a zone", () => {
+  const LA = "America/Los_Angeles";
+
+  it("LOC-06 an existing event fills the draft in minutes of its day in the given zone", () => {
+    const late = { ...LUNCH, startAt: "2026-10-10T06:30:00.000Z", endAt: undefined };
+
+    expect(draftFromEvent(late, LA).start).toBe(23 * 60 + 30);
+  });
+
+  it("LOC-06 the saved event places the draft times on the day in the given zone", () => {
+    const event = eventFromDraft(DRAFT, "2026-10-12", "0195f0a0-0000-7000-8000-000000000009", LA);
+
+    expect(event.startAt).toBe("2026-10-12T19:00:00.000Z");
+    expect(event.endAt).toBe("2026-10-12T20:00:00.000Z");
+  });
+
+  it("LOC-06 a new event's default times read the given zone", () => {
+    expect(newEventDraft(new Date("2026-10-09T17:41:00Z"), LA)).toMatchObject({
+      start: 660,
+      end: 720,
+    });
   });
 });

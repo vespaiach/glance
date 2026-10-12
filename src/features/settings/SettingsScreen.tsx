@@ -7,6 +7,7 @@ import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { SettingsView } from "./components/SettingsView";
 
 const BACKGROUND_PATH = "/settings/background";
@@ -30,6 +31,8 @@ export function SettingsScreen() {
 
   const now = useNow("minute");
 
+  const tz = useTimeZone();
+
   const repo = useSettingsRepo();
 
   const signOut = useSignOut();
@@ -39,7 +42,7 @@ export function SettingsScreen() {
       account={account}
       settings={settings}
       season={season}
-      background={shownBackground(settings.background, photos ?? [], now)}
+      background={shownBackground(settings.background, photos ?? [], now, tz)}
       breakpoint={breakpoint}
       onChange={(change) => repo.update(change)}
       onOpenBackground={() => router.push(BACKGROUND_PATH)}

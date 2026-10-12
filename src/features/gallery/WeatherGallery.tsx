@@ -7,7 +7,7 @@ import {
   WeatherSkeleton,
 } from "@/features/weather";
 import { GalleryGroup } from "./GalleryGroup";
-import { DRY_WEATHER, FULL_WEATHER, gallery, NOW, PLACES } from "./samples";
+import { DRY_WEATHER, FULL_WEATHER, GALLERY_TZ, gallery, NOW, PLACES } from "./samples";
 
 const noop = () => {};
 
@@ -44,16 +44,16 @@ export function WeatherGallery() {
   return (
     <GalleryGroup title={gallery.groups.weatherView}>
       <div {...stylex.props(styles.view)}>
-        <WeatherForecast weather={FULL_WEATHER} {...forecast} />
+        <WeatherForecast tz={GALLERY_TZ} weather={FULL_WEATHER} {...forecast} />
       </div>
       <div {...stylex.props(styles.view)}>
-        <WeatherForecast weather={DRY_WEATHER} {...forecast} clock="24h" unit="C" />
+        <WeatherForecast tz={GALLERY_TZ} weather={DRY_WEATHER} {...forecast} clock="24h" unit="C" />
       </div>
       <div {...stylex.props(styles.view)}>
-        <WeatherForecast weather={FULL_WEATHER} {...forecast} stale />
+        <WeatherForecast tz={GALLERY_TZ} weather={FULL_WEATHER} {...forecast} stale />
       </div>
       <div {...stylex.props(styles.phone)}>
-        <WeatherForecast weather={FULL_WEATHER} {...forecast} breakpoint="phone" />
+        <WeatherForecast tz={GALLERY_TZ} weather={FULL_WEATHER} {...forecast} breakpoint="phone" />
       </div>
       <div {...stylex.props(styles.view)}>
         <WeatherSkeleton breakpoint="wide" />

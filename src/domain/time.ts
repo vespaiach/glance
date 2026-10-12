@@ -1,4 +1,5 @@
 import type { AccountSettings } from "./schemas";
+import { calendarDate, wallTime, zonedInstant } from "./zone";
 
 export type Clock = AccountSettings["clock"];
 
@@ -7,32 +8,42 @@ export interface TimeParts {
   meridiem?: "AM" | "PM";
 }
 
-const weekdayFormat = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+const WEEKDAY: Intl.DateTimeFormatOptions = { weekday: "short" };
 
-const monthDayFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const MONTH_DAY: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
 
-const monthFormat = new Intl.DateTimeFormat("en-US", { month: "long" });
+const MONTH: Intl.DateTimeFormatOptions = { month: "long" };
 
-const longDateFormat = new Intl.DateTimeFormat("en-US", {
-  weekday: "long",
-  month: "long",
-  day: "numeric",
-});
+const LONG_DATE: Intl.DateTimeFormatOptions = { weekday: "long", month: "long", day: "numeric" };
 
-const dayTitleFormat = new Intl.DateTimeFormat("en-US", {
-  weekday: "long",
-  month: "short",
-  day: "numeric",
-});
+const DAY_TITLE: Intl.DateTimeFormatOptions = { weekday: "long", month: "short", day: "numeric" };
+
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+function formatIn(options: Intl.DateTimeFormatOptions, tz: string): Intl.DateTimeFormat {
+  const key = `${JSON.stringify(options)}@${tz}`;
+
+  const cached = formatters.get(key);
+
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat("en-US", { ...options, timeZone: tz });
+
+  formatters.set(key, formatter);
+
+  return formatter;
+}
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function minutesOfDay(date: Date): number {
-  return date.getHours() * 60 + date.getMinutes();
+export function minutesOfDay(date: Date, tz: string): number {
+  const { hour, minute } = wallTime(date, tz);
+
+  return hour * 60 + minute;
 }
 
-export function atMinute(day: Date, minutes: number): Date {
-  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
+export function atMinute(dayKey: string, minutes: number, tz: string): Date {
+  return zonedInstant(tz, calendarDate(dayKey), minutes);
 }
 
 export function timeParts(minutes: number, clock: Clock): TimeParts {
@@ -48,6 +59,10 @@ export function formatClock(minutes: number, clock: Clock): string {
   const { time, meridiem } = timeParts(minutes, clock);
 
   return meridiem ? `${time} ${meridiem}` : time;
+}
+
+export function clockAt(iso: string, clock: Clock, tz: string): string {
+  return formatClock(minutesOfDay(new Date(iso), tz), clock);
 }
 
 export function formatRange(start: number, end: number | undefined, clock: Clock): string {
@@ -73,36 +88,22 @@ export function formatLength(minutes: number): string {
   return rest === 0 ? `${hours} hr` : `${hours} hr ${rest} min`;
 }
 
-export function localDateKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+export function formatWeekday(date: Date, tz: string): string {
+  return formatIn(WEEKDAY, tz).format(date);
 }
 
-export function parseLocalDate(key: string): Date {
-  const [year = 0, month = 1, day = 1] = key.split("-").map(Number);
-
-  return new Date(year, month - 1, day);
+export function formatMonthDay(date: Date, tz: string): string {
+  return formatIn(MONTH_DAY, tz).format(date);
 }
 
-export function localDayNumber(date: Date): number {
-  return Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000);
+export function formatLongDate(date: Date, tz: string): string {
+  return formatIn(LONG_DATE, tz).format(date);
 }
 
-export function formatWeekday(date: Date): string {
-  return weekdayFormat.format(date);
+export function formatMonth(date: Date, tz: string): string {
+  return formatIn(MONTH, tz).format(date);
 }
 
-export function formatMonthDay(date: Date): string {
-  return monthDayFormat.format(date);
-}
-
-export function formatLongDate(date: Date): string {
-  return longDateFormat.format(date);
-}
-
-export function formatMonth(date: Date): string {
-  return monthFormat.format(date);
-}
-
-export function formatDayTitle(date: Date): string {
-  return dayTitleFormat.format(date);
+export function formatDayTitle(date: Date, tz: string): string {
+  return formatIn(DAY_TITLE, tz).format(date);
 }

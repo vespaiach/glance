@@ -1,8 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
+import { deviceTimeZone } from "@/domain/zone";
 import type { SignInState } from "../signIn";
 import { SignInView } from "./SignInView";
+
+const tz = deviceTimeZone();
 
 type Props = ComponentProps<typeof SignInView>;
 
@@ -24,6 +27,7 @@ function renderView(state: SignInState, props: Partial<Props> = {}) {
       season="fall"
       time={NOW}
       clock="12h"
+      tz={tz}
       breakpoint="wide"
       online
       demo

@@ -1,5 +1,8 @@
 import { DEFAULT_SETTINGS } from "./defaults";
 import { idleDue, inAmbientHours } from "./idle";
+import { deviceTimeZone } from "./zone";
+
+const tz = deviceTimeZone();
 
 const hours = DEFAULT_SETTINGS.ambientHours;
 
@@ -15,7 +18,7 @@ describe("inAmbientHours", () => {
     ["07:30", false],
     ["10:41", false],
   ])("AMB-05 at %s is %s for 6:00 PM – 7:30 AM", (time, expected) => {
-    expect(inAmbientHours(hours, at(time))).toBe(expected);
+    expect(inAmbientHours(hours, at(time), tz)).toBe(expected);
   });
 });
 
@@ -33,5 +36,13 @@ describe("idleDue", () => {
 
   it("IDLE-01 Never is never due", () => {
     expect(idleDue(last, at("23:00"), null)).toBe(false);
+  });
+});
+
+describe("inAmbientHours in a zone", () => {
+  it("LOC-06 reads the time of day in the given zone", () => {
+    const fridayNight = new Date("2026-10-10T06:30:00Z");
+
+    expect(inAmbientHours(hours, fridayNight, "America/Los_Angeles")).toBe(true);
   });
 });

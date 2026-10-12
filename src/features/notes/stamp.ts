@@ -6,10 +6,11 @@ export function noteStampText(
   note: Pick<BoardNote, "createdAt" | "waiting">,
   now: Date,
   clock: Clock,
+  tz: string,
 ): string {
   if (note.waiting) return copy.notes.waitingToPost;
 
-  const stamp = noteStamp(note.createdAt, now, clock);
+  const stamp = noteStamp(note.createdAt, now, clock, tz);
 
   return stamp.kind === "justNow" ? copy.notes.justNow : stamp.text;
 }

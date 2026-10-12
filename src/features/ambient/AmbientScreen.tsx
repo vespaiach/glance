@@ -4,12 +4,13 @@ import { useRouter } from "next/navigation";
 import { useNextEventAfter, useWeather } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
 import type { CalendarEvent } from "@/domain/schemas";
-import { localDateKey } from "@/domain/time";
+import { dateKey } from "@/domain/zone";
 import { useBackgroundPhoto } from "@/shell/background";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import { AmbientView } from "./components/AmbientView";
@@ -29,11 +30,13 @@ export function AmbientScreen() {
 
   const time = useNow("second");
 
+  const tz = useTimeZone();
+
   const { showOfflinePill } = useNetwork();
 
   const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
-  const nextEvent = useSyncedZone(eventRows(useNextEventAfter(localDateKey(time))));
+  const nextEvent = useSyncedZone(eventRows(useNextEventAfter(dateKey(time, tz), tz)));
 
   const photo = useBackgroundPhoto();
 
@@ -42,6 +45,7 @@ export function AmbientScreen() {
       season={season}
       time={time}
       clock={settings.clock}
+      tz={tz}
       offline={showOfflinePill}
       weather={weather.state}
       unit={settings.tempUnit}

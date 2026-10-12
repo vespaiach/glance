@@ -1,5 +1,6 @@
 import type { Photo } from "@/domain/schemas";
-import { formatMonthDay, parseLocalDate } from "@/domain/time";
+import { formatMonthDay } from "@/domain/time";
+import { parseDateKey } from "@/domain/zone";
 
 export function newestFirst(photos: readonly Photo[]): Photo[] {
   return [...photos].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -10,7 +11,7 @@ export function wrapIndex(index: number, count: number): number {
 }
 
 export function photoDate(photo: Photo): string {
-  return formatMonthDay(parseLocalDate(photo.takenOn));
+  return formatMonthDay(parseDateKey(photo.takenOn), "UTC");
 }
 
 export function photoMeta(photo: Photo): string {

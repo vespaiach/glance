@@ -9,8 +9,8 @@ export const LATEST_START = 23 * 60 + 30;
 
 export const LATEST_END = 23 * 60 + 55;
 
-export function nextHalfHour(now: Date): number {
-  const next = (Math.floor(minutesOfDay(now) / 30) + 1) * 30;
+export function nextHalfHour(now: Date, tz: string): number {
+  const next = (Math.floor(minutesOfDay(now, tz) / 30) + 1) * 30;
 
   return Math.min(next, LATEST_START);
 }
@@ -19,8 +19,8 @@ export function defaultEnd(start: number): number {
   return Math.min(start + 60, LATEST_END);
 }
 
-export function defaultTimes(now: Date): EventTimes {
-  const start = nextHalfHour(now);
+export function defaultTimes(now: Date, tz: string): EventTimes {
+  const start = nextHalfHour(now, tz);
 
   return { start, end: defaultEnd(start) };
 }

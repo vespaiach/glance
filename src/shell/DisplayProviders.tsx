@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect } from "react";
 import { type FixtureParams, RepoProvider, useDisplayBoot } from "@/data/repos";
-import { localDateKey } from "@/domain/time";
+import { dateKey } from "@/domain/zone";
 import { DEMO_BUILD } from "./demo";
 import {
   FixtureParamsProvider,
@@ -16,10 +16,19 @@ import { NetworkProvider } from "./providers/network";
 import { NowProvider, useNowStore } from "./providers/now";
 import { SeasonProvider } from "./providers/season";
 import { SettingsProvider } from "./providers/settings";
+import { TimeZoneProvider, useTimeZone } from "./providers/timeZone";
 import { SessionGuard } from "./SessionGuard";
 import { SheetHost } from "./SheetHost";
 
 const SIGN_IN = "/signin";
+
+function FixtureSheetHost({ params, children }: { params: FixtureParams; children: ReactNode }) {
+  const { get } = useNowStore();
+
+  const tz = useTimeZone();
+
+  return <SheetHost initial={fixtureSheet(params, dateKey(get(), tz))}>{children}</SheetHost>;
+}
 
 type SessionProps = {
   demo: boolean;
@@ -47,15 +56,17 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
     <RepoProvider store={boot.store}>
       <SessionGuard>
         <SettingsProvider overrides={options.overrides}>
-          <SeasonProvider>
-            <NetworkProvider pillDelayMs={options.pillDelayMs}>
-              <SheetHost initial={fixtureSheet(params, localDateKey(get()))}>
-                <FixtureParamsProvider params={params}>
-                  <IdleProvider>{children}</IdleProvider>
-                </FixtureParamsProvider>
-              </SheetHost>
-            </NetworkProvider>
-          </SeasonProvider>
+          <TimeZoneProvider>
+            <SeasonProvider>
+              <NetworkProvider pillDelayMs={options.pillDelayMs}>
+                <FixtureSheetHost params={params}>
+                  <FixtureParamsProvider params={params}>
+                    <IdleProvider>{children}</IdleProvider>
+                  </FixtureParamsProvider>
+                </FixtureSheetHost>
+              </NetworkProvider>
+            </SeasonProvider>
+          </TimeZoneProvider>
         </SettingsProvider>
       </SessionGuard>
     </RepoProvider>

@@ -8,6 +8,7 @@ import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSheetHost } from "@/shell/SheetHost";
 import { NoteSheet } from "./components/NoteSheet";
 import {
@@ -69,6 +70,8 @@ function EditNoteSheet({ note }: { note: Note }) {
 
   const now = useNow("minute");
 
+  const tz = useTimeZone();
+
   const onDelete = () => {
     close();
     void notes.remove(note.id);
@@ -77,7 +80,7 @@ function EditNoteSheet({ note }: { note: Note }) {
   return (
     <SheetFrame
       mode="edit"
-      eyebrow={copy.notes.sheet.eyebrow(note.author, noteStampText(note, now, clock))}
+      eyebrow={copy.notes.sheet.eyebrow(note.author, noteStampText(note, now, clock, tz))}
       initial={initialNoteSheet(draftFromNote(note))}
       base={() => note}
       onDelete={onDelete}

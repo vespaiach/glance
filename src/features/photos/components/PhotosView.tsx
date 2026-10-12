@@ -4,7 +4,7 @@ import { copy } from "@/copy";
 import type { PhotoVariant } from "@/data/repos";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Photo } from "@/domain/schemas";
-import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
+import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { radii, space } from "@/theme/tokens.stylex";
 import { ColorBlock } from "@/ui/ColorBlock";
@@ -22,6 +22,7 @@ type PhotosViewProps = {
   retryIn: number;
   onRetrySync: () => void;
   clock: Clock;
+  tz: string;
   selected: number;
   playing: boolean;
   uploads: readonly UploadTile[];
@@ -108,7 +109,7 @@ function PhotoGallery({
       <PhotoPanel
         photos={photos}
         {...(updatedAt !== undefined && {
-          updated: formatClock(minutesOfDay(new Date(updatedAt)), rest.clock),
+          updated: clockAt(updatedAt, rest.clock, rest.tz),
         })}
         selected={selected}
         uploads={rest.uploads}

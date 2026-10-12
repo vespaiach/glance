@@ -9,7 +9,8 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { localDayNumber } from "@/domain/time";
+import { dayNumber } from "@/domain/zone";
+import { useTimeZone } from "./timeZone";
 
 export type Granularity = "second" | "minute" | "day";
 
@@ -93,14 +94,16 @@ export function useNowStore(): NowStore {
   return store;
 }
 
-function bucket(date: Date, granularity: Granularity): number {
-  if (granularity === "day") return localDayNumber(date);
+function bucket(date: Date, granularity: Granularity, tz: string): number {
+  if (granularity === "day") return dayNumber(date, tz);
 
   return Math.floor(date.getTime() / (granularity === "minute" ? 60_000 : TICK_MS));
 }
 
 export function useNow(granularity: Granularity = "second"): Date {
   const store = useNowStore();
+
+  const tz = useTimeZone();
 
   const shown = useRef<Date | undefined>(undefined);
 
@@ -109,7 +112,7 @@ export function useNow(granularity: Granularity = "second"): Date {
 
     if (
       shown.current === undefined ||
-      bucket(shown.current, granularity) !== bucket(now, granularity)
+      bucket(shown.current, granularity, tz) !== bucket(now, granularity, tz)
     ) {
       shown.current = now;
     }

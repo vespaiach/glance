@@ -9,8 +9,8 @@ function toMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-export function inAmbientHours(hours: AmbientHours, now: Date): boolean {
-  const minute = minutesOfDay(now);
+export function inAmbientHours(hours: AmbientHours, now: Date, tz: string): boolean {
+  const minute = minutesOfDay(now, tz);
 
   const start = toMinutes(hours.start);
 

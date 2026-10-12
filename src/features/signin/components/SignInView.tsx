@@ -32,6 +32,7 @@ type SignInViewProps = {
   season: Season;
   time: Date;
   clock: ClockSetting;
+  tz: string;
   breakpoint: Breakpoint;
   online: boolean;
   demo: boolean;
@@ -45,7 +46,7 @@ type SignInViewProps = {
 
 type StepProps = Omit<
   SignInViewProps,
-  "season" | "time" | "clock" | "breakpoint" | "keyboardInset" | "xstyle"
+  "season" | "time" | "clock" | "tz" | "breakpoint" | "keyboardInset" | "xstyle"
 >;
 
 const styles = stylex.create({
@@ -297,6 +298,7 @@ export function SignInView({
   season,
   time,
   clock,
+  tz,
   breakpoint,
   keyboardInset = 0,
   xstyle,
@@ -311,7 +313,13 @@ export function SignInView({
   return (
     <div {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
       <main ref={main} {...stylex.props(styles.main, signInLayout(breakpoint))}>
-        <SignInHero season={season} time={time} clock={clock} xstyle={tall && styles.heroTall} />
+        <SignInHero
+          season={season}
+          time={time}
+          clock={clock}
+          tz={tz}
+          xstyle={tall && styles.heroTall}
+        />
         <div {...stylex.props(styles.panel)}>
           <SignInStep {...step} />
         </div>

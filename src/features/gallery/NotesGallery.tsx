@@ -13,7 +13,7 @@ import {
 } from "@/features/notes";
 import { Button } from "@/ui/Button";
 import { GalleryGroup } from "./GalleryGroup";
-import { BOARD_NOTES, gallery, NOW } from "./samples";
+import { BOARD_NOTES, GALLERY_TZ, gallery, NOW } from "./samples";
 
 type Demo = {
   label: string;
@@ -77,7 +77,7 @@ function NoteSheetDemo({
       mode={demo.mode}
       eyebrow={
         edit
-          ? copy.notes.sheet.eyebrow(edit.author, noteStampText(edit, NOW, "12h"))
+          ? copy.notes.sheet.eyebrow(edit.author, noteStampText(edit, NOW, "12h", GALLERY_TZ))
           : copy.notes.board
       }
       initial={initialNoteSheet(edit ? draftFromNote(edit) : draft)}
@@ -97,25 +97,40 @@ export function NotesGallery({ season }: { season: Season }) {
     <>
       <GalleryGroup title={gallery.groups.notesView}>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard state={{ kind: "ready", data: BOARD_NOTES }} expiry="1w" {...board} />
+          <NoteBoard
+            tz={GALLERY_TZ}
+            state={{ kind: "ready", data: BOARD_NOTES }}
+            expiry="1w"
+            {...board}
+          />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard state={{ kind: "ready", data: WAITING_NOTES }} expiry="1w" {...board} />
+          <NoteBoard
+            tz={GALLERY_TZ}
+            state={{ kind: "ready", data: WAITING_NOTES }}
+            expiry="1w"
+            {...board}
+          />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard state={{ kind: "empty" }} expiry="1w" {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "empty" }} expiry="1w" {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard state={{ kind: "empty" }} expiry={null} {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "empty" }} expiry={null} {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard state={{ kind: "loading" }} expiry="1w" {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "loading" }} expiry="1w" {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard state={{ kind: "failed" }} expiry="1w" {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "failed" }} expiry="1w" {...board} />
         </div>
         <div {...stylex.props(styles.phone)}>
-          <NoteBoard state={{ kind: "ready", data: BOARD_NOTES }} expiry="1d" {...board} />
+          <NoteBoard
+            tz={GALLERY_TZ}
+            state={{ kind: "ready", data: BOARD_NOTES }}
+            expiry="1d"
+            {...board}
+          />
         </div>
       </GalleryGroup>
       <GalleryGroup title={gallery.groups.noteSheet}>

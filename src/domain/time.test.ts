@@ -1,5 +1,6 @@
 import {
   atMinute,
+  clockAt,
   formatClock,
   formatDayTitle,
   formatHour,
@@ -9,11 +10,12 @@ import {
   formatMonthDay,
   formatRange,
   formatWeekday,
-  localDateKey,
   minutesOfDay,
-  parseLocalDate,
   timeParts,
 } from "./time";
+import { deviceTimeZone, parseDateKey } from "./zone";
+
+const tz = deviceTimeZone();
 
 const at = (h: number, m: number) => h * 60 + m;
 
@@ -71,40 +73,63 @@ describe("time", () => {
   });
 
   it("TIME-01 minutesOfDay reads the local time of day", () => {
-    expect(minutesOfDay(new Date(2026, 9, 9, 10, 41, 59))).toBe(at(10, 41));
+    expect(minutesOfDay(new Date(2026, 9, 9, 10, 41, 59), tz)).toBe(at(10, 41));
   });
 
   it("D15 atMinute puts minutes of the day on that local day", () => {
-    expect(atMinute(new Date(2026, 9, 9, 18, 5), at(13, 30))).toEqual(new Date(2026, 9, 9, 13, 30));
-  });
-
-  it("TIME-01 localDateKey and parseLocalDate round-trip a local date", () => {
-    const day = new Date(2026, 9, 9, 23, 59);
-
-    expect(localDateKey(day)).toBe("2026-10-09");
-    expect(parseLocalDate("2026-10-09")).toEqual(new Date(2026, 9, 9));
+    expect(atMinute("2026-10-09", at(13, 30), tz)).toEqual(new Date(2026, 9, 9, 13, 30));
   });
 
   it("AMB-03 weekday and month-day labels are short English names", () => {
-    expect(formatWeekday(new Date(2026, 9, 10))).toBe("Sat");
-    expect(formatMonthDay(new Date(2026, 9, 2))).toBe("Oct 2");
+    expect(formatWeekday(new Date(2026, 9, 10), tz)).toBe("Sat");
+    expect(formatMonthDay(new Date(2026, 9, 2), tz)).toBe("Oct 2");
   });
 
   it.each([
     [new Date(2026, 9, 9, 10, 41), "Friday, October 9"],
     [new Date(2027, 0, 1), "Friday, January 1"],
   ])("TIME-01 clock date of %s reads %s", (date, expected) => {
-    expect(formatLongDate(date)).toBe(expected);
+    expect(formatLongDate(date, tz)).toBe(expected);
   });
 
   it("TODAY-01 the season eyebrow names the month in full", () => {
-    expect(formatMonth(new Date(2026, 9, 9))).toBe("October");
+    expect(formatMonth(new Date(2026, 9, 9), tz)).toBe("October");
   });
 
   it.each([
     [new Date(2026, 9, 9), "Friday, Oct 9"],
     [new Date(2027, 0, 14), "Thursday, Jan 14"],
   ])("CAL-01 the day heading of %s reads %s", (date, expected) => {
-    expect(formatDayTitle(date)).toBe(expected);
+    expect(formatDayTitle(date, tz)).toBe(expected);
+  });
+});
+
+describe("time in a zone", () => {
+  const LA = "America/Los_Angeles";
+  const friday = new Date("2026-10-10T06:30:00Z");
+
+  it("LOC-06 minutesOfDay reads the wall time in the given zone, not the device's", () => {
+    expect(minutesOfDay(friday, LA)).toBe(at(23, 30));
+  });
+
+  it("LOC-06 atMinute puts minutes of the day on that day in the given zone", () => {
+    expect(atMinute("2026-10-09", at(13, 30), LA).toISOString()).toBe("2026-10-09T20:30:00.000Z");
+  });
+
+  it("LOC-06 clockAt formats an instant's wall time in the zone", () => {
+    expect(clockAt(friday.toISOString(), "12h", LA)).toBe("11:30 PM");
+    expect(clockAt(friday.toISOString(), "24h", LA)).toBe("23:30");
+  });
+
+  it("LOC-06 date names follow the given zone", () => {
+    expect(formatWeekday(friday, LA)).toBe("Fri");
+    expect(formatMonthDay(friday, LA)).toBe("Oct 9");
+    expect(formatLongDate(friday, LA)).toBe("Friday, October 9");
+    expect(formatDayTitle(friday, LA)).toBe("Friday, Oct 9");
+    expect(formatMonth(new Date("2026-11-01T06:30:00Z"), LA)).toBe("October");
+  });
+
+  it("D15 a date with no time reads its own day when formatted in UTC", () => {
+    expect(formatWeekday(parseDateKey("2026-10-10"), "UTC")).toBe("Sat");
   });
 });

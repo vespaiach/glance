@@ -3,7 +3,7 @@ import { monthTitle } from "@/domain/month";
 import { formatDayTitle } from "@/domain/time";
 import { DayPanel, MonthBlock } from "@/features/calendar";
 import { GalleryGroup } from "./GalleryGroup";
-import { gallery, MARKED_DAYS, NOW, TODAY_EVENTS } from "./samples";
+import { GALLERY_TZ, gallery, MARKED_DAYS, NOW, NOW_DAY, octoberAt, TODAY_EVENTS } from "./samples";
 
 const styles = stylex.create({
   panel: {
@@ -11,10 +11,10 @@ const styles = stylex.create({
   },
 });
 
-const UPDATED_AT = new Date(2026, 9, 9, 9, 32).toISOString();
+const UPDATED_AT = octoberAt(9, 9, 32).toISOString();
 
 const panel = {
-  title: formatDayTitle(NOW),
+  title: formatDayTitle(NOW, GALLERY_TZ),
   calendarEmpty: false,
   now: NOW,
   clock: "12h",
@@ -27,32 +27,46 @@ const panel = {
 } as const;
 
 const month = {
-  year: NOW.getFullYear(),
-  month: NOW.getMonth(),
-  selected: NOW.getDate(),
+  year: NOW_DAY.year,
+  month: NOW_DAY.month,
+  selected: NOW_DAY.day,
   marked: MARKED_DAYS,
 } as const;
 
 export function CalendarGallery() {
   return (
     <GalleryGroup title={gallery.groups.calendarView}>
-      <MonthBlock title={monthTitle(2026, 9, NOW)} today={NOW.getDate()} cell={60} {...month} />
-      <MonthBlock title={monthTitle(2026, 9, NOW)} today={NOW.getDate()} cell={40} {...month} />
       <MonthBlock
-        title={monthTitle(2027, 0, NOW)}
+        title={monthTitle(2026, 9, NOW, GALLERY_TZ)}
+        today={NOW_DAY.day}
+        cell={60}
+        {...month}
+      />
+      <MonthBlock
+        title={monthTitle(2026, 9, NOW, GALLERY_TZ)}
+        today={NOW_DAY.day}
+        cell={40}
+        {...month}
+      />
+      <MonthBlock
+        title={monthTitle(2027, 0, NOW, GALLERY_TZ)}
         year={2027}
         month={0}
         selected={1}
         marked={[]}
         cell={54}
       />
-      <DayPanel state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} />
-      <DayPanel state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} compact />
-      <DayPanel state={{ kind: "empty" }} {...panel} />
-      <DayPanel state={{ kind: "empty" }} {...panel} calendarEmpty />
-      <DayPanel state={{ kind: "loading" }} {...panel} />
-      <DayPanel state={{ kind: "failed" }} {...panel} />
-      <DayPanel state={{ kind: "ready", data: TODAY_EVENTS, updatedAt: UPDATED_AT }} {...panel} />
+      <DayPanel tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} />
+      <DayPanel tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} compact />
+      <DayPanel tz={GALLERY_TZ} state={{ kind: "empty" }} {...panel} />
+      <DayPanel tz={GALLERY_TZ} state={{ kind: "empty" }} {...panel} calendarEmpty />
+      <DayPanel tz={GALLERY_TZ} state={{ kind: "loading" }} {...panel} />
+      <DayPanel tz={GALLERY_TZ} state={{ kind: "failed" }} {...panel} />
+      <DayPanel
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_EVENTS, updatedAt: UPDATED_AT }}
+        {...panel}
+      />
     </GalleryGroup>
   );
 }
