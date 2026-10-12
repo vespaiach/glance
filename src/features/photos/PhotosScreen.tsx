@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import { fixtureUploads, usePhotoSrc, usePhotos } from "@/data/repos";
 import type { Photo } from "@/domain/schemas";
 import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
+import { useNow, useNowStore } from "@/shell/providers/now";
 import { PhotosView } from "./components/PhotosView";
-import { newestFirst, wrapIndex } from "./slideshow";
+import { newestFirst, slideIndex, slideshow, startSlideshow, wrapIndex } from "./slideshow";
 import { initialUploads } from "./uploads";
 
 const notYet = () => {};
@@ -28,29 +29,31 @@ export function PhotosScreen() {
 
   const state = shownPhotos(usePhotos());
 
-  const [index, setIndex] = useState(0);
+  const now = useNow();
 
-  const [playing, setPlaying] = useState(true);
+  const clock = useNowStore();
+
+  const [show, dispatch] = useReducer(slideshow, clock, (store) => startSlideshow(store.get()));
 
   const [uploads] = useState(() => initialUploads(fixture.upload, fixtureUploads));
 
   const count = state.kind === "ready" ? state.data.length : 0;
 
-  const selected = count > 0 ? wrapIndex(index, count) : 0;
+  const selected = count > 0 ? wrapIndex(slideIndex(show, now), count) : 0;
 
   return (
     <PhotosView
       state={state}
       selected={selected}
-      playing={playing}
+      playing={show.kind === "playing"}
       uploads={uploads}
       online={online}
       canUpload={breakpoint !== "phone"}
       breakpoint={breakpoint}
       photoSrc={photoSrc}
-      onSelect={setIndex}
-      onStep={(delta) => setIndex(selected + delta)}
-      onTogglePlay={() => setPlaying((value) => !value)}
+      onSelect={(index) => dispatch({ type: "select", index, at: clock.get() })}
+      onStep={(delta) => dispatch({ type: "step", delta, at: clock.get() })}
+      onTogglePlay={() => dispatch({ type: "toggle", at: clock.get() })}
       onUpload={notYet}
       onRetry={notYet}
       onRemove={notYet}
