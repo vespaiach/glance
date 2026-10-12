@@ -19,8 +19,10 @@ export { usePhotoSrc, usePhotos } from "./photos";
 export {
   type DisplayBoot,
   type FixtureParams,
+  type FixtureUpload,
   fixtureParamsFor,
   fixtureSheetTargets,
+  fixtureUploads,
   fixtureWeatherSearch,
   useDisplayBoot,
 } from "./session";

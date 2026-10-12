@@ -36,6 +36,10 @@ export function useFixtureParams(): FixtureParams {
   return useContext(FixtureParamsContext);
 }
 
+function startsOffline(params: FixtureParams): boolean {
+  return params.net === "offline" || params.upload === "offline";
+}
+
 export function shellOptions(params: FixtureParams): ShellOptions {
   return {
     ...(params.now && { frozenAt: params.now }),
@@ -43,7 +47,7 @@ export function shellOptions(params: FixtureParams): ShellOptions {
       ...(params.clock && { clock: params.clock }),
       ...(params.season && { season: params.season }),
     },
-    ...(params.net === "offline" && { pillDelayMs: 0 }),
+    ...(startsOffline(params) && { pillDelayMs: 0 }),
   };
 }
 

@@ -11,6 +11,7 @@ import type {
   WeatherLocation,
 } from "@/domain/schemas";
 import type { ZoneState } from "@/domain/zoneState";
+import type { UploadTile } from "@/features/photos";
 
 export const SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
 
@@ -35,6 +36,7 @@ export const gallery = {
     weatherView: "Weather view",
     notesView: "Notes view",
     noteSheet: "Note sheet",
+    photosView: "Photos view",
   },
   noteSheet: {
     edit: "Edit note",
@@ -342,6 +344,46 @@ export const TODAY_PHOTO: Photo = {
 };
 
 export const TODAY_PHOTO_SRC = "/fixtures/photos/coast.svg";
+
+const PHOTO_ROWS = [
+  ["coast", "Cannon Beach", "2026-09-06", "Summer trip"],
+  ["orchard", "Apple picking", "2026-09-27", "Sauvie Island"],
+  ["pumpkins", "Pumpkin patch", "2026-10-04", "Family outing"],
+  ["school", "First day of school", "2026-09-02", "Lincoln Elementary"],
+  ["bikes", "Bike ride", "2026-08-30", "Waterfront"],
+  ["forest", "Forest Park trail", "2026-08-22", "Weekend hike"],
+] as const;
+
+export const GALLERY_PHOTOS: Photo[] = PHOTO_ROWS.map(([slug, title, takenOn, place], index) => ({
+  id: slug,
+  title,
+  takenOn,
+  place,
+  createdAt: todayAt(8, 59 - index),
+}));
+
+export const galleryPhotoSrc = (photoId: string) => `/fixtures/photos/${photoId}.svg`;
+
+const preview = (slug: string) => `/fixtures/photos/${slug}.svg`;
+
+export const UPLOAD_SAMPLES: Record<string, readonly UploadTile[]> = {
+  one: [
+    { id: "u1", title: "IMG_2041", preview: preview("orchard"), state: "uploading", percent: 64 },
+  ],
+  several: [
+    { id: "u1", title: "IMG_2041", preview: preview("orchard"), state: "uploading", percent: 82 },
+    { id: "u2", title: "IMG_2042", preview: preview("pumpkins"), state: "uploading", percent: 35 },
+    { id: "u3", title: "IMG_2043", preview: preview("bikes"), state: "uploading", percent: 0 },
+  ],
+  failed: [
+    { id: "u4", title: "IMG_3307", state: "failed", reason: "too-large" },
+    { id: "u5", title: "Recipe card", state: "failed", reason: "not-a-photo" },
+    { id: "u6", title: "Halloween costumes", state: "failed", reason: "network" },
+  ],
+  paused: [
+    { id: "u1", title: "IMG_2041", preview: preview("orchard"), state: "paused", percent: 40 },
+  ],
+};
 
 export const TODAY_WEATHER: Weather = {
   location: "Portland, OR",

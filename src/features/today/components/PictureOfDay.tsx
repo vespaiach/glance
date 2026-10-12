@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { Image, Upload } from "lucide-react";
 import { copy } from "@/copy";
 import type { Photo } from "@/domain/schemas";
-import { formatMonthDay, parseLocalDate } from "@/domain/time";
+import { photoMeta } from "@/features/photos";
 import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
@@ -99,10 +99,6 @@ const styles = stylex.create({
     fontWeight: 330,
   },
 });
-
-function photoMeta({ takenOn, place }: Photo): string {
-  return [formatMonthDay(parseLocalDate(takenOn)), place].filter(Boolean).join(" · ");
-}
 
 export function PictureOfDay({ photo, src }: PictureOfDayProps) {
   return (

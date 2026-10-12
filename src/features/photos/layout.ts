@@ -11,8 +11,8 @@ const grids = stylex.create({
 const featured = stylex.create({
   wide: { minHeight: 320 },
   mid: { minHeight: 320 },
-  narrow: { height: 440 },
-  phone: { height: 260 },
+  narrow: { minHeight: 440 },
+  phone: { minHeight: 260 },
 });
 
 const thumbs = stylex.create({

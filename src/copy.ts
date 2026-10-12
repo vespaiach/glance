@@ -190,6 +190,47 @@ export const copy = {
       offlineBody: "The note saves on this screen and posts when the connection is back.",
     },
   },
+  photos: {
+    count: (count: number) => `Family photos · ${count}`,
+    list: "Family photos",
+    upload: "Upload",
+    uploadPhotos: "Upload photos",
+    emptyTitle: "No photos yet",
+    emptyBody:
+      "Upload family photos to show them here, as the picture of the day and as a background.",
+    waitingForUploads: "Your photos show here once they finish uploading.",
+    previous: "Previous photo",
+    next: "Next photo",
+    pause: "Pause slideshow",
+    play: "Play slideshow",
+    show: (title: string) => `Show ${title}`,
+    loading: "Loading photos",
+    unavailable: "Photos unavailable",
+    tile: {
+      uploading: (title: string) => `Uploading ${title}`,
+      waiting: "Waiting",
+      paused: "Paused",
+      percent: (percent: number) => `${percent}%`,
+      retry: "Try again",
+      remove: "Remove",
+      failed: {
+        "too-large": "Too large · 20 MB max",
+        "not-a-photo": "Not a photo",
+        network: "Didn’t upload",
+      },
+    },
+    row: {
+      uploadingOne: (title: string) => `Uploading ${title}`,
+      uploadingMany: (count: number) => `Uploading ${count} photos`,
+      failed: (count: number) =>
+        count === 1 ? "1 photo didn’t upload" : `${count} photos didn’t upload`,
+      offline: "Offline · upload when back online",
+      offlinePaused: (count: number) =>
+        count === 1
+          ? "Offline · 1 upload paused until back online"
+          : `Offline · ${count} uploads paused until back online`,
+    },
+  },
   weather: {
     now: (location: string) => `${location} · Now`,
     place: (name: string, region: string) => `${name}, ${region}`,
