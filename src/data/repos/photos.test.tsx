@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
-import { usePhotos } from "./photos";
+import { createPhotosRepo, usePhotos } from "./photos";
 import { type Harness, openHarness, synced, wrapperFor } from "./testHarness";
 
 function photo(n: number, createdAt: string): Photo {
@@ -40,5 +41,37 @@ describe("usePhotos", () => {
     await store.db.photos.put(synced(OLDER));
 
     await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([OLDER.id, NEWER.id]));
+  });
+});
+
+describe("PhotosRepo.upload", () => {
+  const chosen = new File(["x"], "IMG_2041.jpg", { type: "image/jpeg" });
+
+  it("PHOTO-04 sends the file, reports its progress and stores the returned row", async () => {
+    const row = synced(NEWER, 4);
+
+    store.upload.mockImplementation(async (_file, onProgress) => {
+      onProgress(50);
+
+      return ok(row);
+    });
+
+    const progress: number[] = [];
+
+    const answer = await createPhotosRepo(store).upload(chosen, (percent) =>
+      progress.push(percent),
+    );
+
+    expect(answer).toEqual(ok(row));
+    expect(store.upload).toHaveBeenCalledWith(chosen, expect.any(Function));
+    expect(progress).toEqual([50]);
+    expect(await store.db.photos.get(NEWER.id)).toEqual(row);
+  });
+
+  it("PHOTO-08 a failed upload stores nothing and answers the error", async () => {
+    store.upload.mockResolvedValue(err("network"));
+
+    expect(await createPhotosRepo(store).upload(chosen, () => {})).toEqual(err("network"));
+    expect(await store.db.photos.count()).toBe(0);
   });
 });

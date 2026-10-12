@@ -1,14 +1,20 @@
 import type { ReactNode } from "react";
 import { type Mock, vi } from "vitest";
+import { err } from "@/domain/result";
 import { deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
 import { STATUS_KEY, type SyncStatus } from "../sync/status";
+import type { Transport } from "../sync/transport";
 import { RepoProvider, type RepoStore } from "./store";
 
 export const TEST_ACCOUNT = "0195f0a0-0000-7000-8000-00000000000a";
 
 export const TEST_NOW = new Date("2026-10-09T17:41:00.000Z");
 
-export type Harness = RepoStore & { nudge: Mock<() => void>; close(): Promise<void> };
+export type Harness = RepoStore & {
+  nudge: Mock<() => void>;
+  upload: Mock<Transport["upload"]>;
+  close(): Promise<void>;
+};
 
 export function openHarness(name: string): Harness {
   const db: GlanceDb = openGlanceDb(name);
@@ -20,6 +26,7 @@ export function openHarness(name: string): Harness {
     now: () => TEST_NOW,
     nudge: vi.fn<() => void>(),
     photoSrc: (photoId, variant) => `/photos/${photoId}/${variant}`,
+    upload: vi.fn<Transport["upload"]>(async () => err("network")),
     close: async () => {
       db.close();
 

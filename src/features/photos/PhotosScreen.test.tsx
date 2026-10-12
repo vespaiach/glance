@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import type { FixtureParams } from "@/data/repos";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
+import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
@@ -35,6 +37,9 @@ beforeEach(() => {
     addEventListener: () => {},
     removeEventListener: () => {},
   }));
+
+  URL.createObjectURL = vi.fn(() => "blob:preview");
+  URL.revokeObjectURL = vi.fn();
 });
 
 afterEach(async () => {
@@ -175,4 +180,134 @@ test("PHOTO-07 while photos upload the slideshow steps through finished photos o
   waitSeconds(8);
 
   expect(featuredTitle()).toBe("Cannon Beach");
+});
+
+const chosen = (name: string, type = "image/jpeg") => new File(["x"], name, { type });
+
+const PICNIC = photo(4, "IMG_2041", "2026-10-09T17:41:00.000Z");
+
+function pendingUpload() {
+  const upload = {
+    report: (_percent: number) => {},
+    finish: (_answer: Awaited<ReturnType<Harness["upload"]>>) => {},
+  };
+
+  store.upload.mockImplementation(
+    (_file, onProgress) =>
+      new Promise((resolve) => {
+        upload.report = (percent) => act(() => onProgress(percent));
+        upload.finish = resolve;
+      }),
+  );
+
+  return upload;
+}
+
+async function choose(...files: File[]) {
+  const user = userEvent.setup({ applyAccept: false });
+
+  await user.upload(await screen.findByLabelText("Choose photos"), files);
+}
+
+function progress(title: string) {
+  return screen.getByRole("progressbar", { name: `Uploading ${title}` });
+}
+
+test("PHOTO-03 Upload opens the picker for several images", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos();
+
+  const picker = await screen.findByLabelText("Choose photos");
+
+  const click = vi.spyOn(picker, "click");
+
+  await userEvent.click(await screen.findByRole("button", { name: "Upload" }));
+
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(picker).toHaveAttribute("accept", "image/*");
+  expect(picker).toHaveAttribute("multiple");
+});
+
+test("PHOTO-06 a chosen photo shows first with its progress and becomes a photo when it finishes", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  const upload = pendingUpload();
+
+  renderPhotos();
+
+  await screen.findByText("Family photos · 1");
+
+  await choose(chosen("IMG_2041.jpg"));
+
+  expect(progress("IMG_2041")).toHaveAttribute("aria-valuenow", "0");
+  expect(screen.getByText("Waiting")).toBeInTheDocument();
+  expect(screen.getByText("Uploading IMG_2041")).toBeInTheDocument();
+
+  upload.report(40);
+
+  expect(progress("IMG_2041")).toHaveAttribute("aria-valuenow", "40");
+
+  await act(async () => upload.finish(ok(synced(PICNIC))));
+
+  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+  expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  expect(screen.getAllByRole("button", { name: /^Show / })[0]).toHaveAccessibleName(
+    "Show IMG_2041",
+  );
+});
+
+test("PHOTO-04 a file over 20 MB fails as too large and is never sent", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos();
+
+  const big = chosen("IMG_3307.jpg");
+
+  Object.defineProperty(big, "size", { value: MAX_PHOTO_BYTES + 1 });
+
+  await choose(big);
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Too large · 20 MB max");
+  expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  expect(store.upload).not.toHaveBeenCalled();
+});
+
+test("PHOTO-08 Remove drops a file that is not a photo", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos();
+
+  await choose(chosen("Recipe card.pdf", "application/pdf"));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Not a photo");
+
+  await userEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(store.upload).not.toHaveBeenCalled();
+});
+
+test("PHOTO-08 a network failure changes only its tile and Try again restarts it at 0%", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  store.upload.mockResolvedValueOnce(err("network"));
+
+  const upload = pendingUpload();
+
+  renderPhotos();
+
+  await choose(chosen("IMG_2041.jpg"));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Didn’t upload");
+  expect(screen.getByText("1 photo didn’t upload")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(progress("IMG_2041")).toHaveAttribute("aria-valuenow", "0");
+  expect(store.upload).toHaveBeenCalledTimes(2);
+
+  await act(async () => upload.finish(ok(synced(PICNIC))));
+
+  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
 });

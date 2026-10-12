@@ -16,7 +16,14 @@ export {
   useNotes,
   useNotesRepo,
 } from "./notes";
-export { usePhotoSrc, usePhotos } from "./photos";
+export {
+  createPhotosRepo,
+  type PhotosRepo,
+  type UploadError,
+  usePhotoSrc,
+  usePhotos,
+  usePhotosRepo,
+} from "./photos";
 export {
   type DisplayBoot,
   type FixtureParams,

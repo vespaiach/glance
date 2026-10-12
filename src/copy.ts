@@ -196,6 +196,7 @@ export const copy = {
     list: "Family photos",
     upload: "Upload",
     uploadPhotos: "Upload photos",
+    picker: "Choose photos",
     emptyTitle: "No photos yet",
     emptyBody:
       "Upload family photos to show them here, as the picture of the day and as a background.",

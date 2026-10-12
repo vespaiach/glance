@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { err } from "@/domain/result";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_NEW_NOTE_DRAFT,
@@ -14,6 +15,7 @@ import { accountDbName, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import { openMetaDb, readSignedInAccount } from "../meta";
 import { createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
 import { createInlineSyncHost } from "../sync/host";
+import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import type { PhotoVariant, RepoStore } from "./store";
 
@@ -50,8 +52,27 @@ const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {
 
 const noNudge = () => {};
 
+const notConnected: Transport["upload"] = async () => err("network");
+
 const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
   fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
+
+function keepUploadedImages(transport: Transport) {
+  const images = new Map<string, string>();
+
+  const upload: Transport["upload"] = async (file, onProgress) => {
+    const answer = await transport.upload(file, onProgress);
+
+    if (answer.ok) images.set(answer.value.id, URL.createObjectURL(file));
+
+    return answer;
+  };
+
+  const photoSrc = (photoId: string, variant: PhotoVariant) =>
+    images.get(photoId) ?? fixturePhotoSrc(photoId, variant);
+
+  return { upload, photoSrc };
+}
 
 export function fixtureParamsFor(demo: boolean, search: string): FixtureParams {
   return demo ? parseFixtureParams(search) : {};
@@ -60,11 +81,9 @@ export function fixtureParamsFor(demo: boolean, search: string): FixtureParams {
 async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promise<OpenedDisplay> {
   const db = openGlanceDb(FIXTURE_DB_NAME);
 
-  const host = createInlineSyncHost({
-    db,
-    transport: createFixtureTransport({ db, params, now }),
-    now,
-  });
+  const transport = createFixtureTransport({ db, params, now });
+
+  const host = createInlineSyncHost({ db, transport, now });
 
   let closed = false;
 
@@ -90,7 +109,7 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
     account: FIXTURE_ACCOUNT,
     now,
     nudge: host.nudge,
-    photoSrc: fixturePhotoSrc,
+    ...keepUploadedImages(transport),
   };
 
   return { boot: { kind: "ready", store }, close };
@@ -112,6 +131,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     now,
     nudge: noNudge,
     photoSrc: apiPhotoSrc,
+    upload: notConnected,
   };
 
   return { boot: { kind: "ready", store }, close: () => db.close() };
