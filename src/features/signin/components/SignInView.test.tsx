@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { deviceTimeZone } from "@/domain/zone";
+import type { WeatherSetupFlow } from "@/features/weather";
 import type { SignInState } from "../signIn";
 import { SignInView } from "./SignInView";
 
@@ -12,6 +13,20 @@ type Props = ComponentProps<typeof SignInView>;
 const EMAIL = "maria@example.com";
 
 const NOW = new Date(2026, 9, 9, 10, 41);
+
+const ignore = () => {};
+
+const SETUP: WeatherSetupFlow = {
+  state: { step: "editing", draft: "" },
+  canLocate: true,
+  type: ignore,
+  submit: ignore,
+  pick: ignore,
+  locate: ignore,
+  confirm: ignore,
+  keep: ignore,
+  skip: ignore,
+};
 
 function renderView(state: SignInState, props: Partial<Props> = {}) {
   const handlers = {
@@ -24,6 +39,7 @@ function renderView(state: SignInState, props: Partial<Props> = {}) {
   render(
     <SignInView
       state={state}
+      setup={SETUP}
       season="fall"
       time={NOW}
       clock="12h"
@@ -165,11 +181,11 @@ test("SIGNIN-06 a blank name shows Add your name on the field", () => {
   expect(screen.getByLabelText("Your name")).toHaveAccessibleDescription("Add your name");
 });
 
-test("SIGNIN-07 Finish on your phone waits for the name", async () => {
+test("SIGNIN-07 Finish on your phone waits for the phone", async () => {
   const { onFinishedOnPhone } = renderView({ step: "phone", email: EMAIL });
 
   expect(screen.getByRole("heading", { name: "Finish on your phone" })).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Waiting for your name");
+  expect(screen.getByRole("status")).toHaveTextContent("Waiting for your phone");
 
   await userEvent.click(screen.getByRole("button", { name: "I finished on my phone" }));
 
@@ -229,4 +245,31 @@ test("SIGNIN-12 the device that opened a stale link can only send a new one", ()
   ).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Send a new link" })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Use a different email" })).not.toBeInTheDocument();
+});
+
+const LOCATION: SignInState = {
+  step: "location",
+  account: { id: "0192f3a0-0000-7000-8000-000000000001", email: EMAIL, name: "Maria" },
+  returning: false,
+};
+
+test("SIGNIN-14 Skip for now asks to end the step", async () => {
+  const { onAction } = renderView(LOCATION);
+
+  await userEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+
+  expect(onAction).toHaveBeenCalledExactlyOnceWith({ type: "skip" });
+});
+
+test("SIGNIN-14 Skip for now is off while the skip is on its way", () => {
+  renderView({ ...LOCATION, skipping: true });
+
+  expect(screen.getByRole("button", { name: "Skip for now" })).toBeDisabled();
+});
+
+test("SIGNIN-14 the setup card's primary reads Continue", () => {
+  renderView(LOCATION);
+
+  expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Use my location" })).toBeInTheDocument();
 });

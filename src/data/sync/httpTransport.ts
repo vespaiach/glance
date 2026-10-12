@@ -166,6 +166,7 @@ export function createHttpTransport({
       link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
       status: () => send<AuthStatus>("/api/auth/status"),
       name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
+      location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
       signout: () => send<void>("/api/auth/signout", { method: "POST" }),
     },
     upload: uploadWith(createXhr),

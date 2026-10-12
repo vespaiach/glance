@@ -1,4 +1,4 @@
-import { saveName } from "./account";
+import { finishSetup, saveName } from "./account";
 import { requestLink, verifyLink } from "./links";
 import { requireDisplay } from "./sessions";
 import { authStatus } from "./status";
@@ -56,7 +56,17 @@ describe("authStatus on the waiting screen", () => {
     openElsewhere(token);
 
     expect(authStatus(harness.deps(), { pendingId })).toEqual({
-      status: { state: "needs-name-elsewhere" },
+      status: { state: "finishing-elsewhere" },
+    });
+  });
+
+  it("SIGNIN-07 keeps waiting after the name until the location step ends", async () => {
+    const { token, pendingId } = await waitingScreen();
+    const opener = openElsewhere(token);
+    saveName(harness.deps().db, opener.accountId, "Maria");
+
+    expect(authStatus(harness.deps(), { pendingId })).toEqual({
+      status: { state: "finishing-elsewhere" },
     });
   });
 
@@ -64,6 +74,7 @@ describe("authStatus on the waiting screen", () => {
     const { token, pendingId } = await waitingScreen();
     const opener = openElsewhere(token);
     saveName(harness.deps().db, opener.accountId, "Maria");
+    finishSetup(harness.deps(), opener.accountId);
     harness.advance(4000);
 
     const answer = authStatus(harness.deps(), { pendingId });
@@ -72,6 +83,7 @@ describe("authStatus on the waiting screen", () => {
       state: "signed-in",
       account: { id: opener.accountId, email: "maria@example.com", name: "Maria" },
       returning: false,
+      setupDone: true,
     });
     expect(answer.sessionToken).not.toBe(opener.sessionToken);
     const display = requireDisplay(harness.deps(), answer.sessionToken);
@@ -82,6 +94,7 @@ describe("authStatus on the waiting screen", () => {
     const first = await waitingScreen();
     const opener = openElsewhere(first.token);
     saveName(harness.deps().db, opener.accountId, "Maria");
+    finishSetup(harness.deps(), opener.accountId);
     harness.advance(60_000);
     const { token, pendingId } = await waitingScreen();
     openElsewhere(token);
@@ -95,6 +108,7 @@ describe("authStatus on the waiting screen", () => {
     const { token, pendingId } = await waitingScreen();
     const opener = openElsewhere(token);
     saveName(harness.deps().db, opener.accountId, "Maria");
+    finishSetup(harness.deps(), opener.accountId);
     authStatus(harness.deps(), { pendingId });
 
     expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "expired" } });
@@ -115,11 +129,28 @@ describe("authStatus with a session", () => {
         state: "signed-in",
         account: { id: opener.accountId, email: "maria@example.com", name: null },
         returning: false,
+        setupDone: false,
       },
     });
   });
 
   it("SIGNIN-09 the opener of a known account is returning", async () => {
+    const first = openElsewhere((await waitingScreen()).token);
+    saveName(harness.deps().db, first.accountId, "Maria");
+    finishSetup(harness.deps(), first.accountId);
+    harness.advance(60_000);
+
+    const opener = openElsewhere((await waitingScreen()).token);
+
+    expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken }).status).toMatchObject({
+      state: "signed-in",
+      account: { name: "Maria" },
+      returning: true,
+      setupDone: true,
+    });
+  });
+
+  it("SIGNIN-14 a named account whose location step never ended is not set up", async () => {
     const first = openElsewhere((await waitingScreen()).token);
     saveName(harness.deps().db, first.accountId, "Maria");
     harness.advance(60_000);
@@ -129,7 +160,7 @@ describe("authStatus with a session", () => {
     expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken }).status).toMatchObject({
       state: "signed-in",
       account: { name: "Maria" },
-      returning: true,
+      setupDone: false,
     });
   });
 

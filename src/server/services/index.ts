@@ -1,6 +1,6 @@
 import "server-only";
 import path from "node:path";
-import type { AccountSettings, CalendarEvent, Note } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, LocationRequest, Note } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
 import { getDb } from "../db/connection";
 import { env } from "../env";
@@ -45,6 +45,14 @@ export function deleteNote(accountId: string, id: string) {
 
 export function putSettings(accountId: string, settingsId: string, saved: AccountSettings) {
   return announce(syncBus(), accountId, settings.putSettings(deps(), accountId, settingsId, saved));
+}
+
+export function finishLocationStep(accountId: string, step: LocationRequest) {
+  const saved = settings.finishLocationStep(deps(), accountId, step);
+
+  if (saved.ok && saved.value) syncBus().publish(accountId, saved.value.version);
+
+  return saved;
 }
 
 export function pullChanges(accountId: string, since: number | undefined) {

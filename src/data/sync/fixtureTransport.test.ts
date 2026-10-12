@@ -462,10 +462,10 @@ describe("FixtureTransport auth", () => {
     });
   });
 
-  it("SIGNIN-07 signin=phone is waiting for a name set elsewhere", async () => {
+  it("SIGNIN-07 signin=phone is waiting for the first sign-in to finish elsewhere", async () => {
     expect(await transport({ signin: "phone" }).auth.status()).toEqual({
       ok: true,
-      value: { state: "needs-name-elsewhere" },
+      value: { state: "finishing-elsewhere" },
     });
   });
 
@@ -479,14 +479,14 @@ describe("FixtureTransport auth", () => {
   it("SIGNIN-09 signin=done signs in Maria as a new account", async () => {
     expect(await transport({ signin: "done" }).auth.status()).toEqual({
       ok: true,
-      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: false },
+      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: false, setupDone: true },
     });
   });
 
   it("SIGNIN-09 signin=done with acct=returning signs Maria back in", async () => {
     expect(await transport({ signin: "done", acct: "returning" }).auth.status()).toEqual({
       ok: true,
-      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: true },
+      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: true, setupDone: true },
     });
   });
 
@@ -495,6 +495,10 @@ describe("FixtureTransport auth", () => {
       ok: true,
       value: { ...FIXTURE_ACCOUNT, name: "Ana" },
     });
+  });
+
+  it("SIGNIN-14 ends the location step", async () => {
+    expect(await transport().auth.location({ skip: true })).toEqual({ ok: true, value: undefined });
   });
 
   it("SIGNIN-11 signs this screen out", async () => {

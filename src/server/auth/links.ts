@@ -127,6 +127,7 @@ function createAccount(db: Database.Database, link: LinkRow, at: string): Accoun
     email: link.email,
     name: null,
     time_zone: link.time_zone,
+    setup_done_at: null,
     created_at: at,
   };
 

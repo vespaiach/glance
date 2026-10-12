@@ -280,6 +280,17 @@ describe("HttpTransport", () => {
     expect(calls[0]?.init.body).toBe(JSON.stringify({ name: "Maria" }));
   });
 
+  it("SIGNIN-14 auth.location posts the place or the skip and answers on 204", async () => {
+    const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
+
+    const answer = await transport(fetch).auth.location({ skip: true });
+
+    expect(answer).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/auth/location");
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ skip: true }));
+  });
+
   it("SIGNIN-11 auth.signout posts and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
 

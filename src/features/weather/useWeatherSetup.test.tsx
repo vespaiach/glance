@@ -320,3 +320,25 @@ test("LOC-09 Keep goes back to the card with the draft", () => {
   expect(result.current.state).toEqual({ step: "editing", draft: "Portland" });
   expect(save).not.toHaveBeenCalled();
 });
+
+test("SIGNIN-14 Skip for now drops a late search answer", async () => {
+  const answer = pending<Result<WeatherLocation[], "network">>();
+  const { result, save } = setup({ source: { searchPlaces: () => answer.promise } });
+  act(() => result.current.type("Portland"));
+  act(() => result.current.submit());
+
+  await act(async () => result.current.skip(async () => true));
+  await act(async () => answer.resolve(ok([PORTLAND])));
+
+  expect(result.current.state).toEqual({ step: "editing", draft: "Portland" });
+  expect(save).not.toHaveBeenCalled();
+});
+
+test("SIGNIN-14 a failed skip shows Couldn't save", async () => {
+  const { result } = setup();
+  act(() => result.current.type("Port"));
+
+  await act(async () => result.current.skip(async () => false));
+
+  expect(result.current.state).toEqual({ step: "editing", draft: "Port", error: "save-failed" });
+});

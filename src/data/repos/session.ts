@@ -23,7 +23,12 @@ import {
   type SignedInAccount,
   saveSignedInAccount,
 } from "../meta";
-import { createFixtureAuth, createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
+import {
+  createFixtureAuth,
+  createFixtureSearch,
+  createFixtureTransport,
+  seedFixtureDb,
+} from "../sync/fixtureTransport";
 import { createInlineSyncHost, createWorkerSyncHost, spawnSyncWorker } from "../sync/host";
 import { createHttpTransport } from "../sync/httpTransport";
 import { recordStatus } from "../sync/status";
@@ -31,6 +36,7 @@ import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import { appServiceWorker } from "./serviceWorker";
 import type { PhotoVariant, RepoStore } from "./store";
+import type { WeatherRepo } from "./weather";
 
 export type { FixtureParams, FixtureUpload };
 
@@ -53,9 +59,10 @@ export const fixtureTimeZone = FIXTURE_TIME_ZONE;
 
 export const fixtureSignIn = { ...FIXTURE_ACCOUNT, name: FIXTURE_ACCOUNT.name ?? "" };
 
-export type SignInAuth = Pick<Transport["auth"], "link" | "status" | "name"> & {
-  remember(account: Account): Promise<void>;
-};
+export type SignInAuth = Pick<Transport["auth"], "link" | "status" | "name" | "location"> &
+  Pick<WeatherRepo, "searchPlaces" | "locate"> & {
+    remember(account: Account): Promise<void>;
+  };
 
 export type DisplayBoot =
   | { kind: "booting" }
@@ -116,10 +123,24 @@ function signOutWith(signout: Transport["auth"]["signout"]) {
   };
 }
 
-export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
-  const auth = demo ? createFixtureAuth(params) : createHttpTransport().auth;
+function signInTransport(demo: boolean, params: FixtureParams) {
+  if (!demo) return createHttpTransport();
 
-  return { link: auth.link, status: auth.status, name: auth.name, remember: rememberSignedIn };
+  return { auth: createFixtureAuth(params), ...createFixtureSearch(params) };
+}
+
+export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
+  const { auth, places, locate } = signInTransport(demo, params);
+
+  return {
+    link: auth.link,
+    status: auth.status,
+    name: auth.name,
+    location: auth.location,
+    searchPlaces: places,
+    locate,
+    remember: rememberSignedIn,
+  };
 }
 
 const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>

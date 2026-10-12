@@ -16,7 +16,8 @@ import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
 import { firstName } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
-import { colors, motion, sizes } from "@/theme/tokens.stylex";
+import { PlaceForm, type WeatherSetupFlow } from "@/features/weather";
+import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { useFieldInView } from "@/ui/fieldInView";
@@ -29,6 +30,7 @@ import { Actions, Email, Heading, LockFooter, StatusTile } from "./SignInParts";
 
 type SignInViewProps = {
   state: SignInState;
+  setup: WeatherSetupFlow;
   season: Season;
   time: Date;
   clock: ClockSetting;
@@ -87,6 +89,17 @@ const styles = stylex.create({
   },
   form: {
     display: "contents",
+  },
+  place: {
+    padding: 0,
+  },
+  skip: {
+    display: "flex",
+    paddingTop: space.lg,
+    boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
+  },
+  skipButton: {
+    marginLeft: -16,
   },
 });
 
@@ -217,6 +230,42 @@ function NameStep({
   );
 }
 
+function LocationStep({
+  state,
+  setup,
+  onAction,
+}: StepProps & { state: Extract<SignInState, { step: "location" }> }) {
+  const { location } = copy.signIn;
+
+  return (
+    <>
+      <Heading eyebrow={location.eyebrow} title={location.title}>
+        {location.body}
+      </Heading>
+      <PlaceForm
+        state={setup.state}
+        canLocate={setup.canLocate}
+        submitLabel={location.submit}
+        onType={setup.type}
+        onSubmit={setup.submit}
+        onPick={setup.pick}
+        onLocate={setup.locate}
+        xstyle={styles.place}
+      />
+      <div {...stylex.props(styles.skip)}>
+        <Button
+          variant="ghost"
+          disabled={state.skipping}
+          onClick={() => onAction({ type: "skip" })}
+          xstyle={styles.skipButton}
+        >
+          {location.skip}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 function PhoneStep({ demo, onAction, onFinishedOnPhone }: StepProps) {
   const { phone } = copy.signIn;
 
@@ -285,6 +334,8 @@ function SignInStep(props: StepProps) {
       return <SentStep {...props} email={state.email} />;
     case "name":
       return <NameStep {...props} state={state} />;
+    case "location":
+      return <LocationStep {...props} state={state} />;
     case "phone":
       return <PhoneStep {...props} />;
     case "expired":

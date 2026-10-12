@@ -9,7 +9,7 @@ import {
   SignInAuthProvider,
 } from "@/data/repos";
 import { err, ok } from "@/domain/result";
-import type { Account } from "@/domain/schemas";
+import type { Account, WeatherLocation } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NowProvider } from "@/shell/providers/now";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -33,7 +33,18 @@ type FakeAuth = {
   link: Mock<SignInAuth["link"]>;
   status: Mock<SignInAuth["status"]>;
   name: Mock<SignInAuth["name"]>;
+  location: Mock<SignInAuth["location"]>;
+  searchPlaces: Mock<SignInAuth["searchPlaces"]>;
+  locate: Mock<SignInAuth["locate"]>;
   remember: Mock<SignInAuth["remember"]>;
+};
+
+const PORTLAND: WeatherLocation = {
+  name: "Portland",
+  region: "Oregon",
+  lat: 45.52,
+  lon: -122.68,
+  timeZone: "America/Los_Angeles",
 };
 
 function fakeAuth(): FakeAuth {
@@ -41,6 +52,9 @@ function fakeAuth(): FakeAuth {
     link: vi.fn<SignInAuth["link"]>(async () => ok(undefined)),
     status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "waiting" })),
     name: vi.fn<SignInAuth["name"]>(async (name) => ok({ ...MARIA, name })),
+    location: vi.fn<SignInAuth["location"]>(async () => ok(undefined)),
+    searchPlaces: vi.fn<SignInAuth["searchPlaces"]>(async () => ok([PORTLAND])),
+    locate: vi.fn<SignInAuth["locate"]>(async () => ok(PORTLAND)),
     remember: vi.fn<SignInAuth["remember"]>(async () => {}),
   };
 }
@@ -225,13 +239,19 @@ test("SIGNIN-08 Send a new link sends again from the expired screen", async () =
 test("SIGNIN-07 a link opened elsewhere on a new account shows Finish on your phone", async () => {
   const auth = fakeAuth();
 
-  auth.status.mockResolvedValue(answer({ state: "needs-name-elsewhere" }));
+  auth.status.mockResolvedValue(answer({ state: "finishing-elsewhere" }));
 
   renderScreen({ signin: "sent" }, auth);
 
   await advance(2_000);
 
   expect(screen.getByRole("heading", { name: "Finish on your phone" })).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Waiting for your phone")).toBeInTheDocument();
 
   await advance(2_000);
 
@@ -241,7 +261,9 @@ test("SIGNIN-07 a link opened elsewhere on a new account shows Finish on your ph
 test("SIGNIN-09 signing in saves the account to glance-meta and opens Today after 2.2 s", async () => {
   const auth = fakeAuth();
 
-  auth.status.mockResolvedValue(answer({ state: "signed-in", account: MARIA, returning: true }));
+  auth.status.mockResolvedValue(
+    answer({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
+  );
 
   renderScreen({ signin: "sent" }, auth);
 
@@ -266,7 +288,9 @@ function openLink(link: "opened" | "stale") {
 test("SIGNIN-09 the device that opened a returning account's link signs in and opens Today", async () => {
   const auth = fakeAuth();
 
-  auth.status.mockResolvedValue(answer({ state: "signed-in", account: MARIA, returning: true }));
+  auth.status.mockResolvedValue(
+    answer({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
+  );
 
   openLink("opened");
 
@@ -286,7 +310,9 @@ test("SIGNIN-06 the device that opened a new account's link asks for the name fi
 
   const ana = { ...MARIA, email: "ana@example.com", name: null };
 
-  auth.status.mockResolvedValue(answer({ state: "signed-in", account: ana, returning: false }));
+  auth.status.mockResolvedValue(
+    answer({ state: "signed-in", account: ana, returning: false, setupDone: false }),
+  );
 
   openLink("opened");
 
@@ -299,7 +325,22 @@ test("SIGNIN-06 the device that opened a new account's link asks for the name fi
   await user().click(screen.getByRole("button", { name: "Continue" }));
 
   expect(auth.name).toHaveBeenCalledExactlyOnceWith("Ana");
-  expect(await screen.findByRole("heading", { name: "Welcome, Ana" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Where is this screen?" })).toBeInTheDocument();
+});
+
+test("SIGNIN-14 a returning sign-in whose location step never ended asks where the screen is", async () => {
+  const auth = fakeAuth();
+
+  auth.status.mockResolvedValue(
+    answer({ state: "signed-in", account: MARIA, returning: true, setupDone: false }),
+  );
+
+  openLink("opened");
+
+  renderScreen({}, auth);
+
+  expect(await screen.findByRole("heading", { name: "Where is this screen?" })).toBeInTheDocument();
+  expect(auth.remember).not.toHaveBeenCalled();
 });
 
 test("SIGNIN-12 the device that opened a stale link offers a new one to its email", async () => {
@@ -342,7 +383,7 @@ test("SIGNIN-09 signin=done is a snapshot and stays put", async () => {
   expect(navigation.replace).not.toHaveBeenCalled();
 });
 
-test("SIGNIN-06 Continue saves the trimmed name and welcomes the new account", async () => {
+test("SIGNIN-06 Continue saves the trimmed name and asks where the screen is", async () => {
   const auth = renderScreen({ signin: "name" });
 
   const person = user();
@@ -351,12 +392,89 @@ test("SIGNIN-06 Continue saves the trimmed name and welcomes the new account", a
   await person.click(screen.getByRole("button", { name: "Continue" }));
 
   expect(auth.name).toHaveBeenCalledExactlyOnceWith("Ana Lee");
-  expect(await screen.findByRole("heading", { name: "Welcome, Ana" })).toBeInTheDocument();
-  expect(auth.remember).toHaveBeenCalledExactlyOnceWith({ ...MARIA, name: "Ana Lee" });
+  expect(await screen.findByRole("heading", { name: "Where is this screen?" })).toBeInTheDocument();
+  expect(auth.remember).not.toHaveBeenCalled();
+});
+
+test("SIGNIN-14 signin=location opens Where is this screen? with Skip for now", () => {
+  renderScreen({ signin: "location" });
+
+  expect(screen.getByRole("heading", { name: "Where is this screen?" })).toBeInTheDocument();
+  expect(screen.getByLabelText("City or ZIP code")).toHaveValue("");
+  expect(screen.getByRole("button", { name: "Skip for now" })).toBeInTheDocument();
+});
+
+test("SIGNIN-14 a found place is saved to the account, then Welcome opens Today", async () => {
+  const auth = renderScreen({ signin: "location" });
+
+  const person = user();
+
+  await person.type(screen.getByLabelText("City or ZIP code"), "Portland, OR");
+  await person.click(screen.getByRole("button", { name: "Continue" }));
+
+  expect(await screen.findByRole("heading", { name: "Welcome, Maria" })).toBeInTheDocument();
+  expect(auth.searchPlaces).toHaveBeenCalledExactlyOnceWith("Portland, OR");
+  expect(auth.location).toHaveBeenCalledExactlyOnceWith({ place: PORTLAND });
+  expect(auth.remember).toHaveBeenCalledExactlyOnceWith(MARIA);
 
   await advance(2_200);
 
-  expect(navigation.replace).toHaveBeenCalledWith("/today");
+  expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
+});
+
+test("SIGNIN-14 Skip for now ends the step and welcomes the account", async () => {
+  const auth = renderScreen({ signin: "location" });
+
+  await user().click(screen.getByRole("button", { name: "Skip for now" }));
+
+  expect(await screen.findByRole("heading", { name: "Welcome, Maria" })).toBeInTheDocument();
+  expect(auth.location).toHaveBeenCalledExactlyOnceWith({ skip: true });
+  expect(auth.remember).toHaveBeenCalledExactlyOnceWith(MARIA);
+});
+
+test("SIGNIN-14 a failed save keeps the place and Continue saves it again", async () => {
+  const auth = fakeAuth();
+
+  auth.location.mockResolvedValueOnce(err("network"));
+
+  renderScreen({ signin: "location" }, auth);
+
+  const person = user();
+
+  await person.type(screen.getByLabelText("City or ZIP code"), "Portland, OR");
+  await person.click(screen.getByRole("button", { name: "Continue" }));
+
+  expect(screen.getByLabelText("City or ZIP code")).toHaveAccessibleDescription(
+    "Couldn’t save. Try again.",
+  );
+  expect(screen.getByLabelText("City or ZIP code")).toHaveValue("Portland, OR");
+
+  await person.click(screen.getByRole("button", { name: "Continue" }));
+
+  expect(await screen.findByRole("heading", { name: "Welcome, Maria" })).toBeInTheDocument();
+  expect(auth.searchPlaces).toHaveBeenCalledOnce();
+  expect(auth.location).toHaveBeenLastCalledWith({ place: PORTLAND });
+});
+
+test("SIGNIN-14 a failed skip says so and Skip for now tries again", async () => {
+  const auth = fakeAuth();
+
+  auth.location.mockResolvedValueOnce(err("network"));
+
+  renderScreen({ signin: "location" }, auth);
+
+  const person = user();
+
+  await person.click(screen.getByRole("button", { name: "Skip for now" }));
+
+  expect(screen.getByLabelText("City or ZIP code")).toHaveAccessibleDescription(
+    "Couldn’t save. Try again.",
+  );
+
+  await person.click(screen.getByRole("button", { name: "Skip for now" }));
+
+  expect(await screen.findByRole("heading", { name: "Welcome, Maria" })).toBeInTheDocument();
+  expect(auth.location).toHaveBeenCalledTimes(2);
 });
 
 test("SIGNIN-06 a failed name save keeps the name step and says so", async () => {

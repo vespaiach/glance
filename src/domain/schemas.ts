@@ -188,6 +188,12 @@ export const NameRequestSchema = v.object({
 });
 export type NameRequest = v.InferOutput<typeof NameRequestSchema>;
 
+export const LocationRequestSchema = v.union([
+  v.object({ place: WeatherLocationSchema }),
+  v.object({ skip: v.literal(true) }),
+]);
+export type LocationRequest = v.InferOutput<typeof LocationRequestSchema>;
+
 export const DisplaySchema = v.object({
   id: IdSchema,
   accountId: IdSchema,

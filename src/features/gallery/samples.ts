@@ -13,6 +13,7 @@ import type {
 import { zonedInstant } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import type { UploadTile } from "@/features/photos";
+import type { WeatherSetupFlow, WeatherSetupState } from "@/features/weather";
 
 export const SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
 
@@ -455,3 +456,19 @@ export const PLACES: readonly WeatherLocation[] = [
   { name: "Portland", region: "Oregon", lat: 45.5152, lon: -122.6784, timeZone: GALLERY_TZ },
   { name: "Portland", region: "Maine", lat: 43.6591, lon: -70.2568, timeZone: "America/New_York" },
 ];
+
+const ignoreSetup = () => {};
+
+export function gallerySetup(state: WeatherSetupState, canLocate = true): WeatherSetupFlow {
+  return {
+    state,
+    canLocate,
+    type: ignoreSetup,
+    submit: ignoreSetup,
+    pick: ignoreSetup,
+    locate: ignoreSetup,
+    confirm: ignoreSetup,
+    keep: ignoreSetup,
+    skip: ignoreSetup,
+  };
+}

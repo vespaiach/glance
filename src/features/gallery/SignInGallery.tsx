@@ -3,7 +3,7 @@ import type { ComponentProps } from "react";
 import type { Season } from "@/domain/schemas";
 import { SignInView } from "@/features/signin";
 import { GalleryGroup } from "./GalleryGroup";
-import { GALLERY_TZ, gallery, NOW } from "./samples";
+import { GALLERY_TZ, gallery, gallerySetup, NOW, PLACES } from "./samples";
 
 type SignInProps = ComponentProps<typeof SignInView>;
 
@@ -12,6 +12,12 @@ type Demo = { key: string; phone?: boolean } & Partial<SignInProps>;
 const ignore = () => {};
 
 const EMAIL = "maria@example.com";
+
+const MARIA = { id: "0192f3a0-0000-7000-8000-000000000001", email: EMAIL, name: "Maria" };
+
+const LOCATION = { step: "location", account: MARIA, returning: false } as const;
+
+const [PORTLAND] = PLACES;
 
 const styles = stylex.create({
   view: {
@@ -32,6 +38,33 @@ const DEMOS: readonly Demo[] = [
   { key: "sent", state: { step: "sent", email: EMAIL } },
   { key: "name", state: { step: "name", email: EMAIL, draft: "" } },
   { key: "name-empty", state: { step: "name", email: EMAIL, draft: "", error: "empty" } },
+  { key: "location", state: LOCATION },
+  {
+    key: "location-locating",
+    state: LOCATION,
+    setup: gallerySetup({ step: "locating", draft: "" }),
+  },
+  {
+    key: "location-choose",
+    state: LOCATION,
+    setup: gallerySetup({ step: "choosing", draft: "Portland", matches: PLACES }),
+  },
+  {
+    key: "location-denied",
+    state: LOCATION,
+    setup: gallerySetup({ step: "editing", draft: "", notice: "denied" }, false),
+  },
+  {
+    key: "location-savefail",
+    state: LOCATION,
+    setup: gallerySetup({
+      step: "editing",
+      draft: "Portland, OR",
+      error: "save-failed",
+      ...(PORTLAND && { place: PORTLAND }),
+    }),
+  },
+  { key: "location-phone", phone: true, breakpoint: "phone", state: LOCATION },
   { key: "phone-wait", state: { step: "phone", email: EMAIL } },
   { key: "expired", state: { step: "expired", email: EMAIL, onLink: false } },
   { key: "link-expired", state: { step: "expired", email: EMAIL, onLink: true } },
@@ -43,6 +76,7 @@ const DEMOS: readonly Demo[] = [
 function signInBase(season: Season): SignInProps {
   return {
     state: { step: "form", email: "" },
+    setup: gallerySetup({ step: "editing", draft: "" }),
     season,
     time: NOW,
     clock: "12h",

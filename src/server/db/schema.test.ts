@@ -111,3 +111,27 @@ describe("001_init", () => {
     db.close();
   });
 });
+
+describe("002_setup_done", () => {
+  it("SIGNIN-14 fills setup_done_at from created_at for accounts made before it", () => {
+    const db = openDb(path.join(tempDir(), "glance.db"));
+    const [init, setupDone] = readMigrations(MIGRATIONS_DIR);
+    migrate(db, init ? [init] : []);
+    insertAccount(db, "a1");
+
+    migrate(db, setupDone ? [setupDone] : []);
+
+    expect(db.prepare("SELECT setup_done_at FROM accounts").get()).toEqual({ setup_done_at: NOW });
+
+    db.close();
+  });
+
+  it("SIGNIN-14 leaves setup_done_at empty for a new account", () => {
+    const db = migratedDb();
+    insertAccount(db, "a1");
+
+    expect(db.prepare("SELECT setup_done_at FROM accounts").get()).toEqual({ setup_done_at: null });
+
+    db.close();
+  });
+});

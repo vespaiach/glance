@@ -139,13 +139,18 @@ function onlineOnly(offline: boolean) {
 }
 
 function authStatus(params: FixtureParams): AuthStatus {
-  if (params.signin === "phone") return { state: "needs-name-elsewhere" };
+  if (params.signin === "phone") return { state: "finishing-elsewhere" };
 
   if (params.signin === "expired") return { state: "expired" };
 
   if (params.signin !== "done") return { state: "waiting" };
 
-  return { state: "signed-in", account: FIXTURE_ACCOUNT, returning: params.acct === "returning" };
+  return {
+    state: "signed-in",
+    account: FIXTURE_ACCOUNT,
+    returning: params.acct === "returning",
+    setupDone: true,
+  };
 }
 
 function unlistedPlace(query: string): WeatherLocation[] {
@@ -211,7 +216,27 @@ export function createFixtureAuth(params: FixtureParams): Transport["auth"] {
       }),
     status: () => online(async () => ok(authStatus(params))),
     name: (name) => online(async () => ok({ ...FIXTURE_ACCOUNT, name: name.trim() })),
+    location: () => online(async () => ok(undefined)),
     signout: () => online(async () => ok(undefined)),
+  };
+}
+
+export function createFixtureSearch(params: FixtureParams): Pick<Transport, "places" | "locate"> {
+  const online = onlineOnly(isOffline(params));
+
+  return {
+    places: (query) =>
+      online(async () => {
+        await wait(PLACE_SEARCH_DELAY_MS);
+
+        return ok(matchPlaces(query));
+      }),
+    locate: () =>
+      online(async () => {
+        await wait(LOCATE_DELAY_MS);
+
+        return ok(FIXTURE_LOCATED_PLACE);
+      }),
   };
 }
 
@@ -248,18 +273,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
 
         return params.net === "wxerror" ? err("server") : ok(fixtureWeather(params));
       }),
-    places: (query) =>
-      online(async () => {
-        await wait(PLACE_SEARCH_DELAY_MS);
-
-        return ok(matchPlaces(query));
-      }),
-    locate: () =>
-      online(async () => {
-        await wait(LOCATE_DELAY_MS);
-
-        return ok(FIXTURE_LOCATED_PLACE);
-      }),
+    ...createFixtureSearch(params),
     auth: createFixtureAuth(params),
     upload: async (file, onProgress): Promise<Result<StoredPhoto, UploadError>> => {
       const problem = uploadProblem(file);

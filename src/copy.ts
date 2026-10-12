@@ -552,10 +552,17 @@ export const copy = {
       empty: "Add your name",
       failed: "Couldn’t save. Try again.",
     },
+    location: {
+      eyebrow: "New family account",
+      title: "Where is this screen?",
+      body: "The weather and the clock’s time zone follow this place. You can change it later in Settings.",
+      submit: "Continue",
+      skip: "Skip for now",
+    },
     phone: {
       title: "Finish on your phone",
-      body: "The link opened on another device. Add your name there and this screen signs in by itself.",
-      waiting: "Waiting for your name",
+      body: "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself.",
+      waiting: "Waiting for your phone",
       finished: "I finished on my phone",
     },
     expired: {

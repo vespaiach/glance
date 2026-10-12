@@ -35,6 +35,7 @@ export type WeatherSetupFlow = {
   locate(): void;
   confirm(): void;
   keep(): void;
+  skip(end: () => Promise<boolean>): void;
 };
 
 const NEVER_ASKS = () => false;
@@ -151,6 +152,16 @@ export function useWeatherSetup({
     dispatch({ type: "locate-failed", reason: place.error });
   };
 
+  const skip = async (end: () => Promise<boolean>) => {
+    const id = ++requestId.current;
+
+    dispatch({ type: "cancel" });
+
+    const ended = await end();
+
+    if (!ended && id === requestId.current) dispatch({ type: "skip-failed" });
+  };
+
   const type = (draft: string) => {
     requestId.current += 1;
 
@@ -179,5 +190,6 @@ export function useWeatherSetup({
       if (state.step === "confirm-zone") void commit(state.place);
     },
     keep: () => dispatch({ type: "keep" }),
+    skip: (end) => void skip(end),
   };
 }
