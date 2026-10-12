@@ -14,7 +14,7 @@ import {
 
 export type SyncedEvent = Synced<CalendarEvent>;
 
-type EventRow = ServerColumns & {
+export type EventRow = ServerColumns & {
   id: string;
   account_id: string;
   title: string;
@@ -97,7 +97,7 @@ function writeEvent(
   });
 }
 
-function toEvent(row: EventRow): SyncedEvent {
+export function toEvent(row: EventRow): SyncedEvent {
   return {
     id: row.id,
     title: row.title,

@@ -7,7 +7,7 @@ import { type ServerColumns, type Stamp, serverFields, stamp, toneFromColumn } f
 
 export type SyncedNote = Synced<Note>;
 
-type NoteRow = ServerColumns & {
+export type NoteRow = ServerColumns & {
   id: string;
   account_id: string;
   text: string;
@@ -80,7 +80,7 @@ function writeNote(
   ).run({ ...note, accountId, tone: String(note.tone), updatedAt, version });
 }
 
-function toNote(row: NoteRow): SyncedNote {
+export function toNote(row: NoteRow): SyncedNote {
   return {
     id: row.id,
     text: row.text,
