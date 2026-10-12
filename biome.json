@@ -19,6 +19,12 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
+      "suspicious": {
+        "noUnknownAtRules": {
+          "level": "error",
+          "options": { "ignore": ["stylex"] }
+        }
+      },
       "style": {
         "noRestrictedImports": {
           "level": "error",

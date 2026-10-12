@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
+| Status | v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
 | Date | 2026-10-11 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.8) · [`design/handoff/`](design/handoff/README.md) (v3) |
 
@@ -16,7 +16,7 @@ This document records the technical decisions. **What** the app does is in the p
 |---|---|---|---|
 | D1 | Framework | **Next.js (App Router), run as a SPA.** A persistent client shell lives in `(app)/layout.tsx`. Views are `'use client'` segments | Deep links work, and the shell's timers (clock, idle, slideshow, sync) survive view changes (spec §3) |
 | D2 | Language / lint | **TypeScript `strict`**, **Biome** (lint + format, in CI and pre-commit) | Spec §3 |
-| D3 | Styling | **StyleX** (Babel + PostCSS plugin). Tokens via `defineVars`, seasons via `createTheme` | Spec §3, §4. No CSS modules, no Tailwind, no inline `style` |
+| D3 | Styling | **StyleX** (Babel + PostCSS plugin). Tokens via `defineVars`, seasons via `createTheme`. Setup (F02): ESM `babel.config.js` (`next/babel` + `@stylexjs/babel-plugin`, `runtimeInjection: false`, `@/*` alias for `.stylex.ts` imports) and `postcss.config.js` reusing its plugins over `app/` and `src/` with `useCSSLayers: true`. `app/globals.css` holds only `@stylex;` (Biome allows that one at-rule). Turbopack picks up the Babel config in dev and build | Spec §3, §4. No CSS modules, no Tailwind, no inline `style`. CSS layers keep StyleX priorities without the `:not(#\#)` specificity hack |
 | D4 | Client data | **Custom local-first store on IndexedDB (Dexie).** The UI reads local data only, writes go local first, and a sync engine in a Web Worker (D19) handles the server | Offline is a core requirement (OFF-*). One code path for online and offline. Small bundle, no RxJS, and the sync rules (D9, D10) are ours to read and change. **Rejected:** RxDB, which has its own replication but adds RxJS, a bigger bundle and a second JSON schema per collection. Dexie Cloud, which replaces our backend with its own server, PostgreSQL and auth. Dexie.Syncable, a legacy addon |
 | D5 | Shell state | **React context + `useSyncExternalStore` stores.** No state library | Little shell state. External stores keep the 1 s clock tick from re-rendering the whole tree |
 | D6 | Validation | **Valibot** schemas in `src/domain` are the single contract. Types come from `v.InferOutput` | Shared by client and server. Small bundle |
