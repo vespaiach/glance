@@ -118,7 +118,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | I03 | ✅ ([#36](https://github.com/vespaiach/glance/pull/36)) | **Notes CRUD:** sheet reducer, Guest author, tilt, delete confirm | V05 | NOTE-01..05, NOTE-09 |
 | I04 | ✅ ([#37](https://github.com/vespaiach/glance/pull/37)) | **Slideshow:** featured stepping, 8 s timer, play/pause, finished photos only | V06 | PHOTO-01, 02, 07 |
 | I05 | ✅ ([#38](https://github.com/vespaiach/glance/pull/38)) | **Upload flow:** upload-tile reducer over `transport.upload` (progress, per-file errors, retry, remove), pre-checks | V06, V07 | PHOTO-03, 04, 06, 08, BG-02 |
-| I06 | 🔄 ([#39](https://github.com/vespaiach/glance/pull/39)) | **Settings live:** season cross-fade, clock, unit, idle, note expiry, background modes, slideshow rotation (V07 already saves every control through `SettingsRepo`) | V07, V10 | SET-02..07, BG-01..06 |
+| I06 | ✅ ([#39](https://github.com/vespaiach/glance/pull/39)) | **Settings live:** season cross-fade, clock, unit, idle, note expiry, background modes, slideshow rotation (V07 already saves every control through `SettingsRepo`) | V07, V10 | SET-02..07, BG-01..06 |
 | I07 | ⬜ | **Weather setup:** search reducer, choose place, save `weatherLocation`, refresh | V04 | WX-04, 06..09 |
 | I08 | ⬜ | **Idle and Ambient:** return to Today, wake tap, schedule enter/leave, sheets discarded | V08, S06 | IDLE-01..03, AMB-04/05, SHELL-04 |
 | I09 | ⬜ | **Sign-in flow:** reducer over `transport.auth` (send, poll 2 s, name step, expired, done → Today), `glance-meta` write, sign-out | V09 | SIGNIN-01..12 |
