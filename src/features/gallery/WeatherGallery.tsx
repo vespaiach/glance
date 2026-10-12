@@ -13,12 +13,26 @@ const noop = () => {};
 
 const SETUPS: readonly WeatherSetupState[] = [
   { step: "editing", draft: "" },
+  { step: "locating", draft: "" },
+  { step: "editing", draft: "", notice: "denied" },
+  { step: "editing", draft: "", notice: "no-position" },
+  { step: "editing", draft: "", notice: "outside" },
+  { step: "editing", draft: "", notice: "lookup" },
+  { step: "editing", draft: "Portland, OR", error: "save-failed", place: PLACES[0] },
   { step: "editing", draft: "", error: "empty" },
   { step: "searching", draft: "Portland", query: "Portland" },
   { step: "editing", draft: "Pordland", error: "unknown" },
   { step: "editing", draft: "Portland", error: "unavailable" },
   { step: "choosing", draft: "Portland", matches: PLACES },
 ];
+
+function setupKey(setup: WeatherSetupState): string {
+  const error = "error" in setup ? setup.error : "";
+
+  const notice = "notice" in setup ? setup.notice : "";
+
+  return `${setup.step}-${setup.draft}-${error}-${notice}`;
+}
 
 const styles = stylex.create({
   view: {
@@ -59,11 +73,15 @@ export function WeatherGallery() {
         <WeatherSkeleton breakpoint="wide" />
       </div>
       {SETUPS.map((setup) => (
-        <div
-          key={`${setup.step}-${setup.draft}-${"error" in setup ? setup.error : ""}`}
-          {...stylex.props(styles.setup)}
-        >
-          <WeatherSetup state={setup} onType={noop} onSubmit={noop} onPick={noop} />
+        <div key={setupKey(setup)} {...stylex.props(styles.setup)}>
+          <WeatherSetup
+            state={setup}
+            canLocate={!("notice" in setup && setup.notice === "denied")}
+            onType={noop}
+            onSubmit={noop}
+            onPick={noop}
+            onLocate={noop}
+          />
         </div>
       ))}
       <div {...stylex.props(styles.setup)}>

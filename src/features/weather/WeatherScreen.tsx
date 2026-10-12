@@ -1,7 +1,13 @@
 "use client";
 
 import { copy } from "@/copy";
-import { fixtureWeatherSearch, useWeather } from "@/data/repos";
+import {
+  fixtureWeatherSearch,
+  type SettingsRepo,
+  useSettingsRepo,
+  useWeather,
+  useWeatherRepo,
+} from "@/data/repos";
 import { forecastStale } from "@/domain/offline";
 import type { WeatherLocation } from "@/domain/schemas";
 import { useBreakpoint } from "@/shell/breakpoint";
@@ -23,6 +29,14 @@ function placeName(location: WeatherLocation | undefined): string {
   return location ? copy.weather.place(location.name, location.region) : "";
 }
 
+function saveLocation(settings: SettingsRepo) {
+  return (place: WeatherLocation) =>
+    settings.update({ weatherLocation: place }).then(
+      () => true,
+      () => false,
+    );
+}
+
 export function WeatherScreen() {
   const breakpoint = useBreakpoint();
 
@@ -34,7 +48,11 @@ export function WeatherScreen() {
 
   const fixture = useFixtureParams();
 
-  const setup = useWeatherSetup(() => initialWeatherSetup(fixture.wx, fixtureWeatherSearch));
+  const setup = useWeatherSetup({
+    initial: () => initialWeatherSetup(fixture.wx, fixtureWeatherSearch),
+    source: useWeatherRepo(),
+    save: saveLocation(useSettingsRepo()),
+  });
 
   const location = settings.weatherLocation;
 
@@ -49,9 +67,11 @@ export function WeatherScreen() {
       empty={
         <WeatherSetup
           state={setup.state}
+          canLocate={setup.canLocate}
           onType={setup.type}
           onSubmit={setup.submit}
           onPick={setup.pick}
+          onLocate={setup.locate}
         />
       }
       failed={

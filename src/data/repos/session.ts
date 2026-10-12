@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Account } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_LOCATED_PLACE,
   FIXTURE_NEW_NOTE_DRAFT,
   FIXTURE_PLACES,
   FIXTURE_SHEET_TARGETS,
@@ -41,6 +42,7 @@ export const fixtureWeatherSearch = {
   query: "Portland",
   unknown: FIXTURE_UNKNOWN_PLACE,
   matches: FIXTURE_PLACES.portland ?? [],
+  located: { draft: "Portland, OR", place: FIXTURE_LOCATED_PLACE },
 };
 
 export const fixtureUploads = FIXTURE_UPLOADS;

@@ -10,7 +10,17 @@ const CHOICES = {
   on: ["link"],
   acct: ["returning"],
   upload: ["one", "progress", "error", "offline"],
-  wx: ["searching", "unknown", "choose"],
+  wx: [
+    "searching",
+    "unknown",
+    "choose",
+    "locating",
+    "no-position",
+    "denied",
+    "outside",
+    "lookup",
+    "savefail",
+  ],
 } as const;
 
 type Choices = typeof CHOICES;

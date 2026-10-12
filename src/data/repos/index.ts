@@ -1,4 +1,4 @@
-export type { AuthStatus } from "../sync/transport";
+export type { AuthStatus, LocateError } from "../sync/transport";
 export { SignInAuthProvider, useSignInAuth } from "./auth";
 export {
   createEventsRepo,
@@ -26,6 +26,11 @@ export {
   usePhotos,
   usePhotosRepo,
 } from "./photos";
+export {
+  type DevicePosition,
+  devicePosition,
+  type PositionError,
+} from "./position";
 export { type AppServiceWorker, appServiceWorker } from "./serviceWorker";
 export {
   type DisplayBoot,

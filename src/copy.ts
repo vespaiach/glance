@@ -385,10 +385,13 @@ export const copy = {
     setup: {
       eyebrow: "Weather · setup",
       title: "Where is this screen?",
-      body: "The forecast on Today, Weather and the ambient screen uses this location.",
+      body: "The forecast and the clock’s time zone follow this place. You can change it later in Settings.",
       label: "City or ZIP code",
       placeholder: "Portland, OR",
       submit: "Show weather",
+      locate: "Use my location",
+      locating: "Finding where this screen is…",
+      locatingHint: "If the browser asks, choose Allow.",
       searching: (query: string) => `Looking for ${query}…`,
       matches: (count: number, city: string) => `${count} places called ${city}`,
       region: (region: string) => `${region}, United States`,
@@ -396,6 +399,14 @@ export const copy = {
         empty: "Enter a city or ZIP code",
         unknown: "We couldn’t find that place. Try a city and state, like Austin, TX",
         unavailable: "Place search isn’t responding. Try again in a moment.",
+        "save-failed": "Couldn’t save. Try again.",
+      },
+      notice: {
+        denied: "Location is off for this screen. Type a city or ZIP instead.",
+        "no-position": "Couldn’t find where this screen is. Try again, or type a city or ZIP.",
+        outside:
+          "This screen seems to be outside the US. Glance works for US places only. Type a US city or ZIP.",
+        lookup: "Couldn’t look up this place. Try again, or type a city or ZIP.",
       },
     },
     range: {
