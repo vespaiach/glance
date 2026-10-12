@@ -70,11 +70,11 @@ function fixtureSeed(params: FixtureParams): Seed | undefined {
 
   if (params.empty) return { settings: DEFAULT_SETTINGS, withRows: false };
 
-  if (params.wx) return { settings: unlocated(FIXTURE_SETTINGS), withRows: true };
+  const settings = params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS;
+
+  if (params.wx) return { settings: unlocated(settings), withRows: true };
 
   const weather = params.net === "wxerror" ? undefined : fixtureWeather(params);
-
-  const settings = params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS;
 
   return { settings, withRows: true, ...(weather && { weather }) };
 }

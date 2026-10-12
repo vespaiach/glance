@@ -3,7 +3,9 @@
 import * as stylex from "@stylexjs/stylex";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
-import { colors, sizes, space } from "@/theme/tokens.stylex";
+import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
+import { photoLayer } from "@/ui/photoLayer";
+import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
 import { NavBar } from "./NavBar";
 import { VIEWS, viewForPath, viewPath } from "./routes";
@@ -17,7 +19,16 @@ const styles = stylex.create({
     overflow: "hidden",
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
+    transitionProperty: "background",
+    transitionDuration: motion.durSeason,
+    transitionTimingFunction: motion.easeInOut,
   },
+  photo: (image: string) => ({
+    backgroundImage: image,
+    backgroundPosition: "center",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
+  }),
   main: {
     flexGrow: 1,
     minHeight: 0,
@@ -61,10 +72,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const main = useScrollTopOnViewChange(pathname);
 
+  const photo = useBackgroundPhoto();
+
   usePrefetchViews();
 
   return (
-    <div {...stylex.props(styles.root)}>
+    <div
+      {...stylex.props(
+        styles.root,
+        photo !== undefined && styles.photo(photoLayer(photo.dim, photo.src)),
+      )}
+    >
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>

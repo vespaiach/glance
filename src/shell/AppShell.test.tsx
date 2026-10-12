@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { type Harness, openHarness } from "@/data/repos/testHarness";
 import { AppShell } from "./AppShell";
+import { shellWrapper } from "./providers/testShell";
 
 const navigation = vi.hoisted(() => ({
   pathname: "/today",
@@ -13,7 +16,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: navigation.push, prefetch: navigation.prefetch }),
 }));
 
+let store: Harness;
+
 beforeEach(() => {
+  store = openHarness("glance-app-shell-test");
   navigation.pathname = "/today";
   navigation.push.mockReset();
   navigation.prefetch.mockReset();
@@ -25,9 +31,19 @@ beforeEach(() => {
   }));
 });
 
-afterEach(() => {
+afterEach(async () => {
   vi.unstubAllGlobals();
+
+  await store.close();
 });
+
+async function renderShell(children: ReactNode) {
+  const view = render(<AppShell>{children}</AppShell>, { wrapper: shellWrapper(store) });
+
+  await screen.findByRole("main");
+
+  return view;
+}
 
 function trackScroll(element: HTMLElement) {
   let top = 0;
@@ -40,31 +56,31 @@ function trackScroll(element: HTMLElement) {
   });
 }
 
-test("SHELL-01 shows the view in main above the nav bar", () => {
-  render(<AppShell>Today view</AppShell>);
+test("SHELL-01 shows the view in main above the nav bar", async () => {
+  await renderShell("Today view");
 
   expect(screen.getByRole("main")).toHaveTextContent("Today view");
   expect(screen.getByRole("navigation", { name: "Views" })).toBeInTheDocument();
 });
 
-test("SHELL-02 the nav bar marks the route's view", () => {
+test("SHELL-02 the nav bar marks the route's view", async () => {
   navigation.pathname = "/settings/background";
 
-  render(<AppShell>Background view</AppShell>);
+  await renderShell("Background view");
 
   expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("aria-current", "page");
 });
 
 test("SHELL-01 tapping a view navigates to it", async () => {
-  render(<AppShell>Today view</AppShell>);
+  await renderShell("Today view");
 
   await userEvent.click(screen.getByRole("button", { name: "Notes" }));
 
   expect(navigation.push).toHaveBeenCalledWith("/notes");
 });
 
-test("SHELL-04 changing view resets the main scroll to the top", () => {
-  const { rerender } = render(<AppShell>Today view</AppShell>);
+test("SHELL-04 changing view resets the main scroll to the top", async () => {
+  const { rerender } = await renderShell("Today view");
 
   const main = screen.getByRole("main");
 
@@ -79,8 +95,8 @@ test("SHELL-04 changing view resets the main scroll to the top", () => {
   expect(main.scrollTop).toBe(0);
 });
 
-test("tech§4.5 prefetches the six views on startup", () => {
-  render(<AppShell>Today view</AppShell>);
+test("tech§4.5 prefetches the six views on startup", async () => {
+  await renderShell("Today view");
 
   expect(navigation.prefetch.mock.calls.map(([path]) => path)).toEqual([
     "/today",
