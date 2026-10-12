@@ -86,7 +86,7 @@ function fixtureSeed(params: FixtureParams): Seed | undefined {
 
   const settings = params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS;
 
-  if (params.wx) return { settings: unlocated(settings), withRows: true };
+  if (params.wx && !params.keepPlace) return { settings: unlocated(settings), withRows: true };
 
   const weather = params.net === "wxerror" ? undefined : fixtureWeather(params);
 

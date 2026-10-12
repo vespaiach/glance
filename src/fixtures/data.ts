@@ -267,8 +267,10 @@ const NEW_YORK = "America/New_York";
 
 const CHICAGO = "America/Chicago";
 
+export const FIXTURE_OTHER_ZONE_PLACE = place("Portland", "Maine", 43.6591, -70.2568, NEW_YORK);
+
 export const FIXTURE_PLACES: Readonly<Record<string, readonly WeatherLocation[]>> = {
-  portland: [PORTLAND_OR, place("Portland", "Maine", 43.6591, -70.2568, NEW_YORK)],
+  portland: [PORTLAND_OR, FIXTURE_OTHER_ZONE_PLACE],
   springfield: [
     place("Springfield", "Illinois", 39.7817, -89.6501, CHICAGO),
     place("Springfield", "Missouri", 37.2089, -93.2923, CHICAGO),

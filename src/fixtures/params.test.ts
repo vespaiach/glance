@@ -63,6 +63,17 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams(query)).toEqual({});
   });
 
+  it("SET-09 wx= on /settings/location keeps the saved place", () => {
+    expect(parseFixtureParams("wx=tz", "/settings/location")).toEqual({
+      wx: "tz",
+      keepPlace: true,
+    });
+  });
+
+  it("SET-09 other pages don't keep the place", () => {
+    expect(parseFixtureParams("wx=tz", "/weather")).toEqual({ wx: "tz" });
+  });
+
   it("§6 ignores params that are not fixture params", () => {
     expect(parseFixtureParams("date=2026-10-14&view=weather")).toEqual({});
   });

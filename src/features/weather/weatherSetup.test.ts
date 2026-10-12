@@ -18,7 +18,16 @@ const SEARCH = {
   unknown: "Pordland",
   matches: PORTLANDS,
   located: { draft: "Portland, OR", place: LOCATED },
+  otherZone: PORTLANDS[1] as WeatherLocation,
 };
+
+const MAINE = PORTLANDS[1] as WeatherLocation;
+
+const confirming = (draft: string): WeatherSetupState => ({
+  step: "confirm-zone",
+  draft,
+  place: MAINE,
+});
 
 const editing = (draft: string): WeatherSetupState => ({ step: "editing", draft });
 
@@ -259,5 +268,43 @@ describe("weather setup reducer", () => {
       error: "save-failed",
       place: LOCATED,
     });
+  });
+
+  it.each<WeatherSetupState>([
+    searching("Portland"),
+    { step: "choosing", draft: "Portland", matches: PORTLANDS },
+    { step: "locating", draft: "Portland" },
+  ])("LOC-09 a place in another zone asks first from $step", (state) => {
+    expect(weatherSetupReducer(state, { type: "ask-zone", place: MAINE })).toEqual(
+      confirming("Portland"),
+    );
+  });
+
+  it("LOC-09 Keep goes back to the card with the draft kept", () => {
+    expect(weatherSetupReducer(confirming("Portland"), { type: "keep" })).toEqual(
+      editing("Portland"),
+    );
+  });
+
+  it("LOC-09 Keep is ignored outside the confirm", () => {
+    expect(weatherSetupReducer(searching("Portland"), { type: "keep" })).toEqual(
+      searching("Portland"),
+    );
+  });
+
+  it("LOC-09 a failed save from the confirm returns to the card with the place kept", () => {
+    expect(
+      weatherSetupReducer(confirming("Portland"), { type: "save-failed", place: MAINE }),
+    ).toEqual({ step: "editing", draft: "Portland", error: "save-failed", place: MAINE });
+  });
+
+  it("LOC-09 wx=tz starts on the confirm for Portland, ME on the Location page", () => {
+    expect(initialWeatherSetup("tz", SEARCH, { confirmsZone: true })).toEqual(
+      confirming("Portland"),
+    );
+  });
+
+  it("LOC-09 wx=tz is the plain card where no zone is asked", () => {
+    expect(initialWeatherSetup("tz", SEARCH)).toEqual(editing(""));
   });
 });

@@ -47,6 +47,7 @@ export const gallery = {
     photosView: "Photos view",
     settingsView: "Settings view",
     backgroundView: "Background view",
+    locationView: "Location view",
     ambientView: "Ambient view",
     signInView: "Sign in view",
   },
@@ -451,6 +452,6 @@ export const DRY_WEATHER: Weather = {
 };
 
 export const PLACES: readonly WeatherLocation[] = [
-  { name: "Portland", region: "Oregon", lat: 45.5152, lon: -122.6784 },
-  { name: "Portland", region: "Maine", lat: 43.6591, lon: -70.2568 },
+  { name: "Portland", region: "Oregon", lat: 45.5152, lon: -122.6784, timeZone: GALLERY_TZ },
+  { name: "Portland", region: "Maine", lat: 43.6591, lon: -70.2568, timeZone: "America/New_York" },
 ];

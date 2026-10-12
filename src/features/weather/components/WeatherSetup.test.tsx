@@ -95,6 +95,22 @@ test("WX-09 several matches list one row per place under a count", () => {
   expect(screen.queryByRole("button", { name: "Show weather" })).not.toBeInTheDocument();
 });
 
+test("WX-09 match rows name each place's time zone (LOC-08)", () => {
+  const zoned = [
+    { ...PORTLANDS[0], timeZone: "America/Los_Angeles" },
+    { ...PORTLANDS[1], timeZone: "America/New_York" },
+  ] as WeatherLocation[];
+
+  renderSetup({ step: "choosing", draft: "Portland", matches: zoned });
+
+  expect(
+    screen.getByRole("button", { name: /^Portland\s*Oregon, United States · Pacific time$/ }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: /^Portland\s*Maine, United States · Eastern time$/ }),
+  ).toBeInTheDocument();
+});
+
 test("WX-09 tapping a row picks that place", async () => {
   const { onPick } = renderSetup({ step: "choosing", draft: "Portland", matches: PORTLANDS });
 

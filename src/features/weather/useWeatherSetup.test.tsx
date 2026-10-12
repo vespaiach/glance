@@ -13,6 +13,16 @@ const PORTLAND: WeatherLocation = {
   timeZone: "America/Los_Angeles",
 };
 
+const MAINE: WeatherLocation = {
+  name: "Portland",
+  region: "Maine",
+  lat: 43.66,
+  lon: -70.26,
+  timeZone: "America/New_York",
+};
+
+const askEastern = (place: WeatherLocation) => place.timeZone === "America/New_York";
+
 const COORDS = { lat: 45.5152, lon: -122.6784 };
 
 const EMPTY: WeatherSetupState = { step: "editing", draft: "" };
@@ -23,6 +33,7 @@ function setup(
     source?: Partial<SetupSource>;
     save?: (place: WeatherLocation) => Promise<boolean>;
     position?: Partial<DevicePosition>;
+    asksZone?: (place: WeatherLocation) => boolean;
   } = {},
 ) {
   const source: SetupSource = {
@@ -40,7 +51,13 @@ function setup(
   };
 
   const hook = renderHook(() =>
-    useWeatherSetup({ initial: () => options.initial ?? EMPTY, source, save, position }),
+    useWeatherSetup({
+      initial: () => options.initial ?? EMPTY,
+      source,
+      save,
+      position,
+      ...(options.asksZone && { asksZone: options.asksZone }),
+    }),
   );
 
   return { ...hook, source, save };
@@ -215,4 +232,91 @@ test("WX-09 picking a match saves it", async () => {
   await act(async () => result.current.pick(PORTLAND));
 
   expect(save).toHaveBeenCalledWith(PORTLAND);
+});
+
+test("LOC-09 a picked place in another zone asks instead of saving", async () => {
+  const { result, save } = setup({
+    initial: { step: "choosing", draft: "Portland", matches: [PORTLAND, MAINE] },
+    asksZone: askEastern,
+  });
+
+  act(() => result.current.pick(MAINE));
+
+  expect(result.current.state).toEqual({ step: "confirm-zone", draft: "Portland", place: MAINE });
+  expect(save).not.toHaveBeenCalled();
+});
+
+test("LOC-09 a picked place in the same zone saves at once", async () => {
+  const { result, save } = setup({
+    initial: { step: "choosing", draft: "Portland", matches: [PORTLAND, MAINE] },
+    asksZone: askEastern,
+  });
+
+  act(() => result.current.pick(PORTLAND));
+
+  await waitFor(() => expect(save).toHaveBeenCalledWith(PORTLAND));
+});
+
+test("LOC-09 a single match in another zone asks too", async () => {
+  const { result, save } = setup({
+    source: { searchPlaces: async () => ok([MAINE]) },
+    asksZone: askEastern,
+  });
+
+  act(() => result.current.type("04101"));
+  act(() => result.current.submit());
+
+  await waitFor(() =>
+    expect(result.current.state).toEqual({ step: "confirm-zone", draft: "04101", place: MAINE }),
+  );
+  expect(save).not.toHaveBeenCalled();
+});
+
+test("LOC-09 a located place in another zone asks too", async () => {
+  const { result, save } = setup({
+    source: { locate: async () => ok(MAINE) },
+    asksZone: askEastern,
+  });
+
+  await act(async () => result.current.locate());
+
+  expect(result.current.state).toEqual({ step: "confirm-zone", draft: "", place: MAINE });
+  expect(save).not.toHaveBeenCalled();
+});
+
+test("LOC-09 Switch saves the asked place", async () => {
+  const { result, save } = setup({
+    initial: { step: "confirm-zone", draft: "Portland", place: MAINE },
+  });
+
+  act(() => result.current.confirm());
+
+  await waitFor(() => expect(save).toHaveBeenCalledWith(MAINE));
+});
+
+test("LOC-09 a failed Switch returns to the card with the place kept", async () => {
+  const { result } = setup({
+    initial: { step: "confirm-zone", draft: "Portland", place: MAINE },
+    save: async () => false,
+  });
+
+  await act(async () => result.current.confirm());
+
+  expect(result.current.state).toEqual({
+    step: "editing",
+    draft: "Portland",
+    error: "save-failed",
+    place: MAINE,
+  });
+});
+
+test("LOC-09 Keep goes back to the card with the draft", () => {
+  const { result, save } = setup({
+    initial: { step: "confirm-zone", draft: "Portland", place: MAINE },
+  });
+
+  act(() => result.current.keep());
+
+  expect(result.current.state).toEqual({ step: "editing", draft: "Portland" });
+  expect(save).not.toHaveBeenCalled();
 });

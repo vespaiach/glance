@@ -72,7 +72,7 @@ export function useShellSetup(demo: boolean): ShellSetup | undefined {
   const [setup, setSetup] = useState<ShellSetup>();
 
   useEffect(() => {
-    const params = fixtureParamsFor(demo, window.location.search);
+    const params = fixtureParamsFor(demo, window.location.search, window.location.pathname);
 
     setSetup({ params, options: shellOptions(params) });
   }, [demo]);

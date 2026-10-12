@@ -9,6 +9,7 @@ export {
   useEventsRepo,
   useHasEvents,
   useNextEventAfter,
+  useUpcomingEvent,
 } from "./events";
 export {
   createNotesRepo,

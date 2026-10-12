@@ -17,7 +17,8 @@ export type WeatherSetupState =
     }
   | { step: "searching"; draft: string; query: string }
   | { step: "choosing"; draft: string; matches: readonly WeatherLocation[] }
-  | { step: "locating"; draft: string };
+  | { step: "locating"; draft: string }
+  | { step: "confirm-zone"; draft: string; place: WeatherLocation };
 
 export type WeatherSetupAction =
   | { type: "type"; draft: string }
@@ -26,14 +27,19 @@ export type WeatherSetupAction =
   | { type: "failed" }
   | { type: "locate" }
   | { type: "locate-failed"; reason: LocateFailure }
-  | { type: "save-failed"; place: WeatherLocation };
+  | { type: "save-failed"; place: WeatherLocation }
+  | { type: "ask-zone"; place: WeatherLocation }
+  | { type: "keep" };
 
 export type FixtureSearch = {
   query: string;
   unknown: string;
   matches: readonly WeatherLocation[];
   located: { draft: string; place: WeatherLocation };
+  otherZone: WeatherLocation;
 };
+
+export type SetupHost = { confirmsZone?: boolean };
 
 export function placeQuery(draft: string): string {
   return draft.trim();
@@ -79,6 +85,12 @@ function locateFailed(state: WeatherSetupState, notice: LocateFailure): WeatherS
   return { step: "editing", draft: state.draft, notice };
 }
 
+function keep(state: WeatherSetupState): WeatherSetupState {
+  if (state.step !== "confirm-zone") return state;
+
+  return { step: "editing", draft: state.draft };
+}
+
 export function weatherSetupReducer(
   state: WeatherSetupState,
   action: WeatherSetupAction,
@@ -97,12 +109,17 @@ export function weatherSetupReducer(
       return locateFailed(state, action.reason);
     case "save-failed":
       return { step: "editing", draft: state.draft, error: "save-failed", place: action.place };
+    case "ask-zone":
+      return { step: "confirm-zone", draft: state.draft, place: action.place };
+    case "keep":
+      return keep(state);
   }
 }
 
 export function initialWeatherSetup(
   fixture: WeatherFixture,
   search: FixtureSearch,
+  { confirmsZone = false }: SetupHost = {},
 ): WeatherSetupState {
   switch (fixture) {
     case "searching":
@@ -120,6 +137,10 @@ export function initialWeatherSetup(
       return { step: "editing", draft: "", notice: fixture };
     case "savefail":
       return { step: "editing", ...search.located, error: "save-failed" };
+    case "tz":
+      return confirmsZone
+        ? { step: "confirm-zone", draft: search.query, place: search.otherZone }
+        : { step: "editing", draft: "" };
     default:
       return { step: "editing", draft: "" };
   }

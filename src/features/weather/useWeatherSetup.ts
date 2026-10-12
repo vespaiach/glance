@@ -23,6 +23,7 @@ export type WeatherSetupOptions = {
   source: SetupSource;
   save: (place: WeatherLocation) => Promise<boolean>;
   position?: DevicePosition;
+  asksZone?: (place: WeatherLocation) => boolean;
 };
 
 export type WeatherSetupFlow = {
@@ -32,7 +33,11 @@ export type WeatherSetupFlow = {
   submit(): void;
   pick(place: WeatherLocation): void;
   locate(): void;
+  confirm(): void;
+  keep(): void;
 };
+
+const NEVER_ASKS = () => false;
 
 const LOOKUP_LIMIT_MS = 5_000;
 
@@ -86,6 +91,7 @@ export function useWeatherSetup({
   source,
   save,
   position = devicePosition,
+  asksZone = NEVER_ASKS,
 }: WeatherSetupOptions): WeatherSetupFlow {
   const requestId = useRef(0);
 
@@ -110,7 +116,10 @@ export function useWeatherSetup({
     if (!saved && id === requestId.current) dispatch({ type: "save-failed", place });
   };
 
-  const pick = (place: WeatherLocation) => void commit(place);
+  const settle = (place: WeatherLocation) => {
+    if (asksZone(place)) dispatch({ type: "ask-zone", place });
+    else void commit(place);
+  };
 
   const search = async (query: string) => {
     const id = ++requestId.current;
@@ -123,7 +132,7 @@ export function useWeatherSetup({
 
     const [only] = answer.ok && answer.value.length === 1 ? answer.value : [];
 
-    if (only) await commit(only);
+    if (only) settle(only);
   };
 
   const locate = async () => {
@@ -135,7 +144,7 @@ export function useWeatherSetup({
 
     if (id !== requestId.current) return;
 
-    if (place.ok) return commit(place.value);
+    if (place.ok) return settle(place.value);
 
     if (place.error === "denied") setDenied(true);
 
@@ -164,7 +173,11 @@ export function useWeatherSetup({
     canLocate: available && !denied,
     type,
     submit,
-    pick,
+    pick: settle,
     locate: () => void locate(),
+    confirm: () => {
+      if (state.step === "confirm-zone") void commit(state.place);
+    },
+    keep: () => dispatch({ type: "keep" }),
   };
 }

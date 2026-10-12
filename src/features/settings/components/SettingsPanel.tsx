@@ -7,6 +7,7 @@ import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { PillTabs } from "@/ui/PillTabs";
 import { SettingsRow } from "@/ui/SettingsRow";
+import { locationSummary } from "../location";
 import type { SettingsAccount } from "./AccountCard";
 
 type SettingsPanelProps = {
@@ -16,6 +17,7 @@ type SettingsPanelProps = {
   background: ShownBackground;
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
+  onOpenLocation: () => void;
 };
 
 const SEASON_OPTIONS = [
@@ -109,6 +111,7 @@ export function SettingsPanel({
   background,
   onChange,
   onOpenBackground,
+  onOpenLocation,
 }: SettingsPanelProps) {
   const text = copy.settings;
 
@@ -120,6 +123,13 @@ export function SettingsPanel({
         <SignedIn account={account} />
       </div>
       <div {...stylex.props(styles.rows)}>
+        <SettingsRow
+          title={text.location.title}
+          description={text.location.body}
+          onClick={onOpenLocation}
+        >
+          {locationSummary(settings.weatherLocation)}
+        </SettingsRow>
         <SettingsRow
           title={text.season.title}
           description={seasonSubtitle(settings.season, season)}

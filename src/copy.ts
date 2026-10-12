@@ -252,6 +252,12 @@ export const copy = {
     title: "Settings",
     signedInAs: "Signed in as",
     signedInEmail: (email: string) => ` · ${email}`,
+    location: {
+      title: "Location",
+      body: "Sets the weather and the time zone",
+      notSet: "Not set",
+      summary: (place: string, zone: string) => `${place} · ${zone}`,
+    },
     season: {
       title: "Season",
       autoLabel: "Auto",
@@ -308,6 +314,46 @@ export const copy = {
       title: "Account",
       signOut: "Sign out",
       signOutCaption: "Signs out this screen only.",
+    },
+  },
+  location: {
+    back: "Settings",
+    title: "Location",
+    nowSetTo: "Now set to",
+    notSet: "Not set",
+    zoneNow: (zone: string, time: string) => `${zone} · ${time}`,
+    deviceClock: "Times follow this device’s own clock",
+    change: "Change location",
+    set: "Set location",
+    search: "Search",
+    sets: "What the location sets",
+    weather: {
+      title: "Weather",
+      body: "The forecast on Today, Weather and the ambient screen",
+    },
+    timeZone: {
+      title: "Time zone",
+      zoned: (zone: string) => `${zone} for the clock, Today, the calendar and event times`,
+      unset: "The clock, Today, the calendar and event times",
+    },
+    caption: (zone: string) =>
+      `The clock and event times follow ${zone}, even if this device is set to a different time.`,
+    captionUnset: "Until a location is set, times follow this device’s own clock.",
+    shared: "Shared by every screen on this account",
+    confirm: {
+      eyebrow: "Time zone change",
+      title: (zone: string) => `Switch to ${zone}?`,
+      hours: (n: number) => (n === 1 ? "1 hour" : `${n} hours`),
+      moves: (place: string, zone: string, hours: string, direction: "ahead" | "back") =>
+        `${place} is in ${zone}. The clock moves ${hours} ${direction}, and event times change to match on every screen.`,
+      sameNow: (place: string, zone: string) =>
+        `${place} is in ${zone}. The time is the same right now, but it can differ later in the year.`,
+      before: (zone: string) => `Now · ${zone}`,
+      after: (zone: string) => `After · ${zone}`,
+      example: (title: string, time: string, shown: string) =>
+        `${title} at ${time} will show at ${shown}.`,
+      switch: (zone: string) => `Switch to ${zone}`,
+      keep: (zone: string) => `Keep ${zone}`,
     },
   },
   background: {
@@ -394,7 +440,8 @@ export const copy = {
       locatingHint: "If the browser asks, choose Allow.",
       searching: (query: string) => `Looking for ${query}…`,
       matches: (count: number, city: string) => `${count} places called ${city}`,
-      region: (region: string) => `${region}, United States`,
+      region: (region: string, zone?: string) =>
+        zone ? `${region}, United States · ${zone}` : `${region}, United States`,
       error: {
         empty: "Enter a city or ZIP code",
         unknown: "We couldn’t find that place. Try a city and state, like Austin, TX",
