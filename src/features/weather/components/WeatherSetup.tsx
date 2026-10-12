@@ -16,7 +16,7 @@ import {
 import type { FormEvent } from "react";
 import { copy } from "@/copy";
 import type { WeatherLocation } from "@/domain/schemas";
-import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
+import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
@@ -150,9 +150,6 @@ const styles = stylex.create({
     alignItems: "center",
     gap: space.sm,
   },
-  locate: {
-    boxShadow: shadows.shadow1,
-  },
 });
 
 type MatchesProps = {
@@ -278,13 +275,7 @@ export function WeatherSetup({
               {copy.weather.setup.submit}
             </Button>
             {canLocate && (
-              <Button
-                type="button"
-                variant="secondary"
-                icon={LocateFixed}
-                onClick={onLocate}
-                xstyle={styles.locate}
-              >
+              <Button type="button" variant="secondary" icon={LocateFixed} onClick={onLocate}>
                 {copy.weather.setup.locate}
               </Button>
             )}
