@@ -1,0 +1,61 @@
+const CHOICES = {
+  sheet: ["event", "newevent", "note", "newnote"],
+  time: ["start", "end", "error", "noend"],
+  season: ["spring", "summer", "fall", "winter"],
+  net: ["loading", "offline", "wxerror"],
+  signin: ["form", "sending", "sent", "name", "phone", "expired", "offline", "done"],
+  on: ["link"],
+  acct: ["returning"],
+  upload: ["one", "progress", "error", "offline"],
+  wx: ["searching", "unknown", "choose"],
+} as const;
+
+type Choices = typeof CHOICES;
+
+type ChoiceParams = { [K in keyof Choices]?: Choices[K][number] };
+
+export type FixtureParams = ChoiceParams & {
+  bg?: "photo";
+  clock?: "24h";
+  empty?: true;
+  kb?: true;
+  now?: Date;
+};
+
+const ISO_DATE_TIME =
+  /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/;
+
+function parseNow(value: string | null): Date | undefined {
+  if (value === null || !ISO_DATE_TIME.test(value)) return undefined;
+
+  const now = new Date(value);
+
+  return Number.isNaN(now.getTime()) ? undefined : now;
+}
+
+function readChoices(query: URLSearchParams): ChoiceParams {
+  const entries = Object.entries(CHOICES).flatMap(([name, values]) => {
+    const value = query.get(name);
+
+    return (values as readonly string[]).includes(value ?? "") ? [[name, value]] : [];
+  });
+
+  return Object.fromEntries(entries);
+}
+
+function readFlags(query: URLSearchParams): FixtureParams {
+  return {
+    ...(query.get("bg") === "photo" && { bg: "photo" }),
+    ...(query.get("clock") === "24" && { clock: "24h" }),
+    ...(query.get("empty") === "1" && { empty: true }),
+    ...(query.get("kb") === "1" && { kb: true }),
+  };
+}
+
+export function parseFixtureParams(search: string | URLSearchParams): FixtureParams {
+  const query = new URLSearchParams(search);
+
+  const now = parseNow(query.get("now"));
+
+  return { ...readChoices(query), ...readFlags(query), ...(now && { now }) };
+}

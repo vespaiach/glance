@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.14 — F11 gallery recorded in §3, §4.4 and §6.5; spec v0.14 (§9) · v1.13 — F10 TimeField + TimePicker recorded in §4.4 and §3; spec v0.13 (§9) · v1.12 — F09 shared pieces recorded in §4.4 and §3; spec v0.12 (§9) · v1.11 — F08 DS display components recorded in §4.4, §3 and D15; spec v0.11 (§9) · v1.10 — F07 DS primitives recorded in §4.4 and D18; spec v0.10 (§9) · v1.9 — F06 domain logic recorded in D15, §3 and §4.4; spec v0.9 (§9) · v1.8 — F05 domain schemas recorded in D6 and §3 · v1.7 — F04 fonts and icons recorded in D3 · v1.6 — F03 tokens and seasons recorded in D3 and §3 · v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
+| Status | v1.15 — S01 fixtures recorded in §3 and §4.3; spec v0.15 (§9) · v1.14 — F11 gallery recorded in §3, §4.4 and §6.5; spec v0.14 (§9) · v1.13 — F10 TimeField + TimePicker recorded in §4.4 and §3; spec v0.13 (§9) · v1.12 — F09 shared pieces recorded in §4.4 and §3; spec v0.12 (§9) · v1.11 — F08 DS display components recorded in §4.4, §3 and D15; spec v0.11 (§9) · v1.10 — F07 DS primitives recorded in §4.4 and D18; spec v0.10 (§9) · v1.9 — F06 domain logic recorded in D15, §3 and §4.4; spec v0.9 (§9) · v1.8 — F05 domain schemas recorded in D6 and §3 · v1.7 — F04 fonts and icons recorded in D3 · v1.6 — F03 tokens and seasons recorded in D3 and §3 · v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
 | Date | 2026-10-11 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.13) · [`design/handoff/`](design/handoff/README.md) (v3) |
 
@@ -117,7 +117,7 @@ src/
     today/ calendar/ events/ notes/ photos/ weather/ settings/ background/ ambient/ signin/
     gallery/   # /dev/gallery (F11): every ui component in the 4 seasons, sample props inline (demo builds only)
       <Name>Screen.tsx  components/  hooks/  layout.ts   # per-view grid (spec §5.3)
-  fixtures/    # Appendix A data, bundled images, URL fixture-param parser (dev/demo only)
+  fixtures/    # dev/demo only (S01): data.ts (Appendix A rows as domain types with fixed UUIDs and device-local times, `fixturePhotoImage(id)`), params.ts (`parseFixtureParams`). Images are SVGs in public/fixtures/photos
   server/      # 'server-only'
     db/        # connection (WAL, foreign_keys=ON), migrate.ts, queries/*.ts
     auth/      # magic links, sessions, requireDisplay()
@@ -134,6 +134,7 @@ db/migrations/001_init.sql
 | `domain` | nothing app-specific (Valibot only) |
 | `theme`, `ui` | `theme`, `domain` (types only) |
 | `data` | `domain` |
+| `fixtures` | `domain` |
 | `shell`, `features/*` | `ui`, `theme`, `domain`, `data/repos` hooks, `shell`, `copy`. A feature may import another feature's **index** only (e.g. `today` uses `events`) |
 | `server` | `domain` only. Never `data`, `ui` or `features` |
 | `app/**` | page files → `features`/`shell`. Route handlers → `server` |
@@ -174,7 +175,7 @@ The spec's "fixture repo first, API repo later" (spec §11) becomes a **transpor
 | `IdleProvider` | Touch timer → `router.push('/today')` or `/ambient`. Also enters and leaves Ambient on the schedule (AMB-05) | Paused while a text field is focused (IDLE-02) |
 | `SheetHost` | One open sheet `{kind, props}` | Closed on route change (SHELL-04) and idle |
 
-Fixture URL params (spec §6) are parsed once in `fixtures/params.ts` and fed into these providers. They're only parsed in dev/demo builds.
+Fixture URL params (spec §6) are parsed once in `fixtures/params.ts` and fed into these providers. They're only parsed in dev/demo builds. `parseFixtureParams` keeps only known values (`clock=24` → `'24h'`, `empty`/`kb`/`bg` flags, `now=` → `Date`, read as local time when it has no offset) and drops the rest.
 
 ### 4.4 Screens and components
 - **Container / presentational split:** `features/*/XScreen.tsx` reads hooks and passes plain props down. `src/ui` components are pure: they take props and an optional `xstyle`, and never read data.
@@ -391,3 +392,4 @@ Applied in spec v0.8 (design review):
 19. Spec v0.12 (F09): §4.2 shared-piece props and `<Zone>`; §8.9 Escape closes a sheet, focus starts on the sheet and returns to the opener. Focus order inside the sheet stays [Open] (Y04).
 20. Spec v0.13 (F10): §4.2 `TimeField` / `TimePicker` props; TPK-02 the open picker scrolls itself into view.
 21. Spec v0.14 (F11): DS-01 groups the gallery like the DS cards instead of showing it side by side with them; the card HTML is not in the handoff.
+22. Spec v0.15 (S01): Appendix A fixture times are device-local; the photo upload order puts Cannon Beach last so the TODAY-07 rotation picks it on Oct 9; Springfield matches follow the prototype (IL / MO / MA).
