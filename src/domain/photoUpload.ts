@@ -1,3 +1,5 @@
+export const FILE_NAME_HEADER = "x-file-name";
+
 export const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
 
 export type UploadProblem = "too-large" | "not-a-photo";

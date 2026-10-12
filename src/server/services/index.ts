@@ -1,15 +1,22 @@
 import "server-only";
+import path from "node:path";
 import type { AccountSettings, CalendarEvent, Note } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
 import { getDb } from "../db/connection";
+import { env } from "../env";
 import type { ServiceDeps } from "./deps";
 import * as events from "./events";
 import * as notes from "./notes";
+import * as photos from "./photos";
 import * as settings from "./settings";
 import * as sync from "./sync";
 
 function deps(): ServiceDeps {
   return { db: getDb(), now: () => new Date() };
+}
+
+function photoDeps(): photos.PhotoDeps {
+  return { ...deps(), photosDir: path.join(env().DATA_DIR, "photos") };
 }
 
 export function putEvent(accountId: string, event: CalendarEvent) {
@@ -34,4 +41,12 @@ export function putSettings(accountId: string, settingsId: string, saved: Accoun
 
 export function pullChanges(accountId: string, since: number | undefined) {
   return sync.pullChanges(deps(), accountId, since);
+}
+
+export async function uploadPhoto(accountId: string, upload: photos.PhotoUpload) {
+  return announce(syncBus(), accountId, await photos.uploadPhoto(photoDeps(), accountId, upload));
+}
+
+export function photoFile(accountId: string, id: string, variant: photos.PhotoVariant) {
+  return photos.photoFile(photoDeps(), accountId, id, variant);
 }

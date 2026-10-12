@@ -1,9 +1,19 @@
 import "server-only";
+import { createReadStream } from "node:fs";
+import { stat } from "node:fs/promises";
+import { Readable } from "node:stream";
 import { type NextRequest, NextResponse } from "next/server";
 import * as v from "valibot";
 import { BUILD_HEADER, isSupportedBuild } from "@/domain/build";
+import { FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import { appUrl, isAllowedOrigin, requireDisplay, type SignedInDisplay } from "./auth";
+import {
+  PHOTO_VARIANTS,
+  type PhotoFile,
+  type PhotoUpload,
+  type PhotoVariant,
+} from "./services/photos";
 
 const MIN_CLIENT_BUILD = 1;
 
@@ -98,4 +108,48 @@ export function syncReader(request: NextRequest): Result<SignedInDisplay, NextRe
   const display = signedInDisplay(request);
 
   return display.ok ? display : err(errorJson(display.error, 401));
+}
+
+export function readUpload(request: NextRequest): Result<PhotoUpload, "invalid"> {
+  const name = decodedName(request.headers.get(FILE_NAME_HEADER));
+
+  if (name === undefined) return err("invalid");
+
+  const length = request.headers.get("content-length");
+
+  return ok({
+    name,
+    type: request.headers.get("content-type") ?? "",
+    size: length === null ? undefined : Number(length),
+    body: request.body ?? Readable.from([]),
+  });
+}
+
+export function readVariant(request: NextRequest): Result<PhotoVariant, "invalid"> {
+  const variant = PHOTO_VARIANTS.find((known) => known === request.nextUrl.searchParams.get("v"));
+
+  return variant ? ok(variant) : err("invalid");
+}
+
+export async function fileResponse(file: PhotoFile): Promise<Response> {
+  const { size } = await stat(file.path);
+
+  return new Response(Readable.toWeb(createReadStream(file.path)) as ReadableStream, {
+    headers: {
+      "content-type": file.contentType,
+      "content-length": String(size),
+      "cache-control": "private, max-age=31536000, immutable",
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
+
+function decodedName(header: string | null): string | undefined {
+  if (!header) return undefined;
+
+  try {
+    return decodeURIComponent(header);
+  } catch {
+    return undefined;
+  }
 }
