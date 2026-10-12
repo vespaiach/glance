@@ -105,7 +105,9 @@ function workerHost() {
     return worker;
   };
 
-  return { host: createWorkerSyncHost({ db, spawn }), spawned };
+  const photosChanged = vi.fn();
+
+  return { host: createWorkerSyncHost({ db, spawn, photosChanged }), spawned, photosChanged };
 }
 
 describe("worker sync host", () => {
@@ -143,6 +145,18 @@ describe("worker sync host", () => {
 
     expect(spawned[0]?.terminate).toHaveBeenCalledTimes(1);
     expect(spawned[0]?.api.nudge).not.toHaveBeenCalled();
+  });
+
+  it("tech§4.5 photosChanged from the worker reaches the page's photo warming", async () => {
+    const { host, spawned, photosChanged } = workerHost();
+
+    await host.start(FIXTURE_ACCOUNT.id);
+
+    spawned[0]?.api.start.mock.calls[0]?.[1].photosChanged(["p1", "p2"]);
+
+    expect(photosChanged).toHaveBeenCalledExactlyOnceWith(["p1", "p2"]);
+
+    host.stop();
   });
 
   it("tech§4.6 a restart from the worker respawns it on the same account", async () => {

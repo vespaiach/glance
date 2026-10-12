@@ -42,7 +42,11 @@ export function createInlineSyncHost(options: Options): SyncHost {
 
 export type SpawnedWorker = { api: SyncWorkerApi; terminate(): void };
 
-type WorkerHostOptions = { db: GlanceDb; spawn: () => SpawnedWorker };
+type WorkerHostOptions = {
+  db: GlanceDb;
+  spawn: () => SpawnedWorker;
+  photosChanged: (ids: string[]) => void;
+};
 
 export function spawnSyncWorker(): SpawnedWorker {
   if (typeof Worker === "undefined") {
@@ -56,7 +60,7 @@ export function spawnSyncWorker(): SpawnedWorker {
   return { api: wrap<SyncWorkerApi>(worker), terminate: () => worker.terminate() };
 }
 
-export function createWorkerSyncHost({ db, spawn }: WorkerHostOptions): SyncHost {
+export function createWorkerSyncHost({ db, spawn, photosChanged }: WorkerHostOptions): SyncHost {
   let worker: SpawnedWorker | undefined;
 
   let accountId: string | undefined;
@@ -70,7 +74,7 @@ export function createWorkerSyncHost({ db, spawn }: WorkerHostOptions): SyncHost
   const launch = (id: string) => {
     worker = spawn();
 
-    return worker.api.start(id, proxy({ restart }));
+    return worker.api.start(id, proxy({ restart, photosChanged }));
   };
 
   const relaunch = () => {

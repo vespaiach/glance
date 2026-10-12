@@ -1,3 +1,4 @@
+import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
@@ -8,9 +9,9 @@ const DEMO_PAGE_EXTENSIONS = ["demo.tsx", ...PAGE_EXTENSIONS];
 export default function nextConfig(phase: string): NextConfig {
   const demo = phase === PHASE_DEVELOPMENT_SERVER || process.env.NEXT_PUBLIC_DEMO === "1";
 
-  return {
+  return withSerwist({
     output: "standalone",
     pageExtensions: demo ? DEMO_PAGE_EXTENSIONS : PAGE_EXTENSIONS,
     redirects: async () => [{ source: "/", destination: "/today", permanent: false }],
-  };
+  });
 }

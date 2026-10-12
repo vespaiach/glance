@@ -26,6 +26,7 @@ import { createHttpTransport } from "../sync/httpTransport";
 import { recordStatus } from "../sync/status";
 import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
+import { appServiceWorker } from "./serviceWorker";
 import type { PhotoVariant, RepoStore } from "./store";
 
 export type { FixtureParams, FixtureUpload };
@@ -192,7 +193,9 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   const transport = createHttpTransport();
 
-  const host = createWorkerSyncHost({ db, spawn: spawnSyncWorker });
+  const { warmPhotos } = appServiceWorker();
+
+  const host = createWorkerSyncHost({ db, spawn: spawnSyncWorker, photosChanged: warmPhotos });
 
   const close = () => {
     host.stop();

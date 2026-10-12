@@ -10,7 +10,7 @@ export const SYNC_STREAM_PATH = "/api/sync/stream";
 
 export const POLL_MS = 30_000;
 
-export type PageCallbacks = { restart(): void };
+export type PageCallbacks = { restart(): void; photosChanged(ids: string[]): void };
 
 export type SyncWorkerApi = {
   start(accountId: string, page: PageCallbacks): Promise<void>;
@@ -84,8 +84,14 @@ function openTriggers(deps: WorkerDeps, sync: () => void, signal: AbortSignal) {
   return stream;
 }
 
-function activate(deps: WorkerDeps, db: GlanceDb, accountId: string, signal: AbortSignal) {
-  const engine = createSyncEngine({ db, transport: deps.transport, accountId, now: deps.now });
+type Activation = { db: GlanceDb; accountId: string; page: PageCallbacks; signal: AbortSignal };
+
+function activate(deps: WorkerDeps, { db, accountId, page, signal }: Activation) {
+  const { transport, now } = deps;
+
+  const photosChanged = page.photosChanged;
+
+  const engine = createSyncEngine({ db, transport, accountId, now, photosChanged });
 
   const quietly = (run: Promise<unknown>) =>
     run.catch((error: unknown) => {
@@ -133,7 +139,7 @@ function startSession(deps: WorkerDeps, accountId: string, page: PageCallbacks):
   });
 
   holdLock(deps.locks, quit.signal, () => {
-    engine = activate(deps, db, accountId, quit.signal);
+    engine = activate(deps, { db, accountId, page, signal: quit.signal });
   });
 
   return { engine: () => engine, stop };

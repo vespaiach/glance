@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { useRetry, useSourceStatus, useSyncStatus } from "./status";
+import { useOutboxEmpty, useRetry, useSourceStatus, useSyncStatus } from "./status";
 import {
   type Harness,
   markSynced,
@@ -87,6 +87,27 @@ describe("useSourceStatus", () => {
         retryAt: RETRY_AT,
       }),
     );
+  });
+});
+
+describe("useOutboxEmpty", () => {
+  it("OFF-07 reads empty only while no change waits to sync", async () => {
+    const { result } = renderHook(() => useOutboxEmpty(), { wrapper: wrapperFor(store) });
+
+    await waitFor(() => expect(result.current).toBe(true));
+
+    const seq = await store.db.outbox.add({
+      entity: "notes",
+      entityId: "n1",
+      op: "delete",
+      attempts: 0,
+    } as Parameters<typeof store.db.outbox.add>[0]);
+
+    await waitFor(() => expect(result.current).toBe(false));
+
+    await store.db.outbox.delete(seq);
+
+    await waitFor(() => expect(result.current).toBe(true));
   });
 });
 

@@ -16,11 +16,13 @@
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
+    "@serwist/turbopack": "9.5.13",
     "@stylexjs/stylex": "0.19.1",
     "better-sqlite3": "12.11.1",
     "comlink": "4.4.2",
     "dexie": "4.4.6",
     "dexie-react-hooks": "4.4.0",
+    "esbuild": "0.28.2",
     "exif-reader": "2.0.3",
     "lucide-react": "0.460.0",
     "next": "16.4.0",
@@ -28,6 +30,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
+    "serwist": "9.5.13",
     "sharp": "0.35.5",
     "valibot": "1.5.0"
   },

@@ -7,6 +7,7 @@ import {
   type OutboxEntry,
   openGlanceDb,
   type StoredEvent,
+  type StoredPhoto,
   type StoredSettings,
 } from "../db";
 import { createSyncEngine } from "./engine";
@@ -44,6 +45,23 @@ const SETTINGS: StoredSettings = {
 };
 
 const { weatherLocation: LOCATION, ...NO_LOCATION } = SETTINGS;
+
+const PHOTO: StoredPhoto = {
+  id: "0195f0a0-0000-7000-8000-000000000201",
+  title: "Cannon Beach",
+  takenOn: "2026-09-12",
+  createdAt: "2026-09-13T10:00:00.000Z",
+  updatedAt: "2026-09-13T10:00:00.000Z",
+  version: 1,
+};
+
+const OTHER_PHOTO: StoredPhoto = { ...PHOTO, id: "0195f0a0-0000-7000-8000-000000000202" };
+
+const DELETED_PHOTO: StoredPhoto = {
+  ...PHOTO,
+  id: "0195f0a0-0000-7000-8000-000000000203",
+  deletedAt: "2026-10-01T10:00:00.000Z",
+};
 
 let db: GlanceDb;
 
@@ -85,8 +103,8 @@ function fakeTransport(overrides: Partial<Transport> = {}) {
   };
 }
 
-function engine(transport: Transport) {
-  return createSyncEngine({ db, transport, accountId: ACCOUNT_ID, now: () => NOW });
+function engine(transport: Transport, photosChanged?: (ids: string[]) => void) {
+  return createSyncEngine({ db, transport, accountId: ACCOUNT_ID, now: () => NOW, photosChanged });
 }
 
 async function queuePut(row: StoredEvent) {
@@ -684,5 +702,49 @@ describe("weather", () => {
     await vi.advanceTimersByTimeAsync(30 * MINUTE);
 
     expect(transport.weather).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("photo warming", () => {
+  it("tech§4.5 a pull reports the live photos it brought in", async () => {
+    const transport = fakeTransport();
+
+    transport.pull.mockImplementation(async () =>
+      ok(
+        pulled([
+          { entity: "photos", row: PHOTO },
+          { entity: "events", row: EVENT },
+          { entity: "photos", row: DELETED_PHOTO },
+        ]),
+      ),
+    );
+
+    const photosChanged = vi.fn();
+
+    await engine(transport, photosChanged).nudge();
+
+    expect(photosChanged).toHaveBeenCalledExactlyOnceWith([PHOTO.id]);
+  });
+
+  it("tech§4.5 a pull with no new photo reports nothing", async () => {
+    const transport = fakeTransport();
+
+    transport.pull.mockImplementation(async () => ok(pulled([{ entity: "events", row: EVENT }])));
+
+    const photosChanged = vi.fn();
+
+    await engine(transport, photosChanged).nudge();
+
+    expect(photosChanged).not.toHaveBeenCalled();
+  });
+
+  it("OFF-06 start reports every live photo already saved, once synced", async () => {
+    await db.photos.bulkPut([PHOTO, OTHER_PHOTO, DELETED_PHOTO]);
+
+    const photosChanged = vi.fn();
+
+    await engine(fakeTransport(), photosChanged).start();
+
+    expect(photosChanged).toHaveBeenCalledExactlyOnceWith([PHOTO.id, OTHER_PHOTO.id]);
   });
 });

@@ -1,9 +1,10 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { Account } from "@/domain/schemas";
 import type { GlanceDb } from "../db";
+import type { PhotoVariant } from "../sw/rules";
 import type { Transport } from "../sync/transport";
 
-export type PhotoVariant = "display" | "thumb" | "orig";
+export type { PhotoVariant };
 
 export type StoreAccount = Pick<Account, "name" | "email">;
 

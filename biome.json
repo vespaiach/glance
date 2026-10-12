@@ -22,7 +22,9 @@
       "suspicious": {
         "noUnknownAtRules": {
           "level": "error",
-          "options": { "ignore": ["stylex"] }
+          "options": {
+            "ignore": ["stylex"]
+          }
         }
       },
       "style": {
@@ -398,6 +400,37 @@
                   {
                     "group": ["@/features/*/**"],
                     "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["app/sw.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/**",
+                      "!@/data/sw/**",
+                      "**/server/**",
+                      "**/data/repos/**",
+                      "**/data/sync/**",
+                      "better-sqlite3",
+                      "dexie",
+                      "react",
+                      "next",
+                      "next/**"
+                    ],
+                    "message": "The service worker imports serwist and data/sw only (tech §4.5)."
                   }
                 ]
               }

@@ -2,9 +2,10 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import type { Result } from "@/domain/result";
 import type { StoredPhoto } from "../db";
+import { photoFileUrl } from "../sw/rules";
 import type { UploadError } from "../sync/transport";
 import { isLive } from "./outbox";
-import { type PhotoVariant, type RepoStore, useRepoStore } from "./store";
+import { type RepoStore, useRepoStore } from "./store";
 
 export type { UploadError };
 
@@ -39,9 +40,7 @@ export function usePhotos(): StoredPhoto[] | undefined {
   return useLiveQuery(() => db.photos.orderBy("createdAt").filter(isLive).toArray(), [db]);
 }
 
-export function apiPhotoSrc(photoId: string, variant: PhotoVariant): string {
-  return `/api/photos/${photoId}/file?v=${variant}`;
-}
+export const apiPhotoSrc = photoFileUrl;
 
 export function usePhotoSrc(): RepoStore["photoSrc"] {
   return useRepoStore().photoSrc;
