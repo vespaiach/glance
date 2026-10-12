@@ -29,6 +29,7 @@ export const gallery = {
     shared: "Shared pieces",
     zone: "Zone states",
     today: "Today",
+    calendarView: "Calendar view",
   },
   button: "Add event",
   disabled: "Disabled",

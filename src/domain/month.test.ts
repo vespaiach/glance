@@ -1,4 +1,4 @@
-import { formatMonthYear, monthCells, weekdayInitials } from "./month";
+import { formatMonthYear, markedDays, monthCells, monthTitle, weekdayInitials } from "./month";
 
 describe("month", () => {
   it("CAL-01 October 2026 starts on Thursday and fills five whole weeks", () => {
@@ -36,5 +36,25 @@ describe("month", () => {
 
   it("spec§4.2 weekday initials run Sunday to Saturday", () => {
     expect(weekdayInitials()).toEqual(["S", "M", "T", "W", "T", "F", "S"]);
+  });
+
+  it("CAL-03 the month heading names the month alone in the current year", () => {
+    expect(monthTitle(2026, 9, new Date(2026, 9, 9))).toBe("October");
+  });
+
+  it("CAL-03 the month heading adds the year outside the current year", () => {
+    expect(monthTitle(2027, 0, new Date(2026, 9, 9))).toBe("January 2027");
+  });
+
+  it("CAL-02 marked days list each local day with an event once, in order", () => {
+    const startAt = (day: number, hour: number) => new Date(2026, 9, day, hour).toISOString();
+
+    const events = [
+      { startAt: startAt(9, 9) },
+      { startAt: startAt(9, 15) },
+      { startAt: startAt(2, 19) },
+    ];
+
+    expect(markedDays(events)).toEqual([2, 9]);
   });
 });

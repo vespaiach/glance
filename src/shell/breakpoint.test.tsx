@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { useBreakpoint } from "./breakpoint";
+import { useBreakpoint, useViewportWidth } from "./breakpoint";
 
 let width = 1920;
 
@@ -49,5 +49,22 @@ describe("useBreakpoint", () => {
     act(() => resizeTo(390));
 
     expect(result.current).toBe("phone");
+  });
+});
+
+describe("useViewportWidth", () => {
+  it("spec§5.4 follows the window width live", () => {
+    vi.stubGlobal("innerWidth", 820);
+
+    const { result } = renderHook(() => useViewportWidth());
+
+    expect(result.current).toBe(820);
+
+    act(() => {
+      vi.stubGlobal("innerWidth", 390);
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    expect(result.current).toBe(390);
   });
 });

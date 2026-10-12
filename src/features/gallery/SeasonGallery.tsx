@@ -41,6 +41,7 @@ import { TextInput } from "@/ui/TextInput";
 import { TopBar } from "@/ui/TopBar";
 import { WeatherNow } from "@/ui/WeatherNow";
 import { Zone } from "@/ui/Zone";
+import { CalendarGallery } from "./CalendarGallery";
 import { GalleryGroup } from "./GalleryGroup";
 import {
   EVENTS,
@@ -488,6 +489,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <SharedGroup />
       <ZoneGroup />
       <TodayGallery season={season} />
+      <CalendarGallery />
     </>
   );
 }

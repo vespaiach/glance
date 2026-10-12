@@ -77,6 +77,23 @@ export const copy = {
       photos: "Photos unavailable",
     },
   },
+  calendar: {
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    count: (count: number) => {
+      if (count === 0) return "No events";
+
+      return count === 1 ? "1 event" : `${count} events`;
+    },
+    loadingCount: "Loading",
+    addEvent: "Add event",
+    freeDay: "Nothing scheduled. A free day.",
+    emptyTitle: "The calendar is empty",
+    emptyBody: "Select a day, then add an event. Days with events get a dot.",
+    caption: "Select an event to edit or delete it",
+    loading: "Loading events",
+    unavailable: "Calendar unavailable",
+  },
   events: {
     now: "Now",
     time: {

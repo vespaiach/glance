@@ -52,3 +52,9 @@ export function useEventsInMonth(year: number, month: number): StoredEvent[] | u
     [db, year, month],
   );
 }
+
+export function useHasEvents(): boolean | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => (await db.events.filter(isLive).first()) !== undefined, [db]);
+}

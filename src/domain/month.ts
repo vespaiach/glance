@@ -1,5 +1,7 @@
 const monthYearFormat = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 
+const monthNameFormat = new Intl.DateTimeFormat("en-US", { month: "long" });
+
 const initialFormat = new Intl.DateTimeFormat("en-US", { weekday: "narrow" });
 
 const WEEK = 7;
@@ -26,4 +28,16 @@ export function weekdayInitials(): string[] {
       new Date(A_SUNDAY.getFullYear(), A_SUNDAY.getMonth(), A_SUNDAY.getDate() + offset),
     ),
   );
+}
+
+export function monthTitle(year: number, month: number, now: Date): string {
+  if (year !== now.getFullYear()) return formatMonthYear(year, month);
+
+  return monthNameFormat.format(new Date(year, month, 1));
+}
+
+export function markedDays(events: readonly { startAt: string }[]): number[] {
+  const days = new Set(events.map((event) => new Date(event.startAt).getDate()));
+
+  return [...days].sort((a, b) => a - b);
 }
