@@ -7,19 +7,19 @@ const units = [
   { value: "c", label: "°C" },
 ];
 
-test("spec§4.2 PillTabs is a tablist with the current value selected", () => {
+test("A11Y-02 PillTabs is a group of buttons with the current value pressed", () => {
   render(<PillTabs options={units} value="c" onChange={() => {}} />);
 
-  expect(screen.getByRole("tablist")).toBeInTheDocument();
-  expect(screen.getByRole("tab", { name: "°C" })).toHaveAttribute("aria-selected", "true");
-  expect(screen.getByRole("tab", { name: "°F" })).toHaveAttribute("aria-selected", "false");
+  expect(screen.getByRole("group")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "°C" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "°F" })).toHaveAttribute("aria-pressed", "false");
 });
 
 test("spec§4.2 PillTabs reports the value of the tapped option", async () => {
   const onChange = vi.fn();
   render(<PillTabs options={units} value="c" onChange={onChange} />);
 
-  await userEvent.click(screen.getByRole("tab", { name: "°F" }));
+  await userEvent.click(screen.getByRole("button", { name: "°F" }));
 
   expect(onChange).toHaveBeenCalledWith("f");
 });
@@ -28,14 +28,14 @@ test("spec§4.2 PillTabs accepts plain strings as options", async () => {
   const onChange = vi.fn();
   render(<PillTabs options={["12h", "24h"]} value="12h" onChange={onChange} />);
 
-  await userEvent.click(screen.getByRole("tab", { name: "24h" }));
+  await userEvent.click(screen.getByRole("button", { name: "24h" }));
 
-  expect(screen.getByRole("tab", { name: "12h" })).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByRole("button", { name: "12h" })).toHaveAttribute("aria-pressed", "true");
   expect(onChange).toHaveBeenCalledWith("24h");
 });
 
-test("A11Y PillTabs names its tab list with the label", () => {
+test("A11Y-02 PillTabs names its group with the label", () => {
   render(<PillTabs label="Temperature" options={units} value="c" onChange={() => {}} />);
 
-  expect(screen.getByRole("tablist", { name: "Temperature" })).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: "Temperature" })).toBeInTheDocument();
 });

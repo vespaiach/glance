@@ -177,7 +177,12 @@ function Hourly({ hourly, unit, clock, xstyle }: HourlyProps) {
             <span {...stylex.props(styles.hourTime)}>
               {formatHour(minutesOfDay(new Date(point.time)), clock)}
             </span>
-            <Icon icon={weatherIcons[point.icon]} size={28} strokeWidth={1.5} />
+            <Icon
+              icon={weatherIcons[point.icon]}
+              size={28}
+              strokeWidth={1.5}
+              label={copy.weather.icon[point.icon]}
+            />
             <span {...stylex.props(styles.hourTemp)}>{displayTemp(point.temp, unit)}°</span>
           </li>
         ))}
@@ -207,6 +212,7 @@ function Daily({ daily, unit, today, xstyle }: DailyProps) {
               <ForecastDay
                 day={dayName(day.date)}
                 icon={day.icon}
+                iconLabel={copy.weather.icon[day.icon]}
                 high={displayTemp(day.high, unit)}
                 low={displayTemp(day.low, unit)}
                 precip={day.precip}

@@ -10,5 +10,5 @@ export const season = stylex.defineVars({
   deep: colors.blockNavy,
   onDeep: colors.white,
   accent: colors.accentMagenta,
-  onAccent: colors.white,
+  onAccent: colors.black,
 });

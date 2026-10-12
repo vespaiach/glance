@@ -3,8 +3,8 @@ import { ambientDim, isTomorrow } from "./ambient";
 const now = new Date(2026, 9, 9, 19, 12);
 
 describe("ambientDim", () => {
-  it("AMB-06 dims the photo at least 0.5 whatever the setting", () => {
-    expect([0, 0.2, 0.4].map(ambientDim)).toEqual([0.5, 0.5, 0.5]);
+  it("AMB-06 dims the photo at least 0.55 whatever the setting", () => {
+    expect([0, 0.2, 0.4].map(ambientDim)).toEqual([0.55, 0.55, 0.55]);
   });
 
   it("AMB-06 keeps a stronger dim", () => {

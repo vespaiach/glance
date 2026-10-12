@@ -170,3 +170,31 @@ test("NOTE-05 Save hands the edited draft over", async () => {
 
   expect(onSave).toHaveBeenCalledWith({ ...WIFI, tone: 2 });
 });
+
+async function tabOrder(count: number) {
+  const visited: Element[] = [];
+
+  for (let step = 0; step < count; step += 1) {
+    await userEvent.tab();
+    visited.push(document.activeElement as Element);
+  }
+
+  return visited;
+}
+
+test("A11Y-04 Tab moves through Close, Message, Your name, the swatches, then the actions, and wraps", async () => {
+  renderSheet();
+
+  const swatches = within(screen.getByRole("group", { name: "Color" })).getAllByRole("button");
+
+  expect(await tabOrder(12)).toEqual([
+    screen.getByRole("button", { name: "Close" }),
+    screen.getByLabelText("Message"),
+    screen.getByLabelText("Your name"),
+    ...swatches,
+    screen.getByRole("button", { name: "Delete" }),
+    screen.getByRole("button", { name: "Cancel" }),
+    screen.getByRole("button", { name: "Save" }),
+    screen.getByRole("button", { name: "Close" }),
+  ]);
+});

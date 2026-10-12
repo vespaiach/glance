@@ -1,4 +1,4 @@
-import type { Season } from "@/domain/schemas";
+import type { Season, WeatherIcon } from "@/domain/schemas";
 import type { WmoCondition } from "@/domain/wmo";
 
 export const copy = {
@@ -424,6 +424,20 @@ export const copy = {
       thunderstorm: "Thunderstorm",
       thunderstormHail: "Thunderstorm with hail",
     } satisfies Record<WmoCondition, string>,
+    icon: {
+      sun: "Clear",
+      moon: "Clear",
+      "cloud-sun": "Partly cloudy",
+      "cloud-moon": "Partly cloudy",
+      cloud: "Cloudy",
+      cloudy: "Overcast",
+      "cloud-fog": "Fog",
+      "cloud-drizzle": "Drizzle",
+      "cloud-rain": "Rain",
+      "cloud-snow": "Snow",
+      snowflake: "Snow grains",
+      "cloud-lightning": "Thunderstorm",
+    } satisfies Record<WeatherIcon, string>,
   },
   ambient: {
     wake: "Wake screen",

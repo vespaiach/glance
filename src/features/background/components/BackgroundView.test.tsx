@@ -54,14 +54,14 @@ function renderView(overrides: Partial<Props> = {}) {
   return props;
 }
 
-function tabs(name: string) {
-  return within(screen.getByRole("tablist", { name }));
+function pills(name: string) {
+  return within(screen.getByRole("group", { name }));
 }
 
-function selectedTab(name: string) {
-  return tabs(name)
-    .getAllByRole("tab")
-    .find((tab) => tab.ariaSelected === "true")?.textContent;
+function selectedPill(name: string) {
+  return pills(name)
+    .getAllByRole("button")
+    .find((pill) => pill.ariaPressed === "true")?.textContent;
 }
 
 function thumb(title: string) {
@@ -81,9 +81,9 @@ test("BG-01 the back link returns to Settings", async () => {
 test("BG-01 the mode tabs show the saved mode and save a new one", async () => {
   const props = renderView({ background: background({ mode: "photo" }) });
 
-  expect(selectedTab("Background")).toBe("Photo");
+  expect(selectedPill("Background")).toBe("Photo");
 
-  await userEvent.click(tabs("Background").getByRole("tab", { name: "Slideshow" }));
+  await userEvent.click(pills("Background").getByRole("button", { name: "Slideshow" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ mode: "slideshow" });
 });
@@ -155,9 +155,9 @@ test("BG-03 tapping a thumb in Season color picks it in Photo mode", async () =>
 test("BG-04 the Dim photo tabs save Off, Light or Strong", async () => {
   const props = renderView();
 
-  expect(selectedTab("Dim photo")).toBe("Light");
+  expect(selectedPill("Dim photo")).toBe("Light");
 
-  await userEvent.click(tabs("Dim photo").getByRole("tab", { name: "Strong" }));
+  await userEvent.click(pills("Dim photo").getByRole("button", { name: "Strong" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ dim: 0.4 });
 });
@@ -165,15 +165,15 @@ test("BG-04 the Dim photo tabs save Off, Light or Strong", async () => {
 test("BG-04 Change photo shows only in Slideshow and saves the interval", async () => {
   renderView({ background: background({ mode: "photo" }) });
 
-  expect(screen.queryByRole("tablist", { name: "Change photo" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: "Change photo" })).not.toBeInTheDocument();
 
   cleanup();
 
   const props = renderView({ background: background({ mode: "slideshow" }) });
 
-  expect(selectedTab("Change photo")).toBe("Daily");
+  expect(selectedPill("Change photo")).toBe("Daily");
 
-  await userEvent.click(tabs("Change photo").getByRole("tab", { name: "Hourly" }));
+  await userEvent.click(pills("Change photo").getByRole("button", { name: "Hourly" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ rotate: "hourly" });
 });

@@ -132,3 +132,23 @@ test("WX-03 a stale offline forecast says when it is from instead of the rain ba
   ).toBeInTheDocument();
   expect(screen.queryByText(/Rain moving in/)).not.toBeInTheDocument();
 });
+
+test("A11Y-01 the hourly and daily weather icons are named by their conditions", () => {
+  render(<WeatherForecast {...base} />);
+
+  const names = (list: string) =>
+    within(screen.getByRole("list", { name: list }))
+      .getAllByRole("img")
+      .map((icon) => icon.ariaLabel);
+
+  expect(names("Next 8 hours")).toEqual(Array(8).fill("Cloudy"));
+  expect(names("7-day forecast")).toEqual([
+    "Partly cloudy",
+    "Rain",
+    "Cloudy",
+    "Clear",
+    "Clear",
+    "Partly cloudy",
+    "Thunderstorm",
+  ]);
+});

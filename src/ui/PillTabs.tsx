@@ -15,6 +15,9 @@ type PillTabsProps<T extends string> = {
 
 const styles = stylex.create({
   list: {
+    borderWidth: 0,
+    margin: 0,
+    minWidth: 0,
     display: "inline-flex",
     gap: 4,
     padding: 4,
@@ -66,7 +69,7 @@ export function PillTabs<T extends string>({
   xstyle,
 }: PillTabsProps<T>) {
   return (
-    <div role="tablist" aria-label={label} {...stylex.props(styles.list, xstyle)}>
+    <fieldset aria-label={label} {...stylex.props(styles.list, xstyle)}>
       {options.map(normalize).map((option) => {
         const selected = option.value === value;
 
@@ -74,8 +77,7 @@ export function PillTabs<T extends string>({
           <button
             key={option.value}
             type="button"
-            role="tab"
-            aria-selected={selected}
+            aria-pressed={selected}
             onClick={() => onChange(option.value)}
             {...stylex.props(styles.tab, styles[size], selected && styles.selected)}
           >
@@ -83,6 +85,6 @@ export function PillTabs<T extends string>({
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

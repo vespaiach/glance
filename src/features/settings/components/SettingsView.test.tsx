@@ -33,14 +33,14 @@ function renderView(overrides: Partial<Props> = {}) {
   return props;
 }
 
-function tabs(name: string) {
-  return within(screen.getByRole("tablist", { name }));
+function pills(name: string) {
+  return within(screen.getByRole("group", { name }));
 }
 
-function selectedTab(name: string) {
-  return tabs(name)
-    .getAllByRole("tab")
-    .find((tab) => tab.ariaSelected === "true")?.textContent;
+function selectedPill(name: string) {
+  return pills(name)
+    .getAllByRole("button")
+    .find((pill) => pill.ariaPressed === "true")?.textContent;
 }
 
 test("SET-01 the header names the signed-in person and email", () => {
@@ -56,21 +56,21 @@ test("SET-01 the header names the signed-in person and email", () => {
 test("SET-02 Auto follows the month and names the season now", () => {
   renderView();
 
-  expect(selectedTab("Season")).toBe("Auto");
+  expect(selectedPill("Season")).toBe("Auto");
   expect(screen.getByText("Follows the month · now Fall")).toBeInTheDocument();
 });
 
 test("SET-02 a fixed season reads Fixed to that season", () => {
   renderView({ settings: { ...DEFAULT_SETTINGS, season: "winter" }, season: "winter" });
 
-  expect(selectedTab("Season")).toBe("Winter");
+  expect(selectedPill("Season")).toBe("Winter");
   expect(screen.getByText("Fixed to Winter")).toBeInTheDocument();
 });
 
 test("SET-02 choosing a season saves it", async () => {
   const props = renderView();
 
-  await userEvent.click(tabs("Season").getByRole("tab", { name: "Spring" }));
+  await userEvent.click(pills("Season").getByRole("button", { name: "Spring" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ season: "spring" });
 });
@@ -96,10 +96,10 @@ test("SET-03 the Background row opens the Background page", async () => {
 test("SET-04 the clock tabs save 12-hour or 24-hour", async () => {
   const props = renderView();
 
-  expect(selectedTab("Clock")).toBe("12-hour");
+  expect(selectedPill("Clock")).toBe("12-hour");
   expect(screen.getByText("Used for every time on the screen")).toBeInTheDocument();
 
-  await userEvent.click(tabs("Clock").getByRole("tab", { name: "24-hour" }));
+  await userEvent.click(pills("Clock").getByRole("button", { name: "24-hour" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ clock: "24h" });
 });
@@ -107,10 +107,10 @@ test("SET-04 the clock tabs save 12-hour or 24-hour", async () => {
 test("SET-05 the temperature tabs save Fahrenheit or Celsius", async () => {
   const props = renderView();
 
-  expect(selectedTab("Temperature")).toBe("Fahrenheit");
+  expect(selectedPill("Temperature")).toBe("Fahrenheit");
   expect(screen.getByText("Weather is shown without a unit letter")).toBeInTheDocument();
 
-  await userEvent.click(tabs("Temperature").getByRole("tab", { name: "Celsius" }));
+  await userEvent.click(pills("Temperature").getByRole("button", { name: "Celsius" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
@@ -135,10 +135,10 @@ test("SET-06 the Ambient hours follow the 24-hour clock", () => {
 test("SET-07 Back to Today after saves the idle timeout, Never as none", async () => {
   const props = renderView();
 
-  expect(selectedTab("Back to Today after")).toBe("3 min");
+  expect(selectedPill("Back to Today after")).toBe("3 min");
 
-  await userEvent.click(tabs("Back to Today after").getByRole("tab", { name: "1 min" }));
-  await userEvent.click(tabs("Back to Today after").getByRole("tab", { name: "Never" }));
+  await userEvent.click(pills("Back to Today after").getByRole("button", { name: "1 min" }));
+  await userEvent.click(pills("Back to Today after").getByRole("button", { name: "Never" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: 60 });
   expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: null });
@@ -147,9 +147,9 @@ test("SET-07 Back to Today after saves the idle timeout, Never as none", async (
 test("SET-07 Remove notes after saves the note expiry, Never as none", async () => {
   const props = renderView({ settings: { ...DEFAULT_SETTINGS, noteExpiry: null } });
 
-  expect(selectedTab("Remove notes after")).toBe("Never");
+  expect(selectedPill("Remove notes after")).toBe("Never");
 
-  await userEvent.click(tabs("Remove notes after").getByRole("tab", { name: "1 day" }));
+  await userEvent.click(pills("Remove notes after").getByRole("button", { name: "1 day" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: "1d" });
 });

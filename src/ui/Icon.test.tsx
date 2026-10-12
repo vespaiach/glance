@@ -43,3 +43,11 @@ test("spec§4.1 Icon accepts a stroke override for large weather glyphs", () => 
 
   expect(svg).toHaveAttribute("stroke-width", "1.25");
 });
+
+test("A11Y-01 Icon with a label is an image named by it", () => {
+  const svg = renderSvg(<Icon icon={House} label="Home" />);
+
+  expect(svg).toHaveAttribute("role", "img");
+  expect(svg).toHaveAttribute("aria-label", "Home");
+  expect(svg).not.toHaveAttribute("aria-hidden");
+});
