@@ -10,6 +10,7 @@ import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSyncedZone } from "@/shell/sourceZone";
 import { BackgroundView } from "./components/BackgroundView";
 
@@ -36,6 +37,8 @@ export function BackgroundScreen() {
 
   const now = useNow("minute");
 
+  const tz = useTimeZone();
+
   const clock = useNowStore();
 
   const { background } = useAccountSettings();
@@ -47,7 +50,7 @@ export function BackgroundScreen() {
   const picker = usePhotoPicker(uploads.choose);
 
   const change = (next: Partial<AccountSettings["background"]>) =>
-    repo.update({ background: changeBackground(background, photos ?? [], next, clock.get()) });
+    repo.update({ background: changeBackground(background, photos ?? [], next, clock.get(), tz) });
 
   return (
     <>
@@ -58,6 +61,7 @@ export function BackgroundScreen() {
         onRetrySync={zone.retry}
         background={background}
         now={now}
+        tz={tz}
         uploads={uploads.tiles}
         online={online}
         canUpload={breakpoint !== "phone"}

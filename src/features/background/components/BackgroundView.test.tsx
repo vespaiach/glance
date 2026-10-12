@@ -3,8 +3,11 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { AccountSettings, Photo } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import type { UploadTile } from "@/features/photos";
 import { BackgroundView } from "./BackgroundView";
+
+const tz = deviceTimeZone();
 
 type Props = ComponentProps<typeof BackgroundView>;
 
@@ -36,6 +39,7 @@ function renderView(overrides: Partial<Props> = {}) {
     onRetrySync: vi.fn<() => void>(),
     background: background(),
     now: new Date(2026, 9, 9, 10, 41),
+    tz,
     uploads: [],
     online: true,
     canUpload: true,

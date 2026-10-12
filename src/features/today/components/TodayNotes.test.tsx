@@ -2,8 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { BoardNote } from "@/domain/notes";
 import type { Note } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { TodayNotes } from "./TodayNotes";
+
+const tz = deviceTimeZone();
 
 const at = (d: number, h: number, m: number) => new Date(2026, 9, d, h, m).toISOString();
 
@@ -43,6 +46,7 @@ type Handlers = {
 function renderNotes(state: ZoneState<BoardNote>, handlers: Partial<Handlers> = {}) {
   return render(
     <TodayNotes
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       state={state}

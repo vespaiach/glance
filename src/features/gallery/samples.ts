@@ -10,12 +10,20 @@ import type {
   WeatherIcon,
   WeatherLocation,
 } from "@/domain/schemas";
+import { deviceTimeZone, zonedInstant } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import type { UploadTile } from "@/features/photos";
 
 export const SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
 
-export const NOW = new Date(2026, 9, 9, 10, 41);
+export const GALLERY_TZ = deviceTimeZone();
+
+export const octoberAt = (day: number, hour: number, minute = 0) =>
+  zonedInstant(GALLERY_TZ, { year: 2026, month: 10, day }, hour * 60 + minute);
+
+export const NOW = octoberAt(9, 10, 41);
+
+export const NOW_DAY = { year: 2026, month: 9, day: 9 } as const;
 
 export const gallery = {
   title: "Gallery",
@@ -258,7 +266,7 @@ export const ZONE_STATES: readonly ZoneState<string>[] = [
   { kind: "ready", data: [NOW_EVENT.title], updatedAt: "10:12 AM" },
 ];
 
-const todayAt = (hour: number, minute: number) => new Date(2026, 9, 9, hour, minute).toISOString();
+const todayAt = (hour: number, minute: number) => octoberAt(9, hour, minute).toISOString();
 
 const sampleId = (n: number) => `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`;
 
@@ -309,7 +317,7 @@ export const TODAY_NOTES: readonly Note[] = [
 ];
 
 const daysAgoAt = (days: number, hour: number, minute: number) =>
-  new Date(2026, 9, 9 - days, hour, minute).toISOString();
+  octoberAt(9 - days, hour, minute).toISOString();
 
 export const BOARD_NOTES: readonly Note[] = [
   ...TODAY_NOTES,

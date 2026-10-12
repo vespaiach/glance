@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
 import { PhotosView } from "@/features/photos";
 import { GalleryGroup } from "./GalleryGroup";
-import { GALLERY_PHOTOS, gallery, galleryPhotoSrc, UPLOAD_SAMPLES } from "./samples";
+import { GALLERY_PHOTOS, GALLERY_TZ, gallery, galleryPhotoSrc, UPLOAD_SAMPLES } from "./samples";
 
 type ViewProps = ComponentProps<typeof PhotosView>;
 
@@ -44,6 +44,7 @@ const base: ViewProps = {
   retryIn: 1,
   onRetrySync: ignore,
   clock: "12h",
+  tz: GALLERY_TZ,
   selected: 1,
   playing: true,
   uploads: [],

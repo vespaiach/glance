@@ -7,13 +7,12 @@ import type { AccountSettings, CalendarEvent, Season, Weather } from "@/domain/s
 import { displayTemp } from "@/domain/temperature";
 import {
   type Clock as ClockSetting,
-  formatClock,
+  clockAt,
   formatMonth,
   formatMonthDay,
   formatWeekday,
-  minutesOfDay,
-  parseLocalDate,
 } from "@/domain/time";
+import { parseDateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { conditionText } from "@/features/weather";
 import { season as seasonVars } from "@/theme/seasons.stylex";
@@ -35,6 +34,7 @@ type AmbientViewProps = {
   season: Season;
   time: Date;
   clock: ClockSetting;
+  tz: string;
   offline: boolean;
   weather: ZoneState<Weather>;
   unit: Unit;
@@ -148,29 +148,24 @@ const styles = stylex.create({
   },
 });
 
-function lowLine(weather: Weather, now: Date, unit: Unit): string {
+function lowLine(weather: Weather, now: Date, tz: string, unit: Unit): string {
   const low = copy.ambient.low(displayTemp(weather.current.low, unit));
 
-  const rainy = nextNotableDay(weather.daily, now);
+  const rainy = nextNotableDay(weather.daily, now, tz);
 
   if (rainy === undefined) return low;
 
-  return `${low} · ${copy.ambient.rain(formatWeekday(parseLocalDate(rainy.date)), rainy.precip ?? 0)}`;
+  return `${low} · ${copy.ambient.rain(formatWeekday(parseDateKey(rainy.date), "UTC"), rainy.precip ?? 0)}`;
 }
 
-function eventLine(event: CalendarEvent, now: Date, clock: ClockSetting): string {
+function eventLine(event: CalendarEvent, now: Date, clock: ClockSetting, tz: string): string {
   const start = new Date(event.startAt);
 
-  const day = isTomorrow(start, now)
+  const day = isTomorrow(start, now, tz)
     ? copy.ambient.tomorrow
-    : copy.ambient.day(formatWeekday(start), formatMonthDay(start));
+    : copy.ambient.day(formatWeekday(start, tz), formatMonthDay(start, tz));
 
-  return copy.ambient.event(
-    day,
-    formatClock(minutesOfDay(start), clock),
-    event.title,
-    event.location,
-  );
+  return copy.ambient.event(day, clockAt(event.startAt, clock, tz), event.title, event.location);
 }
 
 function LineSkeleton({ label }: { label: string }) {
@@ -181,7 +176,9 @@ function LineSkeleton({ label }: { label: string }) {
   );
 }
 
-function AmbientWeather({ weather, now, unit }: { weather: Weather; now: Date; unit: Unit }) {
+type AmbientWeatherProps = { weather: Weather; now: Date; tz: string; unit: Unit };
+
+function AmbientWeather({ weather, now, tz, unit }: AmbientWeatherProps) {
   return (
     <div {...stylex.props(styles.weather)}>
       <Icon icon={weatherIcons[weather.current.icon]} size={56} strokeWidth={1.25} />
@@ -192,7 +189,7 @@ function AmbientWeather({ weather, now, unit }: { weather: Weather; now: Date; u
             conditionText(weather.current.condition),
           )}
         </span>
-        <span {...stylex.props(styles.low)}>{lowLine(weather, now, unit)}</span>
+        <span {...stylex.props(styles.low)}>{lowLine(weather, now, tz, unit)}</span>
       </div>
     </div>
   );
@@ -206,6 +203,7 @@ export function AmbientView({
   season,
   time,
   clock,
+  tz,
   offline,
   weather,
   unit,
@@ -226,7 +224,7 @@ export function AmbientView({
       <div {...stylex.props(styles.top)}>
         <span {...stylex.props(styles.label)}>
           <Icon icon={seasonIcons[season]} size={24} strokeWidth={1.5} />
-          {copy.today.seasonMonth(copy.season[season], formatMonth(time))}
+          {copy.today.seasonMonth(copy.season[season], formatMonth(time, tz))}
         </span>
         <div {...stylex.props(styles.topEnd)}>
           {offline && (
@@ -238,7 +236,7 @@ export function AmbientView({
           <span {...stylex.props(styles.label)}>{copy.appName}</span>
         </div>
       </div>
-      <Clock time={time} hour12={clock === "12h"} />
+      <Clock time={time} tz={tz} hour12={clock === "12h"} />
       <div {...stylex.props(styles.bottom)}>
         <Zone
           state={weather}
@@ -246,7 +244,9 @@ export function AmbientView({
           empty={null}
           failed={null}
         >
-          {([current]) => current && <AmbientWeather weather={current} now={time} unit={unit} />}
+          {([current]) =>
+            current && <AmbientWeather weather={current} now={time} tz={tz} unit={unit} />
+          }
         </Zone>
         <div {...stylex.props(styles.event)}>
           <span {...stylex.props(styles.eyebrow)}>{copy.ambient.nextEvent}</span>
@@ -256,7 +256,7 @@ export function AmbientView({
             empty={<NextEvent>{copy.ambient.nothing}</NextEvent>}
             failed={null}
           >
-            {([event]) => event && <NextEvent>{eventLine(event, time, clock)}</NextEvent>}
+            {([event]) => event && <NextEvent>{eventLine(event, time, clock, tz)}</NextEvent>}
           </Zone>
         </div>
       </div>

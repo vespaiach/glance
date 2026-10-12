@@ -3,7 +3,7 @@ import { CalendarDays, CalendarX2, Plus } from "lucide-react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
-import { type Clock, formatClock, minutesOfDay, timeParts } from "@/domain/time";
+import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -23,6 +23,7 @@ type DayPanelProps = {
   calendarEmpty: boolean;
   now: Date;
   clock: Clock;
+  tz: string;
   compact: boolean;
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
@@ -116,9 +117,10 @@ const styles = stylex.create({
   },
 });
 
-const timeOf = (iso: string, clock: Clock) => timeParts(minutesOfDay(new Date(iso)), clock).time;
+const timeOf = (iso: string, clock: Clock, tz: string) =>
+  timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
-function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock): string {
+function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock, tz: string): string {
   if (state.kind === "loading") return copy.calendar.loadingCount;
 
   if (state.kind === "failed") return copy.calendar.failedCount;
@@ -129,7 +131,7 @@ function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock): string {
 
   if (state.updatedAt === undefined) return count;
 
-  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
 }
 
 function DaySkeleton() {
@@ -162,6 +164,7 @@ export function DayPanel({
   calendarEmpty,
   now,
   clock,
+  tz,
   compact,
   onOpenEvent,
   onAddEvent,
@@ -171,7 +174,7 @@ export function DayPanel({
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <div {...stylex.props(styles.heading)}>
-          <Eyebrow>{eyebrowFor(state, clock)}</Eyebrow>
+          <Eyebrow>{eyebrowFor(state, clock, tz)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{title}</h2>
         </div>
         <Button icon={Plus} onClick={onAddEvent}>
@@ -204,11 +207,11 @@ export function DayPanel({
               {events.map((event) => (
                 <EventRow
                   key={event.id}
-                  start={timeOf(event.startAt, clock)}
-                  end={event.endAt && timeOf(event.endAt, clock)}
+                  start={timeOf(event.startAt, clock, tz)}
+                  end={event.endAt && timeOf(event.endAt, clock, tz)}
                   title={event.title}
                   location={event.location}
-                  status={eventStatus(event, now)}
+                  status={eventStatus(event, now, tz)}
                   dot={event.tone}
                   nowLabel={copy.events.now}
                   compact={compact}

@@ -3,7 +3,7 @@ import type { ComponentProps } from "react";
 import type { Season } from "@/domain/schemas";
 import { SignInView } from "@/features/signin";
 import { GalleryGroup } from "./GalleryGroup";
-import { gallery, NOW } from "./samples";
+import { GALLERY_TZ, gallery, NOW } from "./samples";
 
 type SignInProps = ComponentProps<typeof SignInView>;
 
@@ -46,6 +46,7 @@ function signInBase(season: Season): SignInProps {
     season,
     time: NOW,
     clock: "12h",
+    tz: GALLERY_TZ,
     breakpoint: "wide",
     online: true,
     demo: true,

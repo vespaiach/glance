@@ -1,6 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import type { Weather } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import { WeatherForecast } from "./WeatherForecast";
+
+const tz = deviceTimeZone();
 
 const at = (day: number, hour: number, minute = 0) =>
   new Date(2026, 9, day, hour, minute).toISOString();
@@ -59,7 +62,7 @@ const base = {
 } as const;
 
 test("WX-01 the now block is named after the location and shows four details", () => {
-  render(<WeatherForecast {...base} />);
+  render(<WeatherForecast tz={tz} {...base} />);
 
   expect(screen.getByText("Portland, OR · Now")).toBeInTheDocument();
   expect(screen.getByText("Partly cloudy")).toBeInTheDocument();
@@ -72,7 +75,7 @@ test("WX-01 the now block is named after the location and shows four details", (
 });
 
 test("WX-01 lists the next 8 hours with time and temperature", () => {
-  render(<WeatherForecast {...base} />);
+  render(<WeatherForecast tz={tz} {...base} />);
 
   const hours = within(screen.getByRole("list", { name: "Next 8 hours" })).getAllByRole("listitem");
 
@@ -82,7 +85,7 @@ test("WX-01 lists the next 8 hours with time and temperature", () => {
 });
 
 test("WX-01 the 7-day forecast highlights today and shows precip only when present", () => {
-  render(<WeatherForecast {...base} />);
+  render(<WeatherForecast tz={tz} {...base} />);
 
   const days = within(screen.getByRole("list", { name: "7-day forecast" })).getAllByRole(
     "listitem",
@@ -96,7 +99,7 @@ test("WX-01 the 7-day forecast highlights today and shows precip only when prese
 });
 
 test("WX-02 every value follows the Celsius setting", () => {
-  render(<WeatherForecast {...base} unit="C" />);
+  render(<WeatherForecast tz={tz} {...base} unit="C" />);
 
   expect(screen.getByText("H 20° · L 11° · Feels like 17°")).toBeInTheDocument();
   expect(screen.getByText("13 km/h NW")).toBeInTheDocument();
@@ -104,27 +107,27 @@ test("WX-02 every value follows the Celsius setting", () => {
 });
 
 test("TIME-01 hours and sunset follow the 24-hour clock", () => {
-  render(<WeatherForecast {...base} clock="24h" />);
+  render(<WeatherForecast tz={tz} {...base} clock="24h" />);
 
   expect(screen.getByText("18:42")).toBeInTheDocument();
   expect(screen.getByText("11:00")).toBeInTheDocument();
 });
 
 test("WX-03 rain in the next 8 hours shows when it moves in", () => {
-  render(<WeatherForecast {...base} />);
+  render(<WeatherForecast tz={tz} {...base} />);
 
   expect(screen.getByText("Rain moving in after 4 PM")).toBeInTheDocument();
   expect(screen.getByText("Grab an umbrella if you’re heading out.")).toBeInTheDocument();
 });
 
 test("WX-03 no banner when the next 8 hours stay dry", () => {
-  render(<WeatherForecast {...base} weather={DRY} />);
+  render(<WeatherForecast tz={tz} {...base} weather={DRY} />);
 
   expect(screen.queryByText(/Rain moving in/)).not.toBeInTheDocument();
 });
 
 test("WX-03 a stale offline forecast says when it is from instead of the rain banner", () => {
-  render(<WeatherForecast {...base} stale />);
+  render(<WeatherForecast tz={tz} {...base} stale />);
 
   expect(screen.getByText("Forecast from 10:30 AM")).toBeInTheDocument();
   expect(
@@ -134,7 +137,7 @@ test("WX-03 a stale offline forecast says when it is from instead of the rain ba
 });
 
 test("A11Y-01 the hourly and daily weather icons are named by their conditions", () => {
-  render(<WeatherForecast {...base} />);
+  render(<WeatherForecast tz={tz} {...base} />);
 
   const names = (list: string) =>
     within(screen.getByRole("list", { name: list }))

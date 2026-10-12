@@ -4,13 +4,15 @@ import { useState } from "react";
 import { useEvent, useEventsRepo } from "@/data/repos";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
-import { formatDayTitle, parseLocalDate } from "@/domain/time";
+import { formatDayTitle } from "@/domain/time";
+import { dateKey, parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
 import { EventSheet } from "./components/EventSheet";
 import {
@@ -25,7 +27,7 @@ import {
 
 type SheetFrameProps = {
   mode: "new" | "edit";
-  day: Date;
+  day: string;
   id: string;
   initial: EventSheetState;
   onDelete: () => void;
@@ -38,6 +40,8 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
 
   const { clock } = useAccountSettings();
 
+  const tz = useTimeZone();
+
   const season = useSeason();
 
   const { online } = useNetwork();
@@ -46,13 +50,13 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
 
   const onSave = (draft: EventDraft) => {
     close();
-    void events.put(eventFromDraft(draft, day, id));
+    void events.put(eventFromDraft(draft, day, id, tz));
   };
 
   return (
     <EventSheet
       mode={mode}
-      eyebrow={formatDayTitle(day)}
+      eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
       initial={initial}
       clock={clock}
       swatches={eventSwatches(season)}
@@ -73,6 +77,8 @@ function EditEventSheet({ event, time }: EditProps) {
 
   const events = useEventsRepo();
 
+  const tz = useTimeZone();
+
   const onDelete = () => {
     close();
     void events.remove(event.id);
@@ -81,9 +87,9 @@ function EditEventSheet({ event, time }: EditProps) {
   return (
     <SheetFrame
       mode="edit"
-      day={new Date(event.startAt)}
+      day={dateKey(new Date(event.startAt), tz)}
       id={event.id}
-      initial={initialEventSheet(draftFromEvent(event), time)}
+      initial={initialEventSheet(draftFromEvent(event, tz), time)}
       onDelete={onDelete}
     />
   );
@@ -98,14 +104,16 @@ function LoadedEventSheet({ id, time }: { id: string; time?: TimeFixture }) {
 function NewEventSheet({ day, time }: { day: string; time?: TimeFixture }) {
   const now = useNow("minute");
 
+  const tz = useTimeZone();
+
   const [id] = useState(() => uuidv7(now));
 
   return (
     <SheetFrame
       mode="new"
-      day={parseLocalDate(day)}
+      day={day}
       id={id}
-      initial={initialEventSheet(newEventDraft(now), time)}
+      initial={initialEventSheet(newEventDraft(now, tz), time)}
       onDelete={() => {}}
     />
   );

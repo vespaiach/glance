@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { deviceTimeZone } from "@/domain/zone";
 import { HeroSummary } from "./HeroSummary";
 import { TodayHero } from "./TodayHero";
+
+const tz = deviceTimeZone();
 
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 
@@ -27,7 +30,7 @@ const ignore = () => {};
 
 test("TODAY-01 the hero shows the season and month, the clock and the screen label", () => {
   render(
-    <TodayHero season="fall" time={new Date(2026, 9, 9, 10, 41)} clock="12h">
+    <TodayHero tz={tz} season="fall" time={new Date(2026, 9, 9, 10, 41)} clock="12h">
       summary
     </TodayHero>,
   );
@@ -40,7 +43,9 @@ test("TODAY-01 the hero shows the season and month, the clock and the screen lab
 });
 
 test("TODAY-02 a running event is happening now, with its place and end", () => {
-  render(<HeroSummary hero={{ kind: "now", event: call }} clock="12h" onOpenEvent={ignore} />);
+  render(
+    <HeroSummary tz={tz} hero={{ kind: "now", event: call }} clock="12h" onOpenEvent={ignore} />,
+  );
 
   expect(screen.getByText("Happening now")).toBeInTheDocument();
   expect(screen.getByText("Grandma’s video call")).toBeInTheDocument();
@@ -50,20 +55,26 @@ test("TODAY-02 a running event is happening now, with its place and end", () => 
 test("TODAY-02 a running event with no end says when it started, with AM/PM", () => {
   const garden = { ...call, endAt: undefined, startAt: iso(8, 0), location: "Back yard" };
 
-  render(<HeroSummary hero={{ kind: "now", event: garden }} clock="12h" onOpenEvent={ignore} />);
+  render(
+    <HeroSummary tz={tz} hero={{ kind: "now", event: garden }} clock="12h" onOpenEvent={ignore} />,
+  );
 
   expect(screen.getByText("Back yard · started 8:00 AM")).toBeInTheDocument();
 });
 
 test("TODAY-02 the next event is up next, with its start and AM/PM", () => {
-  render(<HeroSummary hero={{ kind: "next", event: lunch }} clock="12h" onOpenEvent={ignore} />);
+  render(
+    <HeroSummary tz={tz} hero={{ kind: "next", event: lunch }} clock="12h" onOpenEvent={ignore} />,
+  );
 
   expect(screen.getByText("Up next")).toBeInTheDocument();
   expect(screen.getByText("Café Lumen · 12:00 PM")).toBeInTheDocument();
 });
 
 test("TIME-01 the hero times follow the 24-hour setting", () => {
-  render(<HeroSummary hero={{ kind: "next", event: lunch }} clock="24h" onOpenEvent={ignore} />);
+  render(
+    <HeroSummary tz={tz} hero={{ kind: "next", event: lunch }} clock="24h" onOpenEvent={ignore} />,
+  );
 
   expect(screen.getByText("Café Lumen · 12:00")).toBeInTheDocument();
 });
@@ -71,13 +82,20 @@ test("TIME-01 the hero times follow the 24-hour setting", () => {
 test("TODAY-02 an event with no place shows only its time", () => {
   const noPlace = { ...lunch, location: undefined };
 
-  render(<HeroSummary hero={{ kind: "next", event: noPlace }} clock="12h" onOpenEvent={ignore} />);
+  render(
+    <HeroSummary
+      tz={tz}
+      hero={{ kind: "next", event: noPlace }}
+      clock="12h"
+      onOpenEvent={ignore}
+    />,
+  );
 
   expect(screen.getByText("12:00 PM")).toBeInTheDocument();
 });
 
 test("TODAY-02 once today's events ended the hero says so", () => {
-  render(<HeroSummary hero={{ kind: "ended" }} clock="12h" onOpenEvent={ignore} />);
+  render(<HeroSummary tz={tz} hero={{ kind: "ended" }} clock="12h" onOpenEvent={ignore} />);
 
   expect(screen.getByText("Nothing else today")).toBeInTheDocument();
   expect(screen.getByText("Today’s events have ended.")).toBeInTheDocument();
@@ -85,7 +103,7 @@ test("TODAY-02 once today's events ended the hero says so", () => {
 });
 
 test("TODAY-02 a day with no events has nothing scheduled", () => {
-  render(<HeroSummary hero={{ kind: "none" }} clock="12h" onOpenEvent={ignore} />);
+  render(<HeroSummary tz={tz} hero={{ kind: "none" }} clock="12h" onOpenEvent={ignore} />);
 
   expect(screen.getByText("Nothing scheduled")).toBeInTheDocument();
   expect(screen.getByText("Events show here while they happen.")).toBeInTheDocument();
@@ -94,7 +112,14 @@ test("TODAY-02 a day with no events has nothing scheduled", () => {
 test("TODAY-03 tapping the hero event opens it", async () => {
   const onOpenEvent = vi.fn<(id: string) => void>();
 
-  render(<HeroSummary hero={{ kind: "now", event: call }} clock="12h" onOpenEvent={onOpenEvent} />);
+  render(
+    <HeroSummary
+      tz={tz}
+      hero={{ kind: "now", event: call }}
+      clock="12h"
+      onOpenEvent={onOpenEvent}
+    />,
+  );
 
   await userEvent.click(screen.getByRole("button", { name: /Grandma’s video call/ }));
 

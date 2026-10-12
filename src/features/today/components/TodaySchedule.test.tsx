@@ -1,8 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CalendarEvent } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { TodaySchedule } from "./TodaySchedule";
+
+const tz = deviceTimeZone();
 
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 
@@ -23,6 +26,7 @@ type Handlers = {
 function renderSchedule(state: ZoneState<CalendarEvent>, handlers: Partial<Handlers> = {}) {
   return render(
     <TodaySchedule
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       state={state}

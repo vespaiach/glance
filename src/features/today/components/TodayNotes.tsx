@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
 import type { BoardNote } from "@/domain/notes";
-import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
+import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { noteStampText } from "@/features/notes";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -19,6 +19,7 @@ type TodayNotesProps = {
   onRetry: () => void;
   now: Date;
   clock: Clock;
+  tz: string;
   onOpenNote: (id: string) => void;
   onAddNote: () => void;
   onOpenNotes: () => void;
@@ -75,7 +76,7 @@ const styles = stylex.create({
   },
 });
 
-function countFor(state: ZoneState<BoardNote>, clock: Clock): string {
+function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
   if (state.kind === "loading" || state.kind === "failed") return copy.today.notes.loadingCount;
 
   if (state.kind === "empty") return copy.today.notes.count(0);
@@ -84,7 +85,7 @@ function countFor(state: ZoneState<BoardNote>, clock: Clock): string {
 
   if (state.updatedAt === undefined) return count;
 
-  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
 }
 
 function NotesSkeleton() {
@@ -102,6 +103,7 @@ export function TodayNotes({
   onRetry,
   now,
   clock,
+  tz,
   onOpenNote,
   onAddNote,
   onOpenNotes,
@@ -110,7 +112,7 @@ export function TodayNotes({
   return (
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
-        <Eyebrow>{countFor(state, clock)}</Eyebrow>
+        <Eyebrow>{countFor(state, clock, tz)}</Eyebrow>
         <Button variant="ghost" iconRight={ArrowRight} onClick={onOpenNotes}>
           {copy.today.notes.allNotes}
         </Button>
@@ -144,7 +146,7 @@ export function TodayNotes({
                 tone={note.tone}
                 rotate={note.rotation}
                 author={note.author}
-                time={noteStampText(note, now, clock)}
+                time={noteStampText(note, now, clock, tz)}
                 width="100%"
                 minHeight={150}
                 onClick={() => onOpenNote(note.id)}

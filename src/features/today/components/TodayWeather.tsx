@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { AccountSettings, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
-import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
+import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { conditionText } from "@/features/weather";
 import { radii, space } from "@/theme/tokens.stylex";
@@ -22,6 +22,7 @@ type TodayWeatherProps = {
   onRetry: () => void;
   unit: AccountSettings["tempUnit"];
   clock: Clock;
+  tz: string;
   onSetLocation: () => void;
   xstyle?: stylex.StyleXStyles;
 };
@@ -78,10 +79,15 @@ function WeatherSkeleton({ xstyle }: { xstyle?: stylex.StyleXStyles }) {
   );
 }
 
-function locationLabel(weather: Weather, updatedAt: string | undefined, clock: Clock): string {
+function locationLabel(
+  weather: Weather,
+  updatedAt: string | undefined,
+  clock: Clock,
+  tz: string,
+): string {
   if (updatedAt === undefined) return weather.location;
 
-  return copy.zone.updated(weather.location, formatClock(minutesOfDay(new Date(updatedAt)), clock));
+  return copy.zone.updated(weather.location, clockAt(updatedAt, clock, tz));
 }
 
 export function TodayWeather({
@@ -90,6 +96,7 @@ export function TodayWeather({
   onRetry,
   unit,
   clock,
+  tz,
   onSetLocation,
   xstyle,
 }: TodayWeatherProps) {
@@ -130,7 +137,7 @@ export function TodayWeather({
       {([weather], updatedAt) =>
         weather && (
           <WeatherNow
-            location={locationLabel(weather, updatedAt, clock)}
+            location={locationLabel(weather, updatedAt, clock, tz)}
             temp={temp(weather.current.temp)}
             condition={conditionText(weather.current.condition)}
             icon={weather.current.icon}

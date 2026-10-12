@@ -11,6 +11,7 @@ import { useBrowserOnline } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
 import { SignInView } from "./components/SignInView";
 import { initialSignIn, openedLinkFrom } from "./signIn";
@@ -40,6 +41,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       season={useSeason()}
       time={useNow("minute")}
       clock={useAccountSettings().clock}
+      tz={useTimeZone()}
       breakpoint={useBreakpoint()}
       keyboardInset={useKeyboardInset()}
       online={online}

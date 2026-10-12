@@ -2,8 +2,11 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import type { Photo } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import type { UploadTile } from "../uploads";
 import { PhotosView } from "./PhotosView";
+
+const tz = deviceTimeZone();
 
 const photo = (n: number, title: string, takenOn: string, place: string): Photo => ({
   id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
@@ -57,6 +60,7 @@ function renderView(overrides: Partial<Props> = {}) {
     retryIn: 1,
     onRetrySync: vi.fn<() => void>(),
     clock: "12h",
+    tz,
     selected: 0,
     playing: true,
     uploads: [],

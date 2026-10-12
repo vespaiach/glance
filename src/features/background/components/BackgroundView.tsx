@@ -27,6 +27,7 @@ type BackgroundViewProps = {
   onRetrySync: () => void;
   background: Background;
   now: Date;
+  tz: string;
   uploads: readonly UploadTile[];
   online: boolean;
   canUpload: boolean;
@@ -111,14 +112,14 @@ function ThumbsSkeleton({ columns }: { columns: stylex.StyleXStyles }) {
   );
 }
 
-function Photos({ photos, background, now, onChange, ...rest }: PhotosProps) {
+function Photos({ photos, background, now, tz, onChange, ...rest }: PhotosProps) {
   return (
     <div {...stylex.props(styles.photos)}>
       <Eyebrow>{gridLabel(background.mode, photos.length)}</Eyebrow>
       <BackgroundThumbs
         {...rest}
         photos={photos}
-        shown={shownBackground(background, photos, now)}
+        shown={shownBackground(background, photos, now, tz)}
         onPick={(photoId) => onChange(pickPhoto(background.mode, photoId))}
       />
     </div>
@@ -150,9 +151,9 @@ export function BackgroundView({
 }: BackgroundViewProps) {
   const layout = backgroundLayout(breakpoint);
 
-  const { background, now, photoSrc, onChange } = picker;
+  const { background, now, tz, photoSrc, onChange } = picker;
 
-  const shown = shownBackground(background, readyPhotos(state), now);
+  const shown = shownBackground(background, readyPhotos(state), now, tz);
 
   const photos = { ...picker, columns: layout.thumbs };
 

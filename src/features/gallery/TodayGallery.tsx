@@ -14,8 +14,10 @@ import {
 } from "@/features/today";
 import { GalleryGroup } from "./GalleryGroup";
 import {
+  GALLERY_TZ,
   gallery,
   NOW,
+  octoberAt,
   TODAY_EVENTS,
   TODAY_NOTES,
   TODAY_PHOTO,
@@ -25,19 +27,19 @@ import {
 
 const ignore = () => {};
 
-const UPDATED_AT = new Date(2026, 9, 9, 9, 32).toISOString();
+const UPDATED_AT = octoberAt(9, 9, 32).toISOString();
 
 const failure = { retryIn: 1, onRetry: ignore } as const;
 
-const LATER = new Date(2026, 9, 9, 9, 45);
+const LATER = octoberAt(9, 9, 45);
 
-const EVENING = new Date(2026, 9, 9, 19, 0);
+const EVENING = octoberAt(9, 19, 0);
 
 const HEROES = [
-  todayHero(TODAY_EVENTS, NOW),
-  todayHero(TODAY_EVENTS, LATER),
-  todayHero(TODAY_EVENTS, EVENING),
-  todayHero([], NOW),
+  todayHero(TODAY_EVENTS, NOW, GALLERY_TZ),
+  todayHero(TODAY_EVENTS, LATER, GALLERY_TZ),
+  todayHero(TODAY_EVENTS, EVENING, GALLERY_TZ),
+  todayHero([], NOW, GALLERY_TZ),
 ];
 
 const styles = stylex.create({
@@ -88,42 +90,56 @@ export function TodayGallery({ season }: { season: Season }) {
   return (
     <GalleryGroup title={gallery.groups.today}>
       {HEROES.map((hero) => (
-        <TodayHero key={hero.kind} season={season} time={NOW} clock="12h" xstyle={styles.hero}>
-          <HeroSummary hero={hero} clock="12h" onOpenEvent={ignore} />
+        <TodayHero
+          tz={GALLERY_TZ}
+          key={hero.kind}
+          season={season}
+          time={NOW}
+          clock="12h"
+          xstyle={styles.hero}
+        >
+          <HeroSummary tz={GALLERY_TZ} hero={hero} clock="12h" onOpenEvent={ignore} />
         </TodayHero>
       ))}
-      <TodayHero season={season} time={NOW} clock="24h" xstyle={styles.hero}>
+      <TodayHero tz={GALLERY_TZ} season={season} time={NOW} clock="24h" xstyle={styles.hero}>
         <HeroSkeleton />
       </TodayHero>
-      <TodaySchedule state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule}>
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule}>
         <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} />
       </TodaySchedule>
-      <TodaySchedule state={{ kind: "empty" }} {...schedule}>
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule}>
         <PictureOfDayEmpty canUpload onUpload={ignore} />
       </TodaySchedule>
-      <TodaySchedule state={{ kind: "loading" }} {...schedule}>
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule}>
         <PictureOfDaySkeleton />
       </TodaySchedule>
-      <TodaySchedule state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule} compact>
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_EVENTS }}
+        {...schedule}
+        compact
+      >
         <PictureOfDayEmpty canUpload={false} onUpload={ignore} />
       </TodaySchedule>
-      <TodaySchedule state={{ kind: "failed" }} {...schedule} />
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "failed" }} {...schedule} />
       <TodaySchedule
+        tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_EVENTS, updatedAt: UPDATED_AT }}
         {...schedule}
       />
-      <TodayWeather state={{ kind: "ready", data: [TODAY_WEATHER] }} {...weather} />
-      <TodayWeather state={{ kind: "empty" }} {...weather} />
-      <TodayWeather state={{ kind: "loading" }} {...weather} />
-      <TodayWeather state={{ kind: "failed" }} {...weather} />
+      <TodayWeather tz={GALLERY_TZ} state={{ kind: "ready", data: [TODAY_WEATHER] }} {...weather} />
+      <TodayWeather tz={GALLERY_TZ} state={{ kind: "empty" }} {...weather} />
+      <TodayWeather tz={GALLERY_TZ} state={{ kind: "loading" }} {...weather} />
+      <TodayWeather tz={GALLERY_TZ} state={{ kind: "failed" }} {...weather} />
       <TodayWeather
+        tz={GALLERY_TZ}
         state={{ kind: "ready", data: [TODAY_WEATHER], updatedAt: UPDATED_AT }}
         {...weather}
       />
-      <TodayNotes state={{ kind: "ready", data: TODAY_NOTES }} {...notes} />
-      <TodayNotes state={{ kind: "empty" }} {...notes} />
-      <TodayNotes state={{ kind: "loading" }} {...notes} />
-      <TodayNotes state={{ kind: "failed" }} {...notes} />
+      <TodayNotes tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_NOTES }} {...notes} />
+      <TodayNotes tz={GALLERY_TZ} state={{ kind: "empty" }} {...notes} />
+      <TodayNotes tz={GALLERY_TZ} state={{ kind: "loading" }} {...notes} />
+      <TodayNotes tz={GALLERY_TZ} state={{ kind: "failed" }} {...notes} />
     </GalleryGroup>
   );
 }

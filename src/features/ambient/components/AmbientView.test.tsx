@@ -1,11 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
+import { deviceTimeZone } from "@/domain/zone";
 import { AmbientView } from "./AmbientView";
+
+const tz = deviceTimeZone();
 
 const BASE: ComponentProps<typeof AmbientView> = {
   season: "fall",
   time: new Date(2026, 9, 9, 19, 12),
   clock: "12h",
+  tz,
   offline: false,
   weather: { kind: "empty" },
   unit: "F",

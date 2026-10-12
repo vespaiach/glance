@@ -8,6 +8,7 @@ import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSyncedZone } from "@/shell/sourceZone";
 import { PhotosView } from "./components/PhotosView";
 import { newestFirst, slideIndex, slideshow, startSlideshow, wrapIndex } from "./slideshow";
@@ -44,6 +45,8 @@ export function PhotosScreen() {
 
   const picker = usePhotoPicker(uploads.choose);
 
+  const tz = useTimeZone();
+
   const count = state.kind === "ready" ? state.data.length : 0;
 
   const selected = count > 0 ? wrapIndex(slideIndex(show, now), count) : 0;
@@ -56,6 +59,7 @@ export function PhotosScreen() {
         retryIn={zone.retryIn}
         onRetrySync={zone.retry}
         clock={clockFormat}
+        tz={tz}
         selected={selected}
         playing={show.kind === "playing"}
         uploads={uploads.tiles}

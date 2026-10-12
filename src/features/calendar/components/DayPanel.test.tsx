@@ -1,8 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CalendarEvent } from "@/domain/schemas";
+import { deviceTimeZone } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { DayPanel } from "./DayPanel";
+
+const tz = deviceTimeZone();
 
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 
@@ -23,6 +26,7 @@ type Options = {
 function renderPanel(state: ZoneState<CalendarEvent>, options: Options = {}) {
   return render(
     <DayPanel
+      tz={tz}
       retryIn={1}
       onRetry={() => {}}
       state={state}

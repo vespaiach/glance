@@ -4,7 +4,7 @@ import { type Clock, formatDayTitle } from "@/domain/time";
 import { EventSheet, eventSwatches, initialEventSheet, newEventDraft } from "@/features/events";
 import { Button } from "@/ui/Button";
 import { GalleryGroup } from "./GalleryGroup";
-import { gallery, NOW } from "./samples";
+import { GALLERY_TZ, gallery, NOW } from "./samples";
 
 type Demo = {
   label: string;
@@ -42,7 +42,7 @@ export function EventSheetGallery({ season }: { season: Season }) {
 
   const close = () => setOpen(null);
 
-  const draft = open?.mode === "new" ? newEventDraft(NOW) : LUNCH;
+  const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ) : LUNCH;
 
   return (
     <GalleryGroup title={gallery.groups.eventSheet}>
@@ -55,7 +55,7 @@ export function EventSheetGallery({ season }: { season: Season }) {
         <EventSheet
           key={open.label}
           mode={open.mode}
-          eyebrow={formatDayTitle(NOW)}
+          eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
           initial={initialEventSheet(draft, open.time)}
           clock={open.clock ?? "12h"}
           swatches={eventSwatches(season)}

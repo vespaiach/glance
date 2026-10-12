@@ -40,35 +40,41 @@ export type EventSheetAction =
 
 export type SwatchOption = { value: Tone; label: string };
 
-export function draftFromEvent(event: CalendarEvent): EventDraft {
-  const end = event.endAt === undefined ? {} : { end: minutesOfDay(new Date(event.endAt)) };
+export function draftFromEvent(event: CalendarEvent, tz: string): EventDraft {
+  const end = event.endAt === undefined ? {} : { end: minutesOfDay(new Date(event.endAt), tz) };
 
   return {
     title: event.title,
-    start: minutesOfDay(new Date(event.startAt)),
+    start: minutesOfDay(new Date(event.startAt), tz),
     ...end,
     location: event.location ?? "",
     tone: event.tone,
   };
 }
 
-export function eventFromDraft(draft: EventDraft, day: Date, id: string): CalendarEvent {
+export function eventFromDraft(
+  draft: EventDraft,
+  dayKey: string,
+  id: string,
+  tz: string,
+): CalendarEvent {
   const location = draft.location.trim();
 
-  const end = draft.end === undefined ? {} : { endAt: atMinute(day, draft.end).toISOString() };
+  const end =
+    draft.end === undefined ? {} : { endAt: atMinute(dayKey, draft.end, tz).toISOString() };
 
   return {
     id,
     title: draft.title.trim(),
-    startAt: atMinute(day, draft.start).toISOString(),
+    startAt: atMinute(dayKey, draft.start, tz).toISOString(),
     ...end,
     ...(location === "" ? {} : { location }),
     tone: draft.tone,
   };
 }
 
-export function newEventDraft(now: Date): EventDraft {
-  return { title: "", ...defaultTimes(now), location: "", tone: 1 };
+export function newEventDraft(now: Date, tz: string): EventDraft {
+  return { title: "", ...defaultTimes(now, tz), location: "", tone: 1 };
 }
 
 export function eventSwatches(season: Season): SwatchOption[] {

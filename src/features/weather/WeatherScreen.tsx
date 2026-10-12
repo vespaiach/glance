@@ -9,6 +9,7 @@ import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { useWeatherZone } from "@/shell/sourceZone";
 import { Zone } from "@/ui/Zone";
 import { WeatherFailure } from "./components/WeatherFailure";
@@ -36,6 +37,8 @@ export function WeatherScreen() {
   const setup = useWeatherSetup(() => initialWeatherSetup(fixture.wx, fixtureWeatherSearch));
 
   const location = settings.weatherLocation;
+
+  const tz = useTimeZone();
 
   const zone = useWeatherZone(useWeather(), location !== undefined);
 
@@ -66,6 +69,7 @@ export function WeatherScreen() {
             {...(updatedAt !== undefined && { updatedAt })}
             unit={settings.tempUnit}
             clock={settings.clock}
+            tz={tz}
             today={now}
             stale={!online && forecastStale(forecast.fetchedAt, now)}
             breakpoint={breakpoint}

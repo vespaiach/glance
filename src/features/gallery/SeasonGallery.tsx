@@ -52,10 +52,12 @@ import { SignInGallery } from "./SignInGallery";
 import {
   EVENTS,
   FORECAST,
+  GALLERY_TZ,
   gallery,
   MARKED_DAYS,
   NOTES,
   NOW,
+  NOW_DAY,
   NOW_EVENT,
   SWATCHES,
   WEATHER,
@@ -240,13 +242,13 @@ function SurfacesGroup() {
 }
 
 function CalendarGroup() {
-  const [selected, setSelected] = useState(NOW.getDate());
+  const [selected, setSelected] = useState<number>(NOW_DAY.day);
 
   return (
     <GalleryGroup title={gallery.groups.calendar}>
-      <Clock time={NOW} />
-      <Clock time={NOW} size="lg" hour12={false} />
-      <Clock time={NOW} size="lg" showDate={false} align="center" />
+      <Clock tz={GALLERY_TZ} time={NOW} />
+      <Clock tz={GALLERY_TZ} time={NOW} size="lg" hour12={false} />
+      <Clock tz={GALLERY_TZ} time={NOW} size="lg" showDate={false} align="center" />
       <div {...stylex.props(styles.list)}>
         {EVENTS.map((event) => (
           <EventRow key={event.title} {...event} nowLabel={copy.events.now} onClick={ignore} />
@@ -258,17 +260,17 @@ function CalendarGroup() {
         ))}
       </div>
       <MonthGrid
-        year={NOW.getFullYear()}
-        month={NOW.getMonth()}
+        year={NOW_DAY.year}
+        month={NOW_DAY.month}
         selected={selected}
-        today={NOW.getDate()}
+        today={NOW_DAY.day}
         marked={MARKED_DAYS}
         onSelect={setSelected}
       />
       <MonthGrid
-        year={NOW.getFullYear()}
-        month={NOW.getMonth()}
-        today={NOW.getDate()}
+        year={NOW_DAY.year}
+        month={NOW_DAY.month}
+        today={NOW_DAY.day}
         marked={MARKED_DAYS}
         showTitle={false}
         cell={40}
