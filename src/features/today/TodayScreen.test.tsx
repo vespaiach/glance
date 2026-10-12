@@ -216,7 +216,7 @@ test("FAIL-01 a failed first sync shows each source unavailable with a countdown
   renderToday();
 
   expect(await screen.findByText("Calendar unavailable")).toBeInTheDocument();
-  expect(screen.getByText("Notes unavailable")).toBeInTheDocument();
+  expect(await screen.findByText("Notes unavailable")).toBeInTheDocument();
   expect(
     screen.getAllByText("The Glance server isn’t responding. Trying again in 2 min."),
   ).toHaveLength(2);

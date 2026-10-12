@@ -24,7 +24,7 @@ let store: Harness;
 beforeEach(() => {
   store = openHarness("glance-source-zone-test");
 
-  vi.useFakeTimers({ now: TEST_NOW, shouldAdvanceTime: true });
+  vi.useFakeTimers({ now: TEST_NOW, toFake: ["Date"] });
 });
 
 afterEach(async () => {
@@ -32,6 +32,12 @@ afterEach(async () => {
 
   await store.close();
 });
+
+async function pass(ms: number) {
+  vi.setSystemTime(new Date(Date.now() + ms));
+
+  await act(() => new Promise((resolve) => setTimeout(resolve, 1_100)));
+}
 
 function renderSynced(rows: readonly string[] | undefined) {
   return renderHook(() => useSyncedZone(rows), { wrapper: shellWrapper(store) });
@@ -45,7 +51,7 @@ describe("useSyncedZone", () => {
   it("LOAD-02 nothing saved before the first sync is loading", async () => {
     const { result } = renderSynced([]);
 
-    await act(() => vi.advanceTimersByTimeAsync(9_000));
+    await pass(9_000);
 
     expect(result.current.state).toEqual({ kind: "loading" });
   });
@@ -55,7 +61,7 @@ describe("useSyncedZone", () => {
 
     const { result } = renderSynced(undefined);
 
-    await act(() => vi.advanceTimersByTimeAsync(20_000));
+    await pass(11_000);
 
     expect(result.current.state).toEqual({ kind: "loading" });
   });
@@ -63,7 +69,7 @@ describe("useSyncedZone", () => {
   it("LOAD-03 loading for 10 s turns into the failure state", async () => {
     const { result } = renderSynced([]);
 
-    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    await pass(10_000);
 
     await waitFor(() => expect(result.current.state).toEqual({ kind: "failed" }));
   });
@@ -131,7 +137,7 @@ describe("useWeatherZone", () => {
 
     await waitFor(() => expect(result.current.state).toEqual({ kind: "loading" }));
 
-    await act(() => vi.advanceTimersByTimeAsync(10_000));
+    await pass(10_000);
 
     await waitFor(() => expect(result.current.state).toEqual({ kind: "failed" }));
   });
@@ -141,7 +147,7 @@ describe("useWeatherZone", () => {
 
     const { result } = renderWeather(null);
 
-    await act(() => vi.advanceTimersByTimeAsync(20_000));
+    await pass(11_000);
 
     expect(result.current.state).toEqual({ kind: "loading" });
   });
@@ -182,7 +188,7 @@ describe("useWeatherZone", () => {
   it("LOAD-02 before the first sync a missing location is still loading", async () => {
     const { result } = renderWeather(null, false);
 
-    await act(() => vi.advanceTimersByTimeAsync(1_000));
+    await pass(1_000);
 
     expect(result.current.state).toEqual({ kind: "loading" });
   });
