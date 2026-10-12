@@ -29,7 +29,10 @@ function finish(result, code = 0) {
 }
 
 function cells(line) {
-  return line.split("|").slice(1, -1).map((cell) => cell.trim());
+  return line
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim());
 }
 
 function parsePlan(text) {
@@ -72,7 +75,8 @@ function expandDeps(row, rows) {
     return [...deps];
   }
   for (const [, prefix, from, to] of row.rawDeps.matchAll(/\b([A-Z])(\d{2})\.\.[A-Z]?(\d{2})\b/g)) {
-    for (let n = Number(from); n <= Number(to); n++) deps.add(`${prefix}${String(n).padStart(2, "0")}`);
+    for (let n = Number(from); n <= Number(to); n++)
+      deps.add(`${prefix}${String(n).padStart(2, "0")}`);
   }
   for (const id of row.rawDeps.match(ID) ?? []) deps.add(id);
   return [...deps];
@@ -93,16 +97,20 @@ const known = new Map(rows.map((row) => [row.id, row]));
 for (const row of rows) {
   row.deps = expandDeps(row, rows);
   const unknown = row.deps.filter((id) => !known.has(id));
-  if (unknown.length) finish({ action: "error", why: `${row.id} depends on unknown ${unknown.join(", ")}` }, 1);
+  if (unknown.length)
+    finish({ action: "error", why: `${row.id} depends on unknown ${unknown.join(", ")}` }, 1);
 }
 
-const prs = JSON.parse(run("gh", "pr", "list", "--state", "open", "--json", "number,headRefName,isDraft,url"));
+const prs = JSON.parse(
+  run("gh", "pr", "list", "--state", "open", "--json", "number,headRefName,isDraft,url"),
+);
 const prOf = (id) => prs.find((pr) => pr.headRefName.startsWith(`feat/${id}-`));
 
 for (const row of rows.filter((r) => !r.done)) {
   const pr = prOf(row.id);
   if (!pr) continue;
-  if (pr.isDraft) finish({ action: "resume", id: row.id, branch: pr.headRefName, pr: pr.number, url: pr.url });
+  if (pr.isDraft)
+    finish({ action: "resume", id: row.id, branch: pr.headRefName, pr: pr.number, url: pr.url });
   finish({ action: "merge", id: row.id, pr: pr.number, url: pr.url });
 }
 
@@ -111,7 +119,10 @@ if (todo.length === 0) finish({ action: "done" });
 
 const next = todo.find((row) => row.deps.every((id) => known.get(id).done));
 if (!next) {
-  const waiting = todo.map((row) => ({ id: row.id, deps: row.deps.filter((id) => !known.get(id).done) }));
+  const waiting = todo.map((row) => ({
+    id: row.id,
+    deps: row.deps.filter((id) => !known.get(id).done),
+  }));
   finish({ action: "blocked", waiting });
 }
 
