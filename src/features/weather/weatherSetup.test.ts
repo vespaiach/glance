@@ -1,5 +1,10 @@
 import type { WeatherLocation } from "@/domain/schemas";
-import { initialWeatherSetup, type WeatherSetupState, weatherSetupReducer } from "./weatherSetup";
+import {
+  initialWeatherSetup,
+  placeQuery,
+  type WeatherSetupState,
+  weatherSetupReducer,
+} from "./weatherSetup";
 
 const PORTLANDS: WeatherLocation[] = [
   { name: "Portland", region: "Oregon", lat: 45.5152, lon: -122.6784 },
@@ -9,6 +14,12 @@ const PORTLANDS: WeatherLocation[] = [
 const SEARCH = { query: "Portland", unknown: "Pordland", matches: PORTLANDS };
 
 const editing = (draft: string): WeatherSetupState => ({ step: "editing", draft });
+
+const searching = (query: string): WeatherSetupState => ({
+  step: "searching",
+  draft: query,
+  query,
+});
 
 describe("weather setup reducer", () => {
   it("WX-04 starts with an empty field and no error", () => {
@@ -69,6 +80,47 @@ describe("weather setup reducer", () => {
     expect(weatherSetupReducer(choosing, { type: "type", draft: "Portland," })).toEqual(
       editing("Portland,"),
     );
+  });
+
+  it("WX-09 several matches list the places to choose from", () => {
+    expect(
+      weatherSetupReducer(searching("Portland"), { type: "found", matches: PORTLANDS }),
+    ).toEqual({ step: "choosing", draft: "Portland", matches: PORTLANDS });
+  });
+
+  it("WX-08 no match shows the unknown-place error and keeps the draft", () => {
+    expect(weatherSetupReducer(searching("Pordland"), { type: "found", matches: [] })).toEqual({
+      step: "editing",
+      draft: "Pordland",
+      error: "unknown",
+    });
+  });
+
+  it("WX-09 a single match stays on the search while the place is saved", () => {
+    const state = searching("97214");
+
+    expect(weatherSetupReducer(state, { type: "found", matches: PORTLANDS.slice(0, 1) })).toBe(
+      state,
+    );
+  });
+
+  it("WX-07 a failed search shows the search-unavailable error and keeps the draft", () => {
+    expect(weatherSetupReducer(searching("Portland"), { type: "failed" })).toEqual({
+      step: "editing",
+      draft: "Portland",
+      error: "unavailable",
+    });
+  });
+
+  it("WX-07 an answer that arrives after typing is ignored", () => {
+    const state = editing("Portlan");
+
+    expect(weatherSetupReducer(state, { type: "found", matches: PORTLANDS })).toBe(state);
+    expect(weatherSetupReducer(state, { type: "failed" })).toBe(state);
+  });
+
+  it("WX-07 a query is the draft trimmed", () => {
+    expect(placeQuery("  Austin, TX ")).toBe("Austin, TX");
   });
 
   it("WX-07 wx=searching starts searching for the fixture query", () => {

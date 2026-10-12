@@ -101,6 +101,18 @@ async function queuePut(row: StoredEvent) {
   } as OutboxEntry);
 }
 
+async function queueSettings(row: StoredSettings) {
+  await db.settings.put(row);
+
+  await db.outbox.add({
+    entity: "settings",
+    entityId: row.accountId,
+    op: "put",
+    payload: row,
+    attempts: 0,
+  } as OutboxEntry);
+}
+
 async function status(): Promise<SyncStatus | undefined> {
   return (await db.meta.get(STATUS_KEY))?.value as SyncStatus | undefined;
 }
@@ -488,13 +500,62 @@ describe("weather", () => {
 
     const transport = fakeTransport();
 
+    const sync = engine(transport);
+
+    await sync.start();
+
     transport.pull.mockImplementation(async () =>
       ok(pulled([{ entity: "settings", row: { ...SETTINGS, clock: "24h", version: 2 } }])),
     );
 
-    await engine(transport).nudge();
+    await sync.nudge();
+
+    expect(transport.weather).toHaveBeenCalledTimes(1);
+
+    sync.stop();
+  });
+
+  it("WX-09 a location saved on this screen refreshes weather once its push is accepted", async () => {
+    await db.settings.put(NO_LOCATION);
+
+    const transport = fakeTransport({
+      push: vi.fn(async (entry: OutboxEntry) =>
+        ok({ entity: "settings", row: entry.payload } as Change),
+      ),
+    });
+
+    const sync = engine(transport);
+
+    await sync.start();
 
     expect(transport.weather).not.toHaveBeenCalled();
+
+    await queueSettings(SETTINGS);
+
+    await sync.nudge();
+
+    expect(transport.push).toHaveBeenCalledTimes(1);
+    expect(transport.weather).toHaveBeenCalledTimes(1);
+
+    sync.stop();
+  });
+
+  it("tech§4.6 a location still waiting to push doesn't refresh weather", async () => {
+    await db.settings.put(NO_LOCATION);
+
+    const transport = fakeTransport({ push: vi.fn(async () => err<TransportError>("network")) });
+
+    const sync = engine(transport);
+
+    await sync.start();
+
+    await queueSettings(SETTINGS);
+
+    await sync.nudge();
+
+    expect(transport.weather).not.toHaveBeenCalled();
+
+    sync.stop();
   });
 
   it("tech§4.6 stop cancels the scheduled refresh", async () => {

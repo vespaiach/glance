@@ -9,11 +9,14 @@ import {
 import { GalleryGroup } from "./GalleryGroup";
 import { DRY_WEATHER, FULL_WEATHER, gallery, NOW, PLACES } from "./samples";
 
+const noop = () => {};
+
 const SETUPS: readonly WeatherSetupState[] = [
   { step: "editing", draft: "" },
   { step: "editing", draft: "", error: "empty" },
   { step: "searching", draft: "Portland", query: "Portland" },
   { step: "editing", draft: "Pordland", error: "unknown" },
+  { step: "editing", draft: "Portland", error: "unavailable" },
   { step: "choosing", draft: "Portland", matches: PLACES },
 ];
 
@@ -60,7 +63,7 @@ export function WeatherGallery() {
           key={`${setup.step}-${setup.draft}-${"error" in setup ? setup.error : ""}`}
           {...stylex.props(styles.setup)}
         >
-          <WeatherSetup initial={setup} />
+          <WeatherSetup state={setup} onType={noop} onSubmit={noop} onPick={noop} />
         </div>
       ))}
       <div {...stylex.props(styles.setup)}>

@@ -44,4 +44,4 @@ export {
   type StoreAccount,
   useAccount,
 } from "./store";
-export { useWeather } from "./weather";
+export { createWeatherRepo, useWeather, useWeatherRepo, type WeatherRepo } from "./weather";

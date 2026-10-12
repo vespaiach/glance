@@ -1,7 +1,24 @@
 import { useLiveQuery } from "dexie-react-hooks";
-import type { Weather } from "@/domain/schemas";
+import { useMemo } from "react";
+import type { Result } from "@/domain/result";
+import type { Weather, WeatherLocation } from "@/domain/schemas";
 import type { StoredWeather } from "../db";
-import { useRepoStore } from "./store";
+import type { TransportError } from "../sync/transport";
+import { type RepoStore, useRepoStore } from "./store";
+
+export interface WeatherRepo {
+  searchPlaces(query: string): Promise<Result<WeatherLocation[], TransportError>>;
+}
+
+export function createWeatherRepo(store: RepoStore): WeatherRepo {
+  return { searchPlaces: (query) => store.places(query) };
+}
+
+export function useWeatherRepo(): WeatherRepo {
+  const store = useRepoStore();
+
+  return useMemo(() => createWeatherRepo(store), [store]);
+}
 
 function forecast(row: StoredWeather | undefined): Weather | null {
   if (row === undefined) return null;

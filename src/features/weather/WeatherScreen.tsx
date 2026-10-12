@@ -14,6 +14,7 @@ import { WeatherFailure } from "./components/WeatherFailure";
 import { WeatherForecast } from "./components/WeatherForecast";
 import { WeatherSetup } from "./components/WeatherSetup";
 import { WeatherSkeleton } from "./components/WeatherSkeleton";
+import { useWeatherSetup } from "./useWeatherSetup";
 import { initialWeatherSetup } from "./weatherSetup";
 
 const retryLater = () => {};
@@ -39,6 +40,8 @@ export function WeatherScreen() {
 
   const failedStatus = status?.state === "failed" ? status : undefined;
 
+  const setup = useWeatherSetup(() => initialWeatherSetup(fixture.wx, fixtureWeatherSearch));
+
   const location = settings.weatherLocation;
 
   const state = weatherZone({
@@ -51,7 +54,14 @@ export function WeatherScreen() {
     <Zone
       state={state}
       loading={<WeatherSkeleton breakpoint={breakpoint} />}
-      empty={<WeatherSetup initial={initialWeatherSetup(fixture.wx, fixtureWeatherSearch)} />}
+      empty={
+        <WeatherSetup
+          state={setup.state}
+          onType={setup.type}
+          onSubmit={setup.submit}
+          onPick={setup.pick}
+        />
+      }
       failed={
         <WeatherFailure
           location={placeName(location)}
