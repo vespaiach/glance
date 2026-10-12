@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Status | Draft v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D19) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
@@ -122,12 +122,12 @@ Rebuild these as typed React components with the props below (taken from `_ds_bu
 | `EventRow` | `start, end, title, location, status: 'past'\|'now'\|'upcoming', dot, onClick` | Past = struck through, grey dot. Now = season fill and NOW pill |
 | `MonthGrid` | `year, month, selected, today, marked[], onSelect, showTitle, cell` | Selected = black. Today = ring. Marked = dot |
 | `Button` | `variant: primary\|secondary\|ghost\|accent\|inverse, size: md\|lg, icon, iconRight, fullWidth, disabled` | Always a pill (radius 50) |
-| `IconButton` | `icon, variant: soft\|canvas\|solid\|inverse, size: md\|touch, label, active` | `touch` = 56 px. `active` = black |
+| `IconButton` | `icon, variant: soft\|canvas\|solid\|inverse, size: md\|touch\|lg, label, active` | `md` = 40, `touch` = 56, `lg` = 72 px. `active` = black |
 | `PillTabs` | `options[], value, onChange, size` | Segmented control used for every Settings choice |
 | `TextInput` | `label, value, onChange, placeholder, multiline, rows, error` | 2 px black focus ring. Error text below |
 | `TopBar` | `brand, center, right, height, inverse` | Used as the bottom nav bar, `brand=""`, height 72 |
 | `ColorBlock` | `tone: 1-4\|soft, padding, radius` | Never shadowed |
-| `Card` | `variant: hairline\|soft\|canvas, title, eyebrow` | |
+| `Card` | `variant: hairline\|soft\|canvas\|elevated, title, eyebrow, onClick` | With `onClick` the card is a button |
 | `Banner` | `icon, title, body, actionLabel, onAction, tone` | |
 | `WeatherNow` | `location, temp, unit, condition, icon, high, low, feelsLike, details[], tone=3` | |
 | `ForecastDay` | `day, icon, high, low, precip?, active` | |

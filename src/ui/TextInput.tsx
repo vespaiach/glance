@@ -1,0 +1,127 @@
+import * as stylex from "@stylexjs/stylex";
+import { useId } from "react";
+import { colors, motion, radii } from "@/theme/tokens.stylex";
+import { type } from "@/theme/type.stylex";
+
+type TextInputProps = {
+  label?: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  multiline?: boolean;
+  rows?: number;
+  size?: "md" | "lg";
+  error?: string;
+  xstyle?: stylex.StyleXStyles;
+};
+
+const styles = stylex.create({
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  label: {
+    fontFamily: type.fontSans,
+    fontSize: type.bodyLgSize,
+    fontWeight: type.bodyLgWeight,
+    letterSpacing: type.bodyLgLs,
+  },
+  field: {
+    fontFamily: type.fontSans,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.bodyLs,
+    lineHeight: type.bodyLh,
+    color: colors.textPrimary,
+    backgroundColor: colors.surfaceCanvas,
+    boxSizing: "border-box",
+    resize: "none",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: {
+      default: colors.borderHairline,
+      ":focus": colors.black,
+    },
+    borderRadius: radii.md,
+    outline: "none",
+    boxShadow: {
+      default: "none",
+      ":focus": `0 0 0 2px ${colors.focusRing}`,
+    },
+    transitionProperty: "box-shadow",
+    transitionDuration: motion.durFast,
+  },
+  md: {
+    fontSize: type.bodySize,
+    paddingBlock: 12,
+    paddingInline: 14,
+    minHeight: 48,
+  },
+  lg: {
+    fontSize: 24,
+    paddingBlock: 18,
+    paddingInline: 20,
+    minHeight: 64,
+  },
+  invalid: {
+    borderColor: colors.danger,
+    boxShadow: {
+      default: "none",
+      ":focus": `0 0 0 2px ${colors.danger}`,
+    },
+  },
+  error: {
+    fontFamily: type.fontMono,
+    fontSize: type.captionSize,
+    letterSpacing: type.captionLs,
+    textTransform: "uppercase",
+    color: colors.danger,
+  },
+});
+
+export function TextInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  multiline,
+  rows = 3,
+  size = "md",
+  error,
+  xstyle,
+}: TextInputProps) {
+  const id = useId();
+
+  const errorId = `${id}-error`;
+
+  const invalid = Boolean(error);
+
+  const fieldProps = {
+    id,
+    value,
+    placeholder,
+    "aria-invalid": invalid || undefined,
+    "aria-describedby": invalid ? errorId : undefined,
+    ...stylex.props(styles.field, styles[size], invalid && styles.invalid),
+  };
+
+  return (
+    <div {...stylex.props(styles.root, xstyle)}>
+      {label && (
+        <label htmlFor={id} {...stylex.props(styles.label)}>
+          {label}
+        </label>
+      )}
+      {multiline ? (
+        <textarea {...fieldProps} rows={rows} onChange={(e) => onChange(e.target.value)} />
+      ) : (
+        <input {...fieldProps} onChange={(e) => onChange(e.target.value)} />
+      )}
+      {invalid && (
+        <span id={errorId} {...stylex.props(styles.error)}>
+          {error}
+        </span>
+      )}
+    </div>
+  );
+}

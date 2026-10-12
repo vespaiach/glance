@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@rolldown/plugin-babel": "0.2.4",
     "@stylexjs/babel-plugin": "0.19.1",
     "@stylexjs/postcss-plugin": "0.19.1",
     "@testing-library/dom": "10.4.2",
