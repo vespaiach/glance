@@ -136,3 +136,50 @@ test("tech§4.3 a note request renders no event sheet", () => {
 
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
+
+test("EVT-07 Add event queues the new event on the request's day and closes the sheet", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" });
+
+  await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+
+  const [saved] = await store.db.events.toArray();
+
+  expect(saved).toMatchObject({
+    title: "Picnic",
+    startAt: new Date(2026, 9, 12, 11, 0).toISOString(),
+    endAt: new Date(2026, 9, 12, 12, 0).toISOString(),
+    tone: 1,
+  });
+  expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
+});
+
+test("EVT-07 Save keeps the event's id and day", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Alert" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await waitFor(async () =>
+    expect(await store.db.events.get(LUNCH.id)).toMatchObject({
+      ...LUNCH,
+      tone: "accent",
+      version: 1,
+    }),
+  );
+});
+
+test("EVT-03 a failed Save keeps the sheet open and writes nothing", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
+
+  expect(screen.getByRole("dialog", { name: "New event" })).toBeInTheDocument();
+  expect(await store.db.events.count()).toBe(0);
+});

@@ -1,7 +1,9 @@
 import type { CalendarEvent } from "@/domain/schemas";
 import {
+  canSave,
   draftFromEvent,
   type EventSheetState,
+  eventFromDraft,
   eventSheetReducer,
   eventSwatches,
   initialEventSheet,
@@ -164,5 +166,76 @@ describe("event sheet reducer", () => {
 
   it("EVT-06 Delete asks for the inline confirm", () => {
     expect(eventSheetReducer(closed, { type: "askDelete" }).confirming).toBe(true);
+  });
+});
+
+describe("event sheet save", () => {
+  it("EVT-03 Save with a blank title shows Add a title", () => {
+    const blank = initialEventSheet({ ...DRAFT, title: "  " });
+
+    expect(eventSheetReducer(blank, { type: "save" }).titleError).toBe(true);
+  });
+
+  it("EVT-03 a title-only failure keeps the open picker", () => {
+    const open = { ...initialEventSheet({ ...DRAFT, title: "" }), picker: "start" as const };
+
+    expect(eventSheetReducer(open, { type: "save" }).picker).toBe("start");
+  });
+
+  it("TPK-07 Save with equal times shows the end error and closes the picker", () => {
+    const equal = { ...initialEventSheet({ ...DRAFT, end: 720 }), picker: "end" as const };
+
+    const saved = eventSheetReducer(equal, { type: "save" });
+
+    expect(saved).toMatchObject({ endError: true, titleError: false, picker: null });
+  });
+
+  it("TPK-07 Save checks the title and the end together", () => {
+    const both = initialEventSheet({ ...DRAFT, title: "", end: 700 });
+
+    expect(eventSheetReducer(both, { type: "save" })).toMatchObject({
+      titleError: true,
+      endError: true,
+    });
+  });
+
+  it("TPK-07 a titled draft that ends after it starts can be saved", () => {
+    expect(canSave(DRAFT)).toBe(true);
+    expect(canSave({ ...DRAFT, title: " " })).toBe(false);
+    expect(canSave({ ...DRAFT, end: DRAFT.start })).toBe(false);
+  });
+
+  it("TPK-08 a draft with no end passes the end check", () => {
+    expect(canSave(initialEventSheet(DRAFT, "noend").draft)).toBe(true);
+  });
+});
+
+describe("event from draft", () => {
+  const DAY = new Date(2026, 9, 12);
+
+  const ID = "0195f0a0-0000-7000-8000-000000000009";
+
+  it("EVT-07 the saved event places the draft times on the sheet's day", () => {
+    expect(eventFromDraft(DRAFT, DAY, ID)).toEqual({
+      id: ID,
+      title: "Lunch",
+      startAt: new Date(2026, 9, 12, 12, 0).toISOString(),
+      endAt: new Date(2026, 9, 12, 13, 0).toISOString(),
+      location: "Café",
+      tone: 2,
+    });
+  });
+
+  it("EVT-07 the saved event trims the title and Where and drops a blank Where", () => {
+    const event = eventFromDraft({ ...DRAFT, title: " Picnic ", location: "  " }, DAY, ID);
+
+    expect(event.title).toBe("Picnic");
+    expect(event).not.toHaveProperty("location");
+  });
+
+  it("TPK-08 a draft with no end saves no endAt", () => {
+    const { end: _, ...noEnd } = DRAFT;
+
+    expect(eventFromDraft(noEnd, DAY, ID)).not.toHaveProperty("endAt");
   });
 });

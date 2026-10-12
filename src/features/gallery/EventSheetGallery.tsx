@@ -63,6 +63,7 @@ export function EventSheetGallery({ season }: { season: Season }) {
           compact={open.compact}
           onClose={close}
           onDelete={close}
+          onSave={close}
         />
       )}
     </GalleryGroup>

@@ -14,6 +14,7 @@ import { TextInput } from "@/ui/TextInput";
 import { TimeField } from "@/ui/TimeField";
 import { TimePicker } from "@/ui/TimePicker";
 import {
+  canSave,
   type EventDraft,
   type EventSheetAction,
   type EventSheetState,
@@ -32,6 +33,7 @@ type EventSheetProps = {
   compact?: boolean;
   onClose: () => void;
   onDelete: () => void;
+  onSave: (draft: EventDraft) => void;
 };
 
 const words = copy.events.sheet;
@@ -65,13 +67,13 @@ const ACTIONS_ROOM = 96;
 
 const REVEAL_GAP = 16;
 
-function useRevealPicker(picker: TimeFieldName | null) {
+function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
   const times = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const dialog = times.current?.closest("[role=dialog]");
 
-    if (picker === null || !times.current || !dialog) return;
+    if ((picker === null && !endError) || !times.current || !dialog) return;
 
     const box = dialog.getBoundingClientRect();
     const row = times.current.getBoundingClientRect();
@@ -79,7 +81,7 @@ function useRevealPicker(picker: TimeFieldName | null) {
     if (row.bottom <= box.bottom - ACTIONS_ROOM && row.top >= box.top) return;
 
     dialog.scrollTop += row.top - box.top - REVEAL_GAP;
-  }, [picker]);
+  }, [picker, endError]);
 
   return times;
 }
@@ -94,7 +96,7 @@ type TimesProps = {
 function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
   const { draft, picker } = state;
 
-  const times = useRevealPicker(picker);
+  const times = useRevealTimes(picker, state.endError);
 
   const toggle = (field: TimeFieldName) => () => dispatch({ type: "toggle", field });
 
@@ -192,17 +194,20 @@ export function EventSheet({
   compact,
   onClose,
   onDelete,
+  onSave,
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
 
   const { draft } = state;
+
+  const save = () => (canSave(draft) ? onSave(draft) : dispatch({ type: "save" }));
 
   const endActions = (
     <>
       <Button variant="secondary" onClick={onClose} xstyle={styles.cancel}>
         {words.cancel}
       </Button>
-      <Button>{primaryLabel(mode, offline)}</Button>
+      <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
     </>
   );
 

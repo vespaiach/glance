@@ -31,6 +31,10 @@ export function minutesOfDay(date: Date): number {
   return date.getHours() * 60 + date.getMinutes();
 }
 
+export function atMinute(day: Date, minutes: number): Date {
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
+}
+
 export function timeParts(minutes: number, clock: Clock): TimeParts {
   const hours = Math.floor(minutes / 60);
   const mm = pad(minutes % 60);

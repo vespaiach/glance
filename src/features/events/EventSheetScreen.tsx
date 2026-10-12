@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useEvent, useEventsRepo } from "@/data/repos";
+import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
 import { formatDayTitle, parseLocalDate } from "@/domain/time";
 import { useBreakpoint } from "@/shell/breakpoint";
@@ -12,7 +14,9 @@ import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
 import { EventSheet } from "./components/EventSheet";
 import {
   draftFromEvent,
+  type EventDraft,
   type EventSheetState,
+  eventFromDraft,
   eventSwatches,
   initialEventSheet,
   newEventDraft,
@@ -21,12 +25,15 @@ import {
 type SheetFrameProps = {
   mode: "new" | "edit";
   day: Date;
+  id: string;
   initial: EventSheetState;
   onDelete: () => void;
 };
 
-function SheetFrame({ mode, day, initial, onDelete }: SheetFrameProps) {
+function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
+
+  const events = useEventsRepo();
 
   const { clock } = useAccountSettings();
 
@@ -35,6 +42,11 @@ function SheetFrame({ mode, day, initial, onDelete }: SheetFrameProps) {
   const { online } = useNetwork();
 
   const breakpoint = useBreakpoint();
+
+  const onSave = (draft: EventDraft) => {
+    close();
+    void events.put(eventFromDraft(draft, day, id));
+  };
 
   return (
     <EventSheet
@@ -47,6 +59,7 @@ function SheetFrame({ mode, day, initial, onDelete }: SheetFrameProps) {
       compact={breakpoint === "phone"}
       onClose={close}
       onDelete={onDelete}
+      onSave={onSave}
     />
   );
 }
@@ -67,6 +80,7 @@ function EditEventSheet({ event, time }: EditProps) {
     <SheetFrame
       mode="edit"
       day={new Date(event.startAt)}
+      id={event.id}
       initial={initialEventSheet(draftFromEvent(event), time)}
       onDelete={onDelete}
     />
@@ -82,10 +96,13 @@ function LoadedEventSheet({ id, time }: { id: string; time?: TimeFixture }) {
 function NewEventSheet({ day, time }: { day: string; time?: TimeFixture }) {
   const now = useNow("minute");
 
+  const [id] = useState(() => uuidv7(now));
+
   return (
     <SheetFrame
       mode="new"
       day={parseLocalDate(day)}
+      id={id}
       initial={initialEventSheet(newEventDraft(now), time)}
       onDelete={() => {}}
     />

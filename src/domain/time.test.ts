@@ -1,4 +1,5 @@
 import {
+  atMinute,
   formatClock,
   formatDayTitle,
   formatHour,
@@ -71,6 +72,10 @@ describe("time", () => {
 
   it("TIME-01 minutesOfDay reads the local time of day", () => {
     expect(minutesOfDay(new Date(2026, 9, 9, 10, 41, 59))).toBe(at(10, 41));
+  });
+
+  it("D15 atMinute puts minutes of the day on that local day", () => {
+    expect(atMinute(new Date(2026, 9, 9, 18, 5), at(13, 30))).toEqual(new Date(2026, 9, 9, 13, 30));
   });
 
   it("TIME-01 localDateKey and parseLocalDate round-trip a local date", () => {

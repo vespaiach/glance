@@ -1,7 +1,13 @@
 import { copy } from "@/copy";
-import { defaultEnd, defaultTimes, type EventTimes, moveStart } from "@/domain/eventTimes";
+import {
+  defaultEnd,
+  defaultTimes,
+  type EventTimes,
+  endsAfterStart,
+  moveStart,
+} from "@/domain/eventTimes";
 import type { CalendarEvent, Season, Tone } from "@/domain/schemas";
-import { minutesOfDay } from "@/domain/time";
+import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
 
 export type { TimeFixture };
@@ -29,6 +35,7 @@ export type EventSheetAction =
   | { type: "toggle"; field: TimeFieldName }
   | { type: "noEnd" }
   | { type: "done" }
+  | { type: "save" }
   | { type: "askDelete" };
 
 export type SwatchOption = { value: Tone; label: string };
@@ -42,6 +49,21 @@ export function draftFromEvent(event: CalendarEvent): EventDraft {
     ...end,
     location: event.location ?? "",
     tone: event.tone,
+  };
+}
+
+export function eventFromDraft(draft: EventDraft, day: Date, id: string): CalendarEvent {
+  const location = draft.location.trim();
+
+  const end = draft.end === undefined ? {} : { endAt: atMinute(day, draft.end).toISOString() };
+
+  return {
+    id,
+    title: draft.title.trim(),
+    startAt: atMinute(day, draft.start).toISOString(),
+    ...end,
+    ...(location === "" ? {} : { location }),
+    tone: draft.tone,
   };
 }
 
@@ -84,6 +106,22 @@ export function initialEventSheet(draft: EventDraft, time?: TimeFixture): EventS
   };
 }
 
+function saveErrors(draft: EventDraft) {
+  return { titleError: draft.title.trim() === "", endError: !endsAfterStart(draft) };
+}
+
+export function canSave(draft: EventDraft): boolean {
+  const { titleError, endError } = saveErrors(draft);
+
+  return !titleError && !endError;
+}
+
+function failedSave(state: EventSheetState): EventSheetState {
+  const errors = saveErrors(state.draft);
+
+  return { ...state, ...errors, picker: errors.endError ? null : state.picker };
+}
+
 function edited(state: EventSheetState, draft: EventDraft): EventSheetState {
   return { ...state, draft, titleError: false, endError: false };
 }
@@ -123,6 +161,8 @@ export function eventSheetReducer(
       return { ...edited(state, withoutEnd(draft)), picker: null };
     case "done":
       return { ...state, picker: null };
+    case "save":
+      return failedSave(state);
     case "askDelete":
       return { ...state, confirming: true };
   }

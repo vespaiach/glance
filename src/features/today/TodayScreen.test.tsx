@@ -1,9 +1,11 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
 import type { CalendarEvent, Photo } from "@/domain/schemas";
+import { EventSheetScreen } from "@/features/events";
+import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { SheetHost, useSheetHost } from "@/shell/SheetHost";
@@ -161,4 +163,32 @@ test("TODAY-09 Add note opens New note", async () => {
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
     JSON.stringify({ kind: "newnote" }),
   );
+});
+
+test("EVT-07 an event added from Today shows in the schedule at once", async () => {
+  await store.db.events.put(synced(CALL));
+
+  const Shell = shellWrapper(store, { frozenAt: NOW });
+
+  render(
+    <Shell>
+      <SeasonProvider>
+        <NetworkProvider>
+          <SheetHost>
+            <TodayScreen />
+            <EventSheetScreen />
+          </SheetHost>
+        </NetworkProvider>
+      </SeasonProvider>
+    </Shell>,
+  );
+
+  await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
+  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.click(
+    within(screen.getByRole("dialog")).getByRole("button", { name: "Add event" }),
+  );
+
+  expect(await screen.findByText("Picnic")).toBeInTheDocument();
+  expect(screen.getByText("Today · 2 events")).toBeInTheDocument();
 });
