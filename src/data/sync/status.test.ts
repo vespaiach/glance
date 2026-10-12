@@ -35,12 +35,19 @@ describe("nextStatus", () => {
   );
 
   it("WX-05 weather goes loading, then failed with its retry time, then idle", () => {
-    const loading = nextStatus(SYNCED, { type: "weather-loading" });
+    const loading = nextStatus(SYNCED, { type: "weather-loading", at: AT });
 
     const failed = nextStatus(loading, { type: "weather-failed", retryAt: RETRY_AT });
 
-    expect(loading.weather).toEqual({ state: "loading" });
+    expect(loading.weather).toEqual({ state: "loading", since: AT });
     expect(failed.weather).toEqual({ state: "failed", retryAt: RETRY_AT });
     expect(nextStatus(failed, { type: "weather-loaded" }).weather).toEqual({ state: "idle" });
+  });
+
+  it("FAIL-03 a failed sync records its retry time and the next sync clears it", () => {
+    const failed = nextStatus(SYNCED, { type: "failed", error: "server", retryAt: RETRY_AT });
+
+    expect(failed).toEqual({ ...SYNCED, error: "server", retryAt: RETRY_AT });
+    expect(nextStatus(failed, { type: "synced", at: AT })).toEqual(SYNCED);
   });
 });

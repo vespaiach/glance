@@ -4,19 +4,19 @@ import { useRouter } from "next/navigation";
 import { fixtureUploads, usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
 import { changeBackground } from "@/domain/background";
 import type { AccountSettings, Photo } from "@/domain/schemas";
-import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { initialUploads, newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useSyncedZone } from "@/shell/sourceZone";
 import { BackgroundView } from "./components/BackgroundView";
 
 const SETTINGS_PATH = "/settings";
 
-function shownPhotos(photos: readonly Photo[] | undefined): ZoneState<Photo> {
-  return readZoneState(photos && newestFirst(photos));
+function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
+  return photos && newestFirst(photos);
 }
 
 export function BackgroundScreen() {
@@ -32,7 +32,7 @@ export function BackgroundScreen() {
 
   const photos = usePhotos();
 
-  const state = shownPhotos(photos);
+  const zone = useSyncedZone(shownPhotos(photos));
 
   const now = useNow("minute");
 
@@ -53,7 +53,9 @@ export function BackgroundScreen() {
     <>
       {picker.input}
       <BackgroundView
-        state={state}
+        state={zone.state}
+        retryIn={zone.retryIn}
+        onRetrySync={zone.retry}
         background={background}
         now={now}
         uploads={uploads.tiles}

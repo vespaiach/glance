@@ -11,6 +11,8 @@ const styles = stylex.create({
   },
 });
 
+const UPDATED_AT = new Date(2026, 9, 9, 9, 32).toISOString();
+
 const panel = {
   title: formatDayTitle(NOW),
   calendarEmpty: false,
@@ -19,6 +21,8 @@ const panel = {
   compact: false,
   onOpenEvent: () => {},
   onAddEvent: () => {},
+  retryIn: 2,
+  onRetry: () => {},
   xstyle: styles.panel,
 } as const;
 
@@ -48,6 +52,7 @@ export function CalendarGallery() {
       <DayPanel state={{ kind: "empty" }} {...panel} calendarEmpty />
       <DayPanel state={{ kind: "loading" }} {...panel} />
       <DayPanel state={{ kind: "failed" }} {...panel} />
+      <DayPanel state={{ kind: "ready", data: TODAY_EVENTS, updatedAt: UPDATED_AT }} {...panel} />
     </GalleryGroup>
   );
 }

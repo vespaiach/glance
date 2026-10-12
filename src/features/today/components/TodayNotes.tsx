@@ -2,19 +2,21 @@ import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
 import type { Note } from "@/domain/schemas";
-import type { Clock } from "@/domain/time";
+import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { noteStampText } from "@/features/notes";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
-import { EmptyState } from "@/ui/EmptyState";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
 import { Zone } from "@/ui/Zone";
 
 type TodayNotesProps = {
   state: ZoneState<Note>;
+  retryIn: number;
+  onRetry: () => void;
   now: Date;
   clock: Clock;
   onOpenNote: (id: string) => void;
@@ -73,10 +75,16 @@ const styles = stylex.create({
   },
 });
 
-function countFor(state: ZoneState<Note>): string {
-  if (state.kind === "loading") return copy.today.notes.loadingCount;
+function countFor(state: ZoneState<Note>, clock: Clock): string {
+  if (state.kind === "loading" || state.kind === "failed") return copy.today.notes.loadingCount;
 
-  return copy.today.notes.count(state.kind === "ready" ? state.data.length : 0);
+  if (state.kind === "empty") return copy.today.notes.count(0);
+
+  const count = copy.today.notes.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
 }
 
 function NotesSkeleton() {
@@ -90,6 +98,8 @@ function NotesSkeleton() {
 
 export function TodayNotes({
   state,
+  retryIn,
+  onRetry,
   now,
   clock,
   onOpenNote,
@@ -100,7 +110,7 @@ export function TodayNotes({
   return (
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
-        <Eyebrow>{countFor(state)}</Eyebrow>
+        <Eyebrow>{countFor(state, clock)}</Eyebrow>
         <Button variant="ghost" iconRight={ArrowRight} onClick={onOpenNotes}>
           {copy.today.notes.allNotes}
         </Button>
@@ -116,7 +126,15 @@ export function TodayNotes({
             </Button>
           </div>
         }
-        failed={<EmptyState icon={StickyNoteGlyph} title={copy.today.unavailable.notes} />}
+        failed={
+          <SourceFailure
+            icon={StickyNoteGlyph}
+            title={copy.today.unavailable.notes}
+            body={copy.zone.failedBody(retryIn)}
+            retryLabel={copy.zone.retry}
+            onRetry={onRetry}
+          />
+        }
       >
         {(notes) => (
           <div {...stylex.props(styles.grid)}>

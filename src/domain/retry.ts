@@ -7,3 +7,9 @@ export function retryDelayMs(failures: number): number {
 
   return minutes * MINUTE_MS;
 }
+
+export function retryMinutes(retryAt: string | undefined, now: Date): number {
+  if (retryAt === undefined) return 1;
+
+  return Math.max(1, Math.ceil((new Date(retryAt).getTime() - now.getTime()) / MINUTE_MS));
+}

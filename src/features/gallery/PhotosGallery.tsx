@@ -41,6 +41,9 @@ const styles = stylex.create({
 
 const base: ViewProps = {
   state: READY,
+  retryIn: 1,
+  onRetrySync: ignore,
+  clock: "12h",
   selected: 1,
   playing: true,
   uploads: [],

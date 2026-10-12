@@ -80,6 +80,8 @@ function settingsBase(season: Season): SettingsProps {
 
 const BACKGROUND_BASE: BackgroundProps = {
   state: { kind: "ready", data: GALLERY_PHOTOS },
+  retryIn: 1,
+  onRetrySync: ignore,
   background: DEFAULT_SETTINGS.background,
   now: NOW,
   uploads: [],

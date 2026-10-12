@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { AccountSettings, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
+import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { conditionText } from "@/features/weather";
 import { radii, space } from "@/theme/tokens.stylex";
@@ -11,12 +12,16 @@ import { Button } from "@/ui/Button";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { EmptyState } from "@/ui/EmptyState";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { WeatherNow } from "@/ui/WeatherNow";
 import { Zone } from "@/ui/Zone";
 
 type TodayWeatherProps = {
   state: ZoneState<Weather>;
+  retryIn: number;
+  onRetry: () => void;
   unit: AccountSettings["tempUnit"];
+  clock: Clock;
   onSetLocation: () => void;
   xstyle?: stylex.StyleXStyles;
 };
@@ -73,7 +78,21 @@ function WeatherSkeleton({ xstyle }: { xstyle?: stylex.StyleXStyles }) {
   );
 }
 
-export function TodayWeather({ state, unit, onSetLocation, xstyle }: TodayWeatherProps) {
+function locationLabel(weather: Weather, updatedAt: string | undefined, clock: Clock): string {
+  if (updatedAt === undefined) return weather.location;
+
+  return copy.zone.updated(weather.location, formatClock(minutesOfDay(new Date(updatedAt)), clock));
+}
+
+export function TodayWeather({
+  state,
+  retryIn,
+  onRetry,
+  unit,
+  clock,
+  onSetLocation,
+  xstyle,
+}: TodayWeatherProps) {
   const temp = (fahrenheit: number) => displayTemp(fahrenheit, unit);
 
   return (
@@ -97,14 +116,21 @@ export function TodayWeather({ state, unit, onSetLocation, xstyle }: TodayWeathe
       }
       failed={
         <WeatherBlock xstyle={xstyle}>
-          <EmptyState icon={CloudOff} title={copy.today.unavailable.weather} />
+          <SourceFailure
+            icon={CloudOff}
+            title={copy.weather.failed.title}
+            body={copy.weather.failed.body(retryIn)}
+            retryLabel={copy.weather.failed.retry}
+            onRetry={onRetry}
+            xstyle={styles.message}
+          />
         </WeatherBlock>
       }
     >
-      {([weather]) =>
+      {([weather], updatedAt) =>
         weather && (
           <WeatherNow
-            location={weather.location}
+            location={locationLabel(weather, updatedAt, clock)}
             temp={temp(weather.current.temp)}
             condition={conditionText(weather.current.condition)}
             icon={weather.current.icon}

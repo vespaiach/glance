@@ -1,10 +1,10 @@
 "use client";
 
 import { type ShownNote, useNotes } from "@/data/repos";
-import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useSheetHost } from "@/shell/SheetHost";
+import { useSyncedZone } from "@/shell/sourceZone";
 import { NoteBoard } from "./components/NoteBoard";
 
 export function NotesScreen() {
@@ -14,11 +14,13 @@ export function NotesScreen() {
 
   const now = useNow("minute");
 
-  const notes: ZoneState<ShownNote> = readZoneState(useNotes(now));
+  const notes = useSyncedZone<ShownNote>(useNotes(now));
 
   return (
     <NoteBoard
-      state={notes}
+      state={notes.state}
+      retryIn={notes.retryIn}
+      onRetry={notes.retry}
       expiry={settings.noteExpiry}
       now={now}
       clock={settings.clock}

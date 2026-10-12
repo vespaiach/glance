@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness } from "@/data/repos/testHarness";
@@ -32,6 +32,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  cleanup();
   vi.unstubAllGlobals();
 
   await store.close();

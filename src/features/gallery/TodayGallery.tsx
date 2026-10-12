@@ -25,6 +25,10 @@ import {
 
 const ignore = () => {};
 
+const UPDATED_AT = new Date(2026, 9, 9, 9, 32).toISOString();
+
+const failure = { retryIn: 1, onRetry: ignore } as const;
+
 const LATER = new Date(2026, 9, 9, 9, 45);
 
 const EVENING = new Date(2026, 9, 9, 19, 0);
@@ -58,6 +62,7 @@ const schedule = {
   onOpenEvent: ignore,
   onAddEvent: ignore,
   onOpenCalendar: ignore,
+  ...failure,
   xstyle: styles.zone,
 } as const;
 
@@ -67,6 +72,15 @@ const notes = {
   onOpenNote: ignore,
   onAddNote: ignore,
   onOpenNotes: ignore,
+  ...failure,
+  xstyle: styles.side,
+} as const;
+
+const weather = {
+  unit: "F",
+  clock: "12h",
+  onSetLocation: ignore,
+  ...failure,
   xstyle: styles.side,
 } as const;
 
@@ -93,27 +107,23 @@ export function TodayGallery({ season }: { season: Season }) {
       <TodaySchedule state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule} compact>
         <PictureOfDayEmpty canUpload={false} onUpload={ignore} />
       </TodaySchedule>
-      <TodayWeather
-        state={{ kind: "ready", data: [TODAY_WEATHER] }}
-        unit="F"
-        onSetLocation={ignore}
-        xstyle={styles.side}
+      <TodaySchedule state={{ kind: "failed" }} {...schedule} />
+      <TodaySchedule
+        state={{ kind: "ready", data: TODAY_EVENTS, updatedAt: UPDATED_AT }}
+        {...schedule}
       />
+      <TodayWeather state={{ kind: "ready", data: [TODAY_WEATHER] }} {...weather} />
+      <TodayWeather state={{ kind: "empty" }} {...weather} />
+      <TodayWeather state={{ kind: "loading" }} {...weather} />
+      <TodayWeather state={{ kind: "failed" }} {...weather} />
       <TodayWeather
-        state={{ kind: "empty" }}
-        unit="F"
-        onSetLocation={ignore}
-        xstyle={styles.side}
-      />
-      <TodayWeather
-        state={{ kind: "loading" }}
-        unit="F"
-        onSetLocation={ignore}
-        xstyle={styles.side}
+        state={{ kind: "ready", data: [TODAY_WEATHER], updatedAt: UPDATED_AT }}
+        {...weather}
       />
       <TodayNotes state={{ kind: "ready", data: TODAY_NOTES }} {...notes} />
       <TodayNotes state={{ kind: "empty" }} {...notes} />
       <TodayNotes state={{ kind: "loading" }} {...notes} />
+      <TodayNotes state={{ kind: "failed" }} {...notes} />
     </GalleryGroup>
   );
 }

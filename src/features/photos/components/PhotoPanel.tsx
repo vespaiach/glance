@@ -14,6 +14,7 @@ import { UploadRow } from "./UploadRow";
 
 type PhotoPanelProps = {
   photos: readonly Photo[];
+  updated?: string;
   selected: number;
   uploads: readonly UploadTile[];
   summary: UploadSummary;
@@ -155,13 +156,18 @@ export function PhotoPanel({
   onUpload,
   onRetry,
   onRemove,
+  updated,
 }: PhotoPanelProps) {
   const row = showsRow(summary, canUpload);
 
   return (
     <div {...stylex.props(styles.root)}>
       <div {...stylex.props(styles.header)}>
-        <Eyebrow>{copy.photos.count(photos.length)}</Eyebrow>
+        <Eyebrow>
+          {updated === undefined
+            ? copy.photos.count(photos.length)
+            : copy.zone.updated(copy.photos.count(photos.length), updated)}
+        </Eyebrow>
         {canUpload && (
           <Button variant="ghost" icon={Upload} disabled={!online} onClick={onUpload}>
             {copy.photos.upload}

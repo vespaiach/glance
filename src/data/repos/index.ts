@@ -40,7 +40,15 @@ export {
   useDisplayBoot,
 } from "./session";
 export { createSettingsRepo, type SettingsRepo, useSettings, useSettingsRepo } from "./settings";
-export { type SyncStatus, useSyncStatus } from "./status";
+export {
+  type Retry,
+  type SourceStatus,
+  type SyncStatus,
+  useRetry,
+  useSourceStatus,
+  useSyncStatus,
+  type WeatherStatus,
+} from "./status";
 export {
   type PhotoVariant,
   RepoProvider,

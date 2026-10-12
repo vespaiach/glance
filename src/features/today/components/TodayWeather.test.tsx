@@ -25,7 +25,14 @@ const WEATHER = {
 
 test("TODAY-08 shows location, temperature, condition words, high/low and feels like", () => {
   render(
-    <TodayWeather state={{ kind: "ready", data: [WEATHER] }} unit="F" onSetLocation={() => {}} />,
+    <TodayWeather
+      retryIn={1}
+      onRetry={() => {}}
+      clock="12h"
+      state={{ kind: "ready", data: [WEATHER] }}
+      unit="F"
+      onSetLocation={() => {}}
+    />,
   );
 
   expect(screen.getByText("Portland, OR")).toBeInTheDocument();
@@ -36,7 +43,14 @@ test("TODAY-08 shows location, temperature, condition words, high/low and feels 
 
 test("WX-02 temperatures follow the Celsius setting", () => {
   render(
-    <TodayWeather state={{ kind: "ready", data: [WEATHER] }} unit="C" onSetLocation={() => {}} />,
+    <TodayWeather
+      retryIn={1}
+      onRetry={() => {}}
+      clock="12h"
+      state={{ kind: "ready", data: [WEATHER] }}
+      unit="C"
+      onSetLocation={() => {}}
+    />,
   );
 
   expect(screen.getByText("18°")).toBeInTheDocument();
@@ -46,7 +60,16 @@ test("WX-02 temperatures follow the Celsius setting", () => {
 test("TODAY-08 with no location Set location goes to Weather", async () => {
   const onSetLocation = vi.fn<() => void>();
 
-  render(<TodayWeather state={{ kind: "empty" }} unit="F" onSetLocation={onSetLocation} />);
+  render(
+    <TodayWeather
+      retryIn={1}
+      onRetry={() => {}}
+      clock="12h"
+      state={{ kind: "empty" }}
+      unit="F"
+      onSetLocation={onSetLocation}
+    />,
+  );
 
   expect(screen.getByText("Weather needs a location")).toBeInTheDocument();
   expect(screen.getByText("Set the city once and the forecast stays current.")).toBeInTheDocument();
@@ -57,7 +80,16 @@ test("TODAY-08 with no location Set location goes to Weather", async () => {
 });
 
 test("LOAD-02 weather still loading shows a skeleton", () => {
-  render(<TodayWeather state={{ kind: "loading" }} unit="F" onSetLocation={() => {}} />);
+  render(
+    <TodayWeather
+      retryIn={1}
+      onRetry={() => {}}
+      clock="12h"
+      state={{ kind: "loading" }}
+      unit="F"
+      onSetLocation={() => {}}
+    />,
+  );
 
   expect(screen.getByRole("status", { name: "Loading weather" })).toBeInTheDocument();
 });

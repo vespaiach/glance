@@ -5,18 +5,19 @@ import { useNextEventAfter, useWeather } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
 import type { CalendarEvent } from "@/domain/schemas";
 import { localDateKey } from "@/domain/time";
-import { weatherZone } from "@/domain/weather";
-import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { useBackgroundPhoto } from "@/shell/background";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { viewPath } from "@/shell/routes";
+import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import { AmbientView } from "./components/AmbientView";
 
-function eventZone(event: CalendarEvent | null | undefined): ZoneState<CalendarEvent> {
-  return readZoneState(event === undefined ? undefined : event ? [event] : []);
+function eventRows(event: CalendarEvent | null | undefined): CalendarEvent[] | undefined {
+  if (event === undefined) return undefined;
+
+  return event ? [event] : [];
 }
 
 export function AmbientScreen() {
@@ -30,11 +31,9 @@ export function AmbientScreen() {
 
   const { showOfflinePill } = useNetwork();
 
-  const located = settings.weatherLocation !== undefined;
+  const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
-  const weather = weatherZone({ located, weather: useWeather(), failed: false });
-
-  const nextEvent = eventZone(useNextEventAfter(localDateKey(time)));
+  const nextEvent = useSyncedZone(eventRows(useNextEventAfter(localDateKey(time))));
 
   const photo = useBackgroundPhoto();
 
@@ -44,9 +43,9 @@ export function AmbientScreen() {
       time={time}
       clock={settings.clock}
       offline={showOfflinePill}
-      weather={weather}
+      weather={weather.state}
       unit={settings.tempUnit}
-      nextEvent={nextEvent}
+      nextEvent={nextEvent.state}
       photoSrc={photo?.src}
       dim={ambientDim(settings.background.dim)}
       onWake={() => router.push(viewPath("today"))}

@@ -3,19 +3,20 @@
 import { useReducer } from "react";
 import { fixtureUploads, usePhotoSrc, usePhotos } from "@/data/repos";
 import type { Photo } from "@/domain/schemas";
-import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
+import { useAccountSettings } from "@/shell/providers/settings";
+import { useSyncedZone } from "@/shell/sourceZone";
 import { PhotosView } from "./components/PhotosView";
 import { newestFirst, slideIndex, slideshow, startSlideshow, wrapIndex } from "./slideshow";
 import { initialUploads } from "./uploads";
 import { usePhotoPicker } from "./usePhotoPicker";
 import { useUploads } from "./useUploads";
 
-function shownPhotos(photos: readonly Photo[] | undefined): ZoneState<Photo> {
-  return readZoneState(photos && newestFirst(photos));
+function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
+  return photos && newestFirst(photos);
 }
 
 export function PhotosScreen() {
@@ -27,7 +28,11 @@ export function PhotosScreen() {
 
   const photoSrc = usePhotoSrc();
 
-  const state = shownPhotos(usePhotos());
+  const { clock: clockFormat } = useAccountSettings();
+
+  const zone = useSyncedZone(shownPhotos(usePhotos()));
+
+  const state = zone.state;
 
   const now = useNow();
 
@@ -48,6 +53,9 @@ export function PhotosScreen() {
       {picker.input}
       <PhotosView
         state={state}
+        retryIn={zone.retryIn}
+        onRetrySync={zone.retry}
+        clock={clockFormat}
         selected={selected}
         playing={show.kind === "playing"}
         uploads={uploads.tiles}

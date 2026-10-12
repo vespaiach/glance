@@ -10,10 +10,10 @@ import type { UploadTile } from "@/features/photos";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
-import { EmptyState } from "@/ui/EmptyState";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { PillTabs } from "@/ui/PillTabs";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 import { backgroundLayout } from "../layout";
 import { BackgroundOptions } from "./BackgroundOptions";
@@ -23,6 +23,8 @@ type Background = AccountSettings["background"];
 
 type BackgroundViewProps = {
   state: ZoneState<Photo>;
+  retryIn: number;
+  onRetrySync: () => void;
   background: Background;
   now: Date;
   uploads: readonly UploadTile[];
@@ -37,7 +39,10 @@ type BackgroundViewProps = {
   onRemove: (id: string) => void;
 };
 
-type PhotosProps = Omit<BackgroundViewProps, "state" | "onBack" | "breakpoint"> & {
+type PhotosProps = Omit<
+  BackgroundViewProps,
+  "state" | "retryIn" | "onRetrySync" | "onBack" | "breakpoint"
+> & {
   photos: readonly Photo[];
   columns: stylex.StyleXStyles;
 };
@@ -135,7 +140,14 @@ function readyPhotos(state: ZoneState<Photo>): readonly Photo[] {
   return state.kind === "ready" ? state.data : [];
 }
 
-export function BackgroundView({ state, breakpoint, onBack, ...picker }: BackgroundViewProps) {
+export function BackgroundView({
+  state,
+  retryIn,
+  onRetrySync,
+  breakpoint,
+  onBack,
+  ...picker
+}: BackgroundViewProps) {
   const layout = backgroundLayout(breakpoint);
 
   const { background, now, photoSrc, onChange } = picker;
@@ -161,7 +173,15 @@ export function BackgroundView({ state, breakpoint, onBack, ...picker }: Backgro
           state={state}
           loading={<ThumbsSkeleton columns={layout.thumbs} />}
           empty={<Photos {...photos} photos={[]} />}
-          failed={<EmptyState icon={Image} title={copy.background.unavailable} />}
+          failed={
+            <SourceFailure
+              icon={Image}
+              title={copy.background.unavailable}
+              body={copy.zone.failedBody(retryIn)}
+              retryLabel={copy.zone.retry}
+              onRetry={onRetrySync}
+            />
+          }
         >
           {(rows) => <Photos {...photos} photos={rows} />}
         </Zone>

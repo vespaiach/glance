@@ -12,7 +12,9 @@ export type RepoStore = {
   accountId: string;
   account: StoreAccount;
   now: () => Date;
+  startedAt: Date;
   nudge: () => unknown;
+  refreshWeather: () => unknown;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   upload: Transport["upload"];
   places: Transport["places"];
