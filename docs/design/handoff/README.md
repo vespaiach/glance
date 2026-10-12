@@ -31,14 +31,17 @@ Built only from the bound design system (`_ds/…/`, namespace `KioskDisplayDesi
 - **Weather:** current (temp, condition, high, low, feels like, wind, humidity, UV, sunset), 8 hourly points, 7 days (high, low, condition, precip %).
 - **Notes:** id, text, author, created time, tone, rotation.
 - **Photos:** id, title, date, place, image.
-- **Settings** (persisted): season (Auto or a fixed season), clock 12/24 h, °F/°C, background `{mode, photoId, dim, rotate}`, idle timeout, note expiry, ambient hours.
+- **Location** (one per account): place name, state, coordinates and its time zone. Sets the weather and every displayed time. Unset = device clock.
+- **Settings** (persisted): season (Auto or a fixed season), clock 12/24 h, °F/°C, background `{mode, photoId, dim, rotate}`, idle timeout, note expiry, ambient schedule `{mode: same|split|off, all: {start, end}, wknd: {start, end}}` (minutes of the day; `wknd` = Fri & Sat nights when split; end earlier than start = next morning; start ≠ end). Default every night 6:00 PM – 7:30 AM; weekend default 9:00 PM – 9:00 AM.
 - **Account:** one family = one account = one email. Stores the person's name and email. Screen label is "Glance".
 
 ## Mock data to replace
 Mock data is in the `<script data-dc-script>` block at the end of `Glance.dc.html`. These values are hardcoded in it:
 - The date and time (Fri Oct 9 2026, 10:41 AM; Ambient 7:12 PM).
 - The current event: "Design review" is "now" by id.
-- Event times are minutes of the day on a fixed Oct 2026 date, not real timestamps.
+- Event times are minutes of the day on a fixed Oct 2026 date, not real timestamps. Production stores moments in time and shows them in the location's time zone.
+- Time zones: a small state → zone table and a fixed offset from Pacific (October values). Production needs a real place → time zone lookup.
+- Use my location: no real device location; it always finds Portland, OR after 2.6 s (`geo=` forces a failure).
 - The weather condition and icon ("Partly cloudy"), plus Ambient's "Light rain · Sat 80% rain".
 - "Maria", "maria@example.com" (the known account), the sign-in link expiry, upload progress and place search.
 - Photos come from picsum.photos (seeded). Uploads are local to the tab, progress is simulated.
@@ -52,13 +55,14 @@ These are listed in the behavior notes:
 - Phone upload.
 - Changing name or email, deleting the account.
 - Weather alert trigger rules and forecast detail.
-- Editing the weather location from Settings.
+- Places outside the US, a time zone picker separate from the place, several locations per account, per-screen locations.
 - Guided setup, multi-screen management and roles.
 - Session expiry and app lock.
 - Burn-in protection.
+- Different ambient hours per weekday beyond Sun – Thu / Fri & Sat, and holiday exceptions.
 
 ## Files
-- `Glance.dc.html` — the app. URL params open any state: `view=today|calendar|weather|notes|photos|settings|background|ambient|signin`, `bg=photo`, `sheet=event|newevent|note|newnote`, `time=start|end|error|noend`, `clock=24`, `season=spring|summer|fall|winter`, `empty=1`, `net=loading|offline|wxerror`, `kb=1`, `signin=form|sending|sent|name|phone|expired|offline|done` (+ `on=link`, `acct=returning`), `upload=one|progress|error|offline`, `wx=searching|unknown|choose`.
+- `Glance.dc.html` — the app. URL params open any state: `view=today|calendar|weather|notes|photos|settings|background|ambient|signin` (+ `sub=location|ambient` with `view=settings`; `amb=same|split|off`, `pick=all.s|all.e|wknd.s|wknd.e` on the Ambient screen page), `bg=photo`, `sheet=event|newevent|note|newnote`, `time=start|end|error|noend`, `clock=24`, `season=spring|summer|fall|winter`, `empty=1`, `net=loading|offline|wxerror`, `kb=1`, `signin=form|sending|sent|name|location|phone|expired|offline|done` (+ `on=link`, `acct=returning`), `upload=one|progress|error|offline`, `wx=searching|unknown|choose|locating|denied|unavailable|outside|lookup|tz|savefail`, `geo=denied|unavailable|outside|lookup|none`.
 - `Glance - Behavior Notes.dc.html` — behavior and states.
 - `Glance Frames.dc.html` + `Glance Frames - *.dc.html` — boards by feature.
 - `_ds/` — design system tokens, styles and compiled components.

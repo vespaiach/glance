@@ -50,14 +50,14 @@ test("SIGNIN-01 the hero shows the wordmark, the season and month, the clock and
   ).toBeInTheDocument();
 });
 
-test("SIGNIN-01 the email form asks for an email with Send sign-in link and Continue as demo", () => {
+test("SIGNIN-01 the email form asks for an email with Send sign-in link and Continue as guests", () => {
   renderView({ step: "form", email: "" });
 
   expect(screen.getByText("One account per family")).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Sign in or get started" })).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveAttribute("placeholder", "name@example.com");
   expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
-  expect(screen.getByRole("button", { name: "Continue as demo" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Continue as guests" })).toBeInTheDocument();
   expect(screen.getByText(LOCK)).toBeInTheDocument();
 });
 
@@ -89,7 +89,7 @@ test("SIGNIN-03 sending disables the button, hides demo and shows the sending ti
   renderView({ step: "sending", email: EMAIL });
 
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
-  expect(screen.queryByRole("button", { name: "Continue as demo" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(`Sending a link to ${EMAIL}`);
   expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
   expect(screen.getByText(LOCK)).toBeInTheDocument();
@@ -126,18 +126,18 @@ test("SIGNIN-04 I opened the link is hidden outside demo builds", () => {
   expect(screen.queryByRole("button", { name: "I opened the link" })).not.toBeInTheDocument();
 });
 
-test("SIGNIN-05 Continue as demo goes out as onDemo", async () => {
+test("SIGNIN-05 Continue as guests goes out as onDemo", async () => {
   const { onDemo } = renderView({ step: "form", email: "" });
 
-  await userEvent.click(screen.getByRole("button", { name: "Continue as demo" }));
+  await userEvent.click(screen.getByRole("button", { name: "Continue as guests" }));
 
   expect(onDemo).toHaveBeenCalled();
 });
 
-test("SIGNIN-05 Continue as demo is hidden outside demo builds", () => {
+test("SIGNIN-05 Continue as guests is hidden outside demo builds", () => {
   renderView({ step: "form", email: "" }, { demo: false });
 
-  expect(screen.queryByRole("button", { name: "Continue as demo" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
 });
 
 test("SIGNIN-06 What's your name asks for a name for the new account", async () => {

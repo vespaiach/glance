@@ -410,10 +410,10 @@ test("SIGNIN-04 signin=sent opens Check your email for the fixture account", () 
   expect(screen.getByText("maria@example.com")).toBeInTheDocument();
 });
 
-test("SIGNIN-05 Continue as demo opens Today", async () => {
+test("SIGNIN-05 Continue as guests opens Today", async () => {
   renderScreen();
 
-  await user().click(screen.getByRole("button", { name: "Continue as demo" }));
+  await user().click(screen.getByRole("button", { name: "Continue as guests" }));
 
   expect(navigation.push).toHaveBeenCalledWith("/today");
 });

@@ -42,7 +42,7 @@ class Component extends DCLogic {
       ['B', 'Sending link', 'signin=sending'],
       ['C', 'Offline · link can’t be sent', 'signin=offline'],
       ['D', 'Check your email · same for new and known emails', 'signin=sent'],
-      ['E', 'First sign-in · What’s your name? (device that opened the link)', 'signin=name'],
+      ['E', 'First sign-in · What’s your name? (device that opened the link) · then Where is this screen? (M)', 'signin=name'],
       ['F', 'First sign-in · name with keyboard', 'signin=name&kb=1'],
       ['G', 'Waiting screen · finish on your phone', 'signin=phone'],
       ['H', 'Waiting screen · link expired', 'signin=expired'],
@@ -50,6 +50,12 @@ class Component extends DCLogic {
       ['J', 'Signed in · new account', 'signin=done'],
       ['K', 'Signed in · returning', 'signin=done&acct=returning'],
       ['L', 'Settings · account card and sign out', 'view=settings'],
+      ['M', 'First sign-in · Where is this screen?', 'signin=location'],
+      ['N', 'First sign-in · location · locating', 'signin=location&wx=locating'],
+      ['O', 'First sign-in · location · several matches', 'signin=location&wx=choose'],
+      ['P', 'First sign-in · location · location is off', 'signin=location&wx=denied'],
+      ['Q', 'First sign-in · location · couldn’t save', 'signin=location&wx=savefail'],
+      ['R', 'First sign-in · location with keyboard', 'signin=location&kb=1'],
     ];
     return {
       screens: screens.map(([id, name, q]) => ({
