@@ -2,12 +2,14 @@ import "server-only";
 import type Database from "better-sqlite3";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
+import type { Clocked } from "./deps";
 
 export type AccountRow = {
   id: string;
   email: string;
   name: string | null;
   time_zone: string;
+  setup_done_at: string | null;
   created_at: string;
 };
 
@@ -33,4 +35,11 @@ export function saveName(
   const row = accountById(db, accountId);
 
   return row ? ok(toAccount(row)) : err("not-found");
+}
+
+export function finishSetup({ db, now }: Clocked, accountId: string): void {
+  db.prepare("UPDATE accounts SET setup_done_at = ? WHERE id = ? AND setup_done_at IS NULL").run(
+    now().toISOString(),
+    accountId,
+  );
 }

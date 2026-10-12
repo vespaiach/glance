@@ -6,7 +6,7 @@ const CHOICES = {
   time: ["start", "end", "error", "noend"],
   season: ["spring", "summer", "fall", "winter"],
   net: ["loading", "offline", "wxerror"],
-  signin: ["form", "sending", "sent", "name", "phone", "expired", "offline", "done"],
+  signin: ["form", "sending", "sent", "name", "location", "phone", "expired", "offline", "done"],
   on: ["link"],
   acct: ["returning"],
   upload: ["one", "progress", "error", "offline"],

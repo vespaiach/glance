@@ -12,6 +12,7 @@ import {
   GALLERY_TZ,
   gallery,
   galleryPhotoSrc,
+  gallerySetup,
   NOW,
   PLACES,
   UPLOAD_SAMPLES,
@@ -80,19 +81,6 @@ const [PORTLAND, MAINE] = PLACES;
 
 const SOCCER = { title: "Soccer practice", startAt: "2026-10-09T22:30:00.000Z" };
 
-function setupFor(state: WeatherSetupState, canLocate = true): LocationProps["setup"] {
-  return {
-    state,
-    canLocate,
-    type: ignore,
-    submit: ignore,
-    pick: ignore,
-    locate: ignore,
-    confirm: ignore,
-    keep: ignore,
-  };
-}
-
 const CONFIRM: WeatherSetupState = MAINE
   ? { step: "confirm-zone", draft: "Portland", place: MAINE }
   : { step: "editing", draft: "" };
@@ -102,22 +90,22 @@ const LOCATION_DEMOS: readonly Demo<LocationProps>[] = [
   { key: "not-set", location: undefined },
   {
     key: "searching",
-    setup: setupFor({ step: "searching", draft: "Portland", query: "Portland" }),
+    setup: gallerySetup({ step: "searching", draft: "Portland", query: "Portland" }),
   },
-  { key: "choose", setup: setupFor({ step: "choosing", draft: "Portland", matches: PLACES }) },
-  { key: "locating", setup: setupFor({ step: "locating", draft: "" }) },
-  { key: "denied", setup: setupFor({ step: "editing", draft: "", notice: "denied" }, false) },
-  { key: "outside", setup: setupFor({ step: "editing", draft: "", notice: "outside" }) },
-  { key: "confirm", setup: setupFor(CONFIRM) },
+  { key: "choose", setup: gallerySetup({ step: "choosing", draft: "Portland", matches: PLACES }) },
+  { key: "locating", setup: gallerySetup({ step: "locating", draft: "" }) },
+  { key: "denied", setup: gallerySetup({ step: "editing", draft: "", notice: "denied" }, false) },
+  { key: "outside", setup: gallerySetup({ step: "editing", draft: "", notice: "outside" }) },
+  { key: "confirm", setup: gallerySetup(CONFIRM) },
   { key: "phone", phone: true, breakpoint: "phone" },
-  { key: "phone-confirm", phone: true, breakpoint: "phone", setup: setupFor(CONFIRM) },
+  { key: "phone-confirm", phone: true, breakpoint: "phone", setup: gallerySetup(CONFIRM) },
 ];
 
 const LOCATION_BASE: LocationProps = {
   location: PORTLAND,
   now: NOW,
   clock: "12h",
-  setup: setupFor({ step: "editing", draft: "" }),
+  setup: gallerySetup({ step: "editing", draft: "" }),
   example: SOCCER,
   breakpoint: "wide",
   onBack: ignore,

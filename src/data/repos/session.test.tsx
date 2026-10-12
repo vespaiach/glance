@@ -279,7 +279,7 @@ describe("signInAuthFor", () => {
   it("tech§6.5 a demo build signs in through the fixture transport", async () => {
     expect(await signInAuthFor(true, { signin: "phone" }).status()).toEqual({
       ok: true,
-      value: { state: "needs-name-elsewhere" },
+      value: { state: "finishing-elsewhere" },
     });
   });
 

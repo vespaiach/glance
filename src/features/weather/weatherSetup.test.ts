@@ -307,4 +307,31 @@ describe("weather setup reducer", () => {
   it("LOC-09 wx=tz is the plain card where no zone is asked", () => {
     expect(initialWeatherSetup("tz", SEARCH)).toEqual(editing(""));
   });
+
+  it.each<WeatherSetupState>([
+    searching("Portland"),
+    { step: "choosing", draft: "Portland", matches: PORTLANDS },
+    { step: "locating", draft: "Portland" },
+  ])("SIGNIN-14 Skip for now cancels $step and keeps the draft", (state) => {
+    expect(weatherSetupReducer(state, { type: "cancel" })).toEqual(editing("Portland"));
+  });
+
+  it("SIGNIN-14 Skip for now keeps the card as it is", () => {
+    const failed: WeatherSetupState = {
+      step: "editing",
+      draft: "Portland",
+      error: "save-failed",
+      place: MAINE,
+    };
+
+    expect(weatherSetupReducer(failed, { type: "cancel" })).toBe(failed);
+  });
+
+  it("SIGNIN-14 a failed skip shows Couldn't save with the draft kept", () => {
+    expect(weatherSetupReducer(editing("Port"), { type: "skip-failed" })).toEqual({
+      step: "editing",
+      draft: "Port",
+      error: "save-failed",
+    });
+  });
 });

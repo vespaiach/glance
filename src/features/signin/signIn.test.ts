@@ -14,6 +14,8 @@ const sent: SignInState = { step: "sent", email: "maria@example.com" };
 
 const phone: SignInState = { step: "phone", email: "maria@example.com" };
 
+const locating: SignInState = { step: "location", account: ACCOUNT, returning: false };
+
 describe("sign-in reducer", () => {
   it("SIGNIN-01 starts on the empty email form", () => {
     expect(initialSignIn({}, ACCOUNT)).toEqual(form(""));
@@ -27,6 +29,7 @@ describe("sign-in reducer", () => {
     ["name", { step: "name", email: "maria@example.com", draft: "" }],
     ["phone", { step: "phone", email: "maria@example.com" }],
     ["expired", { step: "expired", email: "maria@example.com", onLink: false }],
+    ["location", { step: "location", account: ACCOUNT, returning: false }],
     ["done", { step: "done", name: "Maria", returning: false }],
   ] as const)("tech§4.2 signin=%s opens its state with the fixture account", (signin, state) => {
     expect(initialSignIn({ signin }, ACCOUNT)).toEqual(state);
@@ -159,12 +162,17 @@ describe("sign-in reducer", () => {
 
   it("SIGNIN-07 a link opened elsewhere on a new account shows Finish on your phone", () => {
     expect(
-      signInReducer(sent, { type: "status", status: { state: "needs-name-elsewhere" } }),
+      signInReducer(sent, { type: "status", status: { state: "finishing-elsewhere" } }),
     ).toEqual({ step: "phone", email: "maria@example.com" });
   });
 
   it.each([sent, phone])("SIGNIN-09 a signed-in answer welcomes the account ($step)", (state) => {
-    const status = { state: "signed-in", account: ACCOUNT, returning: true } as const;
+    const status = {
+      state: "signed-in",
+      account: ACCOUNT,
+      returning: true,
+      setupDone: true,
+    } as const;
 
     expect(signInReducer(state, { type: "status", status })).toEqual({
       step: "done",
@@ -205,7 +213,7 @@ describe("sign-in reducer", () => {
     expect(signInReducer(saving, { type: "submit-name" })).toBe(saving);
   });
 
-  it("SIGNIN-09 a saved name welcomes the new account", () => {
+  it("SIGNIN-14 a saved name goes on to Where is this screen?", () => {
     const saving: SignInState = {
       step: "name",
       email: "ana@example.com",
@@ -213,9 +221,64 @@ describe("sign-in reducer", () => {
       saving: true,
     };
 
-    expect(
-      signInReducer(saving, { type: "named", account: { ...ACCOUNT, name: "Ana Lee" } }),
-    ).toEqual({ step: "done", name: "Ana Lee", returning: false });
+    const account = { ...ACCOUNT, name: "Ana Lee" };
+
+    expect(signInReducer(saving, { type: "named", account })).toEqual({
+      step: "location",
+      account,
+      returning: false,
+    });
+  });
+
+  it.each([{ step: "opening" }, sent] as const)(
+    "SIGNIN-14 a named account whose location step never ended asks for it ($step)",
+    (state) => {
+      const status = {
+        state: "signed-in",
+        account: ACCOUNT,
+        returning: true,
+        setupDone: false,
+      } as const;
+
+      expect(signInReducer(state, { type: "status", status })).toEqual({
+        step: "location",
+        account: ACCOUNT,
+        returning: true,
+      });
+    },
+  );
+
+  it("SIGNIN-14 Skip for now starts ending the step", () => {
+    expect(signInReducer(locating, { type: "skip" })).toEqual({ ...locating, skipping: true });
+  });
+
+  it("SIGNIN-14 Skip for now does nothing while a skip is on its way", () => {
+    const skipping: SignInState = { ...locating, skipping: true };
+
+    expect(signInReducer(skipping, { type: "skip" })).toBe(skipping);
+  });
+
+  it("SIGNIN-14 a failed skip stays on the step", () => {
+    expect(signInReducer({ ...locating, skipping: true }, { type: "skip-failed" })).toEqual(
+      locating,
+    );
+  });
+
+  it.each([locating, { ...locating, skipping: true } as const])(
+    "SIGNIN-09 the step ending welcomes the account ($skipping)",
+    (state) => {
+      expect(signInReducer(state, { type: "setup-done" })).toEqual({
+        step: "done",
+        name: "Maria",
+        returning: false,
+      });
+    },
+  );
+
+  it("SIGNIN-14 setup answers are ignored outside the location step", () => {
+    expect(signInReducer(sent, { type: "setup-done" })).toBe(sent);
+    expect(signInReducer(sent, { type: "skip" })).toBe(sent);
+    expect(signInReducer(sent, { type: "skip-failed" })).toBe(sent);
   });
 
   it("SIGNIN-06 a failed name save keeps the name and says so", () => {
@@ -240,7 +303,12 @@ describe("sign-in reducer", () => {
   });
 
   it("SIGNIN-09 a link opened for a named account welcomes it", () => {
-    const status = { state: "signed-in", account: ACCOUNT, returning: true } as const;
+    const status = {
+      state: "signed-in",
+      account: ACCOUNT,
+      returning: true,
+      setupDone: true,
+    } as const;
 
     expect(signInReducer({ step: "opening" }, { type: "status", status })).toEqual({
       step: "done",
@@ -254,7 +322,7 @@ describe("sign-in reducer", () => {
     (state) => {
       const account = { ...ACCOUNT, email: "ana@example.com", name: null };
 
-      const status = { state: "signed-in", account, returning: false } as const;
+      const status = { state: "signed-in", account, returning: false, setupDone: false } as const;
 
       expect(signInReducer(state, { type: "status", status })).toEqual({
         step: "name",

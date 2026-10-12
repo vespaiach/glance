@@ -9,8 +9,8 @@ import { hashToken } from "./tokens";
 export type AuthStatusBody =
   | { state: "waiting" }
   | { state: "expired"; email?: string }
-  | { state: "needs-name-elsewhere" }
-  | { state: "signed-in"; account: Account; returning: boolean };
+  | { state: "finishing-elsewhere" }
+  | { state: "signed-in"; account: Account; returning: boolean; setupDone: boolean };
 
 export type StatusAnswer = { status: AuthStatusBody; sessionToken?: string };
 
@@ -48,7 +48,9 @@ function linkStatus(deps: Clocked, link: LinkRow): StatusAnswer {
 
   if (account === undefined) return { status: expired(link.email) };
 
-  if (account.name === null) return { status: { state: "needs-name-elsewhere" } };
+  if (account.name === null || account.setup_done_at === null) {
+    return { status: { state: "finishing-elsewhere" } };
+  }
 
   return claim(deps, link, account, link.used_at);
 }
@@ -68,7 +70,12 @@ function claim({ db }: Clocked, link: LinkRow, account: AccountRow, usedAt: stri
 }
 
 function signedIn(account: AccountRow, since: string): AuthStatusBody {
-  return { state: "signed-in", account: toAccount(account), returning: account.created_at < since };
+  return {
+    state: "signed-in",
+    account: toAccount(account),
+    returning: account.created_at < since,
+    setupDone: account.setup_done_at !== null,
+  };
 }
 
 function expired(email: string | undefined): AuthStatusBody {

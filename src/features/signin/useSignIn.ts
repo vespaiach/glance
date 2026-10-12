@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import type { AuthStatus, SignInAuth } from "@/data/repos";
-import type { Account } from "@/domain/schemas";
+import type { Account, LocationRequest, WeatherLocation } from "@/domain/schemas";
+import { useWeatherSetup, type WeatherSetupFlow, type WeatherSetupState } from "@/features/weather";
 import { type FixtureAccount, type SignInAction, type SignInState, signInReducer } from "./signIn";
 
 export const POLL_MS = 2_000;
@@ -9,6 +10,7 @@ export const OPEN_TODAY_MS = 2_200;
 
 type Options = {
   initial: SignInState;
+  initialSetup: () => WeatherSetupState;
   auth: SignInAuth;
   fixture: FixtureAccount;
   onSignedIn: () => void;
@@ -16,6 +18,7 @@ type Options = {
 
 export type SignInFlow = {
   state: SignInState;
+  setup: WeatherSetupFlow;
   act(action: SignInAction): void;
   openedLink(): void;
   finishedOnPhone(): void;
@@ -94,7 +97,13 @@ function useMounted() {
   return mounted;
 }
 
-export function useSignIn({ initial, auth, fixture, onSignedIn }: Options): SignInFlow {
+export function useSignIn({
+  initial,
+  initialSetup,
+  auth,
+  fixture,
+  onSignedIn,
+}: Options): SignInFlow {
   const [state, dispatch] = useReducer(signInReducer, initial);
 
   const mounted = useMounted();
@@ -108,11 +117,41 @@ export function useSignIn({ initial, auth, fixture, onSignedIn }: Options): Sign
   const statusAnswered = (status: AuthStatus) => {
     dispatch({ type: "status", status });
 
-    if (status.state === "signed-in" && status.account.name !== null) finish(status.account);
+    if (status.state !== "signed-in" || !status.setupDone) return;
+
+    if (status.account.name !== null) finish(status.account);
   };
 
   const signedIn = (account: Account, returning: boolean) =>
-    statusAnswered({ state: "signed-in", account, returning });
+    statusAnswered({ state: "signed-in", account, returning, setupDone: true });
+
+  const endSetup = async (account: Account, request: LocationRequest) => {
+    const answer = await auth.location(request);
+
+    if (!answer.ok) return false;
+
+    dispatch({ type: "setup-done" });
+
+    finish(account);
+
+    return true;
+  };
+
+  const setup = useWeatherSetup({
+    initial: initialSetup,
+    source: auth,
+    save: (place: WeatherLocation) =>
+      state.step === "location" ? endSetup(state.account, { place }) : Promise.resolve(false),
+  });
+
+  const skip = (account: Account) =>
+    setup.skip(async () => {
+      const ended = await endSetup(account, { skip: true });
+
+      if (!ended) dispatch({ type: "skip-failed" });
+
+      return ended;
+    });
 
   usePolling(isWaiting(state), auth.status, statusAnswered);
 
@@ -134,8 +173,6 @@ export function useSignIn({ initial, auth, fixture, onSignedIn }: Options): Sign
     if (!answer.ok) return dispatch({ type: "name-failed" });
 
     dispatch({ type: "named", account: answer.value });
-
-    finish(answer.value);
   };
 
   const act = (action: SignInAction) => {
@@ -148,6 +185,8 @@ export function useSignIn({ initial, auth, fixture, onSignedIn }: Options): Sign
     if (next.step === "sending") void sendLink(next.email);
 
     if (next.step === "name" && next.saving) void saveName(next.draft);
+
+    if (next.step === "location" && next.skipping) skip(next.account);
   };
 
   const openedLink = () => {
@@ -162,5 +201,5 @@ export function useSignIn({ initial, auth, fixture, onSignedIn }: Options): Sign
     if (state.step === "phone") signedIn(fixture, false);
   };
 
-  return { state, act, openedLink, finishedOnPhone };
+  return { state, setup, act, openedLink, finishedOnPhone };
 }

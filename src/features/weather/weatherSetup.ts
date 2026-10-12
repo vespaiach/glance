@@ -29,7 +29,9 @@ export type WeatherSetupAction =
   | { type: "locate-failed"; reason: LocateFailure }
   | { type: "save-failed"; place: WeatherLocation }
   | { type: "ask-zone"; place: WeatherLocation }
-  | { type: "keep" };
+  | { type: "keep" }
+  | { type: "cancel" }
+  | { type: "skip-failed" };
 
 export type FixtureSearch = {
   query: string;
@@ -91,6 +93,12 @@ function keep(state: WeatherSetupState): WeatherSetupState {
   return { step: "editing", draft: state.draft };
 }
 
+function cancel(state: WeatherSetupState): WeatherSetupState {
+  if (state.step === "editing") return state;
+
+  return { step: "editing", draft: state.draft };
+}
+
 export function weatherSetupReducer(
   state: WeatherSetupState,
   action: WeatherSetupAction,
@@ -113,6 +121,10 @@ export function weatherSetupReducer(
       return { step: "confirm-zone", draft: state.draft, place: action.place };
     case "keep":
       return keep(state);
+    case "cancel":
+      return cancel(state);
+    case "skip-failed":
+      return { step: "editing", draft: state.draft, error: "save-failed" };
   }
 }
 
