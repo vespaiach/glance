@@ -94,7 +94,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 | ID | Status | Task | Extra deps | Covers |
 |---|---|---|---|---|
-| V01 | ⬜ | **Today:** hero states, schedule, picture of the day, weather zone, notes zone, live status changes | — | TODAY-01..11, TIME-02 |
+| V01 | 🔄 ([#24](https://github.com/vespaiach/glance/pull/24)) | **Today:** hero states, schedule, picture of the day, weather zone, notes zone, live status changes | — | TODAY-01..11, TIME-02 |
 | V02 | ⬜ | **Calendar:** month block, day list, empty states | — | CAL-01..05 (render) |
 | V03 | ⬜ | **Event sheet:** New/Edit, fields, swatches, delete confirm, time fields | F10 | EVT-01..06, TPK-01..04 |
 | V04 | ⬜ | **Weather:** now, hourly, 7-day, rain banner, setup card + search states | — | WX-01..05, WX-07..09 (states) |
