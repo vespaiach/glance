@@ -3,12 +3,20 @@ import type Database from "better-sqlite3";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
 import { placeLabel } from "../weather/places";
-import type { WeatherFailure, WeatherProvider } from "../weather/provider";
+import type {
+  Coordinates,
+  LocateFailure,
+  PlaceLocator,
+  WeatherFailure,
+  WeatherProvider,
+} from "../weather/provider";
 import type { ServiceDeps } from "./deps";
 
 export type WeatherDeps = ServiceDeps & { provider: WeatherProvider };
 
 export type WeatherError = "no-location" | WeatherFailure;
+
+export type LocateDeps = { provider: WeatherProvider; locator: PlaceLocator };
 
 export const WEATHER_CACHE_MS = 15 * 60 * 1000;
 
@@ -44,6 +52,25 @@ export function searchPlaces(
   query: string,
 ): Promise<Result<WeatherLocation[], WeatherFailure>> {
   return provider.places(query);
+}
+
+export async function locatePlace(
+  { provider, locator }: LocateDeps,
+  position: Coordinates,
+): Promise<Result<WeatherLocation, LocateFailure>> {
+  const at = rounded(position);
+
+  const [place, timeZone] = await Promise.all([locator.placeAt(at), provider.timeZoneAt(at)]);
+
+  if (!place.ok) return place;
+
+  if (!timeZone.ok) return timeZone;
+
+  return ok({ ...place.value, ...at, timeZone: timeZone.value });
+}
+
+function rounded({ lat, lon }: Coordinates): Coordinates {
+  return { lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100 };
 }
 
 function weatherLocation(db: Database.Database, accountId: string): WeatherLocation | undefined {

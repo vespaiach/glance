@@ -7,6 +7,7 @@ import * as v from "valibot";
 import { BUILD_HEADER, isSupportedBuild } from "@/domain/build";
 import { FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
+import { WeatherLocationSchema } from "@/domain/schemas";
 import { appUrl, isAllowedOrigin, requireDisplay, type SignedInDisplay } from "./auth";
 import {
   PHOTO_VARIANTS,
@@ -14,6 +15,7 @@ import {
   type PhotoUpload,
   type PhotoVariant,
 } from "./services/photos";
+import type { Coordinates } from "./weather/provider";
 
 const MIN_CLIENT_BUILD = 1;
 
@@ -114,6 +116,23 @@ export function readPlaceQuery(request: NextRequest): Result<string, "invalid"> 
   const query = request.nextUrl.searchParams.get("q")?.trim();
 
   return query ? ok(query) : err("invalid");
+}
+
+const CoordinatesSchema = v.pick(WeatherLocationSchema, ["lat", "lon"]);
+
+export function readCoordinates(request: NextRequest): Result<Coordinates, "invalid"> {
+  const params = request.nextUrl.searchParams;
+
+  const parsed = v.safeParse(CoordinatesSchema, {
+    lat: coordinate(params.get("lat")),
+    lon: coordinate(params.get("lon")),
+  });
+
+  return parsed.success ? ok(parsed.output) : err("invalid");
+}
+
+function coordinate(param: string | null): number {
+  return param?.trim() ? Number(param) : Number.NaN;
 }
 
 export function readUpload(request: NextRequest): Result<PhotoUpload, "invalid"> {

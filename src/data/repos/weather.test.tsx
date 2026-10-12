@@ -43,4 +43,22 @@ describe("WeatherRepo", () => {
     });
     expect(store.places).toHaveBeenCalledWith("Austin");
   });
+
+  it("LOC-04 locate asks the transport for the place at the position", async () => {
+    const place = {
+      name: "Portland",
+      region: "Oregon",
+      lat: 45.52,
+      lon: -122.68,
+      timeZone: "America/Los_Angeles",
+    };
+
+    store.locate.mockResolvedValue({ ok: true, value: place });
+
+    expect(await createWeatherRepo(store).locate({ lat: 45.51, lon: -122.68 })).toEqual({
+      ok: true,
+      value: place,
+    });
+    expect(store.locate).toHaveBeenCalledWith({ lat: 45.51, lon: -122.68 });
+  });
 });

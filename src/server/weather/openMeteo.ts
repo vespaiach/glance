@@ -1,19 +1,19 @@
 import "server-only";
 import * as v from "valibot";
-import { err, ok, type Result } from "@/domain/result";
+import { err, ok } from "@/domain/result";
+import { isTimeZone } from "@/domain/signIn";
 import { ForecastResponseSchema, toForecast } from "./forecast";
+import { type Fetch, getJson } from "./getJson";
 import { GeocodingResponseSchema, placeQuery, toPlaces } from "./places";
-import type { Coordinates, WeatherFailure, WeatherProvider } from "./provider";
-
-export type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
+import type { Coordinates, WeatherProvider } from "./provider";
 
 const FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
 
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 
-const TIMEOUT_MS = 8_000;
-
 const SEARCH_COUNT = 20;
+
+const ZoneResponseSchema = v.object({ timezone: v.string() });
 
 const FORECAST_PARAMS = {
   current: [
@@ -55,6 +55,15 @@ export function createOpenMeteo(fetchFn: Fetch): WeatherProvider {
 
       return response.ok ? ok(toPlaces(response.value.results, parsed)) : response;
     },
+    timeZoneAt: async (place) => {
+      const response = await getJson(fetchFn, zoneUrl(place), ZoneResponseSchema);
+
+      if (!response.ok) return response;
+
+      return isTimeZone(response.value.timezone)
+        ? ok(response.value.timezone)
+        : err("weather-failed");
+    },
   };
 }
 
@@ -63,6 +72,17 @@ function forecastUrl({ lat, lon }: Coordinates): string {
     latitude: String(lat),
     longitude: String(lon),
     ...FORECAST_PARAMS,
+  });
+
+  return `${FORECAST_URL}?${params}`;
+}
+
+function zoneUrl({ lat, lon }: Coordinates): string {
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    timezone: "auto",
+    forecast_days: "1",
   });
 
   return `${FORECAST_URL}?${params}`;
@@ -78,22 +98,4 @@ function searchUrl(search: string): string {
   });
 
   return `${GEOCODING_URL}?${params}`;
-}
-
-async function getJson<T>(
-  fetchFn: Fetch,
-  url: string,
-  schema: v.GenericSchema<unknown, T>,
-): Promise<Result<T, WeatherFailure>> {
-  try {
-    const response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-
-    if (!response.ok) return err("weather-failed");
-
-    const parsed = v.safeParse(schema, await response.json());
-
-    return parsed.success ? ok(parsed.output) : err("weather-failed");
-  } catch {
-    return err("weather-failed");
-  }
 }

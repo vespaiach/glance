@@ -6,6 +6,8 @@ import type { OutboxEntry, StoredPhoto } from "../db";
 import type {
   AuthStatus,
   Change,
+  Coordinates,
+  LocateError,
   PullResponse,
   Transport,
   TransportError,
@@ -17,7 +19,7 @@ export type HttpTransportOptions = {
   createXhr?: () => XMLHttpRequest;
 };
 
-type Send = <T>(path: string, init?: RequestInit) => Promise<Result<T, TransportError>>;
+type Send<E = TransportError> = <T>(path: string, init?: RequestInit) => Promise<Result<T, E>>;
 
 const BUILD = String(CLIENT_BUILD);
 
@@ -39,6 +41,10 @@ function uploadError(status: number): UploadError {
   return transportError(status);
 }
 
+function locateError(status: number): LocateError {
+  return status === 404 ? "outside" : transportError(status);
+}
+
 function readJson<T>(text: string): Result<T, TransportError> {
   try {
     return ok(JSON.parse(text) as T);
@@ -47,15 +53,21 @@ function readJson<T>(text: string): Result<T, TransportError> {
   }
 }
 
-async function readAnswer<T>(response: Response): Promise<Result<T, TransportError>> {
-  if (!response.ok) return err(transportError(response.status));
+async function readAnswer<T, E>(
+  response: Response,
+  toError: (status: number) => E,
+): Promise<Result<T, E | TransportError>> {
+  if (!response.ok) return err(toError(response.status));
 
   if (response.status === 204) return ok(undefined as T);
 
   return readJson<T>(await response.text());
 }
 
-function sender(fetch: typeof globalThis.fetch): Send {
+function sender<E>(
+  fetch: typeof globalThis.fetch,
+  toError: (status: number) => E,
+): Send<E | TransportError> {
   return async <T>(path: string, init: RequestInit = {}) => {
     const headers = new Headers(init.headers);
 
@@ -63,7 +75,7 @@ function sender(fetch: typeof globalThis.fetch): Send {
 
     const response = await fetch(path, { ...init, headers }).catch(() => undefined);
 
-    return response === undefined ? err("network") : readAnswer<T>(response);
+    return response === undefined ? err("network") : readAnswer<T, E>(response, toError);
   };
 }
 
@@ -88,6 +100,10 @@ function pushWith(send: Send): Transport["push"] {
 
 function pullPath(cursor: string | undefined): string {
   return cursor === undefined ? "/api/sync" : `/api/sync?since=${encodeURIComponent(cursor)}`;
+}
+
+function locatePath({ lat, lon }: Coordinates): string {
+  return `/api/weather/locate?${new URLSearchParams({ lat: String(lat), lon: String(lon) })}`;
 }
 
 function percentOf(event: ProgressEvent): number {
@@ -135,7 +151,9 @@ export function createHttpTransport({
   fetch = globalThis.fetch.bind(globalThis),
   createXhr = () => new XMLHttpRequest(),
 }: HttpTransportOptions = {}): Transport {
-  const send = sender(fetch);
+  const send = sender(fetch, transportError);
+
+  const sendLocate = sender(fetch, locateError);
 
   return {
     push: pushWith(send),
@@ -143,6 +161,7 @@ export function createHttpTransport({
     weather: () => send<Weather>("/api/weather"),
     places: (query) =>
       send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
+    locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
     auth: {
       link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
       status: () => send<AuthStatus>("/api/auth/status"),

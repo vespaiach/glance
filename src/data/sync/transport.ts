@@ -7,6 +7,10 @@ export type TransportError = "network" | "unauthorized" | "invalid" | "outdated"
 
 export type UploadError = TransportError | UploadProblem;
 
+export type LocateError = TransportError | "outside";
+
+export type Coordinates = Pick<WeatherLocation, "lat" | "lon">;
+
 export type Change =
   | { entity: "events"; row: StoredEvent }
   | { entity: "notes"; row: StoredNote }
@@ -30,6 +34,7 @@ export interface Transport {
   pull(cursor: string | undefined): Answer<PullResponse>;
   weather(): Answer<Weather>;
   places(query: string): Answer<WeatherLocation[]>;
+  locate(position: Coordinates): Answer<WeatherLocation, LocateError>;
   auth: {
     link(request: LinkRequest): Answer<void>;
     status(): Answer<AuthStatus>;

@@ -4,7 +4,9 @@ import type { AccountSettings, CalendarEvent, Note } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
 import { getDb } from "../db/connection";
 import { env } from "../env";
+import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
+import type { Coordinates } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
 import * as events from "./events";
 import * as notes from "./notes";
@@ -63,5 +65,11 @@ export function accountWeather(accountId: string) {
 
 export function searchPlaces(query: string) {
   return weather.searchPlaces(weatherDeps(), query);
+}
+export function locatePlace(position: Coordinates) {
+  return weather.locatePlace(
+    { provider: createOpenMeteo(fetch), locator: createCensusGeocoder(fetch) },
+    position,
+  );
 }
 export type { WeatherError } from "./weather";

@@ -4,6 +4,7 @@ import { FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { CalendarEventSchema } from "@/domain/schemas";
 import {
   outdatedClient,
+  readCoordinates,
   readCursor,
   readPlaceQuery,
   readRow,
@@ -178,5 +179,28 @@ describe("readPlaceQuery", () => {
   it("WX-04 refuses a missing or blank query", () => {
     expect(readPlaceQuery(search(""))).toEqual({ ok: false, error: "invalid" });
     expect(readPlaceQuery(search("?q=%20%20"))).toEqual({ ok: false, error: "invalid" });
+  });
+});
+
+describe("readCoordinates", () => {
+  function locate(query: string): NextRequest {
+    return new NextRequest(`https://glance.example.com/api/weather/locate${query}`);
+  }
+
+  it("LOC-04 reads the position's latitude and longitude", () => {
+    expect(readCoordinates(locate("?lat=45.51523&lon=-122.67836"))).toEqual({
+      ok: true,
+      value: { lat: 45.51523, lon: -122.67836 },
+    });
+  });
+
+  it("LOC-04 refuses a missing, blank, non-numeric or out-of-range coordinate", () => {
+    const refused = { ok: false, error: "invalid" };
+
+    expect(readCoordinates(locate("?lat=45.5"))).toEqual(refused);
+    expect(readCoordinates(locate("?lat=&lon=-122.6"))).toEqual(refused);
+    expect(readCoordinates(locate("?lat=north&lon=-122.6"))).toEqual(refused);
+    expect(readCoordinates(locate("?lat=91&lon=-122.6"))).toEqual(refused);
+    expect(readCoordinates(locate("?lat=45.5&lon=181"))).toEqual(refused);
   });
 });

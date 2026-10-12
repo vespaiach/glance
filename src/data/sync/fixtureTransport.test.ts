@@ -6,6 +6,7 @@ import {
   FIXTURE_AMBIENT_NOW,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
+  FIXTURE_LOCATED_PLACE,
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
@@ -547,5 +548,35 @@ describe("FixtureTransport upload", () => {
     );
 
     expect(result).toEqual({ ok: false, error: "network" });
+  });
+});
+
+describe("FixtureTransport locate", () => {
+  const AT = { lat: 40.71, lon: -74.01 };
+
+  it("LOC-01 always finds Portland, OR at 2-decimal coordinates after 2.6 s, not before", async () => {
+    useTimers();
+    const pending = transport().locate(AT);
+
+    const early = settleWithin(pending, 2_599);
+    await vi.advanceTimersByTimeAsync(2_599);
+    expect(await early).toBe(NEVER);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toEqual({ ok: true, value: FIXTURE_LOCATED_PLACE });
+    expect(FIXTURE_LOCATED_PLACE).toEqual({
+      name: "Portland",
+      region: "Oregon",
+      lat: 45.52,
+      lon: -122.68,
+      timeZone: "America/Los_Angeles",
+    });
+  });
+
+  it("LOC-03 net=offline fails with a network error", async () => {
+    expect(await transport({ net: "offline" }).locate(AT)).toEqual({
+      ok: false,
+      error: "network",
+    });
   });
 });
