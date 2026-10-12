@@ -98,9 +98,6 @@ const styles = stylex.create({
     paddingTop: space.lg,
     boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
   },
-  skipButton: {
-    marginLeft: -16,
-  },
 });
 
 function FormStep({ state, online, demo, onAction, onDemo }: StepProps) {
@@ -257,7 +254,6 @@ function LocationStep({
           variant="ghost"
           disabled={state.skipping}
           onClick={() => onAction({ type: "skip" })}
-          xstyle={styles.skipButton}
         >
           {location.skip}
         </Button>
