@@ -149,6 +149,50 @@ export const copy = {
     justNow: "Just now",
   },
   weather: {
+    now: (location: string) => `${location} · Now`,
+    place: (name: string, region: string) => `${name}, ${region}`,
+    details: {
+      wind: "Wind",
+      humidity: "Humidity",
+      uv: "UV index",
+      sunset: "Sunset",
+    },
+    wind: (speed: number, unit: "F" | "C", direction: string) =>
+      `${speed} ${unit === "C" ? "km/h" : "mph"} ${direction}`,
+    percent: (value: number) => `${value}%`,
+    hourly: "Next 8 hours",
+    daily: "7-day forecast",
+    today: "Today",
+    rain: {
+      title: (time: string) => `Rain moving in after ${time}`,
+      body: "Grab an umbrella if you’re heading out.",
+    },
+    offline: {
+      title: (time: string) => `Forecast from ${time}`,
+      body: "Updates when the screen is back online. Conditions may have changed.",
+    },
+    loading: "Loading weather",
+    failed: {
+      title: "Weather unavailable",
+      body: (minutes: number) =>
+        `The forecast service isn’t responding. Trying again in ${minutes} min.`,
+      retry: "Try again",
+    },
+    setup: {
+      eyebrow: "Weather · setup",
+      title: "Where is this screen?",
+      body: "The forecast on Today, Weather and the ambient screen uses this location.",
+      label: "City or ZIP code",
+      placeholder: "Portland, OR",
+      submit: "Show weather",
+      searching: (query: string) => `Looking for ${query}…`,
+      matches: (count: number, city: string) => `${count} places called ${city}`,
+      region: (region: string) => `${region}, United States`,
+      error: {
+        empty: "Enter a city or ZIP code",
+        unknown: "We couldn’t find that place. Try a city and state, like Austin, TX",
+      },
+    },
     range: {
       high: "H",
       low: "L",

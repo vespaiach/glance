@@ -5,7 +5,12 @@ import { type ReactNode, useEffect } from "react";
 import { type FixtureParams, RepoProvider, useDisplayBoot } from "@/data/repos";
 import { localDateKey } from "@/domain/time";
 import { DEMO_BUILD } from "./demo";
-import { fixtureSheet, type ShellOptions, useShellSetup } from "./fixtureOptions";
+import {
+  FixtureParamsProvider,
+  fixtureSheet,
+  type ShellOptions,
+  useShellSetup,
+} from "./fixtureOptions";
 import { IdleProvider } from "./providers/idle";
 import { NetworkProvider } from "./providers/network";
 import { NowProvider, useNowStore } from "./providers/now";
@@ -43,7 +48,9 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
         <SeasonProvider>
           <NetworkProvider pillDelayMs={options.pillDelayMs}>
             <SheetHost initial={fixtureSheet(params, localDateKey(get()))}>
-              <IdleProvider>{children}</IdleProvider>
+              <FixtureParamsProvider params={params}>
+                <IdleProvider>{children}</IdleProvider>
+              </FixtureParamsProvider>
             </SheetHost>
           </NetworkProvider>
         </SeasonProvider>

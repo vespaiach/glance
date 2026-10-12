@@ -14,6 +14,7 @@ export {
   type FixtureParams,
   fixtureParamsFor,
   fixtureSheetTargets,
+  fixtureWeatherSearch,
   useDisplayBoot,
 } from "./session";
 export { createSettingsRepo, type SettingsRepo, useSettings, useSettingsRepo } from "./settings";

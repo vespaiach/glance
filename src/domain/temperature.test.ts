@@ -1,4 +1,4 @@
-import { displayTemp, toCelsius } from "./temperature";
+import { displayTemp, displayWind, toCelsius } from "./temperature";
 
 describe("temperature", () => {
   it.each([
@@ -18,5 +18,13 @@ describe("temperature", () => {
 
   it("WX-02 Celsius converts the stored Fahrenheit", () => {
     expect(displayTemp(64, "C")).toBe(18);
+  });
+
+  it("WX-02 wind stays in mph with Fahrenheit", () => {
+    expect(displayWind(8, "F")).toBe(8);
+  });
+
+  it("WX-02 wind turns into km/h with Celsius", () => {
+    expect(displayWind(8, "C")).toBe(13);
   });
 });

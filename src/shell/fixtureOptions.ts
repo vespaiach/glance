@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { type FixtureParams, fixtureParamsFor, fixtureSheetTargets } from "@/data/repos";
 import type { AccountSettings } from "@/domain/schemas";
 import type { SheetRequest } from "./SheetHost";
@@ -12,6 +19,22 @@ export type ShellOptions = {
 };
 
 export type ShellSetup = { params: FixtureParams; options: ShellOptions };
+
+const FixtureParamsContext = createContext<FixtureParams>({});
+
+export function FixtureParamsProvider({
+  params,
+  children,
+}: {
+  params: FixtureParams;
+  children: ReactNode;
+}) {
+  return createElement(FixtureParamsContext, { value: params }, children);
+}
+
+export function useFixtureParams(): FixtureParams {
+  return useContext(FixtureParamsContext);
+}
 
 export function shellOptions(params: FixtureParams): ShellOptions {
   return {

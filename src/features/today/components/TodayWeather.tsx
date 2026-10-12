@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { AccountSettings, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
-import type { WmoCondition } from "@/domain/wmo";
 import type { ZoneState } from "@/domain/zoneState";
+import { conditionText } from "@/features/weather";
 import { radii, space } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { ColorBlock } from "@/ui/ColorBlock";
@@ -49,12 +49,6 @@ const styles = stylex.create({
     gap: space.md,
   },
 });
-
-function conditionText(condition: string): string {
-  return Object.hasOwn(copy.weather.condition, condition)
-    ? copy.weather.condition[condition as WmoCondition]
-    : condition;
-}
 
 function WeatherBlock({ children, xstyle }: { children: ReactNode; xstyle?: stylex.StyleXStyles }) {
   return (

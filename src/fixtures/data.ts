@@ -190,15 +190,15 @@ export const FIXTURE_SETTINGS: AccountSettings = {
   weatherLocation: PORTLAND_OR,
 };
 
-const HOURLY: [hour: number, icon: WeatherIcon, temp: number][] = [
-  [11, "cloud-sun", 64],
-  [12, "cloud-sun", 66],
-  [13, "cloud", 67],
-  [14, "cloud", 68],
-  [15, "cloud-drizzle", 65],
-  [16, "cloud-rain", 61],
-  [17, "cloud-rain", 58],
-  [18, "cloud", 56],
+const HOURLY: [hour: number, icon: WeatherIcon, temp: number, precip: number][] = [
+  [11, "cloud-sun", 64, 10],
+  [12, "cloud-sun", 66, 10],
+  [13, "cloud", 67, 20],
+  [14, "cloud", 68, 30],
+  [15, "cloud-drizzle", 65, 40],
+  [16, "cloud-rain", 61, 70],
+  [17, "cloud-rain", 58, 80],
+  [18, "cloud", 56, 40],
 ];
 
 const DAILY: [icon: WeatherIcon, high: number, low: number, precip?: number][] = [
@@ -229,7 +229,7 @@ export const FIXTURE_WEATHER: Weather = {
     uv: 3,
     sunset: at(9, 18, 42),
   },
-  hourly: HOURLY.map(([hour, icon, temp]) => ({ time: at(9, hour), icon, temp })),
+  hourly: HOURLY.map(([hour, icon, temp, precip]) => ({ time: at(9, hour), icon, temp, precip })),
   daily: DAILY.map(([icon, high, low, precip], index) => ({
     date: isoDate(9 + index),
     icon,
