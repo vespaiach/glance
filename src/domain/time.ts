@@ -11,6 +11,8 @@ const weekdayFormat = new Intl.DateTimeFormat("en-US", { weekday: "short" });
 
 const monthDayFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 
+const monthFormat = new Intl.DateTimeFormat("en-US", { month: "long" });
+
 const longDateFormat = new Intl.DateTimeFormat("en-US", {
   weekday: "long",
   month: "long",
@@ -85,4 +87,8 @@ export function formatMonthDay(date: Date): string {
 
 export function formatLongDate(date: Date): string {
   return longDateFormat.format(date);
+}
+
+export function formatMonth(date: Date): string {
+  return monthFormat.format(date);
 }

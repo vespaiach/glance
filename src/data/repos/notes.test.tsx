@@ -76,6 +76,17 @@ describe("notes repo", () => {
 });
 
 describe("useNotes", () => {
+  it("NOTE-04 lists the newest note first", async () => {
+    await saveExpiry(null);
+    await store.db.notes.bulkPut([synced(OLD), synced(NEW), synced(FRESH)]);
+
+    const { result } = renderNotes();
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.id)).toEqual([NEW.id, FRESH.id, OLD.id]),
+    );
+  });
+
   it("OFF-04 a new note is pending until its outbox entry drains", async () => {
     await store.db.notes.put(synced(FRESH));
 
@@ -85,8 +96,8 @@ describe("useNotes", () => {
 
     await waitFor(() =>
       expect(result.current?.map(({ id, pending }) => ({ id, pending }))).toEqual([
-        { id: FRESH.id, pending: false },
         { id: NEW.id, pending: true },
+        { id: FRESH.id, pending: false },
       ]),
     );
 
@@ -110,7 +121,7 @@ describe("useNotes", () => {
 
     const { result } = renderNotes();
 
-    await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([OLD.id, FRESH.id]));
+    await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([FRESH.id, OLD.id]));
   });
 
   it("NOTE-08 uses the default expiry when no settings row exists", async () => {

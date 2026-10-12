@@ -1,0 +1,164 @@
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { createSettingsRepo } from "@/data/repos";
+import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import type { CalendarEvent, Photo } from "@/domain/schemas";
+import { SeasonProvider } from "@/shell/providers/season";
+import { shellWrapper } from "@/shell/providers/testShell";
+import { SheetHost, useSheetHost } from "@/shell/SheetHost";
+import { TodayScreen } from "./TodayScreen";
+
+const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/today",
+  useRouter: () => ({ push: navigation.push, prefetch: () => {} }),
+}));
+
+const NOW = new Date(2026, 9, 9, 10, 41);
+
+const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
+
+const CALL: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000001",
+  title: "Grandma’s video call",
+  location: "Living room",
+  startAt: iso(10, 30),
+  endAt: iso(11, 15),
+  tone: 1,
+};
+
+const COAST: Photo = {
+  id: "0195f0a0-0000-7000-8000-000000000002",
+  title: "Cannon Beach",
+  takenOn: "2026-09-06",
+  place: "Summer trip",
+  createdAt: "2026-10-05T19:05:00.000Z",
+};
+
+let store: Harness;
+
+beforeEach(() => {
+  store = openHarness("glance-today-screen-test");
+  navigation.push.mockReset();
+
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+});
+
+afterEach(async () => {
+  cleanup();
+  vi.unstubAllGlobals();
+
+  await store.close();
+});
+
+function OpenSheet() {
+  const { sheet } = useSheetHost();
+
+  return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
+}
+
+function renderToday() {
+  const Shell = shellWrapper(store, { frozenAt: NOW });
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <Shell>
+      <SeasonProvider>
+        <SheetHost>{children}</SheetHost>
+      </SeasonProvider>
+    </Shell>
+  );
+
+  return render(
+    <>
+      <TodayScreen />
+      <OpenSheet />
+    </>,
+    { wrapper },
+  );
+}
+
+test("TODAY-02 the hero shows the event running now", async () => {
+  await store.db.events.put(synced(CALL));
+
+  renderToday();
+
+  expect(await screen.findByText("Happening now")).toBeInTheDocument();
+  expect(screen.getByText("Living room · until 11:15")).toBeInTheDocument();
+  expect(screen.getByText("Today · 1 event")).toBeInTheDocument();
+});
+
+test("TODAY-03 tapping the hero event opens Edit event", async () => {
+  await store.db.events.put(synced(CALL));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Happening now/ }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "event", id: CALL.id }),
+  );
+});
+
+test("TODAY-04 Add event opens New event on today", async () => {
+  await store.db.events.put(synced(CALL));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "newevent", day: "2026-10-09" }),
+  );
+});
+
+test("TODAY-04 Full calendar goes to the Calendar view", async () => {
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Full calendar" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/calendar");
+});
+
+test("TODAY-07 the picture of the day shows on the season background", async () => {
+  await store.db.photos.put(synced(COAST));
+
+  renderToday();
+
+  expect(await screen.findByRole("img", { name: "Cannon Beach" })).toBeInTheDocument();
+});
+
+test("TODAY-10 a photo background drops the picture of the day", async () => {
+  await store.db.photos.put(synced(COAST));
+  await createSettingsRepo(store).update({
+    background: { mode: "photo", photoId: COAST.id, dim: 0.2, rotate: "daily" },
+  });
+
+  renderToday();
+
+  expect(await screen.findByText("Full calendar")).toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByText("Picture of the day")).not.toBeInTheDocument());
+});
+
+test("TODAY-08 with no location the weather zone asks for one", async () => {
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Set location" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/weather");
+});
+
+test("TODAY-09 Add note opens New note", async () => {
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Add note" }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "newnote" }),
+  );
+});

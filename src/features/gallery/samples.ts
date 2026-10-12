@@ -1,5 +1,14 @@
 import type { EventStatus } from "@/domain/eventStatus";
-import type { NoteTone, Season, Tone, WeatherIcon } from "@/domain/schemas";
+import type {
+  CalendarEvent,
+  Note,
+  NoteTone,
+  Photo,
+  Season,
+  Tone,
+  Weather,
+  WeatherIcon,
+} from "@/domain/schemas";
 import type { ZoneState } from "@/domain/zoneState";
 
 export const SEASONS: readonly Season[] = ["spring", "summer", "fall", "winter"];
@@ -19,6 +28,7 @@ export const gallery = {
     time: "Time entry",
     shared: "Shared pieces",
     zone: "Zone states",
+    today: "Today",
   },
   button: "Add event",
   disabled: "Disabled",
@@ -218,3 +228,83 @@ export const ZONE_STATES: readonly ZoneState<string>[] = [
   { kind: "failed" },
   { kind: "ready", data: [NOW_EVENT.title], updatedAt: "10:12 AM" },
 ];
+
+const todayAt = (hour: number, minute: number) => new Date(2026, 9, 9, hour, minute).toISOString();
+
+const sampleId = (n: number) => `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`;
+
+export const TODAY_EVENTS: readonly CalendarEvent[] = [
+  {
+    id: sampleId(1),
+    title: "School drop-off",
+    location: "Lincoln Elementary",
+    startAt: todayAt(9, 0),
+    endAt: todayAt(9, 30),
+    tone: "soft",
+  },
+  {
+    id: sampleId(2),
+    title: "Grandma’s video call",
+    location: "Living room",
+    startAt: todayAt(10, 30),
+    endAt: todayAt(11, 15),
+    tone: 1,
+  },
+  {
+    id: sampleId(3),
+    title: "Lunch with Aunt Rosa",
+    location: "Café Lumen",
+    startAt: todayAt(12, 0),
+    endAt: todayAt(13, 0),
+    tone: 2,
+  },
+];
+
+export const TODAY_NOTES: readonly Note[] = [
+  {
+    id: sampleId(11),
+    text: "Package for Mia at the front door.",
+    author: "Mom",
+    createdAt: todayAt(9, 5),
+    tone: 2,
+    rotation: 1.5,
+  },
+  {
+    id: sampleId(12),
+    text: "Wi-Fi password is on the fridge!",
+    author: "Dad",
+    createdAt: todayAt(8, 12),
+    tone: 1,
+    rotation: -2,
+  },
+];
+
+export const TODAY_PHOTO: Photo = {
+  id: sampleId(21),
+  title: "Cannon Beach",
+  takenOn: "2026-09-06",
+  place: "Summer trip",
+  createdAt: todayAt(8, 0),
+};
+
+export const TODAY_PHOTO_SRC = "/fixtures/photos/coast.svg";
+
+export const TODAY_WEATHER: Weather = {
+  location: "Portland, OR",
+  fetchedAt: todayAt(10, 30),
+  current: {
+    temp: 64,
+    condition: "partlyCloudy",
+    icon: "cloud-sun",
+    high: 68,
+    low: 51,
+    feelsLike: 62,
+    windMph: 8,
+    windDir: "NW",
+    humidity: 62,
+    uv: 3,
+    sunset: todayAt(18, 42),
+  },
+  hourly: [],
+  daily: [],
+};

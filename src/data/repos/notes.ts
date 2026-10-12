@@ -34,7 +34,7 @@ export function useNotesRepo(): NotesRepo {
 }
 
 async function readNotes(db: GlanceDb, accountId: string): Promise<NotesRead> {
-  const notes = await db.notes.orderBy("createdAt").filter(isLive).toArray();
+  const notes = await db.notes.orderBy("createdAt").reverse().filter(isLive).toArray();
 
   const pending = await pendingIds(db, "notes");
 

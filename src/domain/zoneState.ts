@@ -30,3 +30,9 @@ export function zoneState<T>(input: ZoneInput<T>): ZoneState<T> {
 
   return input.failed || timedOut ? { kind: "failed" } : { kind: "loading" };
 }
+
+export function readZoneState<T>(rows: readonly T[] | undefined): ZoneState<T> {
+  if (rows === undefined) return { kind: "loading" };
+
+  return rows.length === 0 ? { kind: "empty" } : { kind: "ready", data: rows };
+}
