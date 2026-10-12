@@ -1,0 +1,40 @@
+import type { UploadProblem } from "@/domain/photoUpload";
+import type { Result } from "@/domain/result";
+import type { Account, Weather, WeatherLocation } from "@/domain/schemas";
+import type { OutboxEntry, StoredEvent, StoredNote, StoredPhoto, StoredSettings } from "../db";
+
+export type TransportError = "network" | "unauthorized" | "invalid" | "outdated" | "server";
+
+export type UploadError = TransportError | UploadProblem;
+
+export type Change =
+  | { entity: "events"; row: StoredEvent }
+  | { entity: "notes"; row: StoredNote }
+  | { entity: "photos"; row: StoredPhoto }
+  | { entity: "settings"; row: StoredSettings };
+
+export type PullResponse = { cursor: string; changes: Change[] };
+
+export type AuthStatus =
+  | { state: "waiting" }
+  | { state: "expired" }
+  | { state: "needs-name-elsewhere" }
+  | { state: "signed-in"; account: Account; returning: boolean };
+
+export type LinkRequest = { email: string; timeZone: string };
+
+type Answer<T, E = TransportError> = Promise<Result<T, E>>;
+
+export interface Transport {
+  push(entry: OutboxEntry): Answer<Change>;
+  pull(cursor: string | undefined): Answer<PullResponse>;
+  weather(): Answer<Weather>;
+  places(query: string): Answer<WeatherLocation[]>;
+  auth: {
+    link(request: LinkRequest): Answer<void>;
+    status(): Answer<AuthStatus>;
+    name(name: string): Answer<Account>;
+    signout(): Answer<void>;
+  };
+  upload(file: File, onProgress: (percent: number) => void): Answer<StoredPhoto, UploadError>;
+}
