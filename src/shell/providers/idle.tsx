@@ -12,6 +12,7 @@ import { idleDue, inAmbientHours } from "@/domain/idle";
 import { useSheetHost } from "../SheetHost";
 import { type NowStore, useNowStore } from "./now";
 import { useAccountSettings } from "./settings";
+import { useTimeZone } from "./timeZone";
 
 const TODAY = "/today";
 
@@ -73,6 +74,8 @@ export function IdleProvider({
 
   const store = useNowStore();
 
+  const tz = useTimeZone();
+
   const { close } = useSheetHost();
 
   const router = useRouter();
@@ -106,7 +109,7 @@ export function IdleProvider({
   useEffect(() => {
     let lastActivity = store.get();
 
-    let ambient = inAmbientHours(ambientHours, lastActivity);
+    let ambient = inAmbientHours(ambientHours, lastActivity, tz);
 
     const go = (path: string) => {
       const { close, reload, updates } = latest.current;
@@ -126,7 +129,7 @@ export function IdleProvider({
     const onTick = () => {
       const now = store.get();
 
-      const nowAmbient = inAmbientHours(ambientHours, now);
+      const nowAmbient = inAmbientHours(ambientHours, now, tz);
 
       if (isTextField(document.activeElement)) lastActivity = now;
 
@@ -153,7 +156,7 @@ export function IdleProvider({
       stopWatching();
       unsubscribe();
     };
-  }, [store, idleTimeout, ambientHours]);
+  }, [store, idleTimeout, ambientHours, tz]);
 
   return children;
 }
