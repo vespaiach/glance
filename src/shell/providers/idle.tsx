@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
+import { useSyncStatus } from "@/data/repos";
 import { idleDue, inAmbientHours } from "@/domain/idle";
 import { useSheetHost } from "../SheetHost";
 import { type NowStore, useNowStore } from "./now";
@@ -37,7 +38,13 @@ function watchActivity(store: NowStore, onActive: (at: Date) => void): () => voi
   };
 }
 
-export function IdleProvider({ children }: { children: ReactNode }) {
+function loadPage(path: string) {
+  window.location.assign(path);
+}
+
+type IdleProps = { reload?: (path: string) => void; children: ReactNode };
+
+export function IdleProvider({ reload = loadPage, children }: IdleProps) {
   const { idleTimeout, ambientHours } = useAccountSettings();
 
   const store = useNowStore();
@@ -48,10 +55,12 @@ export function IdleProvider({ children }: { children: ReactNode }) {
 
   const pathname = usePathname();
 
-  const latest = useRef({ pathname, close, navigate: router.push });
+  const outdated = useSyncStatus()?.error === "outdated";
+
+  const latest = useRef({ pathname, close, navigate: router.push, outdated, reload });
 
   useEffect(() => {
-    latest.current = { pathname, close, navigate: router.push };
+    latest.current = { pathname, close, navigate: router.push, outdated, reload };
   });
 
   useEffect(() => {
@@ -61,6 +70,8 @@ export function IdleProvider({ children }: { children: ReactNode }) {
 
     const go = (path: string) => {
       latest.current.close();
+
+      if (latest.current.outdated) return latest.current.reload(path);
 
       if (latest.current.pathname === path) return;
 

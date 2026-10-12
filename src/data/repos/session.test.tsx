@@ -1,7 +1,8 @@
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW, FIXTURE_PHOTOS } from "@/fixtures/data";
-import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME } from "../db";
+import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import { deleteMetaDb, openMetaDb, readSignedInAccount, saveSignedInAccount } from "../meta";
+import { INITIAL_STATUS, STATUS_KEY, type SyncStatus } from "../sync/status";
 import { type DisplayBoot, fixtureParamsFor, signInAuthFor, useDisplayBoot } from "./session";
 
 const ACCOUNT = {
@@ -64,6 +65,40 @@ describe("useDisplayBoot", () => {
 
     expect(store.accountId).toBe(ACCOUNT.accountId);
     expect(store.db.name).toBe(accountDbName(ACCOUNT.accountId));
+  });
+
+  it("SIGNIN-13 opening a signed-in display clears the halt the last session left", async () => {
+    await signIn();
+
+    const db = openGlanceDb(accountDbName(ACCOUNT.accountId));
+
+    await db.meta.put({ key: STATUS_KEY, value: { ...INITIAL_STATUS, error: "unauthorized" } });
+
+    db.close();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    const status = await readyStore(result.current).db.meta.get(STATUS_KEY);
+
+    expect((status?.value as SyncStatus | undefined)?.error).toBeUndefined();
+  });
+
+  it("D19 a signed-in display starts syncing through the sync host", async () => {
+    await signIn();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    const { db } = readyStore(result.current);
+
+    await waitFor(async () => {
+      const status = await db.meta.get(STATUS_KEY);
+
+      expect((status?.value as SyncStatus | undefined)?.online).toBe(false);
+    });
   });
 
   it("TODAY-07 the fixture display shows photos from the bundled images", async () => {

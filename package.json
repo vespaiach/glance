@@ -18,6 +18,7 @@
   "dependencies": {
     "@stylexjs/stylex": "0.19.1",
     "better-sqlite3": "12.11.1",
+    "comlink": "4.4.2",
     "dexie": "4.4.6",
     "dexie-react-hooks": "4.4.0",
     "exif-reader": "2.0.3",

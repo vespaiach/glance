@@ -436,6 +436,30 @@ describe("sync retries", () => {
     sync.stop();
   });
 
+  it("tech§5 retrying is true while a failed sync waits for its retry", async () => {
+    useTimers();
+
+    const transport = fakeTransport();
+
+    transport.pull.mockImplementationOnce(async () => err<TransportError>("network"));
+
+    const sync = engine(transport);
+
+    expect(sync.retrying()).toBe(false);
+
+    await sync.nudge();
+
+    expect(sync.retrying()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(MINUTE);
+
+    await vi.waitFor(() => expect(transport.pull).toHaveBeenCalledTimes(2));
+
+    expect(sync.retrying()).toBe(false);
+
+    sync.stop();
+  });
+
   it("tech§5 a 401 halts without scheduling a retry", async () => {
     useTimers();
 
