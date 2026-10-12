@@ -124,6 +124,8 @@ function setup(overrides: Partial<WorkerDeps> & { transport?: FakeTransport } = 
 
   const restart = vi.fn();
 
+  const photosChanged = vi.fn();
+
   const deps: WorkerDeps = {
     openDb: () => openGlanceDb(DB_NAME),
     transport,
@@ -138,13 +140,15 @@ function setup(overrides: Partial<WorkerDeps> & { transport?: FakeTransport } = 
 
   workers.push(worker);
 
-  return { worker, transport, streams, events, restart, deps };
+  const page = { restart, photosChanged };
+
+  return { worker, transport, streams, events, restart, photosChanged, page, deps };
 }
 
 async function started(overrides: Parameters<typeof setup>[0] = {}) {
   const parts = setup(overrides);
 
-  await parts.worker.start(ACCOUNT_ID, { restart: parts.restart });
+  await parts.worker.start(ACCOUNT_ID, parts.page);
 
   await vi.waitFor(() => expect(parts.transport.pull).toHaveBeenCalledTimes(1));
 
@@ -173,7 +177,7 @@ describe("glance-sync lock", () => {
 
     const waiting = setup({ locks });
 
-    await waiting.worker.start(ACCOUNT_ID, { restart: waiting.restart });
+    await waiting.worker.start(ACCOUNT_ID, waiting.page);
     await waiting.worker.nudge();
     await settled();
 
@@ -188,7 +192,7 @@ describe("glance-sync lock", () => {
 
     const waiting = setup({ locks });
 
-    await waiting.worker.start(ACCOUNT_ID, { restart: waiting.restart });
+    await waiting.worker.start(ACCOUNT_ID, waiting.page);
 
     await active.worker.stop();
 
@@ -311,6 +315,29 @@ describe("triggers", () => {
 
     expect(transport.pull).toHaveBeenCalledTimes(3);
     expect(transport.pull).toHaveBeenLastCalledWith(undefined);
+  });
+});
+
+describe("photo warming", () => {
+  it("tech§4.5 photos a pull brings in reach the page as photosChanged", async () => {
+    const transport = fakeTransport();
+
+    const photo = {
+      id: "0195f0a0-0000-7000-8000-000000000201",
+      title: "Cannon Beach",
+      takenOn: "2026-09-12",
+      createdAt: "2026-09-13T10:00:00.000Z",
+      updatedAt: "2026-09-13T10:00:00.000Z",
+      version: 1,
+    };
+
+    transport.pull.mockImplementation(async () =>
+      ok({ cursor: "c1", changes: [{ entity: "photos", row: photo }] }),
+    );
+
+    const { photosChanged } = await started({ transport });
+
+    await vi.waitFor(() => expect(photosChanged).toHaveBeenCalledWith([photo.id]));
   });
 });
 

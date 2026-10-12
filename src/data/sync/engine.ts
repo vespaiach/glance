@@ -18,7 +18,13 @@ export type SyncEngine = {
   stop(): void;
 };
 
-type Options = { db: GlanceDb; transport: Transport; accountId: string; now: () => Date };
+type Options = {
+  db: GlanceDb;
+  transport: Transport;
+  accountId: string;
+  now: () => Date;
+  photosChanged?: (ids: string[]) => void;
+};
 
 type Halt = Extract<SyncError, "unauthorized" | "outdated">;
 
@@ -96,6 +102,19 @@ async function serverPlace(db: GlanceDb, accountId: string): Promise<string | un
   return placeKey(await readLocation(db, accountId));
 }
 
+function livePhotoIds(changes: Change[]): string[] {
+  return changes.flatMap((change) =>
+    change.entity === "photos" && !change.row.deletedAt ? [change.row.id] : [],
+  );
+}
+
+function savedPhotoIds(db: GlanceDb): Promise<string[]> {
+  return db.photos
+    .filter((photo) => !photo.deletedAt)
+    .primaryKeys()
+    .then((ids) => ids as string[]);
+}
+
 function applyPull(db: GlanceDb, response: PullResponse): Promise<void> {
   const tables = [db.events, db.notes, db.photos, db.settings, db.outbox, db.meta];
 
@@ -106,7 +125,13 @@ function applyPull(db: GlanceDb, response: PullResponse): Promise<void> {
   });
 }
 
-export function createSyncEngine({ db, transport, accountId, now }: Options): SyncEngine {
+export function createSyncEngine({
+  db,
+  transport,
+  accountId,
+  now,
+  photosChanged = () => {},
+}: Options): SyncEngine {
   const syncQueue = serialQueue();
 
   const weatherQueue = serialQueue();
@@ -128,6 +153,10 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
   let fetchedPlace: string | undefined;
 
   const record = (event: StatusEvent) => recordStatus(db, event);
+
+  const reportPhotos = (ids: string[]) => {
+    if (ids.length > 0) photosChanged(ids);
+  };
 
   const clearWeatherTimer = () => {
     clearTimeout(weatherTimer);
@@ -209,6 +238,8 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
     if (!answer.ok) return answer;
 
     await applyPull(db, answer.value);
+
+    reportPhotos(livePhotoIds(answer.value.changes));
 
     fromScratch = false;
 
@@ -298,6 +329,8 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
   return {
     start: async () => {
       await nudge();
+
+      reportPhotos(await savedPhotoIds(db));
 
       if (weatherTimer === undefined) await refreshWeather();
     },

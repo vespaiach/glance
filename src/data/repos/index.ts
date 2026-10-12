@@ -26,6 +26,7 @@ export {
   usePhotos,
   usePhotosRepo,
 } from "./photos";
+export { type AppServiceWorker, appServiceWorker } from "./serviceWorker";
 export {
   type DisplayBoot,
   type FixtureParams,
@@ -44,6 +45,7 @@ export {
   type Retry,
   type SourceStatus,
   type SyncStatus,
+  useOutboxEmpty,
   useRetry,
   useSourceStatus,
   useSyncStatus,

@@ -2,7 +2,12 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
-import { useSyncStatus } from "@/data/repos";
+import {
+  type AppServiceWorker,
+  appServiceWorker,
+  useOutboxEmpty,
+  useSyncStatus,
+} from "@/data/repos";
 import { idleDue, inAmbientHours } from "@/domain/idle";
 import { useSheetHost } from "../SheetHost";
 import { type NowStore, useNowStore } from "./now";
@@ -42,9 +47,28 @@ function loadPage(path: string) {
   window.location.assign(path);
 }
 
-type IdleProps = { reload?: (path: string) => void; children: ReactNode };
+export type IdleUpdates = Pick<
+  AppServiceWorker,
+  "updateWaiting" | "applyUpdate" | "checkForUpdate"
+>;
 
-export function IdleProvider({ reload = loadPage, children }: IdleProps) {
+type UpdateState = { updates: IdleUpdates; outdated: boolean; outboxEmpty: boolean };
+
+function updateDue({ updates, outdated, outboxEmpty }: UpdateState): boolean {
+  return updates.updateWaiting() && (outdated || outboxEmpty);
+}
+
+type IdleProps = {
+  reload?: (path: string) => void;
+  updates?: IdleUpdates;
+  children: ReactNode;
+};
+
+export function IdleProvider({
+  reload = loadPage,
+  updates = appServiceWorker(),
+  children,
+}: IdleProps) {
   const { idleTimeout, ambientHours } = useAccountSettings();
 
   const store = useNowStore();
@@ -57,11 +81,27 @@ export function IdleProvider({ reload = loadPage, children }: IdleProps) {
 
   const outdated = useSyncStatus()?.error === "outdated";
 
-  const latest = useRef({ pathname, close, navigate: router.push, outdated, reload });
+  const outboxEmpty = useOutboxEmpty() === true;
+
+  const current = {
+    pathname,
+    close,
+    navigate: router.push,
+    outdated,
+    outboxEmpty,
+    reload,
+    updates,
+  };
+
+  const latest = useRef(current);
 
   useEffect(() => {
-    latest.current = { pathname, close, navigate: router.push, outdated, reload };
+    latest.current = current;
   });
+
+  useEffect(() => {
+    if (outdated) updates.checkForUpdate();
+  }, [outdated, updates]);
 
   useEffect(() => {
     let lastActivity = store.get();
@@ -69,9 +109,13 @@ export function IdleProvider({ reload = loadPage, children }: IdleProps) {
     let ambient = inAmbientHours(ambientHours, lastActivity);
 
     const go = (path: string) => {
-      latest.current.close();
+      const { close, reload, updates } = latest.current;
 
-      if (latest.current.outdated) return latest.current.reload(path);
+      close();
+
+      if (updateDue(latest.current)) return updates.applyUpdate(() => reload(path));
+
+      if (latest.current.outdated) return reload(path);
 
       if (latest.current.pathname === path) return;
 

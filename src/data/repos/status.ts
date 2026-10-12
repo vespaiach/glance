@@ -40,6 +40,12 @@ export function useSyncStatus(): SyncStatus | undefined {
   return useLiveQuery(() => readStatus(db), [db]);
 }
 
+export function useOutboxEmpty(): boolean | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => (await db.outbox.count()) === 0, [db]);
+}
+
 export function useSourceStatus(): SourceStatus | undefined {
   const { db, startedAt } = useRepoStore();
 

@@ -3,7 +3,7 @@ import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import type { AccountSettings } from "@/domain/schemas";
 import { SheetHost, useSheetHost } from "../SheetHost";
-import { IdleProvider } from "./idle";
+import { IdleProvider, type IdleUpdates } from "./idle";
 import { shellWrapper } from "./testShell";
 
 const navigation = vi.hoisted(() => ({
@@ -45,12 +45,24 @@ function SheetProbe() {
   );
 }
 
+type IdleOptions = { reload?: (path: string) => void; updates?: IdleUpdates; queued?: boolean };
+
+function fakeUpdates(waiting: boolean) {
+  return {
+    updateWaiting: vi.fn(() => waiting),
+    applyUpdate: vi.fn<(then: () => void) => void>(),
+    checkForUpdate: vi.fn(),
+  };
+}
+
 async function renderIdle(
   start: string,
   settings: Partial<AccountSettings> = {},
-  reload?: (path: string) => void,
+  { reload, updates, queued = true }: IdleOptions = {},
 ) {
   await createSettingsRepo(store).update({ idleTimeout: 60, ...settings });
+
+  if (!queued) await store.db.outbox.clear();
 
   vi.useFakeTimers({ now: new Date(`2026-10-09T${start}`), shouldAdvanceTime: true });
 
@@ -59,7 +71,7 @@ async function renderIdle(
   const tree = () => (
     <Shell>
       <SheetHost>
-        <IdleProvider reload={reload}>
+        <IdleProvider reload={reload} updates={updates}>
           <SheetProbe />
         </IdleProvider>
       </SheetHost>
@@ -103,7 +115,7 @@ describe("IdleProvider", () => {
 
     const reload = vi.fn<(path: string) => void>();
 
-    await renderIdle("10:41:00", {}, reload);
+    await renderIdle("10:41:00", {}, { reload });
 
     await act(() => vi.advanceTimersByTimeAsync(200));
 
@@ -114,10 +126,74 @@ describe("IdleProvider", () => {
     expect(navigation.push).not.toHaveBeenCalled();
   });
 
+  it("OFF-07 a waiting update applies at the next idle once nothing waits to sync", async () => {
+    navigation.pathname = "/today";
+
+    const reload = vi.fn<(path: string) => void>();
+
+    const updates = fakeUpdates(true);
+
+    await renderIdle("10:41:00", {}, { reload, updates, queued: false });
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    await waitFor(() => expect(updates.applyUpdate).toHaveBeenCalledTimes(1));
+
+    expect(reload).not.toHaveBeenCalled();
+
+    updates.applyUpdate.mock.calls[0]?.[0]();
+
+    expect(reload).toHaveBeenCalledExactlyOnceWith("/today");
+    expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it("OFF-07 a waiting update holds off while changes wait to sync", async () => {
+    const updates = fakeUpdates(true);
+
+    await renderIdle("10:41:00", {}, { updates });
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    expect(navigation.push).toHaveBeenCalledWith("/today");
+    expect(updates.applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it("OFF-07 after a 426 a waiting update applies even with changes waiting", async () => {
+    await putSyncStatus(store, { online: true, weather: { state: "idle" }, error: "outdated" });
+
+    const reload = vi.fn<(path: string) => void>();
+
+    const updates = fakeUpdates(true);
+
+    await renderIdle("10:41:00", {}, { reload, updates });
+
+    await act(() => vi.advanceTimersByTimeAsync(200));
+
+    seconds(60);
+
+    await waitFor(() => expect(updates.applyUpdate).toHaveBeenCalledTimes(1));
+
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("OFF-07 a 426 looks for the new version right away", async () => {
+    await putSyncStatus(store, { online: true, weather: { state: "idle" }, error: "outdated" });
+
+    const updates = fakeUpdates(false);
+
+    await renderIdle("10:41:00", {}, { updates });
+
+    await waitFor(() => expect(updates.checkForUpdate).toHaveBeenCalledTimes(1));
+  });
+
   it("OFF-07 without a 426 idle navigates in place", async () => {
     const reload = vi.fn<(path: string) => void>();
 
-    await renderIdle("10:41:00", {}, reload);
+    await renderIdle("10:41:00", {}, { reload });
 
     seconds(60);
 
