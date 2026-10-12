@@ -8,6 +8,7 @@ import {
   FIXTURE_ACCOUNT,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
+  FIXTURE_LOCATED_PLACE,
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
@@ -27,6 +28,8 @@ export const FIXTURE_CURSOR = "fixture";
 export const SIGN_IN_DELAY_MS = 1_400;
 
 export const PLACE_SEARCH_DELAY_MS = 1_200;
+
+export const LOCATE_DELAY_MS = 2_600;
 
 export const UPLOAD_TICK_MS = 400;
 
@@ -250,6 +253,12 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
         await wait(PLACE_SEARCH_DELAY_MS);
 
         return ok(matchPlaces(query));
+      }),
+    locate: () =>
+      online(async () => {
+        await wait(LOCATE_DELAY_MS);
+
+        return ok(FIXTURE_LOCATED_PLACE);
       }),
     auth: createFixtureAuth(params),
     upload: async (file, onProgress): Promise<Result<StoredPhoto, UploadError>> => {

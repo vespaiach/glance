@@ -210,6 +210,35 @@ describe("HttpTransport", () => {
     expect(calls[0]?.url).toBe("/api/weather/places?q=Portland%2C%20OR");
   });
 
+  it("LOC-04 locate asks for the place at the position", async () => {
+    const place = {
+      name: "Portland",
+      region: "Oregon",
+      lat: 45.52,
+      lon: -122.68,
+      timeZone: "America/Los_Angeles",
+    };
+    const { calls, fetch } = fakeFetch(json(place));
+
+    const answer = await transport(fetch).locate({ lat: 45.51523, lon: -122.67836 });
+
+    expect(answer).toEqual({ ok: true, value: place });
+    expect(calls[0]?.url).toBe("/api/weather/locate?lat=45.51523&lon=-122.67836");
+  });
+
+  it("LOC-03 locate answers outside on a 404 and maps other failures as usual", async () => {
+    const { fetch } = fakeFetch(
+      json({ error: "not-found" }, 404),
+      json({ error: "weather-failed" }, 502),
+      new TypeError("offline"),
+    );
+    const at = { lat: 43.65, lon: -79.38 };
+
+    expect(await transport(fetch).locate(at)).toEqual({ ok: false, error: "outside" });
+    expect(await transport(fetch).locate(at)).toEqual({ ok: false, error: "server" });
+    expect(await transport(fetch).locate(at)).toEqual({ ok: false, error: "network" });
+  });
+
   it("SIGNIN-03 auth.link posts the email and time zone and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
 

@@ -168,3 +168,39 @@ describe("createOpenMeteo places", () => {
     });
   });
 });
+
+describe("createOpenMeteo timeZoneAt", () => {
+  const ZONE_BODY = { latitude: 45.528744, timezone: "America/Los_Angeles" };
+
+  it("LOC-04 asks the forecast endpoint for one day in the place's own time zone", async () => {
+    const fetchFn = answering(ZONE_BODY);
+
+    await createOpenMeteo(fetchFn).timeZoneAt({ lat: 45.52, lon: -122.68 });
+
+    const url = calledUrl(fetchFn);
+
+    expect(url.origin + url.pathname).toBe("https://api.open-meteo.com/v1/forecast");
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      latitude: "45.52",
+      longitude: "-122.68",
+      timezone: "auto",
+      forecast_days: "1",
+    });
+  });
+
+  it("LOC-04 answers the time zone at the coordinates", async () => {
+    expect(await createOpenMeteo(answering(ZONE_BODY)).timeZoneAt(PORTLAND)).toEqual({
+      ok: true,
+      value: "America/Los_Angeles",
+    });
+  });
+
+  it("LOC-05 fails on a zone that isn't a valid IANA zone, or when the service errors", async () => {
+    const failed = { ok: false, error: "weather-failed" };
+
+    expect(
+      await createOpenMeteo(answering({ timezone: "Mars/Olympus" })).timeZoneAt(PORTLAND),
+    ).toEqual(failed);
+    expect(await createOpenMeteo(answering({}, 500)).timeZoneAt(PORTLAND)).toEqual(failed);
+  });
+});

@@ -1,10 +1,10 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { err, ok } from "@/domain/result";
 import type { WeatherLocation } from "@/domain/schemas";
-import type { Forecast, WeatherProvider } from "../weather/provider";
+import type { Forecast, PlaceLocator, WeatherProvider } from "../weather/provider";
 import { putSettings } from "./settings";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
-import { accountWeather, searchPlaces, type WeatherDeps } from "./weather";
+import { accountWeather, locatePlace, searchPlaces, type WeatherDeps } from "./weather";
 
 const harness = serviceHarnessPerTest();
 
@@ -50,6 +50,7 @@ function fakeProvider() {
   const provider = {
     forecast: vi.fn<WeatherProvider["forecast"]>(async (_place, now) => ok(forecastAt(now, temp))),
     places: vi.fn<WeatherProvider["places"]>(async () => ok([PORTLAND])),
+    timeZoneAt: vi.fn<WeatherProvider["timeZoneAt"]>(async () => ok("America/Los_Angeles")),
   };
 
   return {
@@ -170,5 +171,54 @@ describe("searchPlaces", () => {
     fake.provider.places.mockResolvedValueOnce(err("weather-failed"));
 
     expect(await searchPlaces(deps(), "Portland")).toEqual(err("weather-failed"));
+  });
+});
+
+describe("locatePlace", () => {
+  const locator = {
+    placeAt: vi.fn<PlaceLocator["placeAt"]>(async () => ok({ name: "Portland", region: "Oregon" })),
+  };
+
+  const locateDeps = () => ({ provider: fake.provider, locator });
+
+  beforeEach(() => locator.placeAt.mockClear());
+
+  it("LOC-04 rounds the position to 2 decimals before looking it up", async () => {
+    await locatePlace(locateDeps(), { lat: 45.51523, lon: -122.67836 });
+
+    expect(locator.placeAt).toHaveBeenCalledWith({ lat: 45.52, lon: -122.68 });
+    expect(fake.provider.timeZoneAt).toHaveBeenCalledWith({ lat: 45.52, lon: -122.68 });
+  });
+
+  it("LOC-04 answers the place at the rounded position with its time zone", async () => {
+    expect(await locatePlace(locateDeps(), { lat: 45.51523, lon: -122.67836 })).toEqual(
+      ok({
+        name: "Portland",
+        region: "Oregon",
+        lat: 45.52,
+        lon: -122.68,
+        timeZone: "America/Los_Angeles",
+      }),
+    );
+  });
+
+  it("LOC-03 answers not-found outside the United States", async () => {
+    locator.placeAt.mockResolvedValueOnce(err("not-found"));
+
+    expect(await locatePlace(locateDeps(), { lat: 43.65, lon: -79.38 })).toEqual(err("not-found"));
+  });
+
+  it("LOC-03 answers weather-failed when either lookup fails", async () => {
+    locator.placeAt.mockResolvedValueOnce(err("weather-failed"));
+
+    expect(await locatePlace(locateDeps(), { lat: 45.52, lon: -122.68 })).toEqual(
+      err("weather-failed"),
+    );
+
+    fake.provider.timeZoneAt.mockResolvedValueOnce(err("weather-failed"));
+
+    expect(await locatePlace(locateDeps(), { lat: 45.52, lon: -122.68 })).toEqual(
+      err("weather-failed"),
+    );
   });
 });

@@ -15,6 +15,7 @@ export type Harness = RepoStore & {
   refreshWeather: Mock<() => void>;
   upload: Mock<Transport["upload"]>;
   places: Mock<Transport["places"]>;
+  locate: Mock<Transport["locate"]>;
   signOut: Mock<() => Promise<void>>;
   close(): Promise<void>;
 };
@@ -33,6 +34,7 @@ export function openHarness(name: string): Harness {
     photoSrc: (photoId, variant) => `/photos/${photoId}/${variant}`,
     upload: vi.fn<Transport["upload"]>(async () => err("network")),
     places: vi.fn<Transport["places"]>(async () => err("network")),
+    locate: vi.fn<Transport["locate"]>(async () => err("network")),
     signOut: vi.fn<() => Promise<void>>(async () => {}),
     close: async () => {
       db.close();

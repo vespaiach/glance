@@ -19,6 +19,7 @@ export type RepoStore = {
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   upload: Transport["upload"];
   places: Transport["places"];
+  locate: Transport["locate"];
   signOut: () => Promise<void>;
 };
 

@@ -3,15 +3,19 @@ import { useMemo } from "react";
 import type { Result } from "@/domain/result";
 import type { Weather, WeatherLocation } from "@/domain/schemas";
 import type { StoredWeather } from "../db";
-import type { TransportError } from "../sync/transport";
+import type { Coordinates, LocateError, TransportError } from "../sync/transport";
 import { type RepoStore, useRepoStore } from "./store";
 
 export interface WeatherRepo {
   searchPlaces(query: string): Promise<Result<WeatherLocation[], TransportError>>;
+  locate(position: Coordinates): Promise<Result<WeatherLocation, LocateError>>;
 }
 
 export function createWeatherRepo(store: RepoStore): WeatherRepo {
-  return { searchPlaces: (query) => store.places(query) };
+  return {
+    searchPlaces: (query) => store.places(query),
+    locate: (position) => store.locate(position),
+  };
 }
 
 export function useWeatherRepo(): WeatherRepo {

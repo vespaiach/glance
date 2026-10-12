@@ -1,0 +1,270 @@
+{
+  "result": {
+    "geographies": {
+      "States": [
+        {
+          "STATENS": "01155107",
+          "GEOID": "41",
+          "CENTLAT": "+43.9396011",
+          "AREAWATER": 6168644112,
+          "STATE": "41",
+          "BASENAME": "Oregon",
+          "STUSAB": "OR",
+          "OID": "27490206508673",
+          "LSADC": "00",
+          "FUNCSTAT": "A",
+          "INTPTLAT": "+43.9717125",
+          "DIVISION": "9",
+          "NAME": "Oregon",
+          "REGION": "4",
+          "OBJECTID": 35,
+          "CENTLON": "-120.6109268",
+          "AREALAND": 248630762803,
+          "INTPTLON": "-120.6229578",
+          "MTFCC": "G4000"
+        }
+      ],
+      "Combined Statistical Areas": [
+        {
+          "POP100": "",
+          "GEOID": "440",
+          "CENTLAT": "+45.2912370",
+          "AREAWATER": 512363400,
+          "BASENAME": "Portland-Vancouver-Salem, OR-WA",
+          "OID": "2619034687908106",
+          "LSADC": "M0",
+          "FUNCSTAT": "S",
+          "INTPTLAT": "+45.2917994",
+          "NAME": "Portland-Vancouver-Salem, OR-WA CSA",
+          "OBJECTID": 12,
+          "CSA": "440",
+          "CENTLON": "-122.6219445",
+          "INTPTLON": "-122.6239684",
+          "AREALAND": 32931830897,
+          "HU100": "",
+          "MTFCC": "G3100"
+        }
+      ],
+      "County Subdivisions": [
+        {
+          "COUSUB": "92520",
+          "GEOID": "4105192520",
+          "CENTLAT": "+45.5229985",
+          "AREAWATER": 5710786,
+          "STATE": "41",
+          "BASENAME": "Portland West",
+          "OID": "276903718130991",
+          "LSADC": "22",
+          "FUNCSTAT": "S",
+          "INTPTLAT": "+45.5214359",
+          "NAME": "Portland West CCD",
+          "OBJECTID": 11103,
+          "CENTLON": "-122.7390805",
+          "COUSUBCC": "Z5",
+          "AREALAND": 126528480,
+          "INTPTLON": "-122.7348701",
+          "MTFCC": "G4040",
+          "COUSUBNS": "02585640",
+          "COUNTY": "051"
+        }
+      ],
+      "Urban Areas": [
+        {
+          "GEOID": "71317",
+          "CENTLAT": "+45.5155545",
+          "AREAWATER": 27578732,
+          "BASENAME": "Portland, OR--WA",
+          "OID": "27021231904479",
+          "UA": "71317",
+          "LSADC": "67",
+          "FUNCSTAT": "S",
+          "INTPTLAT": "+45.5157550",
+          "NAME": "Portland, OR--WA Urban Area",
+          "OBJECTID": 1865,
+          "CENTLON": "-122.6460877",
+          "AREALAND": 1345168445,
+          "INTPTLON": "-122.6470725",
+          "MTFCC": "G3500"
+        }
+      ],
+      "Incorporated Places": [
+        {
+          "DISP_CLR": 5,
+          "STGEOMETRY_Area": 765384745.79105473,
+          "NECTAPCI": "N",
+          "GEOID": "4159000",
+          "CENTLAT": "+45.5371363",
+          "AREAWATER": 29835837,
+          "BASENAME": "Portland",
+          "STATE": "41",
+          "OID": "27890245511675",
+          "LSADC": "25",
+          "PLACE": "59000",
+          "FUNCSTAT": "A",
+          "INTPTLAT": "+45.5369506",
+          "NAME": "Portland city",
+          "OBJECTID": 32014,
+          "PLACECC": "C1",
+          "CENTLON": "-122.6500207",
+          "STGEOMETRY_Length": 276971.18063418433,
+          "CBSAPCI": "Y",
+          "AREALAND": 345724128,
+          "INTPTLON": "-122.6499710",
+          "PLACENS": "02411471",
+          "MTFCC": "G4110"
+        }
+      ],
+      "Counties": [
+        {
+          "GEOID": "41051",
+          "CENTLAT": "+45.5471521",
+          "AREAWATER": 88048650,
+          "STATE": "41",
+          "BASENAME": "Multnomah",
+          "OID": "27590501077376",
+          "LSADC": "06",
+          "FUNCSTAT": "A",
+          "INTPTLAT": "+45.5471676",
+          "NAME": "Multnomah County",
+          "OBJECTID": 2431,
+          "CENTLON": "-122.4147887",
+          "COUNTYCC": "H1",
+          "COUNTYNS": "01135861",
+          "AREALAND": 1116317985,
+          "INTPTLON": "-122.4140031",
+          "MTFCC": "G4020",
+          "COUNTY": "051"
+        }
+      ],
+      "2026 State Legislative Districts - Upper": [
+        {
+          "GEOID": "41017",
+          "CENTLAT": "+45.5572154",
+          "AREAWATER": 4739633,
+          "STATE": "41",
+          "BASENAME": "17",
+          "OID": "2129042510092255",
+          "SLDU": "017",
+          "LSADC": "LU",
+          "FUNCSTAT": "N",
+          "INTPTLAT": "+45.5550169",
+          "NAME": "State Senate District 17",
+          "OBJECTID": 1271,
+          "CENTLON": "-122.7849254",
+          "LSY": "2026",
+          "AREALAND": 111865593,
+          "INTPTLON": "-122.7835263",
+          "MTFCC": "G5210",
+          "LDTYP": "O"
+        }
+      ],
+      "120th Congressional Districts": [
+        {
+          "STGEOMETRY_Area": 20599311732.742443,
+          "CD120": "01",
+          "GEOID": "4101",
+          "CENTLAT": "+45.7245341",
+          "CDSESSN": "120",
+          "AREAWATER": 1358330001,
+          "STATE": "41",
+          "BASENAME": "1",
+          "OID": "2119042393278472",
+          "LSADC": "C2",
+          "FUNCSTAT": "N",
+          "INTPTLAT": "+45.7636060",
+          "NAME": "Congressional District 1",
+          "OBJECTID": 423,
+          "CENTLON": "-123.4930403",
+          "STGEOMETRY_Length": 805884.06281853141,
+          "AREALAND": 8681602137,
+          "INTPTLON": "-123.4560758",
+          "MTFCC": "G5200"
+        }
+      ],
+      "2026 State Legislative Districts - Lower": [
+        {
+          "GEOID": "41033",
+          "CENTLAT": "+45.5602726",
+          "SLDL": "033",
+          "AREAWATER": 4729520,
+          "STATE": "41",
+          "BASENAME": "33",
+          "OID": "2139042511169867",
+          "LSADC": "LL",
+          "FUNCSTAT": "N",
+          "INTPTLAT": "+45.5605503",
+          "NAME": "State House District 33",
+          "OBJECTID": 3355,
+          "CENTLON": "-122.7642490",
+          "LSY": "2026",
+          "AREALAND": 76655115,
+          "INTPTLON": "-122.7666803",
+          "MTFCC": "G5220",
+          "LDTYP": "O"
+        }
+      ],
+      "2020 Census Blocks": [
+        {
+          "SUFFIX": "",
+          "GEOID": "410510106022014",
+          "CENTLAT": "+45.5198087",
+          "BLOCK": "2014",
+          "AREAWATER": 0,
+          "STATE": "41",
+          "BASENAME": "2014",
+          "OID": "210701007893175",
+          "LSADC": "BK",
+          "FUNCSTAT": "S",
+          "INTPTLAT": "+45.5198087",
+          "NAME": "Block 2014",
+          "OBJECTID": 7157764,
+          "TRACT": "010602",
+          "CENTLON": "-122.6799234",
+          "BLKGRP": "2",
+          "AREALAND": 6401,
+          "INTPTLON": "-122.6799234",
+          "MTFCC": "G5040",
+          "LWBLKTYP": "L",
+          "UR": "U",
+          "COUNTY": "051"
+        }
+      ],
+      "Census Tracts": [
+        {
+          "GEOID": "41051010602",
+          "CENTLAT": "+45.5185501",
+          "AREAWATER": 217662,
+          "STATE": "41",
+          "BASENAME": "106.02",
+          "OID": "2079015489245786",
+          "LSADC": "CT",
+          "FUNCSTAT": "S",
+          "INTPTLAT": "+45.5184690",
+          "NAME": "Census Tract 106.02",
+          "OBJECTID": 19798,
+          "TRACT": "010602",
+          "CENTLON": "-122.6747756",
+          "AREALAND": 802753,
+          "INTPTLON": "-122.6748716",
+          "MTFCC": "G5020",
+          "COUNTY": "051"
+        }
+      ]
+    },
+    "input": {
+      "vintage": {
+        "isDefault": true,
+        "id": "4",
+        "vintageName": "Current_Current",
+        "vintageDescription": "Current Vintage - Current Benchmark"
+      },
+      "location": { "x": -122.68, "y": 45.52 },
+      "benchmark": {
+        "isDefault": true,
+        "benchmarkDescription": "Public Address Ranges - Current Benchmark",
+        "id": "4",
+        "benchmarkName": "Public_AR_Current"
+      }
+    }
+  }
+}

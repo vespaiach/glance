@@ -192,6 +192,8 @@ const PORTLAND_OR: WeatherLocation = {
   timeZone: FIXTURE_TIME_ZONE,
 };
 
+export const FIXTURE_LOCATED_PLACE: WeatherLocation = { ...PORTLAND_OR, lat: 45.52, lon: -122.68 };
+
 export const FIXTURE_SETTINGS: AccountSettings = {
   ...DEFAULT_SETTINGS,
   background: { ...DEFAULT_SETTINGS.background, photoId: fixtureId(3, 6) },
