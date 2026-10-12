@@ -33,6 +33,8 @@ const CHOICES = {
     "savefail",
     "tz",
   ],
+  amb: ["same", "split", "off"],
+  pick: ["all.s", "all.e", "wknd.s", "wknd.e"],
 } as const;
 
 type Choices = typeof CHOICES;

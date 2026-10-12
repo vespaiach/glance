@@ -17,7 +17,7 @@ type SettingsViewProps = {
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
   onOpenLocation: () => void;
-  onPreviewAmbient: () => void;
+  onOpenAmbient: () => void;
   onSignOut: () => void;
 };
 
@@ -44,7 +44,7 @@ export function SettingsView({
   onChange,
   onOpenBackground,
   onOpenLocation,
-  onPreviewAmbient,
+  onOpenAmbient,
   onSignOut,
 }: SettingsViewProps) {
   return (
@@ -59,11 +59,7 @@ export function SettingsView({
         onOpenLocation={onOpenLocation}
       />
       <div {...stylex.props(styles.side)}>
-        <ScreenOptions
-          settings={settings}
-          onChange={onChange}
-          onPreviewAmbient={onPreviewAmbient}
-        />
+        <ScreenOptions settings={settings} onChange={onChange} onOpenAmbient={onOpenAmbient} />
         <AccountCard account={account} onSignOut={onSignOut} />
       </div>
     </div>

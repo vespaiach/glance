@@ -121,6 +121,20 @@ test("TPK-03 minute grid reads 00 … 55 in 5-minute steps and presses the curre
   );
 });
 
+test("SET-10 minuteStep 15 shows only 00 · 15 · 30 · 45", async () => {
+  const onChange = vi.fn();
+
+  render(<TimePicker {...starts} value={at(18, 30)} minuteStep={15} onChange={onChange} />);
+
+  const cells = within(minuteGroup()).getAllByRole("button");
+
+  expect(cells.map((cell) => cell.textContent)).toEqual(["00", "15", "30", "45"]);
+
+  await userEvent.click(within(minuteGroup()).getByRole("button", { name: "45 minutes" }));
+
+  expect(onChange).toHaveBeenCalledWith(at(18, 45));
+});
+
 test("TPK-10 24-hour hour cells say '{hh} hundred' and minute cells '{n} minutes'", () => {
   render(<TimePicker {...starts} clock="24h" value={at(15, 0)} />);
 

@@ -37,7 +37,11 @@ export function moveStart(times: EventTimes, start: number): EventTimes {
 
 export type Meridiem = NonNullable<TimeParts["meridiem"]>;
 
-export const PICKER_MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+export type MinuteStep = 5 | 15;
+
+export function pickerMinutes(step: MinuteStep): number[] {
+  return Array.from({ length: 60 / step }, (_, i) => i * step);
+}
 
 export function pickerHours(clock: Clock, meridiem?: Meridiem): number[] {
   if (clock === "24h") return Array.from({ length: 24 }, (_, hour) => hour);

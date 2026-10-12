@@ -15,20 +15,44 @@ export type AmbientSummary =
   | { mode: "same"; all: AmbientRange | null }
   | { mode: "split"; all: AmbientRange | null; wknd: AmbientRange | null };
 
+export type AmbientSegment = { left: number; width: number };
+
 type Night = { weekday: number; sinceNoon: number };
 
-function toMinutes(time: string): number {
+export function ambientMinutes(time: string): number {
   const [hours = 0, minutes = 0] = time.split(":").map(Number);
 
   return hours * 60 + minutes;
+}
+
+export function ambientTime(minutes: number): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
 function pastNoon(minutes: number): number {
   return (minutes - NOON + DAY) % DAY;
 }
 
-function spanLength({ start, end }: AmbientSet): number {
-  return (toMinutes(end) - toMinutes(start) + DAY) % DAY;
+export function ambientLength({ start, end }: AmbientSet): number {
+  return (ambientMinutes(end) - ambientMinutes(start) + DAY) % DAY;
+}
+
+const percentOfDay = (minutes: number) => (minutes / DAY) * 100;
+
+export function ambientSegments(set: AmbientSet): AmbientSegment[] {
+  const length = ambientLength(set);
+
+  if (length === 0) return [];
+
+  const dim = pastNoon(ambientMinutes(set.start));
+
+  const overflow = Math.max(dim + length - DAY, 0);
+
+  const first = { left: percentOfDay(dim), width: percentOfDay(length - overflow) };
+
+  return overflow === 0 ? [first] : [first, { left: 0, width: percentOfDay(overflow) }];
 }
 
 function nightOf(now: Date, tz: string): Night {
@@ -42,9 +66,9 @@ function nightOf(now: Date, tz: string): Night {
 function nightRuns(set: AmbientSet | null, sinceNoon: number): boolean {
   if (set === null) return false;
 
-  const dim = pastNoon(toMinutes(set.start));
+  const dim = pastNoon(ambientMinutes(set.start));
 
-  return sinceNoon >= dim && sinceNoon < dim + spanLength(set);
+  return sinceNoon >= dim && sinceNoon < dim + ambientLength(set);
 }
 
 export function ambientSetFor(ambient: Ambient, weekday: number): AmbientSet | null {
@@ -66,11 +90,11 @@ export function inAmbient(ambient: Ambient, now: Date, tz: string): boolean {
 }
 
 function rangeOf(set: AmbientSet, clock: Clock): AmbientRange | null {
-  if (spanLength(set) === 0) return null;
+  if (ambientLength(set) === 0) return null;
 
   return {
-    start: formatClock(toMinutes(set.start), clock),
-    end: formatClock(toMinutes(set.end), clock),
+    start: formatClock(ambientMinutes(set.start), clock),
+    end: formatClock(ambientMinutes(set.end), clock),
   };
 }
 

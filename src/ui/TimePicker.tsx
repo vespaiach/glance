@@ -4,8 +4,9 @@ import { type ReactNode, useEffect, useId, useRef } from "react";
 import {
   endForLength,
   type Meridiem,
-  PICKER_MINUTES,
+  type MinuteStep,
   pickerHours,
+  pickerMinutes,
   withHour,
   withMeridiem,
   withMinute,
@@ -45,6 +46,8 @@ type TimePickerProps = {
   onChange: (minutes: number) => void;
   onDone: () => void;
   ends?: TimePickerEnds;
+  doneVariant?: "primary" | "secondary";
+  minuteStep?: MinuteStep;
   compact?: boolean;
   xstyle?: stylex.StyleXStyles;
 };
@@ -97,7 +100,7 @@ const styles = stylex.create({
   compactGrid: {
     gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   },
-  lengthGrid: {
+  fourColumns: {
     gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   },
   cell: {
@@ -225,6 +228,8 @@ export function TimePicker({
   onChange,
   onDone,
   ends,
+  doneVariant = "secondary",
+  minuteStep = 5,
   compact,
   xstyle,
 }: TimePickerProps) {
@@ -237,6 +242,10 @@ export function TimePicker({
   const minute = value % 60;
 
   const grid = compact ? styles.compactGrid : undefined;
+
+  const minutes = pickerMinutes(minuteStep);
+
+  const minuteGrid = minutes.length === 4 ? styles.fourColumns : grid;
 
   return (
     <fieldset
@@ -266,8 +275,8 @@ export function TimePicker({
           />
         ))}
       </Section>
-      <Section title={labels.minutes} grid={grid}>
-        {PICKER_MINUTES.map((m) => (
+      <Section title={labels.minutes} grid={minuteGrid}>
+        {minutes.map((m) => (
           <Cell
             key={m}
             label={String(m).padStart(2, "0")}
@@ -279,7 +288,7 @@ export function TimePicker({
         ))}
       </Section>
       {ends && (
-        <Section title={labels.length} grid={styles.lengthGrid}>
+        <Section title={labels.length} grid={styles.fourColumns}>
           {ends.lengths.map((length) => (
             <Cell
               key={length.value}
@@ -300,7 +309,11 @@ export function TimePicker({
             </Button>
           )}
         </div>
-        <Button variant="secondary" onClick={onDone} xstyle={styles.done}>
+        <Button
+          variant={doneVariant}
+          onClick={onDone}
+          xstyle={doneVariant === "secondary" && styles.done}
+        >
           {labels.done}
         </Button>
       </div>

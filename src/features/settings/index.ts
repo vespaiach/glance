@@ -1,3 +1,5 @@
+export { AmbientScheduleScreen } from "./AmbientScheduleScreen";
+export { AmbientScheduleView } from "./components/AmbientScheduleView";
 export { LocationView } from "./components/LocationView";
 export { SettingsView } from "./components/SettingsView";
 export { LocationScreen } from "./LocationScreen";

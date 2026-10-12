@@ -3,8 +3,9 @@ import type { ComponentProps } from "react";
 import { changeBackground } from "@/domain/background";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Season } from "@/domain/schemas";
+import { DEFAULT_AMBIENT } from "@/domain/schemas";
 import { BackgroundView } from "@/features/background";
-import { LocationView, SettingsView } from "@/features/settings";
+import { AmbientScheduleView, LocationView, SettingsView } from "@/features/settings";
 import type { WeatherSetupState } from "@/features/weather";
 import { GalleryGroup } from "./GalleryGroup";
 import {
@@ -23,6 +24,8 @@ type SettingsProps = ComponentProps<typeof SettingsView>;
 type BackgroundProps = ComponentProps<typeof BackgroundView>;
 
 type LocationProps = ComponentProps<typeof LocationView>;
+
+type AmbientProps = ComponentProps<typeof AmbientScheduleView>;
 
 type Demo<T> = { key: string; phone?: boolean } & Partial<T>;
 
@@ -111,6 +114,28 @@ const LOCATION_BASE: LocationProps = {
   onBack: ignore,
 };
 
+const SPLIT = { ...DEFAULT_AMBIENT, mode: "split" } as const;
+
+const AMBIENT_DEMOS: readonly Demo<AmbientProps>[] = [
+  { key: "every-night" },
+  { key: "pick-dim", initialPick: "all.s" },
+  { key: "split", ambient: SPLIT, initialPick: "wknd.e" },
+  { key: "same", ambient: { ...DEFAULT_AMBIENT, all: { start: "18:00", end: "18:00" } } },
+  { key: "off", ambient: { ...DEFAULT_AMBIENT, mode: "off" } },
+  { key: "clock-24", clock: "24h", idleTimeout: null, initialPick: "all.e" },
+  { key: "phone", phone: true, breakpoint: "phone", initialPick: "all.s" },
+];
+
+const AMBIENT_BASE: AmbientProps = {
+  ambient: DEFAULT_AMBIENT,
+  clock: "12h",
+  idleTimeout: 180,
+  breakpoint: "wide",
+  onChange: ignore,
+  onBack: ignore,
+  onPreview: ignore,
+};
+
 function settingsBase(season: Season): SettingsProps {
   return {
     account: ACCOUNT,
@@ -121,7 +146,7 @@ function settingsBase(season: Season): SettingsProps {
     onChange: ignore,
     onOpenBackground: ignore,
     onOpenLocation: ignore,
-    onPreviewAmbient: ignore,
+    onOpenAmbient: ignore,
     onSignOut: ignore,
   };
 }
@@ -159,6 +184,13 @@ export function SettingsGallery({ season }: { season: Season }) {
         {LOCATION_DEMOS.map(({ key, phone, ...demo }) => (
           <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
             <LocationView {...LOCATION_BASE} {...demo} />
+          </div>
+        ))}
+      </GalleryGroup>
+      <GalleryGroup title={gallery.groups.ambientScheduleView}>
+        {AMBIENT_DEMOS.map(({ key, phone, ...demo }) => (
+          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+            <AmbientScheduleView {...AMBIENT_BASE} {...demo} />
           </div>
         ))}
       </GalleryGroup>

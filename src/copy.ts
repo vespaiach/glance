@@ -292,7 +292,6 @@ export const copy = {
     ambient: {
       title: "Ambient screen",
       summary: (summary: AmbientSummary) => ambientSummaryText(summary),
-      preview: "Preview",
     },
     idle: {
       title: "Back to Today after",
@@ -316,6 +315,38 @@ export const copy = {
       signOut: "Sign out",
       signOutCaption: "Signs out this screen only.",
     },
+  },
+  ambientSchedule: {
+    back: "Settings",
+    title: "Ambient screen",
+    intro:
+      "During these hours the screen dims to the clock, weather and next event. A touch wakes it.",
+    schedule: "Schedule",
+    modes: [
+      { value: "same", label: "Every night" },
+      { value: "split", label: "Weekends differ" },
+      { value: "off", label: "Off" },
+    ],
+    sets: { every: "Every night", all: "Sun – Thu nights", wknd: "Fri & Sat nights" },
+    dims: "Dims at",
+    wakes: "Wakes at",
+    dimGroup: "Dim time",
+    wakeGroup: "Wake time",
+    sameTime: "Same as dim time",
+    notSet: "Not set",
+    range: (start: string, end: string) => `${start} – ${end}`,
+    bar: (set: string, range: string) => `${set}: ${range}`,
+    staysBright: "The screen stays bright all day and night.",
+    over24: "Over 24 hours",
+    noon: "Noon",
+    midnight: "Midnight",
+    noHours: "No ambient hours.",
+    wakeLine: (idleTimeout: number | null) =>
+      idleTimeout === null
+        ? "After a touch it stays awake until the next ambient start."
+        : `After a touch it dims again when nobody has touched it for ${idleTimeout / 60} min.`,
+    wakeLineOff: "Touch-to-wake and the idle timer work as usual.",
+    preview: "Preview",
   },
   location: {
     back: "Settings",

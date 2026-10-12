@@ -85,6 +85,10 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("wx=tz", "/weather")).toEqual({ wx: "tz" });
   });
 
+  it("SET-10 reads amb= and pick= for the Ambient screen page", () => {
+    expect(parseFixtureParams("amb=split&pick=wknd.e")).toEqual({ amb: "split", pick: "wknd.e" });
+  });
+
   it("§6 ignores params that are not fixture params", () => {
     expect(parseFixtureParams("date=2026-10-14&view=weather")).toEqual({});
   });

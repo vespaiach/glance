@@ -150,6 +150,16 @@ describe("seedFixtureDb", () => {
     );
   });
 
+  it.each([
+    ["split", { ...FIXTURE_SETTINGS.ambient, mode: "split" }],
+    ["off", { ...FIXTURE_SETTINGS.ambient, mode: "off" }],
+    ["same", { ...FIXTURE_SETTINGS.ambient, all: { start: "18:00", end: "18:00" } }],
+  ] as const)("SET-10 amb=%s seeds that ambient schedule", async (amb, ambient) => {
+    await seedFixtureDb(db, { amb });
+
+    expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.ambient).toEqual(ambient);
+  });
+
   it("AMB-03 now= during ambient hours seeds the Appendix A ambient forecast", async () => {
     await seedFixtureDb(db, { now: FIXTURE_AMBIENT_NOW });
 

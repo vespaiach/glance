@@ -163,12 +163,12 @@ test("SET-09 the Location row opens the Location page", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/settings/location");
 });
 
-test("SET-06 Preview opens Ambient", async () => {
+test("SET-06 the Ambient screen tile opens the Ambient screen page", async () => {
   renderSettings();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Preview" }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Ambient screen/ }));
 
-  expect(navigation.push).toHaveBeenCalledWith("/ambient");
+  expect(navigation.push).toHaveBeenCalledWith("/settings/ambient");
 });
 
 test("SIGNIN-11 Sign out signs this screen out and returns to the email form", async () => {
