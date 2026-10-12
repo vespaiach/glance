@@ -231,6 +231,111 @@ export const copy = {
           : `Offline · ${count} uploads paused until back online`,
     },
   },
+  settings: {
+    eyebrow: "Screen settings",
+    title: "Settings",
+    signedInAs: "Signed in as",
+    signedInEmail: (email: string) => ` · ${email}`,
+    season: {
+      title: "Season",
+      autoLabel: "Auto",
+      following: (season: string) => `Follows the month · now ${season}`,
+      fixed: (season: string) => `Fixed to ${season}`,
+    },
+    background: {
+      title: "Background",
+      body: "Photo, slideshow or the plain season palette",
+      season: "Season color",
+      photo: (title: string) => `Photo · ${title}`,
+      slideshow: (interval: string) => `Slideshow · ${interval}`,
+    },
+    clock: {
+      title: "Clock",
+      body: "Used for every time on the screen",
+      options: [
+        { value: "12h", label: "12-hour" },
+        { value: "24h", label: "24-hour" },
+      ],
+    },
+    temperature: {
+      title: "Temperature",
+      body: "Weather is shown without a unit letter",
+      options: [
+        { value: "F", label: "Fahrenheit" },
+        { value: "C", label: "Celsius" },
+      ],
+    },
+    schedule: "Schedule",
+    ambient: {
+      title: "Ambient screen",
+      hours: (start: string, end: string) => `${start} – ${end}`,
+      preview: "Preview",
+    },
+    idle: {
+      title: "Back to Today after",
+      options: [
+        { value: "60", label: "1 min" },
+        { value: "180", label: "3 min" },
+        { value: "300", label: "5 min" },
+        { value: "never", label: "Never" },
+      ],
+    },
+    noteExpiry: {
+      title: "Remove notes after",
+      options: [
+        { value: "1d", label: "1 day" },
+        { value: "1w", label: "1 week" },
+        { value: "never", label: "Never" },
+      ],
+    },
+    account: {
+      title: "Account",
+      signOut: "Sign out",
+      signOutCaption: "Signs out this screen only.",
+    },
+  },
+  background: {
+    back: "Settings",
+    title: "Background",
+    modes: [
+      { value: "season", label: "Season color" },
+      { value: "photo", label: "Photo" },
+      { value: "slideshow", label: "Slideshow" },
+    ],
+    selectOne: "Family photos · select one",
+    inRotation: (count: number) => `Family photos · all ${count} in rotation`,
+    list: "Family photos",
+    use: (title: string) => `Use ${title} as background`,
+    upload: "Upload photo",
+    uploadOffline: "Upload when online",
+    preview: "Preview",
+    dim: {
+      title: "Dim photo",
+      options: [
+        { value: "0", label: "Off" },
+        { value: "0.2", label: "Light" },
+        { value: "0.4", label: "Strong" },
+      ],
+    },
+    rotate: {
+      title: "Change photo",
+      options: [
+        { value: "hourly", label: "Hourly" },
+        { value: "daily", label: "Daily" },
+        { value: "weekly", label: "Weekly" },
+      ],
+    },
+    interval: { hourly: "hourly", daily: "daily", weekly: "weekly" },
+    caption: {
+      season: "Screens use the plain seasonal palette. Pick a photo to switch.",
+      photo: (title: string) =>
+        `${title} is the background on every screen. Panels stay solid on top.`,
+      slideshow: (title: string, interval: string) =>
+        `Showing ${title}. The photo changes ${interval}; panels stay solid on top.`,
+    },
+    loading: "Loading photos",
+    unavailable: "Photos unavailable",
+  },
   weather: {
     now: (location: string) => `${location} · Now`,
     place: (name: string, region: string) => `${name}, ${region}`,

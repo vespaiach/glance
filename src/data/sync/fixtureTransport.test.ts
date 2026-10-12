@@ -119,6 +119,15 @@ describe("seedFixtureDb", () => {
     expect(await db.weather.count()).toBe(0);
   });
 
+  it("BG-03 bg=photo seeds the Appendix A background in Photo mode", async () => {
+    await seedFixtureDb(db, { bg: "photo" });
+
+    expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.background).toEqual({
+      ...FIXTURE_SETTINGS.background,
+      mode: "photo",
+    });
+  });
+
   it("WX-07 wx= seeds everything except the weather location and the forecast", async () => {
     await seedFixtureDb(db, { wx: "searching" });
 

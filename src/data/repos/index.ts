@@ -28,5 +28,11 @@ export {
 } from "./session";
 export { createSettingsRepo, type SettingsRepo, useSettings, useSettingsRepo } from "./settings";
 export { type SyncStatus, useSyncStatus } from "./status";
-export { type PhotoVariant, RepoProvider, type RepoStore } from "./store";
+export {
+  type PhotoVariant,
+  RepoProvider,
+  type RepoStore,
+  type StoreAccount,
+  useAccount,
+} from "./store";
 export { useWeather } from "./weather";

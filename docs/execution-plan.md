@@ -100,7 +100,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | V04 | ✅ ([#27](https://github.com/vespaiach/glance/pull/27)) | **Weather:** now, hourly, 7-day, rain banner, setup card + search states | — | WX-01..05, WX-07..09 (states) |
 | V05 | ✅ ([#28](https://github.com/vespaiach/glance/pull/28)) | **Notes:** board, note sheet, counts and captions | — | NOTE-01..07 |
 | V06 | ✅ ([#29](https://github.com/vespaiach/glance/pull/29)) | **Photos:** featured, thumbs, empty, upload tile states; upload hidden on phone | — | PHOTO-01, 05..09 (states), spec §5.4 |
-| V07 | ⬜ | **Settings + Background:** rows, account card, background picker and preview | — | SET-01..08, BG-01..05 |
+| V07 | ✅ ([#30](https://github.com/vespaiach/glance/pull/30)) | **Settings + Background:** rows, account card, background picker and preview | — | SET-01..08, BG-01..05 |
 | V08 | ⬜ | **Ambient** | — | AMB-01..04 |
 | V09 | ⬜ | **Sign in:** all `signin=` states, hero, lock footer; SIGNIN-13 uses the SIGNIN-01 form | — | SIGNIN-01..12 (states), SIGNIN-13 fallback |
 | V10 | ⬜ | **Photo background mode** across views | V01, V07 | SHELL-05, BG-06, TODAY-10 |
@@ -118,7 +118,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | I03 | ⬜ | **Notes CRUD:** sheet reducer, Guest author, tilt, delete confirm | V05 | NOTE-01..05, NOTE-09 |
 | I04 | ⬜ | **Slideshow:** featured stepping, 8 s timer, play/pause, finished photos only | V06 | PHOTO-01, 02, 07 |
 | I05 | ⬜ | **Upload flow:** upload-tile reducer over `transport.upload` (progress, per-file errors, retry, remove), pre-checks | V06, V07 | PHOTO-03, 04, 06, 08, BG-02 |
-| I06 | ⬜ | **Settings live:** season cross-fade, clock, unit, idle, note expiry, background modes, slideshow rotation | V07, V10 | SET-02..07, BG-01..06 |
+| I06 | ⬜ | **Settings live:** season cross-fade, clock, unit, idle, note expiry, background modes, slideshow rotation (V07 already saves every control through `SettingsRepo`) | V07, V10 | SET-02..07, BG-01..06 |
 | I07 | ⬜ | **Weather setup:** search reducer, choose place, save `weatherLocation`, refresh | V04 | WX-04, 06..09 |
 | I08 | ⬜ | **Idle and Ambient:** return to Today, wake tap, schedule enter/leave, sheets discarded | V08, S06 | IDLE-01..03, AMB-04/05, SHELL-04 |
 | I09 | ⬜ | **Sign-in flow:** reducer over `transport.auth` (send, poll 2 s, name step, expired, done → Today), `glance-meta` write, sign-out | V09 | SIGNIN-01..12 |

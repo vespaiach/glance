@@ -53,6 +53,10 @@ function unlocated({ weatherLocation: _, ...settings }: AccountSettings): Accoun
   return settings;
 }
 
+function onPhoto(settings: AccountSettings): AccountSettings {
+  return { ...settings, background: { ...settings.background, mode: "photo" } };
+}
+
 function fixtureSeed(params: FixtureParams): Seed | undefined {
   if (params.net === "loading") return undefined;
 
@@ -62,7 +66,9 @@ function fixtureSeed(params: FixtureParams): Seed | undefined {
 
   const weather = params.net === "wxerror" ? undefined : FIXTURE_WEATHER;
 
-  return { settings: FIXTURE_SETTINGS, withRows: true, ...(weather && { weather }) };
+  const settings = params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS;
+
+  return { settings, withRows: true, ...(weather && { weather }) };
 }
 
 async function writeSeed(db: GlanceDb, seed: Seed): Promise<void> {

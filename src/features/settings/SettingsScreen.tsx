@@ -1,21 +1,45 @@
 "use client";
 
-import * as stylex from "@stylexjs/stylex";
-import { copy } from "@/copy";
+import { useRouter } from "next/navigation";
+import { useAccount, usePhotos, useSettingsRepo } from "@/data/repos";
+import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { ViewPlaceholder } from "@/shell/ViewPlaceholder";
-import { settingsLayout } from "./layout";
+import { useSeason } from "@/shell/providers/season";
+import { useAccountSettings } from "@/shell/providers/settings";
+import { SettingsView } from "./components/SettingsView";
 
-const zones = stylex.create({ rows: { minHeight: 480 }, account: {} });
+const BACKGROUND_PATH = "/settings/background";
+
+const AMBIENT_PATH = "/ambient";
+
+const notYet = () => {};
 
 export function SettingsScreen() {
+  const router = useRouter();
+
   const breakpoint = useBreakpoint();
 
+  const account = useAccount();
+
+  const settings = useAccountSettings();
+
+  const season = useSeason();
+
+  const photos = usePhotos();
+
+  const repo = useSettingsRepo();
+
   return (
-    <ViewPlaceholder
-      label={copy.nav.view.settings}
-      layout={settingsLayout(breakpoint)}
-      zones={zones}
+    <SettingsView
+      account={account}
+      settings={settings}
+      season={season}
+      background={shownBackground(settings.background, photos ?? [])}
+      breakpoint={breakpoint}
+      onChange={(change) => repo.update(change)}
+      onOpenBackground={() => router.push(BACKGROUND_PATH)}
+      onPreviewAmbient={() => router.push(AMBIENT_PATH)}
+      onSignOut={notYet}
     />
   );
 }

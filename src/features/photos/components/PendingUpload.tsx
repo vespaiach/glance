@@ -11,6 +11,7 @@ type PendingUploadProps = {
   tile: UploadTile;
   onRetry: (id: string) => void;
   onRemove: (id: string) => void;
+  frame?: stylex.StyleXStyles;
 };
 
 const FAILURE_ICONS: Record<UploadFailure, LucideIcon> = {
@@ -165,10 +166,10 @@ function FailedActions({ tile, onRetry, onRemove }: PendingUploadProps) {
   );
 }
 
-export function PendingUpload({ tile, onRetry, onRemove }: PendingUploadProps) {
+export function PendingUpload({ tile, onRetry, onRemove, frame }: PendingUploadProps) {
   return (
     <div {...stylex.props(styles.root)}>
-      <div {...stylex.props(styles.frame)}>
+      <div {...stylex.props(styles.frame, frame)}>
         {tile.state !== "failed" && tile.preview && (
           // biome-ignore lint/performance/noImgElement: the preview is a local object URL of the chosen file, which the Next image optimizer can't load
           <img src={tile.preview} alt="" {...stylex.props(styles.preview)} />
