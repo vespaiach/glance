@@ -70,4 +70,15 @@ Screens A and B on the same account, both online:
 |---|---|---|---|
 | 2026-10-12 | `feat/Q01-qa-checklist` | Local run, headless Chrome 152, two profiles | See below |
 
-**2026-10-12 local run.** Passed: sign-in through a local SMTP catcher; the SW precached 40 files, `pages` 9 and `pages-rsc` 13 on both screens; a note made on A showed on B within 3 s; with the server down a reload of A opened Today from saved data, the nav bar opened all six views, full loads of `/settings/background`, `/ambient` and `/calendar?date=…` worked, and a new note read "Save for later" then **Waiting to post**. Found and fixed: after an offline cold start the note only posted on the FAIL-03 retry (up to 5 min after the server came back), because the sync stream's first open never pulls; it now pulls when that first open follows a failed start (tech-design §4.6). Found (not an app bug): `Ctrl-C` on `next start` keeps sync streams open while it drains, so screens never see the server go away; the setup above says to kill it hard. Not run here, left for the kiosk pass: section 1 (each board was compared at the six sizes in its own V/I/Y task), photos, the iPad home-screen app, sections 4 and 5 beyond what's noted.
+**2026-10-12 local run.** Passed:
+- Sign-in through a local SMTP catcher. On both screens the SW precached 40 files and cached `pages` (9) and `pages-rsc` (13).
+- Sync: a note made on A showed on B within 3 s.
+- Offline cold start: with the server down, a reload of A opened Today from saved data, the nav bar opened all six views, and full loads of `/settings/background`, `/ambient` and `/calendar?date=…` worked. A new note's button read "Save for later" and the note showed **Waiting to post**. Once the server was back, the note posted and reached B.
+- 401: with every session deleted, A's next push sent it to the sign-in form with the note kept in the outbox; signing in again with the same email posted it. B, signed in again with a different email, lost the old account's DB and opened empty. Sign out on B left A signed in and deleted B's account DB.
+- Update: after a rebuild both screens had the new SW waiting, and each reloaded once into it at an idle move to Today.
+
+Found and fixed: after an offline cold start the waiting note only posted on the FAIL-03 retry, up to 5 min after the server came back, because the sync stream's first open never pulls. Now that first open pulls when it follows a failed start (tech-design §4.6). Retested: the note posted 27 s after the server came back, with the retry still 3 min away.
+
+Found, not an app bug: `Ctrl-C` on `next start` keeps sync streams open while it drains, so screens never see the server go away. The setup above says to kill it hard.
+
+Not run here, left for the kiosk pass: section 1 (each board was compared at the six sizes in its own V/I/Y task), photos and photo warming, the iPad home-screen app, Ambient, the update held by waiting changes, and the 426 path.

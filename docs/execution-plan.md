@@ -168,7 +168,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
-| Q01 | 🔄 ([#59](https://github.com/vespaiach/glance/pull/59)) | **Manual QA checklist** (tech §7): visual parity, offline cold start on a production build, two screens syncing, 401 and update paths on a kiosk | C03, C04, C05 | OFF-06/07, SYNC-01..03 |
+| Q01 | ✅ ([#59](https://github.com/vespaiach/glance/pull/59)) | **Manual QA checklist** (tech §7): visual parity, offline cold start on a production build, two screens syncing, 401 and update paths on a kiosk | C03, C04, C05 | OFF-06/07, SYNC-01..03 |
 
 ---
 
