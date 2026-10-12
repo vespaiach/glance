@@ -136,6 +136,7 @@ const HourlyPointSchema = v.object({
   time: IsoTimestampSchema,
   icon: WeatherIconSchema,
   temp: v.number(),
+  precip: v.optional(v.number()),
 });
 
 const DailyPointSchema = v.object({

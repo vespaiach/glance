@@ -13,6 +13,7 @@ import {
   WeatherSchema,
 } from "@/domain/schemas";
 import { formatClock, minutesOfDay } from "@/domain/time";
+import { rainStart } from "@/domain/weather";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_AMBIENT_NOW,
@@ -156,6 +157,10 @@ describe("Appendix A fixtures", () => {
       ["Recipe card", "notPhoto"],
       ["Halloween costumes", "network"],
     ]);
+  });
+
+  it("WX-03 the fixture forecast brings rain at 4 PM, as the rain banner shows", () => {
+    expect(rainStart(FIXTURE_WEATHER.hourly)).toBe(new Date(2026, 9, 9, 16).toISOString());
   });
 
   it("WX-01 the weather is Portland, OR at 64° partly cloudy with 8 hours and 7 days", () => {

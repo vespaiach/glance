@@ -58,6 +58,7 @@ import {
 } from "./samples";
 import { TimeEntryDemo } from "./TimeEntryDemo";
 import { TodayGallery } from "./TodayGallery";
+import { WeatherGallery } from "./WeatherGallery";
 
 type SeasonGalleryProps = {
   season: Season;
@@ -492,6 +493,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <TodayGallery season={season} />
       <CalendarGallery />
       <EventSheetGallery season={season} />
+      <WeatherGallery />
     </>
   );
 }

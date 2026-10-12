@@ -200,6 +200,12 @@ describe("WeatherSchema", () => {
     expect(accepts(WeatherSchema, { ...weather, daily: weather.daily.slice(1) })).toBe(false);
   });
 
+  it("WX-03 keeps the precipitation chance of an hourly point", () => {
+    const hourly = weather.hourly.map((point) => ({ ...point, precip: 70 }));
+
+    expect(v.parse(WeatherSchema, { ...weather, hourly }).hourly[0]?.precip).toBe(70);
+  });
+
   it("D6 rejects an icon outside the weather set", () => {
     const current = { ...weather.current, icon: "house" };
 

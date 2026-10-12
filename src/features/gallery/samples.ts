@@ -8,6 +8,7 @@ import type {
   Tone,
   Weather,
   WeatherIcon,
+  WeatherLocation,
 } from "@/domain/schemas";
 import type { ZoneState } from "@/domain/zoneState";
 
@@ -31,6 +32,7 @@ export const gallery = {
     today: "Today",
     calendarView: "Calendar view",
     eventSheet: "Event sheet",
+    weatherView: "Weather view",
   },
   eventSheet: {
     edit: "Edit event",
@@ -321,3 +323,41 @@ export const TODAY_WEATHER: Weather = {
   hourly: [],
   daily: [],
 };
+
+const HOURLY: [hour: number, icon: WeatherIcon, temp: number, precip: number][] = [
+  [11, "cloud-sun", 64, 10],
+  [12, "cloud-sun", 66, 10],
+  [13, "cloud", 67, 20],
+  [14, "cloud", 68, 30],
+  [15, "cloud-drizzle", 65, 40],
+  [16, "cloud-rain", 61, 70],
+  [17, "cloud-rain", 58, 80],
+  [18, "cloud", 56, 40],
+];
+
+export const FULL_WEATHER: Weather = {
+  ...TODAY_WEATHER,
+  hourly: HOURLY.map(([hour, icon, temp, precip]) => ({
+    time: todayAt(hour, 0),
+    icon,
+    temp,
+    precip,
+  })),
+  daily: FORECAST.map((day, index) => ({
+    date: `2026-10-${String(9 + index).padStart(2, "0")}`,
+    icon: day.icon,
+    high: day.high,
+    low: day.low,
+    ...(day.precip !== undefined && { precip: day.precip }),
+  })),
+};
+
+export const DRY_WEATHER: Weather = {
+  ...FULL_WEATHER,
+  hourly: FULL_WEATHER.hourly.map((point) => ({ ...point, precip: 10 })),
+};
+
+export const PLACES: readonly WeatherLocation[] = [
+  { name: "Portland", region: "Oregon", lat: 45.5152, lon: -122.6784 },
+  { name: "Portland", region: "Maine", lat: 43.6591, lon: -70.2568 },
+];

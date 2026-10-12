@@ -118,6 +118,14 @@ describe("seedFixtureDb", () => {
     expect(await db.events.count()).toBe(FIXTURE_EVENTS.length);
     expect(await db.weather.count()).toBe(0);
   });
+
+  it("WX-07 wx= seeds everything except the weather location and the forecast", async () => {
+    await seedFixtureDb(db, { wx: "searching" });
+
+    expect(await db.events.count()).toBe(FIXTURE_EVENTS.length);
+    expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.weatherLocation).toBeUndefined();
+    expect(await db.weather.count()).toBe(0);
+  });
 });
 
 describe("FixtureTransport pull", () => {

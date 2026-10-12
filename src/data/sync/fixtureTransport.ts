@@ -49,10 +49,16 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 
 const never = <T>() => new Promise<T>(() => {});
 
+function unlocated({ weatherLocation: _, ...settings }: AccountSettings): AccountSettings {
+  return settings;
+}
+
 function fixtureSeed(params: FixtureParams): Seed | undefined {
   if (params.net === "loading") return undefined;
 
   if (params.empty) return { settings: DEFAULT_SETTINGS, withRows: false };
+
+  if (params.wx) return { settings: unlocated(FIXTURE_SETTINGS), withRows: true };
 
   const weather = params.net === "wxerror" ? undefined : FIXTURE_WEATHER;
 
