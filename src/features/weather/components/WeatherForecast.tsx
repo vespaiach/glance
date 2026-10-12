@@ -34,7 +34,7 @@ type WeatherForecastProps = {
   unit: Unit;
   clock: Clock;
   today: Date;
-  offline: boolean;
+  stale: boolean;
   breakpoint: Breakpoint;
 };
 
@@ -132,10 +132,10 @@ function details(current: Weather["current"], unit: Unit, clock: Clock): Weather
   ];
 }
 
-type NoticeProps = { weather: Weather; clock: Clock; offline: boolean };
+type NoticeProps = { weather: Weather; clock: Clock; stale: boolean };
 
-function Notice({ weather, clock, offline }: NoticeProps) {
-  if (offline) {
+function Notice({ weather, clock, stale }: NoticeProps) {
+  if (stale) {
     return (
       <Banner
         icon={WifiOff}
@@ -233,7 +233,7 @@ export function WeatherForecast({
   unit,
   clock,
   today,
-  offline,
+  stale,
   breakpoint,
 }: WeatherForecastProps) {
   const layout = weatherLayout(breakpoint);
@@ -257,7 +257,7 @@ export function WeatherForecast({
         xstyle={styles.now}
       />
       <div {...stylex.props(styles.panel)}>
-        <Notice weather={weather} clock={clock} offline={offline} />
+        <Notice weather={weather} clock={clock} stale={stale} />
         <Hourly hourly={weather.hourly} unit={unit} clock={clock} xstyle={layout.hourly} />
         <Daily
           daily={weather.daily}

@@ -9,6 +9,7 @@ import { photoLayer } from "@/ui/photoLayer";
 import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
 import { NavBar } from "./NavBar";
+import { OfflineNotice } from "./OfflineNotice";
 import { VIEWS, viewForPath, viewPath } from "./routes";
 
 const styles = stylex.create({
@@ -71,6 +72,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const photo = useBackgroundPhoto();
 
+  const view = viewForPath(pathname);
+
   usePrefetchViews();
 
   return (
@@ -80,10 +83,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <NavBar
-        active={viewForPath(pathname)}
+        active={view}
         compact={breakpoint === "phone"}
         onNavigate={(path) => router.push(path)}
       />
+      <OfflineNotice breakpoint={breakpoint} onWeather={view === "weather"} />
     </div>
   );
 }

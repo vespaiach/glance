@@ -20,6 +20,8 @@ export const FIXTURE_NOW = new Date(2026, 9, 9, 10, 41);
 
 export const FIXTURE_AMBIENT_NOW = new Date(2026, 9, 9, 19, 12);
 
+export const FIXTURE_SAVED_AT = at(9, 9, 32);
+
 export const FIXTURE_ACCOUNT: Account = {
   id: fixtureId(4, 1),
   email: "maria@example.com",

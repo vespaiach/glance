@@ -1,4 +1,4 @@
-import { OFFLINE_PILL_DELAY_MS, offlinePillShown } from "./offline";
+import { forecastStale, OFFLINE_PILL_DELAY_MS, offlinePillShown, savedTimeShown } from "./offline";
 
 const since = new Date("2026-10-09T10:41:00");
 
@@ -18,4 +18,28 @@ describe("offlinePillShown", () => {
   it("OFF-01 takes a shorter delay", () => {
     expect(offlinePillShown(since, since, 0)).toBe(true);
   });
+});
+
+describe("forecastStale", () => {
+  it("OFF-03 a forecast is stale once it is more than an hour old", () => {
+    const fetchedAt = since.toISOString();
+
+    expect(forecastStale(fetchedAt, later(60 * 60_000))).toBe(false);
+    expect(forecastStale(fetchedAt, later(60 * 60_000 + 1))).toBe(true);
+  });
+});
+
+describe("savedTimeShown", () => {
+  it.each([
+    ["wide", false, true],
+    ["mid", false, true],
+    ["narrow", false, false],
+    ["phone", false, false],
+    ["wide", true, false],
+  ] as const)(
+    "OFF-01 on %s (Weather: %s) the saved time shows: %s",
+    (breakpoint, onWeather, shown) => {
+      expect(savedTimeShown(breakpoint, onWeather)).toBe(shown);
+    },
+  );
 });

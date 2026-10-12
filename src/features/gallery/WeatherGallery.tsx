@@ -36,7 +36,7 @@ const forecast = {
   unit: "F",
   clock: "12h",
   today: NOW,
-  offline: false,
+  stale: false,
   breakpoint: "wide",
 } as const;
 
@@ -50,7 +50,7 @@ export function WeatherGallery() {
         <WeatherForecast weather={DRY_WEATHER} {...forecast} clock="24h" unit="C" />
       </div>
       <div {...stylex.props(styles.view)}>
-        <WeatherForecast weather={FULL_WEATHER} {...forecast} offline />
+        <WeatherForecast weather={FULL_WEATHER} {...forecast} stale />
       </div>
       <div {...stylex.props(styles.phone)}>
         <WeatherForecast weather={FULL_WEATHER} {...forecast} breakpoint="phone" />

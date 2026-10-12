@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { BoardNote } from "@/domain/notes";
 import type { AccountSettings, Note } from "@/domain/schemas";
 import type { ZoneState } from "@/domain/zoneState";
 import { NoteBoard } from "./NoteBoard";
@@ -25,7 +26,7 @@ const WIFI: Note = {
 };
 
 type Options = {
-  state?: ZoneState<Note>;
+  state?: ZoneState<BoardNote>;
   expiry?: AccountSettings["noteExpiry"];
   onOpenNote?: (id: string) => void;
   onAddNote?: () => void;
@@ -74,6 +75,14 @@ test("NOTE-04 notes show in the given order with their author and stamp", () => 
     "Back at 6MomJust now",
     "Wi-Fi password is on the fridge!Dad8:12 AM",
   ]);
+});
+
+test("OFF-04 a new note waiting to post says so instead of its stamp", () => {
+  renderBoard({ state: { kind: "ready", data: [{ ...NEWEST, waiting: true }, WIFI] } });
+
+  expect(screen.getByText("Waiting to post")).toBeInTheDocument();
+  expect(screen.queryByText("Just now")).not.toBeInTheDocument();
+  expect(screen.getByText("8:12 AM")).toBeInTheDocument();
 });
 
 test("NOTE-06 the caption names the expiry setting", () => {

@@ -320,6 +320,71 @@ test("PHOTO-08 a network failure changes only its tile and Try again restarts it
   expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
 });
 
+async function goOffline() {
+  await act(() => putSyncStatus(store, { online: false, weather: { state: "idle" } }));
+}
+
+async function goOnline() {
+  await act(() => putSyncStatus(store, { online: true, weather: { state: "idle" } }));
+}
+
+test("PHOTO-09 going offline pauses an upload, and back online it is sent again from 0%", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  const upload = pendingUpload();
+
+  renderPhotos();
+
+  await choose(chosen("IMG_2041.jpg"));
+
+  upload.report(40);
+
+  await goOffline();
+
+  expect(await screen.findByText("Paused")).toBeInTheDocument();
+  expect(screen.getByText("Offline · 1 upload paused until back online")).toBeInTheDocument();
+
+  await act(async () => upload.finish(err("network")));
+
+  expect(screen.getByText("Paused")).toBeInTheDocument();
+
+  await goOnline();
+
+  expect(await screen.findByText("Uploading IMG_2041")).toBeInTheDocument();
+  expect(progress("IMG_2041")).toHaveAttribute("aria-valuenow", "0");
+  expect(store.upload).toHaveBeenCalledTimes(2);
+
+  await act(async () => upload.finish(ok(synced(PICNIC))));
+
+  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+});
+
+test("PHOTO-09 an upload still running when the screen reconnects carries on without a resend", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  const upload = pendingUpload();
+
+  renderPhotos();
+
+  await choose(chosen("IMG_2041.jpg"));
+
+  upload.report(40);
+
+  await goOffline();
+
+  expect(await screen.findByText("Paused")).toBeInTheDocument();
+
+  await goOnline();
+
+  expect(await screen.findByText("Uploading IMG_2041")).toBeInTheDocument();
+  expect(progress("IMG_2041")).toHaveAttribute("aria-valuenow", "40");
+  expect(store.upload).toHaveBeenCalledTimes(1);
+
+  await act(async () => upload.finish(ok(synced(PICNIC))));
+
+  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+});
+
 test("FAIL-01 a failed first sync shows Photos unavailable with a countdown and Try again", async () => {
   await putSyncStatus(store, {
     online: true,

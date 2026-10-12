@@ -42,7 +42,7 @@ export function BackgroundScreen() {
 
   const repo = useSettingsRepo();
 
-  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads));
+  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads), online);
 
   const picker = usePhotoPicker(uploads.choose);
 

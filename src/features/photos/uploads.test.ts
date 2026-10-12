@@ -203,4 +203,26 @@ describe("uploads", () => {
   it("PHOTO-08 Remove drops the tile", () => {
     expect(uploads([running, failed("b")], { type: "remove", id: "b" })).toEqual([running]);
   });
+
+  it("PHOTO-09 going offline pauses every running upload where it is", () => {
+    expect(uploads([uploading("a", 40), failed("b")], { type: "pause" })).toEqual([
+      paused("a"),
+      failed("b"),
+    ]);
+  });
+
+  it("PHOTO-09 progress and failures for a paused upload are ignored", () => {
+    const tiles = [paused("a")];
+
+    expect(uploads(tiles, { type: "progress", id: "a", percent: 60 })).toEqual(tiles);
+    expect(uploads(tiles, { type: "fail", id: "a", reason: "network" })).toEqual(tiles);
+  });
+
+  it("PHOTO-09 resuming a paused upload runs it again from where it was", () => {
+    expect(uploads([paused("a")], { type: "resume", id: "a" })).toEqual([uploading("a", 40)]);
+  });
+
+  it("PHOTO-09 restarting a paused upload sends it again from 0%", () => {
+    expect(uploads([paused("a")], { type: "restart", id: "a" })).toEqual([uploading("a", 0)]);
+  });
 });

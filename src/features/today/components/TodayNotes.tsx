@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
-import type { Note } from "@/domain/schemas";
+import type { BoardNote } from "@/domain/notes";
 import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { noteStampText } from "@/features/notes";
@@ -14,7 +14,7 @@ import { StickyNote } from "@/ui/StickyNote";
 import { Zone } from "@/ui/Zone";
 
 type TodayNotesProps = {
-  state: ZoneState<Note>;
+  state: ZoneState<BoardNote>;
   retryIn: number;
   onRetry: () => void;
   now: Date;
@@ -75,7 +75,7 @@ const styles = stylex.create({
   },
 });
 
-function countFor(state: ZoneState<Note>, clock: Clock): string {
+function countFor(state: ZoneState<BoardNote>, clock: Clock): string {
   if (state.kind === "loading" || state.kind === "failed") return copy.today.notes.loadingCount;
 
   if (state.kind === "empty") return copy.today.notes.count(0);

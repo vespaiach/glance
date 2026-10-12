@@ -1,7 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 import { Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
-import type { AccountSettings, Note } from "@/domain/schemas";
+import type { BoardNote } from "@/domain/notes";
+import type { AccountSettings } from "@/domain/schemas";
 import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -18,7 +19,7 @@ import { noteStampText } from "../stamp";
 type Expiry = AccountSettings["noteExpiry"];
 
 type NoteBoardProps = {
-  state: ZoneState<Note>;
+  state: ZoneState<BoardNote>;
   retryIn: number;
   onRetry: () => void;
   expiry: Expiry;
@@ -107,7 +108,7 @@ const styles = stylex.create({
 
 const keepKey = (expiry: Expiry) => expiry ?? "never";
 
-function countFor(state: ZoneState<Note>, clock: Clock): string {
+function countFor(state: ZoneState<BoardNote>, clock: Clock): string {
   if (state.kind === "loading") return copy.notes.loadingCount;
 
   if (state.kind === "failed") return copy.notes.failedCount;

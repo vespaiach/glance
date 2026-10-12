@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useRef } from "react";
+import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { usePhotosRepo } from "@/data/repos";
 import { uuidv7 } from "@/domain/id";
 import { useNowStore } from "@/shell/providers/now";
@@ -19,12 +19,16 @@ function canRetry(tile: UploadTile): boolean {
   return tile.state === "failed" && tile.reason === "network";
 }
 
-export function useUploads(initial: () => UploadTile[]): Uploads {
+export function useUploads(initial: () => UploadTile[], online: boolean): Uploads {
   const repo = usePhotosRepo();
 
   const clock = useNowStore();
 
   const chosen = useRef(new Map<string, Chosen>());
+
+  const sending = useRef(new Set<string>());
+
+  const connected = useRef(online);
 
   const [tiles, dispatch] = useReducer(uploads, undefined, initial);
 
@@ -37,9 +41,15 @@ export function useUploads(initial: () => UploadTile[]): Uploads {
   };
 
   const send = async (id: string, file: File) => {
+    sending.current.add(id);
+
     const answer = await repo.upload(file, (percent) =>
       dispatch({ type: "progress", id, percent }),
     );
+
+    sending.current.delete(id);
+
+    if (!answer.ok && !connected.current) return dispatch({ type: "pause" });
 
     if (!answer.ok) return dispatch({ type: "fail", id, reason: uploadFailure(answer.error) });
 
@@ -77,6 +87,29 @@ export function useUploads(initial: () => UploadTile[]): Uploads {
 
     if (entry) void send(id, entry.file);
   };
+
+  const resume = (tile: UploadTile) => {
+    const entry = chosen.current.get(tile.id);
+
+    if (tile.state !== "paused" || entry === undefined) return;
+
+    if (sending.current.has(tile.id)) return dispatch({ type: "resume", id: tile.id });
+
+    dispatch({ type: "restart", id: tile.id });
+
+    void send(tile.id, entry.file);
+  };
+
+  const reconnect = useEffectEvent(() => {
+    for (const tile of tiles) resume(tile);
+  });
+
+  useEffect(() => {
+    connected.current = online;
+
+    if (online) reconnect();
+    else dispatch({ type: "pause" });
+  }, [online]);
 
   const remove = (id: string) => {
     forget(id);

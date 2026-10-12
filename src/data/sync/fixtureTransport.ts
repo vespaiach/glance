@@ -12,11 +12,13 @@ import {
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
   FIXTURE_PLACES,
+  FIXTURE_SAVED_AT,
   FIXTURE_SETTINGS,
   FIXTURE_WEATHER,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
 import { CURSOR_KEY, type GlanceDb, type OutboxEntry, type StoredPhoto } from "../db";
+import { STATUS_KEY, type SyncStatus } from "./status";
 import type { AuthStatus, Change, Transport, TransportError, UploadError } from "./transport";
 
 export const FIXTURE_CURSOR = "fixture";
@@ -35,6 +37,13 @@ type Seed = {
   settings: AccountSettings;
   withRows: boolean;
   weather?: Weather;
+  status?: SyncStatus;
+};
+
+const OFFLINE_STATUS: SyncStatus = {
+  online: false,
+  lastSyncedAt: FIXTURE_SAVED_AT,
+  weather: { state: "idle" },
 };
 
 type Options = { db: GlanceDb; params: FixtureParams; now: () => Date };
@@ -76,7 +85,15 @@ function fixtureSeed(params: FixtureParams): Seed | undefined {
 
   const weather = params.net === "wxerror" ? undefined : fixtureWeather(params);
 
+  if (isOffline(params)) return offlineSeed(settings, weather);
+
   return { settings, withRows: true, ...(weather && { weather }) };
+}
+
+function offlineSeed(settings: AccountSettings, weather: Weather | undefined): Seed {
+  const saved = weather && { ...weather, fetchedAt: FIXTURE_SAVED_AT };
+
+  return { settings, withRows: true, status: OFFLINE_STATUS, ...(saved && { weather: saved }) };
 }
 
 async function writeSeed(db: GlanceDb, seed: Seed): Promise<void> {
@@ -91,6 +108,8 @@ async function writeSeed(db: GlanceDb, seed: Seed): Promise<void> {
   await db.settings.put({ ...seeded(seed.settings), accountId });
 
   if (seed.weather) await db.weather.put({ ...seed.weather, accountId });
+
+  if (seed.status) await db.meta.put({ key: STATUS_KEY, value: seed.status });
 
   await db.meta.put({ key: CURSOR_KEY, value: FIXTURE_CURSOR });
 }

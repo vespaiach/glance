@@ -9,12 +9,14 @@ import {
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
+  FIXTURE_SAVED_AT,
   FIXTURE_SETTINGS,
   FIXTURE_WEATHER,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
 import { CURSOR_KEY, deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
 import { createFixtureTransport, FIXTURE_CURSOR, seedFixtureDb } from "./fixtureTransport";
+import { STATUS_KEY } from "./status";
 
 const DB_NAME = "glance-fixture-transport-test";
 
@@ -146,6 +148,33 @@ describe("seedFixtureDb", () => {
       ...FIXTURE_AMBIENT_WEATHER,
       accountId: FIXTURE_ACCOUNT.id,
     });
+  });
+
+  it("OFF-01 net=offline seeds an offline status saved at 9:32 and the forecast from then", async () => {
+    await seedFixtureDb(db, { net: "offline" });
+
+    expect((await db.meta.get(STATUS_KEY))?.value).toEqual({
+      online: false,
+      lastSyncedAt: FIXTURE_SAVED_AT,
+      weather: { state: "idle" },
+    });
+    expect((await db.weather.get(FIXTURE_ACCOUNT.id))?.fetchedAt).toBe(FIXTURE_SAVED_AT);
+    expect(await db.events.count()).toBe(FIXTURE_EVENTS.length);
+  });
+
+  it("PHOTO-09 upload=offline seeds the same offline status", async () => {
+    await seedFixtureDb(db, { upload: "offline" });
+
+    expect((await db.meta.get(STATUS_KEY))?.value).toMatchObject({
+      online: false,
+      lastSyncedAt: FIXTURE_SAVED_AT,
+    });
+  });
+
+  it("OFF-01 online fixtures seed no sync status", async () => {
+    await seedFixtureDb(db, {});
+
+    expect(await db.meta.get(STATUS_KEY)).toBeUndefined();
   });
 
   it("WX-07 wx= seeds everything except the weather location and the forecast", async () => {

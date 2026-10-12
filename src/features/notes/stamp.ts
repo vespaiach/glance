@@ -1,9 +1,14 @@
 import { copy } from "@/copy";
-import { noteStamp } from "@/domain/notes";
-import type { Note } from "@/domain/schemas";
+import { type BoardNote, noteStamp } from "@/domain/notes";
 import type { Clock } from "@/domain/time";
 
-export function noteStampText(note: Pick<Note, "createdAt">, now: Date, clock: Clock): string {
+export function noteStampText(
+  note: Pick<BoardNote, "createdAt" | "waiting">,
+  now: Date,
+  clock: Clock,
+): string {
+  if (note.waiting) return copy.notes.waitingToPost;
+
   const stamp = noteStamp(note.createdAt, now, clock);
 
   return stamp.kind === "justNow" ? copy.notes.justNow : stamp.text;

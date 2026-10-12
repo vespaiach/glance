@@ -40,7 +40,7 @@ export function PhotosScreen() {
 
   const [show, dispatch] = useReducer(slideshow, clock, (store) => startSlideshow(store.get()));
 
-  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads));
+  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads), online);
 
   const picker = usePhotoPicker(uploads.choose);
 

@@ -2,6 +2,7 @@
 
 import { copy } from "@/copy";
 import { fixtureWeatherSearch, useWeather } from "@/data/repos";
+import { forecastStale } from "@/domain/offline";
 import type { WeatherLocation } from "@/domain/schemas";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
@@ -66,7 +67,7 @@ export function WeatherScreen() {
             unit={settings.tempUnit}
             clock={settings.clock}
             today={now}
-            offline={!online}
+            stale={!online && forecastStale(forecast.fetchedAt, now)}
             breakpoint={breakpoint}
           />
         )

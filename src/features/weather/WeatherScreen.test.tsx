@@ -174,14 +174,25 @@ test("FAIL-02 a saved forecast after a failed fetch says when it was updated", a
   expect(await screen.findByText("Portland, OR · Now · Updated 10:30 AM")).toBeInTheDocument();
 });
 
-test("WX-03 offline the saved forecast says when it is from", async () => {
+test("OFF-03 offline a forecast over an hour old says when it is from", async () => {
+  await locate();
+  await store.db.weather.put({ ...WEATHER, fetchedAt: at(9, 9, 32), accountId: store.accountId });
+  await putSyncStatus(store, { online: false, weather: { state: "idle" } });
+
+  renderWeather();
+
+  expect(await screen.findByText("Forecast from 9:32 AM")).toBeInTheDocument();
+});
+
+test("OFF-03 offline a forecast under an hour old has no Forecast from banner", async () => {
   await locate();
   await store.db.weather.put({ ...WEATHER, accountId: store.accountId });
   await putSyncStatus(store, { online: false, weather: { state: "idle" } });
 
   renderWeather();
 
-  expect(await screen.findByText("Forecast from 10:30 AM")).toBeInTheDocument();
+  expect(await screen.findByText("Partly cloudy")).toBeInTheDocument();
+  expect(screen.queryByText(/Forecast from/)).not.toBeInTheDocument();
 });
 
 async function search(query: string) {
