@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import type { FixtureParams } from "@/data/repos";
@@ -39,13 +39,14 @@ beforeEach(() => {
 
 afterEach(async () => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 
   await store.close();
 });
 
-function renderPhotos(params: FixtureParams = {}) {
-  const Shell = shellWrapper(store, { frozenAt: NOW });
+function renderPhotos(params: FixtureParams = {}, clock: "frozen" | "running" = "frozen") {
+  const Shell = shellWrapper(store, clock === "frozen" ? { frozenAt: NOW } : {});
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
@@ -114,4 +115,64 @@ test("PHOTO-08 upload=error opens with the three failed tiles", async () => {
   renderPhotos({ upload: "error" });
 
   expect(await screen.findAllByRole("alert")).toHaveLength(3);
+});
+
+function runningClock() {
+  vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"], now: NOW });
+}
+
+function waitSeconds(seconds: number) {
+  act(() => vi.advanceTimersByTime(seconds * 1000));
+}
+
+test("PHOTO-02 the featured photo advances every 8 s while Photos is open", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos({}, "running");
+
+  expect(await screen.findByRole("img", { name: "Cannon Beach" })).toBeInTheDocument();
+
+  waitSeconds(8);
+
+  expect(featuredTitle()).toBe("Apple picking");
+
+  waitSeconds(8);
+
+  expect(featuredTitle()).toBe("Forest Park trail");
+});
+
+test("PHOTO-02 a paused slideshow keeps its photo", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos({}, "running");
+
+  await screen.findByRole("img", { name: "Cannon Beach" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Pause slideshow" }));
+
+  waitSeconds(20);
+
+  expect(featuredTitle()).toBe("Cannon Beach");
+});
+
+test("PHOTO-07 while photos upload the slideshow steps through finished photos only", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(COAST), synced(APPLES)]);
+
+  renderPhotos({ upload: "progress" }, "running");
+
+  await screen.findByRole("img", { name: "Cannon Beach" });
+
+  waitSeconds(8);
+
+  expect(featuredTitle()).toBe("Apple picking");
+
+  waitSeconds(8);
+
+  expect(featuredTitle()).toBe("Cannon Beach");
 });
