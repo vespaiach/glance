@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { fixtureUploads, usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
+import { changeBackground } from "@/domain/background";
 import type { AccountSettings, Photo } from "@/domain/schemas";
 import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { initialUploads, newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
+import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { BackgroundView } from "./components/BackgroundView";
 
@@ -28,7 +30,13 @@ export function BackgroundScreen() {
 
   const photoSrc = usePhotoSrc();
 
-  const state = shownPhotos(usePhotos());
+  const photos = usePhotos();
+
+  const state = shownPhotos(photos);
+
+  const now = useNow("minute");
+
+  const clock = useNowStore();
 
   const { background } = useAccountSettings();
 
@@ -39,7 +47,7 @@ export function BackgroundScreen() {
   const picker = usePhotoPicker(uploads.choose);
 
   const change = (next: Partial<AccountSettings["background"]>) =>
-    repo.update({ background: { ...background, ...next } });
+    repo.update({ background: changeBackground(background, photos ?? [], next, clock.get()) });
 
   return (
     <>
@@ -47,6 +55,7 @@ export function BackgroundScreen() {
       <BackgroundView
         state={state}
         background={background}
+        now={now}
         uploads={uploads.tiles}
         online={online}
         canUpload={breakpoint !== "phone"}

@@ -44,9 +44,9 @@ const styles = stylex.create({
     borderRadius: radii.full,
     cursor: "pointer",
     boxShadow: `inset 0 0 0 1px ${colors.borderHairline}`,
-    transitionProperty: "transform, box-shadow",
-    transitionDuration: `${motion.durPress}, ${motion.durFast}`,
-    transitionTimingFunction: motion.easeOut,
+    transitionProperty: "transform, box-shadow, background-color",
+    transitionDuration: `${motion.durPress}, ${motion.durFast}, ${motion.durSeason}`,
+    transitionTimingFunction: `${motion.easeOut}, ${motion.easeOut}, ${motion.easeInOut}`,
   },
   selected: {
     boxShadow: `0 0 0 3px ${colors.white}, 0 0 0 5px ${colors.black}`,

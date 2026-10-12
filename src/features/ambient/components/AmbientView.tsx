@@ -22,6 +22,7 @@ import { space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Clock } from "@/ui/Clock";
 import { Icon } from "@/ui/Icon";
+import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { seasonIcons } from "@/ui/seasonIcons";
@@ -48,6 +49,8 @@ const styles = stylex.create({
   root: {
     width: "100%",
     minHeight: "100dvh",
+    position: "relative",
+    isolation: "isolate",
     margin: 0,
     borderWidth: 0,
     padding: "clamp(32px, 6vw, 96px)",
@@ -62,12 +65,6 @@ const styles = stylex.create({
     backgroundColor: seasonVars.deep,
     color: seasonVars.onDeep,
   },
-  photo: (image: string) => ({
-    backgroundImage: image,
-    backgroundPosition: "center",
-    backgroundSize: "cover",
-    backgroundRepeat: "no-repeat",
-  }),
   top: {
     display: "flex",
     flexWrap: "wrap",
@@ -223,13 +220,9 @@ export function AmbientView({
       type="button"
       aria-label={copy.ambient.wake}
       onClick={onWake}
-      {...stylex.props(
-        ambientType,
-        styles.root,
-        photoSrc !== undefined && styles.photo(photoLayer(dim, photoSrc)),
-        xstyle,
-      )}
+      {...stylex.props(ambientType, styles.root, xstyle)}
     >
+      <PhotoBackdrop image={photoSrc && photoLayer(dim, photoSrc)} />
       <div {...stylex.props(styles.top)}>
         <span {...stylex.props(styles.label)}>
           <Icon icon={seasonIcons[season]} size={24} strokeWidth={1.5} />

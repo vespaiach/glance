@@ -1,11 +1,12 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
+import { changeBackground } from "@/domain/background";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Season } from "@/domain/schemas";
 import { BackgroundView } from "@/features/background";
 import { SettingsView } from "@/features/settings";
 import { GalleryGroup } from "./GalleryGroup";
-import { GALLERY_PHOTOS, gallery, galleryPhotoSrc, UPLOAD_SAMPLES } from "./samples";
+import { GALLERY_PHOTOS, gallery, galleryPhotoSrc, NOW, UPLOAD_SAMPLES } from "./samples";
 
 type SettingsProps = ComponentProps<typeof SettingsView>;
 
@@ -21,7 +22,12 @@ const ACCOUNT = { name: "Maria", email: "maria@example.com" };
 
 const PHOTO = { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST?.id } as const;
 
-const SLIDESHOW = { ...PHOTO, mode: "slideshow", rotate: "weekly" } as const;
+const SLIDESHOW = changeBackground(
+  PHOTO,
+  GALLERY_PHOTOS,
+  { mode: "slideshow", rotate: "weekly" },
+  NOW,
+);
 
 const styles = stylex.create({
   view: {
@@ -75,6 +81,7 @@ function settingsBase(season: Season): SettingsProps {
 const BACKGROUND_BASE: BackgroundProps = {
   state: { kind: "ready", data: GALLERY_PHOTOS },
   background: DEFAULT_SETTINGS.background,
+  now: NOW,
   uploads: [],
   online: true,
   canUpload: true,

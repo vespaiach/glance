@@ -52,6 +52,9 @@ const styles = stylex.create({
   now: {
     backgroundColor: season.block1,
     boxShadow: "none",
+    transitionProperty: "transform, background-color",
+    transitionDuration: `${motion.durPress}, ${motion.durSeason}`,
+    transitionTimingFunction: `${motion.easeOut}, ${motion.easeInOut}`,
   },
   times: {
     display: "flex",
@@ -69,6 +72,9 @@ const styles = stylex.create({
     width: 14,
     height: 14,
     borderRadius: radii.full,
+    transitionProperty: "background-color",
+    transitionDuration: motion.durSeason,
+    transitionTimingFunction: motion.easeInOut,
   },
   dotCompact: { width: 10, height: 10 },
   tone1: { backgroundColor: season.block1 },

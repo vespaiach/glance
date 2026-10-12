@@ -72,6 +72,9 @@ const styles = stylex.create({
   accent: {
     backgroundColor: season.accent,
     color: season.onAccent,
+    transitionProperty: "transform, background-color, color",
+    transitionDuration: `${motion.durPress}, ${motion.durSeason}, ${motion.durSeason}`,
+    transitionTimingFunction: `${motion.easeOut}, ${motion.easeInOut}, ${motion.easeInOut}`,
   },
   inverse: {
     backgroundColor: colors.white,

@@ -1,5 +1,6 @@
 import { usePhotoSrc, usePhotos } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
+import { useNow } from "./providers/now";
 import { useAccountSettings } from "./providers/settings";
 
 export type BackgroundPhoto = { src: string; dim: number };
@@ -9,7 +10,7 @@ export function useBackgroundPhoto(): BackgroundPhoto | undefined {
 
   const photoSrc = usePhotoSrc();
 
-  const shown = shownBackground(background, usePhotos() ?? []);
+  const shown = shownBackground(background, usePhotos() ?? [], useNow("minute"));
 
   if (shown.mode === "season") return undefined;
 

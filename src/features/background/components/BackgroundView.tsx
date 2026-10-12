@@ -24,6 +24,7 @@ type Background = AccountSettings["background"];
 type BackgroundViewProps = {
   state: ZoneState<Photo>;
   background: Background;
+  now: Date;
   uploads: readonly UploadTile[];
   online: boolean;
   canUpload: boolean;
@@ -105,14 +106,14 @@ function ThumbsSkeleton({ columns }: { columns: stylex.StyleXStyles }) {
   );
 }
 
-function Photos({ photos, background, onChange, ...rest }: PhotosProps) {
+function Photos({ photos, background, now, onChange, ...rest }: PhotosProps) {
   return (
     <div {...stylex.props(styles.photos)}>
       <Eyebrow>{gridLabel(background.mode, photos.length)}</Eyebrow>
       <BackgroundThumbs
         {...rest}
         photos={photos}
-        shown={shownBackground(background, photos)}
+        shown={shownBackground(background, photos, now)}
         onPick={(photoId) => onChange(pickPhoto(background.mode, photoId))}
       />
     </div>
@@ -137,9 +138,9 @@ function readyPhotos(state: ZoneState<Photo>): readonly Photo[] {
 export function BackgroundView({ state, breakpoint, onBack, ...picker }: BackgroundViewProps) {
   const layout = backgroundLayout(breakpoint);
 
-  const { background, photoSrc, onChange } = picker;
+  const { background, now, photoSrc, onChange } = picker;
 
-  const shown = shownBackground(background, readyPhotos(state));
+  const shown = shownBackground(background, readyPhotos(state), now);
 
   const photos = { ...picker, columns: layout.thumbs };
 

@@ -81,6 +81,9 @@ const styles = stylex.create({
     marginLeft: -DOT_SIZE / 2,
     borderRadius: radii.full,
     backgroundColor: season.accent,
+    transitionProperty: "background-color",
+    transitionDuration: motion.durSeason,
+    transitionTimingFunction: motion.easeInOut,
   }),
   dotOnSelected: { backgroundColor: colors.white },
 });
