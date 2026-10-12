@@ -44,6 +44,7 @@ import { Zone } from "@/ui/Zone";
 import { CalendarGallery } from "./CalendarGallery";
 import { EventSheetGallery } from "./EventSheetGallery";
 import { GalleryGroup } from "./GalleryGroup";
+import { NotesGallery } from "./NotesGallery";
 import {
   EVENTS,
   FORECAST,
@@ -494,6 +495,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <CalendarGallery />
       <EventSheetGallery season={season} />
       <WeatherGallery />
+      <NotesGallery season={season} />
     </>
   );
 }

@@ -1,10 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
-import { noteStamp } from "@/domain/notes";
 import type { Note } from "@/domain/schemas";
 import type { Clock } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
+import { noteStampText } from "@/features/notes";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { EmptyState } from "@/ui/EmptyState";
@@ -79,12 +79,6 @@ function countFor(state: ZoneState<Note>): string {
   return copy.today.notes.count(state.kind === "ready" ? state.data.length : 0);
 }
 
-function stampText(note: Note, now: Date, clock: Clock): string {
-  const stamp = noteStamp(note.createdAt, now, clock);
-
-  return stamp.kind === "justNow" ? copy.notes.justNow : stamp.text;
-}
-
 function NotesSkeleton() {
   return (
     <Skeleton label={copy.today.notes.loading} xstyle={styles.grid}>
@@ -132,7 +126,7 @@ export function TodayNotes({
                 tone={note.tone}
                 rotate={note.rotation}
                 author={note.author}
-                time={stampText(note, now, clock)}
+                time={noteStampText(note, now, clock)}
                 width="100%"
                 minHeight={150}
                 onClick={() => onOpenNote(note.id)}

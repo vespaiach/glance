@@ -33,6 +33,14 @@ export const gallery = {
     calendarView: "Calendar view",
     eventSheet: "Event sheet",
     weatherView: "Weather view",
+    notesView: "Notes view",
+    noteSheet: "Note sheet",
+  },
+  noteSheet: {
+    edit: "Edit note",
+    new: "New note",
+    draft: "New note · draft",
+    offline: "Offline",
   },
   eventSheet: {
     edit: "Edit event",
@@ -291,6 +299,37 @@ export const TODAY_NOTES: readonly Note[] = [
     createdAt: todayAt(8, 12),
     tone: 1,
     rotation: -2,
+  },
+];
+
+const daysAgoAt = (days: number, hour: number, minute: number) =>
+  new Date(2026, 9, 9 - days, hour, minute).toISOString();
+
+export const BOARD_NOTES: readonly Note[] = [
+  ...TODAY_NOTES,
+  {
+    id: sampleId(13),
+    text: "Window cleaner comes Wednesday — please leave blinds up.",
+    author: "Mom",
+    createdAt: daysAgoAt(4, 18, 20),
+    tone: 3,
+    rotation: -1,
+  },
+  {
+    id: sampleId(14),
+    text: "Welcome home, Grandpa!",
+    author: "Mia",
+    createdAt: daysAgoAt(3, 16, 45),
+    tone: 4,
+    rotation: 2.5,
+  },
+  {
+    id: sampleId(15),
+    text: "Bike lock code changes Friday. Ask Dad.",
+    author: "Dad",
+    createdAt: daysAgoAt(3, 7, 50),
+    tone: "soft",
+    rotation: -1.5,
   },
 ];
 

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Note } from "@/domain/schemas";
-import { createNotesRepo, useNotes } from "./notes";
+import { createNotesRepo, useNote, useNotes } from "./notes";
 import {
   type Harness,
   openHarness,
@@ -130,6 +130,18 @@ describe("useNotes", () => {
     const { result } = renderNotes();
 
     await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([FRESH.id]));
+  });
+
+  it("NOTE-01 useNote reads one live note and null once it is removed", async () => {
+    await store.db.notes.put(synced(FRESH));
+
+    const { result } = renderHook(() => useNote(FRESH.id), { wrapper: wrapperFor(store) });
+
+    await waitFor(() => expect(result.current?.text).toBe("Note 1"));
+
+    await act(() => createNotesRepo(store).remove(FRESH.id));
+
+    await waitFor(() => expect(result.current).toBeNull());
   });
 
   it("tech§4.1 hides deleted notes", async () => {

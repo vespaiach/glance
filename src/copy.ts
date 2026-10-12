@@ -147,6 +147,48 @@ export const copy = {
   notes: {
     guestAuthor: "Guest",
     justNow: "Just now",
+    board: "Notice board",
+    count: (count: number) => {
+      if (count === 0) return "No notes";
+
+      return count === 1 ? "1 note" : `${count} notes`;
+    },
+    loadingCount: "Loading",
+    addNote: "Add note",
+    loading: "Loading notes",
+    unavailable: "Notes unavailable",
+    caption: (keep: string) => `Select a note to edit or delete it · ${keep}`,
+    keep: {
+      "1d": "Notes are removed after 1 day",
+      "1w": "Notes are removed after 1 week",
+      never: "Notes stay until deleted",
+    },
+    emptyTitle: "No notes yet",
+    emptyBody: (keep: string) => `Leave a note for the family. Notes show on Today. ${keep}`,
+    emptyKeep: {
+      "1d": "They’re removed after 1 day.",
+      "1w": "They’re removed after 1 week.",
+      never: "They stay until someone deletes them.",
+    },
+    sheet: {
+      newTitle: "New note",
+      editTitle: "Edit note",
+      eyebrow: (author: string, time: string) => `${author} · ${time}`,
+      close: "Close",
+      message: "Message",
+      messagePlaceholder: "Leave a note for the family",
+      name: "Your name",
+      namePlaceholder: "Optional",
+      color: "Color",
+      post: "Post note",
+      save: "Save",
+      saveOffline: "Save for later",
+      cancel: "Cancel",
+      delete: "Delete",
+      confirmDelete: "Delete note",
+      offlineTitle: "You’re offline",
+      offlineBody: "The note saves on this screen and posts when the connection is back.",
+    },
   },
   weather: {
     now: (location: string) => `${location} · Now`,

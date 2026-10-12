@@ -33,6 +33,16 @@ export function useNotesRepo(): NotesRepo {
   return useMemo(() => createNotesRepo(store), [store]);
 }
 
+export function useNote(id: string): StoredNote | null | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => {
+    const row = await db.notes.get(id);
+
+    return row && isLive(row) ? row : null;
+  }, [db, id]);
+}
+
 async function readNotes(db: GlanceDb, accountId: string): Promise<NotesRead> {
   const notes = await db.notes.orderBy("createdAt").reverse().filter(isLive).toArray();
 

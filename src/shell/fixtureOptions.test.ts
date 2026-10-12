@@ -43,7 +43,10 @@ test("tech§6 sheet=note and sheet=newnote open the note sheets", () => {
     kind: "note",
     id: fixtureSheetTargets.note,
   });
-  expect(fixtureSheet({ sheet: "newnote" }, "2026-10-09")).toEqual({ kind: "newnote" });
+  expect(fixtureSheet({ sheet: "newnote" }, "2026-10-09")).toEqual({
+    kind: "newnote",
+    draft: { text: "Has anyone seen my blue umbr", tone: 2 },
+  });
 });
 
 test("tech§6 no sheet= opens no sheet", () => {
