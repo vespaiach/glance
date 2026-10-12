@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
 import { CalendarEventSchema } from "@/domain/schemas";
-import { outdatedClient, readRow } from "./http";
+import { outdatedClient, readCursor, readRow } from "./http";
 
 const URL_BASE = "https://glance.example.com/api/events/x";
 
@@ -77,4 +77,25 @@ describe("readRow", () => {
 
     expect(await readRow(bad, CalendarEventSchema, ID)).toEqual({ ok: false, error: "invalid" });
   });
+});
+
+describe("readCursor", () => {
+  function pull(query: string): NextRequest {
+    return new NextRequest(`https://glance.example.com/api/sync${query}`);
+  }
+
+  it("SYNC-02 reads no cursor as a pull from scratch", () => {
+    expect(readCursor(pull(""))).toEqual({ ok: true, value: undefined });
+  });
+
+  it("SYNC-02 reads the since version", () => {
+    expect(readCursor(pull("?since=42"))).toEqual({ ok: true, value: 42 });
+  });
+
+  it.each(["?since=", "?since=abc", "?since=-1", "?since=1.5"])(
+    "SYNC-02 rejects the cursor %s",
+    (query) => {
+      expect(readCursor(pull(query))).toEqual({ ok: false, error: "invalid" });
+    },
+  );
 });

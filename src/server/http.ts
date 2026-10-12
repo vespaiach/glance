@@ -71,15 +71,31 @@ export async function readRow<T extends { id: string }>(
 }
 
 export function syncWriter(request: NextRequest): Result<SignedInDisplay, NextResponse> {
-  const refused = crossOrigin(request) ?? outdatedClient(request);
+  const refused = crossOrigin(request);
+
+  if (refused) return err(refused);
+
+  return syncReader(request);
+}
+
+export function savedJson<T>(saved: Result<T, "not-found">): NextResponse {
+  return saved.ok ? NextResponse.json(saved.value) : errorJson(saved.error, 404);
+}
+
+export function readCursor(request: NextRequest): Result<number | undefined, "invalid"> {
+  const since = request.nextUrl.searchParams.get("since");
+
+  if (since === null) return ok(undefined);
+
+  return /^\d+$/.test(since) ? ok(Number(since)) : err("invalid");
+}
+
+export function syncReader(request: NextRequest): Result<SignedInDisplay, NextResponse> {
+  const refused = outdatedClient(request);
 
   if (refused) return err(refused);
 
   const display = signedInDisplay(request);
 
   return display.ok ? display : err(errorJson(display.error, 401));
-}
-
-export function savedJson<T>(saved: Result<T, "not-found">): NextResponse {
-  return saved.ok ? NextResponse.json(saved.value) : errorJson(saved.error, 404);
 }
