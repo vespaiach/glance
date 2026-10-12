@@ -310,12 +310,9 @@
                       "**/features/**",
                       "@/fixtures",
                       "@/fixtures/**",
-                      "**/fixtures/**",
-                      "@/copy",
-                      "@/copy/**",
-                      "**/copy/**"
+                      "**/fixtures/**"
                     ],
-                    "message": "server may import only domain (tech §3)."
+                    "message": "server may import only domain and copy (tech §3)."
                   },
                   {
                     "group": ["@/features/*/**"],

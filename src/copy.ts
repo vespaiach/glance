@@ -513,6 +513,11 @@ export const copy = {
       after: ".",
     },
     resend: "Send a new link",
+    email: {
+      subject: "Your Glance sign-in link",
+      body: (url: string) =>
+        `Open this link to sign in to Glance:\n\n${url}\n\nIt works once, for 10 minutes. New here? The same link sets up your family’s Glance.\n\nIf you didn’t ask for it, you can ignore this email.`,
+    },
     done: {
       eyebrow: "Signed in",
       welcome: (firstName: string) => `Welcome, ${firstName}`,

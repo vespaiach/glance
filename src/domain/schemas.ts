@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { isTimeZone, isValidEmail } from "./signIn";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -174,6 +175,17 @@ export const AccountSchema = v.object({
   name: v.nullable(v.string()),
 });
 export type Account = v.InferOutput<typeof AccountSchema>;
+
+export const LinkRequestSchema = v.object({
+  email: v.pipe(v.string(), v.check(isValidEmail)),
+  timeZone: v.pipe(v.string(), v.check(isTimeZone)),
+});
+export type LinkRequest = v.InferOutput<typeof LinkRequestSchema>;
+
+export const NameRequestSchema = v.object({
+  name: v.pipe(RequiredTextSchema, v.maxLength(100)),
+});
+export type NameRequest = v.InferOutput<typeof NameRequestSchema>;
 
 export const DisplaySchema = v.object({
   id: IdSchema,
