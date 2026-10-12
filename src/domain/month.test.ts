@@ -1,4 +1,12 @@
-import { formatMonthYear, markedDays, monthCells, monthTitle, weekdayInitials } from "./month";
+import {
+  formatMonthYear,
+  markedDays,
+  monthCells,
+  monthTitle,
+  readDateParam,
+  stepMonth,
+  weekdayInitials,
+} from "./month";
 
 describe("month", () => {
   it("CAL-01 October 2026 starts on Thursday and fills five whole weeks", () => {
@@ -57,4 +65,40 @@ describe("month", () => {
 
     expect(markedDays(events)).toEqual([2, 9]);
   });
+
+  const NOW = new Date(2026, 9, 9, 10, 41);
+
+  it.each([
+    ["2026-10-14", 1, "2026-11-01"],
+    ["2026-10-14", -1, "2026-09-01"],
+    ["2026-12-25", 1, "2027-01-01"],
+    ["2027-01-25", -1, "2026-12-01"],
+  ] as const)("CAL-03 stepping from %s by %i selects the 1st, %s", (selected, delta, expected) => {
+    expect(stepMonth(selected, delta, NOW)).toBe(expected);
+  });
+
+  it.each([
+    ["2026-09-01", 1],
+    ["2026-11-30", -1],
+  ] as const)(
+    "CAL-03 stepping from %s by %i into the current month selects today",
+    (selected, delta) => {
+      expect(stepMonth(selected, delta, NOW)).toBe("2026-10-09");
+    },
+  );
+
+  it("CAL-03 stepping into this month in another year selects the 1st", () => {
+    expect(stepMonth("2027-11-01", -1, NOW)).toBe("2027-10-01");
+  });
+
+  it.each(["2026-10-14", "2028-02-29"])("CAL-01 ?date=%s opens on that day", (value) => {
+    expect(readDateParam(value)).toBe(value);
+  });
+
+  it.each([null, "", "2026-1-4", "2026-02-30", "2026-13-01", "tomorrow", "2026-10-14T10:00"])(
+    "CAL-01 ?date=%s is ignored",
+    (value) => {
+      expect(readDateParam(value)).toBeUndefined();
+    },
+  );
 });
