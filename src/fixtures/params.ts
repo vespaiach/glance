@@ -1,3 +1,6 @@
+import { zonedInstant } from "@/domain/zone";
+import { FIXTURE_TIME_ZONE } from "./data";
+
 const CHOICES = {
   sheet: ["event", "newevent", "note", "newnote"],
   time: ["start", "end", "error", "noend"],
@@ -25,10 +28,28 @@ export type FixtureParams = ChoiceParams & {
 const ISO_DATE_TIME =
   /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/;
 
+const HAS_OFFSET = /(Z|[+-]\d{2}:\d{2})$/;
+
+function fixtureWallTime(value: string): Date {
+  const wall = new Date(`${value}Z`);
+
+  const date = {
+    year: wall.getUTCFullYear(),
+    month: wall.getUTCMonth() + 1,
+    day: wall.getUTCDate(),
+  };
+
+  const minutes = wall.getUTCHours() * 60 + wall.getUTCMinutes();
+
+  const start = zonedInstant(FIXTURE_TIME_ZONE, date, minutes);
+
+  return new Date(start.getTime() + (wall.getTime() % 60_000));
+}
+
 function parseNow(value: string | null): Date | undefined {
   if (value === null || !ISO_DATE_TIME.test(value)) return undefined;
 
-  const now = new Date(value);
+  const now = HAS_OFFSET.test(value) ? new Date(value) : fixtureWallTime(value);
 
   return Number.isNaN(now.getTime()) ? undefined : now;
 }

@@ -5,6 +5,7 @@ import {
   FIXTURE_NEW_NOTE_DRAFT,
   FIXTURE_PLACES,
   FIXTURE_SHEET_TARGETS,
+  FIXTURE_TIME_ZONE,
   FIXTURE_UNKNOWN_PLACE,
   FIXTURE_UPLOADS,
   type FixtureUpload,
@@ -43,6 +44,8 @@ export const fixtureWeatherSearch = {
 };
 
 export const fixtureUploads = FIXTURE_UPLOADS;
+
+export const fixtureTimeZone = FIXTURE_TIME_ZONE;
 
 export const fixtureSignIn = { ...FIXTURE_ACCOUNT, name: FIXTURE_ACCOUNT.name ?? "" };
 

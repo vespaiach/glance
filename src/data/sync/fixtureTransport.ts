@@ -3,7 +3,7 @@ import { inAmbientHours } from "@/domain/idle";
 import { photoTitle, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
-import { dateKey, deviceTimeZone } from "@/domain/zone";
+import { dateKey } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_AMBIENT_WEATHER,
@@ -14,6 +14,7 @@ import {
   FIXTURE_PLACES,
   FIXTURE_SAVED_AT,
   FIXTURE_SETTINGS,
+  FIXTURE_TIME_ZONE,
   FIXTURE_WEATHER,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
@@ -70,7 +71,7 @@ function onPhoto(settings: AccountSettings): AccountSettings {
 
 function fixtureWeather(params: FixtureParams): Weather {
   const evening =
-    params.now && inAmbientHours(FIXTURE_SETTINGS.ambientHours, params.now, deviceTimeZone());
+    params.now && inAmbientHours(FIXTURE_SETTINGS.ambientHours, params.now, FIXTURE_TIME_ZONE);
 
   return evening ? FIXTURE_AMBIENT_WEATHER : FIXTURE_WEATHER;
 }
@@ -147,7 +148,15 @@ function authStatus(params: FixtureParams): AuthStatus {
 function unlistedPlace(query: string): WeatherLocation[] {
   const [name = "", ...region] = query.split(",");
 
-  return [{ name: name.trim(), region: region.join(",").trim(), lat: 0, lon: 0 }];
+  return [
+    {
+      name: name.trim(),
+      region: region.join(",").trim(),
+      lat: 0,
+      lon: 0,
+      timeZone: FIXTURE_TIME_ZONE,
+    },
+  ];
 }
 
 function matchPlaces(query: string): WeatherLocation[] {
@@ -221,7 +230,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
   const uploaded = (file: File): StoredPhoto => ({
     id: crypto.randomUUID(),
     title: photoTitle(file.name),
-    takenOn: dateKey(now(), deviceTimeZone()),
+    takenOn: dateKey(now(), FIXTURE_TIME_ZONE),
     createdAt: now().toISOString(),
     ...stamp(),
   });

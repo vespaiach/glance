@@ -12,9 +12,10 @@ import {
   PhotoSchema,
   WeatherSchema,
 } from "@/domain/schemas";
+import { isTimeZone } from "@/domain/signIn";
 import { formatClock, minutesOfDay } from "@/domain/time";
 import { rainStart } from "@/domain/weather";
-import { deviceTimeZone } from "@/domain/zone";
+import { wallTime } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_AMBIENT_NOW,
@@ -26,17 +27,18 @@ import {
   FIXTURE_PLACES,
   FIXTURE_SETTINGS,
   FIXTURE_SHEET_TARGETS,
+  FIXTURE_TIME_ZONE,
   FIXTURE_UPLOADS,
   FIXTURE_WEATHER,
   fixturePhotoImage,
 } from "./data";
 
-const tz = deviceTimeZone();
+const tz = "America/Los_Angeles";
 
 const publicDir = path.join(import.meta.dirname, "..", "..", "public");
 
 const onDay = (day: number) =>
-  FIXTURE_EVENTS.filter((event) => new Date(event.startAt).getDate() === day);
+  FIXTURE_EVENTS.filter((event) => wallTime(new Date(event.startAt), tz).day === day);
 
 const titleOf = (id: string | undefined) => FIXTURE_PHOTOS.find((photo) => photo.id === id)?.title;
 
@@ -57,9 +59,14 @@ describe("Appendix A fixtures", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("Appendix A the clock is frozen at Fri Oct 9 2026 10:41 AM, Ambient at 7:12 PM", () => {
-    expect(FIXTURE_NOW).toEqual(new Date(2026, 9, 9, 10, 41));
-    expect(FIXTURE_AMBIENT_NOW).toEqual(new Date(2026, 9, 9, 19, 12));
+  it("LOC-06 the fixture zone is the fixture place's, America/Los_Angeles", () => {
+    expect(FIXTURE_TIME_ZONE).toBe(tz);
+    expect(FIXTURE_SETTINGS.weatherLocation?.timeZone).toBe(tz);
+  });
+
+  it("LOC-06 the clock is frozen at Fri Oct 9 2026 10:41 AM Pacific, Ambient at 7:12 PM", () => {
+    expect(FIXTURE_NOW).toEqual(new Date("2026-10-09T17:41:00Z"));
+    expect(FIXTURE_AMBIENT_NOW).toEqual(new Date("2026-10-10T02:12:00Z"));
   });
 
   it("STATUS-01 Oct 9 runs one past, one now and three upcoming events at 10:41", () => {
@@ -75,10 +82,10 @@ describe("Appendix A fixtures", () => {
   });
 
   it("Appendix A October has events on the 2nd, 9th, 14th, 22nd and 28th", () => {
-    const days = FIXTURE_EVENTS.map((event) => new Date(event.startAt));
+    const days = FIXTURE_EVENTS.map((event) => wallTime(new Date(event.startAt), tz));
 
-    expect(days.every((day) => day.getFullYear() === 2026 && day.getMonth() === 9)).toBe(true);
-    expect([...new Set(days.map((day) => day.getDate()))].sort((a, b) => a - b)).toEqual([
+    expect(days.every((day) => day.year === 2026 && day.month === 10)).toBe(true);
+    expect([...new Set(days.map((day) => day.day))].sort((a, b) => a - b)).toEqual([
       2, 9, 14, 22, 28,
     ]);
   });
@@ -163,7 +170,7 @@ describe("Appendix A fixtures", () => {
   });
 
   it("WX-03 the fixture forecast brings rain at 4 PM, as the rain banner shows", () => {
-    expect(rainStart(FIXTURE_WEATHER.hourly)).toBe(new Date(2026, 9, 9, 16).toISOString());
+    expect(rainStart(FIXTURE_WEATHER.hourly)).toBe("2026-10-09T23:00:00.000Z");
   });
 
   it("WX-01 the weather is Portland, OR at 64° partly cloudy with 8 hours and 7 days", () => {
@@ -202,6 +209,29 @@ describe("Appendix A fixtures", () => {
       "Springfield, Massachusetts",
     ]);
     expect(names("pordland")).toBeUndefined();
+  });
+
+  it("LOC-05 every search fixture carries its place's zone", () => {
+    const zones = Object.fromEntries(
+      Object.values(FIXTURE_PLACES)
+        .flat()
+        .map((place) => [`${place.name}, ${place.region}`, place.timeZone]),
+    );
+
+    expect(zones).toEqual({
+      "Portland, Oregon": "America/Los_Angeles",
+      "Portland, Maine": "America/New_York",
+      "Springfield, Illinois": "America/Chicago",
+      "Springfield, Missouri": "America/Chicago",
+      "Springfield, Massachusetts": "America/New_York",
+      "Seattle, Washington": "America/Los_Angeles",
+      "Boston, Massachusetts": "America/New_York",
+      "Chicago, Illinois": "America/Chicago",
+      "Austin, Texas": "America/Chicago",
+      "Denver, Colorado": "America/Denver",
+      "New York, New York": "America/New_York",
+    });
+    expect(Object.values(zones).every((zone) => zone !== undefined && isTimeZone(zone))).toBe(true);
   });
 
   it("§6 sheet=event opens Lunch with Aunt Rosa and sheet=note opens the Wi-Fi note", () => {

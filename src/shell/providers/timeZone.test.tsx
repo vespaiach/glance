@@ -2,9 +2,20 @@ import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { deviceTimeZone } from "@/domain/zone";
 import { NowProvider, useNow } from "./now";
+import { DefaultSettingsProvider } from "./settings";
 import { TimeZoneProvider, useTimeZone } from "./timeZone";
 
 const LA = "America/Los_Angeles";
+
+const PORTLAND = { name: "Portland", region: "Oregon", lat: 45.5152, lon: -122.6784 };
+
+function located(weatherLocation?: typeof PORTLAND & { timeZone?: string }) {
+  return ({ children }: { children: ReactNode }) => (
+    <DefaultSettingsProvider overrides={weatherLocation && { weatherLocation }}>
+      <TimeZoneProvider>{children}</TimeZoneProvider>
+    </DefaultSettingsProvider>
+  );
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -17,8 +28,22 @@ describe("TimeZoneProvider", () => {
     expect(result.current).toBe(deviceTimeZone());
   });
 
-  it("LOC-06 the provider gives the device zone", () => {
-    const { result } = renderHook(() => useTimeZone(), { wrapper: TimeZoneProvider });
+  it("LOC-06 the provider gives the location's zone", () => {
+    const { result } = renderHook(() => useTimeZone(), {
+      wrapper: located({ ...PORTLAND, timeZone: LA }),
+    });
+
+    expect(result.current).toBe(LA);
+  });
+
+  it("LOC-06 the provider gives the device zone when no place is set", () => {
+    const { result } = renderHook(() => useTimeZone(), { wrapper: located() });
+
+    expect(result.current).toBe(deviceTimeZone());
+  });
+
+  it("LOC-06 the provider gives the device zone when the place has no zone", () => {
+    const { result } = renderHook(() => useTimeZone(), { wrapper: located(PORTLAND) });
 
     expect(result.current).toBe(deviceTimeZone());
   });
@@ -28,7 +53,9 @@ describe("TimeZoneProvider", () => {
 
     const wrapper = ({ children }: { children: ReactNode }) => (
       <NowProvider>
-        <TimeZoneProvider timeZone={LA}>{children}</TimeZoneProvider>
+        <DefaultSettingsProvider>
+          <TimeZoneProvider timeZone={LA}>{children}</TimeZoneProvider>
+        </DefaultSettingsProvider>
       </NowProvider>
     );
 

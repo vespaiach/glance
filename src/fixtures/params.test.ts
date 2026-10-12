@@ -24,7 +24,7 @@ describe("parseFixtureParams", () => {
       acct: "returning",
       upload: "progress",
       wx: "choose",
-      now: new Date(2026, 9, 9, 19, 12),
+      now: new Date("2026-10-10T02:12:00Z"),
     });
   });
 
@@ -67,9 +67,15 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("date=2026-10-14&view=weather")).toEqual({});
   });
 
-  it("TIME-03 now= without an offset is local time", () => {
+  it("LOC-06 now= without an offset is a Pacific wall time", () => {
     expect(parseFixtureParams("now=2026-10-09T10:41:30").now).toEqual(
-      new Date(2026, 9, 9, 10, 41, 30),
+      new Date("2026-10-09T17:41:30Z"),
+    );
+  });
+
+  it("LOC-06 now= without an offset follows Pacific standard time in winter", () => {
+    expect(parseFixtureParams("now=2026-12-24T10:41").now).toEqual(
+      new Date("2026-12-24T18:41:00Z"),
     );
   });
 

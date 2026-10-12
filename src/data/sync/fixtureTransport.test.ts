@@ -397,6 +397,22 @@ describe("FixtureTransport places", () => {
     });
   });
 
+  it("LOC-05 the ZIP or comma fallback gets the fixture zone", async () => {
+    useTimers();
+    const fixture = transport();
+    const zip = fixture.places("10001");
+    const city = fixture.places("Tacoma, WA");
+
+    await vi.advanceTimersByTimeAsync(1_200);
+
+    const zones = async (pending: typeof zip) => {
+      const result = await pending;
+      return result.ok ? result.value.map((place) => place.timeZone) : [];
+    };
+    expect(await zones(zip)).toEqual(["America/Los_Angeles"]);
+    expect(await zones(city)).toEqual(["America/Los_Angeles"]);
+  });
+
   it("OFF-01 net=offline fails with a network error", async () => {
     expect(await transport({ net: "offline" }).places("Portland")).toEqual({
       ok: false,
