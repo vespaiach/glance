@@ -1,4 +1,16 @@
-import { defaultEnd, defaultTimes, endsAfterStart, moveStart, nextHalfHour } from "./eventTimes";
+import {
+  defaultEnd,
+  defaultTimes,
+  endForLength,
+  endsAfterStart,
+  moveStart,
+  nextHalfHour,
+  PICKER_MINUTES,
+  pickerHours,
+  withHour,
+  withMeridiem,
+  withMinute,
+} from "./eventTimes";
 
 const at = (h: number, m: number) => h * 60 + m;
 const today = (h: number, m: number) => new Date(2026, 9, 9, h, m);
@@ -49,5 +61,54 @@ describe("eventTimes", () => {
     [{ start: at(11, 0), end: at(10, 55) }, false],
   ])("TPK-07 %o ends after start: %s", (times, expected) => {
     expect(endsAfterStart(times)).toBe(expected);
+  });
+
+  it.each([
+    [at(10, 30), 15, at(15, 30)],
+    [at(10, 41), 0, at(0, 41)],
+  ])("TPK-03 setting the hour of %i to %i keeps the minutes: %i", (minutes, hour, expected) => {
+    expect(withHour(minutes, hour)).toBe(expected);
+  });
+
+  it.each([
+    [at(10, 30), 45, at(10, 45)],
+    [at(23, 41), 0, at(23, 0)],
+  ])("TPK-03 setting the minutes of %i to %i keeps the hour: %i", (minutes, minute, expected) => {
+    expect(withMinute(minutes, minute)).toBe(expected);
+  });
+
+  it.each([
+    [at(10, 30), "PM", at(22, 30)],
+    [at(12, 15), "AM", at(0, 15)],
+    [at(0, 5), "PM", at(12, 5)],
+    [at(22, 30), "PM", at(22, 30)],
+    [at(9, 0), "AM", at(9, 0)],
+  ] as const)(
+    "TPK-03 switching %i to %s keeps the clock hour and minutes: %i",
+    (minutes, meridiem, expected) => {
+      expect(withMeridiem(minutes, meridiem)).toBe(expected);
+    },
+  );
+
+  it.each([
+    [at(11, 0), 90, at(12, 30)],
+    [at(23, 0), 120, at(23, 55)],
+  ])(
+    "TPK-04 a length chip from start %i of %i minutes ends at %i, capped at 11:55 PM",
+    (start, length, expected) => {
+      expect(endForLength(start, length)).toBe(expected);
+    },
+  );
+
+  it.each([
+    ["12h", "AM", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]],
+    ["12h", "PM", [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]],
+    ["24h", undefined, Array.from({ length: 24 }, (_, hour) => hour)],
+  ] as const)("TPK-03 the %s hour grid for %s holds the hours %o", (clock, meridiem, expected) => {
+    expect(pickerHours(clock, meridiem)).toEqual(expected);
+  });
+
+  it("TPK-03 the minute grid steps by 5 from 00 to 55", () => {
+    expect(PICKER_MINUTES).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
   });
 });

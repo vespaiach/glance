@@ -11,6 +11,27 @@ export const copy = {
   } satisfies Record<Season, string>,
   events: {
     now: "Now",
+    time: {
+      starts: "Starts",
+      ends: "Ends",
+      startGroup: "Start time",
+      endGroup: "End time",
+      change: "Change",
+      noEnd: "No end time",
+      endsBeforeStart: "Ends before it starts",
+      hour: "Hour",
+      minutes: "Minutes",
+      length: "Length",
+      done: "Done",
+      hour24Cell: (hour: string) => `${hour} hundred`,
+      minuteCell: (minutes: number) => `${minutes} minutes`,
+      lengths: [
+        { value: 30, label: "30 min" },
+        { value: 60, label: "1 hr" },
+        { value: 90, label: "1.5 hr" },
+        { value: 120, label: "2 hr" },
+      ],
+    },
   },
   notes: {
     guestAuthor: "Guest",
