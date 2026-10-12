@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useNextEventAfter, usePhotoSrc, usePhotos, useWeather } from "@/data/repos";
+import { useNextEventAfter, useWeather } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
-import { shownBackground } from "@/domain/background";
 import type { CalendarEvent } from "@/domain/schemas";
 import { localDateKey } from "@/domain/time";
 import { weatherZone } from "@/domain/weather";
 import { readZoneState, type ZoneState } from "@/domain/zoneState";
+import { useBackgroundPhoto } from "@/shell/background";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -17,16 +17,6 @@ import { AmbientView } from "./components/AmbientView";
 
 function eventZone(event: CalendarEvent | null | undefined): ZoneState<CalendarEvent> {
   return readZoneState(event === undefined ? undefined : event ? [event] : []);
-}
-
-function useBackgroundSrc(): string | undefined {
-  const { background } = useAccountSettings();
-
-  const photoSrc = usePhotoSrc();
-
-  const shown = shownBackground(background, usePhotos() ?? []);
-
-  return shown.mode === "season" ? undefined : photoSrc(shown.photo.id, "display");
 }
 
 export function AmbientScreen() {
@@ -46,7 +36,7 @@ export function AmbientScreen() {
 
   const nextEvent = eventZone(useNextEventAfter(localDateKey(time)));
 
-  const photoSrc = useBackgroundSrc();
+  const photo = useBackgroundPhoto();
 
   return (
     <AmbientView
@@ -57,7 +47,7 @@ export function AmbientScreen() {
       weather={weather}
       unit={settings.tempUnit}
       nextEvent={nextEvent}
-      photoSrc={photoSrc}
+      photoSrc={photo?.src}
       dim={ambientDim(settings.background.dim)}
       onWake={() => router.push(viewPath("today"))}
     />

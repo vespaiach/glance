@@ -130,6 +130,15 @@ describe("seedFixtureDb", () => {
     });
   });
 
+  it("BG-06 bg=photo also applies with wx=, so the setup card shows on the photo", async () => {
+    await seedFixtureDb(db, { bg: "photo", wx: "searching" });
+
+    const settings = await db.settings.get(FIXTURE_ACCOUNT.id);
+
+    expect(settings?.background.mode).toBe("photo");
+    expect(settings?.weatherLocation).toBeUndefined();
+  });
+
   it("AMB-03 now= during ambient hours seeds the Appendix A ambient forecast", async () => {
     await seedFixtureDb(db, { now: FIXTURE_AMBIENT_NOW });
 
