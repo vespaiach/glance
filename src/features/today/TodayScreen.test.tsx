@@ -2,8 +2,14 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo } from "@/data/repos";
-import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
-import type { CalendarEvent, Photo } from "@/domain/schemas";
+import {
+  type Harness,
+  markSynced,
+  openHarness,
+  putSyncStatus,
+  synced,
+} from "@/data/repos/testHarness";
+import type { CalendarEvent, Photo, WeatherLocation } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -38,6 +44,8 @@ const COAST: Photo = {
   place: "Summer trip",
   createdAt: "2026-10-05T19:05:00.000Z",
 };
+
+const PORTLAND: WeatherLocation = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
 
 let store: Harness;
 
@@ -148,6 +156,8 @@ test("TODAY-10 a photo background drops the picture of the day", async () => {
 });
 
 test("TODAY-08 with no location the weather zone asks for one", async () => {
+  await markSynced(store);
+
   renderToday();
 
   await userEvent.click(await screen.findByRole("button", { name: "Set location" }));
@@ -156,6 +166,8 @@ test("TODAY-08 with no location the weather zone asks for one", async () => {
 });
 
 test("TODAY-09 Add note opens New note", async () => {
+  await markSynced(store);
+
   renderToday();
 
   await userEvent.click(await screen.findByRole("button", { name: "Add note" }));
@@ -191,4 +203,68 @@ test("EVT-07 an event added from Today shows in the schedule at once", async () 
 
   expect(await screen.findByText("Picnic")).toBeInTheDocument();
   expect(screen.getByText("Today · 2 events")).toBeInTheDocument();
+});
+
+test("FAIL-01 a failed first sync shows each source unavailable with a countdown", async () => {
+  await putSyncStatus(store, {
+    online: true,
+    error: "server",
+    retryAt: new Date(NOW.getTime() + 2 * 60_000).toISOString(),
+    weather: { state: "idle" },
+  });
+
+  renderToday();
+
+  expect(await screen.findByText("Calendar unavailable")).toBeInTheDocument();
+  expect(screen.getByText("Notes unavailable")).toBeInTheDocument();
+  expect(
+    screen.getAllByText("The Glance server isn’t responding. Trying again in 2 min."),
+  ).toHaveLength(2);
+});
+
+test("FAIL-01 Try again on a failed zone syncs now", async () => {
+  await putSyncStatus(store, { online: true, error: "server", weather: { state: "idle" } });
+
+  renderToday();
+
+  await screen.findByText("Calendar unavailable");
+
+  await userEvent.click(screen.getAllByRole("button", { name: "Try again" })[0] as HTMLElement);
+
+  expect(store.nudge).toHaveBeenCalledTimes(1);
+});
+
+test("FAIL-02 saved events after a failed sync show when they were updated", async () => {
+  await store.db.events.put(synced(CALL));
+  await markSynced(store);
+  await putSyncStatus(store, {
+    online: true,
+    error: "server",
+    lastSyncedAt: iso(9, 32),
+    weather: { state: "idle" },
+  });
+
+  renderToday();
+
+  expect(await screen.findByText("Today · 1 event · Updated 9:32 AM")).toBeInTheDocument();
+});
+
+test("WX-05 a failed weather fetch counts down and Try again refreshes it", async () => {
+  await markSynced(store);
+  await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
+  await putSyncStatus(store, {
+    online: true,
+    weather: { state: "failed", retryAt: new Date(NOW.getTime() + 60_000).toISOString() },
+  });
+
+  renderToday();
+
+  expect(await screen.findByText("Weather unavailable")).toBeInTheDocument();
+  expect(
+    screen.getByText("The forecast service isn’t responding. Trying again in 1 min."),
+  ).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(store.refreshWeather).toHaveBeenCalledTimes(1);
 });

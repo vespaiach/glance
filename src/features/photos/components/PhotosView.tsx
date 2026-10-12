@@ -4,11 +4,12 @@ import { copy } from "@/copy";
 import type { PhotoVariant } from "@/data/repos";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Photo } from "@/domain/schemas";
+import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { radii, space } from "@/theme/tokens.stylex";
 import { ColorBlock } from "@/ui/ColorBlock";
-import { EmptyState } from "@/ui/EmptyState";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 import { photosLayout } from "../layout";
 import { type UploadTile, uploadSummary } from "../uploads";
@@ -18,6 +19,9 @@ import { PhotosEmpty } from "./PhotosEmpty";
 
 type PhotosViewProps = {
   state: ZoneState<Photo>;
+  retryIn: number;
+  onRetrySync: () => void;
+  clock: Clock;
   selected: number;
   playing: boolean;
   uploads: readonly UploadTile[];
@@ -33,7 +37,10 @@ type PhotosViewProps = {
   onRemove: (id: string) => void;
 };
 
-type GalleryProps = Omit<PhotosViewProps, "state"> & { photos: readonly Photo[] };
+type GalleryProps = Omit<PhotosViewProps, "state" | "retryIn" | "onRetrySync"> & {
+  photos: readonly Photo[];
+  updatedAt?: string;
+};
 
 const SKELETON_THUMBS = [0, 1, 2, 3];
 
@@ -70,7 +77,14 @@ function PhotosSkeleton({ breakpoint }: { breakpoint: Breakpoint }) {
   );
 }
 
-function PhotoGallery({ photos, selected, breakpoint, photoSrc, ...rest }: GalleryProps) {
+function PhotoGallery({
+  photos,
+  selected,
+  breakpoint,
+  photoSrc,
+  updatedAt,
+  ...rest
+}: GalleryProps) {
   const layout = photosLayout(breakpoint);
 
   const featured = photos[selected];
@@ -93,6 +107,9 @@ function PhotoGallery({ photos, selected, breakpoint, photoSrc, ...rest }: Galle
       </ColorBlock>
       <PhotoPanel
         photos={photos}
+        {...(updatedAt !== undefined && {
+          updated: formatClock(minutesOfDay(new Date(updatedAt)), rest.clock),
+        })}
         selected={selected}
         uploads={rest.uploads}
         summary={uploadSummary(rest.uploads, rest.online)}
@@ -109,7 +126,7 @@ function PhotoGallery({ photos, selected, breakpoint, photoSrc, ...rest }: Galle
   );
 }
 
-export function PhotosView({ state, ...gallery }: PhotosViewProps) {
+export function PhotosView({ state, retryIn, onRetrySync, ...gallery }: PhotosViewProps) {
   return (
     <Zone
       state={state}
@@ -125,9 +142,23 @@ export function PhotosView({ state, ...gallery }: PhotosViewProps) {
           />
         )
       }
-      failed={<EmptyState icon={Image} title={copy.photos.unavailable} />}
+      failed={
+        <SourceFailure
+          icon={Image}
+          title={copy.photos.unavailable}
+          body={copy.zone.failedBody(retryIn)}
+          retryLabel={copy.zone.retry}
+          onRetry={onRetrySync}
+        />
+      }
     >
-      {(photos) => <PhotoGallery {...gallery} photos={photos} />}
+      {(photos, updatedAt) => (
+        <PhotoGallery
+          {...gallery}
+          photos={photos}
+          {...(updatedAt !== undefined && { updatedAt })}
+        />
+      )}
     </Zone>
   );
 }

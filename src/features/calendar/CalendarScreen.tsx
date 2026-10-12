@@ -5,13 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useEventsInMonth, useEventsOnDay, useHasEvents } from "@/data/repos";
 import { markedDays, monthTitle, readDateParam, stepMonth } from "@/domain/month";
-import type { CalendarEvent } from "@/domain/schemas";
 import { formatDayTitle, localDateKey, parseLocalDate } from "@/domain/time";
-import { readZoneState, type ZoneState } from "@/domain/zoneState";
 import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useSheetHost } from "@/shell/SheetHost";
+import { useSyncedZone } from "@/shell/sourceZone";
 import { space } from "@/theme/tokens.stylex";
 import { DayPanel } from "./components/DayPanel";
 import { MonthBlock } from "./components/MonthBlock";
@@ -24,13 +23,6 @@ const styles = stylex.create({
     alignItems: "start",
   },
 });
-
-function dayState(
-  events: readonly CalendarEvent[] | undefined,
-  hasEvents: boolean | undefined,
-): ZoneState<CalendarEvent> {
-  return hasEvents === undefined ? { kind: "loading" } : readZoneState(events);
-}
 
 function todayInMonth(now: Date, year: number, month: number): number | undefined {
   return now.getFullYear() === year && now.getMonth() === month ? now.getDate() : undefined;
@@ -66,6 +58,8 @@ export function CalendarScreen() {
 
   const hasEvents = useHasEvents();
 
+  const dayEvents = useSyncedZone(hasEvents === undefined ? undefined : events);
+
   return (
     <div {...stylex.props(styles.grid, calendarLayout(breakpoint))}>
       <MonthBlock
@@ -81,7 +75,9 @@ export function CalendarScreen() {
         onSelectDay={(date) => setPicked(dayKey(year, month, date))}
       />
       <DayPanel
-        state={dayState(events, hasEvents)}
+        state={dayEvents.state}
+        retryIn={dayEvents.retryIn}
+        onRetry={dayEvents.retry}
         title={formatDayTitle(selected)}
         calendarEmpty={hasEvents === false}
         now={now}

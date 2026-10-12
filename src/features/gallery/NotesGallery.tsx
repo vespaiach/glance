@@ -44,7 +44,14 @@ const styles = stylex.create({
   },
 });
 
-const board = { now: NOW, clock: "12h", onOpenNote: ignore, onAddNote: ignore } as const;
+const board = {
+  now: NOW,
+  clock: "12h",
+  retryIn: 2,
+  onRetry: ignore,
+  onOpenNote: ignore,
+  onAddNote: ignore,
+} as const;
 
 function NoteSheetDemo({
   season,

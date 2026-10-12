@@ -1,7 +1,13 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import {
+  type Harness,
+  markSynced,
+  openHarness,
+  putSyncStatus,
+  synced,
+} from "@/data/repos/testHarness";
 import type { CalendarEvent } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
@@ -100,6 +106,7 @@ test("CAL-01 today is selected and its events are listed", async () => {
 });
 
 test("CAL-04 a free day says so when other days have events", async () => {
+  await markSynced(store);
   await store.db.events.put(synced(NEXT_YEAR));
 
   renderCalendar();
@@ -109,6 +116,8 @@ test("CAL-04 a free day says so when other days have events", async () => {
 });
 
 test("CAL-04 with no events at all the day shows the empty calendar tile", async () => {
+  await markSynced(store);
+
   renderCalendar();
 
   expect(await screen.findByText("The calendar is empty")).toBeInTheDocument();
@@ -257,4 +266,24 @@ test("CAL-01 an invalid ?date= opens on today", async () => {
   renderCalendar();
 
   expect(await screen.findByRole("heading", { name: "Friday, Oct 9" })).toBeInTheDocument();
+});
+
+test("FAIL-01 a failed first sync shows Calendar unavailable with a countdown and Try again", async () => {
+  await putSyncStatus(store, {
+    online: true,
+    error: "server",
+    retryAt: new Date(NOW.getTime() + 5 * 60_000).toISOString(),
+    weather: { state: "idle" },
+  });
+
+  renderCalendar();
+
+  expect(await screen.findByText("Calendar unavailable")).toBeInTheDocument();
+  expect(
+    screen.getByText("The Glance server isn’t responding. Trying again in 5 min."),
+  ).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(store.nudge).toHaveBeenCalledTimes(1);
 });

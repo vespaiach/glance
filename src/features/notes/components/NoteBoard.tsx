@@ -2,15 +2,15 @@ import * as stylex from "@stylexjs/stylex";
 import { Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
 import type { AccountSettings, Note } from "@/domain/schemas";
-import type { Clock } from "@/domain/time";
+import { type Clock, formatClock, minutesOfDay } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
-import { EmptyState } from "@/ui/EmptyState";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
 import { Zone } from "@/ui/Zone";
 import { noteStampText } from "../stamp";
@@ -19,6 +19,8 @@ type Expiry = AccountSettings["noteExpiry"];
 
 type NoteBoardProps = {
   state: ZoneState<Note>;
+  retryIn: number;
+  onRetry: () => void;
   expiry: Expiry;
   now: Date;
   clock: Clock;
@@ -105,10 +107,18 @@ const styles = stylex.create({
 
 const keepKey = (expiry: Expiry) => expiry ?? "never";
 
-function countFor(state: ZoneState<Note>): string {
+function countFor(state: ZoneState<Note>, clock: Clock): string {
   if (state.kind === "loading") return copy.notes.loadingCount;
 
-  return copy.notes.count(state.kind === "ready" ? state.data.length : 0);
+  if (state.kind === "failed") return copy.notes.failedCount;
+
+  if (state.kind === "empty") return copy.notes.count(0);
+
+  const count = copy.notes.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
 }
 
 function BoardSkeleton() {
@@ -137,6 +147,8 @@ function EmptyBoard({ expiry }: { expiry: Expiry }) {
 
 export function NoteBoard({
   state,
+  retryIn,
+  onRetry,
   expiry,
   now,
   clock,
@@ -148,7 +160,7 @@ export function NoteBoard({
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <div {...stylex.props(styles.heading)}>
-          <Eyebrow>{countFor(state)}</Eyebrow>
+          <Eyebrow>{countFor(state, clock)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{copy.notes.board}</h2>
         </div>
         <Button icon={Plus} onClick={onAddNote}>
@@ -159,7 +171,15 @@ export function NoteBoard({
         state={state}
         loading={<BoardSkeleton />}
         empty={<EmptyBoard expiry={expiry} />}
-        failed={<EmptyState icon={StickyNoteGlyph} title={copy.notes.unavailable} />}
+        failed={
+          <SourceFailure
+            icon={StickyNoteGlyph}
+            title={copy.notes.unavailable}
+            body={copy.zone.failedBody(retryIn)}
+            retryLabel={copy.zone.retry}
+            onRetry={onRetry}
+          />
+        }
       >
         {(notes) => (
           <>

@@ -4,20 +4,22 @@ import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
-import { type Clock, minutesOfDay, timeParts } from "@/domain/time";
+import { type Clock, formatClock, minutesOfDay, timeParts } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
-import { EmptyState } from "@/ui/EmptyState";
 import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 import { tile } from "./tile";
 
 type TodayScheduleProps = {
   state: ZoneState<CalendarEvent>;
+  retryIn: number;
+  onRetry: () => void;
   now: Date;
   clock: Clock;
   compact: boolean;
@@ -70,6 +72,10 @@ const styles = stylex.create({
     paddingBlock: space.md,
     paddingInline: space.md,
   },
+  failure: {
+    paddingBlock: space.md,
+    paddingInline: space.xs,
+  },
   empty: {
     flexGrow: 1,
     marginTop: space.xs,
@@ -81,10 +87,18 @@ const styles = stylex.create({
 
 const timeOf = (iso: string, clock: Clock) => timeParts(minutesOfDay(new Date(iso)), clock).time;
 
-function eyebrowFor(state: ZoneState<CalendarEvent>): string {
+function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock): string {
   if (state.kind === "loading") return copy.today.schedule.loadingCount;
 
-  return copy.today.schedule.count(state.kind === "ready" ? state.data.length : 0);
+  if (state.kind === "failed") return copy.today.schedule.failedCount;
+
+  if (state.kind === "empty") return copy.today.schedule.count(0);
+
+  const count = copy.today.schedule.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
 }
 
 function ScheduleSkeleton() {
@@ -114,6 +128,8 @@ function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
 
 export function TodaySchedule({
   state,
+  retryIn,
+  onRetry,
   now,
   clock,
   compact,
@@ -126,7 +142,7 @@ export function TodaySchedule({
   return (
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
-        <Eyebrow>{eyebrowFor(state)}</Eyebrow>
+        <Eyebrow>{eyebrowFor(state, clock)}</Eyebrow>
         <div {...stylex.props(styles.actions)}>
           {state.kind === "ready" && (
             <Button variant="ghost" icon={Plus} onClick={onAddEvent}>
@@ -142,7 +158,16 @@ export function TodaySchedule({
         state={state}
         loading={<ScheduleSkeleton />}
         empty={<EmptyDay onAddEvent={onAddEvent} />}
-        failed={<EmptyState icon={CalendarX2} title={copy.today.unavailable.calendar} />}
+        failed={
+          <SourceFailure
+            icon={CalendarX2}
+            title={copy.today.unavailable.calendar}
+            body={copy.zone.failedBody(retryIn)}
+            retryLabel={copy.zone.retry}
+            onRetry={onRetry}
+            xstyle={styles.failure}
+          />
+        }
       >
         {(events) => (
           <div {...stylex.props(styles.list)}>

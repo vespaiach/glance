@@ -23,6 +23,8 @@ type Handlers = {
 function renderSchedule(state: ZoneState<CalendarEvent>, handlers: Partial<Handlers> = {}) {
   return render(
     <TodaySchedule
+      retryIn={1}
+      onRetry={() => {}}
       state={state}
       now={NOW}
       clock="12h"

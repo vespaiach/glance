@@ -34,6 +34,8 @@ type Options = {
 function renderBoard(options: Options = {}) {
   return render(
     <NoteBoard
+      retryIn={1}
+      onRetry={() => {}}
       state={options.state ?? { kind: "ready", data: [NEWEST, WIFI] }}
       expiry={options.expiry === undefined ? "1w" : options.expiry}
       now={NOW}
@@ -83,6 +85,8 @@ test("NOTE-06 the caption names the expiry setting", () => {
 
   rerender(
     <NoteBoard
+      retryIn={1}
+      onRetry={() => {}}
       state={{ kind: "ready", data: [WIFI] }}
       expiry={null}
       now={NOW}

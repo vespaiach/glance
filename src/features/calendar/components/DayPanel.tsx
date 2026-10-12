@@ -3,20 +3,22 @@ import { CalendarDays, CalendarX2, Plus } from "lucide-react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
-import { type Clock, minutesOfDay, timeParts } from "@/domain/time";
+import { type Clock, formatClock, minutesOfDay, timeParts } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
-import { EmptyState } from "@/ui/EmptyState";
 import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 
 type DayPanelProps = {
   state: ZoneState<CalendarEvent>;
+  retryIn: number;
+  onRetry: () => void;
   title: string;
   calendarEmpty: boolean;
   now: Date;
@@ -116,10 +118,18 @@ const styles = stylex.create({
 
 const timeOf = (iso: string, clock: Clock) => timeParts(minutesOfDay(new Date(iso)), clock).time;
 
-function eyebrowFor(state: ZoneState<CalendarEvent>): string {
+function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock): string {
   if (state.kind === "loading") return copy.calendar.loadingCount;
 
-  return copy.calendar.count(state.kind === "ready" ? state.data.length : 0);
+  if (state.kind === "failed") return copy.calendar.failedCount;
+
+  if (state.kind === "empty") return copy.calendar.count(0);
+
+  const count = copy.calendar.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, formatClock(minutesOfDay(new Date(state.updatedAt)), clock));
 }
 
 function DaySkeleton() {
@@ -146,6 +156,8 @@ function EmptyCalendar() {
 
 export function DayPanel({
   state,
+  retryIn,
+  onRetry,
   title,
   calendarEmpty,
   now,
@@ -159,7 +171,7 @@ export function DayPanel({
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <div {...stylex.props(styles.heading)}>
-          <Eyebrow>{eyebrowFor(state)}</Eyebrow>
+          <Eyebrow>{eyebrowFor(state, clock)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{title}</h2>
         </div>
         <Button icon={Plus} onClick={onAddEvent}>
@@ -176,7 +188,15 @@ export function DayPanel({
             <p {...stylex.props(styles.freeDay)}>{copy.calendar.freeDay}</p>
           )
         }
-        failed={<EmptyState icon={CalendarX2} title={copy.calendar.unavailable} />}
+        failed={
+          <SourceFailure
+            icon={CalendarX2}
+            title={copy.calendar.unavailable}
+            body={copy.zone.failedBody(retryIn)}
+            retryLabel={copy.zone.retry}
+            onRetry={onRetry}
+          />
+        }
       >
         {(events) => (
           <>

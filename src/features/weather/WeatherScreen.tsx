@@ -1,14 +1,14 @@
 "use client";
 
 import { copy } from "@/copy";
-import { fixtureWeatherSearch, useSyncStatus, useWeather } from "@/data/repos";
+import { fixtureWeatherSearch, useWeather } from "@/data/repos";
 import type { WeatherLocation } from "@/domain/schemas";
-import { retryMinutes, weatherZone } from "@/domain/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
+import { useWeatherZone } from "@/shell/sourceZone";
 import { Zone } from "@/ui/Zone";
 import { WeatherFailure } from "./components/WeatherFailure";
 import { WeatherForecast } from "./components/WeatherForecast";
@@ -16,8 +16,6 @@ import { WeatherSetup } from "./components/WeatherSetup";
 import { WeatherSkeleton } from "./components/WeatherSkeleton";
 import { useWeatherSetup } from "./useWeatherSetup";
 import { initialWeatherSetup } from "./weatherSetup";
-
-const retryLater = () => {};
 
 function placeName(location: WeatherLocation | undefined): string {
   return location ? copy.weather.place(location.name, location.region) : "";
@@ -34,25 +32,15 @@ export function WeatherScreen() {
 
   const fixture = useFixtureParams();
 
-  const weather = useWeather();
-
-  const status = useSyncStatus()?.weather;
-
-  const failedStatus = status?.state === "failed" ? status : undefined;
-
   const setup = useWeatherSetup(() => initialWeatherSetup(fixture.wx, fixtureWeatherSearch));
 
   const location = settings.weatherLocation;
 
-  const state = weatherZone({
-    located: location !== undefined,
-    weather,
-    failed: failedStatus !== undefined,
-  });
+  const zone = useWeatherZone(useWeather(), location !== undefined);
 
   return (
     <Zone
-      state={state}
+      state={zone.state}
       loading={<WeatherSkeleton breakpoint={breakpoint} />}
       empty={
         <WeatherSetup
@@ -65,15 +53,16 @@ export function WeatherScreen() {
       failed={
         <WeatherFailure
           location={placeName(location)}
-          minutes={failedStatus ? retryMinutes(failedStatus.retryAt, now) : 1}
-          onRetry={retryLater}
+          minutes={zone.retryIn}
+          onRetry={zone.retry}
         />
       }
     >
-      {([forecast]) =>
+      {([forecast], updatedAt) =>
         forecast && (
           <WeatherForecast
             weather={forecast}
+            {...(updatedAt !== undefined && { updatedAt })}
             unit={settings.tempUnit}
             clock={settings.clock}
             today={now}

@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo, type FixtureParams } from "@/data/repos";
-import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
+import { type Harness, markSynced, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import { err, ok } from "@/domain/result";
 import type { Weather, WeatherLocation } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
@@ -55,8 +55,10 @@ const MAINE: WeatherLocation = { name: "Portland", region: "Maine", lat: 43.6591
 
 let store: Harness;
 
-beforeEach(() => {
+beforeEach(async () => {
   store = openHarness("glance-weather-screen-test");
+
+  await markSynced(store);
 
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
@@ -143,6 +145,33 @@ test("WX-05 a failed fetch with no forecast shows the retry countdown", async ()
     screen.getByText("The forecast service isn’t responding. Trying again in 2 min."),
   ).toBeInTheDocument();
   expect(screen.getByText("Portland, Oregon")).toBeInTheDocument();
+});
+
+test("WX-05 Try again refreshes the weather now", async () => {
+  await locate();
+  await putSyncStatus(store, {
+    online: true,
+    weather: { state: "failed", retryAt: new Date(2026, 9, 9, 10, 42).toISOString() },
+  });
+
+  renderWeather();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Try again" }));
+
+  expect(store.refreshWeather).toHaveBeenCalledTimes(1);
+});
+
+test("FAIL-02 a saved forecast after a failed fetch says when it was updated", async () => {
+  await locate();
+  await store.db.weather.put({ ...WEATHER, accountId: store.accountId });
+  await putSyncStatus(store, {
+    online: true,
+    weather: { state: "failed", retryAt: new Date(2026, 9, 9, 10, 42).toISOString() },
+  });
+
+  renderWeather();
+
+  expect(await screen.findByText("Portland, OR · Now · Updated 10:30 AM")).toBeInTheDocument();
 });
 
 test("WX-03 offline the saved forecast says when it is from", async () => {

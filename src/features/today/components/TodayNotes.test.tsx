@@ -42,6 +42,8 @@ type Handlers = {
 function renderNotes(state: ZoneState<Note>, handlers: Partial<Handlers> = {}) {
   return render(
     <TodayNotes
+      retryIn={1}
+      onRetry={() => {}}
       state={state}
       now={new Date(2026, 9, 9, 10, 41)}
       clock="12h"

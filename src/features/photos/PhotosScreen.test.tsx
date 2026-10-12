@@ -2,7 +2,13 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import type { FixtureParams } from "@/data/repos";
-import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import {
+  type Harness,
+  markSynced,
+  openHarness,
+  putSyncStatus,
+  synced,
+} from "@/data/repos/testHarness";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
@@ -109,6 +115,8 @@ test("PHOTO-02 Pause and Play toggle the slideshow button", async () => {
 });
 
 test("PHOTO-05 with no photos the view is empty", async () => {
+  await markSynced(store);
+
   renderPhotos();
 
   expect(await screen.findByText("No photos yet")).toBeInTheDocument();
@@ -310,4 +318,24 @@ test("PHOTO-08 a network failure changes only its tile and Try again restarts it
   await act(async () => upload.finish(ok(synced(PICNIC))));
 
   expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+});
+
+test("FAIL-01 a failed first sync shows Photos unavailable with a countdown and Try again", async () => {
+  await putSyncStatus(store, {
+    online: true,
+    error: "server",
+    retryAt: new Date(NOW.getTime() + 5 * 60_000).toISOString(),
+    weather: { state: "idle" },
+  });
+
+  renderPhotos();
+
+  expect(await screen.findByText("Photos unavailable")).toBeInTheDocument();
+  expect(
+    screen.getByText("The Glance server isn’t responding. Trying again in 5 min."),
+  ).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(store.nudge).toHaveBeenCalledTimes(1);
 });

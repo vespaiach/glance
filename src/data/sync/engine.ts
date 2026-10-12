@@ -127,6 +127,10 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
   let weatherFailures = 0;
 
+  let syncTimer: ReturnType<typeof setTimeout> | undefined;
+
+  let syncFailures = 0;
+
   let fetchedPlace: string | undefined;
 
   const record = (event: StatusEvent) =>
@@ -142,14 +146,36 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
     weatherTimer = undefined;
   };
 
+  const clearSyncTimer = () => {
+    clearTimeout(syncTimer);
+
+    syncTimer = undefined;
+  };
+
+  const scheduleSyncRetry = (): string | undefined => {
+    if (stopped) return undefined;
+
+    syncFailures += 1;
+
+    const delayMs = retryDelayMs(syncFailures);
+
+    syncTimer = setTimeout(() => void nudge(), delayMs);
+
+    return new Date(now().getTime() + delayMs).toISOString();
+  };
+
   const fail = async (error: TransportError) => {
     if (isHalt(error)) {
       halted = error;
 
       clearWeatherTimer();
+
+      return record({ type: "failed", error: reported(error) });
     }
 
-    await record({ type: "failed", error: reported(error) });
+    const retryAt = scheduleSyncRetry();
+
+    await record({ type: "failed", error: reported(error), ...(retryAt && { retryAt }) });
   };
 
   const scheduleWeather = (delayMs: number) => {
@@ -197,6 +223,8 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
     fromScratch = false;
 
+    syncFailures = 0;
+
     await record({ type: "synced", at: now().toISOString() });
 
     return DONE;
@@ -204,6 +232,8 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
 
   const sync = async (): Promise<SyncResult> => {
     if (halted) return err(halted);
+
+    clearSyncTimer();
 
     const pushed = await drain();
 
@@ -223,7 +253,7 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
   const fetchWeather = async (place: WeatherLocation): Promise<SyncResult> => {
     fetchedPlace = placeKey(place);
 
-    await record({ type: "weather-loading" });
+    await record({ type: "weather-loading", at: now().toISOString() });
 
     const answer = await transport.weather();
 
@@ -293,6 +323,8 @@ export function createSyncEngine({ db, transport, accountId, now }: Options): Sy
       stopped = true;
 
       clearWeatherTimer();
+
+      clearSyncTimer();
     },
   };
 }

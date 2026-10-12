@@ -23,6 +23,8 @@ type Options = {
 function renderPanel(state: ZoneState<CalendarEvent>, options: Options = {}) {
   return render(
     <DayPanel
+      retryIn={1}
+      onRetry={() => {}}
       state={state}
       title="Friday, Oct 9"
       calendarEmpty={options.calendarEmpty ?? false}

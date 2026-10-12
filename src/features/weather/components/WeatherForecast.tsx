@@ -30,6 +30,7 @@ type Unit = AccountSettings["tempUnit"];
 
 type WeatherForecastProps = {
   weather: Weather;
+  updatedAt?: string;
   unit: Unit;
   clock: Clock;
   today: Date;
@@ -220,8 +221,15 @@ function Daily({ daily, unit, today, xstyle }: DailyProps) {
   );
 }
 
+function nowLabel(weather: Weather, updatedAt: string | undefined, clock: Clock): string {
+  const label = copy.weather.now(weather.location);
+
+  return updatedAt === undefined ? label : copy.zone.updated(label, clockTime(updatedAt, clock));
+}
+
 export function WeatherForecast({
   weather,
+  updatedAt,
   unit,
   clock,
   today,
@@ -237,7 +245,7 @@ export function WeatherForecast({
   return (
     <div {...stylex.props(styles.grid, layout.grid)}>
       <WeatherNow
-        location={copy.weather.now(weather.location)}
+        location={nowLabel(weather, updatedAt, clock)}
         temp={temp(current.temp)}
         condition={conditionText(current.condition)}
         icon={current.icon}

@@ -1,5 +1,5 @@
 import type { Weather } from "./schemas";
-import { rainStart, retryMinutes, weatherZone } from "./weather";
+import { rainStart, weatherZone } from "./weather";
 
 const at = (hour: number) => new Date(2026, 9, 9, hour).toISOString();
 
@@ -11,7 +11,9 @@ const hours = (precips: (number | undefined)[]): Weather["hourly"] =>
     ...(precip !== undefined && { precip }),
   }));
 
-const FORECAST = { location: "Portland, OR" } as Weather;
+const FORECAST = { location: "Portland, OR", fetchedAt: "2026-10-09T16:30:00.000Z" } as Weather;
+
+const base = { located: true, failed: false, timedOut: false };
 
 describe("rainStart", () => {
   it("WX-03 is the first of the next 8 hours with a 50% chance of rain or more", () => {
@@ -31,48 +33,55 @@ describe("rainStart", () => {
   });
 });
 
-describe("retryMinutes", () => {
-  const now = new Date(2026, 9, 9, 10, 41);
-
-  it("FAIL-03 rounds the wait up to whole minutes", () => {
-    expect(retryMinutes(new Date(2026, 9, 9, 10, 42, 30).toISOString(), now)).toBe(2);
-  });
-
-  it("FAIL-03 is 1 min for a retry less than a minute away", () => {
-    expect(retryMinutes(new Date(2026, 9, 9, 10, 41, 10).toISOString(), now)).toBe(1);
-  });
-
-  it("FAIL-03 is 1 min for a retry already due", () => {
-    expect(retryMinutes(new Date(2026, 9, 9, 10, 40).toISOString(), now)).toBe(1);
-  });
-});
-
 describe("weatherZone", () => {
   it("WX-04 is empty without a location, even with a saved forecast", () => {
-    expect(weatherZone({ located: false, weather: FORECAST, failed: false })).toEqual({
-      kind: "empty",
-    });
+    expect(weatherZone({ ...base, located: false, weather: FORECAST })).toEqual({ kind: "empty" });
   });
 
   it("WX-01 is ready with the saved forecast", () => {
-    expect(weatherZone({ located: true, weather: FORECAST, failed: true })).toEqual({
+    expect(weatherZone({ ...base, weather: FORECAST })).toEqual({
       kind: "ready",
       data: [FORECAST],
     });
   });
 
-  it("WX-05 is loading while no forecast is saved yet", () => {
-    expect(weatherZone({ located: true, weather: null, failed: false })).toEqual({
-      kind: "loading",
+  it("FAIL-02 a saved forecast after a failed fetch is ready with its fetch time", () => {
+    expect(weatherZone({ ...base, weather: FORECAST, failed: true })).toEqual({
+      kind: "ready",
+      data: [FORECAST],
+      updatedAt: FORECAST.fetchedAt,
     });
-    expect(weatherZone({ located: true, weather: undefined, failed: false })).toEqual({
+  });
+
+  it("LOAD-02 is loading while the location isn't known before the first sync", () => {
+    expect(weatherZone({ ...base, located: undefined, weather: null })).toEqual({
       kind: "loading",
     });
   });
 
-  it("WX-05 fails when the fetch failed and no forecast is saved", () => {
-    expect(weatherZone({ located: true, weather: null, failed: true })).toEqual({
+  it("LOAD-03 an unknown location that timed out is a failure", () => {
+    expect(weatherZone({ ...base, located: undefined, weather: null, timedOut: true })).toEqual({
       kind: "failed",
+    });
+  });
+
+  it("WX-05 is loading while no forecast is saved yet", () => {
+    expect(weatherZone({ ...base, weather: null })).toEqual({ kind: "loading" });
+    expect(weatherZone({ ...base, weather: undefined })).toEqual({ kind: "loading" });
+  });
+
+  it("WX-05 fails when the fetch failed and no forecast is saved", () => {
+    expect(weatherZone({ ...base, weather: null, failed: true })).toEqual({ kind: "failed" });
+  });
+
+  it("LOAD-03 fails when loading timed out with no forecast saved", () => {
+    expect(weatherZone({ ...base, weather: null, timedOut: true })).toEqual({ kind: "failed" });
+  });
+
+  it("LOAD-02 a saved forecast stays ready while a refresh is slow", () => {
+    expect(weatherZone({ ...base, weather: FORECAST, timedOut: true })).toEqual({
+      kind: "ready",
+      data: [FORECAST],
     });
   });
 });

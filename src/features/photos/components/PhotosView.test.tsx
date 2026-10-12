@@ -54,6 +54,9 @@ type Props = ComponentProps<typeof PhotosView>;
 function renderView(overrides: Partial<Props> = {}) {
   const props: Props = {
     state: { kind: "ready", data: PHOTOS },
+    retryIn: 1,
+    onRetrySync: vi.fn<() => void>(),
+    clock: "12h",
     selected: 0,
     playing: true,
     uploads: [],

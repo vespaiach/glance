@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { type Mock, vi } from "vitest";
 import { err } from "@/domain/result";
-import { deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
+import { CURSOR_KEY, deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
 import { STATUS_KEY, type SyncStatus } from "../sync/status";
 import type { Transport } from "../sync/transport";
 import { RepoProvider, type RepoStore } from "./store";
@@ -12,6 +12,7 @@ export const TEST_NOW = new Date("2026-10-09T17:41:00.000Z");
 
 export type Harness = RepoStore & {
   nudge: Mock<() => void>;
+  refreshWeather: Mock<() => void>;
   upload: Mock<Transport["upload"]>;
   places: Mock<Transport["places"]>;
   signOut: Mock<() => Promise<void>>;
@@ -26,7 +27,9 @@ export function openHarness(name: string): Harness {
     accountId: TEST_ACCOUNT,
     account: { name: "Maria", email: "maria@example.com" },
     now: () => TEST_NOW,
+    startedAt: TEST_NOW,
     nudge: vi.fn<() => void>(),
+    refreshWeather: vi.fn<() => void>(),
     photoSrc: (photoId, variant) => `/photos/${photoId}/${variant}`,
     upload: vi.fn<Transport["upload"]>(async () => err("network")),
     places: vi.fn<Transport["places"]>(async () => err("network")),
@@ -51,4 +54,8 @@ export function synced<T>(row: T, version = 1) {
 
 export async function putSyncStatus(store: RepoStore, status: SyncStatus): Promise<void> {
   await store.db.meta.put({ key: STATUS_KEY, value: status });
+}
+
+export async function markSynced(store: RepoStore): Promise<void> {
+  await store.db.meta.put({ key: CURSOR_KEY, value: "c1" });
 }

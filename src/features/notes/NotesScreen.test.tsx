@@ -1,7 +1,13 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import {
+  type Harness,
+  markSynced,
+  openHarness,
+  putSyncStatus,
+  synced,
+} from "@/data/repos/testHarness";
 import type { AccountSettings, Note } from "@/domain/schemas";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { SheetHost, useSheetHost } from "@/shell/SheetHost";
@@ -90,6 +96,8 @@ test("NOTE-06 the caption follows the note expiry setting", async () => {
 });
 
 test("NOTE-07 with no notes the board shows the empty state", async () => {
+  await markSynced(store);
+
   renderNotes({ noteExpiry: null });
 
   expect(await screen.findByText("No notes yet")).toBeInTheDocument();
@@ -120,4 +128,24 @@ test("NOTE-01 Add note opens New note", async () => {
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
     JSON.stringify({ kind: "newnote" }),
   );
+});
+
+test("FAIL-01 a failed first sync shows Notes unavailable with a countdown and Try again", async () => {
+  await putSyncStatus(store, {
+    online: true,
+    error: "server",
+    retryAt: new Date(NOW.getTime() + 5 * 60_000).toISOString(),
+    weather: { state: "idle" },
+  });
+
+  renderNotes();
+
+  expect(await screen.findByText("Notes unavailable")).toBeInTheDocument();
+  expect(
+    screen.getByText("The Glance server isn’t responding. Trying again in 5 min."),
+  ).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(store.nudge).toHaveBeenCalledTimes(1);
 });

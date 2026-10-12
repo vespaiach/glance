@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import { type Harness, markSynced, openHarness, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { AccountSettings, CalendarEvent, Weather } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
@@ -144,6 +144,7 @@ test("AMB-03 an event on the next day reads Tomorrow and one with no place ends 
 
 test("AMB-03 with no upcoming event and no weather location it says Nothing scheduled and hides the weather", async () => {
   await seed([], false);
+  await markSynced(store);
 
   renderAmbient();
 

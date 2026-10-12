@@ -12,17 +12,19 @@ import {
   useWeather,
 } from "@/data/repos";
 import { pictureOfDay } from "@/domain/pictureOfDay";
-import type { AccountSettings, Photo, Weather } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Photo } from "@/domain/schemas";
 import { localDateKey } from "@/domain/time";
 import { todayHero } from "@/domain/todayHero";
-import { readZoneState, type ZoneState } from "@/domain/zoneState";
+import type { ZoneState } from "@/domain/zoneState";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { type View, viewPath } from "@/shell/routes";
 import { useSheetHost } from "@/shell/SheetHost";
+import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import { space } from "@/theme/tokens.stylex";
+import { Zone } from "@/ui/Zone";
 import { HeroSkeleton, HeroSummary } from "./components/HeroSummary";
 import { PictureOfDay, PictureOfDayEmpty, PictureOfDaySkeleton } from "./components/PictureOfDay";
 import { TodayHero } from "./components/TodayHero";
@@ -38,14 +40,12 @@ const styles = stylex.create({
   },
 });
 
-function weatherZone(
-  weather: Weather | null | undefined,
-  location: AccountSettings["weatherLocation"],
-): ZoneState<Weather> {
-  if (location === undefined) return { kind: "empty" };
-
-  return weather ? { kind: "ready", data: [weather] } : { kind: "loading" };
-}
+type HeroProps = {
+  state: ZoneState<CalendarEvent>;
+  clock: AccountSettings["clock"];
+  now: Date;
+  onOpenEvent: (id: string) => void;
+};
 
 function HeroClock({ children }: { children: ReactNode }) {
   const season = useSeason();
@@ -62,22 +62,40 @@ function HeroClock({ children }: { children: ReactNode }) {
 }
 
 type PictureProps = {
-  photos: readonly Photo[] | undefined;
+  state: ZoneState<Photo>;
   now: Date;
   canUpload: boolean;
   onUpload: () => void;
 };
 
-function Picture({ photos, now, canUpload, onUpload }: PictureProps) {
+function Picture({ state, now, canUpload, onUpload }: PictureProps) {
   const photoSrc = usePhotoSrc();
 
-  if (photos === undefined) return <PictureOfDaySkeleton />;
+  const empty = <PictureOfDayEmpty canUpload={canUpload} onUpload={onUpload} />;
 
-  const photo = pictureOfDay(photos, now);
+  return (
+    <Zone state={state} loading={<PictureOfDaySkeleton />} empty={empty} failed={null}>
+      {(photos) => {
+        const photo = pictureOfDay(photos, now);
 
-  if (photo === undefined) return <PictureOfDayEmpty canUpload={canUpload} onUpload={onUpload} />;
+        return photo ? <PictureOfDay photo={photo} src={photoSrc(photo.id, "display")} /> : empty;
+      }}
+    </Zone>
+  );
+}
 
-  return <PictureOfDay photo={photo} src={photoSrc(photo.id, "display")} />;
+function Hero({ state, clock, now, onOpenEvent }: HeroProps) {
+  if (state.kind === "loading") return <HeroSkeleton />;
+
+  if (state.kind === "failed") return null;
+
+  return (
+    <HeroSummary
+      hero={todayHero(state.kind === "ready" ? state.data : [], now)}
+      clock={clock}
+      onOpenEvent={onOpenEvent}
+    />
+  );
 }
 
 export function TodayScreen() {
@@ -93,13 +111,13 @@ export function TodayScreen() {
 
   const day = localDateKey(now);
 
-  const events = readZoneState(useEventsOnDay(day));
+  const events = useSyncedZone(useEventsOnDay(day));
 
-  const notes: ZoneState<ShownNote> = readZoneState(useNotes(now));
+  const notes = useSyncedZone<ShownNote>(useNotes(now));
 
-  const photos = usePhotos();
+  const photos = useSyncedZone(usePhotos());
 
-  const weather = weatherZone(useWeather(), settings.weatherLocation);
+  const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
   const go = (view: View) => router.push(viewPath(view));
 
@@ -108,18 +126,12 @@ export function TodayScreen() {
   return (
     <div {...stylex.props(styles.grid, todayLayout(breakpoint))}>
       <HeroClock>
-        {events.kind === "loading" ? (
-          <HeroSkeleton />
-        ) : (
-          <HeroSummary
-            hero={todayHero(events.kind === "ready" ? events.data : [], now)}
-            clock={settings.clock}
-            onOpenEvent={openEvent}
-          />
-        )}
+        <Hero state={events.state} clock={settings.clock} now={now} onOpenEvent={openEvent} />
       </HeroClock>
       <TodaySchedule
-        state={events}
+        state={events.state}
+        retryIn={events.retryIn}
+        onRetry={events.retry}
         now={now}
         clock={settings.clock}
         compact={breakpoint === "phone"}
@@ -130,7 +142,7 @@ export function TodayScreen() {
       >
         {settings.background.mode === "season" && (
           <Picture
-            photos={photos}
+            state={photos.state}
             now={now}
             canUpload={breakpoint !== "phone"}
             onUpload={() => go("photos")}
@@ -138,13 +150,18 @@ export function TodayScreen() {
         )}
       </TodaySchedule>
       <TodayWeather
-        state={weather}
+        state={weather.state}
+        retryIn={weather.retryIn}
+        onRetry={weather.retry}
         unit={settings.tempUnit}
+        clock={settings.clock}
         onSetLocation={() => go("weather")}
         xstyle={todayAreas.wx}
       />
       <TodayNotes
-        state={notes}
+        state={notes.state}
+        retryIn={notes.retryIn}
+        onRetry={notes.retry}
         now={now}
         clock={settings.clock}
         onOpenNote={(id) => sheets.open({ kind: "note", id })}

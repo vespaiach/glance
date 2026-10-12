@@ -9,8 +9,7 @@ export interface ZoneInput<T> {
   everSynced: boolean;
   failed: boolean;
   lastSyncedAt?: string;
-  since: Date;
-  now: Date;
+  timedOut: boolean;
 }
 
 export const LOADING_LIMIT_MS = 10_000;
@@ -26,13 +25,9 @@ function savedState<T>({ rows, failed, lastSyncedAt }: ZoneInput<T>): ZoneState<
 export function zoneState<T>(input: ZoneInput<T>): ZoneState<T> {
   if (input.everSynced || input.rows.length > 0) return savedState(input);
 
-  const timedOut = input.now.getTime() - input.since.getTime() >= LOADING_LIMIT_MS;
-
-  return input.failed || timedOut ? { kind: "failed" } : { kind: "loading" };
+  return input.failed || input.timedOut ? { kind: "failed" } : { kind: "loading" };
 }
 
-export function readZoneState<T>(rows: readonly T[] | undefined): ZoneState<T> {
-  if (rows === undefined) return { kind: "loading" };
-
-  return rows.length === 0 ? { kind: "empty" } : { kind: "ready", data: rows };
+export function loadingTimedOut(since: Date, now: Date): boolean {
+  return now.getTime() - since.getTime() >= LOADING_LIMIT_MS;
 }

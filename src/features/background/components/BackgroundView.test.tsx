@@ -32,6 +32,8 @@ const background = (change: Partial<AccountSettings["background"]> = {}) => ({
 function renderView(overrides: Partial<Props> = {}) {
   const props: Props = {
     state: { kind: "ready", data: PHOTOS },
+    retryIn: 1,
+    onRetrySync: vi.fn<() => void>(),
     background: background(),
     now: new Date(2026, 9, 9, 10, 41),
     uploads: [],

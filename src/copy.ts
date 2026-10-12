@@ -3,6 +3,12 @@ import type { WmoCondition } from "@/domain/wmo";
 
 export const copy = {
   appName: "Glance",
+  zone: {
+    updated: (label: string, time: string) => `${label} · Updated ${time}`,
+    failedBody: (minutes: number) =>
+      `The Glance server isn’t responding. Trying again in ${minutes} min.`,
+    retry: "Try again",
+  },
   season: {
     spring: "Spring",
     summer: "Summer",
@@ -44,6 +50,7 @@ export const copy = {
         return count === 1 ? "Today · 1 event" : `Today · ${count} events`;
       },
       loadingCount: "Today · Loading",
+      failedCount: "Today",
       addEvent: "Add event",
       fullCalendar: "Full calendar",
       emptyTitle: "No events yet",
@@ -86,6 +93,7 @@ export const copy = {
       return count === 1 ? "1 event" : `${count} events`;
     },
     loadingCount: "Loading",
+    failedCount: "Calendar",
     addEvent: "Add event",
     freeDay: "Nothing scheduled. A free day.",
     emptyTitle: "The calendar is empty",
@@ -154,6 +162,7 @@ export const copy = {
       return count === 1 ? "1 note" : `${count} notes`;
     },
     loadingCount: "Loading",
+    failedCount: "Notes",
     addNote: "Add note",
     loading: "Loading notes",
     unavailable: "Notes unavailable",

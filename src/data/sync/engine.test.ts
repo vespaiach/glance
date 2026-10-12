@@ -378,7 +378,93 @@ describe("pull", () => {
   });
 });
 
+describe("sync retries", () => {
+  it("FAIL-03 a failed sync retries after 1, 2 and 5 min, then every 5 min", async () => {
+    useTimers();
+
+    const transport = fakeTransport({ pull: vi.fn(async () => err<TransportError>("server")) });
+
+    const sync = engine(transport);
+
+    await sync.nudge();
+
+    expect((await status())?.retryAt).toBe(failedUntil(1).retryAt);
+
+    for (const [minutes, calls, next] of [
+      [1, 2, 2],
+      [2, 3, 5],
+      [5, 4, 5],
+    ] as const) {
+      await vi.advanceTimersByTimeAsync(minutes * MINUTE - 1);
+
+      expect(transport.pull).toHaveBeenCalledTimes(calls - 1);
+
+      await vi.advanceTimersByTimeAsync(1);
+
+      await vi.waitFor(async () => {
+        expect(transport.pull).toHaveBeenCalledTimes(calls);
+        expect((await status())?.retryAt).toBe(failedUntil(next).retryAt);
+      });
+    }
+
+    sync.stop();
+  });
+
+  it("FAIL-03 a sync that works clears the retry and resets the schedule", async () => {
+    useTimers();
+
+    const transport = fakeTransport();
+
+    transport.pull.mockImplementationOnce(async () => err<TransportError>("network"));
+
+    const sync = engine(transport);
+
+    await sync.nudge();
+    await vi.advanceTimersByTimeAsync(MINUTE);
+
+    await vi.waitFor(async () => {
+      expect(transport.pull).toHaveBeenCalledTimes(2);
+      expect((await status())?.retryAt).toBeUndefined();
+    });
+
+    transport.pull.mockImplementationOnce(async () => err<TransportError>("network"));
+
+    await sync.nudge();
+
+    expect((await status())?.retryAt).toBe(failedUntil(1).retryAt);
+
+    sync.stop();
+  });
+
+  it("tech§5 a 401 halts without scheduling a retry", async () => {
+    useTimers();
+
+    const transport = fakeTransport({
+      pull: vi.fn(async () => err<TransportError>("unauthorized")),
+    });
+
+    await engine(transport).nudge();
+
+    await vi.advanceTimersByTimeAsync(10 * MINUTE);
+
+    expect(transport.pull).toHaveBeenCalledTimes(1);
+    expect((await status())?.retryAt).toBeUndefined();
+  });
+});
+
 describe("weather", () => {
+  it("LOAD-03 a fetch records when it started loading", async () => {
+    await db.settings.put(SETTINGS);
+
+    const transport = fakeTransport({ weather: vi.fn(() => new Promise<never>(() => {})) });
+
+    void engine(transport).refreshWeather();
+
+    await vi.waitFor(async () =>
+      expect((await status())?.weather).toEqual({ state: "loading", since: NOW.toISOString() }),
+    );
+  });
+
   it("WX-06 start syncs, saves the forecast under the account and refreshes every 15 min", async () => {
     useTimers();
 
