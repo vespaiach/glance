@@ -110,6 +110,12 @@ export function syncReader(request: NextRequest): Result<SignedInDisplay, NextRe
   return display.ok ? display : err(errorJson(display.error, 401));
 }
 
+export function readPlaceQuery(request: NextRequest): Result<string, "invalid"> {
+  const query = request.nextUrl.searchParams.get("q")?.trim();
+
+  return query ? ok(query) : err("invalid");
+}
+
 export function readUpload(request: NextRequest): Result<PhotoUpload, "invalid"> {
   const name = decodedName(request.headers.get(FILE_NAME_HEADER));
 
