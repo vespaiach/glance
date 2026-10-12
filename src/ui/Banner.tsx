@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { season } from "@/theme/seasons.stylex";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "./Button";
 import { Icon } from "./Icon";
@@ -28,6 +28,9 @@ const styles = stylex.create({
     alignItems: "center",
     gap: space.md,
     color: colors.textPrimary,
+    transitionProperty: "background-color",
+    transitionDuration: motion.durSeason,
+    transitionTimingFunction: motion.easeInOut,
   },
   tone1: { backgroundColor: season.block1 },
   tone2: { backgroundColor: season.block2 },

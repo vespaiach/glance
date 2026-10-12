@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAccount, usePhotos, useSettingsRepo } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
+import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { SettingsView } from "./components/SettingsView";
@@ -27,6 +28,8 @@ export function SettingsScreen() {
 
   const photos = usePhotos();
 
+  const now = useNow("minute");
+
   const repo = useSettingsRepo();
 
   return (
@@ -34,7 +37,7 @@ export function SettingsScreen() {
       account={account}
       settings={settings}
       season={season}
-      background={shownBackground(settings.background, photos ?? [])}
+      background={shownBackground(settings.background, photos ?? [], now)}
       breakpoint={breakpoint}
       onChange={(change) => repo.update(change)}
       onOpenBackground={() => router.push(BACKGROUND_PATH)}

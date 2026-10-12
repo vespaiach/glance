@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { season } from "@/theme/seasons.stylex";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { weatherLayout } from "../layout";
 
@@ -15,6 +15,9 @@ const styles = stylex.create({
     minHeight: 420,
     borderRadius: radii.lg,
     backgroundColor: season.block3,
+    transitionProperty: "background-color",
+    transitionDuration: motion.durSeason,
+    transitionTimingFunction: motion.easeInOut,
     padding: "clamp(24px, 2.6vw, 40px)",
     boxSizing: "border-box",
     display: "flex",

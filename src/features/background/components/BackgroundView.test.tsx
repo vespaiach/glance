@@ -33,6 +33,7 @@ function renderView(overrides: Partial<Props> = {}) {
   const props: Props = {
     state: { kind: "ready", data: PHOTOS },
     background: background(),
+    now: new Date(2026, 9, 9, 10, 41),
     uploads: [],
     online: true,
     canUpload: true,

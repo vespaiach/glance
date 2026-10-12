@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import type { FixtureParams } from "@/data/repos";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
@@ -99,6 +100,31 @@ test("BG-03 tapping a thumb saves it as the background in Photo mode", async () 
       "Forest Park trail is the background on every screen. Panels stay solid on top.",
     ),
   ).toBeInTheDocument();
+});
+
+test("BG-03 tapping a thumb in Slideshow shows it now and keeps the slideshow", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+
+  await store.db.settings.put(
+    synced({
+      ...DEFAULT_SETTINGS,
+      accountId: store.accountId,
+      background: { ...DEFAULT_SETTINGS.background, mode: "slideshow", photoId: COAST.id },
+    }),
+  );
+
+  renderBackground();
+
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Use Forest Park trail as background" }),
+  );
+
+  expect(
+    await screen.findByText(
+      "Showing Forest Park trail. The photo changes daily; panels stay solid on top.",
+    ),
+  ).toBeInTheDocument();
+  expect((await store.db.settings.get(store.accountId))?.background.mode).toBe("slideshow");
 });
 
 test("BG-02 upload=one puts the uploading tile first", async () => {

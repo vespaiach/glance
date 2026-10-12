@@ -4,6 +4,7 @@ import * as stylex from "@stylexjs/stylex";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
+import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
 import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
@@ -17,18 +18,14 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
+    position: "relative",
+    isolation: "isolate",
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
-    transitionProperty: "background",
+    transitionProperty: "background-color",
     transitionDuration: motion.durSeason,
     transitionTimingFunction: motion.easeInOut,
   },
-  photo: (image: string) => ({
-    backgroundImage: image,
-    backgroundPosition: "center",
-    backgroundSize: "cover",
-    backgroundRepeat: "no-repeat",
-  }),
   main: {
     flexGrow: 1,
     minHeight: 0,
@@ -77,12 +74,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   usePrefetchViews();
 
   return (
-    <div
-      {...stylex.props(
-        styles.root,
-        photo !== undefined && styles.photo(photoLayer(photo.dim, photo.src)),
-      )}
-    >
+    <div {...stylex.props(styles.root)}>
+      <PhotoBackdrop image={photo && photoLayer(photo.dim, photo.src)} />
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>

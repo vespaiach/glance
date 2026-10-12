@@ -26,9 +26,13 @@ beforeEach(() => {
 
 afterEach(() => store.close());
 
-function renderBackground(background: Partial<AccountSettings["background"]>) {
+function renderBackground(
+  background: Partial<AccountSettings["background"]>,
+  frozenAt = new Date(2026, 9, 9, 10, 30),
+) {
   return renderHook(() => useBackgroundPhoto(), {
     wrapper: shellWrapper(store, {
+      frozenAt,
       overrides: { background: { ...DEFAULT_SETTINGS.background, ...background } },
     }),
   });
@@ -58,13 +62,20 @@ test("BG-06 Photo mode shows the chosen photo's display variant with its dim", a
   );
 });
 
-test("BG-06 Slideshow shows its current photo, the first one when none is chosen", async () => {
+test("BG-06 an hourly Slideshow shows the next photo each hour, in upload order", async () => {
   await savePhotos();
 
-  const { result } = renderBackground({ mode: "slideshow", dim: 0 });
+  const slideshow = { mode: "slideshow", photoId: FIRST.id, rotate: "hourly", dim: 0 } as const;
+
+  const hourOne = renderBackground(slideshow, new Date(1970, 0, 1, 0, 30));
+
+  const hourTwo = renderBackground(slideshow, new Date(1970, 0, 1, 1, 30));
 
   await waitFor(() =>
-    expect(result.current).toEqual({ src: `/photos/${FIRST.id}/display`, dim: 0 }),
+    expect(hourOne.result.current).toEqual({ src: `/photos/${FIRST.id}/display`, dim: 0 }),
+  );
+  await waitFor(() =>
+    expect(hourTwo.result.current).toEqual({ src: `/photos/${CHOSEN.id}/display`, dim: 0 }),
   );
 });
 
