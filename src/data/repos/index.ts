@@ -23,6 +23,7 @@ export {
   type FixtureUpload,
   fixtureParamsFor,
   fixtureSheetTargets,
+  fixtureSignIn,
   fixtureUploads,
   fixtureWeatherSearch,
   useDisplayBoot,

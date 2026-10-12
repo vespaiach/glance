@@ -30,7 +30,7 @@ function subscribeBrowserOnline(listener: () => void) {
   };
 }
 
-function useBrowserOnline(): boolean {
+export function useBrowserOnline(): boolean {
   return useSyncExternalStore(
     subscribeBrowserOnline,
     () => navigator.onLine,

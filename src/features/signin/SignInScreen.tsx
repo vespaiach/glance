@@ -1,39 +1,45 @@
 "use client";
 
-import * as stylex from "@stylexjs/stylex";
-import { copy } from "@/copy";
+import { useRouter } from "next/navigation";
+import { useReducer } from "react";
+import { fixtureSignIn } from "@/data/repos";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { ViewPlaceholder } from "@/shell/ViewPlaceholder";
-import { colors, sizes } from "@/theme/tokens.stylex";
-import { signInLayout } from "./layout";
+import { DEMO_BUILD } from "@/shell/demo";
+import { useFixtureParams } from "@/shell/fixtureOptions";
+import { useBrowserOnline } from "@/shell/providers/network";
+import { useNow } from "@/shell/providers/now";
+import { useSeason } from "@/shell/providers/season";
+import { useAccountSettings } from "@/shell/providers/settings";
+import { viewPath } from "@/shell/routes";
+import { SignInView } from "./components/SignInView";
+import { initialSignIn, signInReducer } from "./signIn";
 
-const styles = stylex.create({
-  root: {
-    height: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: colors.surfaceCanvas,
-    color: colors.textPrimary,
-  },
-  main: {
-    flexGrow: 1,
-    minHeight: 0,
-    overflow: "auto",
-    boxSizing: "border-box",
-    padding: sizes.kioskGutter,
-  },
-});
+const notYet = () => {};
 
-const zones = stylex.create({ hero: {}, form: {} });
+export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
+  const router = useRouter();
 
-export function SignInScreen() {
-  const breakpoint = useBreakpoint();
+  const params = useFixtureParams();
+
+  const [state, dispatch] = useReducer(signInReducer, params, (fixture) =>
+    initialSignIn(fixture, fixtureSignIn),
+  );
+
+  const online = useBrowserOnline() && params.signin !== "offline";
 
   return (
-    <div {...stylex.props(styles.root)}>
-      <main {...stylex.props(styles.main)}>
-        <ViewPlaceholder label={copy.nav.signIn} layout={signInLayout(breakpoint)} zones={zones} />
-      </main>
-    </div>
+    <SignInView
+      state={state}
+      season={useSeason()}
+      time={useNow("minute")}
+      clock={useAccountSettings().clock}
+      breakpoint={useBreakpoint()}
+      online={online}
+      demo={demo}
+      onAction={dispatch}
+      onDemo={() => router.push(viewPath("today"))}
+      onOpenedLink={notYet}
+      onFinishedOnPhone={notYet}
+    />
   );
 }
