@@ -1,5 +1,5 @@
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
-import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW } from "@/fixtures/data";
+import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW, FIXTURE_PHOTOS } from "@/fixtures/data";
 import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME } from "../db";
 import { deleteMetaDb, openMetaDb, saveSignedInAccount } from "../meta";
 import { type DisplayBoot, fixtureParamsFor, useDisplayBoot } from "./session";
@@ -64,6 +64,32 @@ describe("useDisplayBoot", () => {
 
     expect(store.accountId).toBe(ACCOUNT.accountId);
     expect(store.db.name).toBe(accountDbName(ACCOUNT.accountId));
+  });
+
+  it("TODAY-07 the fixture display shows photos from the bundled images", async () => {
+    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    const coast = FIXTURE_PHOTOS.find((photo) => photo.title === "Cannon Beach");
+
+    expect(readyStore(result.current).photoSrc(coast?.id ?? "", "display")).toBe(
+      "/fixtures/photos/coast.svg",
+    );
+  });
+
+  it("tech§3 a signed-in display shows photos from the authenticated file route", async () => {
+    const meta = openMetaDb();
+
+    await saveSignedInAccount(meta, ACCOUNT);
+
+    meta.close();
+
+    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+
+    await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+    expect(readyStore(result.current).photoSrc("p1", "thumb")).toBe("/api/photos/p1/file?v=thumb");
   });
 
   it("tech§4.5 unmounting closes the DB it opened", async () => {

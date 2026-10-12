@@ -1,3 +1,5 @@
+"use client";
+
 import { Component, type ReactNode } from "react";
 import type { ZoneState } from "@/domain/zoneState";
 

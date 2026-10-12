@@ -23,6 +23,60 @@ export const copy = {
     signIn: "Sign in",
     ambient: "Ambient",
   },
+  today: {
+    seasonMonth: (season: string, month: string) => `${season} · ${month}`,
+    hero: {
+      now: "Happening now",
+      next: "Up next",
+      today: "Today",
+      until: (end: string) => `until ${end}`,
+      started: (start: string) => `started ${start}`,
+      endedTitle: "Nothing else today",
+      endedBody: "Today’s events have ended.",
+      noneTitle: "Nothing scheduled",
+      noneBody: "Events show here while they happen.",
+      loading: "Loading calendar",
+    },
+    schedule: {
+      count: (count: number) => {
+        if (count === 0) return "Today · No events";
+
+        return count === 1 ? "Today · 1 event" : `Today · ${count} events`;
+      },
+      loadingCount: "Today · Loading",
+      addEvent: "Add event",
+      fullCalendar: "Full calendar",
+      emptyTitle: "No events yet",
+      emptyBody: "Add the first one. It shows here and on the calendar.",
+      loading: "Loading events",
+    },
+    picture: {
+      eyebrow: "Picture of the day",
+      emptyBody: "Appears once someone uploads a photo.",
+      upload: "Upload",
+      loading: "Loading photo",
+    },
+    weather: {
+      needsTitle: "Weather needs a location",
+      needsBody: "Set the city once and the forecast stays current.",
+      setLocation: "Set location",
+      loading: "Loading weather",
+    },
+    notes: {
+      count: (count: number) => `Notes · ${count}`,
+      loadingCount: "Notes",
+      allNotes: "All notes",
+      emptyTitle: "No notes yet",
+      addNote: "Add note",
+      loading: "Loading notes",
+    },
+    unavailable: {
+      calendar: "Calendar unavailable",
+      weather: "Weather unavailable",
+      notes: "Notes unavailable",
+      photos: "Photos unavailable",
+    },
+  },
   events: {
     now: "Now",
     time: {

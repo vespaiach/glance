@@ -1,11 +1,14 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { GlanceDb } from "../db";
 
+export type PhotoVariant = "display" | "thumb" | "orig";
+
 export type RepoStore = {
   db: GlanceDb;
   accountId: string;
   now: () => Date;
   nudge: () => unknown;
+  photoSrc: (photoId: string, variant: PhotoVariant) => string;
 };
 
 const RepoContext = createContext<RepoStore | undefined>(undefined);

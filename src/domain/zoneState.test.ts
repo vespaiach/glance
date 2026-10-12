@@ -1,4 +1,4 @@
-import { zoneState } from "./zoneState";
+import { readZoneState, zoneState } from "./zoneState";
 
 const since = new Date(2026, 9, 9, 10, 41, 0);
 const secondsIn = (seconds: number) => new Date(since.getTime() + seconds * 1000);
@@ -44,5 +44,19 @@ describe("zoneState", () => {
     expect(zoneState({ ...base, everSynced: true, failed: true, lastSyncedAt })).toEqual({
       kind: "empty",
     });
+  });
+});
+
+describe("readZoneState", () => {
+  it("LOAD-02 a local read still running is loading", () => {
+    expect(readZoneState(undefined)).toEqual({ kind: "loading" });
+  });
+
+  it("tech§4.4 a finished read with no rows is empty", () => {
+    expect(readZoneState([])).toEqual({ kind: "empty" });
+  });
+
+  it("tech§4.4 a finished read with rows is ready", () => {
+    expect(readZoneState(["a"])).toEqual({ kind: "ready", data: ["a"] });
   });
 });

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { FIXTURE_ACCOUNT } from "@/fixtures/data";
+import { FIXTURE_ACCOUNT, fixturePhotoImage } from "@/fixtures/data";
 import { type FixtureParams, parseFixtureParams } from "@/fixtures/params";
 import { accountDbName, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import { openMetaDb, readSignedInAccount } from "../meta";
 import { createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
 import { createInlineSyncHost } from "../sync/host";
-import type { RepoStore } from "./store";
+import { apiPhotoSrc } from "./photos";
+import type { PhotoVariant, RepoStore } from "./store";
 
 export type { FixtureParams };
 
@@ -21,6 +22,9 @@ type OpenedDisplay = { boot: DisplayBoot; close(): void };
 const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {} };
 
 const noNudge = () => {};
+
+const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
+  fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
 
 export function fixtureParamsFor(demo: boolean, search: string): FixtureParams {
   return demo ? parseFixtureParams(search) : {};
@@ -53,7 +57,13 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
     if (!closed) throw error;
   });
 
-  const store = { db, accountId: FIXTURE_ACCOUNT.id, now, nudge: host.nudge };
+  const store = {
+    db,
+    accountId: FIXTURE_ACCOUNT.id,
+    now,
+    nudge: host.nudge,
+    photoSrc: fixturePhotoSrc,
+  };
 
   return { boot: { kind: "ready", store }, close };
 }
@@ -67,7 +77,13 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   const db = openGlanceDb(accountDbName(account.accountId));
 
-  const store = { db, accountId: account.accountId, now, nudge: noNudge };
+  const store = {
+    db,
+    accountId: account.accountId,
+    now,
+    nudge: noNudge,
+    photoSrc: apiPhotoSrc,
+  };
 
   return { boot: { kind: "ready", store }, close: () => db.close() };
 }

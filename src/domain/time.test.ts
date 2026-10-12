@@ -3,6 +3,7 @@ import {
   formatHour,
   formatLength,
   formatLongDate,
+  formatMonth,
   formatMonthDay,
   formatRange,
   formatWeekday,
@@ -88,5 +89,9 @@ describe("time", () => {
     [new Date(2027, 0, 1), "Friday, January 1"],
   ])("TIME-01 clock date of %s reads %s", (date, expected) => {
     expect(formatLongDate(date)).toBe(expected);
+  });
+
+  it("TODAY-01 the season eyebrow names the month in full", () => {
+    expect(formatMonth(new Date(2026, 9, 9))).toBe("October");
   });
 });

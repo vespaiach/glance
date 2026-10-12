@@ -18,6 +18,7 @@ export function openHarness(name: string): Harness {
     accountId: TEST_ACCOUNT,
     now: () => TEST_NOW,
     nudge: vi.fn<() => void>(),
+    photoSrc: (photoId, variant) => `/photos/${photoId}/${variant}`,
     close: async () => {
       db.close();
 

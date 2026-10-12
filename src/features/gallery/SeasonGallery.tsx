@@ -55,6 +55,7 @@ import {
   ZONE_STATES,
 } from "./samples";
 import { TimeEntryDemo } from "./TimeEntryDemo";
+import { TodayGallery } from "./TodayGallery";
 
 type SeasonGalleryProps = {
   season: Season;
@@ -486,6 +487,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <TimeGroup />
       <SharedGroup />
       <ZoneGroup />
+      <TodayGallery season={season} />
     </>
   );
 }

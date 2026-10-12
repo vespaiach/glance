@@ -32,6 +32,17 @@ export const todayAreas = stylex.create({
   notes: { gridArea: "notes" },
 });
 
+const scheduleFits = stylex.create({
+  wide: { contain: "size" },
+  mid: {},
+  narrow: {},
+  phone: {},
+});
+
+export function todayScheduleFit(breakpoint: Breakpoint): stylex.StyleXStyles {
+  return scheduleFits[breakpoint];
+}
+
 export function todayLayout(breakpoint: Breakpoint): stylex.StyleXStyles {
   return grids[breakpoint];
 }
