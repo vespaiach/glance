@@ -19,6 +19,7 @@ test("SHELL-02 each view's route makes it the active view", () => {
 
 test("SHELL-02 Settings stays active on Background", () => {
   expect(viewForPath("/settings/background")).toBe("settings");
+  expect(viewForPath("/settings/location")).toBe("settings");
 });
 
 test("SHELL-03 Sign in and Ambient have no active view", () => {

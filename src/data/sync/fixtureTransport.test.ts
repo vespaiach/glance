@@ -142,6 +142,14 @@ describe("seedFixtureDb", () => {
     expect(settings?.weatherLocation).toBeUndefined();
   });
 
+  it("SET-09 wx= on the Location page keeps the saved place", async () => {
+    await seedFixtureDb(db, { wx: "choose", keepPlace: true });
+
+    expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.weatherLocation).toEqual(
+      FIXTURE_SETTINGS.weatherLocation,
+    );
+  });
+
   it("AMB-03 now= during ambient hours seeds the Appendix A ambient forecast", async () => {
     await seedFixtureDb(db, { now: FIXTURE_AMBIENT_NOW });
 

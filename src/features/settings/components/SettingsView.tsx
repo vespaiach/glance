@@ -16,6 +16,7 @@ type SettingsViewProps = {
   breakpoint: Breakpoint;
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
+  onOpenLocation: () => void;
   onPreviewAmbient: () => void;
   onSignOut: () => void;
 };
@@ -42,6 +43,7 @@ export function SettingsView({
   breakpoint,
   onChange,
   onOpenBackground,
+  onOpenLocation,
   onPreviewAmbient,
   onSignOut,
 }: SettingsViewProps) {
@@ -54,6 +56,7 @@ export function SettingsView({
         background={background}
         onChange={onChange}
         onOpenBackground={onOpenBackground}
+        onOpenLocation={onOpenLocation}
       />
       <div {...stylex.props(styles.side)}>
         <ScreenOptions

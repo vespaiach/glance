@@ -4,6 +4,7 @@ import {
   FIXTURE_ACCOUNT,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_NEW_NOTE_DRAFT,
+  FIXTURE_OTHER_ZONE_PLACE,
   FIXTURE_PLACES,
   FIXTURE_SHEET_TARGETS,
   FIXTURE_TIME_ZONE,
@@ -43,6 +44,7 @@ export const fixtureWeatherSearch = {
   unknown: FIXTURE_UNKNOWN_PLACE,
   matches: FIXTURE_PLACES.portland ?? [],
   located: { draft: "Portland, OR", place: FIXTURE_LOCATED_PLACE },
+  otherZone: FIXTURE_OTHER_ZONE_PLACE,
 };
 
 export const fixtureUploads = FIXTURE_UPLOADS;
@@ -140,8 +142,8 @@ function keepUploadedImages(transport: Transport) {
   return { upload, photoSrc };
 }
 
-export function fixtureParamsFor(demo: boolean, search: string): FixtureParams {
-  return demo ? parseFixtureParams(search) : {};
+export function fixtureParamsFor(demo: boolean, search: string, pathname = ""): FixtureParams {
+  return demo ? parseFixtureParams(search, pathname) : {};
 }
 
 async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promise<OpenedDisplay> {

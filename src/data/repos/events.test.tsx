@@ -8,6 +8,7 @@ import {
   useEventsOnDay,
   useHasEvents,
   useNextEventAfter,
+  useUpcomingEvent,
 } from "./events";
 import { type Harness, openHarness, synced, TEST_NOW, wrapperFor } from "./testHarness";
 
@@ -170,6 +171,40 @@ describe("event hooks", () => {
     await store.db.events.put(synced(SOCCER));
 
     const { result } = renderHook(() => useNextEventAfter("2026-10-09", tz), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current).toBeNull());
+  });
+});
+
+describe("useUpcomingEvent", () => {
+  const TEN_41 = new Date(2026, 9, 9, 10, 41);
+
+  it("LOC-09 reads the first live event starting after now, today included", async () => {
+    const earlier = event(5, at(9, 9, 8));
+
+    const removed = event(6, at(9, 9, 12));
+
+    await store.db.events.bulkPut([
+      synced(SOCCER),
+      synced(earlier),
+      synced(DENTIST),
+      synced(NEXT_DAY),
+      { ...synced(removed), deletedAt: TEST_NOW.toISOString() },
+    ]);
+
+    const { result } = renderHook(() => useUpcomingEvent(TEN_41), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe(SOCCER.id));
+  });
+
+  it("LOC-09 is null with nothing after now", async () => {
+    await store.db.events.put(synced(DENTIST));
+
+    const { result } = renderHook(() => useUpcomingEvent(TEN_41), {
       wrapper: wrapperFor(store),
     });
 

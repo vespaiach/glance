@@ -23,6 +23,7 @@ function renderView(overrides: Partial<Props> = {}) {
     breakpoint: "wide",
     onChange: vi.fn(),
     onOpenBackground: vi.fn(),
+    onOpenLocation: vi.fn(),
     onPreviewAmbient: vi.fn(),
     onSignOut: vi.fn(),
     ...overrides,

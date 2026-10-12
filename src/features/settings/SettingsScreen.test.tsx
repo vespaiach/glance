@@ -26,6 +26,24 @@ const COAST: Photo = {
   createdAt: "2026-10-05T19:00:00.000Z",
 };
 
+const PORTLAND = {
+  name: "Portland",
+  region: "Oregon",
+  lat: 45.52,
+  lon: -122.68,
+  timeZone: "America/Los_Angeles",
+};
+
+async function saveLocation(weatherLocation?: typeof PORTLAND | Omit<typeof PORTLAND, "timeZone">) {
+  await store.db.settings.put(
+    synced({
+      ...DEFAULT_SETTINGS,
+      ...(weatherLocation && { weatherLocation }),
+      accountId: store.accountId,
+    }),
+  );
+}
+
 let store: Harness;
 
 beforeEach(() => {
@@ -96,6 +114,53 @@ test("SET-03 the Background row names the saved photo and opens the Background p
   await userEvent.click(row);
 
   expect(navigation.push).toHaveBeenCalledWith("/settings/background");
+});
+
+test("SET-09 the Location row comes first and names the place and its time zone", async () => {
+  await saveLocation(PORTLAND);
+
+  renderSettings();
+
+  const row = await screen.findByRole("button", { name: /Portland, OR · Pacific time/ });
+
+  expect(screen.getAllByRole("button")[0]).toBe(row);
+  expect(row).toHaveTextContent(/^LocationSets the weather and the time zone/);
+});
+
+test("SET-09 the Location row reads Not set without a location", async () => {
+  await saveLocation();
+
+  renderSettings();
+
+  expect(
+    await screen.findByRole("button", {
+      name: /^Location.*Not set$/,
+    }),
+  ).toBeInTheDocument();
+});
+
+test("SET-09 a place saved before v0.32 shows without a time zone", async () => {
+  const { timeZone: _, ...old } = PORTLAND;
+
+  await saveLocation(old);
+
+  renderSettings();
+
+  expect(
+    await screen.findByRole("button", {
+      name: /^Location.*zonePortland, OR$/,
+    }),
+  ).toBeInTheDocument();
+});
+
+test("SET-09 the Location row opens the Location page", async () => {
+  await saveLocation(PORTLAND);
+
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Location/ }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/settings/location");
 });
 
 test("SET-06 Preview opens Ambient", async () => {

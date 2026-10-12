@@ -89,6 +89,18 @@ export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | nul
   }, [db, dayKey, tz]);
 }
 
+export function useUpcomingEvent(now: Date): StoredEvent | null | undefined {
+  const { db } = useRepoStore();
+
+  const after = now.toISOString();
+
+  return useLiveQuery(async () => {
+    const first = await db.events.where("startAt").above(after).filter(isLive).first();
+
+    return first ?? null;
+  }, [db, after]);
+}
+
 export function useHasEvents(): boolean | undefined {
   const { db } = useRepoStore();
 

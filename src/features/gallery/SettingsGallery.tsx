@@ -4,7 +4,8 @@ import { changeBackground } from "@/domain/background";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Season } from "@/domain/schemas";
 import { BackgroundView } from "@/features/background";
-import { SettingsView } from "@/features/settings";
+import { LocationView, SettingsView } from "@/features/settings";
+import type { WeatherSetupState } from "@/features/weather";
 import { GalleryGroup } from "./GalleryGroup";
 import {
   GALLERY_PHOTOS,
@@ -12,12 +13,15 @@ import {
   gallery,
   galleryPhotoSrc,
   NOW,
+  PLACES,
   UPLOAD_SAMPLES,
 } from "./samples";
 
 type SettingsProps = ComponentProps<typeof SettingsView>;
 
 type BackgroundProps = ComponentProps<typeof BackgroundView>;
+
+type LocationProps = ComponentProps<typeof LocationView>;
 
 type Demo<T> = { key: string; phone?: boolean } & Partial<T>;
 
@@ -72,15 +76,63 @@ const BACKGROUND_DEMOS: readonly Demo<BackgroundProps>[] = [
   { key: "phone", phone: true, breakpoint: "phone", canUpload: false, background: PHOTO },
 ];
 
+const [PORTLAND, MAINE] = PLACES;
+
+const SOCCER = { title: "Soccer practice", startAt: "2026-10-09T22:30:00.000Z" };
+
+function setupFor(state: WeatherSetupState, canLocate = true): LocationProps["setup"] {
+  return {
+    state,
+    canLocate,
+    type: ignore,
+    submit: ignore,
+    pick: ignore,
+    locate: ignore,
+    confirm: ignore,
+    keep: ignore,
+  };
+}
+
+const CONFIRM: WeatherSetupState = MAINE
+  ? { step: "confirm-zone", draft: "Portland", place: MAINE }
+  : { step: "editing", draft: "" };
+
+const LOCATION_DEMOS: readonly Demo<LocationProps>[] = [
+  { key: "set" },
+  { key: "not-set", location: undefined },
+  {
+    key: "searching",
+    setup: setupFor({ step: "searching", draft: "Portland", query: "Portland" }),
+  },
+  { key: "choose", setup: setupFor({ step: "choosing", draft: "Portland", matches: PLACES }) },
+  { key: "locating", setup: setupFor({ step: "locating", draft: "" }) },
+  { key: "denied", setup: setupFor({ step: "editing", draft: "", notice: "denied" }, false) },
+  { key: "outside", setup: setupFor({ step: "editing", draft: "", notice: "outside" }) },
+  { key: "confirm", setup: setupFor(CONFIRM) },
+  { key: "phone", phone: true, breakpoint: "phone" },
+  { key: "phone-confirm", phone: true, breakpoint: "phone", setup: setupFor(CONFIRM) },
+];
+
+const LOCATION_BASE: LocationProps = {
+  location: PORTLAND,
+  now: NOW,
+  clock: "12h",
+  setup: setupFor({ step: "editing", draft: "" }),
+  example: SOCCER,
+  breakpoint: "wide",
+  onBack: ignore,
+};
+
 function settingsBase(season: Season): SettingsProps {
   return {
     account: ACCOUNT,
-    settings: DEFAULT_SETTINGS,
+    settings: { ...DEFAULT_SETTINGS, ...(PORTLAND && { weatherLocation: PORTLAND }) },
     season,
     background: { mode: "season" },
     breakpoint: "wide",
     onChange: ignore,
     onOpenBackground: ignore,
+    onOpenLocation: ignore,
     onPreviewAmbient: ignore,
     onSignOut: ignore,
   };
@@ -112,6 +164,13 @@ export function SettingsGallery({ season }: { season: Season }) {
         {settingsDemos(season).map(({ key, phone, ...demo }) => (
           <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
             <SettingsView {...settingsBase(season)} {...demo} />
+          </div>
+        ))}
+      </GalleryGroup>
+      <GalleryGroup title={gallery.groups.locationView}>
+        {LOCATION_DEMOS.map(({ key, phone, ...demo }) => (
+          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+            <LocationView {...LOCATION_BASE} {...demo} />
           </div>
         ))}
       </GalleryGroup>
