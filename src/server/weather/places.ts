@@ -2,6 +2,7 @@ import "server-only";
 import * as v from "valibot";
 import { copy } from "@/copy";
 import type { WeatherLocation } from "@/domain/schemas";
+import { isTimeZone } from "@/domain/signIn";
 
 export const GeocodingResponseSchema = v.object({
   results: v.optional(
@@ -11,6 +12,7 @@ export const GeocodingResponseSchema = v.object({
         admin1: v.optional(v.string()),
         latitude: v.number(),
         longitude: v.number(),
+        timezone: v.optional(v.string()),
       }),
     ),
     [],
@@ -89,7 +91,7 @@ export function placeQuery(query: string): PlaceQuery {
 export function toPlaces(results: GeocodingResult[], query: PlaceQuery): WeatherLocation[] {
   const places = results
     .filter((result) => namedAs(result, query.search) && inState(result, query.state))
-    .map(toPlace);
+    .flatMap(toPlace);
 
   return distinct(places).slice(0, MAX_PLACES);
 }
@@ -110,8 +112,16 @@ function inState({ admin1 = "" }: GeocodingResult, state: string | undefined): b
   return normalized(admin1) === wanted || stateCode(admin1)?.toLowerCase() === wanted;
 }
 
-function toPlace({ name, admin1, latitude, longitude }: GeocodingResult): WeatherLocation {
-  return { name, region: admin1 ?? "", lat: latitude, lon: longitude };
+function toPlace({
+  name,
+  admin1,
+  latitude,
+  longitude,
+  timezone,
+}: GeocodingResult): WeatherLocation[] {
+  if (timezone === undefined || !isTimeZone(timezone)) return [];
+
+  return [{ name, region: admin1 ?? "", lat: latitude, lon: longitude, timeZone: timezone }];
 }
 
 function distinct(places: WeatherLocation[]): WeatherLocation[] {

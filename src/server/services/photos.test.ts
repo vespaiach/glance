@@ -2,15 +2,25 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import sharp, { type Exif } from "sharp";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { tempDirPerTest } from "../db/testDir";
 import { type PhotoDeps, type PhotoUpload, photoFile, uploadPhoto } from "./photos";
+import { putSettings } from "./settings";
 import { pullChanges } from "./sync";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
 const harness = serviceHarnessPerTest();
 
 const photosDir = tempDirPerTest();
+
+const PORTLAND = {
+  name: "Portland",
+  region: "Oregon",
+  lat: 45.52,
+  lon: -122.68,
+  timeZone: "America/Los_Angeles",
+};
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -80,6 +90,15 @@ describe("uploadPhoto", () => {
 
   it("PHOTO-03 dates a photo with no EXIF date by the upload day in the account's time zone", async () => {
     harness.advance(12 * 60 * 60 * 1000);
+
+    const photo = await saved(await jpeg());
+
+    expect(photo.takenOn).toBe("2026-10-09");
+  });
+
+  it("LOC-07 dates a photo with no EXIF date by the upload day in the location's time zone", async () => {
+    putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, weatherLocation: PORTLAND });
+    harness.advance(15 * 60 * 60 * 1000);
 
     const photo = await saved(await jpeg());
 
