@@ -1,4 +1,4 @@
-import { initialSignIn, type SignInState, signInReducer } from "./signIn";
+import { initialSignIn, openedLinkFrom, type SignInState, signInReducer } from "./signIn";
 
 const ACCOUNT = {
   id: "0195f0a0-0000-7000-8000-00000000000a",
@@ -232,6 +232,69 @@ describe("sign-in reducer", () => {
       draft: "Ana",
       error: "failed",
     });
+  });
+
+  it("SIGNIN-09 the device that opened a link starts by checking it", () => {
+    expect(initialSignIn({ signin: "sent" }, ACCOUNT, "opened")).toEqual({ step: "opening" });
+    expect(initialSignIn({}, ACCOUNT, "stale")).toEqual({ step: "opening" });
+  });
+
+  it("SIGNIN-09 a link opened for a named account welcomes it", () => {
+    const status = { state: "signed-in", account: ACCOUNT, returning: true } as const;
+
+    expect(signInReducer({ step: "opening" }, { type: "status", status })).toEqual({
+      step: "done",
+      name: "Maria",
+      returning: true,
+    });
+  });
+
+  it.each([{ step: "opening" }, sent] as const)(
+    "SIGNIN-06 a signed-in account with no name asks for one ($step)",
+    (state) => {
+      const account = { ...ACCOUNT, email: "ana@example.com", name: null };
+
+      const status = { state: "signed-in", account, returning: false } as const;
+
+      expect(signInReducer(state, { type: "status", status })).toEqual({
+        step: "name",
+        email: "ana@example.com",
+        draft: "",
+      });
+    },
+  );
+
+  it("SIGNIN-12 a stale link shows the expired step for its email on the opening device", () => {
+    const status = { state: "expired", email: "maria@example.com" } as const;
+
+    expect(signInReducer({ step: "opening" }, { type: "status", status })).toEqual({
+      step: "expired",
+      email: "maria@example.com",
+      onLink: true,
+    });
+  });
+
+  it("SIGNIN-12 a stale link with no known email opens the empty form", () => {
+    expect(
+      signInReducer({ step: "opening" }, { type: "status", status: { state: "expired" } }),
+    ).toEqual(form(""));
+  });
+
+  it("SIGNIN-10 a link check that can't reach the server opens the empty form", () => {
+    expect(signInReducer({ step: "opening" }, { type: "status-failed" })).toEqual(form(""));
+  });
+
+  it("SIGNIN-04 a failed status poll keeps the waiting screen", () => {
+    expect(signInReducer(sent, { type: "status-failed" })).toBe(sent);
+  });
+
+  it.each([
+    ["?link=opened", "opened"],
+    ["?link=stale", "stale"],
+    ["?link=other", undefined],
+    ["", undefined],
+  ] as const)("SIGNIN-12 reads the link answer from %j", (search, link) => {
+    expect(openedLinkFrom(search)).toBe(link);
   });
 
   it("SIGNIN-09 the signed-in state ignores every action", () => {

@@ -3,6 +3,7 @@ import type { Account } from "@/domain/schemas";
 import { isValidEmail } from "@/domain/signIn";
 
 export type SignInState =
+  | { step: "opening" }
   | { step: "form"; email: string; error?: "invalid" | "failed" }
   | { step: "sending"; email: string }
   | { step: "sent"; email: string }
@@ -20,6 +21,7 @@ export type SignInAction =
   | { type: "link-sent" }
   | { type: "link-failed" }
   | { type: "status"; status: AuthStatus }
+  | { type: "status-failed" }
   | { type: "opened-link" }
   | { type: "named"; account: Account }
   | { type: "name-failed" };
@@ -27,6 +29,10 @@ export type SignInAction =
 export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct">;
 
 export type FixtureAccount = Account & { name: string };
+
+export type OpenedLink = "opened" | "stale";
+
+const EMPTY_FORM: SignInState = { step: "form", email: "" };
 
 function send(state: SignInState): SignInState {
   if (state.step === "expired") return { step: "sending", email: state.email };
@@ -61,10 +67,25 @@ function linkAnswered(state: SignInState, sent: boolean): SignInState {
 }
 
 function signedIn(account: Account, returning: boolean): SignInState {
-  return { step: "done", name: account.name ?? "", returning };
+  if (account.name === null) return { step: "name", email: account.email, draft: "" };
+
+  return { step: "done", name: account.name, returning };
+}
+
+function linkChecked(status: AuthStatus): SignInState {
+  switch (status.state) {
+    case "signed-in":
+      return signedIn(status.account, status.returning);
+    case "expired":
+      return status.email ? { step: "expired", email: status.email, onLink: true } : EMPTY_FORM;
+    default:
+      return EMPTY_FORM;
+  }
 }
 
 function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
+  if (state.step === "opening") return linkChecked(status);
+
   if (state.step !== "sent" && state.step !== "phone") return state;
 
   switch (status.state) {
@@ -80,7 +101,9 @@ function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
 }
 
 function named(state: SignInState, account: Account): SignInState {
-  return state.step === "name" && state.saving ? signedIn(account, false) : state;
+  if (state.step !== "name" || !state.saving) return state;
+
+  return { step: "done", name: account.name ?? "", returning: false };
 }
 
 function nameFailed(state: SignInState): SignInState {
@@ -113,6 +136,8 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
       return linkAnswered(state, false);
     case "status":
       return statusAnswered(state, action.status);
+    case "status-failed":
+      return state.step === "opening" ? EMPTY_FORM : state;
     case "opened-link":
       return state.step === "sent" ? { step: "name", email: state.email, draft: "" } : state;
     case "named":
@@ -122,8 +147,20 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
   }
 }
 
-export function initialSignIn(fixture: SignInFixture, account: FixtureAccount): SignInState {
+export function openedLinkFrom(search: string): OpenedLink | undefined {
+  const link = new URLSearchParams(search).get("link");
+
+  return link === "opened" || link === "stale" ? link : undefined;
+}
+
+export function initialSignIn(
+  fixture: SignInFixture,
+  account: FixtureAccount,
+  link?: OpenedLink,
+): SignInState {
   const { email, name } = account;
+
+  if (link) return { step: "opening" };
 
   switch (fixture.signin) {
     case "sending":
@@ -139,6 +176,6 @@ export function initialSignIn(fixture: SignInFixture, account: FixtureAccount): 
     case "done":
       return { step: "done", name, returning: fixture.acct === "returning" };
     default:
-      return { step: "form", email: "" };
+      return EMPTY_FORM;
   }
 }

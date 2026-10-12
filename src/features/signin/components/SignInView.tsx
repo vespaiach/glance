@@ -275,6 +275,8 @@ function SignInStep(props: StepProps) {
   const { state } = props;
 
   switch (state.step) {
+    case "opening":
+      return null;
     case "form":
     case "sending":
       return <FormStep {...props} />;

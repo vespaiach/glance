@@ -1,4 +1,6 @@
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import Dexie from "dexie";
+import { vi } from "vitest";
 import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW, FIXTURE_PHOTOS } from "@/fixtures/data";
 import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import { deleteMetaDb, openMetaDb, readSignedInAccount, saveSignedInAccount } from "../meta";
@@ -15,13 +17,56 @@ const now = () => FIXTURE_NOW;
 
 const params = {};
 
+const OTHER = { id: "0195f0a0-0000-7000-8000-00000000000b", name: "Ana", email: "ana@example.com" };
+
+const PENDING = { entity: "notes", entityId: "n1", op: "delete", attempts: 0 } as const;
+
 afterEach(async () => {
   cleanup();
+
+  vi.unstubAllGlobals();
 
   await deleteMetaDb();
   await deleteGlanceDb(FIXTURE_DB_NAME);
   await deleteGlanceDb(accountDbName(ACCOUNT.accountId));
+  await deleteGlanceDb(accountDbName(OTHER.id));
 });
+
+function stubCaches() {
+  const remove = vi.fn<(name: string) => Promise<boolean>>(async () => true);
+
+  vi.stubGlobal("caches", { delete: remove });
+
+  return remove;
+}
+
+function stubServer() {
+  const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
+    if (String(input).startsWith("/api/auth/")) return new Response(null, { status: 204 });
+
+    throw new TypeError("offline");
+  });
+
+  vi.stubGlobal("fetch", fetch);
+
+  return fetch;
+}
+
+async function queueChange(accountId: string) {
+  const db = openGlanceDb(accountDbName(accountId));
+
+  await db.outbox.add(PENDING);
+
+  db.close();
+}
+
+async function bootSignedIn() {
+  const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+
+  await waitFor(() => expect(result.current.kind).toBe("ready"));
+
+  return readyStore(result.current);
+}
 
 function readyStore(boot: DisplayBoot) {
   if (boot.kind !== "ready") throw new Error(`expected ready, got ${boot.kind}`);
@@ -182,6 +227,42 @@ describe("sign out", () => {
 
     expect(await storedAccount()).toBeUndefined();
   });
+
+  it("SIGNIN-11 signing out tells the server", async () => {
+    const fetch = stubServer();
+
+    await signIn();
+
+    await (await bootSignedIn()).signOut();
+
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/auth/signout",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("SIGNIN-11 signing out deletes this screen's account DB with its pending changes", async () => {
+    await signIn();
+
+    await queueChange(ACCOUNT.accountId);
+
+    const store = await bootSignedIn();
+
+    await store.signOut();
+
+    expect(store.db.isOpen()).toBe(false);
+    expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
+  });
+
+  it("tech§4.5 signing out clears the photos cache", async () => {
+    const remove = stubCaches();
+
+    await signIn();
+
+    await (await bootSignedIn()).signOut();
+
+    expect(remove).toHaveBeenCalledExactlyOnceWith("photos");
+  });
 });
 
 describe("signInAuthFor", () => {
@@ -202,10 +283,68 @@ describe("signInAuthFor", () => {
     });
   });
 
-  it("tech§4.2 outside demo builds sign-in can't reach a server until HttpTransport", async () => {
-    expect(
-      await signInAuthFor(false, params).link({ email: "maria@example.com", timeZone: "UTC" }),
-    ).toEqual({ ok: false, error: "network" });
+  it("tech§4.2 outside demo builds sign-in goes to the server", async () => {
+    const fetch = stubServer();
+
+    const request = { email: "maria@example.com", timeZone: "UTC" };
+
+    expect(await signInAuthFor(false, params).link(request)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/auth/link",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("SIGNIN-13 signing in as a different account deletes the old account's DB and photos", async () => {
+    const remove = stubCaches();
+
+    await signIn();
+
+    await queueChange(ACCOUNT.accountId);
+
+    await signInAuthFor(false, params).remember(OTHER);
+
+    expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
+    expect(remove).toHaveBeenCalledExactlyOnceWith("photos");
+    expect(await storedAccount()).toEqual({ accountId: OTHER.id, name: "Ana", email: OTHER.email });
+  });
+
+  it("SIGNIN-13 signing in again as the same account keeps its pending changes", async () => {
+    const remove = stubCaches();
+
+    await signIn();
+
+    await queueChange(ACCOUNT.accountId);
+
+    await signInAuthFor(false, params).remember({
+      id: ACCOUNT.accountId,
+      name: "Maria",
+      email: ACCOUNT.email,
+    });
+
+    const db = openGlanceDb(accountDbName(ACCOUNT.accountId));
+
+    expect(await db.outbox.count()).toBe(1);
+    expect(remove).not.toHaveBeenCalled();
+
+    db.close();
+  });
+
+  it("tech§4.5 Gap 5 signing in asks the browser to keep this screen's storage", async () => {
+    const persist = vi.fn(async () => true);
+
+    Object.defineProperty(navigator, "storage", { value: { persist }, configurable: true });
+
+    await signInAuthFor(false, params)
+      .remember(OTHER)
+      .finally(() => {
+        Reflect.deleteProperty(navigator, "storage");
+      });
+
+    expect(persist).toHaveBeenCalledOnce();
   });
 });
 

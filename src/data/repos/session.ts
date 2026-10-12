@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { err } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
@@ -12,11 +11,13 @@ import {
   fixturePhotoImage,
 } from "@/fixtures/data";
 import { type FixtureParams, parseFixtureParams } from "@/fixtures/params";
-import { accountDbName, FIXTURE_DB_NAME, openGlanceDb } from "../db";
+import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import {
   clearSignedInAccount,
+  type MetaDb,
   openMetaDb,
   readSignedInAccount,
+  type SignedInAccount,
   saveSignedInAccount,
 } from "../meta";
 import { createFixtureAuth, createFixtureTransport, seedFixtureDb } from "../sync/fixtureTransport";
@@ -59,21 +60,38 @@ type OpenedDisplay = { boot: DisplayBoot; close(): void };
 
 const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {} };
 
-const notConnected = async () => err("network" as const);
+const PHOTO_CACHE = "photos";
 
-const offlineAuth: Transport["auth"] = {
-  link: notConnected,
-  status: notConnected,
-  name: notConnected,
-  signout: notConnected,
-};
+async function deleteAccountData(accountId: string): Promise<void> {
+  await deleteGlanceDb(accountDbName(accountId));
+
+  if ("caches" in globalThis) await caches.delete(PHOTO_CACHE);
+}
+
+function keepStorage() {
+  if (!("storage" in navigator)) return;
+
+  navigator.storage.persist().catch(() => {});
+}
+
+async function replaceSignedIn(meta: MetaDb, account: SignedInAccount): Promise<void> {
+  const previous = await readSignedInAccount(meta);
+
+  if (previous && previous.accountId !== account.accountId) {
+    await deleteAccountData(previous.accountId);
+  }
+
+  await saveSignedInAccount(meta, account);
+}
 
 async function rememberSignedIn(account: Account): Promise<void> {
   const meta = openMetaDb();
 
   const entry = { accountId: account.id, name: account.name, email: account.email };
 
-  await saveSignedInAccount(meta, entry).finally(() => meta.close());
+  await replaceSignedIn(meta, entry).finally(() => meta.close());
+
+  keepStorage();
 }
 
 async function forgetSignedIn(): Promise<void> {
@@ -91,7 +109,7 @@ function signOutWith(signout: Transport["auth"]["signout"]) {
 }
 
 export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
-  const auth = demo ? createFixtureAuth(params) : offlineAuth;
+  const auth = demo ? createFixtureAuth(params) : createHttpTransport().auth;
 
   return { link: auth.link, status: auth.status, name: auth.name, remember: rememberSignedIn };
 }
@@ -176,6 +194,11 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   const host = createWorkerSyncHost({ db, spawn: spawnSyncWorker });
 
+  const close = () => {
+    host.stop();
+    db.close();
+  };
+
   void host.start(account.accountId);
 
   const store = {
@@ -189,12 +212,13 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     photoSrc: apiPhotoSrc,
     upload: transport.upload,
     places: transport.places,
-    signOut: signOutWith(offlineAuth.signout),
-  };
+    signOut: async () => {
+      close();
 
-  const close = () => {
-    host.stop();
-    db.close();
+      await signOutWith(transport.auth.signout)();
+
+      await deleteAccountData(account.accountId);
+    },
   };
 
   return { boot: { kind: "ready", store }, close };

@@ -58,6 +58,28 @@ function usePolling(
   }, [waiting, status]);
 }
 
+function useLinkCheck(
+  checking: boolean,
+  status: SignInAuth["status"],
+  onAnswer: (answer: Awaited<ReturnType<SignInAuth["status"]>>) => void,
+) {
+  const answered = useEffectEvent(onAnswer);
+
+  useEffect(() => {
+    if (!checking) return;
+
+    let live = true;
+
+    void status().then((answer) => {
+      if (live) answered(answer);
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [checking, status]);
+}
+
 function useMounted() {
   const mounted = useRef(true);
 
@@ -83,16 +105,21 @@ export function useSignIn({ initial, auth, fixture, onSignedIn }: Options): Sign
     });
   };
 
-  const signedIn = (account: Account, returning: boolean) => {
-    dispatch({ type: "status", status: { state: "signed-in", account, returning } });
+  const statusAnswered = (status: AuthStatus) => {
+    dispatch({ type: "status", status });
 
-    finish(account);
+    if (status.state === "signed-in" && status.account.name !== null) finish(status.account);
   };
 
-  usePolling(isWaiting(state), auth.status, (status) => {
-    if (status.state === "signed-in") return signedIn(status.account, status.returning);
+  const signedIn = (account: Account, returning: boolean) =>
+    statusAnswered({ state: "signed-in", account, returning });
 
-    dispatch({ type: "status", status });
+  usePolling(isWaiting(state), auth.status, statusAnswered);
+
+  useLinkCheck(state.step === "opening", auth.status, (answer) => {
+    if (!answer.ok) return dispatch({ type: "status-failed" });
+
+    statusAnswered(answer.value);
   });
 
   const sendLink = async (email: string) => {
