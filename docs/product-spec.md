@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.11 — DS display components from F08: Clock takes a `Date` and never ticks itself, EventRow `compact` (phone columns) and `nowLabel`, WeatherNow `labels` and no `unit`, weather icons as keys, tappable ForecastDay/StickyNote (§4.2) · v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Status | Draft v0.12 — shared pieces from F09: their props, `<Zone>`, Sheet Escape and focus start/return (§4.2, §8.9) · v0.11 — DS display components from F08: Clock takes a `Date` and never ticks itself, EventRow `compact` (phone columns) and `nowLabel`, WeatherNow `labels` and no `unit`, weather icons as keys, tappable ForecastDay/StickyNote (§4.2) · v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D19) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
@@ -135,7 +135,18 @@ Rebuild these as typed React components with the props below (taken from `_ds_bu
 | `Eyebrow`, `Icon` | — | Mono uppercase label. Lucide wrapper |
 | `Ticker` | — | **Not used** in Glance |
 
-New components designed in handoff v2 (not in the DS bundle): **`TimeField`**, **`TimePicker`** (§8.3.1). Other shared pieces the screens need (not in the DS): `Skeleton` (pulse 1.2 s, opacity 0.06–0.1), `EmptyState` (icon · title · body · one action), `SourceFailure` (icon · "{Source} unavailable" · retry countdown · Try again), `Sheet` (modal over a 60% scrim, radius 32, max-width 560), `ColorSwatchPicker`, `OfflinePill`, `SettingsRow`.
+New components designed in handoff v2 (not in the DS bundle): **`TimeField`**, **`TimePicker`** (§8.3.1). Other shared pieces the screens need (not in the DS):
+
+| Component | Props | Notes |
+|---|---|---|
+| `Skeleton`, `SkeletonBlock` | `label` · `width, height, radius` | The group pulses 1.2 s; blocks are black at 0.1, so they read 0.06–0.1. The group is a busy `status` named by `label` ("Loading events") |
+| `EmptyState` | `icon, title, body, eyebrow, action, size: md\|lg, align: start\|center` | Icon · title · body · one action (any button the screen passes). `md` = zone (28 px title), `lg` = whole view (display-xl title) |
+| `SourceFailure` | `icon, title, body, retryLabel, onRetry, eyebrow, size` | An `EmptyState` with a secondary "Try again" (`rotate-cw`). `body` carries the retry countdown text. A `status` |
+| `Sheet` | `title, eyebrow, closeLabel, onClose, children, startActions, endActions` | §8.9. `role="dialog"`, `aria-modal`, labelled by its title |
+| `ColorSwatchPicker` | `label, options[{value: Tone, label}], value, onChange` | 44 px round swatches, `aria-pressed`, named by color. Selected = white + black ring |
+| `OfflinePill` | `label, meta` | Black pill, wifi-off, `status`. The shell places it (§5.4) |
+| `SettingsRow` | `title, description, children, onClick, divider` | Title + description on the left, control on the right. With `onClick` the row is a button with a chevron |
+| `Zone` | `state: ZoneState<T>, loading, empty, failed, children(data, updatedAt)` | Renders one of the four states (§9.3–9.5) inside its own error boundary, which shows `failed` if the content throws |
 
 Components live in `src/ui/` and are styled only with StyleX. Each accepts an optional `xstyle` prop (a StyleX style) for layout overrides from the caller, in place of the prototype's `style` prop. `ui` can't import `copy.ts`, so any words a component shows (NOW, H/L) come in as props from the screen. Weather `icon` props take the domain `WeatherIcon` key.
 
@@ -501,10 +512,10 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 
 ### 8.9 Sheets (shared) — `SHEET`
 - Modal over a 60% scrim that also covers the bar. Card radius 32, max-width 560, padding `clamp(24px,3vw,40px)`, shadow-3. Close IconButton 44.
-- Tapping the scrim, Cancel or ✕ discards the draft. No dirty-check.
+- Tapping the scrim, Cancel or ✕ discards the draft. So does Escape on a hardware keyboard. No dirty-check.
 - The action row is sticky at the bottom: Delete on the left, Cancel + primary on the right.
 - Offline: banner "You're offline" — event: "Changes save on this screen and sync when the connection is back."; note: "The note saves on this screen and posts when the connection is back."
-- Focus is trapped while open. Focus order inside sheets is **[Open]** (proposed: title field → fields in visual order → swatches → actions).
+- Focus is trapped while open. Opening moves focus to the sheet itself, not a field, so tablets don't raise the keyboard; closing returns it to what opened the sheet. Focus order inside sheets is **[Open]** (proposed: title field → fields in visual order → swatches → actions).
 
 ---
 
