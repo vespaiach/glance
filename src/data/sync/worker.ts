@@ -66,11 +66,13 @@ function watchOutbox(db: GlanceDb, onQueued: () => void, signal: AbortSignal) {
   signal.addEventListener("abort", () => subscription.unsubscribe());
 }
 
-function openTriggers(deps: WorkerDeps, sync: () => void, signal: AbortSignal) {
+type Triggered = { sync: () => void; retrying: () => boolean };
+
+function openTriggers(deps: WorkerDeps, { sync, retrying }: Triggered, signal: AbortSignal) {
   let everOpened = false;
 
   const opened = () => {
-    if (everOpened) sync();
+    if (everOpened || retrying()) sync();
 
     everOpened = true;
   };
@@ -104,7 +106,7 @@ function activate(deps: WorkerDeps, { db, accountId, page, signal }: Activation)
 
   watchOutbox(db, sync, signal);
 
-  const stream = openTriggers(deps, sync, signal);
+  const stream = openTriggers(deps, { sync, retrying: engine.retrying }, signal);
 
   const poll = setInterval(() => {
     if (!stream?.isOpen() && !engine.retrying()) sync();
