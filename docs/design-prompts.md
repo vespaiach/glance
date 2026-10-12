@@ -8,7 +8,8 @@ Paste each prompt into Claude Design in the **Glance** project (the one that pro
 | 2 | [Re-copy for a family audience](prompts/02-family-copy.md) | ✅ Delivered in handoff v2 → spec §10 |
 | 3 | [Sign-up/sign-in flow + undesigned states](prompts/03-signin-and-system-states.md) | ✅ Delivered in handoff v3 → spec §8.1 (`SIGNIN-*`), PHOTO-06..09, WX-07..09 |
 | 4 | [Session no longer valid](prompts/04-session-ended.md) | ⏳ Requested → spec SIGNIN-13. Builds on v3 |
+| 5 | [Location and time zone](prompts/05-location-and-time-zone.md) | ⏳ Requested → spec LOC-01..07 (§9.9), SET-09, SIGNIN-14. Builds on v3 |
 
-Prompts 1–3 are delivered. Prompt 4 is waiting for design: until it lands, SIGNIN-13 uses the plain SIGNIN-01 form. Spec references: [`product-spec.md`](product-spec.md) — §8.3.1 (time entry), §10 (family copy), §8.1 / PHOTO-06..09 / WX-07..09 (sign-in, upload, location states).
+Prompts 1–3 are delivered. Prompts 4 and 5 are waiting for design: until prompt 4 lands, SIGNIN-13 uses the plain SIGNIN-01 form; the prompt 5 screens (execution plan L06–L08) wait for it. Spec references: [`product-spec.md`](product-spec.md) — §8.3.1 (time entry), §10 (family copy), §8.1 / PHOTO-06..09 / WX-07..09 (sign-in, upload, location states).
 
 New prompts go in [`prompts/`](prompts/) as `NN-short-name.md`, with a row added above.

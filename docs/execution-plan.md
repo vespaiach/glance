@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.2 — branch from latest main · v1.1: task status tracking · v1.0: first plan |
-| Date | 2026-10-11 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.8) · [`tech-design.md`](tech-design.md) (v1.3) |
+| Status | v1.3 — Phase 6 location and time zone (L00–L08), D02 design for it · v1.2 — branch from latest main · v1.1: task status tracking · v1.0: first plan |
+| Date | 2026-10-12 |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.32) · [`tech-design.md`](tech-design.md) (v1.59) |
 
 Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 
@@ -45,6 +45,12 @@ graph LR
   Y --> C03
   C01 --> C03
   C04 --> Q[Q01 release QA]
+  Q --> L00 --> L01 --> L02 --> L04
+  L00 --> L03 --> L04
+  L03 --> L05 --> L06
+  L00 --> D02[D02 design, prompt 5] --> L06
+  L04 & L06 --> L07
+  L06 --> L08
 ```
 
 **Critical path:** F01 → F02 → F03 → F07 → F09 → S07 → V01 → I01 → Y01 → C01 → C02 → C04 → Q01.
@@ -172,8 +178,29 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 ---
 
+## Phase 6 — Location and time zone
+
+The location sets the weather and the screen's time zone (spec §9.9). L01–L05 have no new UI and can start once L00 is done. L06–L08 wait for the prompt 5 design (D02).
+
+| ID | Status | Task | Depends on | Covers |
+|---|---|---|---|---|
+| L00 | ✅ ([#61](https://github.com/vespaiach/glance/pull/61)) | **Docs:** spec v0.32, tech design v1.59, this phase, [prompt 5](prompts/05-location-and-time-zone.md) | — | LOC, SET-09, SIGNIN-14, D20 |
+| L01 | ⬜ | **Zone primitives:** pure `domain/zone.ts` (`wallTime`, `zonedInstant`, `dayNumber`, `dateKey`, `parseDateKey`, `addDays`, `dayStart`, `displayTimeZone`). Nothing calls it yet | L00 | LOC-06 (DST rule), D15 |
+| L02 | ⬜ | **Zone through the client:** every time helper and domain rule takes `tz`, `repos/events.ts` day ranges use `dayStart`, `TimeZoneProvider` + `useTimeZone()` (device zone, so nothing changes on screen), screens pass `tz` down, guard test against local-zone `Date` getters, Vitest on a pinned `TZ`. Split into L02a (domain and repos) / L02b (shell and UI) if too big | L01 | TIME-01..03, LOC-06, D15, tech §4.3 |
+| L03 | ⬜ | **Place carries its zone (server):** optional `WeatherLocation.timeZone`, `places.ts` reads the geocoding `timezone`, `accountTimeZone` for `uploadDay` | L00 | LOC-05, LOC-07, tech §6.4 |
+| L04 | ⬜ | **Display follows the location:** `TimeZoneProvider` gives the location's zone, else the device's | L02, L03 | LOC-06 |
+| L05 | ⬜ | **Place from coordinates:** `server/weather/census.ts`, Open-Meteo `timeZoneAt`, `locatePlace`, `GET /api/weather/locate`, `Transport.weather.locate`, repo `locate` | L03 | LOC-04, D13, D20, tech §6.1 |
+| L06 | ⬜ | **"Use my location":** `locating` state and failures in the setup reducer, shared `useWeatherSetup`, `data/repos/position.ts`, button and status in `WeatherSetup`, `wx=locating\|denied\|outside`, gallery. Brings the prompt 5 handoff into the spec | L05, D02 | LOC-01..03, WX-04, D20 |
+| L07 | ⬜ | **Settings › Location:** SET-09 row, `/settings/location` page reusing the setup | L04, L06 | SET-09, WX-06 |
+| L08 | ⬜ | **Sign-in location step:** `location` step after the name for a new account, Skip for now, `POST /api/auth/location` → `saveLocation`, `signin=location` | L06 | SIGNIN-14, LOC-07, tech §6.1 |
+
+**Phase 6 exit:** with the device clock set to UTC and the location in Portland, OR, the clock, Today, the calendar and event times show Pacific time; "Use my location" works and fails as LOC-01..03 say; L06–L08 match the prompt 5 boards at the 6 sizes.
+
+---
+
 ## External dependency
 
 | ID | Status | Item | Blocks | Fallback |
 |---|---|---|---|---|
 | D01 | ⬜ | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | Final SIGNIN-13 screen (follow-up to C03) | SIGNIN-01 form as-is (spec §8.1) |
+| D02 | ⬜ | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |
