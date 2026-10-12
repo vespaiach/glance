@@ -1,0 +1,15 @@
+.git
+.github
+.githooks
+.claude
+.data
+.next
+node_modules
+coverage
+docs
+scripts
+*.tsbuildinfo
+next-env.d.ts
+.env*
+Dockerfile
+.dockerignore

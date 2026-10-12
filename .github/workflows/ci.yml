@@ -19,3 +19,21 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t glance .
+      - run: >
+          docker run -d --name glance -p 3000:3000 -v glance-data:/data
+          -e APP_URL=http://localhost:3000 -e SMTP_URL=smtp://localhost:1025 -e MAIL_FROM=glance@localhost
+          glance
+      - run: |
+          for i in $(seq 1 30); do curl -fsS -o /dev/null http://localhost:3000/signin && break; sleep 1; done
+          curl -fsS -o /dev/null http://localhost:3000/signin
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api/sync)" = 426
+          docker exec glance test -f /data/glance.db
+          docker exec glance sh -c 'ls /data/backups/glance-*.db'
+      - if: always()
+        run: docker logs glance
