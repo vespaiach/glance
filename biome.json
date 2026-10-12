@@ -195,6 +195,57 @@
       }
     },
     {
+      "includes": ["src/fixtures/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/copy",
+                      "@/copy/**",
+                      "**/copy/**",
+                      "react",
+                      "react-dom",
+                      "next",
+                      "next/**",
+                      "dexie"
+                    ],
+                    "message": "fixtures may import only domain (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/shell/**", "src/features/**"],
       "linter": {
         "rules": {
