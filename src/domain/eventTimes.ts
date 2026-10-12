@@ -1,4 +1,4 @@
-import { minutesOfDay } from "./time";
+import { type Clock, minutesOfDay, type TimeParts } from "./time";
 
 export interface EventTimes {
   start: number;
@@ -33,4 +33,32 @@ export function moveStart(times: EventTimes, start: number): EventTimes {
   if (times.end === undefined || !endsAfterStart(times)) return { ...times, start };
 
   return { start, end: Math.min(start + times.end - times.start, LATEST_END) };
+}
+
+export type Meridiem = NonNullable<TimeParts["meridiem"]>;
+
+export const PICKER_MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+
+export function pickerHours(clock: Clock, meridiem?: Meridiem): number[] {
+  if (clock === "24h") return Array.from({ length: 24 }, (_, hour) => hour);
+
+  const offset = meridiem === "PM" ? 12 : 0;
+
+  return Array.from({ length: 12 }, (_, hour) => hour + offset);
+}
+
+export function withHour(minutes: number, hour: number): number {
+  return hour * 60 + (minutes % 60);
+}
+
+export function withMinute(minutes: number, minute: number): number {
+  return Math.floor(minutes / 60) * 60 + minute;
+}
+
+export function withMeridiem(minutes: number, meridiem: Meridiem): number {
+  return (minutes % 720) + (meridiem === "PM" ? 720 : 0);
+}
+
+export function endForLength(start: number, length: number): number {
+  return Math.min(start + length, LATEST_END);
 }
