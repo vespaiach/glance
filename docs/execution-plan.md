@@ -134,7 +134,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | Y01 | ✅ ([#43](https://github.com/vespaiach/glance/pull/43)) | **Loading and failure per zone:** skeletons, 10 s timeout, failure + countdown + Try again, "Updated {time}", weather retry schedule | S04, V01..V08 | LOAD-01..03, FAIL-01..03, WX-05 |
 | Y02 | ✅ ([#44](https://github.com/vespaiach/glance/pull/44)) | **Offline:** pill + saved time, sheet banners, "Save for later", "Waiting to post", forecast-from banner, Ambient notice, upload disabled/paused, sign-in offline | Y01, I01, I03, I05, I09 | OFF-01..05, SHEET offline, WX-03, PHOTO-09, SIGNIN-10 |
 | Y03 | ✅ ([#45](https://github.com/vespaiach/glance/pull/45)) | **On-screen keyboard:** `visualViewport`, sheet shrink, full-page form padding, Return behavior | V03, V05, V04, V09 | KB-01..04 |
-| Y04 | 🔄 ([#46](https://github.com/vespaiach/glance/pull/46)) | **Accessibility pass:** labels, `aria-pressed`, dialog labels, sheet focus order (proposed default), contrast check | Phase 3 | A11Y, spec §8.9 |
+| Y04 | ✅ ([#46](https://github.com/vespaiach/glance/pull/46)) | **Accessibility pass:** labels, `aria-pressed`, dialog labels, sheet focus order (proposed default), contrast check | Phase 3 | A11Y, spec §8.9 |
 
 **Phase 4 exit:** `net=loading|offline|wxerror` and `kb=1` match the System states board.
 
