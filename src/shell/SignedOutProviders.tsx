@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { DEMO_BUILD } from "./demo";
-import { useShellSetup } from "./fixtureOptions";
+import { FixtureParamsProvider, useShellSetup } from "./fixtureOptions";
 import { NowProvider } from "./providers/now";
 import { SeasonProvider } from "./providers/season";
 import { DefaultSettingsProvider } from "./providers/settings";
@@ -15,7 +15,9 @@ export function SignedOutProviders({ children }: { children: ReactNode }) {
   return (
     <NowProvider frozenAt={setup.options.frozenAt}>
       <DefaultSettingsProvider overrides={setup.options.overrides}>
-        <SeasonProvider>{children}</SeasonProvider>
+        <SeasonProvider>
+          <FixtureParamsProvider params={setup.params}>{children}</FixtureParamsProvider>
+        </SeasonProvider>
       </DefaultSettingsProvider>
     </NowProvider>
   );

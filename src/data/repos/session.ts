@@ -32,6 +32,11 @@ export const fixtureWeatherSearch = {
 
 export const fixtureUploads = FIXTURE_UPLOADS;
 
+export const fixtureSignIn = {
+  email: FIXTURE_ACCOUNT.email,
+  name: FIXTURE_ACCOUNT.name ?? "",
+};
+
 export type DisplayBoot =
   | { kind: "booting" }
   | { kind: "signed-out" }

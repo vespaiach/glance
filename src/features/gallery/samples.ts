@@ -40,6 +40,7 @@ export const gallery = {
     settingsView: "Settings view",
     backgroundView: "Background view",
     ambientView: "Ambient view",
+    signInView: "Sign in view",
   },
   noteSheet: {
     edit: "Edit note",
