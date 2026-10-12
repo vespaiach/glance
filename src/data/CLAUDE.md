@@ -1,4 +1,5 @@
 - The sync engine logic lives in engine.ts and is host-agnostic (no Worker/DOM APIs). sync.worker.ts and host.ts are thin.
 - A repo write = row + outbox entry in ONE Dexie transaction, then nudge().
-- The worker never posts data to the page, only status. It closes Dexie on `versionchange`.
-- A pull skips rows that still have an outbox entry.
+- The worker never posts data to the page. Status goes in Dexie `meta.status`; the only messages are `photosChanged` and `restart`. It closes Dexie on `versionchange`.
+- Server rows (pull or push response) never overwrite a row that still has an outbox entry.
+- Every server call goes through `Transport` (Http | Fixture). Nothing else calls `fetch`.
