@@ -17,7 +17,7 @@ export type PullResponse = { cursor: string; changes: Change[] };
 
 export type AuthStatus =
   | { state: "waiting" }
-  | { state: "expired" }
+  | { state: "expired"; email?: string }
   | { state: "needs-name-elsewhere" }
   | { state: "signed-in"; account: Account; returning: boolean };
 

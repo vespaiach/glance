@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { fixtureSignIn, useSignInAuth } from "@/data/repos";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { DEMO_BUILD } from "@/shell/demo";
@@ -12,7 +13,7 @@ import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { viewPath } from "@/shell/routes";
 import { SignInView } from "./components/SignInView";
-import { initialSignIn } from "./signIn";
+import { initialSignIn, openedLinkFrom } from "./signIn";
 import { useSignIn } from "./useSignIn";
 
 export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
@@ -20,8 +21,10 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
 
   const params = useFixtureParams();
 
+  const [link] = useState(() => openedLinkFrom(window.location.search));
+
   const flow = useSignIn({
-    initial: initialSignIn(params, fixtureSignIn),
+    initial: initialSignIn(params, fixtureSignIn, link),
     auth: useSignInAuth(),
     fixture: fixtureSignIn,
     onSignedIn: () => router.replace(viewPath("today")),

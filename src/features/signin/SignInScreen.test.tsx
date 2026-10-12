@@ -61,6 +61,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
 });
 
 function renderScreen(params: FixtureParams = {}, auth: FakeAuth = fakeAuth()) {
@@ -256,6 +257,81 @@ test("SIGNIN-09 signing in saves the account to glance-meta and opens Today afte
   await advance(100);
 
   expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
+});
+
+function openLink(link: "opened" | "stale") {
+  window.history.replaceState(null, "", `/signin?link=${link}`);
+}
+
+test("SIGNIN-09 the device that opened a returning account's link signs in and opens Today", async () => {
+  const auth = fakeAuth();
+
+  auth.status.mockResolvedValue(answer({ state: "signed-in", account: MARIA, returning: true }));
+
+  openLink("opened");
+
+  renderScreen({}, auth);
+
+  expect(await screen.findByRole("heading", { name: "Welcome back, Maria" })).toBeInTheDocument();
+  expect(auth.status).toHaveBeenCalledOnce();
+  expect(auth.remember).toHaveBeenCalledExactlyOnceWith(MARIA);
+
+  await advance(2_200);
+
+  expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
+});
+
+test("SIGNIN-06 the device that opened a new account's link asks for the name first", async () => {
+  const auth = fakeAuth();
+
+  const ana = { ...MARIA, email: "ana@example.com", name: null };
+
+  auth.status.mockResolvedValue(answer({ state: "signed-in", account: ana, returning: false }));
+
+  openLink("opened");
+
+  renderScreen({}, auth);
+
+  await user().type(await screen.findByLabelText("Your name"), "Ana");
+
+  expect(auth.remember).not.toHaveBeenCalled();
+
+  await user().click(screen.getByRole("button", { name: "Continue" }));
+
+  expect(auth.name).toHaveBeenCalledExactlyOnceWith("Ana");
+  expect(await screen.findByRole("heading", { name: "Welcome, Ana" })).toBeInTheDocument();
+});
+
+test("SIGNIN-12 the device that opened a stale link offers a new one to its email", async () => {
+  const auth = fakeAuth();
+
+  auth.status.mockResolvedValue(answer({ state: "expired", email: "maria@example.com" }));
+
+  openLink("stale");
+
+  renderScreen({}, auth);
+
+  expect(
+    await screen.findByRole("heading", { name: "This link doesn’t work anymore" }),
+  ).toBeInTheDocument();
+
+  await user().click(screen.getByRole("button", { name: "Send a new link" }));
+
+  expect(auth.link).toHaveBeenCalledWith(expect.objectContaining({ email: "maria@example.com" }));
+});
+
+test("SIGNIN-10 a link check that can't reach the server opens the email form", async () => {
+  const auth = fakeAuth();
+
+  auth.status.mockResolvedValue(err("network"));
+
+  openLink("opened");
+
+  renderScreen({}, auth);
+
+  expect(
+    await screen.findByRole("heading", { name: "Sign in or get started" }),
+  ).toBeInTheDocument();
 });
 
 test("SIGNIN-09 signin=done is a snapshot and stays put", async () => {
