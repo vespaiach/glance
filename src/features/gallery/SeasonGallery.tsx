@@ -42,6 +42,7 @@ import { TopBar } from "@/ui/TopBar";
 import { WeatherNow } from "@/ui/WeatherNow";
 import { Zone } from "@/ui/Zone";
 import { CalendarGallery } from "./CalendarGallery";
+import { EventSheetGallery } from "./EventSheetGallery";
 import { GalleryGroup } from "./GalleryGroup";
 import {
   EVENTS,
@@ -490,6 +491,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <ZoneGroup />
       <TodayGallery season={season} />
       <CalendarGallery />
+      <EventSheetGallery season={season} />
     </>
   );
 }

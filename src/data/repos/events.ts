@@ -32,6 +32,16 @@ function startingBetween(db: GlanceDb, from: Date, to: Date): Promise<StoredEven
     .toArray();
 }
 
+export function useEvent(id: string): StoredEvent | null | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => {
+    const row = await db.events.get(id);
+
+    return row && isLive(row) ? row : null;
+  }, [db, id]);
+}
+
 export function useEventsOnDay(dayKey: string): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 

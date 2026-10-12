@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FIXTURE_ACCOUNT, fixturePhotoImage } from "@/fixtures/data";
+import { FIXTURE_ACCOUNT, FIXTURE_SHEET_TARGETS, fixturePhotoImage } from "@/fixtures/data";
 import { type FixtureParams, parseFixtureParams } from "@/fixtures/params";
 import { accountDbName, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import { openMetaDb, readSignedInAccount } from "../meta";
@@ -9,6 +9,8 @@ import { apiPhotoSrc } from "./photos";
 import type { PhotoVariant, RepoStore } from "./store";
 
 export type { FixtureParams };
+
+export const fixtureSheetTargets = FIXTURE_SHEET_TARGETS;
 
 export type DisplayBoot =
   | { kind: "booting" }

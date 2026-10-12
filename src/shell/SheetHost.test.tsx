@@ -33,6 +33,16 @@ describe("SheetHost", () => {
     expect(result.current.sheet).toBeNull();
   });
 
+  it("tech§6 a sheet fixture is the first open sheet", () => {
+    const { result } = renderHook(() => useSheetHost(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <SheetHost initial={{ kind: "newnote" }}>{children}</SheetHost>
+      ),
+    });
+
+    expect(result.current.sheet).toEqual({ kind: "newnote" });
+  });
+
   it("SHELL-04 changing view closes the open sheet", () => {
     const { result, rerender } = renderHook(() => useSheetHost(), { wrapper });
 
