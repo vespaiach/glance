@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
+| Status | v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
 | Date | 2026-10-11 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.8) · [`design/handoff/`](design/handoff/README.md) (v3) |
 
@@ -31,7 +31,7 @@ This document records the technical decisions. **What** the app does is in the p
 | D15 | Time | No date library. **`Intl.DateTimeFormat`** plus pure helpers in `src/domain/time.ts`. Account stores an IANA `time_zone` | Few, well-specified formats (TIME-01). Open item C |
 | D16 | Offline shell | **Serwist** (Workbox-compatible) PWA. Precache build assets, fonts and the HTML + RSC payloads of every static app route. **NetworkFirst** (3 s timeout) for navigations and RSC requests, falling back to the cache, then `/today`. **CacheFirst** for photo files, with cache warming. **NetworkOnly** for every other `/api/*` call (Dexie owns data). Web app manifest + `navigator.storage.persist()`. New versions activate only when the screen is idle. See §4.5 | OFF-*. Kiosk screens reload rarely, and when they do they must start offline |
 | D17 | Hosting | **One Docker container** (`output: 'standalone'`) on a VPS or home server, volume at `/data` | Open item A. SQLite and photos need a persistent disk, and the SSE bus needs a single process |
-| D18 | Tooling | **npm** (committed `package-lock.json`, `npm ci` in CI and Docker), **Vitest** + Testing Library + `fake-indexeddb`. **No e2e tests**: automated unit/component/data tests plus a manual QA checklist (§7). `comlink` for worker messaging | Small app, small team. The sync engine is host-agnostic, so the risky logic is tested without a browser |
+| D18 | Tooling | **npm** (committed `package-lock.json`, `npm ci` in CI and Docker, every dependency pinned to an exact version, Node 24 via `.nvmrc`), **Vitest** + Testing Library + `fake-indexeddb`. **No e2e tests**: automated unit/component/data tests plus a manual QA checklist (§7). `comlink` for worker messaging | Small app, small team. The sync engine is host-agnostic, so the risky logic is tested without a browser |
 | D19 | Sync host | Sync runs in a **dedicated Web Worker**, one per tab. The page keeps reads (`useLiveQuery`) and repo writes (row + outbox in one Dexie transaction). The worker does push, pull/apply, SSE, polling, retries and the weather refresh. Typed messages via **Comlink** | Pull/apply and JSON parsing stay off the UI thread, so the 1 s clock, slideshow cross-fades and touch never jank on low-end wall tablets |
 
 ---
@@ -91,6 +91,7 @@ app/
   (app)/{calendar,weather,notes,photos,settings,settings/background}/page.tsx
   signin/page.tsx  ambient/page.tsx  dev/gallery/page.tsx (excluded in prod)
   sw.ts                      # Serwist service worker: precache, runtime strategies, photo warming
+  serwist/[path]/route.ts    # @serwist/turbopack: compiles sw.ts, serves /serwist/sw.js (§4.5)
   manifest.ts                # web app manifest (start_url /today, display fullscreen/standalone, icons)
   api/
     auth/{link,verify,status,name,signout}/route.ts
@@ -125,7 +126,7 @@ src/
 db/migrations/001_init.sql
 ```
 
-**Dependency rules** (enforced with Biome `noRestrictedImports` and the `server-only` package):
+**Dependency rules** (enforced with Biome `noRestrictedImports` overrides per folder in `biome.json`, and the `server-only` package). Cross-module imports use the `@/` alias (`@/*` → `src/*`). Imports inside a module are relative:
 
 | Module | May import |
 |---|---|
@@ -235,7 +236,7 @@ A signed-in screen must cold-start offline (after a reload or a power cut) with 
 - The SW is disabled in dev (`next dev`). Test it on `next build && next start`.
 - A SW needs HTTPS. For home servers, put Caddy in front of the container.
 - RSC caching depends on Next internals (headers, `_rsc`, payload shape). **Pin the exact Next version** and run the offline cold-start manual QA checklist (§7) on every upgrade.
-- **Bundler (decide in Phase 0, verify before Phase 5):** Next 16 builds with Turbopack by default, and `@serwist/next` has historically needed webpack. Either pin `next build --webpack`, or build `app/sw.ts` with Serwist's standalone build step after `next build`. StyleX works with both.
+- **Bundler (decided in F01, verify in C04): Turbopack**, Next 16's default, for `next dev` and `next build`. No `--webpack` flag. The SW comes from **`@serwist/turbopack`**: a route handler `app/serwist/[path]/route.ts` (`createSerwistRoute`, statically generated) compiles `app/sw.ts` with esbuild and serves it at `/serwist/sw.js`. The page registers it with `SerwistProvider`. Precache entries for the route HTML/RSC go in `additionalPrecacheEntries`. StyleX supports Turbopack from Next 16.0.3 (spec §3). Rejected: `next build --webpack`, because it makes the dev and prod bundlers differ and works against Next's default. If C04 finds `@serwist/turbopack` can't precache what Gap 1 needs, fall back to `@serwist/cli`'s standalone build step after `next build`. Turbopack stays either way.
 
 ### 4.6 Sync worker
 **Split.** The page reads through hooks, writes through repos, then calls `nudge()`. The worker owns:

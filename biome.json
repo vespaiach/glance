@@ -1,0 +1,355 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": ["**", "!docs"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "patterns": [
+              {
+                "group": ["@/features/*/**"],
+                "message": "Import another feature through its index only (tech §3)."
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/domain/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**",
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/copy",
+                      "@/copy/**",
+                      "**/copy/**",
+                      "react",
+                      "react-dom",
+                      "next",
+                      "next/**",
+                      "dexie"
+                    ],
+                    "message": "domain imports nothing app-specific, Valibot only (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/theme/**", "src/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**",
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/copy",
+                      "@/copy/**",
+                      "**/copy/**"
+                    ],
+                    "message": "theme and ui may import only theme and domain types (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/data/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/copy",
+                      "@/copy/**",
+                      "**/copy/**"
+                    ],
+                    "message": "data may import only domain (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/shell/**", "src/features/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**",
+                      "@/data/**",
+                      "**/data/**",
+                      "!@/data/repos/**",
+                      "!**/data/repos/**",
+                      "dexie"
+                    ],
+                    "message": "shell and features read data through data/repos hooks only (tech §3, §4.2)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/server/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**",
+                      "@/copy",
+                      "@/copy/**",
+                      "**/copy/**"
+                    ],
+                    "message": "server may import only domain (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["app/api/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**",
+                      "@/server/db",
+                      "@/server/db/**",
+                      "better-sqlite3"
+                    ],
+                    "message": "Route handlers import only server services and never touch SQLite (tech §6.1)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["app/**", "!app/api/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**",
+                      "better-sqlite3"
+                    ],
+                    "message": "Page files render features and shell only (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
