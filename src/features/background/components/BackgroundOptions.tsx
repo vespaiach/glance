@@ -31,10 +31,8 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     gap: 10,
-    alignItems: "flex-start",
   },
   preview: {
-    alignSelf: "stretch",
     aspectRatio: "16 / 10",
     borderRadius: radii.md,
     overflow: "hidden",

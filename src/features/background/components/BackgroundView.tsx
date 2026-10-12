@@ -65,9 +65,6 @@ const styles = stylex.create({
     gap: space.xs,
     alignItems: "flex-start",
   },
-  back: {
-    marginLeft: -16,
-  },
   title: {
     margin: 0,
     fontSize: type.displayXlSize,
@@ -125,7 +122,7 @@ function Photos({ photos, background, onChange, ...rest }: PhotosProps) {
 function Header({ onBack }: { onBack: () => void }) {
   return (
     <div {...stylex.props(styles.header)}>
-      <Button variant="ghost" icon={ChevronLeft} onClick={onBack} xstyle={styles.back}>
+      <Button variant="ghost" icon={ChevronLeft} onClick={onBack}>
         {copy.background.back}
       </Button>
       <h2 {...stylex.props(styles.title)}>{copy.background.title}</h2>

@@ -37,10 +37,8 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     gap: 10,
-    alignItems: "flex-start",
   },
   tile: {
-    alignSelf: "stretch",
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "space-between",
