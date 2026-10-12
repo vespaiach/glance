@@ -15,6 +15,14 @@ const EMAIL = "maria@example.com";
 
 const MARIA = { id: "0192f3a0-0000-7000-8000-000000000001", email: EMAIL, name: "Maria" };
 
+const OTHER_EMAIL = "sam.lee@example.com";
+
+const SIGNED_OUT = { email: EMAIL, pending: 0 };
+
+const WAITING = { email: EMAIL, pending: 3 };
+
+const ENDED = { step: "form", email: EMAIL } as const;
+
 const LOCATION = { step: "location", account: MARIA, returning: false } as const;
 
 const [PORTLAND] = PLACES;
@@ -71,6 +79,17 @@ const DEMOS: readonly Demo[] = [
   { key: "done", state: { step: "done", name: "Maria", returning: false } },
   { key: "done-returning", state: { step: "done", name: "Maria", returning: true } },
   { key: "phone", phone: true, breakpoint: "phone" },
+  { key: "ended", state: ENDED, signedOut: SIGNED_OUT },
+  { key: "ended-pending", state: ENDED, signedOut: WAITING },
+  { key: "ended-switch", state: { step: "form", email: OTHER_EMAIL }, signedOut: WAITING },
+  { key: "ended-sending", state: { step: "sending", email: EMAIL }, signedOut: WAITING },
+  {
+    key: "ended-switch-phone",
+    phone: true,
+    breakpoint: "phone",
+    state: { step: "form", email: OTHER_EMAIL },
+    signedOut: WAITING,
+  },
 ];
 
 function signInBase(season: Season): SignInProps {

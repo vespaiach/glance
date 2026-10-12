@@ -6,6 +6,7 @@ import {
   type AppServiceWorker,
   appServiceWorker,
   useOutboxEmpty,
+  useSignedOut,
   useSyncStatus,
 } from "@/data/repos";
 import { idleDue, inAmbientHours } from "@/domain/idle";
@@ -18,11 +19,13 @@ const TODAY = "/today";
 
 const AMBIENT = "/ambient";
 
+const SIGN_IN = "/signin";
+
 const ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
 
 const TEXT_INPUT_TYPES = new Set(["text", "email", "search", "tel", "url", "password", "number"]);
 
-function isTextField(element: Element | null): boolean {
+export function isTextField(element: Element | null): boolean {
   if (element instanceof HTMLTextAreaElement) return true;
 
   if (element instanceof HTMLInputElement) return TEXT_INPUT_TYPES.has(element.type);
@@ -86,9 +89,12 @@ export function IdleProvider({
 
   const outboxEmpty = useOutboxEmpty() === true;
 
+  const signedOut = useSignedOut();
+
   const current = {
     pathname,
     close,
+    signedOut,
     navigate: router.push,
     outdated,
     outboxEmpty,
@@ -111,10 +117,12 @@ export function IdleProvider({
 
     let ambient = inAmbientHours(ambientHours, lastActivity, tz);
 
-    const go = (path: string) => {
-      const { close, reload, updates } = latest.current;
+    const awake = () => (latest.current.signedOut ? SIGN_IN : TODAY);
 
-      close();
+    const go = (path: string) => {
+      const { close, reload, updates, signedOut } = latest.current;
+
+      if (!signedOut) close();
 
       if (updateDue(latest.current)) return updates.applyUpdate(() => reload(path));
 
@@ -136,13 +144,13 @@ export function IdleProvider({
       if (nowAmbient !== ambient) {
         ambient = nowAmbient;
 
-        if (nowAmbient || latest.current.pathname === AMBIENT) go(nowAmbient ? AMBIENT : TODAY);
+        if (nowAmbient || latest.current.pathname === AMBIENT) go(nowAmbient ? AMBIENT : awake());
       }
 
       if (idleDue(lastActivity, now, idleTimeout)) {
         lastActivity = now;
 
-        go(ambient ? AMBIENT : TODAY);
+        go(ambient ? AMBIENT : awake());
       }
     };
 

@@ -1,13 +1,43 @@
 "use client";
 
-import { type ReactNode, useMemo } from "react";
-import { fixtureTimeZone, SignInAuthProvider, signInAuthFor } from "@/data/repos";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  type FixtureParams,
+  fixtureTimeZone,
+  type SignedOutAccount,
+  SignedOutAccountProvider,
+  SignInAuthProvider,
+  signedOutAccountFor,
+  signInAuthFor,
+} from "@/data/repos";
 import { DEMO_BUILD } from "./demo";
 import { FixtureParamsProvider, useShellSetup } from "./fixtureOptions";
 import { NowProvider } from "./providers/now";
 import { SeasonProvider } from "./providers/season";
 import { DefaultSettingsProvider } from "./providers/settings";
 import { TimeZoneProvider } from "./providers/timeZone";
+
+type Loaded = { account: SignedOutAccount | undefined };
+
+function useSignedOutLoad(demo: boolean, params: FixtureParams | undefined): Loaded | undefined {
+  const [loaded, setLoaded] = useState<Loaded>();
+
+  useEffect(() => {
+    if (params === undefined) return;
+
+    let live = true;
+
+    void signedOutAccountFor(demo, params).then((account) => {
+      if (live) setLoaded({ account });
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [demo, params]);
+
+  return loaded;
+}
 
 export function SignedOutProviders({
   demo = DEMO_BUILD,
@@ -20,15 +50,26 @@ export function SignedOutProviders({
 
   const auth = useMemo(() => setup && signInAuthFor(demo, setup.params), [demo, setup]);
 
-  if (setup === undefined || auth === undefined) return null;
+  const loaded = useSignedOutLoad(demo, setup?.params);
+
+  const overrides = useMemo(
+    () => ({ ...loaded?.account?.settings, ...setup?.options.overrides }),
+    [loaded, setup],
+  );
+
+  if (setup === undefined || auth === undefined || loaded === undefined) return null;
 
   return (
     <NowProvider frozenAt={setup.options.frozenAt}>
-      <DefaultSettingsProvider overrides={setup.options.overrides}>
+      <DefaultSettingsProvider overrides={overrides}>
         <TimeZoneProvider timeZone={demo ? fixtureTimeZone : undefined}>
           <SeasonProvider>
             <FixtureParamsProvider params={setup.params}>
-              <SignInAuthProvider auth={auth}>{children}</SignInAuthProvider>
+              <SignInAuthProvider auth={auth}>
+                <SignedOutAccountProvider account={loaded.account}>
+                  {children}
+                </SignedOutAccountProvider>
+              </SignInAuthProvider>
             </FixtureParamsProvider>
           </SeasonProvider>
         </TimeZoneProvider>

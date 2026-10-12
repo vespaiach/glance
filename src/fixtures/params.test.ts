@@ -59,8 +59,19 @@ describe("parseFixtureParams", () => {
     "now=yesterday",
     "now=2026-10-09",
     "now=2026-13-40T10:41",
+    "pending=-1",
+    "pending=many",
+    "switch=yes",
   ])("§6 ignores the unknown value %s", (query) => {
     expect(parseFixtureParams(query)).toEqual({});
+  });
+
+  it("SIGNIN-13 reads signin=ended with the waiting count and another email entered", () => {
+    expect(parseFixtureParams("signin=ended&pending=3&switch=1")).toEqual({
+      signin: "ended",
+      pending: 3,
+      switch: true,
+    });
   });
 
   it("SET-09 wx= on /settings/location keeps the saved place", () => {

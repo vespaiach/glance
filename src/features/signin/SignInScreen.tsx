@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { fixtureSignIn, fixtureWeatherSearch, useSignInAuth } from "@/data/repos";
+import {
+  fixtureSignIn,
+  fixtureWeatherSearch,
+  useSignedOutAccount,
+  useSignInAuth,
+} from "@/data/repos";
 import { initialWeatherSetup } from "@/features/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { DEMO_BUILD } from "@/shell/demo";
@@ -25,8 +30,10 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
 
   const [link] = useState(() => openedLinkFrom(window.location.search));
 
+  const signedOut = useSignedOutAccount();
+
   const flow = useSignIn({
-    initial: initialSignIn(params, fixtureSignIn, link),
+    initial: initialSignIn(params, fixtureSignIn, link, signedOut),
     initialSetup: () => initialWeatherSetup(params.wx, fixtureWeatherSearch),
     auth: useSignInAuth(),
     fixture: fixtureSignIn,
@@ -40,6 +47,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
   return (
     <SignInView
       state={flow.state}
+      signedOut={signedOut}
       setup={flow.setup}
       season={useSeason()}
       time={useNow("minute")}

@@ -5,6 +5,7 @@ export type SignedInAccount = {
   accountId: Account["id"];
   name: Account["name"];
   email: Account["email"];
+  signedOut?: true;
 };
 
 export type MetaDb = Dexie & { account: EntityTable<SignedInAccount, "accountId"> };
@@ -37,4 +38,8 @@ export function saveSignedInAccount(db: MetaDb, account: SignedInAccount): Promi
 
 export function clearSignedInAccount(db: MetaDb): Promise<void> {
   return db.account.clear();
+}
+
+export async function markSignedOut(db: MetaDb): Promise<void> {
+  await db.account.toCollection().modify({ signedOut: true });
 }

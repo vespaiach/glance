@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { WifiOff } from "lucide-react";
+import { LogOut, WifiOff } from "lucide-react";
 import { copy } from "@/copy";
 import { isTomorrow } from "@/domain/ambient";
 import { nextNotableDay } from "@/domain/nextNotableDay";
@@ -36,6 +36,7 @@ type AmbientViewProps = {
   clock: ClockSetting;
   tz: string;
   offline: boolean;
+  signedOut: boolean;
   weather: ZoneState<Weather>;
   unit: Unit;
   nextEvent: ZoneState<CalendarEvent>;
@@ -205,6 +206,7 @@ export function AmbientView({
   clock,
   tz,
   offline,
+  signedOut,
   weather,
   unit,
   nextEvent,
@@ -231,6 +233,12 @@ export function AmbientView({
             <span {...stylex.props(styles.label, styles.offline)}>
               <Icon icon={WifiOff} size={20} />
               {copy.ambient.offline}
+            </span>
+          )}
+          {signedOut && (
+            <span {...stylex.props(styles.label, styles.offline)}>
+              <Icon icon={LogOut} size={20} />
+              {copy.ambient.signedOut}
             </span>
           )}
           <span {...stylex.props(styles.label)}>{copy.appName}</span>
