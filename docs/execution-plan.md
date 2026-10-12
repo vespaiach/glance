@@ -113,7 +113,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
-| I01 | 🔄 ([#34](https://github.com/vespaiach/glance/pull/34)) | **Events CRUD:** Save validation in the V03 sheet reducer (EVT-03, TPK-07), TPK defaults and rules, save → repo, Today and Calendar update | V01, V02, V03 | EVT-03..07, TPK-05..09, TODAY-03/04 |
+| I01 | ✅ ([#34](https://github.com/vespaiach/glance/pull/34)) | **Events CRUD:** Save validation in the V03 sheet reducer (EVT-03, TPK-07), TPK defaults and rules, save → repo, Today and Calendar update | V01, V02, V03 | EVT-03..07, TPK-05..09, TODAY-03/04 |
 | I02 | ⬜ | **Calendar navigation:** select day, month stepping, `?date=` | V02 | CAL-01..03 |
 | I03 | ⬜ | **Notes CRUD:** sheet reducer, Guest author, tilt, delete confirm | V05 | NOTE-01..05, NOTE-09 |
 | I04 | ⬜ | **Slideshow:** featured stepping, 8 s timer, play/pause, finished photos only | V06 | PHOTO-01, 02, 07 |
