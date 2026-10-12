@@ -1,0 +1,141 @@
+import { saveName } from "./account";
+import { requestLink, verifyLink } from "./links";
+import { requireDisplay } from "./sessions";
+import { authStatus } from "./status";
+import { authHarnessPerTest, linkToken } from "./testAuth";
+
+const harness = authHarnessPerTest();
+
+const REQUEST = { email: "maria@example.com", timeZone: "America/New_York", ip: "203.0.113.5" };
+
+async function waitingScreen(): Promise<{ token: string; pendingId: string }> {
+  const result = await requestLink(harness.deps(), REQUEST);
+
+  if (!result.ok) throw new Error(result.error);
+
+  return { token: linkToken(harness.sent.at(-1)), pendingId: result.value.pendingId };
+}
+
+function openElsewhere(token: string): { sessionToken: string; accountId: string } {
+  const verified = verifyLink(harness.deps(), { token });
+
+  if (!verified.ok) throw new Error(verified.error.code);
+
+  const display = requireDisplay(harness.deps(), verified.value.sessionToken);
+
+  if (!display.ok) throw new Error(display.error);
+
+  return { sessionToken: verified.value.sessionToken, accountId: display.value.accountId };
+}
+
+describe("authStatus on the waiting screen", () => {
+  it("SIGNIN-04 is waiting until the link is opened", async () => {
+    const { pendingId } = await waitingScreen();
+
+    expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "waiting" } });
+  });
+
+  it("SIGNIN-08 is expired 10 minutes after the link was sent unopened", async () => {
+    const { pendingId } = await waitingScreen();
+    harness.advance(10 * 60 * 1000);
+
+    expect(authStatus(harness.deps(), { pendingId })).toEqual({
+      status: { state: "expired", email: "maria@example.com" },
+    });
+  });
+
+  it("SIGNIN-08 is expired once a newer link voided this one", async () => {
+    const { pendingId } = await waitingScreen();
+    await waitingScreen();
+
+    expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "expired" } });
+  });
+
+  it("SIGNIN-07 waits for the name when a new account's link opened on another device", async () => {
+    const { token, pendingId } = await waitingScreen();
+    openElsewhere(token);
+
+    expect(authStatus(harness.deps(), { pendingId })).toEqual({
+      status: { state: "needs-name-elsewhere" },
+    });
+  });
+
+  it("SIGNIN-09 signs in with its own session once the name is saved", async () => {
+    const { token, pendingId } = await waitingScreen();
+    const opener = openElsewhere(token);
+    saveName(harness.deps().db, opener.accountId, "Maria");
+    harness.advance(4000);
+
+    const answer = authStatus(harness.deps(), { pendingId });
+
+    expect(answer.status).toEqual({
+      state: "signed-in",
+      account: { id: opener.accountId, email: "maria@example.com", name: "Maria" },
+      returning: false,
+    });
+    expect(answer.sessionToken).not.toBe(opener.sessionToken);
+    const display = requireDisplay(harness.deps(), answer.sessionToken);
+    expect(display.ok && display.value.accountId).toBe(opener.accountId);
+  });
+
+  it("SIGNIN-09 says returning when the account already existed", async () => {
+    const first = await waitingScreen();
+    const opener = openElsewhere(first.token);
+    saveName(harness.deps().db, opener.accountId, "Maria");
+    harness.advance(60_000);
+    const { token, pendingId } = await waitingScreen();
+    openElsewhere(token);
+
+    const answer = authStatus(harness.deps(), { pendingId });
+
+    expect(answer.status).toMatchObject({ state: "signed-in", returning: true });
+  });
+
+  it("tech§6.2 the pending id signs in only once", async () => {
+    const { token, pendingId } = await waitingScreen();
+    const opener = openElsewhere(token);
+    saveName(harness.deps().db, opener.accountId, "Maria");
+    authStatus(harness.deps(), { pendingId });
+
+    expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "expired" } });
+  });
+
+  it("SIGNIN-08 is expired with no pending id", () => {
+    expect(authStatus(harness.deps(), {})).toEqual({ status: { state: "expired" } });
+  });
+});
+
+describe("authStatus with a session", () => {
+  it("SIGNIN-06 the opener of a new account is signed in with no name yet", async () => {
+    const { token } = await waitingScreen();
+    const opener = openElsewhere(token);
+
+    expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken })).toEqual({
+      status: {
+        state: "signed-in",
+        account: { id: opener.accountId, email: "maria@example.com", name: null },
+        returning: false,
+      },
+    });
+  });
+
+  it("SIGNIN-09 the opener of a known account is returning", async () => {
+    const first = openElsewhere((await waitingScreen()).token);
+    saveName(harness.deps().db, first.accountId, "Maria");
+    harness.advance(60_000);
+
+    const opener = openElsewhere((await waitingScreen()).token);
+
+    expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken }).status).toMatchObject({
+      state: "signed-in",
+      account: { name: "Maria" },
+      returning: true,
+    });
+  });
+
+  it("SIGNIN-12 a stale link's email is reported to the device that opened it", () => {
+    expect(authStatus(harness.deps(), { linkEmail: "maria@example.com" })).toEqual({
+      status: { state: "expired", email: "maria@example.com" },
+    });
+  });
+});

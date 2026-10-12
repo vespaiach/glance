@@ -3,6 +3,8 @@ import {
   AccountSchema,
   AccountSettingsSchema,
   CalendarEventSchema,
+  LinkRequestSchema,
+  NameRequestSchema,
   NoteSchema,
   PhotoSchema,
   type Synced,
@@ -220,5 +222,39 @@ describe("AccountSchema", () => {
 
   it("SIGNIN-02 rejects an invalid email", () => {
     expect(accepts(AccountSchema, { id, email: "maria@", name: "Maria" })).toBe(false);
+  });
+});
+
+describe("LinkRequestSchema", () => {
+  it("SIGNIN-12 accepts an email and an IANA time zone", () => {
+    expect(
+      accepts(LinkRequestSchema, { email: "maria@example.com", timeZone: "America/New_York" }),
+    ).toBe(true);
+  });
+
+  it("SIGNIN-02 rejects an invalid email", () => {
+    expect(accepts(LinkRequestSchema, { email: "maria@", timeZone: "America/New_York" })).toBe(
+      false,
+    );
+  });
+
+  it("tech§6.2 rejects a time zone that isn't an IANA name", () => {
+    expect(accepts(LinkRequestSchema, { email: "maria@example.com", timeZone: "Mars/Base" })).toBe(
+      false,
+    );
+  });
+});
+
+describe("NameRequestSchema", () => {
+  it("SIGNIN-06 accepts a name", () => {
+    expect(accepts(NameRequestSchema, { name: "Maria" })).toBe(true);
+  });
+
+  it("SIGNIN-06 rejects a blank name", () => {
+    expect(accepts(NameRequestSchema, { name: "   " })).toBe(false);
+  });
+
+  it("tech§6.1 rejects a name over 100 characters", () => {
+    expect(accepts(NameRequestSchema, { name: "a".repeat(101) })).toBe(false);
   });
 });
