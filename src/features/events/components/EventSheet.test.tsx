@@ -1,6 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { eventSwatches, initialEventSheet, type TimeFixture } from "../eventSheet";
+import {
+  type EventDraft,
+  type EventSheetState,
+  eventSwatches,
+  initialEventSheet,
+  type TimeFixture,
+} from "../eventSheet";
 import { EventSheet } from "./EventSheet";
 
 const DRAFT = {
@@ -17,8 +23,10 @@ type Options = {
   mode?: "new" | "edit";
   time?: TimeFixture;
   offline?: boolean;
+  initial?: EventSheetState;
   onClose?: () => void;
   onDelete?: () => void;
+  onSave?: (draft: EventDraft) => void;
 };
 
 function renderSheet(options: Options = {}) {
@@ -28,12 +36,13 @@ function renderSheet(options: Options = {}) {
     <EventSheet
       mode={mode}
       eyebrow="Friday, Oct 9"
-      initial={initialEventSheet(mode === "new" ? BLANK : DRAFT, options.time)}
+      initial={options.initial ?? initialEventSheet(mode === "new" ? BLANK : DRAFT, options.time)}
       clock="12h"
       swatches={eventSwatches("fall")}
       offline={options.offline ?? false}
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
+      onSave={options.onSave ?? (() => {})}
     />,
   );
 }
@@ -202,4 +211,60 @@ test("SHEET Cancel and Close discard the sheet", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Close" }));
 
   expect(onClose).toHaveBeenCalledTimes(2);
+});
+
+test("EVT-05 Add event saves the draft", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ mode: "new", onSave });
+
+  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  expect(onSave).toHaveBeenCalledWith({ ...BLANK, title: "Picnic" });
+});
+
+test("EVT-03 Save with an empty title shows Add a title and saves nothing", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ mode: "new", onSave });
+
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  expect(screen.getByText("Add a title")).toBeInTheDocument();
+  expect(onSave).not.toHaveBeenCalled();
+});
+
+test("EVT-03 the title error clears on the next change", async () => {
+  renderSheet({ mode: "new" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.type(screen.getByLabelText("Title"), "P");
+
+  expect(screen.queryByText("Add a title")).not.toBeInTheDocument();
+});
+
+test("TPK-07 a failed Save closes the picker and shows Ends before it starts", async () => {
+  const onSave = vi.fn();
+
+  const initial = { ...initialEventSheet({ ...DRAFT, end: 720 }), picker: "end" as const };
+
+  renderSheet({ initial, onSave });
+
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(screen.queryByRole("group", { name: "End time" })).not.toBeInTheDocument();
+  expect(screen.getByRole("alert")).toHaveTextContent("Ends before it starts");
+  expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  expect(onSave).not.toHaveBeenCalled();
+});
+
+test("TPK-09 offline Save for later saves the same way", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ offline: true, onSave });
+
+  await userEvent.click(screen.getByRole("button", { name: "Save for later" }));
+
+  expect(onSave).toHaveBeenCalledWith(DRAFT);
 });
