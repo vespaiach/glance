@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.15 — Appendix A details from S01: fixture times are device-local, photo upload order puts Cannon Beach last so TODAY-07 picks it on Oct 9, Springfield matches in prototype order (IL / MO / MA) · v0.14 — DS-01 gallery groups components like the DS cards instead of embedding them (the cards are not in the handoff) · v0.13 — TimeField and TimePicker props from F10 (§4.2); the open picker scrolls itself into view (TPK-02) · v0.12 — shared pieces from F09: their props, `<Zone>`, Sheet Escape and focus start/return (§4.2, §8.9) · v0.11 — DS display components from F08: Clock takes a `Date` and never ticks itself, EventRow `compact` (phone columns) and `nowLabel`, WeatherNow `labels` and no `unit`, weather icons as keys, tappable ForecastDay/StickyNote (§4.2) · v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
+| Status | Draft v0.16 — S06 shell timing: AMB-05 the schedule end only leaves the Ambient screen, IDLE-01 what counts as a touch, IDLE-02 the wait restarts when the field loses focus · v0.15 — Appendix A details from S01: fixture times are device-local, photo upload order puts Cannon Beach last so TODAY-07 picks it on Oct 9, Springfield matches in prototype order (IL / MO / MA) · v0.14 — DS-01 gallery groups components like the DS cards instead of embedding them (the cards are not in the handoff) · v0.13 — TimeField and TimePicker props from F10 (§4.2); the open picker scrolls itself into view (TPK-02) · v0.12 — shared pieces from F09: their props, `<Zone>`, Sheet Escape and focus start/return (§4.2, §8.9) · v0.11 — DS display components from F08: Clock takes a `Date` and never ticks itself, EventRow `compact` (phone columns) and `nowLabel`, WeatherNow `labels` and no `unit`, weather icons as keys, tappable ForecastDay/StickyNote (§4.2) · v0.10 — DS primitives from F07: Card `elevated` variant and tappable cards, IconButton `lg` (§4.2) · v0.9 — domain rule details from F06: STATUS-01 events with no end, NOTE-04 stamp aging, TODAY-07 rotation order · v0.8 — design review fixes (OFF-07, SYNC-03, PHOTO-03, §7, §7.0, §9.3, §11), no photo upload on phone (§1.2, §5.4), domain types aligned with the store (§7), AMB-03 rule, SIGNIN-11 discard · v0.7: no automated visual snapshots (§11) · v0.6: offline cold start (§3, SIGNIN-13, NOTE-08, OFF-06/07) · synced with design handoff **v3** (sign-up/sign-in flow, photo upload, weather location search, "Glance" screen label). Decisions from 2026-10-11 applied, including the technical design |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D19) |
 | Date | 2026-10-11 |
 | Design requests | [`docs/design-prompts.md`](design-prompts.md) — prompts for Claude Design to cover the undesigned parts |
@@ -509,7 +509,7 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 | AMB-02 | Giant Clock (clamp 84–300 px). |
 | AMB-03 | Bottom grid (hairline 20% white top): current weather "{temp}° · {condition}" / "Low {low}° overnight · {next notable day}". Next notable day (decided): the first of the next 6 days with precip ≥ 50% → "{Wkd} {p}% rain" (e.g. "Sat 80% rain"). None → "Low {low}° overnight" alone. Next to it, "Next event": "Tomorrow" or "{Wkd}, {Mon} {d}" · {start} · {title}, {where} — or "Nothing scheduled". |
 | AMB-04 | Caption "Click or tap anywhere to wake". Tap anywhere → Today. The whole screen is one button with `aria-label` "Wake screen". |
-| AMB-05 | Enters automatically at the schedule start and leaves at its end. After a wake tap during hours, it returns after the idle timeout. |
+| AMB-05 | Enters automatically at the schedule start and leaves at its end (to Today, only if the Ambient screen is showing; a view someone woke into stays). After a wake tap during hours, it returns after the idle timeout. A screen that starts during hours reaches Ambient the same way, after the idle timeout. |
 | — | Burn-in drift and screen dimming are recommended, not designed **[Open]**. |
 
 ### 8.9 Sheets (shared) — `SHEET`
@@ -528,8 +528,8 @@ Full-screen button (no bar): background = season deep, or the photo with dim ≥
 - TIME-03: A single `now` source (injectable for tests and the `?now=` fixture).
 
 ### 9.2 Idle timeout — `IDLE`
-- IDLE-01: After no touch for the chosen time, any view returns to Today and open sheets are discarded.
-- IDLE-02: Paused while a text field is focused.
+- IDLE-01: After no touch for the chosen time, any view returns to Today and open sheets are discarded. A tap, key press or scroll counts as a touch. Already on Today, only the sheet closes.
+- IDLE-02: Paused while a text field is focused. Leaving the field starts the wait again.
 - IDLE-03: During ambient hours, after a wake tap, idle returns to Ambient instead.
 
 ### 9.3 Loading — `LOAD`

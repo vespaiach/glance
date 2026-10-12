@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { type Mock, vi } from "vitest";
 import { deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
+import { STATUS_KEY, type SyncStatus } from "../sync/status";
 import { RepoProvider, type RepoStore } from "./store";
 
 export const TEST_ACCOUNT = "0195f0a0-0000-7000-8000-00000000000a";
@@ -33,4 +34,8 @@ export function wrapperFor(store: RepoStore) {
 
 export function synced<T>(row: T, version = 1) {
   return { ...row, updatedAt: "2026-10-01T09:00:00.000Z", version };
+}
+
+export async function putSyncStatus(store: RepoStore, status: SyncStatus): Promise<void> {
+  await store.db.meta.put({ key: STATUS_KEY, value: status });
 }
