@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
 import type { FixtureParams } from "@/data/repos";
+import type { NoteTone } from "@/domain/schemas";
 
 export type TimeFixture = NonNullable<FixtureParams["time"]>;
 
@@ -10,7 +11,7 @@ export type SheetRequest =
   | { kind: "event"; id: string; time?: TimeFixture }
   | { kind: "newevent"; day: string; time?: TimeFixture }
   | { kind: "note"; id: string }
-  | { kind: "newnote" };
+  | { kind: "newnote"; draft?: { text: string; tone: NoteTone } };
 
 export type SheetHostValue = {
   sheet: SheetRequest | null;

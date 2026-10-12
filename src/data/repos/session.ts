@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_NEW_NOTE_DRAFT,
   FIXTURE_PLACES,
   FIXTURE_SHEET_TARGETS,
   FIXTURE_UNKNOWN_PLACE,
@@ -16,7 +17,10 @@ import type { PhotoVariant, RepoStore } from "./store";
 
 export type { FixtureParams };
 
-export const fixtureSheetTargets = FIXTURE_SHEET_TARGETS;
+export const fixtureSheetTargets = {
+  ...FIXTURE_SHEET_TARGETS,
+  noteDraft: { text: FIXTURE_NEW_NOTE_DRAFT, tone: 2 },
+} as const;
 
 export const fixtureWeatherSearch = {
   query: "Portland",

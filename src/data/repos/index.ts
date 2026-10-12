@@ -7,7 +7,14 @@ export {
   useEventsRepo,
   useHasEvents,
 } from "./events";
-export { createNotesRepo, type NotesRepo, type ShownNote, useNotes, useNotesRepo } from "./notes";
+export {
+  createNotesRepo,
+  type NotesRepo,
+  type ShownNote,
+  useNote,
+  useNotes,
+  useNotesRepo,
+} from "./notes";
 export { usePhotoSrc, usePhotos } from "./photos";
 export {
   type DisplayBoot,

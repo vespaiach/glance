@@ -58,7 +58,7 @@ export function fixtureSheet(params: FixtureParams, today: string): SheetRequest
     case "note":
       return { kind: "note", id: fixtureSheetTargets.note };
     case "newnote":
-      return { kind: "newnote" };
+      return { kind: "newnote", draft: fixtureSheetTargets.noteDraft };
     default:
       return null;
   }
