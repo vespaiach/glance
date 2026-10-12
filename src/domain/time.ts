@@ -11,6 +11,12 @@ const weekdayFormat = new Intl.DateTimeFormat("en-US", { weekday: "short" });
 
 const monthDayFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 
+const longDateFormat = new Intl.DateTimeFormat("en-US", {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+});
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function minutesOfDay(date: Date): number {
@@ -75,4 +81,8 @@ export function formatWeekday(date: Date): string {
 
 export function formatMonthDay(date: Date): string {
   return monthDayFormat.format(date);
+}
+
+export function formatLongDate(date: Date): string {
+  return longDateFormat.format(date);
 }

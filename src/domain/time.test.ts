@@ -2,6 +2,7 @@ import {
   formatClock,
   formatHour,
   formatLength,
+  formatLongDate,
   formatMonthDay,
   formatRange,
   formatWeekday,
@@ -80,5 +81,12 @@ describe("time", () => {
   it("AMB-03 weekday and month-day labels are short English names", () => {
     expect(formatWeekday(new Date(2026, 9, 10))).toBe("Sat");
     expect(formatMonthDay(new Date(2026, 9, 2))).toBe("Oct 2");
+  });
+
+  it.each([
+    [new Date(2026, 9, 9, 10, 41), "Friday, October 9"],
+    [new Date(2027, 0, 1), "Friday, January 1"],
+  ])("TIME-01 clock date of %s reads %s", (date, expected) => {
+    expect(formatLongDate(date)).toBe(expected);
   });
 });
