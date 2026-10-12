@@ -119,17 +119,38 @@ describe("createOpenMeteo places", () => {
     });
   });
 
-  it("WX-09 answers the matching places", async () => {
+  it("LOC-05 answers the matching places with their time zones", async () => {
     const fetchFn = answering({
       results: [
-        { name: "Austin", admin1: "Texas", latitude: 30.26715, longitude: -97.74306, id: 1 },
-        { name: "Austin", admin1: "Minnesota", latitude: 43.66663, longitude: -92.97464 },
+        {
+          name: "Austin",
+          admin1: "Texas",
+          latitude: 30.26715,
+          longitude: -97.74306,
+          timezone: "America/Chicago",
+          id: 1,
+        },
+        {
+          name: "Austin",
+          admin1: "Minnesota",
+          latitude: 43.66663,
+          longitude: -92.97464,
+          timezone: "America/Chicago",
+        },
       ],
     });
 
     expect(await createOpenMeteo(fetchFn).places("Austin, TX")).toEqual({
       ok: true,
-      value: [{ name: "Austin", region: "Texas", lat: 30.26715, lon: -97.74306 }],
+      value: [
+        {
+          name: "Austin",
+          region: "Texas",
+          lat: 30.26715,
+          lon: -97.74306,
+          timeZone: "America/Chicago",
+        },
+      ],
     });
   });
 

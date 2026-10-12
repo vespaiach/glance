@@ -1,15 +1,22 @@
 import { type GeocodingResult, placeLabel, placeQuery, toPlaces } from "./places";
 
-const result = (name: string, admin1: string, latitude = 1, longitude = 2): GeocodingResult => ({
+const result = (
+  name: string,
+  admin1: string,
+  latitude = 1,
+  longitude = 2,
+  timezone = "America/Chicago",
+): GeocodingResult => ({
   name,
   admin1,
   latitude,
   longitude,
+  timezone,
 });
 
 const PORTLANDS = [
-  result("Portland", "Oregon", 45.52345, -122.67621),
-  result("Portland", "Maine", 43.65737, -70.2589),
+  result("Portland", "Oregon", 45.52345, -122.67621, "America/Los_Angeles"),
+  result("Portland", "Maine", 43.65737, -70.2589, "America/New_York"),
   result("Blue Island", "Illinois"),
   result("Portland", "Texas"),
 ];
@@ -31,9 +38,21 @@ describe("placeQuery", () => {
 describe("toPlaces", () => {
   it("WX-09 lists the places with the searched name, with their state and coordinates", () => {
     expect(toPlaces(PORTLANDS, placeQuery("portland"))).toEqual([
-      { name: "Portland", region: "Oregon", lat: 45.52345, lon: -122.67621 },
-      { name: "Portland", region: "Maine", lat: 43.65737, lon: -70.2589 },
-      { name: "Portland", region: "Texas", lat: 1, lon: 2 },
+      {
+        name: "Portland",
+        region: "Oregon",
+        lat: 45.52345,
+        lon: -122.67621,
+        timeZone: "America/Los_Angeles",
+      },
+      {
+        name: "Portland",
+        region: "Maine",
+        lat: 43.65737,
+        lon: -70.2589,
+        timeZone: "America/New_York",
+      },
+      { name: "Portland", region: "Texas", lat: 1, lon: 2, timeZone: "America/Chicago" },
     ]);
   });
 
@@ -58,7 +77,20 @@ describe("toPlaces", () => {
 
   it("WX-09 keeps every place a ZIP code returns, whatever its name", () => {
     expect(toPlaces([result("Portland", "Oregon")], placeQuery("97214"))).toEqual([
-      { name: "Portland", region: "Oregon", lat: 1, lon: 2 },
+      { name: "Portland", region: "Oregon", lat: 1, lon: 2, timeZone: "America/Chicago" },
+    ]);
+  });
+
+  it("LOC-05 leaves out a result with no time zone or an invalid one", () => {
+    const { timezone: _, ...zoneless } = result("Portland", "Maine");
+    const results = [
+      zoneless,
+      result("Portland", "Texas", 1, 2, "Mars/Olympus"),
+      result("Portland", "Oregon"),
+    ];
+
+    expect(toPlaces(results, placeQuery("Portland")).map(({ region }) => region)).toEqual([
+      "Oregon",
     ]);
   });
 

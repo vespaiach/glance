@@ -17,7 +17,7 @@ import {
 import { err, ok, type Result } from "@/domain/result";
 import type { Photo, Synced } from "@/domain/schemas";
 import type { ServiceDeps } from "./deps";
-import { optional, stamp } from "./rows";
+import { accountTimeZone, optional, stamp } from "./rows";
 
 export type SyncedPhoto = Synced<Photo>;
 
@@ -232,12 +232,8 @@ function insertPhoto(
 }
 
 function uploadDay(db: Database.Database, accountId: string, at: string): string {
-  const { time_zone: timeZone } = db
-    .prepare("SELECT time_zone FROM accounts WHERE id = ?")
-    .get(accountId) as { time_zone: string };
-
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
+    timeZone: accountTimeZone(db, accountId),
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -14,6 +14,18 @@ export function stamp(db: Database.Database, now: Date): Stamp {
   return { updatedAt: now.toISOString(), version };
 }
 
+export function accountTimeZone(db: Database.Database, accountId: string): string {
+  const { time_zone: timeZone } = db
+    .prepare(
+      `SELECT coalesce(json_extract(settings.json, '$.weatherLocation.timeZone'), accounts.time_zone) AS time_zone
+       FROM accounts LEFT JOIN settings ON settings.account_id = accounts.id
+       WHERE accounts.id = ?`,
+    )
+    .get(accountId) as { time_zone: string };
+
+  return timeZone;
+}
+
 export function serverFields(row: ServerColumns) {
   return {
     updatedAt: row.updated_at,

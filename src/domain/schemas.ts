@@ -92,6 +92,7 @@ export const WeatherLocationSchema = v.object({
   region: v.string(),
   lat: v.pipe(v.number(), v.minValue(-90), v.maxValue(90)),
   lon: v.pipe(v.number(), v.minValue(-180), v.maxValue(180)),
+  timeZone: v.optional(v.pipe(v.string(), v.check(isTimeZone))),
 });
 export type WeatherLocation = v.InferOutput<typeof WeatherLocationSchema>;
 

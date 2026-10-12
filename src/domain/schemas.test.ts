@@ -185,6 +185,30 @@ describe("AccountSettingsSchema", () => {
     ).toBe(true);
   });
 
+  it("LOC-05 accepts a weather location with its IANA time zone", () => {
+    const weatherLocation = {
+      name: "Portland",
+      region: "Oregon",
+      lat: 45.52,
+      lon: -122.68,
+      timeZone: "America/Los_Angeles",
+    };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, weatherLocation })).toBe(true);
+  });
+
+  it("LOC-05 rejects a weather location with an unknown time zone", () => {
+    const weatherLocation = {
+      name: "Portland",
+      region: "Oregon",
+      lat: 45.52,
+      lon: -122.68,
+      timeZone: "Pacific",
+    };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, weatherLocation })).toBe(false);
+  });
+
   it("D13 rejects a weather location outside lat/lon range", () => {
     const weatherLocation = { name: "Nowhere", region: "", lat: 91, lon: 0 };
 
