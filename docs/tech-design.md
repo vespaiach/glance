@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v1.15 — S01 fixtures recorded in §3 and §4.3; spec v0.15 (§9) · v1.14 — F11 gallery recorded in §3, §4.4 and §6.5; spec v0.14 (§9) · v1.13 — F10 TimeField + TimePicker recorded in §4.4 and §3; spec v0.13 (§9) · v1.12 — F09 shared pieces recorded in §4.4 and §3; spec v0.12 (§9) · v1.11 — F08 DS display components recorded in §4.4, §3 and D15; spec v0.11 (§9) · v1.10 — F07 DS primitives recorded in §4.4 and D18; spec v0.10 (§9) · v1.9 — F06 domain logic recorded in D15, §3 and §4.4; spec v0.9 (§9) · v1.8 — F05 domain schemas recorded in D6 and §3 · v1.7 — F04 fonts and icons recorded in D3 · v1.6 — F03 tokens and seasons recorded in D3 and §3 · v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
-| Date | 2026-10-11 |
+| Status | v1.16 — S02 local store recorded in §4.1, §4.5 and §3 · v1.15 — S01 fixtures recorded in §3 and §4.3; spec v0.15 (§9) · v1.14 — F11 gallery recorded in §3, §4.4 and §6.5; spec v0.14 (§9) · v1.13 — F10 TimeField + TimePicker recorded in §4.4 and §3; spec v0.13 (§9) · v1.12 — F09 shared pieces recorded in §4.4 and §3; spec v0.12 (§9) · v1.11 — F08 DS display components recorded in §4.4, §3 and D15; spec v0.11 (§9) · v1.10 — F07 DS primitives recorded in §4.4 and D18; spec v0.10 (§9) · v1.9 — F06 domain logic recorded in D15, §3 and §4.4; spec v0.9 (§9) · v1.8 — F05 domain schemas recorded in D6 and §3 · v1.7 — F04 fonts and icons recorded in D3 · v1.6 — F03 tokens and seasons recorded in D3 and §3 · v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
+| Date | 2026-10-12 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.13) · [`design/handoff/`](design/handoff/README.md) (v3) |
 
 This document records the technical decisions. **What** the app does is in the product spec (requirement IDs like `SYNC-02` refer to it). This document covers **how** it's built. If they conflict, the spec wins on behavior and this document wins on implementation.
@@ -106,7 +106,7 @@ src/
   copy.ts      # every user-facing string (spec §10)
   shell/       # AppShell, NavBar, OfflinePill placement (ui/OfflinePill), SheetHost, providers/{now,settings,season,network,idle}, sw-updates.ts
   data/
-    db.ts      # Dexie schema per account (entities + outbox + meta)
+    db.ts      # Dexie schema per account (entities + outbox + meta), row and outbox types, open/delete by name (S02)
     meta.ts    # glance-meta Dexie DB: {accountId, name, email} for the signed-in account
     repos/     # events.ts, notes.ts, photos.ts, settings.ts, weather.ts — interface + Dexie impl
     sync/      # engine.ts       createSyncEngine({ db, fetch, now, onStatus }), no Worker/DOM APIs
@@ -159,6 +159,7 @@ db.version(1).stores({
 - Rows keep the server's soft delete (`deletedAt`). Hooks filter deleted rows out.
 - `syncState: 'pending'` (e.g. "Waiting to post") is **derived**: the row has an outbox entry. It isn't stored.
 - **Wire format = domain types** (camelCase, Valibot). Dexie stores them as-is. Snake_case exists only in SQL, and `server/db/queries` maps between the two.
+- **Code (S02, `dexie` pinned 4.4.6):** `data/db.ts` exports `openGlanceDb(name)` (applies the schema above, opens lazily), `deleteGlanceDb(name)`, `accountDbName(accountId)` (`glance-{accountId}`) and `FIXTURE_DB_NAME` (`glance-fixture`). The DB is typed as `Dexie & { table: EntityTable<…> }`, not a `Dexie` subclass. Row types: `StoredEvent` / `StoredNote` / `StoredPhoto` are `Synced<T>`; the single `settings` row is `Synced<AccountSettings> & { accountId }` and the `weather` row is `Weather & { accountId }`, because those tables are keyed by `accountId`. `OutboxEntry` is `{ seq, entity: 'events'|'notes'|'photos'|'settings', entityId, op, payload?, attempts }` (no payload on a delete); `meta` rows are `{ key, value }`, and S04 types the keys it writes. Dexie's default `versionchange` handling closes an open connection, so another context's upgrade is never blocked (§4.6).
 
 ### 4.2 Repository pattern
 Each repo has a small interface (`EventsRepo.put / remove / byDay / byMonth …`) and one Dexie implementation. A write is **one Dexie transaction**: update the row and append to the outbox, then call `nudge()` on the sync host (§4.6). Screens use hooks (`useEventsOnDay(date)`) built on `useLiveQuery`, so every view, the calendar dots and Today update on their own (EVT-07, CAL-02).
@@ -210,7 +211,7 @@ A signed-in screen must cold-start offline (after a reload or a power cut) with 
 - `/` → `/today` is a `redirects()` entry in `next.config`, not a server component, so it stays static.
 
 **Gap 2: auth bootstrap offline (must-fix).** The session cookie is httpOnly, and `glance-{accountId}` is only found through its own meta table.
-- `data/meta.ts` keeps `{accountId, name, email}` in a small **`glance-meta`** Dexie DB, written after sign-in. Name and email let Settings render offline (SET-01, SET-08).
+- `data/meta.ts` keeps `{accountId, name, email}` in a small **`glance-meta`** Dexie DB, written after sign-in. Name and email let Settings render offline (SET-01, SET-08). Code (S02): one table `account` keyed by `accountId` holding at most one `SignedInAccount` (`name` is `null` until named, as in `Account`). `openMetaDb()`, `readSignedInAccount(db)`, `saveSignedInAccount(db, account)` (clears and puts in one transaction, so a different account replaces the old entry), `clearSignedInAccount(db)` and `deleteMetaDb()`.
 - Offline: trust it and open `glance-{accountId}`. No entry → `/signin`.
 - Online: a 401 from any call means signed out (Gap 3).
 
