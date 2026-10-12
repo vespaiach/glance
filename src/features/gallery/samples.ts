@@ -49,6 +49,7 @@ export const gallery = {
     settingsView: "Settings view",
     backgroundView: "Background view",
     locationView: "Location view",
+    ambientScheduleView: "Ambient screen view",
     ambientView: "Ambient view",
     signInView: "Sign in view",
   },

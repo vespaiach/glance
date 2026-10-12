@@ -5,8 +5,8 @@ import {
   endsAfterStart,
   moveStart,
   nextHalfHour,
-  PICKER_MINUTES,
   pickerHours,
+  pickerMinutes,
   withHour,
   withMeridiem,
   withMinute,
@@ -112,7 +112,11 @@ describe("eventTimes", () => {
   });
 
   it("TPK-03 the minute grid steps by 5 from 00 to 55", () => {
-    expect(PICKER_MINUTES).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+    expect(pickerMinutes(5)).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
+  });
+
+  it("SET-10 the ambient minute grid steps by 15", () => {
+    expect(pickerMinutes(15)).toEqual([0, 15, 30, 45]);
   });
 });
 

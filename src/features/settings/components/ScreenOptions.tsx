@@ -1,19 +1,20 @@
 import * as stylex from "@stylexjs/stylex";
-import { Moon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { copy } from "@/copy";
 import { ambientSummary } from "@/domain/idle";
 import type { AccountSettings } from "@/domain/schemas";
-import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
+import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
-import { Button } from "@/ui/Button";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
+import { Icon } from "@/ui/Icon";
 import { PillTabs } from "@/ui/PillTabs";
+import { press } from "@/ui/press";
 
 type ScreenOptionsProps = {
   settings: AccountSettings;
   onChange: (change: Partial<AccountSettings>) => void;
-  onPreviewAmbient: () => void;
+  onOpenAmbient: () => void;
 };
 
 type IdleOption = (typeof copy.settings.idle.options)[number]["value"];
@@ -39,20 +40,28 @@ const styles = stylex.create({
     gap: 10,
   },
   tile: {
+    width: "100%",
+    minHeight: 72,
     display: "flex",
-    flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "center",
     gap: space.sm,
+    borderWidth: 0,
     backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.md,
     paddingBlock: space.md,
     paddingInline: 20,
+    boxSizing: "border-box",
+    fontFamily: type.fontSans,
+    color: colors.textPrimary,
+    textAlign: "start",
+    cursor: "pointer",
   },
   tileText: {
     display: "flex",
     flexDirection: "column",
     gap: space.xxs,
+    minWidth: 0,
   },
   tileTitle: {
     fontSize: type.headlineSize,
@@ -62,9 +71,7 @@ const styles = stylex.create({
   tileBody: {
     fontSize: type.bodySmSize,
     fontWeight: type.bodySmWeight,
-  },
-  button: {
-    boxShadow: shadows.shadow1,
+    textWrap: "pretty",
   },
 });
 
@@ -72,32 +79,30 @@ function idleOption(timeout: AccountSettings["idleTimeout"]): IdleOption {
   return timeout === null ? "never" : (`${timeout}` as const);
 }
 
-function AmbientTile({ settings, onPreviewAmbient }: Omit<ScreenOptionsProps, "onChange">) {
+function AmbientTile({ settings, onOpenAmbient }: Omit<ScreenOptionsProps, "onChange">) {
   const text = copy.settings.ambient;
 
   return (
-    <div {...stylex.props(styles.tile)}>
-      <div {...stylex.props(styles.tileText)}>
+    <button type="button" onClick={onOpenAmbient} {...stylex.props(styles.tile, press.scale)}>
+      <span {...stylex.props(styles.tileText)}>
         <span {...stylex.props(styles.tileTitle)}>{text.title}</span>
         <span {...stylex.props(styles.tileBody)}>
           {text.summary(ambientSummary(settings.ambient, settings.clock))}
         </span>
-      </div>
-      <Button variant="secondary" icon={Moon} onClick={onPreviewAmbient} xstyle={styles.button}>
-        {text.preview}
-      </Button>
-    </div>
+      </span>
+      <Icon icon={ChevronRight} size={22} />
+    </button>
   );
 }
 
-export function ScreenOptions({ settings, onChange, onPreviewAmbient }: ScreenOptionsProps) {
+export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptionsProps) {
   const text = copy.settings;
 
   return (
     <ColorBlock tone="soft" padding="clamp(20px, 2.4vw, 32px)" xstyle={styles.block}>
       <div {...stylex.props(styles.group)}>
         <Eyebrow>{text.schedule}</Eyebrow>
-        <AmbientTile settings={settings} onPreviewAmbient={onPreviewAmbient} />
+        <AmbientTile settings={settings} onOpenAmbient={onOpenAmbient} />
       </div>
       <div {...stylex.props(styles.group)}>
         <Eyebrow>{text.idle.title}</Eyebrow>

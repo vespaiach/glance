@@ -14,7 +14,7 @@ const BACKGROUND_PATH = "/settings/background";
 
 const LOCATION_PATH = "/settings/location";
 
-const AMBIENT_PATH = "/ambient";
+const AMBIENT_PATH = "/settings/ambient";
 
 const SIGN_IN_PATH = "/signin";
 
@@ -49,7 +49,7 @@ export function SettingsScreen() {
       onChange={(change) => repo.update(change)}
       onOpenBackground={() => router.push(BACKGROUND_PATH)}
       onOpenLocation={() => router.push(LOCATION_PATH)}
-      onPreviewAmbient={() => router.push(AMBIENT_PATH)}
+      onOpenAmbient={() => router.push(AMBIENT_PATH)}
       onSignOut={() => void signOut().then(() => router.replace(SIGN_IN_PATH))}
     />
   );

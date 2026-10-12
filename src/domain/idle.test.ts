@@ -1,5 +1,14 @@
 import { DEFAULT_SETTINGS } from "./defaults";
-import { ambientSetFor, ambientSummary, idleDue, inAmbient } from "./idle";
+import {
+  ambientLength,
+  ambientMinutes,
+  ambientSegments,
+  ambientSetFor,
+  ambientSummary,
+  ambientTime,
+  idleDue,
+  inAmbient,
+} from "./idle";
 import type { AccountSettings } from "./schemas";
 import { deviceTimeZone, zonedInstant } from "./zone";
 
@@ -163,6 +172,51 @@ describe("ambientSummary", () => {
 
   it("SET-06 Off has no ranges", () => {
     expect(ambientSummary({ ...split, mode: "off" }, "12h")).toEqual({ mode: "off" });
+  });
+});
+
+describe("ambient times", () => {
+  it.each([
+    ["18:00", 1080],
+    ["07:30", 450],
+    ["00:00", 0],
+    ["23:45", 1425],
+  ])("SET-10 %s is %i minutes of the day and back", (time, minutes) => {
+    expect(ambientMinutes(time)).toBe(minutes);
+    expect(ambientTime(minutes)).toBe(time);
+  });
+});
+
+describe("ambientLength", () => {
+  it.each([
+    ["18:00", "07:30", 810],
+    ["21:00", "09:00", 720],
+    ["01:00", "05:00", 240],
+    ["23:45", "00:00", 15],
+    ["18:00", "18:00", 0],
+  ])("SET-10 %s to %s lasts %i minutes, wrapping past midnight", (start, end, minutes) => {
+    expect(ambientLength({ start, end })).toBe(minutes);
+  });
+});
+
+describe("ambientSegments", () => {
+  it("SET-10 a night from 6 PM to 7:30 AM fills one stretch of the noon-to-noon bar", () => {
+    expect(ambientSegments({ start: "18:00", end: "07:30" })).toEqual([{ left: 25, width: 56.25 }]);
+  });
+
+  it("SET-10 a span that runs past noon wraps to the start of the bar", () => {
+    expect(ambientSegments({ start: "06:00", end: "15:00" })).toEqual([
+      { left: 75, width: 25 },
+      { left: 0, width: 12.5 },
+    ]);
+  });
+
+  it("SET-10 a span from noon fills from the left edge", () => {
+    expect(ambientSegments({ start: "12:00", end: "18:00" })).toEqual([{ left: 0, width: 25 }]);
+  });
+
+  it("SET-10 a set with the same dim and wake time has no stretch (Not set)", () => {
+    expect(ambientSegments({ start: "18:00", end: "18:00" })).toEqual([]);
   });
 });
 

@@ -24,7 +24,7 @@ function renderView(overrides: Partial<Props> = {}) {
     onChange: vi.fn(),
     onOpenBackground: vi.fn(),
     onOpenLocation: vi.fn(),
-    onPreviewAmbient: vi.fn(),
+    onOpenAmbient: vi.fn(),
     onSignOut: vi.fn(),
     ...overrides,
   };
@@ -116,15 +116,15 @@ test("SET-05 the temperature tabs save Fahrenheit or Celsius", async () => {
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
 
-test("SET-06 the Ambient tile shows the hours in the clock format and previews Ambient", async () => {
+test("SET-06 the Ambient tile shows the hours in the clock format and opens the Ambient screen page", async () => {
   const props = renderView();
 
   expect(screen.getByText("Ambient screen")).toBeInTheDocument();
   expect(screen.getByText("6:00 PM – 7:30 AM")).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Preview" }));
+  await userEvent.click(screen.getByRole("button", { name: /^Ambient screen/ }));
 
-  expect(props.onPreviewAmbient).toHaveBeenCalled();
+  expect(props.onOpenAmbient).toHaveBeenCalled();
 });
 
 test("SET-06 the Ambient hours follow the 24-hour clock", () => {
