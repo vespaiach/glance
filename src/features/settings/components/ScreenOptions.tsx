@@ -1,8 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 import { Moon } from "lucide-react";
 import { copy } from "@/copy";
+import { ambientSummary } from "@/domain/idle";
 import type { AccountSettings } from "@/domain/schemas";
-import { formatClock } from "@/domain/time";
 import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
@@ -68,18 +68,6 @@ const styles = stylex.create({
   },
 });
 
-function clockMinutes(time: string): number {
-  const [hours = 0, minutes = 0] = time.split(":").map(Number);
-
-  return hours * 60 + minutes;
-}
-
-function ambientRange({ ambientHours, clock }: AccountSettings): string {
-  const start = formatClock(clockMinutes(ambientHours.start), clock);
-
-  return copy.settings.ambient.hours(start, formatClock(clockMinutes(ambientHours.end), clock));
-}
-
 function idleOption(timeout: AccountSettings["idleTimeout"]): IdleOption {
   return timeout === null ? "never" : (`${timeout}` as const);
 }
@@ -91,7 +79,9 @@ function AmbientTile({ settings, onPreviewAmbient }: Omit<ScreenOptionsProps, "o
     <div {...stylex.props(styles.tile)}>
       <div {...stylex.props(styles.tileText)}>
         <span {...stylex.props(styles.tileTitle)}>{text.title}</span>
-        <span {...stylex.props(styles.tileBody)}>{ambientRange(settings)}</span>
+        <span {...stylex.props(styles.tileBody)}>
+          {text.summary(ambientSummary(settings.ambient, settings.clock))}
+        </span>
       </div>
       <Button variant="secondary" icon={Moon} onClick={onPreviewAmbient} xstyle={styles.button}>
         {text.preview}

@@ -1,3 +1,4 @@
+import type { AmbientRange, AmbientSummary } from "@/domain/idle";
 import type { Season, WeatherIcon } from "@/domain/schemas";
 import type { WmoCondition } from "@/domain/wmo";
 
@@ -290,7 +291,7 @@ export const copy = {
     schedule: "Schedule",
     ambient: {
       title: "Ambient screen",
-      hours: (start: string, end: string) => `${start} – ${end}`,
+      summary: (summary: AmbientSummary) => ambientSummaryText(summary),
       preview: "Preview",
     },
     idle: {
@@ -603,3 +604,15 @@ export const copy = {
     },
   },
 } as const;
+
+function ambientRangeText(range: AmbientRange | null): string {
+  return range === null ? "Not set" : `${range.start} – ${range.end}`;
+}
+
+function ambientSummaryText(summary: AmbientSummary): string {
+  if (summary.mode === "off") return "Off";
+
+  if (summary.mode === "same") return ambientRangeText(summary.all);
+
+  return `Sun – Thu ${ambientRangeText(summary.all)} · Fri & Sat ${ambientRangeText(summary.wknd)}`;
+}

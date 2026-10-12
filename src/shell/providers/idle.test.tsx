@@ -285,6 +285,38 @@ describe("IdleProvider", () => {
     expect(navigation.push).toHaveBeenCalledWith("/ambient");
   });
 
+  it("AMB-05 weekends differ: Friday night waits for the Fri & Sat dim time", async () => {
+    navigation.pathname = "/today";
+
+    const ambient = {
+      mode: "split",
+      all: { start: "18:00", end: "07:30" },
+      wknd: { start: "21:00", end: "09:00" },
+    } as const;
+
+    await renderIdle("17:59:30", { idleTimeout: null, ambient });
+
+    seconds(60);
+
+    expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it("AMB-05 Off never enters Ambient", async () => {
+    navigation.pathname = "/today";
+
+    const ambient = {
+      mode: "off",
+      all: { start: "18:00", end: "07:30" },
+      wknd: { start: "21:00", end: "09:00" },
+    } as const;
+
+    await renderIdle("17:59:30", { idleTimeout: null, ambient });
+
+    seconds(60);
+
+    expect(navigation.push).not.toHaveBeenCalled();
+  });
+
   it("AMB-05 leaves Ambient for Today at the schedule end", async () => {
     navigation.pathname = "/ambient";
 

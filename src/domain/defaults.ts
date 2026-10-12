@@ -1,4 +1,4 @@
-import type { AccountSettings } from "./schemas";
+import { type AccountSettings, DEFAULT_AMBIENT } from "./schemas";
 
 export const DEFAULT_SETTINGS: AccountSettings = {
   season: "auto",
@@ -7,5 +7,5 @@ export const DEFAULT_SETTINGS: AccountSettings = {
   background: { mode: "season", dim: 0.2, rotate: "daily" },
   idleTimeout: 180,
   noteExpiry: "1w",
-  ambientHours: { start: "18:00", end: "07:30" },
+  ambient: DEFAULT_AMBIENT,
 };

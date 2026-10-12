@@ -96,6 +96,24 @@ export const WeatherLocationSchema = v.object({
 });
 export type WeatherLocation = v.InferOutput<typeof WeatherLocationSchema>;
 
+const AmbientTimeSchema = v.pipe(v.string(), v.regex(/^([01]\d|2[0-3]):(00|15|30|45)$/));
+
+const AmbientSetSchema = v.object({ start: AmbientTimeSchema, end: AmbientTimeSchema });
+
+export const AmbientSchema = v.object({
+  mode: v.picklist(["same", "split", "off"]),
+  all: AmbientSetSchema,
+  wknd: AmbientSetSchema,
+});
+export type Ambient = v.InferOutput<typeof AmbientSchema>;
+export type AmbientSet = Ambient["all"];
+
+export const DEFAULT_AMBIENT: Ambient = {
+  mode: "same",
+  all: { start: "18:00", end: "07:30" },
+  wknd: { start: "21:00", end: "09:00" },
+};
+
 export const AccountSettingsSchema = v.object({
   season: v.picklist(["auto", ...SeasonSchema.options]),
   clock: v.picklist(["12h", "24h"]),
@@ -108,7 +126,7 @@ export const AccountSettingsSchema = v.object({
   }),
   idleTimeout: v.nullable(v.picklist([60, 180, 300])),
   noteExpiry: v.nullable(v.picklist(["1d", "1w"])),
-  ambientHours: v.object({ start: v.literal("18:00"), end: v.literal("07:30") }),
+  ambient: v.optional(AmbientSchema, DEFAULT_AMBIENT),
   weatherLocation: v.optional(WeatherLocationSchema),
 });
 export type AccountSettings = v.InferOutput<typeof AccountSettingsSchema>;
