@@ -103,7 +103,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | V07 | ✅ ([#30](https://github.com/vespaiach/glance/pull/30)) | **Settings + Background:** rows, account card, background picker and preview | — | SET-01..08, BG-01..05 |
 | V08 | ✅ ([#31](https://github.com/vespaiach/glance/pull/31)) | **Ambient** | — | AMB-01..04, AMB-06 |
 | V09 | ✅ ([#32](https://github.com/vespaiach/glance/pull/32)) | **Sign in:** all `signin=` states, hero, lock footer; SIGNIN-13 uses the SIGNIN-01 form | — | SIGNIN-01..12 (states), SIGNIN-13 fallback |
-| V10 | 🔄 ([#33](https://github.com/vespaiach/glance/pull/33)) | **Photo background mode** across views | V01, V07 | SHELL-05, BG-06, TODAY-10 |
+| V10 | ✅ ([#33](https://github.com/vespaiach/glance/pull/33)) | **Photo background mode** across views | V01, V07 | SHELL-05, BG-06, TODAY-10 |
 
 **Phase 2 exit:** visual parity with every board at the 6 sizes (manual screenshot review, tech §7).
 
