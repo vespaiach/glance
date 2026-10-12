@@ -1,0 +1,21 @@
+import { eventStatus } from "./eventStatus";
+
+const now = new Date(2026, 9, 9, 10, 41);
+const iso = (d: number, h: number, m: number) => new Date(2026, 9, d, h, m).toISOString();
+
+describe("eventStatus", () => {
+  it.each([
+    ["ended before now", iso(9, 9, 0), iso(9, 9, 30), "past"],
+    ["ending exactly now", iso(9, 10, 0), iso(9, 10, 41), "past"],
+    ["running", iso(9, 10, 30), iso(9, 11, 15), "now"],
+    ["starting exactly now", iso(9, 10, 41), iso(9, 11, 0), "now"],
+    ["later today", iso(9, 12, 0), iso(9, 13, 0), "upcoming"],
+    ["started today with no end", iso(9, 9, 0), undefined, "now"],
+    ["later today with no end", iso(9, 15, 0), undefined, "upcoming"],
+    ["on an earlier day", iso(2, 19, 0), iso(2, 21, 0), "past"],
+    ["on an earlier day with no end", iso(8, 9, 0), undefined, "past"],
+    ["on a later day", iso(14, 16, 0), iso(14, 16, 30), "upcoming"],
+  ] as const)("STATUS-01 an event %s is %s", (_, startAt, endAt, expected) => {
+    expect(eventStatus({ startAt, endAt }, now)).toBe(expected);
+  });
+});

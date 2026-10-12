@@ -1,4 +1,5 @@
 import type { Season } from "@/domain/schemas";
+import type { WmoCondition } from "@/domain/wmo";
 
 export const copy = {
   appName: "Glance",
@@ -10,5 +11,29 @@ export const copy = {
   } satisfies Record<Season, string>,
   notes: {
     guestAuthor: "Guest",
+    justNow: "Just now",
+  },
+  weather: {
+    condition: {
+      clear: "Clear",
+      mostlyClear: "Mostly clear",
+      partlyCloudy: "Partly cloudy",
+      overcast: "Overcast",
+      fog: "Fog",
+      drizzle: "Drizzle",
+      freezingDrizzle: "Freezing drizzle",
+      lightRain: "Light rain",
+      rain: "Rain",
+      heavyRain: "Heavy rain",
+      freezingRain: "Freezing rain",
+      lightSnow: "Light snow",
+      snow: "Snow",
+      heavySnow: "Heavy snow",
+      snowGrains: "Snow grains",
+      rainShowers: "Rain showers",
+      snowShowers: "Snow showers",
+      thunderstorm: "Thunderstorm",
+      thunderstormHail: "Thunderstorm with hail",
+    } satisfies Record<WmoCondition, string>,
   },
 } as const;

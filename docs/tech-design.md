@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.8 — F05 domain schemas recorded in D6 and §3 · v1.7 — F04 fonts and icons recorded in D3 · v1.6 — F03 tokens and seasons recorded in D3 and §3 · v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
+| Status | v1.9 — F06 domain logic recorded in D15, §3 and §4.4; spec v0.9 (§9) · v1.8 — F05 domain schemas recorded in D6 and §3 · v1.7 — F04 fonts and icons recorded in D3 · v1.6 — F03 tokens and seasons recorded in D3 and §3 · v1.5 — F02 StyleX setup recorded in D3 · v1.4 — F01 scaffold: Turbopack + `@serwist/turbopack` (§4.5), `@/` alias and Biome dependency rules (§3), exact pins (D18) · v1.3 (draft for review) — one `Transport` for every server call (§4.2), zone state keyed on "ever synced", status in Dexie `meta` (§4.6), phase mapping (§8), demo build flag (§6.5) · review fixes: zone states (§4.4), push/tombstone rules (§5), 426 update path, auth pending id, backups · v1.2: offline cold start (D16, §4.5), sync worker (D19, §4.6), no e2e tests (§7) |
 | Date | 2026-10-11 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.8) · [`design/handoff/`](design/handoff/README.md) (v3) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.9) · [`design/handoff/`](design/handoff/README.md) (v3) |
 
 This document records the technical decisions. **What** the app does is in the product spec (requirement IDs like `SYNC-02` refer to it). This document covers **how** it's built. If they conflict, the spec wins on behavior and this document wins on implementation.
 
@@ -28,7 +28,7 @@ This document records the technical decisions. **What** the app does is in the p
 | D12 | Photos | Files on disk under `/data/photos`. **`sharp`** makes a display (≤ 2560 px) and a thumb (≤ 640 px) WebP copy on upload | 20 MB originals are too heavy for a kiosk grid |
 | D13 | Weather | **Open-Meteo** (forecast + geocoding) behind a `WeatherProvider` adapter. Settings store the chosen place with its coordinates. Server cache per account, 15 min TTL | Open item B. Free, no API key |
 | D14 | Email | **Nodemailer over SMTP**, configured by env vars | Open item E |
-| D15 | Time | No date library. **`Intl.DateTimeFormat`** plus pure helpers in `src/domain/time.ts`. Account stores an IANA `time_zone` | Few, well-specified formats (TIME-01). Open item C |
+| D15 | Time | No date library. **`Intl.DateTimeFormat`** plus pure helpers in `src/domain/time.ts`. Account stores an IANA `time_zone`. TIME-01 formatters take **minutes of the local day** (`minutesOfDay(date)`), so the TimePicker draft and stored events share them: `formatClock` ("10:41 AM"), `timeParts` (time + mono AM/PM), `formatRange` (rows), `formatHour` (hourly), `formatLength` (TPK-01). Weekday and month-day names use `Intl.DateTimeFormat("en-US")`. Local days compare by `localDayNumber` (days since 1970-01-01 of the local date), which is DST-safe | Few, well-specified formats (TIME-01). Open item C |
 | D16 | Offline shell | **Serwist** (Workbox-compatible) PWA. Precache build assets, fonts and the HTML + RSC payloads of every static app route. **NetworkFirst** (3 s timeout) for navigations and RSC requests, falling back to the cache, then `/today`. **CacheFirst** for photo files, with cache warming. **NetworkOnly** for every other `/api/*` call (Dexie owns data). Web app manifest + `navigator.storage.persist()`. New versions activate only when the screen is idle. See §4.5 | OFF-*. Kiosk screens reload rarely, and when they do they must start offline |
 | D17 | Hosting | **One Docker container** (`output: 'standalone'`) on a VPS or home server, volume at `/data` | Open item A. SQLite and photos need a persistent disk, and the SSE bus needs a single process |
 | D18 | Tooling | **npm** (committed `package-lock.json`, `npm ci` in CI and Docker, every dependency pinned to an exact version, Node 24 via `.nvmrc`), **Vitest** + Testing Library + `fake-indexeddb`. **No e2e tests**: automated unit/component/data tests plus a manual QA checklist (§7). `comlink` for worker messaging | Small app, small team. The sync engine is host-agnostic, so the risky logic is tested without a browser |
@@ -100,7 +100,7 @@ app/
     weather/route.ts  weather/places/route.ts
     sync/route.ts  sync/stream/route.ts        # pull · SSE ping
 src/
-  domain/      # schemas.ts (Valibot schemas + types), defaults.ts, pure logic: status, time, season, temperature, defaults, zone state, wmo (weather code → icon + copy key)
+  domain/      # schemas.ts (Valibot schemas + types), defaults.ts, pure logic (F06): time.ts (TIME-01), eventStatus.ts (STATUS-01), eventTimes.ts (TPK-05..08 in minutes of the day), season.ts, temperature.ts, notes.ts (tilt, stamp, expiry), pictureOfDay.ts, nextNotableDay.ts (AMB-03), wmo.ts (WMO code → icon + `WmoCondition` key, `copy.weather.condition` holds the text; unknown codes → `undefined`), zoneState.ts
   theme/       # tokens.stylex.ts, seasons.stylex.ts, type.stylex.ts, themes.ts (season + Ambient createTheme), fonts.ts + fonts/ (vendored Geist woff2)
   ui/          # DS components + shared pieces (§4.2 of the spec). StyleX only, no data access
   copy.ts      # every user-facing string (spec §10)
@@ -191,7 +191,7 @@ Fixture URL params (spec §6) are parsed once in `fixtures/params.ts` and fed in
 | `failed` | No local rows, never synced, and the pull failed or took over 10 s (FAIL-01) |
 | `empty` / `ready` | Ever synced, or local rows exist. Works offline after a reload. `ready` carries `updatedAt` when the last pull failed (FAIL-02) |
 
-Weather uses its own `status.weather` (§4.6) instead of the pull. Every zone renders through `ZoneState<T>` + `<Zone>` and has its own error boundary.
+`zoneState({ rows, everSynced, failed, lastSyncedAt, since, now })` returns `ZoneState<T>` = `{kind: "loading"} | {kind: "failed"} | {kind: "empty"} | {kind: "ready", data, updatedAt?}`. `since` is when the zone started waiting; `updatedAt` is `lastSyncedAt`, set only when the last sync failed. Weather uses its own `status.weather` (§4.6) instead of the pull. Every zone renders through `ZoneState<T>` + `<Zone>` and has its own error boundary.
 
 ### 4.5 Offline boot and caching
 A signed-in screen must cold-start offline (after a reload or a power cut) with every view working.
@@ -379,3 +379,4 @@ Applied in spec v0.8 (design review):
 13. **PHOTO-03**: uploaded photos are dated by EXIF or upload date, with no place. §9.3: loading/failure in terms of local data (§4.4). §11 Phase 5 wording: transport swap.
 14. §1.2 / §5.4: no photo upload on the `phone` breakpoint (future feature). Upload entry points are hidden by `useBreakpoint()`, and the upload code is unchanged.
 15. §7: domain types match the store (`startAt`/`endAt`, `Photo.takenOn`/`createdAt`, `Synced<T>`). TPK-07 same-day is a client rule. AMB-03 "next notable day" rule. SIGNIN-11: waiting changes are discarded on sign-out (accepted for v1).
+16. Spec v0.9 (F06): STATUS-01 events with no end are `now` until the end of their day; NOTE-04 stamp aging thresholds; TODAY-07 rotation order (oldest upload first, local day number mod count).
