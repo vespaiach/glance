@@ -121,7 +121,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | I06 | ✅ ([#39](https://github.com/vespaiach/glance/pull/39)) | **Settings live:** season cross-fade, clock, unit, idle, note expiry, background modes, slideshow rotation (V07 already saves every control through `SettingsRepo`) | V07, V10 | SET-02..07, BG-01..06 |
 | I07 | ✅ ([#40](https://github.com/vespaiach/glance/pull/40)) | **Weather setup:** search reducer, choose place, save `weatherLocation`, refresh | V04 | WX-04, 06..09 |
 | I08 | ✅ ([#41](https://github.com/vespaiach/glance/pull/41)) | **Idle and Ambient:** return to Today, wake tap, schedule enter/leave, sheets discarded | V08, S06 | IDLE-01..03, AMB-04/05, SHELL-04 |
-| I09 | ⬜ | **Sign-in flow:** reducer over `transport.auth` (send, poll 2 s, name step, expired, done → Today), `glance-meta` write, sign-out | V09 | SIGNIN-01..12 |
+| I09 | 🔄 ([#42](https://github.com/vespaiach/glance/pull/42)) | **Sign-in flow:** reducer over `transport.auth` (send, poll 2 s, name step, expired, done → Today), `glance-meta` write, sign-out | V09 | SIGNIN-01..12 |
 
 **Phase 3 exit:** behavior notes reproduced end to end in fixture mode.
 
