@@ -116,7 +116,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | I01 | ✅ ([#34](https://github.com/vespaiach/glance/pull/34)) | **Events CRUD:** Save validation in the V03 sheet reducer (EVT-03, TPK-07), TPK defaults and rules, save → repo, Today and Calendar update | V01, V02, V03 | EVT-03..07, TPK-05..09, TODAY-03/04 |
 | I02 | ✅ ([#35](https://github.com/vespaiach/glance/pull/35)) | **Calendar navigation:** select day, month stepping, `?date=` | V02 | CAL-01..03 |
 | I03 | ✅ ([#36](https://github.com/vespaiach/glance/pull/36)) | **Notes CRUD:** sheet reducer, Guest author, tilt, delete confirm | V05 | NOTE-01..05, NOTE-09 |
-| I04 | ⬜ | **Slideshow:** featured stepping, 8 s timer, play/pause, finished photos only | V06 | PHOTO-01, 02, 07 |
+| I04 | 🔄 ([#37](https://github.com/vespaiach/glance/pull/37)) | **Slideshow:** featured stepping, 8 s timer, play/pause, finished photos only | V06 | PHOTO-01, 02, 07 |
 | I05 | ⬜ | **Upload flow:** upload-tile reducer over `transport.upload` (progress, per-file errors, retry, remove), pre-checks | V06, V07 | PHOTO-03, 04, 06, 08, BG-02 |
 | I06 | ⬜ | **Settings live:** season cross-fade, clock, unit, idle, note expiry, background modes, slideshow rotation (V07 already saves every control through `SettingsRepo`) | V07, V10 | SET-02..07, BG-01..06 |
 | I07 | ⬜ | **Weather setup:** search reducer, choose place, save `weatherLocation`, refresh | V04 | WX-04, 06..09 |
