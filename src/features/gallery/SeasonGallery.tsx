@@ -45,6 +45,7 @@ import { CalendarGallery } from "./CalendarGallery";
 import { EventSheetGallery } from "./EventSheetGallery";
 import { GalleryGroup } from "./GalleryGroup";
 import { NotesGallery } from "./NotesGallery";
+import { PhotosGallery } from "./PhotosGallery";
 import {
   EVENTS,
   FORECAST,
@@ -496,6 +497,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <EventSheetGallery season={season} />
       <WeatherGallery />
       <NotesGallery season={season} />
+      <PhotosGallery />
     </>
   );
 }

@@ -5,6 +5,8 @@ import {
   FIXTURE_PLACES,
   FIXTURE_SHEET_TARGETS,
   FIXTURE_UNKNOWN_PLACE,
+  FIXTURE_UPLOADS,
+  type FixtureUpload,
   fixturePhotoImage,
 } from "@/fixtures/data";
 import { type FixtureParams, parseFixtureParams } from "@/fixtures/params";
@@ -15,7 +17,7 @@ import { createInlineSyncHost } from "../sync/host";
 import { apiPhotoSrc } from "./photos";
 import type { PhotoVariant, RepoStore } from "./store";
 
-export type { FixtureParams };
+export type { FixtureParams, FixtureUpload };
 
 export const fixtureSheetTargets = {
   ...FIXTURE_SHEET_TARGETS,
@@ -27,6 +29,8 @@ export const fixtureWeatherSearch = {
   unknown: FIXTURE_UNKNOWN_PLACE,
   matches: FIXTURE_PLACES.portland ?? [],
 };
+
+export const fixtureUploads = FIXTURE_UPLOADS;
 
 export type DisplayBoot =
   | { kind: "booting" }

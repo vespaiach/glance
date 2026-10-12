@@ -19,6 +19,11 @@ test("OFF-01 net=offline shows the offline pill at once", () => {
   expect(shellOptions({ net: "loading" }).pillDelayMs).toBeUndefined();
 });
 
+test("PHOTO-09 upload=offline shows the offline pill at once, as the frames do", () => {
+  expect(shellOptions({ upload: "offline" }).pillDelayMs).toBe(0);
+  expect(shellOptions({ upload: "error" }).pillDelayMs).toBeUndefined();
+});
+
 test("tech§4.3 no fixture params leave every provider on its defaults", () => {
   expect(shellOptions({})).toEqual({ overrides: {} });
 });
