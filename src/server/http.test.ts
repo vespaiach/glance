@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
+import { FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { CalendarEventSchema } from "@/domain/schemas";
-import { outdatedClient, readCursor, readRow } from "./http";
+import { outdatedClient, readCursor, readRow, readUpload, readVariant } from "./http";
 
 const URL_BASE = "https://glance.example.com/api/events/x";
 
@@ -98,4 +99,59 @@ describe("readCursor", () => {
       expect(readCursor(pull(query))).toEqual({ ok: false, error: "invalid" });
     },
   );
+});
+
+describe("readUpload", () => {
+  function post(headers: Record<string, string>): NextRequest {
+    return new NextRequest("https://glance.example.com/api/photos", {
+      method: "POST",
+      headers,
+      body: "bytes",
+    });
+  }
+
+  it("tech§6.3 reads the file name, type and declared size from the headers", () => {
+    const upload = readUpload(
+      post({
+        [FILE_NAME_HEADER]: encodeURIComponent("Día de playa.jpg"),
+        "content-type": "image/jpeg",
+        "content-length": "5",
+      }),
+    );
+
+    expect(upload).toMatchObject({
+      ok: true,
+      value: { name: "Día de playa.jpg", type: "image/jpeg", size: 5 },
+    });
+  });
+
+  it("tech§6.3 rejects an upload with no file name", () => {
+    expect(readUpload(post({ "content-type": "image/jpeg" }))).toEqual({
+      ok: false,
+      error: "invalid",
+    });
+  });
+
+  it("tech§6.3 rejects a file name that isn't URI-encoded", () => {
+    expect(
+      readUpload(post({ [FILE_NAME_HEADER]: "%E0%A4%A", "content-type": "image/jpeg" })),
+    ).toEqual({
+      ok: false,
+      error: "invalid",
+    });
+  });
+});
+
+describe("readVariant", () => {
+  function file(query: string): NextRequest {
+    return new NextRequest(`https://glance.example.com/api/photos/x/file${query}`);
+  }
+
+  it.each(["display", "thumb", "orig"])("tech§6.3 reads the %s variant", (variant) => {
+    expect(readVariant(file(`?v=${variant}`))).toEqual({ ok: true, value: variant });
+  });
+
+  it.each(["", "?v=", "?v=large"])("tech§6.3 rejects the variant query %s", (query) => {
+    expect(readVariant(file(query))).toEqual({ ok: false, error: "invalid" });
+  });
 });

@@ -1,13 +1,11 @@
 import "server-only";
 import type Database from "better-sqlite3";
-import type { AccountSettings, Photo, Synced } from "@/domain/schemas";
+import type { AccountSettings } from "@/domain/schemas";
 import type { ServiceDeps } from "./deps";
 import { type EventRow, type SyncedEvent, toEvent } from "./events";
 import { type NoteRow, type SyncedNote, toNote } from "./notes";
-import { optional } from "./rows";
+import { type PhotoRow, type SyncedPhoto, toPhoto } from "./photos";
 import type { SyncedSettings } from "./settings";
-
-export type SyncedPhoto = Synced<Photo>;
 
 export type SyncChange =
   | { entity: "events"; row: SyncedEvent }
@@ -16,15 +14,6 @@ export type SyncChange =
   | { entity: "settings"; row: SyncedSettings };
 
 export type SyncPull = { cursor: string; changes: SyncChange[] };
-
-type PhotoRow = {
-  id: string;
-  title: string;
-  taken_on: string | null;
-  place: string | null;
-  created_at: string;
-  version: number;
-};
 
 type SettingsRow = { account_id: string; json: string; updated_at: string; version: number };
 
@@ -73,18 +62,6 @@ function currentVersion(db: Database.Database): number {
 
 function byVersion(changes: SyncChange[]): SyncChange[] {
   return changes.sort((a, b) => a.row.version - b.row.version);
-}
-
-function toPhoto(row: PhotoRow): SyncedPhoto {
-  return {
-    id: row.id,
-    title: row.title,
-    takenOn: row.taken_on ?? row.created_at.slice(0, 10),
-    ...optional("place", row.place),
-    createdAt: row.created_at,
-    updatedAt: row.created_at,
-    version: row.version,
-  };
 }
 
 function toSettings(row: SettingsRow): SyncedSettings {
