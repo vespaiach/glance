@@ -97,7 +97,7 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | V01 | ✅ ([#24](https://github.com/vespaiach/glance/pull/24)) | **Today:** hero states, schedule, picture of the day, weather zone, notes zone, live status changes | — | TODAY-01..11, TIME-02 |
 | V02 | ✅ ([#25](https://github.com/vespaiach/glance/pull/25)) | **Calendar:** month block, day list, empty states | — | CAL-01..05 (render) |
 | V03 | ✅ ([#26](https://github.com/vespaiach/glance/pull/26)) | **Event sheet:** New/Edit, fields, swatches, delete confirm, time fields | F10 | EVT-01..06, TPK-01..04 |
-| V04 | 🔄 ([#27](https://github.com/vespaiach/glance/pull/27)) | **Weather:** now, hourly, 7-day, rain banner, setup card + search states | — | WX-01..05, WX-07..09 (states) |
+| V04 | ✅ ([#27](https://github.com/vespaiach/glance/pull/27)) | **Weather:** now, hourly, 7-day, rain banner, setup card + search states | — | WX-01..05, WX-07..09 (states) |
 | V05 | ⬜ | **Notes:** board, note sheet, counts and captions | — | NOTE-01..07 |
 | V06 | ⬜ | **Photos:** featured, thumbs, empty, upload tile states; upload hidden on phone | — | PHOTO-01, 05..09 (states), spec §5.4 |
 | V07 | ⬜ | **Settings + Background:** rows, account card, background picker and preview | — | SET-01..08, BG-01..05 |
