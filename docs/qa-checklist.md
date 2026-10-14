@@ -12,7 +12,7 @@ What the automated tests can't cover (tech-design §7, D18: no e2e tests). Run t
 A production build, never `next dev` (the service worker is off in dev).
 
 - **Kiosk run (the release pass):** the Docker image behind Caddy with HTTPS ([`deploy.md`](deploy.md)), opened on the real screens: the wall iPad installed to the home screen, plus a second screen (another tablet, or a laptop browser) signed in to the **same** account.
-- **Local run (a quick pass, e.g. before a Next upgrade PR):** `npm run build`, then start it with `DATA_DIR=<empty dir> APP_URL=http://localhost:3100 SMTP_URL=smtp://127.0.0.1:2525 MAIL_FROM='Glance <qa@example.com>' PORT=3100 npx next start -p 3100`. `localhost` counts as a secure origin, so the service worker runs without HTTPS. Point `SMTP_URL` at any local SMTP catcher (Mailpit, MailHog) to read the sign-in links. Two "screens" are two separate browser profiles (or one normal and one private window); two tabs of one profile share one database and are **one** screen.
+- **Local run (a quick pass, e.g. before a Next upgrade PR):** `npm run build`, then start it with `DATA_DIR=<empty dir> APP_URL=http://localhost:3100 RESEND_API_KEY=re_… MAIL_FROM='Glance <qa@your-verified-domain>' PORT=3100 npx next start -p 3100`. `localhost` counts as a secure origin, so the service worker runs without HTTPS. Use a Resend key and a sender on a domain verified in Resend, and request the links for an inbox you can read (with `Glance <onboarding@resend.dev>`, only your Resend account's own email). Two "screens" are two separate browser profiles (or one normal and one private window); two tabs of one profile share one database and are **one** screen.
 - **"Server down"** means the server can't be reached (OFF-*): stop the container (`docker stop glance`), or on a local run kill the process with `kill -9`. A plain `Ctrl-C` / `SIGTERM` lets `next start` drain, and it keeps open sync streams alive while it does, so the screens never notice. Browser "offline" emulation alone isn't enough either, because the sync worker and service worker keep their own connections.
 - Read a screen's sync state in DevTools › Application › IndexedDB › `glance-{accountId}`: `meta` › `status` (`online`, `error`, `lastSyncedAt`, `retryAt`) and the `outbox` table.
 
@@ -71,7 +71,7 @@ Screens A and B on the same account, both online:
 | 2026-10-12 | `feat/Q01-qa-checklist` | Local run, headless Chrome 152, two profiles | See below |
 
 **2026-10-12 local run.** Passed:
-- Sign-in through a local SMTP catcher. On both screens the SW precached 40 files and cached `pages` (9) and `pages-rsc` (13).
+- Sign-in through a real email. On both screens the SW precached 40 files and cached `pages` (9) and `pages-rsc` (13).
 - Sync: a note made on A showed on B within 3 s.
 - Offline cold start: with the server down, a reload of A opened Today from saved data, the nav bar opened all six views, and full loads of `/settings/background`, `/ambient` and `/calendar?date=…` worked. A new note's button read "Save for later" and the note showed **Waiting to post**. Once the server was back, the note posted and reached B.
 - 401: with every session deleted, A's next push sent it to the sign-in form with the note kept in the outbox; signing in again with the same email posted it. B, signed in again with a different email, lost the old account's DB and opened empty. Sign out on B left A signed in and deleted B's account DB.
