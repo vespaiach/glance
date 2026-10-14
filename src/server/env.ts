@@ -4,7 +4,7 @@ import * as v from "valibot";
 const EnvSchema = v.object({
   DATA_DIR: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   APP_URL: v.pipe(v.string(), v.url()),
-  SMTP_URL: v.pipe(v.string(), v.url()),
+  RESEND_API_KEY: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   MAIL_FROM: v.pipe(v.string(), v.trim(), v.nonEmpty()),
 });
 

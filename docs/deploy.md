@@ -32,8 +32,8 @@ It asks:
 |---|---|
 | `DATA_DIR` | `/var/lib/glance`. Outside the release folders, so it survives deploys and rollbacks. |
 | `APP_URL` | Not asked: shipit writes `https://<domain>`. Sign-in links point here and writes must come from this origin. |
-| `SMTP_URL` | Nodemailer SMTP URL for sign-in emails, e.g. `smtps://user:password@smtp.example.com:465`. |
-| `MAIL_FROM` | Sender of sign-in emails, e.g. `Glance <glance@example.com>`. |
+| `RESEND_API_KEY` | [Resend](https://resend.com) API key for sign-in emails, e.g. `re_…`. A key with "Sending access" only is enough. |
+| `MAIL_FROM` | Sender of sign-in emails, e.g. `Glance <glance@example.com>`. Its domain must be verified in Resend (Domains), or Resend refuses the email and sign-in shows the send error. |
 
 Values can't contain quotes or backslashes (shipit refuses them). `PORT` and `NODE_ENV` come from the systemd unit. Change a value later with `sudo shipit env glance`, which restarts the app. Bad or missing config stops the app at boot, and `sudo shipit logs glance` names the bad variables (never their values).
 
@@ -127,7 +127,7 @@ docker run -d --name glance --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
   -v /srv/glance:/data \
   -e APP_URL=https://glance.example.com \
-  -e SMTP_URL=smtps://user:password@smtp.example.com:465 \
+  -e RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx \
   -e 'MAIL_FROM=Glance <glance@example.com>' \
   glance
 ```
@@ -137,8 +137,8 @@ The container runs as the `node` user (uid 1000). A bind-mounted folder like `/s
 | Variable | Required | Meaning |
 |---|---|---|
 | `APP_URL` | yes | The public URL the screens open, e.g. `https://glance.example.com`. Sign-in links point here, write requests must come from this origin, and an `https:` URL makes the session cookie `Secure`. |
-| `SMTP_URL` | yes | Nodemailer SMTP URL for sign-in emails, e.g. `smtps://user:password@host:465`. |
-| `MAIL_FROM` | yes | Sender of sign-in emails, e.g. `Glance <glance@example.com>`. |
+| `RESEND_API_KEY` | yes | [Resend](https://resend.com) API key for sign-in emails, e.g. `re_…`. |
+| `MAIL_FROM` | yes | Sender of sign-in emails, e.g. `Glance <glance@example.com>`, on a domain verified in Resend. |
 | `DATA_DIR` | no | Set to `/data` by the image. |
 | `PORT` | no | Set to `3000` by the image. |
 

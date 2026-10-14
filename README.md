@@ -23,7 +23,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Server | Next.js Route Handlers, SQLite via `better-sqlite3` (raw SQL + numbered migrations) |
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
-| Email | Nodemailer over SMTP (sign-in links) |
+| Email | [Resend](https://resend.com) HTTP API (sign-in links) |
 | Tooling | npm, Node 24, [Biome](https://biomejs.dev) (lint + format), Vitest + Testing Library + `fake-indexeddb` |
 | Hosting | One Docker container with a `/data` volume, Caddy in front for HTTPS |
 
@@ -67,7 +67,7 @@ docs/           spec, technical design, plan, deploy and QA guides
 ### Requirements
 
 - **Node 24** (see `.nvmrc`) and npm
-- Optional: a local SMTP catcher such as [Mailpit](https://mailpit.axllent.org) on port 1025, to read sign-in emails
+- Optional: a [Resend](https://resend.com) API key, to send real sign-in emails
 
 ### Get started
 
@@ -79,11 +79,11 @@ npm ci
 npm run dev
 ```
 
-Open <http://localhost:3000>. The dev server reads `.env.development` (committed): data goes to `.data/` (git-ignored) and email to `smtp://localhost:1025`. Migrations run on boot.
+Open <http://localhost:3000>. The dev server reads `.env.development` (committed), with data in `.data/` (git-ignored), then `.env.development.local` (git-ignored) for your own `RESEND_API_KEY`. Migrations run on boot.
 
 The dev server is also a **demo build**: choose **Continue as demo** on the sign-in screen to use seeded fixture data with no backend, and open **`/dev/gallery`** to see every component in all four seasons. Fixture URL params reproduce any design state, e.g. `/today?season=winter&net=offline` or `/notes?sheet=newnote` (full list in [product spec §6](docs/product-spec.md)).
 
-To try real sign-in, run a mail catcher on port 1025, request a link on `/signin` and open it from the caught email.
+To try real sign-in, put `RESEND_API_KEY=re_…` in `.env.development.local` (and a `MAIL_FROM` on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email), request a link on `/signin` and open it from the email. Without a key the server stops at boot with `Invalid server config: RESEND_API_KEY`.
 
 ### Commands
 
@@ -94,7 +94,7 @@ To try real sign-in, run a mail catcher on port 1025, request a link on `/signin
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest (unit, component, data and sync tests) |
 | `npm run build` | Production build |
-| `npm start` | Serve the production build (needs `DATA_DIR`, `APP_URL`, `SMTP_URL`, `MAIL_FROM`) |
+| `npm start` | Serve the production build (needs `DATA_DIR`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`) |
 
 CI runs `check` → `typecheck` → `test` → `build`, then builds and smoke-tests the Docker image. A pre-commit hook in `.githooks/` is installed by `npm ci`.
 

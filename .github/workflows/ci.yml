@@ -27,7 +27,7 @@ jobs:
       - run: docker build -t glance .
       - run: >
           docker run -d --name glance -p 3000:3000 -v glance-data:/data
-          -e APP_URL=http://localhost:3000 -e SMTP_URL=smtp://localhost:1025 -e MAIL_FROM=glance@localhost
+          -e APP_URL=http://localhost:3000 -e RESEND_API_KEY=re_ci -e MAIL_FROM=glance@localhost
           glance
       - run: |
           for i in $(seq 1 30); do curl -fsS -o /dev/null http://localhost:3000/signin && break; sleep 1; done

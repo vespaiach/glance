@@ -20,7 +20,7 @@ function deps(): AuthDeps {
   shared.glanceAuth ??= {
     db: getDb(),
     now: () => new Date(),
-    mailer: createMailer(env().SMTP_URL, env().MAIL_FROM),
+    mailer: createMailer(env().RESEND_API_KEY, env().MAIL_FROM),
     appUrl: env().APP_URL,
     limits: {
       email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
