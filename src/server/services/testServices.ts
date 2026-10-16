@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import { migratedDbPerTest } from "../db/testDb";
+import { sqliteDbPerTest } from "../db/testDb";
 import type { ServiceDeps } from "./deps";
 
 export const START = new Date("2026-10-09T14:00:00.000Z");
@@ -15,7 +15,7 @@ export type ServiceHarness = {
 };
 
 export function serviceHarnessPerTest(): ServiceHarness {
-  const db = migratedDbPerTest();
+  const db = sqliteDbPerTest();
 
   let clock = START;
 

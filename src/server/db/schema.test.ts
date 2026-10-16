@@ -1,137 +1,135 @@
-import path from "node:path";
-import type Database from "better-sqlite3";
-import { openDb } from "./connection";
-import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
-import { tempDirPerTest } from "./testDir";
+import { migratedDbPerTest } from "./testDb";
 
-const tempDir = tempDirPerTest();
+const db = migratedDbPerTest();
 
 const NOW = "2026-10-09T14:00:00.000Z";
 
-function migratedDb(): Database.Database {
-  const db = openDb(path.join(tempDir(), "glance.db"));
-
-  migrate(db, readMigrations(MIGRATIONS_DIR));
-
-  return db;
+async function insertAccount(id: string): Promise<void> {
+  await db().run(
+    "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ($1, $2, 'America/New_York', $3)",
+    [id, `${id}@example.com`, NOW],
+  );
 }
 
-function insertAccount(db: Database.Database, id: string): void {
-  db.prepare(
-    "INSERT INTO accounts (id, email, time_zone, created_at) VALUES (?, ?, 'America/New_York', ?)",
-  ).run(id, `${id}@example.com`, NOW);
+async function insertEvent(startAt: string, endAt: string | null): Promise<void> {
+  await db().run(
+    "INSERT INTO events (id, account_id, title, start_at, end_at, updated_at, version) VALUES ('e1', 'a1', 'Swim', $1, $2, $3, 1)",
+    [startAt, endAt, NOW],
+  );
 }
 
-function insertEvent(db: Database.Database, startAt: string, endAt: string | null): void {
-  db.prepare(
-    "INSERT INTO events (id, account_id, title, start_at, end_at, updated_at, version) VALUES ('e1', 'a1', 'Swim', ?, ?, ?, 1)",
-  ).run(startAt, endAt, NOW);
+async function insertNote(): Promise<void> {
+  await db().run(
+    "INSERT INTO notes (id, account_id, text, tone, rotation, created_at, updated_at, version) VALUES ('n1', 'a1', 'Hi', 'yellow', 1.5, $1, $1, 1)",
+    [NOW],
+  );
 }
 
 describe("001_init", () => {
-  it("spec§7.0 creates every v1 table", () => {
-    const db = migratedDb();
+  it("spec§7.0 creates every v1 table", async () => {
+    const rows = await db().all<{ name: string }>(
+      "SELECT table_name AS name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name",
+    );
 
-    const names = db
-      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
-      .all()
-      .map((row) => (row as { name: string }).name);
-
-    expect(names).toEqual([
+    expect(rows.map((row) => row.name)).toEqual([
       "accounts",
       "displays",
       "events",
       "magic_links",
       "notes",
       "photos",
+      "schema_migrations",
       "sessions",
       "settings",
       "sync_state",
       "weather_cache",
     ]);
-
-    db.close();
   });
 
-  it("spec§7.0 starts the global change counter at 0", () => {
-    const db = migratedDb();
-
-    expect(db.prepare("SELECT id, version FROM sync_state").all()).toEqual([{ id: 1, version: 0 }]);
-
-    db.close();
+  it("spec§7.0 starts the global change counter at 0", async () => {
+    expect(await db().all("SELECT id, version FROM sync_state")).toEqual([{ id: 1, version: 0 }]);
   });
 
-  it("spec§7.0 allows only one sync_state row", () => {
-    const db = migratedDb();
-
-    expect(() => db.prepare("INSERT INTO sync_state VALUES (2, 0)").run()).toThrow(/CHECK/);
-
-    db.close();
+  it("spec§7.0 allows only one sync_state row", async () => {
+    await expect(db().run("INSERT INTO sync_state VALUES (2, 0)")).rejects.toThrow(
+      /check constraint/,
+    );
   });
 
-  it("spec§7.0 rejects an event that ends at or before it starts", () => {
-    const db = migratedDb();
-    insertAccount(db, "a1");
+  it("spec§7.0 rejects an event that ends at or before it starts", async () => {
+    await insertAccount("a1");
 
-    expect(() => insertEvent(db, NOW, NOW)).toThrow(/CHECK/);
-    expect(() => insertEvent(db, NOW, null)).not.toThrow();
-
-    db.close();
+    await expect(insertEvent(NOW, NOW)).rejects.toThrow(/check constraint/);
+    await expect(insertEvent(NOW, null)).resolves.toBeUndefined();
   });
 
-  it("spec§7.0 rejects a row whose account doesn't exist", () => {
-    const db = migratedDb();
-
-    expect(() => insertEvent(db, NOW, null)).toThrow(/FOREIGN KEY/);
-
-    db.close();
+  it("spec§7.0 rejects a row whose account doesn't exist", async () => {
+    await expect(insertEvent(NOW, null)).rejects.toThrow(/foreign key constraint/);
   });
 
-  it("spec§7.0 matches account emails without case", () => {
-    const db = migratedDb();
-    insertAccount(db, "a1");
+  it("spec§7.0 matches account emails without case", async () => {
+    await insertAccount("a1");
 
-    const found = db.prepare("SELECT id FROM accounts WHERE email = ?").get("A1@Example.com");
+    const found = await db().one("SELECT id FROM accounts WHERE email = $1", ["A1@Example.com"]);
 
     expect(found).toEqual({ id: "a1" });
-
-    db.close();
   });
 
-  it("spec§7.0 defaults a note's author to Guest", () => {
-    const db = migratedDb();
-    insertAccount(db, "a1");
+  it("spec§7.0 rejects a second account with the same email in another case", async () => {
+    await insertAccount("a1");
 
-    db.prepare(
-      "INSERT INTO notes (id, account_id, text, tone, rotation, created_at, updated_at, version) VALUES ('n1', 'a1', 'Hi', 'yellow', 1.5, ?, ?, 1)",
-    ).run(NOW, NOW);
-
-    expect(db.prepare("SELECT author FROM notes").get()).toEqual({ author: "Guest" });
-
-    db.close();
-  });
-});
-
-describe("002_setup_done", () => {
-  it("SIGNIN-14 fills setup_done_at from created_at for accounts made before it", () => {
-    const db = openDb(path.join(tempDir(), "glance.db"));
-    const [init, setupDone] = readMigrations(MIGRATIONS_DIR);
-    migrate(db, init ? [init] : []);
-    insertAccount(db, "a1");
-
-    migrate(db, setupDone ? [setupDone] : []);
-
-    expect(db.prepare("SELECT setup_done_at FROM accounts").get()).toEqual({ setup_done_at: NOW });
-
-    db.close();
+    await expect(
+      db().run(
+        "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a2', 'A1@EXAMPLE.COM', 'UTC', $1)",
+        [NOW],
+      ),
+    ).rejects.toThrow(/unique constraint/);
   });
 
-  it("SIGNIN-14 leaves setup_done_at empty for a new account", () => {
-    const db = migratedDb();
-    insertAccount(db, "a1");
+  it("spec§7.0 defaults a note's author to Guest", async () => {
+    await insertAccount("a1");
 
-    expect(db.prepare("SELECT setup_done_at FROM accounts").get()).toEqual({ setup_done_at: null });
+    await insertNote();
 
-    db.close();
+    expect(await db().one("SELECT author FROM notes")).toEqual({ author: "Guest" });
+  });
+
+  it("spec§7.0 reads timestamps as ISO strings and versions and rotations as numbers", async () => {
+    await insertAccount("a1");
+    await insertNote();
+
+    const note = await db().one("SELECT created_at, rotation, version FROM notes");
+
+    expect(note).toEqual({ created_at: NOW, rotation: 1.5, version: 1 });
+  });
+
+  it("spec§7.0 stores a photo's taken_on as a date", async () => {
+    await insertAccount("a1");
+
+    await db().run(
+      "INSERT INTO photos (id, account_id, title, taken_on, file_path, created_at, version) VALUES ('p1', 'a1', 'Beach', '2026-07-04', 'p1', $1, 1)",
+      [NOW],
+    );
+
+    expect(await db().one("SELECT taken_on FROM photos")).toEqual({ taken_on: "2026-07-04" });
+  });
+
+  it("spec§7.0 stores settings as jsonb", async () => {
+    await insertAccount("a1");
+
+    await db().run(
+      "INSERT INTO settings (account_id, json, updated_at, version) VALUES ('a1', $1, $2, 1)",
+      [JSON.stringify({ clock: "24h" }), NOW],
+    );
+
+    const row = await db().one("SELECT json, json ->> 'clock' AS clock FROM settings");
+
+    expect(row).toEqual({ json: { clock: "24h" }, clock: "24h" });
+  });
+
+  it("SIGNIN-14 leaves setup_done_at empty for a new account", async () => {
+    await insertAccount("a1");
+
+    expect(await db().one("SELECT setup_done_at FROM accounts")).toEqual({ setup_done_at: null });
   });
 });

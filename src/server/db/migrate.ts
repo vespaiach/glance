@@ -1,7 +1,7 @@
 import "server-only";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import type Database from "better-sqlite3";
+import type { Db } from "./db";
 
 export type Migration = { version: number; sql: string };
 
@@ -20,19 +20,30 @@ export function readMigrations(dir: string): Migration[] {
     .sort((a, b) => a.version - b.version);
 }
 
-export function migrate(db: Database.Database, migrations: Migration[]): void {
-  const current = db.pragma("user_version", { simple: true }) as number;
+const CREATE_SCHEMA_MIGRATIONS =
+  "CREATE TABLE IF NOT EXISTS schema_migrations (version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())";
 
-  const pending = migrations.filter((migration) => migration.version > current);
+export async function migrate(db: Db, migrations: Migration[]): Promise<void> {
+  await db.exec(CREATE_SCHEMA_MIGRATIONS);
+
+  const applied = await appliedVersions(db);
+
+  const pending = migrations.filter((migration) => !applied.has(migration.version));
 
   for (const migration of pending) {
-    applyMigration(db, migration);
+    await applyMigration(db, migration);
   }
 }
 
-function applyMigration(db: Database.Database, migration: Migration): void {
-  db.transaction(() => {
-    db.exec(migration.sql);
-    db.pragma(`user_version = ${migration.version}`);
-  })();
+async function appliedVersions(db: Db): Promise<Set<number>> {
+  const rows = await db.all<{ version: number }>("SELECT version FROM schema_migrations");
+
+  return new Set(rows.map((row) => row.version));
+}
+
+async function applyMigration(db: Db, migration: Migration): Promise<void> {
+  await db.tx(async (tx) => {
+    await tx.exec(migration.sql);
+    await tx.run("INSERT INTO schema_migrations (version) VALUES ($1)", [migration.version]);
+  });
 }

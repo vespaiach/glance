@@ -1,87 +1,90 @@
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE accounts (
-  id TEXT PRIMARY KEY,
-  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  name TEXT,
-  time_zone TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  id text PRIMARY KEY,
+  email citext NOT NULL UNIQUE,
+  name text,
+  time_zone text NOT NULL,
+  setup_done_at timestamptz,
+  created_at timestamptz NOT NULL
 );
 
 CREATE TABLE displays (
-  id TEXT PRIMARY KEY,
-  account_id TEXT NOT NULL REFERENCES accounts(id),
-  last_seen_at TEXT
+  id text PRIMARY KEY,
+  account_id text NOT NULL REFERENCES accounts(id),
+  last_seen_at timestamptz
 );
 
 CREATE TABLE sessions (
-  token_hash TEXT PRIMARY KEY,
-  display_id TEXT NOT NULL REFERENCES displays(id),
-  created_at TEXT NOT NULL
+  token_hash text PRIMARY KEY,
+  display_id text NOT NULL REFERENCES displays(id),
+  created_at timestamptz NOT NULL
 );
 
 CREATE TABLE magic_links (
-  token_hash TEXT PRIMARY KEY,
-  email TEXT NOT NULL,
-  pending_id TEXT NOT NULL,
-  time_zone TEXT NOT NULL,
-  expires_at TEXT NOT NULL,
-  used_at TEXT
+  token_hash text PRIMARY KEY,
+  email text NOT NULL,
+  pending_id text NOT NULL,
+  time_zone text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  used_at timestamptz
 );
 
 CREATE TABLE events (
-  id TEXT PRIMARY KEY,
-  account_id TEXT NOT NULL REFERENCES accounts(id),
-  title TEXT NOT NULL,
-  start_at TEXT NOT NULL,
-  end_at TEXT,
-  location TEXT,
-  tone TEXT NOT NULL DEFAULT '1',
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  version INTEGER NOT NULL,
+  id text PRIMARY KEY,
+  account_id text NOT NULL REFERENCES accounts(id),
+  title text NOT NULL,
+  start_at timestamptz NOT NULL,
+  end_at timestamptz,
+  location text,
+  tone text NOT NULL DEFAULT '1',
+  updated_at timestamptz NOT NULL,
+  deleted_at timestamptz,
+  version bigint NOT NULL,
   CHECK (end_at IS NULL OR end_at > start_at)
 );
 
 CREATE TABLE notes (
-  id TEXT PRIMARY KEY,
-  account_id TEXT NOT NULL REFERENCES accounts(id),
-  text TEXT NOT NULL,
-  author TEXT NOT NULL DEFAULT 'Guest',
-  tone TEXT NOT NULL,
-  rotation REAL NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  deleted_at TEXT,
-  version INTEGER NOT NULL
+  id text PRIMARY KEY,
+  account_id text NOT NULL REFERENCES accounts(id),
+  text text NOT NULL,
+  author text NOT NULL DEFAULT 'Guest',
+  tone text NOT NULL,
+  rotation double precision NOT NULL,
+  created_at timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL,
+  deleted_at timestamptz,
+  version bigint NOT NULL
 );
 
 CREATE TABLE photos (
-  id TEXT PRIMARY KEY,
-  account_id TEXT NOT NULL REFERENCES accounts(id),
-  title TEXT NOT NULL,
-  taken_on TEXT,
-  place TEXT,
-  file_path TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  version INTEGER NOT NULL
+  id text PRIMARY KEY,
+  account_id text NOT NULL REFERENCES accounts(id),
+  title text NOT NULL,
+  taken_on date,
+  place text,
+  file_path text NOT NULL,
+  created_at timestamptz NOT NULL,
+  version bigint NOT NULL
 );
 
 CREATE TABLE settings (
-  account_id TEXT PRIMARY KEY REFERENCES accounts(id),
-  json TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  version INTEGER NOT NULL
+  account_id text PRIMARY KEY REFERENCES accounts(id),
+  json jsonb NOT NULL,
+  updated_at timestamptz NOT NULL,
+  version bigint NOT NULL
 );
 
 CREATE TABLE weather_cache (
-  account_id TEXT PRIMARY KEY,
-  location TEXT NOT NULL,
-  json TEXT NOT NULL,
-  fetched_at TEXT NOT NULL
+  account_id text PRIMARY KEY,
+  location text NOT NULL,
+  json text NOT NULL,
+  fetched_at timestamptz NOT NULL
 );
 
 CREATE TABLE sync_state (
-  id INTEGER PRIMARY KEY CHECK (id = 1),
-  version INTEGER NOT NULL
+  id integer PRIMARY KEY CHECK (id = 1),
+  version bigint NOT NULL
 );
 
 INSERT INTO sync_state (id, version) VALUES (1, 0);
