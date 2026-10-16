@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.39 — handoff v5 is specified but not built yet (execution plan Phase 9). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
+| Status | Draft v0.40 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified but not built yet (execution plan Phase 9). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D23) |
 | Date | 2026-10-15 |
 | Design requests | Prompts sent to Claude Design, all delivered: [1 time entry](prompts/01-time-entry.md) and [2 family copy](prompts/02-family-copy.md) in handoff v2 (§8.3.1, §10), [3 sign-in and system states](prompts/03-signin-and-system-states.md) in v3 (§8.1, PHOTO-06..09, WX-07..09), [4 signed out](prompts/04-session-ended.md) and [5 location and time zone](prompts/05-location-and-time-zone.md) in v4 (SIGNIN-13, §9.9). v4 also added the Ambient screen page (SET-10) and v5 came with no prompt (decision 23). A new prompt goes in [`prompts/`](prompts/) as `NN-short-name.md` |
@@ -69,13 +69,13 @@ Known conflicts where the handoff overrides the design system:
 | Language | **TypeScript**, `strict: true` | Domain types in §7 are the shared contract between client and API |
 | Lint/format | **Biome** | Replaces ESLint and Prettier. `biome check` runs in CI and pre-commit |
 | Styling | **StyleX** via `@stylexjs/babel-plugin` + `@stylexjs/postcss-plugin` | The official Next.js setup (works with Webpack and Turbopack from Next 16.0.3): `babel.config.js` with `next/babel` + the StyleX plugin, `postcss.config.js` sharing that config, and `app/globals.css` containing `@stylex;`. No CSS modules and no Tailwind |
-| Database | **SQLite** | Accessed only from Next.js Route Handlers (`app/api/**/route.ts`), never from the client. Driver: `better-sqlite3` (synchronous, mature, and already in Next's default `serverExternalPackages`). Run in WAL mode |
+| Database | **PostgreSQL** | Accessed only from Next.js Route Handlers (`app/api/**/route.ts`), never from the client. Driver: `pg` (a connection pool, already in Next's default `serverExternalPackages`); server tests run on PGlite (Postgres in WebAssembly). The database is hosted outside the app |
 | API | Route Handlers, JSON | `/api/events`, `/api/notes`, `/api/photos`, `/api/settings`, `/api/weather` (server proxy to the provider), `/api/auth/*`, `/api/sync` (pull) + `/api/sync/stream` (SSE change ping) |
 | Client data | **Local-first store** on IndexedDB (Dexie) | Screens read local data only. Writes go to IndexedDB plus an outbox, and a sync engine pushes and pulls ([tech design](tech-design.md) D4, §5) |
 | Validation | **Valibot** | Schemas in `src/domain` are the runtime contract for the §7 types, on the client and in Route Handlers |
 
 **Consequences of these choices:**
-- **No `output: 'export'`.** SQLite, the photo files and the SSE bus need one running Node server (`next build && next start`) with a **persistent disk** (tech design D17).
+- **No `output: 'export'`.** The photo files and the SSE bus need one running Node server (`next build && next start`) with a **persistent disk** (tech design D17). PostgreSQL runs outside that process.
 - **"SPA" here means:** after the first load, view changes never trigger a full page load, and the shell's timers (clock, idle, slideshow, sync) keep running across views. Deep links like `/calendar` still work because each view is a real route.
 - **Data flow:** screens read and write through client repositories (§11) backed by IndexedDB. A sync engine pushes queued writes to the API and pulls changes (§9.7). The server is the source of truth.
 - **Migrations:** plain versioned SQL files applied at startup (`db/migrations/NNN_*.sql`, tracked with `PRAGMA user_version`). No ORM (decided): raw SQL with small typed helpers.
@@ -332,47 +332,48 @@ interface Display { id: string; accountId: string; }  // one signed-in screen; t
 
 **Scope rule:** events, notes, photos and settings belong to the **account**. A display is a signed-in session on one screen. It holds no settings of its own, so changing a setting on one display changes it on every display of that family (synced via §9.7).
 
-### 7.0 SQLite schema (v1)
+### 7.0 PostgreSQL schema (v1)
 
 ```sql
-CREATE TABLE accounts  (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-                        name TEXT, time_zone TEXT NOT NULL,                -- IANA zone sent by the waiting screen with the link request
-                        setup_done_at TEXT,                                -- set when the first-run location step ends (saved or skipped, SIGNIN-14); filled from created_at for accounts made before v0.34
-                        created_at TEXT NOT NULL);                         -- name NULL until the first-sign-in step
-CREATE TABLE displays  (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
-                        last_seen_at TEXT);
-CREATE TABLE sessions  (token_hash TEXT PRIMARY KEY, display_id TEXT NOT NULL REFERENCES displays(id),
-                        created_at TEXT NOT NULL);                       -- account comes from the display
-CREATE TABLE magic_links (token_hash TEXT PRIMARY KEY, email TEXT NOT NULL,
-                        pending_id TEXT NOT NULL, time_zone TEXT NOT NULL, -- waiting screen's cookie id; its display row is created on verify
-                        expires_at TEXT NOT NULL, used_at TEXT);           -- 10-minute expiry, single use; a new link voids older ones for that email (SIGNIN-12)
-CREATE TABLE events    (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
-                        title TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT, location TEXT,
-                        tone TEXT NOT NULL DEFAULT '1', updated_at TEXT NOT NULL, deleted_at TEXT,
-                        version INTEGER NOT NULL,
+CREATE EXTENSION IF NOT EXISTS citext;                                    -- case-insensitive emails
+CREATE TABLE accounts  (id text PRIMARY KEY, email citext NOT NULL UNIQUE,
+                        name text, time_zone text NOT NULL,                -- IANA zone sent by the waiting screen with the link request
+                        setup_done_at timestamptz,                         -- set when the first-run location step ends (saved or skipped, SIGNIN-14)
+                        created_at timestamptz NOT NULL);                  -- name NULL until the first-sign-in step
+CREATE TABLE displays  (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
+                        last_seen_at timestamptz);
+CREATE TABLE sessions  (token_hash text PRIMARY KEY, display_id text NOT NULL REFERENCES displays(id),
+                        created_at timestamptz NOT NULL);                  -- account comes from the display
+CREATE TABLE magic_links (token_hash text PRIMARY KEY, email text NOT NULL,
+                        pending_id text NOT NULL, time_zone text NOT NULL, -- waiting screen's cookie id; its display row is created on verify
+                        expires_at timestamptz NOT NULL, used_at timestamptz); -- 10-minute expiry, single use; a new link voids older ones for that email (SIGNIN-12)
+CREATE TABLE events    (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
+                        title text NOT NULL, start_at timestamptz NOT NULL, end_at timestamptz, location text,
+                        tone text NOT NULL DEFAULT '1', updated_at timestamptz NOT NULL, deleted_at timestamptz,
+                        version bigint NOT NULL,
                         CHECK (end_at IS NULL OR end_at > start_at));  -- same local day is checked on the screen (TPK-07); the API also rejects spans ≥ 24 h
-CREATE TABLE notes     (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
-                        text TEXT NOT NULL, author TEXT NOT NULL DEFAULT 'Guest', tone TEXT NOT NULL,
-                        rotation REAL NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, deleted_at TEXT,
-                        version INTEGER NOT NULL);
-CREATE TABLE photos    (id TEXT PRIMARY KEY, account_id TEXT NOT NULL REFERENCES accounts(id),
-                        title TEXT NOT NULL, taken_on TEXT, place TEXT, file_path TEXT NOT NULL,
-                        created_at TEXT NOT NULL, version INTEGER NOT NULL);
-CREATE TABLE settings  (account_id TEXT PRIMARY KEY REFERENCES accounts(id),
-                        json TEXT NOT NULL, updated_at TEXT NOT NULL,
-                        version INTEGER NOT NULL);                         -- AccountSettings as JSON
-CREATE TABLE weather_cache (account_id TEXT PRIMARY KEY, location TEXT NOT NULL,  -- "lat,lon" the cache was fetched for
-                        json TEXT NOT NULL, fetched_at TEXT NOT NULL);
-CREATE TABLE sync_state (id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL);  -- global change counter
+CREATE TABLE notes     (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
+                        text text NOT NULL, author text NOT NULL DEFAULT 'Guest', tone text NOT NULL,
+                        rotation double precision NOT NULL, created_at timestamptz NOT NULL, updated_at timestamptz NOT NULL,
+                        deleted_at timestamptz, version bigint NOT NULL);
+CREATE TABLE photos    (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
+                        title text NOT NULL, taken_on date, place text, file_path text NOT NULL,
+                        created_at timestamptz NOT NULL, version bigint NOT NULL);
+CREATE TABLE settings  (account_id text PRIMARY KEY REFERENCES accounts(id),
+                        json jsonb NOT NULL, updated_at timestamptz NOT NULL,
+                        version bigint NOT NULL);                          -- AccountSettings as JSON
+CREATE TABLE weather_cache (account_id text PRIMARY KEY, location text NOT NULL,  -- "lat,lon" the cache was fetched for
+                        json text NOT NULL, fetched_at timestamptz NOT NULL);
+CREATE TABLE sync_state (id integer PRIMARY KEY CHECK (id = 1), version bigint NOT NULL);  -- global change counter
 CREATE INDEX events_account_start ON events(account_id, start_at);
 CREATE INDEX notes_account_created ON notes(account_id, created_at);
 ```
 
 - IDs are UUIDv7 generated on the client, so items created offline keep their ID after sync.
-- Timestamps are ISO-8601 UTC strings. Display uses the location's time zone (`weatherLocation.timeZone`), else the browser's (LOC-06). Server jobs use the location's time zone, else `accounts.time_zone` (LOC-07).
+- Timestamps are `timestamptz` in the database and ISO-8601 UTC strings everywhere else (the server reads them back with `toISOString()`); `taken_on` is a `YYYY-MM-DD` date. Display uses the location's time zone (`weatherLocation.timeZone`), else the browser's (LOC-06). Server jobs use the location's time zone, else `accounts.time_zone` (LOC-07).
 - `updated_at` and `version` are always stamped by the server. Every write bumps `sync_state.version` in the same transaction and copies it to the row. `/api/sync?since=` returns rows with a higher `version` (§9.7).
 - Soft deletes (`deleted_at`) let other displays receive deletions through `/api/sync`.
-- Photo files are stored on disk (`{DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}`) and served through an authenticated route. On upload, `sharp` makes a display copy (≤ 2560 px) and a thumb (≤ 640 px) in WebP. Only metadata goes in SQLite.
+- Photo files are stored on disk (`{DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}`) and served through an authenticated route. On upload, `sharp` makes a display copy (≤ 2560 px) and a thumb (≤ 640 px) in WebP. Only metadata goes in the database.
 - **Handoff v5 additions** (planned, execution plan Phase 9, as a migration after the PostgreSQL schema of Phase 8): `events.all_day` (boolean, default false; an all-day row has `end_at` NULL and `start_at` at its date's UTC midnight); `photos` gains `updated_at`, `deleted_at`, the three `*_source` columns and `checked` (PHOTO-10..13), and `taken_on` may be NULL ("No date"); the QR sign-in (SIGNIN-15) and the signed-in list (SET-12) change `magic_links` and `displays` (tech design §6.6). Deleting a photo also deletes its files.
 - Note expiry (NOTE-08) runs server-side on an hourly timer: soft-delete notes whose age since `createdAt` is past `noteExpiry` (24 hours or 7 days). It is the same rule the screens use to hide notes, so the server and the screen agree and the time zone doesn't change the result.
 
@@ -616,7 +617,7 @@ Full-screen button (no bar), text on-deep.
 - The drawn keyboard in the prototype (`kb=1`) is a visual mock only. Do not build it. In the app, `kb=1` applies the prototype's keyboard height (36% of the window height, 260–380 px) as the inset and focuses the first field of the open sheet or form, caret at the end, so the frames can be checked without a device. The space the keyboard would cover stays empty.
 
 ### 9.7 Sync — `SYNC`
-- SYNC-01: Settings, notes, events, photos and background are saved to the **account** in SQLite and sync to every display signed in to that account (the prototype persists nothing).
+- SYNC-01: Settings, notes, events, photos and background are saved to the **account** in the server database (PostgreSQL) and sync to every display signed in to that account (the prototype persists nothing).
 - SYNC-02: Transport (decided, [tech design](tech-design.md) §5). **Push:** each write is saved in IndexedDB together with an outbox entry. The sync engine sends outbox entries in order as idempotent `PUT`/`DELETE /api/{entity}/{id}`. **Pull:** `GET /api/sync?since={version}` returns every changed row, deletions included, plus the new cursor. `GET /api/sync/stream` (SSE) only signals that the account changed, which triggers a pull. Without SSE the client polls every 30 s. A pull never overwrites a row that still has a pending outbox entry.
 - SYNC-03: Conflicts: last write **to reach the server** wins. The server stamps `updated_at` and `version`, so display clock drift doesn't matter. Offline edits (OFF-04) replay in order on reconnect. **Delete wins:** an edit to an event or note that another screen deleted doesn't bring it back. Settings are one record: if two screens change settings at the same moment, the later one replaces the whole set (accepted for v1).
 
@@ -664,7 +665,7 @@ Voice check for family copy: short words, no jargon ("display" → "screen" in u
 | **2. Screens (static states)** | Family copy (§10). Today, Calendar, Weather, Notes, Photos, Settings, Background, Ambient, Sign in, Sheets — every state in §8 from fixtures | **Visual parity** with each `Glance Frames - *` board at 1920×1080, 1440×900, 1280×800, 1180×820, 820×1180, 390×844 (screenshot review) |
 | **3. Interactions (local)** | Create/edit/delete events and notes, validation, calendar navigation, photo slideshow and upload (local), settings applied live, idle timeout, ambient schedule | Behavior notes reproduced end to end. Includes TimeField/TimePicker and the TPK rules (§8.3.1). Unit tests for status, time formatting, season mapping, temp conversion |
 | **4. System states** | Skeletons, per-source failure and retry, offline pill and queue, keyboard handling | `net=loading\|offline\|wxerror` and `kb=1` frames match the System states board |
-| **5. Real data** | SQLite schema and migrations (§7.0), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline shell (service worker) and sync worker, designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | `FixtureTransport` swapped for `HttpTransport`. Repos and screens unchanged |
+| **5. Real data** | Database schema and migrations (§7.0; built on SQLite, moved to PostgreSQL in execution plan Phase 8), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline shell (service worker) and sync worker, designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | `FixtureTransport` swapped for `HttpTransport`. Repos and screens unchanged |
 | **6. Location and time zone** | Screen time zone from the location (LOC-05..07), "Use my location" (LOC-01..04), Settings › Location (SET-09), first-run location step (SIGNIN-14), time zone names and confirm (LOC-08/09). UI from handoff v4 | A screen whose clock is set to UTC shows the location's time everywhere. The new states match the v4 Weather, Settings and Account boards at the 6 sizes |
 | **7. Handoff v4 follow-ups** | Signed-out form (SIGNIN-13, AMB-07), editable ambient schedule (§7 `ambient`, SET-06, SET-10, AMB-05) | A 401 with a sheet open waits for the sheet; the form keeps the waiting changes. The Ambient screen page matches the Settings board frames N–R; schedule rules have table tests (weekend nights, past midnight, "Not set") |
 | **9. Handoff v5** (execution plan Phase 9; phase 8 there moves the server to PostgreSQL) | Look and nav bar (§2, §4.3, SHELL-01/02/06/07, SET-11, AMB-08), Discard changes? (§8.9), all-day events (EVT-08, TODAY-12, CAL-06), Today overflow (TODAY-11), picture of the day (TODAY-07), photo details, delete and full screen (PHOTO-10..14), signed-in screens and QR sign-in (SET-12, SIGNIN-15), sign-in changes (SIGNIN-01/03/05), Ambient season video (AMB-09) | Every new frame of the v5 Today, Calendar, Notes, Photos and Account boards matches at the 6 sizes; all-day events stay on their date when the location's time zone changes; a photo edited or deleted on one screen changes on the others |
@@ -681,7 +682,7 @@ Phases 0–4 need no backend: each data source sits behind a repository interfac
 | 1 | Audience | **Family members.** Family copy deck (§10) |
 | 2 | Settings scope | **Per account.** All displays of a family share settings (§7) |
 | 3 | Time entry | **Designed in handoff v2** (TimeField + TimePicker, §8.3.1) |
-| 4 | Stack | **Next.js (SPA) + TypeScript + Biome + StyleX + SQLite** (§3) |
+| 4 | Stack | **Next.js (SPA) + TypeScript + Biome + StyleX + PostgreSQL** (§3; ~~SQLite~~ until execution plan Phase 8) |
 | 5 | "Continue as guests" (was "Continue as demo") | ~~Dev/demo builds only~~ **Removed** in handoff v5 (SIGNIN-05) |
 | 6 | Picture of the day | ~~Deterministic daily rotation by local date~~ Handoff v5: "On this day" first, else a shuffled cycle, the same on every screen (TODAY-07) |
 | 7 | Weather | Refresh every 15 min. Rain banner when precip ≥ 50% in the next 8 h. Provider still open (below) |

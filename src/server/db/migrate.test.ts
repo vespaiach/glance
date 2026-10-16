@@ -1,22 +1,40 @@
 import { writeFileSync } from "node:fs";
 import path from "node:path";
-import type Database from "better-sqlite3";
-import { openDb } from "./connection";
+import type { PGlite } from "@electric-sql/pglite";
+import type { Db } from "./db";
 import { migrate, readMigrations } from "./migrate";
+import { openPglite, pgliteDb } from "./pglite";
 import { tempDirPerTest } from "./testDir";
 
 const tempDir = tempDirPerTest();
 
-function tableNames(db: Database.Database): string[] {
-  const rows = db
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
-    .all();
+let client: PGlite;
 
-  return rows.map((row) => (row as { name: string }).name);
+let db: Db;
+
+beforeEach(async () => {
+  client = await openPglite();
+  db = pgliteDb(client);
+});
+
+afterEach(async () => {
+  await client.close();
+});
+
+async function tableNames(): Promise<string[]> {
+  const rows = await db.all<{ name: string }>(
+    "SELECT table_name AS name FROM information_schema.tables WHERE table_schema = 'public' AND table_name <> 'schema_migrations' ORDER BY table_name",
+  );
+
+  return rows.map((row) => row.name);
 }
 
-function userVersion(db: Database.Database): number {
-  return db.pragma("user_version", { simple: true }) as number;
+async function versions(): Promise<number[]> {
+  const rows = await db.all<{ version: number }>(
+    "SELECT version FROM schema_migrations ORDER BY version",
+  );
+
+  return rows.map((row) => row.version);
 }
 
 describe("readMigrations", () => {
@@ -34,50 +52,37 @@ describe("readMigrations", () => {
 });
 
 describe("migrate", () => {
-  const first = { version: 1, sql: "CREATE TABLE a (id INTEGER PRIMARY KEY);" };
-  const second = { version: 2, sql: "CREATE TABLE b (id INTEGER PRIMARY KEY);" };
+  const first = { version: 1, sql: "CREATE TABLE a (id integer PRIMARY KEY);" };
+  const second = { version: 2, sql: "CREATE TABLE b (id integer PRIMARY KEY);" };
 
-  it("D7 applies every migration to a new database and sets user_version", () => {
-    const db = openDb(path.join(tempDir(), "a.db"));
+  it("D7 applies every migration to a new database and records each version", async () => {
+    await migrate(db, [first, second]);
 
-    migrate(db, [first, second]);
-
-    expect(tableNames(db)).toEqual(["a", "b"]);
-    expect(userVersion(db)).toBe(2);
-
-    db.close();
+    expect(await tableNames()).toEqual(["a", "b"]);
+    expect(await versions()).toEqual([1, 2]);
   });
 
-  it("D7 applies only migrations newer than user_version", () => {
-    const db = openDb(path.join(tempDir(), "a.db"));
-    migrate(db, [first]);
+  it("D7 applies only migrations not recorded yet", async () => {
+    await migrate(db, [first]);
 
-    migrate(db, [first, second]);
+    await migrate(db, [first, second]);
 
-    expect(tableNames(db)).toEqual(["a", "b"]);
-    expect(userVersion(db)).toBe(2);
-
-    db.close();
+    expect(await tableNames()).toEqual(["a", "b"]);
+    expect(await versions()).toEqual([1, 2]);
   });
 
-  it("D7 running it again changes nothing", () => {
-    const db = openDb(path.join(tempDir(), "a.db"));
-    migrate(db, [first, second]);
+  it("D7 running it again changes nothing", async () => {
+    await migrate(db, [first, second]);
 
-    expect(() => migrate(db, [first, second])).not.toThrow();
-    expect(userVersion(db)).toBe(2);
-
-    db.close();
+    await expect(migrate(db, [first, second])).resolves.toBeUndefined();
+    expect(await versions()).toEqual([1, 2]);
   });
 
-  it("D7 a failing migration leaves the database at the last good version", () => {
-    const db = openDb(path.join(tempDir(), "a.db"));
-    const broken = { version: 2, sql: "CREATE TABLE b (id INTEGER); CREATE TABLE nope (" };
+  it("D7 a failing migration leaves the database at the last good version", async () => {
+    const broken = { version: 2, sql: "CREATE TABLE b (id integer); CREATE TABLE nope (" };
 
-    expect(() => migrate(db, [first, broken])).toThrow();
-    expect(tableNames(db)).toEqual(["a"]);
-    expect(userVersion(db)).toBe(1);
-
-    db.close();
+    await expect(migrate(db, [first, broken])).rejects.toThrow();
+    expect(await tableNames()).toEqual(["a"]);
+    expect(await versions()).toEqual([1]);
   });
 });
