@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.10 — P03 is folded into P02 (#81): moving the services onto the `Db` left nothing for the runtime to run on but PostgreSQL, so the `DATABASE_URL` pool, the boot migration and the SQLite and backup removals ship with it |
-| Date | 2026-10-15 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.41) · [`tech-design.md`](tech-design.md) (v1.79) |
+| Status | v1.11 — Phase 10 (handoff v6: a left sidebar replaces the bottom nav bar) and D05 are added. v1.10: P03 is folded into P02 (#81) |
+| Date | 2026-10-16 |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.56) · [`tech-design.md`](tech-design.md) (v2.00) |
 
 Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 
@@ -66,6 +66,7 @@ graph LR
   D03 --> U15
   D03 --> U16
   D04[D04 season videos] -.-> U16
+  D05[D05 handoff v6] --> N01 --> N02 --> N03
 ```
 
 **Critical path:** F01 → F02 → F03 → F07 → F09 → S07 → V01 → I01 → Y01 → C01 → C02 → C04 → Q01.
@@ -271,6 +272,20 @@ The designer's own revisions in handoff v5 (D03, spec v0.38 decision 23). Plan: 
 
 ---
 
+## Phase 10 — Handoff v6
+
+Handoff v6 (D05, spec v0.56 decision 27) replaces the bottom nav bar with a **left sidebar**: a grip while Hidden, an 80 px icon rail, and a 320 px drawer that pushes the page. Only the prototype's default is built (left side, Rail handle). The bottom bar, its idle hiding and the SET-11 setting are removed. Plan: tech design §4.8. No board draws the sidebar, so it is checked against the prototype (`Glance.dc.html?rail=1`, then Open menu) at the 6 sizes, and the v5 boards are still checked for everything else.
+
+| ID | Status | Task | Depends on | Covers |
+|---|---|---|---|---|
+| N01 | ⬜ | **Sidebar state and components:** `shell/sidebar.ts` (`SidebarState`, `sidebarReducer` with `show` / `open` / `close` / `back` / `viewChanged`, `initialSidebar(rail)`, `sidebarInset`), pure `SidebarGrip`, `SidebarRail` and `SidebarDrawer` (copy "Open menu", "Show sidebar", "Close sidebar", header "Glance"), `inert` when not shown, 280 ms `durBase` slides; the gallery's Navigation group shows the three states at wide and phone in four seasons. Not wired into the shell yet. Tests: one per reducer transition (and the no-ops); names, `aria-current`, `aria-expanded`, Ambient never active, Settings active on `/settings/*`, ✕ and row callbacks | D05 | SHELL-01, SHELL-02, SHELL-08, SHELL-09 |
+| N02 | ⬜ | **Shell switches to the sidebar:** `AppShell` owns the reducer (`rail=1\|open` as its initial state), pads by the inset with the 280 ms transition, renders grip, rail and drawer, `viewChanged` on pathname change, Escape and focus (SHELL-09); `OfflineNotice` at the gutter plus the inset, 24 px up; `todayCapacity` without the bar height. Removes `NavBar`, `BarHandle`, the bar half of `bar.ts`, `BarProvider` / `useBar` / `useBarBlock`, `IdleProvider`'s bar calls, `PhotosScreen`'s bar block, the `bar=` param, `shadow2Up` and "Show menu", with their tests. Tests: a view change from Expanded lands on Rail, Escape returns to Rail and focuses Open menu, the idle return to Today closes the drawer and keeps Hidden hidden, TODAY-11 capacity tables without the bar. Matches the prototype in its three states at the 6 sizes; Today C–D and Photos L–M still match their boards | N01 | SHELL-01, SHELL-03, SHELL-04, SHELL-08..10, OFF-01, TODAY-11, IDLE-01, PHOTO-14, AMB-08 |
+| N03 | ⬜ | **Remove "Hide bar when idle":** `hideBarWhenIdle` out of `AccountSettingsSchema` and `DEFAULT_SETTINGS`, the SET-11 row and copy out of `SettingsPanel` (Temperature is last again), the `barauto` param and fixture seed. No build floor change (tech §4.8). Tests: a settings row that still holds `hideBarWhenIdle` parses and drops it; the Settings panel has no SET-11 row. Settings A still matches its board, without the v5 last row | N02 | SET-11, §7 |
+
+**Phase 10 exit:** a 1280×800 screen loads with only the grip; the grip opens the rail, Open menu pushes the page aside with the drawer, a row opens its view and returns to the rail, ✕ hides it, and Escape closes the drawer; the offline pill never covers the rail; `grep -rn "hideBarWhenIdle\|BarProvider\|NavBar\|Show menu" src` is empty.
+
+---
+
 ## External dependency
 
 | ID | Status | Item | Blocks | Fallback |
@@ -279,3 +294,4 @@ The designer's own revisions in handoff v5 (D03, spec v0.38 decision 23). Plan: 
 | D02 | ✅ ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |
 | D03 | ✅ ([#78](https://github.com/vespaiach/glance/pull/78)) | Design handoff v5 in the repo (the designer's own revisions, no prompt): `docs/design/handoff`, spec v0.38, tech design v1.75, this phase | Phase 9 | None: Phase 9 waits |
 | D04 | ⬜ | Season videos `videos/{spring,summer,fall,winter}.mp4` for AMB-09: source, license, size budget (spec §12.2 O4) | U16 (the video itself) | U16 ships with the AMB-06 background; the files are added when they exist |
+| D05 | 🔄 | Design handoff v6 in the repo (the left sidebar, the designer's own revision, no prompt): `docs/design/handoff`, spec v0.56, tech design v2.00 (§4.8), this phase | Phase 10 | None: Phase 10 waits |
