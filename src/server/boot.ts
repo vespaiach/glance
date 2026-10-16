@@ -1,12 +1,11 @@
 import "server-only";
-import { getDb } from "./db/connection";
-import { readMigrations } from "./db/migrate";
-import { migrateSqlite, SQLITE_MIGRATIONS_DIR } from "./db/sqliteMigrate";
+import { getDb } from "./db/db";
+import { MIGRATIONS_DIR, migrate, readMigrations } from "./db/migrate";
 import { startJobs } from "./jobs";
 
-export function bootServer(): void {
+export async function bootServer(): Promise<void> {
   try {
-    migrateSqlite(getDb(), readMigrations(SQLITE_MIGRATIONS_DIR));
+    await migrate(getDb(), readMigrations(MIGRATIONS_DIR));
   } catch (error) {
     console.error(error);
     process.exit(1);

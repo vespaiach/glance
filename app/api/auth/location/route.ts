@@ -6,7 +6,7 @@ import { finishLocationStep } from "@/server/services";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const display = syncWriter(request);
+  const display = await syncWriter(request);
 
   if (!display.ok) return display.error;
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!body.ok) return errorJson(body.error, 400);
 
-  finishLocationStep(display.value.accountId, body.value);
+  await finishLocationStep(display.value.accountId, body.value);
 
   return new NextResponse(null, { status: 204 });
 }

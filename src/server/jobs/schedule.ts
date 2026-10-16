@@ -1,26 +1,28 @@
 import "server-only";
 
-export type Jobs = { hourly: () => void; daily: () => void };
+type Job = () => unknown;
 
-export function createJobTick({ hourly, daily }: Jobs): (now: Date) => void {
+export type Jobs = { hourly: Job; daily: Job };
+
+export function createJobTick({ hourly, daily }: Jobs): (now: Date) => Promise<void> {
   let lastDay: string | undefined;
 
-  return (now) => {
+  return async (now) => {
     const day = now.toISOString().slice(0, 10);
 
-    runSafely(hourly);
+    await runSafely(hourly);
 
     if (day === lastDay) return;
 
     lastDay = day;
 
-    runSafely(daily);
+    await runSafely(daily);
   };
 }
 
-function runSafely(job: () => void): void {
+async function runSafely(job: Job): Promise<void> {
   try {
-    job();
+    await job();
   } catch (error) {
     console.error(error);
   }

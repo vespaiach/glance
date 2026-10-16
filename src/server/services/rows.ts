@@ -1,29 +1,32 @@
 import "server-only";
-import type Database from "better-sqlite3";
 import type { Tone } from "@/domain/schemas";
+import type { Db } from "../db/db";
 
 export type Stamp = { updatedAt: string; version: number };
 
 export type ServerColumns = { updated_at: string; deleted_at: string | null; version: number };
 
-export function stamp(db: Database.Database, now: Date): Stamp {
-  const { version } = db
-    .prepare("UPDATE sync_state SET version = version + 1 WHERE id = 1 RETURNING version")
-    .get() as { version: number };
-
-  return { updatedAt: now.toISOString(), version };
+export async function lockVersions(db: Db): Promise<void> {
+  await db.run("SELECT version FROM sync_state WHERE id = 1 FOR UPDATE");
 }
 
-export function accountTimeZone(db: Database.Database, accountId: string): string {
-  const { time_zone: timeZone } = db
-    .prepare(
-      `SELECT coalesce(json_extract(settings.json, '$.weatherLocation.timeZone'), accounts.time_zone) AS time_zone
-       FROM accounts LEFT JOIN settings ON settings.account_id = accounts.id
-       WHERE accounts.id = ?`,
-    )
-    .get(accountId) as { time_zone: string };
+export async function stamp(db: Db, now: Date): Promise<Stamp> {
+  const row = await db.one<{ version: number }>(
+    "UPDATE sync_state SET version = version + 1 WHERE id = 1 RETURNING version",
+  );
 
-  return timeZone;
+  return { updatedAt: now.toISOString(), version: (row as { version: number }).version };
+}
+
+export async function accountTimeZone(db: Db, accountId: string): Promise<string> {
+  const row = await db.one<{ time_zone: string }>(
+    `SELECT coalesce(settings.json -> 'weatherLocation' ->> 'timeZone', accounts.time_zone) AS time_zone
+     FROM accounts LEFT JOIN settings ON settings.account_id = accounts.id
+     WHERE accounts.id = $1`,
+    [accountId],
+  );
+
+  return (row as { time_zone: string }).time_zone;
 }
 
 export function serverFields(row: ServerColumns) {

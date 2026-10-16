@@ -4,8 +4,8 @@ import { pullChanges } from "@/server/services";
 
 export const runtime = "nodejs";
 
-export function GET(request: NextRequest): NextResponse {
-  const display = syncReader(request);
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const display = await syncReader(request);
 
   if (!display.ok) return display.error;
 
@@ -13,5 +13,5 @@ export function GET(request: NextRequest): NextResponse {
 
   if (!since.ok) return errorJson(since.error, 400);
 
-  return NextResponse.json(pullChanges(display.value.accountId, since.value));
+  return NextResponse.json(await pullChanges(display.value.accountId, since.value));
 }

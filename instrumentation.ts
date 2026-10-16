@@ -5,5 +5,5 @@ export async function register(): Promise<void> {
 
   const { bootServer } = await import("@/server/boot");
 
-  bootServer();
+  await bootServer();
 }

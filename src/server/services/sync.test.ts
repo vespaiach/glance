@@ -28,27 +28,32 @@ const NOTE: Note = {
 
 const PHOTO_ID = "0192f3a0-3333-7000-8000-000000000001";
 
-function insertPhoto(accountId: string, version: number, takenOn: string | null): void {
-  harness
-    .deps()
-    .db.prepare(
-      `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, version)
-       VALUES (?, ?, 'Cannon Beach', ?, NULL, 'x', '2026-10-01T18:30:00.000Z', ?)`,
-    )
-    .run(PHOTO_ID, accountId, takenOn, version);
+async function insertPhoto(
+  accountId: string,
+  version: number,
+  takenOn: string | null,
+): Promise<void> {
+  await harness.deps().db.run(
+    `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, version)
+       VALUES ($1, $2, 'Cannon Beach', $3, NULL, 'x', '2026-10-01T18:30:00.000Z', $4)`,
+    [PHOTO_ID, accountId, takenOn, version],
+  );
 }
 
 describe("pullChanges", () => {
-  it("SYNC-02 answers no changes and the current version when nothing was written", () => {
-    expect(pullChanges(harness.deps(), MARIA, undefined)).toEqual({ cursor: "0", changes: [] });
+  it("SYNC-02 answers no changes and the current version when nothing was written", async () => {
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
+      cursor: "0",
+      changes: [],
+    });
   });
 
-  it("SYNC-02 without a cursor returns every row of the account in version order", () => {
-    putNote(harness.deps(), MARIA, NOTE);
-    putEvent(harness.deps(), MARIA, EVENT);
-    putSettings(harness.deps(), MARIA, MARIA, DEFAULT_SETTINGS);
+  it("SYNC-02 without a cursor returns every row of the account in version order", async () => {
+    await putNote(harness.deps(), MARIA, NOTE);
+    await putEvent(harness.deps(), MARIA, EVENT);
+    await putSettings(harness.deps(), MARIA, MARIA, DEFAULT_SETTINGS);
 
-    expect(pullChanges(harness.deps(), MARIA, undefined)).toEqual({
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
       cursor: "3",
       changes: [
         { entity: "notes", row: { ...NOTE, updatedAt: STAMP, version: 1 } },
@@ -61,22 +66,22 @@ describe("pullChanges", () => {
     });
   });
 
-  it("SYNC-02 returns only the rows changed after the cursor", () => {
-    putNote(harness.deps(), MARIA, NOTE);
-    putEvent(harness.deps(), MARIA, EVENT);
-    putNote(harness.deps(), MARIA, { ...NOTE, text: "Milk" });
+  it("SYNC-02 returns only the rows changed after the cursor", async () => {
+    await putNote(harness.deps(), MARIA, NOTE);
+    await putEvent(harness.deps(), MARIA, EVENT);
+    await putNote(harness.deps(), MARIA, { ...NOTE, text: "Milk" });
 
-    expect(pullChanges(harness.deps(), MARIA, 2)).toEqual({
+    expect(await pullChanges(harness.deps(), MARIA, 2)).toEqual({
       cursor: "3",
       changes: [{ entity: "notes", row: { ...NOTE, text: "Milk", updatedAt: STAMP, version: 3 } }],
     });
   });
 
-  it("SYNC-02 returns deletions as tombstones", () => {
-    putEvent(harness.deps(), MARIA, EVENT);
-    deleteEvent(harness.deps(), MARIA, EVENT.id);
+  it("SYNC-02 returns deletions as tombstones", async () => {
+    await putEvent(harness.deps(), MARIA, EVENT);
+    await deleteEvent(harness.deps(), MARIA, EVENT.id);
 
-    expect(pullChanges(harness.deps(), MARIA, 1)).toEqual({
+    expect(await pullChanges(harness.deps(), MARIA, 1)).toEqual({
       cursor: "2",
       changes: [
         { entity: "events", row: { ...EVENT, updatedAt: STAMP, deletedAt: STAMP, version: 2 } },
@@ -84,10 +89,10 @@ describe("pullChanges", () => {
     });
   });
 
-  it("SYNC-02 returns photos with their upload time as the update time", () => {
-    insertPhoto(MARIA, 4, "2026-09-28");
+  it("SYNC-02 returns photos with their upload time as the update time", async () => {
+    await insertPhoto(MARIA, 4, "2026-09-28");
 
-    expect(pullChanges(harness.deps(), MARIA, undefined).changes).toEqual([
+    expect((await pullChanges(harness.deps(), MARIA, undefined)).changes).toEqual([
       {
         entity: "photos",
         row: {
@@ -102,20 +107,41 @@ describe("pullChanges", () => {
     ]);
   });
 
-  it("PHOTO-03 dates a photo with no taken date by its upload day", () => {
-    insertPhoto(MARIA, 1, null);
+  it("PHOTO-03 dates a photo with no taken date by its upload day", async () => {
+    await insertPhoto(MARIA, 1, null);
 
-    expect(pullChanges(harness.deps(), MARIA, undefined).changes[0]?.row).toMatchObject({
+    expect((await pullChanges(harness.deps(), MARIA, undefined)).changes[0]?.row).toMatchObject({
       takenOn: "2026-10-01",
     });
   });
 
-  it("tech§5 never returns another account's rows", () => {
-    putEvent(harness.deps(), OMAR, EVENT);
-    putNote(harness.deps(), OMAR, NOTE);
-    putSettings(harness.deps(), OMAR, OMAR, DEFAULT_SETTINGS);
-    insertPhoto(OMAR, 4, "2026-09-28");
+  it("tech§5 never returns another account's rows", async () => {
+    await putEvent(harness.deps(), OMAR, EVENT);
+    await putNote(harness.deps(), OMAR, NOTE);
+    await putSettings(harness.deps(), OMAR, OMAR, DEFAULT_SETTINGS);
+    await insertPhoto(OMAR, 4, "2026-09-28");
 
-    expect(pullChanges(harness.deps(), MARIA, undefined)).toEqual({ cursor: "3", changes: [] });
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
+      cursor: "3",
+      changes: [],
+    });
+  });
+
+  it("tech§5 concurrent writes get distinct versions, and a pull never skips one that commits later", async () => {
+    const ids = Array.from({ length: 8 }, (_, i) => `0192f3a0-2222-7000-8000-00000000001${i}`);
+
+    const [writes, pulls] = await Promise.all([
+      Promise.all(ids.map((id) => putNote(harness.deps(), MARIA, { ...NOTE, id }))),
+      Promise.all(ids.map(() => pullChanges(harness.deps(), MARIA, undefined))),
+    ]);
+
+    expect(writes.map((saved) => saved.ok && saved.value.version).sort()).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8,
+    ]);
+    for (const pull of pulls) {
+      expect(pull.changes.map((change) => change.row.version)).toEqual(
+        Array.from({ length: Number(pull.cursor) }, (_, i) => i + 1),
+      );
+    }
   });
 });

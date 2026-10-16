@@ -4,12 +4,12 @@ import { clearCookie, setCookie } from "@/server/http";
 
 export const runtime = "nodejs";
 
-export function GET(request: NextRequest): NextResponse {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   const token = request.nextUrl.searchParams.get("t") ?? "";
 
   const pendingId = request.cookies.get("pending")?.value;
 
-  const verified = verifyLink({ token, pendingId });
+  const verified = await verifyLink({ token, pendingId });
 
   const response = NextResponse.redirect(signInUrl(verified.ok ? "opened" : "stale"), 303);
 

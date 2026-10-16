@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
 
 export async function PUT(request: NextRequest, { params }: Context): Promise<NextResponse> {
-  const display = syncWriter(request);
+  const display = await syncWriter(request);
 
   if (!display.ok) return display.error;
 
@@ -16,13 +16,13 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
 
   if (!row.ok) return errorJson(row.error, 400);
 
-  return savedJson(putEvent(display.value.accountId, row.value));
+  return savedJson(await putEvent(display.value.accountId, row.value));
 }
 
 export async function DELETE(request: NextRequest, { params }: Context): Promise<NextResponse> {
-  const display = syncWriter(request);
+  const display = await syncWriter(request);
 
   if (!display.ok) return display.error;
 
-  return savedJson(deleteEvent(display.value.accountId, (await params).id));
+  return savedJson(await deleteEvent(display.value.accountId, (await params).id));
 }

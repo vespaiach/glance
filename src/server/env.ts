@@ -1,7 +1,10 @@
 import "server-only";
 import * as v from "valibot";
 
+const POSTGRES_URL = /^postgres(ql)?:\/\//;
+
 const EnvSchema = v.object({
+  DATABASE_URL: v.pipe(v.string(), v.trim(), v.regex(POSTGRES_URL)),
   DATA_DIR: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   APP_URL: v.pipe(v.string(), v.url()),
   RESEND_API_KEY: v.pipe(v.string(), v.trim(), v.nonEmpty()),

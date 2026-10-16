@@ -1,4 +1,4 @@
 import "server-only";
-import type Database from "better-sqlite3";
+import type { Db } from "../db/db";
 
-export type ServiceDeps = { db: Database.Database; now: () => Date };
+export type ServiceDeps = { db: Db; now: () => Date };

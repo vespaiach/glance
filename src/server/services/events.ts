@@ -1,9 +1,10 @@
 import "server-only";
-import type Database from "better-sqlite3";
 import { err, ok, type Result } from "@/domain/result";
 import type { CalendarEvent, Synced, Tone } from "@/domain/schemas";
+import type { Db } from "../db/db";
 import type { ServiceDeps } from "./deps";
 import {
+  lockVersions,
   optional,
   type ServerColumns,
   type Stamp,
@@ -28,73 +29,78 @@ export function putEvent(
   { db, now }: ServiceDeps,
   accountId: string,
   event: CalendarEvent,
-): Result<SyncedEvent, "not-found"> {
-  return db.transaction((): Result<SyncedEvent, "not-found"> => {
-    const existing = eventRow(db, event.id);
+): Promise<Result<SyncedEvent, "not-found">> {
+  return db.tx(async (tx): Promise<Result<SyncedEvent, "not-found">> => {
+    await lockVersions(tx);
+
+    const existing = await eventRow(tx, event.id);
 
     if (existing && existing.account_id !== accountId) return err("not-found");
 
     if (existing?.deleted_at) return ok(toEvent(existing));
 
-    const stamped = stamp(db, now());
+    const stamped = await stamp(tx, now());
 
-    writeEvent(db, accountId, event, stamped);
+    await writeEvent(tx, accountId, event, stamped);
 
     return ok({ ...event, ...stamped });
-  })();
+  });
 }
 
 export function deleteEvent(
   { db, now }: ServiceDeps,
   accountId: string,
   id: string,
-): Result<SyncedEvent, "not-found"> {
-  return db.transaction((): Result<SyncedEvent, "not-found"> => {
-    const existing = eventRow(db, id);
+): Promise<Result<SyncedEvent, "not-found">> {
+  return db.tx(async (tx): Promise<Result<SyncedEvent, "not-found">> => {
+    await lockVersions(tx);
+
+    const existing = await eventRow(tx, id);
 
     if (existing?.account_id !== accountId) return err("not-found");
 
     if (existing.deleted_at) return ok(toEvent(existing));
 
-    const { updatedAt, version } = stamp(db, now());
+    const { updatedAt, version } = await stamp(tx, now());
 
-    db.prepare("UPDATE events SET deleted_at = ?, updated_at = ?, version = ? WHERE id = ?").run(
-      updatedAt,
+    await tx.run("UPDATE events SET deleted_at = $1, updated_at = $1, version = $2 WHERE id = $3", [
       updatedAt,
       version,
       id,
-    );
+    ]);
 
     return ok(toEvent({ ...existing, deleted_at: updatedAt, updated_at: updatedAt, version }));
-  })();
+  });
 }
 
-function eventRow(db: Database.Database, id: string): EventRow | undefined {
-  return db.prepare("SELECT * FROM events WHERE id = ?").get(id) as EventRow | undefined;
+function eventRow(db: Db, id: string): Promise<EventRow | undefined> {
+  return db.one<EventRow>("SELECT * FROM events WHERE id = $1", [id]);
 }
 
-function writeEvent(
-  db: Database.Database,
+async function writeEvent(
+  db: Db,
   accountId: string,
   event: CalendarEvent,
   { updatedAt, version }: Stamp,
-): void {
-  db.prepare(
+): Promise<void> {
+  await db.run(
     `INSERT INTO events (id, account_id, title, start_at, end_at, location, tone, updated_at, version)
-     VALUES (@id, @accountId, @title, @startAt, @endAt, @location, @tone, @updatedAt, @version)
-     ON CONFLICT (id) DO UPDATE SET title = @title, start_at = @startAt, end_at = @endAt,
-       location = @location, tone = @tone, updated_at = @updatedAt, version = @version`,
-  ).run({
-    id: event.id,
-    accountId,
-    title: event.title,
-    startAt: event.startAt,
-    endAt: event.endAt ?? null,
-    location: event.location ?? null,
-    tone: String(event.tone),
-    updatedAt,
-    version,
-  });
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET title = excluded.title, start_at = excluded.start_at,
+       end_at = excluded.end_at, location = excluded.location, tone = excluded.tone,
+       updated_at = excluded.updated_at, version = excluded.version`,
+    [
+      event.id,
+      accountId,
+      event.title,
+      event.startAt,
+      event.endAt ?? null,
+      event.location ?? null,
+      String(event.tone),
+      updatedAt,
+      version,
+    ],
+  );
 }
 
 export function toEvent(row: EventRow): SyncedEvent {

@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 const ERROR_STATUS: Record<WeatherError, number> = { "no-location": 409, "weather-failed": 502 };
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const display = syncReader(request);
+  const display = await syncReader(request);
 
   if (!display.ok) return display.error;
 

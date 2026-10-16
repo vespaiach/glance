@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
 
 export async function PUT(request: NextRequest, { params }: Context): Promise<NextResponse> {
-  const display = syncWriter(request);
+  const display = await syncWriter(request);
 
   if (!display.ok) return display.error;
 
@@ -16,5 +16,5 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
 
   if (!body.ok) return errorJson(body.error, 400);
 
-  return savedJson(putSettings(display.value.accountId, (await params).id, body.value));
+  return savedJson(await putSettings(display.value.accountId, (await params).id, body.value));
 }

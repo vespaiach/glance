@@ -1,9 +1,16 @@
 import "server-only";
-import type Database from "better-sqlite3";
 import { err, ok, type Result } from "@/domain/result";
 import type { Note, NoteTone, Synced } from "@/domain/schemas";
+import type { Db } from "../db/db";
 import type { ServiceDeps } from "./deps";
-import { type ServerColumns, type Stamp, serverFields, stamp, toneFromColumn } from "./rows";
+import {
+  lockVersions,
+  type ServerColumns,
+  type Stamp,
+  serverFields,
+  stamp,
+  toneFromColumn,
+} from "./rows";
 
 export type SyncedNote = Synced<Note>;
 
@@ -21,63 +28,78 @@ export function putNote(
   { db, now }: ServiceDeps,
   accountId: string,
   note: Note,
-): Result<SyncedNote, "not-found"> {
-  return db.transaction((): Result<SyncedNote, "not-found"> => {
-    const existing = noteRow(db, note.id);
+): Promise<Result<SyncedNote, "not-found">> {
+  return db.tx(async (tx): Promise<Result<SyncedNote, "not-found">> => {
+    await lockVersions(tx);
+
+    const existing = await noteRow(tx, note.id);
 
     if (existing && existing.account_id !== accountId) return err("not-found");
 
     if (existing?.deleted_at) return ok(toNote(existing));
 
-    const stamped = stamp(db, now());
+    const stamped = await stamp(tx, now());
 
-    writeNote(db, accountId, note, stamped);
+    await writeNote(tx, accountId, note, stamped);
 
     return ok({ ...note, ...stamped });
-  })();
+  });
 }
 
 export function deleteNote(
   { db, now }: ServiceDeps,
   accountId: string,
   id: string,
-): Result<SyncedNote, "not-found"> {
-  return db.transaction((): Result<SyncedNote, "not-found"> => {
-    const existing = noteRow(db, id);
+): Promise<Result<SyncedNote, "not-found">> {
+  return db.tx(async (tx): Promise<Result<SyncedNote, "not-found">> => {
+    await lockVersions(tx);
+
+    const existing = await noteRow(tx, id);
 
     if (existing?.account_id !== accountId) return err("not-found");
 
     if (existing.deleted_at) return ok(toNote(existing));
 
-    const { updatedAt, version } = stamp(db, now());
+    const { updatedAt, version } = await stamp(tx, now());
 
-    db.prepare("UPDATE notes SET deleted_at = ?, updated_at = ?, version = ? WHERE id = ?").run(
-      updatedAt,
+    await tx.run("UPDATE notes SET deleted_at = $1, updated_at = $1, version = $2 WHERE id = $3", [
       updatedAt,
       version,
       id,
-    );
+    ]);
 
     return ok(toNote({ ...existing, deleted_at: updatedAt, updated_at: updatedAt, version }));
-  })();
+  });
 }
 
-function noteRow(db: Database.Database, id: string): NoteRow | undefined {
-  return db.prepare("SELECT * FROM notes WHERE id = ?").get(id) as NoteRow | undefined;
+function noteRow(db: Db, id: string): Promise<NoteRow | undefined> {
+  return db.one<NoteRow>("SELECT * FROM notes WHERE id = $1", [id]);
 }
 
-function writeNote(
-  db: Database.Database,
+async function writeNote(
+  db: Db,
   accountId: string,
   note: Note,
   { updatedAt, version }: Stamp,
-): void {
-  db.prepare(
+): Promise<void> {
+  await db.run(
     `INSERT INTO notes (id, account_id, text, author, tone, rotation, created_at, updated_at, version)
-     VALUES (@id, @accountId, @text, @author, @tone, @rotation, @createdAt, @updatedAt, @version)
-     ON CONFLICT (id) DO UPDATE SET text = @text, author = @author, tone = @tone,
-       rotation = @rotation, created_at = @createdAt, updated_at = @updatedAt, version = @version`,
-  ).run({ ...note, accountId, tone: String(note.tone), updatedAt, version });
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET text = excluded.text, author = excluded.author,
+       tone = excluded.tone, rotation = excluded.rotation, created_at = excluded.created_at,
+       updated_at = excluded.updated_at, version = excluded.version`,
+    [
+      note.id,
+      accountId,
+      note.text,
+      note.author,
+      String(note.tone),
+      note.rotation,
+      note.createdAt,
+      updatedAt,
+      version,
+    ],
+  );
 }
 
 export function toNote(row: NoteRow): SyncedNote {

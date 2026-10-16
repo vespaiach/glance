@@ -2,7 +2,7 @@ import "server-only";
 import path from "node:path";
 import type { AccountSettings, CalendarEvent, LocationRequest, Note } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
-import { getDb } from "../db/connection";
+import { getDb } from "../db/db";
 import { env } from "../env";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
@@ -27,28 +27,32 @@ function photoDeps(): photos.PhotoDeps {
   return { ...deps(), photosDir: path.join(env().DATA_DIR, "photos") };
 }
 
-export function putEvent(accountId: string, event: CalendarEvent) {
-  return announce(syncBus(), accountId, events.putEvent(deps(), accountId, event));
+export async function putEvent(accountId: string, event: CalendarEvent) {
+  return announce(syncBus(), accountId, await events.putEvent(deps(), accountId, event));
 }
 
-export function deleteEvent(accountId: string, id: string) {
-  return announce(syncBus(), accountId, events.deleteEvent(deps(), accountId, id));
+export async function deleteEvent(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await events.deleteEvent(deps(), accountId, id));
 }
 
-export function putNote(accountId: string, note: Note) {
-  return announce(syncBus(), accountId, notes.putNote(deps(), accountId, note));
+export async function putNote(accountId: string, note: Note) {
+  return announce(syncBus(), accountId, await notes.putNote(deps(), accountId, note));
 }
 
-export function deleteNote(accountId: string, id: string) {
-  return announce(syncBus(), accountId, notes.deleteNote(deps(), accountId, id));
+export async function deleteNote(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await notes.deleteNote(deps(), accountId, id));
 }
 
-export function putSettings(accountId: string, settingsId: string, saved: AccountSettings) {
-  return announce(syncBus(), accountId, settings.putSettings(deps(), accountId, settingsId, saved));
+export async function putSettings(accountId: string, settingsId: string, saved: AccountSettings) {
+  return announce(
+    syncBus(),
+    accountId,
+    await settings.putSettings(deps(), accountId, settingsId, saved),
+  );
 }
 
-export function finishLocationStep(accountId: string, step: LocationRequest) {
-  const saved = settings.finishLocationStep(deps(), accountId, step);
+export async function finishLocationStep(accountId: string, step: LocationRequest) {
+  const saved = await settings.finishLocationStep(deps(), accountId, step);
 
   if (saved.ok && saved.value) syncBus().publish(accountId, saved.value.version);
 

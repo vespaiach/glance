@@ -5,7 +5,7 @@ import { searchPlaces } from "@/server/services";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const display = syncReader(request);
+  const display = await syncReader(request);
 
   if (!display.ok) return display.error;
 

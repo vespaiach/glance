@@ -4,7 +4,6 @@ import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import type Database from "better-sqlite3";
 import exifReader from "exif-reader";
 import sharp from "sharp";
 import { uuidv7 } from "@/domain/id";
@@ -16,6 +15,7 @@ import {
 } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Photo, Synced } from "@/domain/schemas";
+import type { Db } from "../db/db";
 import type { ServiceDeps } from "./deps";
 import { accountTimeZone, optional, stamp } from "./rows";
 
@@ -83,7 +83,11 @@ export async function uploadPhoto(
   if (!takenOn.ok) return takenOn;
 
   return ok(
-    insertPhoto(deps, accountId, { id, title: photoTitle(upload.name), takenOn: takenOn.value }),
+    await insertPhoto(deps, accountId, {
+      id,
+      title: photoTitle(upload.name),
+      takenOn: takenOn.value,
+    }),
   );
 }
 
@@ -93,9 +97,10 @@ export async function photoFile(
   id: string,
   variant: PhotoVariant,
 ): Promise<Result<PhotoFile, "not-found">> {
-  const row = db
-    .prepare("SELECT file_path FROM photos WHERE id = ? AND account_id = ?")
-    .get(id, accountId) as { file_path: string } | undefined;
+  const row = await db.one<{ file_path: string }>(
+    "SELECT file_path FROM photos WHERE id = $1 AND account_id = $2",
+    [id, accountId],
+  );
 
   if (!row) return err("not-found");
 
@@ -209,31 +214,40 @@ function insertPhoto(
   { db, now }: PhotoDeps,
   accountId: string,
   photo: { id: string; title: string; takenOn: string | undefined },
-): SyncedPhoto {
-  return db.transaction((): SyncedPhoto => {
-    const { updatedAt, version } = stamp(db, now());
+): Promise<SyncedPhoto> {
+  return db.tx(async (tx): Promise<SyncedPhoto> => {
+    const { updatedAt, version } = await stamp(tx, now());
 
     const row: PhotoRow = {
       id: photo.id,
       title: photo.title,
-      taken_on: photo.takenOn ?? uploadDay(db, accountId, updatedAt),
+      taken_on: photo.takenOn ?? (await uploadDay(tx, accountId, updatedAt)),
       place: null,
       created_at: updatedAt,
       version,
     };
 
-    db.prepare(
+    await tx.run(
       `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, version)
-       VALUES (@id, @accountId, @title, @taken_on, NULL, @filePath, @created_at, @version)`,
-    ).run({ ...row, accountId, filePath: path.join(accountId, photo.id) });
+       VALUES ($1, $2, $3, $4, NULL, $5, $6, $7)`,
+      [
+        row.id,
+        accountId,
+        row.title,
+        row.taken_on,
+        path.join(accountId, photo.id),
+        row.created_at,
+        row.version,
+      ],
+    );
 
     return toPhoto(row);
-  })();
+  });
 }
 
-function uploadDay(db: Database.Database, accountId: string, at: string): string {
+async function uploadDay(db: Db, accountId: string, at: string): Promise<string> {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: accountTimeZone(db, accountId),
+    timeZone: await accountTimeZone(db, accountId),
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

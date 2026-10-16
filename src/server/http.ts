@@ -55,7 +55,9 @@ export function outdatedClient(request: NextRequest): NextResponse | undefined {
   return errorJson("outdated", 426);
 }
 
-export function signedInDisplay(request: NextRequest): Result<SignedInDisplay, "unauthorized"> {
+export function signedInDisplay(
+  request: NextRequest,
+): Promise<Result<SignedInDisplay, "unauthorized">> {
   return requireDisplay(request.cookies.get("session")?.value);
 }
 
@@ -82,7 +84,9 @@ export async function readRow<T extends { id: string }>(
   return body;
 }
 
-export function syncWriter(request: NextRequest): Result<SignedInDisplay, NextResponse> {
+export async function syncWriter(
+  request: NextRequest,
+): Promise<Result<SignedInDisplay, NextResponse>> {
   const refused = crossOrigin(request);
 
   if (refused) return err(refused);
@@ -102,12 +106,14 @@ export function readCursor(request: NextRequest): Result<number | undefined, "in
   return /^\d+$/.test(since) ? ok(Number(since)) : err("invalid");
 }
 
-export function syncReader(request: NextRequest): Result<SignedInDisplay, NextResponse> {
+export async function syncReader(
+  request: NextRequest,
+): Promise<Result<SignedInDisplay, NextResponse>> {
   const refused = outdatedClient(request);
 
   if (refused) return err(refused);
 
-  const display = signedInDisplay(request);
+  const display = await signedInDisplay(request);
 
   return display.ok ? display : err(errorJson(display.error, 401));
 }

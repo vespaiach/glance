@@ -97,7 +97,10 @@ describe("uploadPhoto", () => {
   });
 
   it("LOC-07 dates a photo with no EXIF date by the upload day in the location's time zone", async () => {
-    putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, weatherLocation: PORTLAND });
+    await putSettings(harness.deps(), MARIA, MARIA, {
+      ...DEFAULT_SETTINGS,
+      weatherLocation: PORTLAND,
+    });
     harness.advance(15 * 60 * 60 * 1000);
 
     const photo = await saved(await jpeg());
@@ -149,7 +152,7 @@ describe("uploadPhoto", () => {
 
     expect(answer).toEqual({ ok: false, error: "too-large" });
     expect(storedFiles()).toEqual([]);
-    expect(harness.globalVersion()).toBe(0);
+    expect(await harness.globalVersion()).toBe(0);
   });
 
   it("PHOTO-04 refuses a declared size over 20 MB without reading the body", async () => {
@@ -183,7 +186,7 @@ describe("uploadPhoto", () => {
 
     expect(answer).toEqual({ ok: false, error: "not-a-photo" });
     expect(storedFiles()).toEqual([]);
-    expect(harness.globalVersion()).toBe(0);
+    expect(await harness.globalVersion()).toBe(0);
   });
 
   it("PHOTO-04 refuses an SVG, which isn't a photo", async () => {
@@ -203,7 +206,7 @@ describe("uploadPhoto", () => {
   it("SYNC-02 the saved photo reaches other displays through the pull", async () => {
     const photo = await saved(await jpeg());
 
-    expect(pullChanges(harness.deps(), MARIA, 0).changes).toEqual([
+    expect((await pullChanges(harness.deps(), MARIA, 0)).changes).toEqual([
       { entity: "photos", row: photo },
     ]);
   });

@@ -1,7 +1,7 @@
 import "server-only";
-import type Database from "better-sqlite3";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
+import type { Db } from "../db/db";
 import type { Clocked } from "./deps";
 
 export type AccountRow = {
@@ -13,33 +13,33 @@ export type AccountRow = {
   created_at: string;
 };
 
-export function accountById(db: Database.Database, accountId: string): AccountRow | undefined {
-  return db.prepare("SELECT * FROM accounts WHERE id = ?").get(accountId) as AccountRow | undefined;
+export function accountById(db: Db, accountId: string): Promise<AccountRow | undefined> {
+  return db.one<AccountRow>("SELECT * FROM accounts WHERE id = $1", [accountId]);
 }
 
-export function accountByEmail(db: Database.Database, email: string): AccountRow | undefined {
-  return db.prepare("SELECT * FROM accounts WHERE email = ?").get(email) as AccountRow | undefined;
+export function accountByEmail(db: Db, email: string): Promise<AccountRow | undefined> {
+  return db.one<AccountRow>("SELECT * FROM accounts WHERE email = $1", [email]);
 }
 
 export function toAccount(row: AccountRow): Account {
   return { id: row.id, email: row.email, name: row.name };
 }
 
-export function saveName(
-  db: Database.Database,
+export async function saveName(
+  db: Db,
   accountId: string,
   name: string,
-): Result<Account, "not-found"> {
-  db.prepare("UPDATE accounts SET name = ? WHERE id = ?").run(name.trim(), accountId);
+): Promise<Result<Account, "not-found">> {
+  await db.run("UPDATE accounts SET name = $1 WHERE id = $2", [name.trim(), accountId]);
 
-  const row = accountById(db, accountId);
+  const row = await accountById(db, accountId);
 
   return row ? ok(toAccount(row)) : err("not-found");
 }
 
-export function finishSetup({ db, now }: Clocked, accountId: string): void {
-  db.prepare("UPDATE accounts SET setup_done_at = ? WHERE id = ? AND setup_done_at IS NULL").run(
+export async function finishSetup({ db, now }: Clocked, accountId: string): Promise<void> {
+  await db.run("UPDATE accounts SET setup_done_at = $1 WHERE id = $2 AND setup_done_at IS NULL", [
     now().toISOString(),
     accountId,
-  );
+  ]);
 }

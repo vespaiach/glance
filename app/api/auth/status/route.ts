@@ -4,8 +4,8 @@ import { clearCookie, setCookie } from "@/server/http";
 
 export const runtime = "nodejs";
 
-export function GET(request: NextRequest): NextResponse {
-  const answer = authStatus({
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const answer = await authStatus({
     sessionToken: request.cookies.get("session")?.value,
     pendingId: request.cookies.get("pending")?.value,
     linkEmail: request.cookies.get("link_email")?.value,
