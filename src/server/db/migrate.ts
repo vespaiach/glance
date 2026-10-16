@@ -5,7 +5,7 @@ import type { Db } from "./db";
 
 export type Migration = { version: number; sql: string };
 
-export const MIGRATIONS_DIR = path.join(process.cwd(), "db", "migrations");
+export const MIGRATIONS_DIR = path.join(process.cwd(), "db-migrations");
 
 const MIGRATION_FILE = /^(\d{3})_.+\.sql$/;
 
