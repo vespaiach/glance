@@ -7,11 +7,13 @@ import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { useFieldInView } from "@/ui/fieldInView";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
+import { BarHandle } from "./BarHandle";
 import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
 import { useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
 import { NavBar } from "./NavBar";
 import { OfflineNotice } from "./OfflineNotice";
+import { useBar } from "./providers/bar";
 import { VIEWS, viewForPath, viewPath } from "./routes";
 
 const styles = stylex.create({
@@ -79,6 +81,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const keyboardInset = useKeyboardInset();
 
+  const bar = useBar();
+
   usePrefetchViews();
 
   useFieldInView(main, keyboardInset);
@@ -91,8 +95,14 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>
-      <NavBar active={view} breakpoint={breakpoint} onNavigate={(path) => router.push(path)} />
-      <OfflineNotice breakpoint={breakpoint} onWeather={view === "weather"} />
+      <NavBar
+        active={view}
+        breakpoint={breakpoint}
+        mode={bar.mode}
+        onNavigate={(path) => router.push(path)}
+      />
+      {bar.mode === "hidden" && <BarHandle onReveal={bar.touch} />}
+      <OfflineNotice breakpoint={breakpoint} bar={bar.mode} onWeather={view === "weather"} />
     </div>
   );
 }

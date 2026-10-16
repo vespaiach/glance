@@ -44,6 +44,7 @@ const settings = {
     all: { start: "18:00", end: "07:30" },
     wknd: { start: "21:00", end: "09:00" },
   },
+  hideBarWhenIdle: true,
 };
 
 const hour = { time: "2026-10-09T18:00:00.000Z", icon: "cloud-sun", temp: 64 };
@@ -189,6 +190,19 @@ describe("AccountSettingsSchema", () => {
     const saved = { ...rest, ambientHours: { start: "18:00", end: "07:30" } };
 
     expect(v.parse(AccountSettingsSchema, saved)).toEqual({ ...rest, ambient: settings.ambient });
+  });
+
+  it("SET-11 settings saved before Hide bar when idle read it as On", () => {
+    const { hideBarWhenIdle: _, ...saved } = settings;
+
+    expect(v.parse(AccountSettingsSchema, saved).hideBarWhenIdle).toBe(true);
+  });
+
+  it("SET-11 keeps Hide bar when idle Off", () => {
+    expect(v.parse(AccountSettingsSchema, { ...settings, hideBarWhenIdle: false })).toEqual({
+      ...settings,
+      hideBarWhenIdle: false,
+    });
   });
 
   it("BG-04 rejects a dim outside Off, Light and Strong", () => {

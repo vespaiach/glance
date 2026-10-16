@@ -35,6 +35,8 @@ const CHOICES = {
   ],
   amb: ["same", "split", "off"],
   pick: ["all.s", "all.e", "wknd.s", "wknd.e"],
+  bar: ["hidden", "float"],
+  barauto: ["off"],
 } as const;
 
 type Choices = typeof CHOICES;

@@ -34,6 +34,7 @@ export const copy = {
     background: "Background",
     signIn: "Sign in",
     ambient: "Ambient",
+    showMenu: "Show menu",
   },
   today: {
     seasonMonth: (season: string, month: string) => `${season} · ${month}`,
@@ -287,6 +288,14 @@ export const copy = {
       options: [
         { value: "F", label: "Fahrenheit" },
         { value: "C", label: "Celsius" },
+      ],
+    },
+    hideBar: {
+      title: "Hide bar when idle",
+      body: "After 20 seconds without a touch. Any tap brings it back.",
+      options: [
+        { value: "on", label: "On" },
+        { value: "off", label: "Off" },
       ],
     },
     schedule: "Schedule",

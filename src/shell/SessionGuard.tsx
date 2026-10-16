@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { useMarkSignedOut, useSignedOut } from "@/data/repos";
-import { isTextField } from "./providers/idle";
+import { isTextField } from "./keyboard";
 import { useSheetHost } from "./SheetHost";
 
 const SIGN_IN = "/signin";

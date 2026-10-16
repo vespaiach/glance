@@ -5,13 +5,14 @@ import { savedTimeShown } from "@/domain/offline";
 import { type Clock, clockAt } from "@/domain/time";
 import { sizes } from "@/theme/tokens.stylex";
 import { OfflinePill } from "@/ui/OfflinePill";
-import { offlinePillBottom } from "./bar";
+import { type BarMode, offlinePillBottom } from "./bar";
 import { useNetwork } from "./providers/network";
 import { useAccountSettings } from "./providers/settings";
 import { useTimeZone } from "./providers/timeZone";
 
 type OfflineNoticeProps = {
   breakpoint: Breakpoint;
+  bar: BarMode;
   onWeather: boolean;
 };
 
@@ -28,7 +29,7 @@ function savedLabel(savedAt: string, clock: Clock, tz: string): string {
   return copy.offline.saved(clockAt(savedAt, clock, tz));
 }
 
-export function OfflineNotice({ breakpoint, onWeather }: OfflineNoticeProps) {
+export function OfflineNotice({ breakpoint, bar, onWeather }: OfflineNoticeProps) {
   const { showOfflinePill, savedAt } = useNetwork();
 
   const { clock } = useAccountSettings();
@@ -43,7 +44,7 @@ export function OfflineNotice({ breakpoint, onWeather }: OfflineNoticeProps) {
     <OfflinePill
       label={copy.offline.label}
       {...(showSaved && { meta: savedLabel(savedAt, clock, tz) })}
-      xstyle={[styles.pill, styles.bottom(offlinePillBottom(breakpoint))]}
+      xstyle={[styles.pill, styles.bottom(offlinePillBottom(breakpoint, bar))]}
     />
   );
 }
