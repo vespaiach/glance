@@ -1,7 +1,7 @@
 import { eventStatus } from "./eventStatus";
 import type { CalendarEvent } from "./schemas";
 
-type HeroEvent = Pick<CalendarEvent, "startAt" | "endAt">;
+type HeroEvent = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
 
 export type TodayHero<T extends HeroEvent> =
   | { kind: "now"; event: T }
@@ -16,9 +16,9 @@ export function todayHero<T extends HeroEvent>(
   now: Date,
   tz: string,
 ): TodayHero<T> {
-  if (events.length === 0) return { kind: "none" };
+  const ordered = events.filter((event) => !event.allDay).sort(byStart);
 
-  const ordered = [...events].sort(byStart);
+  if (ordered.length === 0) return { kind: "none" };
 
   const running = ordered.filter((event) => eventStatus(event, now, tz) === "now").at(-1);
 

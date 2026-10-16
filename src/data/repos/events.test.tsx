@@ -251,3 +251,134 @@ describe("event hooks in a zone", () => {
     await waitFor(() => expect(result.current?.id).toBe(NEXT_MONTH.id));
   });
 });
+
+describe("all-day events in the hooks", () => {
+  const allDay = (n: number, key: string, title = `All day ${n}`): CalendarEvent => ({
+    ...event(n, `${key}T00:00:00.000Z`, title),
+    allDay: true,
+  });
+
+  const timedAt = (n: number, startAt: string) => event(n, startAt, `Timed ${n}`);
+
+  const NO_SCHOOL = allDay(10, "2026-10-16", "No school");
+
+  const GRANDPA = allDay(11, "2026-10-09", "Grandpa staying over");
+
+  const FIRST = allDay(12, "2026-10-01");
+
+  const NOV_FIRST = allDay(13, "2026-11-01");
+
+  const SEPT_LAST = allDay(14, "2026-09-30");
+
+  const ZONES = ["America/Los_Angeles", "UTC", "Pacific/Guam"];
+
+  async function idsOnDay(key: string, zone: string): Promise<string[] | undefined> {
+    const { result } = renderHook(() => useEventsOnDay(key, zone), { wrapper: wrapperFor(store) });
+
+    await waitFor(() => expect(result.current).toBeDefined());
+
+    return result.current?.map((row) => row.id);
+  }
+
+  it.each(ZONES)(
+    "D21 a day reads its all-day event first, then its timed events, in %s",
+    async (zone) => {
+      const morning = timedAt(20, "2026-10-16T16:00:00.000Z");
+
+      await store.db.events.bulkPut([synced(morning), synced(NO_SCHOOL), synced(GRANDPA)]);
+
+      const ids = await idsOnDay("2026-10-16", zone);
+
+      expect(ids?.[0]).toBe(NO_SCHOOL.id);
+      expect(ids).not.toContain(GRANDPA.id);
+    },
+  );
+
+  it.each(ZONES)(
+    "D21 an all-day event stays on its date after a zone change to %s",
+    async (zone) => {
+      await store.db.events.bulkPut([synced(NO_SCHOOL)]);
+
+      expect(await idsOnDay("2026-10-15", zone)).toEqual([]);
+      expect(await idsOnDay("2026-10-16", zone)).toEqual([NO_SCHOOL.id]);
+      expect(await idsOnDay("2026-10-17", zone)).toEqual([]);
+    },
+  );
+
+  it("D21 a timed event at a UTC midnight is read as timed, once", async () => {
+    const midnight = timedAt(21, "2026-10-16T00:00:00.000Z");
+
+    await store.db.events.bulkPut([synced(midnight), synced(NO_SCHOOL)]);
+
+    expect(await idsOnDay("2026-10-16", "UTC")).toEqual([NO_SCHOOL.id, midnight.id]);
+    expect(await idsOnDay("2026-10-15", "America/Los_Angeles")).toEqual([midnight.id]);
+    expect(await idsOnDay("2026-10-16", "America/Los_Angeles")).toEqual([NO_SCHOOL.id]);
+  });
+
+  it.each(ZONES)("CAL-02 a month reads the all-day events of its own dates in %s", async (zone) => {
+    await store.db.events.bulkPut([
+      synced(SEPT_LAST),
+      synced(FIRST),
+      synced(NO_SCHOOL),
+      synced(NOV_FIRST),
+      { ...synced(GRANDPA), deletedAt: TEST_NOW.toISOString() },
+    ]);
+
+    const { result } = renderHook(() => useEventsInMonth(2026, 9, zone), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.id)).toEqual([FIRST.id, NO_SCHOOL.id]),
+    );
+  });
+
+  it.each(ZONES)(
+    "AMB-03 the next event is the next day's all-day event, before its timed ones, in %s",
+    async (zone) => {
+      const tenth = timedAt(22, "2026-10-10T16:00:00.000Z");
+
+      await store.db.events.bulkPut([synced(tenth), synced(allDay(15, "2026-10-10"))]);
+
+      const { result } = renderHook(() => useNextEventAfter("2026-10-09", zone), {
+        wrapper: wrapperFor(store),
+      });
+
+      await waitFor(() => expect(result.current?.title).toBe("All day 15"));
+    },
+  );
+
+  it("AMB-03 a timed event on an earlier day comes before a later all-day event", async () => {
+    const zone = "Pacific/Guam";
+
+    const tenth = timedAt(22, "2026-10-10T02:00:00.000Z");
+
+    await store.db.events.bulkPut([synced(tenth), synced(NO_SCHOOL)]);
+
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09", zone), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe(tenth.id));
+  });
+
+  it("AMB-03 an all-day event on today's date is not after today in a zone ahead of UTC", async () => {
+    await store.db.events.bulkPut([synced(GRANDPA), synced(NO_SCHOOL)]);
+
+    const { result } = renderHook(() => useNextEventAfter("2026-10-09", "Pacific/Guam"), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe(NO_SCHOOL.id));
+  });
+
+  it("LOC-09 the upcoming event example skips all-day events", async () => {
+    await store.db.events.bulkPut([synced(NO_SCHOOL), synced(NEXT_MONTH)]);
+
+    const { result } = renderHook(() => useUpcomingEvent(new Date(2026, 9, 9, 10, 41)), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.id).toBe(NEXT_MONTH.id));
+  });
+});

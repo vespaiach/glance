@@ -105,6 +105,30 @@ describe("CalendarEventSchema", () => {
   it("D6 rejects an unknown tone", () => {
     expect(accepts(CalendarEventSchema, { ...event, tone: 5 })).toBe(false);
   });
+
+  const { endAt: _, ...timed } = event;
+
+  const allDay = { ...timed, startAt: "2026-10-16T00:00:00.000Z", allDay: true };
+
+  it("D21 accepts an all-day event at its date's UTC midnight with no end", () => {
+    expect(v.parse(CalendarEventSchema, allDay)).toEqual(allDay);
+  });
+
+  it("D21 rejects an all-day event with an end", () => {
+    expect(accepts(CalendarEventSchema, { ...allDay, endAt: "2026-10-16T01:00:00.000Z" })).toBe(
+      false,
+    );
+  });
+
+  it("D21 rejects an all-day event that doesn't start at a UTC midnight", () => {
+    expect(accepts(CalendarEventSchema, { ...allDay, startAt: "2026-10-16T07:00:00.000Z" })).toBe(
+      false,
+    );
+  });
+
+  it("D21 rejects allDay false, so a timed event leaves the field out", () => {
+    expect(accepts(CalendarEventSchema, { ...allDay, allDay: false })).toBe(false);
+  });
 });
 
 describe("SyncedEventSchema", () => {
@@ -115,6 +139,12 @@ describe("SyncedEventSchema", () => {
     expect(accepts(SyncedEventSchema, { ...row, deletedAt: "2026-10-09T17:05:00.000Z" })).toBe(
       true,
     );
+  });
+
+  it("D21 checks an all-day row like an all-day event", () => {
+    const row = { ...event, updatedAt: "2026-10-09T17:00:00.000Z", version: 7, allDay: true };
+
+    expect(accepts(SyncedEventSchema, row)).toBe(false);
   });
 
   it("D10 rejects a row without a version", () => {

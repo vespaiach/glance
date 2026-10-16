@@ -95,6 +95,55 @@ describe("putEvent", () => {
   });
 });
 
+describe("putEvent all day", () => {
+  const { endAt: _, ...timed } = EVENT;
+
+  const NO_SCHOOL: CalendarEvent = {
+    ...timed,
+    title: "No school",
+    startAt: "2026-10-16T00:00:00.000Z",
+    allDay: true,
+  };
+
+  it("D21 saves an all-day event and answers it with allDay", async () => {
+    expect(await putEvent(harness.deps(), MARIA, NO_SCHOOL)).toEqual({
+      ok: true,
+      value: { ...NO_SCHOOL, updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
+    });
+  });
+
+  it("D21 an edit back to set times stores the event as timed again", async () => {
+    await putEvent(harness.deps(), MARIA, NO_SCHOOL);
+
+    await putEvent(harness.deps(), MARIA, EVENT);
+
+    const deleted = await deleteEvent(harness.deps(), MARIA, EVENT.id);
+
+    expect(deleted.ok && deleted.value.allDay).toBeUndefined();
+  });
+
+  it("D21 a tombstone keeps allDay", async () => {
+    await putEvent(harness.deps(), MARIA, NO_SCHOOL);
+
+    const deleted = await deleteEvent(harness.deps(), MARIA, NO_SCHOOL.id);
+
+    expect(deleted.ok && deleted.value.allDay).toBe(true);
+  });
+
+  it("tech§5 refuses to turn another account's event all day", async () => {
+    await putEvent(harness.deps(), MARIA, EVENT);
+
+    expect(await putEvent(harness.deps(), OMAR, NO_SCHOOL)).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+
+    const deleted = await deleteEvent(harness.deps(), MARIA, EVENT.id);
+
+    expect(deleted.ok && deleted.value.allDay).toBeUndefined();
+  });
+});
+
 describe("deleteEvent", () => {
   it("SYNC-03 keeps a tombstone stamped with the delete time and the next version", async () => {
     await putEvent(harness.deps(), MARIA, EVENT);

@@ -1,9 +1,10 @@
+import { eventDayKey } from "./allDay";
 import type { CalendarEvent } from "./schemas";
-import { dayNumber } from "./zone";
+import { dateKey } from "./zone";
 
-export type EventStatus = "past" | "now" | "upcoming";
+export type EventStatus = "past" | "now" | "upcoming" | "allDay";
 
-type EventSpan = Pick<CalendarEvent, "startAt" | "endAt">;
+type EventSpan = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
 
 function statusToday({ startAt, endAt }: EventSpan, now: Date): EventStatus {
   const time = now.getTime();
@@ -14,11 +15,15 @@ function statusToday({ startAt, endAt }: EventSpan, now: Date): EventStatus {
 }
 
 export function eventStatus(event: EventSpan, now: Date, tz: string): EventStatus {
-  const dayOffset = dayNumber(new Date(event.startAt), tz) - dayNumber(now, tz);
+  if (event.allDay) return "allDay";
 
-  if (dayOffset < 0) return "past";
+  const day = eventDayKey(event, tz);
 
-  if (dayOffset > 0) return "upcoming";
+  const today = dateKey(now, tz);
+
+  if (day < today) return "past";
+
+  if (day > today) return "upcoming";
 
   return statusToday(event, now);
 }

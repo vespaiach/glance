@@ -1,5 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
+import { allDayStart, eventDayKey } from "@/domain/allDay";
 import type { CalendarEvent } from "@/domain/schemas";
 import { addDays, dayStart } from "@/domain/zone";
 import type { GlanceDb, StoredEvent } from "../db";
@@ -24,12 +25,46 @@ export function useEventsRepo(): EventsRepo {
   return useMemo(() => createEventsRepo(store), [store]);
 }
 
-function startingBetween(db: GlanceDb, from: Date, to: Date): Promise<StoredEvent[]> {
-  return db.events
-    .where("startAt")
-    .between(from.toISOString(), to.toISOString())
-    .filter(isLive)
-    .toArray();
+function isKind(allDay: boolean) {
+  return (row: StoredEvent) => isLive(row) && (row.allDay === true) === allDay;
+}
+
+function startingBetween(
+  db: GlanceDb,
+  [from, to]: readonly [string, string],
+  allDay: boolean,
+): Promise<StoredEvent[]> {
+  return db.events.where("startAt").between(from, to).filter(isKind(allDay)).toArray();
+}
+
+async function eventsOnDays(
+  db: GlanceDb,
+  [first, end]: readonly [string, string],
+  tz: string,
+): Promise<StoredEvent[]> {
+  const allDay = await startingBetween(db, [allDayStart(first), allDayStart(end)], true);
+
+  const timed = await startingBetween(db, [isoDayStart(first, tz), isoDayStart(end, tz)], false);
+
+  return [...allDay, ...timed];
+}
+
+function isoDayStart(key: string, tz: string): string {
+  return dayStart(key, tz).toISOString();
+}
+
+function firstFrom(db: GlanceDb, from: string, allDay: boolean): Promise<StoredEvent | undefined> {
+  return db.events.where("startAt").aboveOrEqual(from).filter(isKind(allDay)).first();
+}
+
+function earlierDay(
+  allDay: StoredEvent | undefined,
+  timed: StoredEvent | undefined,
+  tz: string,
+): StoredEvent | null {
+  if (!allDay || !timed) return allDay ?? timed ?? null;
+
+  return eventDayKey(timed, tz) < eventDayKey(allDay, tz) ? timed : allDay;
 }
 
 export function useEvent(id: string): StoredEvent | null | undefined {
@@ -49,10 +84,7 @@ function firstOfMonth(year: number, month: number): string {
 export function useEventsOnDay(dayKey: string, tz: string): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 
-  return useLiveQuery(
-    () => startingBetween(db, dayStart(dayKey, tz), dayStart(addDays(dayKey, 1), tz)),
-    [db, dayKey, tz],
-  );
+  return useLiveQuery(() => eventsOnDays(db, [dayKey, addDays(dayKey, 1)], tz), [db, dayKey, tz]);
 }
 
 export function useEventsInMonth(
@@ -63,12 +95,7 @@ export function useEventsInMonth(
   const { db } = useRepoStore();
 
   return useLiveQuery(
-    () =>
-      startingBetween(
-        db,
-        dayStart(firstOfMonth(year, month), tz),
-        dayStart(firstOfMonth(year, month + 1), tz),
-      ),
+    () => eventsOnDays(db, [firstOfMonth(year, month), firstOfMonth(year, month + 1)], tz),
     [db, year, month, tz],
   );
 }
@@ -77,15 +104,13 @@ export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | nul
   const { db } = useRepoStore();
 
   return useLiveQuery(async () => {
-    const next = dayStart(addDays(dayKey, 1), tz);
+    const next = addDays(dayKey, 1);
 
-    const first = await db.events
-      .where("startAt")
-      .aboveOrEqual(next.toISOString())
-      .filter(isLive)
-      .first();
+    const allDay = await firstFrom(db, allDayStart(next), true);
 
-    return first ?? null;
+    const timed = await firstFrom(db, isoDayStart(next, tz), false);
+
+    return earlierDay(allDay, timed, tz);
   }, [db, dayKey, tz]);
 }
 
@@ -95,7 +120,7 @@ export function useUpcomingEvent(now: Date): StoredEvent | null | undefined {
   const after = now.toISOString();
 
   return useLiveQuery(async () => {
-    const first = await db.events.where("startAt").above(after).filter(isLive).first();
+    const first = await db.events.where("startAt").above(after).filter(isKind(false)).first();
 
     return first ?? null;
   }, [db, after]);

@@ -1,6 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { LogOut, WifiOff } from "lucide-react";
 import { copy } from "@/copy";
+import { eventDayKey } from "@/domain/allDay";
 import { isTomorrow } from "@/domain/ambient";
 import { nextNotableDay } from "@/domain/nextNotableDay";
 import type { AccountSettings, CalendarEvent, Season, Weather } from "@/domain/schemas";
@@ -159,14 +160,18 @@ function lowLine(weather: Weather, now: Date, tz: string, unit: Unit): string {
   return `${low} · ${copy.ambient.rain(formatWeekday(parseDateKey(rainy.date), "UTC"), rainy.precip ?? 0)}`;
 }
 
+function eventDay(event: CalendarEvent, now: Date, tz: string): string {
+  if (isTomorrow(event, now, tz)) return copy.ambient.tomorrow;
+
+  const date = parseDateKey(eventDayKey(event, tz));
+
+  return copy.ambient.day(formatWeekday(date, "UTC"), formatMonthDay(date, "UTC"));
+}
+
 function eventLine(event: CalendarEvent, now: Date, clock: ClockSetting, tz: string): string {
-  const start = new Date(event.startAt);
+  const start = event.allDay ? copy.ambient.allDay : clockAt(event.startAt, clock, tz);
 
-  const day = isTomorrow(start, now, tz)
-    ? copy.ambient.tomorrow
-    : copy.ambient.day(formatWeekday(start, tz), formatMonthDay(start, tz));
-
-  return copy.ambient.event(day, clockAt(event.startAt, clock, tz), event.title, event.location);
+  return copy.ambient.event(eventDay(event, now, tz), start, event.title, event.location);
 }
 
 function LineSkeleton({ label }: { label: string }) {

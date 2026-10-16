@@ -23,6 +23,7 @@ export type EventRow = ServerColumns & {
   end_at: string | null;
   location: string | null;
   tone: string;
+  all_day: boolean;
 };
 
 export function putEvent(
@@ -84,11 +85,11 @@ async function writeEvent(
   { updatedAt, version }: Stamp,
 ): Promise<void> {
   await db.run(
-    `INSERT INTO events (id, account_id, title, start_at, end_at, location, tone, updated_at, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO events (id, account_id, title, start_at, end_at, location, tone, all_day, updated_at, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
      ON CONFLICT (id) DO UPDATE SET title = excluded.title, start_at = excluded.start_at,
        end_at = excluded.end_at, location = excluded.location, tone = excluded.tone,
-       updated_at = excluded.updated_at, version = excluded.version`,
+       all_day = excluded.all_day, updated_at = excluded.updated_at, version = excluded.version`,
     [
       event.id,
       accountId,
@@ -97,6 +98,7 @@ async function writeEvent(
       event.endAt ?? null,
       event.location ?? null,
       String(event.tone),
+      event.allDay === true,
       updatedAt,
       version,
     ],
@@ -111,6 +113,7 @@ export function toEvent(row: EventRow): SyncedEvent {
     ...optional("endAt", row.end_at),
     ...optional("location", row.location),
     tone: toneFromColumn<Tone>(row.tone),
+    ...(row.all_day ? { allDay: true } : {}),
     ...serverFields(row),
   };
 }

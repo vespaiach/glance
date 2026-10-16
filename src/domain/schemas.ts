@@ -39,9 +39,14 @@ const eventEntries = {
   title: RequiredTextSchema,
   location: v.optional(v.string()),
   tone: ToneSchema,
+  allDay: v.optional(v.literal(true)),
 };
 
-function spanIsValid({ startAt, endAt }: { startAt: string; endAt?: string }) {
+type EventSpan = { startAt: string; endAt?: string; allDay?: true };
+
+function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
+  if (allDay) return endAt === undefined && Date.parse(startAt) % DAY_MS === 0;
+
   if (endAt === undefined) return true;
 
   const span = Date.parse(endAt) - Date.parse(startAt);

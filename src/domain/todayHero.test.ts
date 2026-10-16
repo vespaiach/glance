@@ -13,6 +13,8 @@ const garden = { id: "garden", startAt: iso(8, 0) };
 
 const day = [lunch, call, dropOff];
 
+const grandpa = { id: "grandpa", startAt: "2026-10-09T00:00:00.000Z", allDay: true as const };
+
 describe("todayHero", () => {
   it("TODAY-02 a running event is happening now", () => {
     expect(todayHero(day, at(10, 41), tz)).toEqual({ kind: "now", event: call });
@@ -55,5 +57,21 @@ describe("todayHero in a zone", () => {
     expect(todayHero([late], new Date("2026-10-10T16:00:00Z"), "America/Los_Angeles")).toEqual({
       kind: "ended",
     });
+  });
+
+  it("TODAY-02 a day with only all-day events has nothing scheduled", () => {
+    expect(todayHero([grandpa], at(10, 41), tz)).toEqual({ kind: "none" });
+  });
+
+  it("TODAY-02 an all-day event never takes the hero from a running event", () => {
+    expect(todayHero([grandpa, ...day], at(10, 41), tz)).toEqual({ kind: "now", event: call });
+  });
+
+  it("TODAY-02 an all-day event is never up next", () => {
+    expect(todayHero([grandpa, ...day], at(9, 45), tz)).toEqual({ kind: "next", event: call });
+  });
+
+  it("TODAY-02 all-day events don't keep the day from ending", () => {
+    expect(todayHero([grandpa, ...day], at(13, 0), tz)).toEqual({ kind: "ended" });
   });
 });

@@ -32,3 +32,22 @@ describe("eventStatus in a zone", () => {
     );
   });
 });
+
+describe("eventStatus of an all-day event", () => {
+  it.each([
+    ["today", "2026-10-09T00:00:00.000Z"],
+    ["on an earlier day", "2026-10-02T00:00:00.000Z"],
+    ["on a later day", "2026-10-16T00:00:00.000Z"],
+  ])("STATUS-01 an all-day event %s has no status", (_, startAt) => {
+    expect(eventStatus({ startAt, allDay: true }, now, tz)).toBe("allDay");
+  });
+
+  it.each(["America/Los_Angeles", "Pacific/Guam"])(
+    "STATUS-01 an all-day event today is never past or now in %s",
+    (zone) => {
+      const event = { startAt: "2026-10-09T00:00:00.000Z", allDay: true as const };
+
+      expect(eventStatus(event, new Date("2026-10-09T12:00:00Z"), zone)).toBe("allDay");
+    },
+  );
+});
