@@ -15,6 +15,8 @@ const photo = (n: number, title: string): Photo => ({
   id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
   title,
   takenOn: "2026-09-06",
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   createdAt: "2026-10-05T19:00:00.000Z",
 });
 

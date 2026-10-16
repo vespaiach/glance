@@ -237,6 +237,38 @@ describe("seedFixtureDb", () => {
     });
   });
 
+  it("PHOTO-03 upload=done seeds the two uploaded photos, guessed and not checked, newest first", async () => {
+    await seedFixtureDb(db, { upload: "done" });
+
+    const newest = await db.photos.orderBy("createdAt").reverse().limit(2).toArray();
+
+    expect(
+      newest.map(({ title, takenOn, place, sources, checked }) => ({
+        title,
+        takenOn,
+        place,
+        sources,
+        checked,
+      })),
+    ).toEqual([
+      {
+        title: "Halloween costumes",
+        takenOn: "2025-10-31",
+        place: undefined,
+        sources: { title: "file-name", takenOn: "file-name", place: "none" },
+        checked: false,
+      },
+      {
+        title: "Cannon Beach",
+        takenOn: "2026-08-16",
+        place: "Cannon Beach, OR",
+        sources: { title: "place", takenOn: "photo", place: "photo-location" },
+        checked: false,
+      },
+    ]);
+    expect(await db.photos.count()).toBe(FIXTURE_PHOTOS.length + 2);
+  });
+
   it("OFF-01 online fixtures seed no sync status", async () => {
     await seedFixtureDb(db, {});
 
@@ -592,7 +624,7 @@ describe("FixtureTransport upload", () => {
     useTimers();
     const progress: number[] = [];
 
-    const pending = transport().upload(photoFile("IMG_2041.jpg"), (percent) =>
+    const pending = transport().upload(photoFile("IMG_2041.jpg"), "2026-10-08", (percent) =>
       progress.push(percent),
     );
     await vi.advanceTimersByTimeAsync(400);
@@ -606,10 +638,33 @@ describe("FixtureTransport upload", () => {
       value: {
         id: expect.any(String),
         title: "IMG_2041",
-        takenOn: "2026-10-09",
+        takenOn: "2026-10-08",
         createdAt: NOW.toISOString(),
+        sources: { title: "file", takenOn: "file-date", place: "none" },
+        checked: false,
         updatedAt: NOW.toISOString(),
         version: expect.any(Number),
+      },
+    });
+  });
+
+  it("PHOTO-10 guesses the name and date from the file name", async () => {
+    useTimers();
+
+    const pending = transport().upload(
+      photoFile("halloween-costumes-2025-10-31.jpg"),
+      "2026-10-08",
+      () => {},
+    );
+    await vi.advanceTimersByTimeAsync(400 * 13);
+
+    expect(await pending).toMatchObject({
+      ok: true,
+      value: {
+        title: "Halloween costumes",
+        takenOn: "2025-10-31",
+        sources: { title: "file-name", takenOn: "file-name", place: "none" },
+        checked: false,
       },
     });
   });
@@ -617,8 +672,10 @@ describe("FixtureTransport upload", () => {
   it("PHOTO-08 rejects a file over 20 MB as too large with no progress", async () => {
     const progress: number[] = [];
 
-    const result = await transport().upload(photoFile("IMG_3307.jpg", MAX_PHOTO_BYTES + 1), (p) =>
-      progress.push(p),
+    const result = await transport().upload(
+      photoFile("IMG_3307.jpg", MAX_PHOTO_BYTES + 1),
+      "2026-10-08",
+      (p) => progress.push(p),
     );
 
     expect(result).toEqual({ ok: false, error: "too-large" });
@@ -628,6 +685,7 @@ describe("FixtureTransport upload", () => {
   it("PHOTO-08 rejects a file that isn't an image as not a photo", async () => {
     const result = await transport().upload(
       photoFile("Recipe card.pdf", 1000, "application/pdf"),
+      "2026-10-08",
       () => {},
     );
 
@@ -637,6 +695,7 @@ describe("FixtureTransport upload", () => {
   it("PHOTO-09 upload=offline fails with a network error", async () => {
     const result = await transport({ upload: "offline" }).upload(
       photoFile("IMG_2041.jpg"),
+      "2026-10-08",
       () => {},
     );
 

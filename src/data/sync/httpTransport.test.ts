@@ -1,5 +1,5 @@
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
-import { FILE_NAME_HEADER, MAX_PHOTO_BYTES } from "@/domain/photoUpload";
+import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import type { OutboxEntry } from "../db";
 import { createHttpTransport } from "./httpTransport";
 
@@ -301,10 +301,10 @@ describe("HttpTransport", () => {
     expect(calls[0]?.init.method).toBe("POST");
   });
 
-  it("tech§6.3 upload sends the raw file with its type, encoded name and build header", async () => {
+  it("D22 upload sends the raw file with its type, encoded name, modified date and build header", async () => {
     const file = photoFile();
 
-    const answer = transport(fakeFetch().fetch).upload(file, () => {});
+    const answer = transport(fakeFetch().fetch).upload(file, "2026-08-16", () => {});
     sentXhr().answer(201, PHOTO_ROW);
 
     expect(await answer).toEqual({ ok: true, value: PHOTO_ROW });
@@ -313,13 +313,14 @@ describe("HttpTransport", () => {
     expect(sentXhr().body).toBe(file);
     expect(sentXhr().headers["content-type"]).toBe("image/jpeg");
     expect(sentXhr().headers[FILE_NAME_HEADER]).toBe("Cannon%20Beach.jpg");
+    expect(sentXhr().headers[FILE_MODIFIED_HEADER]).toBe("2026-08-16");
     expect(sentXhr().headers[BUILD_HEADER]).toBe(String(CLIENT_BUILD));
   });
 
   it("PHOTO-04 upload reports the real progress as a whole percent", async () => {
     const percents: number[] = [];
 
-    const answer = transport(fakeFetch().fetch).upload(photoFile(), (percent) =>
+    const answer = transport(fakeFetch().fetch).upload(photoFile(), "2026-08-16", (percent) =>
       percents.push(percent),
     );
     sentXhr().progress(250, 1000);
@@ -334,7 +335,7 @@ describe("HttpTransport", () => {
     ["too-large", photoFile("big.jpg", MAX_PHOTO_BYTES + 1)],
     ["not-a-photo", photoFile("notes.pdf", 1000, "application/pdf")],
   ])("PHOTO-04 upload refuses a %s file before sending it", async (problem, file) => {
-    const answer = await transport(fakeFetch().fetch).upload(file, () => {});
+    const answer = await transport(fakeFetch().fetch).upload(file, "2026-08-16", () => {});
 
     expect(answer).toEqual({ ok: false, error: problem });
     expect(FakeXhr.last).toBeUndefined();
@@ -347,7 +348,7 @@ describe("HttpTransport", () => {
     [426, "outdated"],
     [500, "server"],
   ])("PHOTO-04 upload maps HTTP %i to %s", async (status, error) => {
-    const answer = transport(fakeFetch().fetch).upload(photoFile(), () => {});
+    const answer = transport(fakeFetch().fetch).upload(photoFile(), "2026-08-16", () => {});
     sentXhr().answer(status, { error: "x" });
 
     expect(await answer).toEqual({ ok: false, error });
@@ -356,7 +357,7 @@ describe("HttpTransport", () => {
   it.each(["onerror", "onabort", "ontimeout"] as const)(
     "PHOTO-09 upload answers network on %s",
     async (event) => {
-      const answer = transport(fakeFetch().fetch).upload(photoFile(), () => {});
+      const answer = transport(fakeFetch().fetch).upload(photoFile(), "2026-08-16", () => {});
       sentXhr()[event]?.();
 
       expect(await answer).toEqual({ ok: false, error: "network" });

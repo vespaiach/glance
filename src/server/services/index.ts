@@ -24,7 +24,11 @@ function weatherDeps(): weather.WeatherDeps {
 }
 
 function photoDeps(): photos.PhotoDeps {
-  return { ...deps(), photosDir: path.join(env().DATA_DIR, "photos") };
+  return {
+    ...deps(),
+    photosDir: path.join(env().DATA_DIR, "photos"),
+    locator: createCensusGeocoder(fetch),
+  };
 }
 
 export async function putEvent(accountId: string, event: CalendarEvent) {

@@ -1,7 +1,7 @@
-import type { FixtureUpload } from "@/data/repos";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import {
   chosenTile,
+  type FixtureUploads,
   initialUploads,
   type UploadTile,
   uploadFailure,
@@ -30,7 +30,7 @@ const paused = (title: string): UploadTile => ({
   percent: 40,
 });
 
-const FIXTURES: Record<"one" | "progress" | "error" | "offline", readonly FixtureUpload[]> = {
+const FIXTURES: FixtureUploads = {
   one: [{ title: "IMG_2041", status: "uploading", progress: 64, preview: "/a.svg" }],
   progress: [],
   error: [
@@ -39,6 +39,7 @@ const FIXTURES: Record<"one" | "progress" | "error" | "offline", readonly Fixtur
     { title: "Halloween costumes", status: "failed", progress: 0, error: "network" },
   ],
   offline: [{ title: "IMG_2041", status: "paused", progress: 40 }],
+  done: [],
 };
 
 describe("uploadSummary", () => {
@@ -107,6 +108,10 @@ describe("initialUploads", () => {
     ).toEqual(["too-large", "not-a-photo", "network"]);
   });
 
+  it("PHOTO-03 upload=done starts with no uploads, since they finished", () => {
+    expect(initialUploads("done", FIXTURES)).toEqual([]);
+  });
+
   it("PHOTO-09 upload=offline starts with a paused upload", () => {
     expect(initialUploads("offline", FIXTURES)).toEqual([
       { id: "upload-0", title: "IMG_2041", state: "paused", percent: 40 },
@@ -117,7 +122,13 @@ describe("initialUploads", () => {
 const file = (name: string, type: string, size = 1_000) => ({ name, type, size });
 
 describe("chosenTile", () => {
-  it("PHOTO-03 a chosen photo is titled by its file name and waits at 0%", () => {
+  it("PHOTO-10 a chosen photo shows the name guessed from its file name", () => {
+    expect(chosenTile("a", file("halloween-costumes-2025-10-31.jpg", "image/jpeg")).title).toBe(
+      "Halloween costumes",
+    );
+  });
+
+  it("PHOTO-03 a chosen photo with no words in its file name is titled by its file name and waits at 0%", () => {
     expect(chosenTile("a", file("IMG_2041.jpeg", "image/jpeg"), "blob:a")).toEqual({
       id: "a",
       title: "IMG_2041",
@@ -130,7 +141,7 @@ describe("chosenTile", () => {
   it("PHOTO-04 a file over 20 MB fails as too large before the upload starts", () => {
     expect(chosenTile("a", file("big.jpg", "image/jpeg", MAX_PHOTO_BYTES + 1))).toEqual({
       id: "a",
-      title: "big",
+      title: "Big",
       state: "failed",
       reason: "too-large",
     });

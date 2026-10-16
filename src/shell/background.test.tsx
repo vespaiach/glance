@@ -10,6 +10,8 @@ function photo(n: number, createdAt: string): Photo {
     id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
     title: `Photo ${n}`,
     takenOn: "2026-09-27",
+    sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+    checked: true,
     createdAt,
   };
 }

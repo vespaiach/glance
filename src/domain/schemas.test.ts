@@ -181,6 +181,8 @@ describe("PhotoSchema", () => {
     takenOn: "2026-09-06",
     place: "Summer trip",
     createdAt: "2026-09-06T20:00:00.000Z",
+    sources: { title: "file-name", takenOn: "file-date", place: "photo-location" },
+    checked: false,
   };
 
   it("D6 accepts a photo with or without a place", () => {
@@ -192,6 +194,15 @@ describe("PhotoSchema", () => {
 
   it("PHOTO-03 rejects a takenOn that isn't a date", () => {
     expect(accepts(PhotoSchema, { ...photo, takenOn: "Sep 6" })).toBe(false);
+  });
+
+  it("PHOTO-10 rejects a photo with no sources or an unknown source", () => {
+    const { sources: _, ...noSources } = photo;
+
+    expect(accepts(PhotoSchema, noSources)).toBe(false);
+    expect(accepts(PhotoSchema, { ...photo, sources: { ...photo.sources, place: "file" } })).toBe(
+      false,
+    );
   });
 });
 

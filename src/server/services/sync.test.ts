@@ -34,8 +34,10 @@ async function insertPhoto(
   takenOn: string | null,
 ): Promise<void> {
   await harness.deps().db.run(
-    `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, version)
-       VALUES ($1, $2, 'Cannon Beach', $3, NULL, 'x', '2026-10-01T18:30:00.000Z', $4)`,
+    `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, updated_at,
+       version, title_source, date_source, place_source)
+       VALUES ($1, $2, 'Cannon Beach', $3, NULL, 'x', '2026-10-01T18:30:00.000Z',
+       '2026-10-02T08:00:00.000Z', $4, 'place', 'photo', 'none')`,
     [PHOTO_ID, accountId, takenOn, version],
   );
 }
@@ -89,7 +91,7 @@ describe("pullChanges", () => {
     });
   });
 
-  it("SYNC-02 returns photos with their upload time as the update time", async () => {
+  it("D22 returns photos with their update time, sources and checked", async () => {
     await insertPhoto(MARIA, 4, "2026-09-28");
 
     expect((await pullChanges(harness.deps(), MARIA, undefined)).changes).toEqual([
@@ -100,8 +102,10 @@ describe("pullChanges", () => {
           title: "Cannon Beach",
           takenOn: "2026-09-28",
           createdAt: "2026-10-01T18:30:00.000Z",
-          updatedAt: "2026-10-01T18:30:00.000Z",
+          updatedAt: "2026-10-02T08:00:00.000Z",
           version: 4,
+          sources: { title: "place", takenOn: "photo", place: "none" },
+          checked: false,
         },
       },
     ]);

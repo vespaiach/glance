@@ -42,7 +42,7 @@ export function toPlaces(results: GeocodingResult[], query: PlaceQuery): Weather
   return distinct(places).slice(0, MAX_PLACES);
 }
 
-export function placeLabel({ name, region }: WeatherLocation): string {
+export function placeLabel({ name, region }: Pick<WeatherLocation, "name" | "region">): string {
   return copy.weather.place(name, stateCode(region) ?? region);
 }
 

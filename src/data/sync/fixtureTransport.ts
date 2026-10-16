@@ -1,9 +1,9 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { inAmbient } from "@/domain/idle";
-import { photoTitle, uploadProblem } from "@/domain/photoUpload";
+import { photoDetails } from "@/domain/photoName";
+import { uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, CalendarEvent, Weather, WeatherLocation } from "@/domain/schemas";
-import { dateKey } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_ALL_DAY,
@@ -18,6 +18,7 @@ import {
   FIXTURE_SEEDED_EVENTS,
   FIXTURE_SETTINGS,
   FIXTURE_TIME_ZONE,
+  FIXTURE_UPLOADED_PHOTOS,
   FIXTURE_WEATHER,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
@@ -145,6 +146,9 @@ async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promi
     await db.notes.bulkPut(FIXTURE_NOTES.map(seeded));
     await db.photos.bulkPut(FIXTURE_PHOTOS.map(seeded));
   }
+
+  if (seed.withRows && params.upload === "done")
+    await db.photos.bulkPut(FIXTURE_UPLOADED_PHOTOS.map(seeded));
 
   await db.settings.put({ ...seeded(seed.settings), accountId });
 
@@ -298,10 +302,9 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
 
   const signedIn = signedInOnly(params.signin === "ended");
 
-  const uploaded = (file: File): StoredPhoto => ({
+  const uploaded = (file: File, modifiedOn: string): StoredPhoto => ({
     id: crypto.randomUUID(),
-    title: photoTitle(file.name),
-    takenOn: dateKey(now(), FIXTURE_TIME_ZONE),
+    ...photoDetails({ fileName: file.name, fileDate: modifiedOn, metadata: {} }),
     createdAt: now().toISOString(),
     ...stamp(),
   });
@@ -320,7 +323,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
       }),
     ...createFixtureSearch(params),
     auth: createFixtureAuth(params),
-    upload: async (file, onProgress): Promise<Result<StoredPhoto, UploadError>> => {
+    upload: async (file, modifiedOn, onProgress): Promise<Result<StoredPhoto, UploadError>> => {
       const problem = uploadProblem(file);
 
       if (problem) return err(problem);
@@ -329,7 +332,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
 
       await reportProgress(onProgress);
 
-      return ok(uploaded(file));
+      return ok(uploaded(file, modifiedOn));
     },
   };
 }

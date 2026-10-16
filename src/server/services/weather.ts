@@ -58,7 +58,7 @@ export async function locatePlace(
   { provider, locator }: LocateDeps,
   position: Coordinates,
 ): Promise<Result<WeatherLocation, LocateFailure>> {
-  const at = rounded(position);
+  const at = roundedPoint(position);
 
   const [place, timeZone] = await Promise.all([locator.placeAt(at), provider.timeZoneAt(at)]);
 
@@ -69,7 +69,7 @@ export async function locatePlace(
   return ok({ ...place.value, ...at, timeZone: timeZone.value });
 }
 
-function rounded({ lat, lon }: Coordinates): Coordinates {
+export function roundedPoint({ lat, lon }: Coordinates): Coordinates {
   return { lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100 };
 }
 

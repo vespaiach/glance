@@ -15,6 +15,7 @@ import type { Photo } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
+import { TimeZoneProvider } from "@/shell/providers/timeZone";
 import { PhotosScreen } from "./PhotosScreen";
 
 const NOW = new Date(2026, 9, 9, 10, 41);
@@ -23,6 +24,8 @@ const photo = (n: number, title: string, createdAt: string): Photo => ({
   id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
   title,
   takenOn: "2026-09-27",
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   place: "Sauvie Island",
   createdAt,
 });
@@ -56,14 +59,20 @@ afterEach(async () => {
   await store.close();
 });
 
-function renderPhotos(params: FixtureParams = {}, clock: "frozen" | "running" = "frozen") {
+function renderPhotos(
+  params: FixtureParams = {},
+  clock: "frozen" | "running" = "frozen",
+  timeZone?: string,
+) {
   const Shell = shellWrapper(store, clock === "frozen" ? { frozenAt: NOW } : {});
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <NetworkProvider>
-        <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
-      </NetworkProvider>
+      <TimeZoneProvider timeZone={timeZone}>
+        <NetworkProvider>
+          <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
+        </NetworkProvider>
+      </TimeZoneProvider>
     </Shell>
   );
 
@@ -201,7 +210,7 @@ function pendingUpload() {
   };
 
   store.upload.mockImplementation(
-    (_file, onProgress) =>
+    (_file, _modifiedOn, onProgress) =>
       new Promise((resolve) => {
         upload.report = (percent) => act(() => onProgress(percent));
         upload.finish = resolve;
@@ -220,6 +229,26 @@ async function choose(...files: File[]) {
 function progress(title: string) {
   return screen.getByRole("progressbar", { name: `Uploading ${title}` });
 }
+
+test("PHOTO-10 the upload tile shows the name guessed from the file and sends its modified date in the screen's zone", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  pendingUpload();
+
+  renderPhotos({}, "frozen", "Pacific/Kiritimati");
+
+  await screen.findByText("Family photos · 1");
+
+  const file = new File(["x"], "halloween-costumes-2025-10-31.jpg", {
+    type: "image/jpeg",
+    lastModified: Date.UTC(2026, 7, 16, 12),
+  });
+
+  await choose(file);
+
+  expect(screen.getByText("Uploading Halloween costumes")).toBeInTheDocument();
+  expect(store.upload).toHaveBeenCalledWith(file, "2026-08-17", expect.any(Function));
+});
 
 test("PHOTO-03 Upload opens the picker for several images", async () => {
   await store.db.photos.bulkPut([synced(COAST)]);

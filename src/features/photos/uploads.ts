@@ -1,4 +1,5 @@
 import type { FixtureParams, FixtureUpload, UploadError } from "@/data/repos";
+import { nameFromFile } from "@/domain/photoName";
 import { photoTitle, type UploadProblem, uploadProblem } from "@/domain/photoUpload";
 
 export type UploadFailure = UploadProblem | "network";
@@ -86,7 +87,9 @@ export function initialUploads(
 }
 
 export function chosenTile(id: string, file: ChosenFile, preview?: string): UploadTile {
-  const base = { id, title: photoTitle(file.name), ...(preview && { preview }) };
+  const title = nameFromFile(file.name) ?? photoTitle(file.name);
+
+  const base = { id, title, ...(preview && { preview }) };
 
   const problem = uploadProblem(file);
 

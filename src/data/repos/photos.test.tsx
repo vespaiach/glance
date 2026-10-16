@@ -9,6 +9,8 @@ function photo(n: number, createdAt: string): Photo {
     id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
     title: `Photo ${n}`,
     takenOn: "2026-09-27",
+    sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+    checked: true,
     createdAt,
   };
 }
@@ -47,10 +49,10 @@ describe("usePhotos", () => {
 describe("PhotosRepo.upload", () => {
   const chosen = new File(["x"], "IMG_2041.jpg", { type: "image/jpeg" });
 
-  it("PHOTO-04 sends the file, reports its progress and stores the returned row", async () => {
+  it("D22 sends the file and its modified date, reports its progress and stores the returned row", async () => {
     const row = synced(NEWER, 4);
 
-    store.upload.mockImplementation(async (_file, onProgress) => {
+    store.upload.mockImplementation(async (_file, _modifiedOn, onProgress) => {
       onProgress(50);
 
       return ok(row);
@@ -58,12 +60,12 @@ describe("PhotosRepo.upload", () => {
 
     const progress: number[] = [];
 
-    const answer = await createPhotosRepo(store).upload(chosen, (percent) =>
+    const answer = await createPhotosRepo(store).upload(chosen, "2026-10-08", (percent) =>
       progress.push(percent),
     );
 
     expect(answer).toEqual(ok(row));
-    expect(store.upload).toHaveBeenCalledWith(chosen, expect.any(Function));
+    expect(store.upload).toHaveBeenCalledWith(chosen, "2026-10-08", expect.any(Function));
     expect(progress).toEqual([50]);
     expect(await store.db.photos.get(NEWER.id)).toEqual(row);
   });
@@ -71,7 +73,9 @@ describe("PhotosRepo.upload", () => {
   it("PHOTO-08 a failed upload stores nothing and answers the error", async () => {
     store.upload.mockResolvedValue(err("network"));
 
-    expect(await createPhotosRepo(store).upload(chosen, () => {})).toEqual(err("network"));
+    expect(await createPhotosRepo(store).upload(chosen, "2026-10-08", () => {})).toEqual(
+      err("network"),
+    );
     expect(await store.db.photos.count()).toBe(0);
   });
 });

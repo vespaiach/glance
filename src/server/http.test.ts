@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
-import { FILE_NAME_HEADER } from "@/domain/photoUpload";
+import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { CalendarEventSchema } from "@/domain/schemas";
 import {
   outdatedClient,
@@ -53,6 +53,10 @@ describe("outdatedClient", () => {
 
   it("D21 answers 426 to build 3, which would write all-day events back as timed ones", () => {
     expect(outdatedClient(request({ [BUILD_HEADER]: "3" }))?.status).toBe(426);
+  });
+
+  it("D22 answers 426 to build 4, which doesn't know a photo's sources", () => {
+    expect(outdatedClient(request({ [BUILD_HEADER]: "4" }))?.status).toBe(426);
   });
 });
 
@@ -144,6 +148,29 @@ describe("readUpload", () => {
       value: { name: "Día de playa.jpg", type: "image/jpeg", size: 5 },
     });
   });
+
+  it("D22 reads the file's modified date", () => {
+    const upload = readUpload(
+      post({ [FILE_NAME_HEADER]: "a.jpg", [FILE_MODIFIED_HEADER]: "2026-08-16" }),
+    );
+
+    expect(upload).toMatchObject({ ok: true, value: { modifiedOn: "2026-08-16" } });
+  });
+
+  it("D22 reads an upload with no modified date", () => {
+    const upload = readUpload(post({ [FILE_NAME_HEADER]: "a.jpg" }));
+
+    expect(upload.ok && "modifiedOn" in upload.value).toBe(false);
+  });
+
+  it.each(["Aug 16", "2026-13-01", "2026-08-16T10:00:00Z", ""])(
+    "D22 rejects a modified date %j that isn't a date",
+    (modifiedOn) => {
+      expect(
+        readUpload(post({ [FILE_NAME_HEADER]: "a.jpg", [FILE_MODIFIED_HEADER]: modifiedOn })),
+      ).toEqual({ ok: false, error: "invalid" });
+    },
+  );
 
   it("tech§6.3 rejects an upload with no file name", () => {
     expect(readUpload(post({ "content-type": "image/jpeg" }))).toEqual({

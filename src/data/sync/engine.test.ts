@@ -50,6 +50,8 @@ const PHOTO: StoredPhoto = {
   id: "0195f0a0-0000-7000-8000-000000000201",
   title: "Cannon Beach",
   takenOn: "2026-09-12",
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   createdAt: "2026-09-13T10:00:00.000Z",
   updatedAt: "2026-09-13T10:00:00.000Z",
   version: 1,

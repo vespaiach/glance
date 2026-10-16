@@ -111,15 +111,11 @@ describe("toPlaces", () => {
 
 describe("placeLabel", () => {
   it("WX-01 names a place by its city and state code, like the boards", () => {
-    expect(placeLabel({ name: "Portland", region: "Oregon", lat: 1, lon: 2 })).toBe("Portland, OR");
+    expect(placeLabel({ name: "Portland", region: "Oregon" })).toBe("Portland, OR");
   });
 
   it("WX-01 codes Puerto Rico too, and keeps a region with no code", () => {
-    expect(placeLabel({ name: "San Juan", region: "Puerto Rico", lat: 1, lon: 2 })).toBe(
-      "San Juan, PR",
-    );
-    expect(placeLabel({ name: "Somewhere", region: "Elsewhere", lat: 1, lon: 2 })).toBe(
-      "Somewhere, Elsewhere",
-    );
+    expect(placeLabel({ name: "San Juan", region: "Puerto Rico" })).toBe("San Juan, PR");
+    expect(placeLabel({ name: "Somewhere", region: "Elsewhere" })).toBe("Somewhere, Elsewhere");
   });
 });

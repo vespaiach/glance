@@ -12,6 +12,8 @@ const photo = (title: string, createdAt: string, place?: string): Photo => ({
   id: title,
   title,
   takenOn: "2026-09-27",
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   createdAt,
   ...(place && { place }),
 });
