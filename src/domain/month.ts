@@ -1,4 +1,6 @@
-import { dateKey, parseDateKey, wallTime } from "./zone";
+import { eventDayKey } from "./allDay";
+import type { CalendarEvent } from "./schemas";
+import { calendarDate, dateKey, parseDateKey, wallTime } from "./zone";
 
 const monthYearFormat = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -44,8 +46,11 @@ export function monthTitle(year: number, month: number, now: Date, tz: string): 
   return monthNameFormat.format(firstOf(year, month));
 }
 
-export function markedDays(events: readonly { startAt: string }[], tz: string): number[] {
-  const days = new Set(events.map((event) => wallTime(new Date(event.startAt), tz).day));
+export function markedDays(
+  events: readonly Pick<CalendarEvent, "startAt" | "allDay">[],
+  tz: string,
+): number[] {
+  const days = new Set(events.map((event) => calendarDate(eventDayKey(event, tz)).day));
 
   return [...days].sort((a, b) => a - b);
 }

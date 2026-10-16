@@ -133,3 +133,23 @@ describe("001_init", () => {
     expect(await db().one("SELECT setup_done_at FROM accounts")).toEqual({ setup_done_at: null });
   });
 });
+
+describe("002_event_all_day", () => {
+  it("spec§7.0 an event is timed unless it says all day", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    expect(await db().one("SELECT all_day FROM events")).toEqual({ all_day: false });
+  });
+
+  it("D21 rejects an all-day event with an end", async () => {
+    await insertAccount("a1");
+
+    await expect(
+      db().run(
+        "INSERT INTO events (id, account_id, title, start_at, end_at, all_day, updated_at, version) VALUES ('e1', 'a1', 'Trip', $1, $2, true, $1, 1)",
+        ["2026-10-16T00:00:00.000Z", "2026-10-16T05:00:00.000Z"],
+      ),
+    ).rejects.toThrow(/check constraint/);
+  });
+});

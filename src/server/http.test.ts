@@ -50,6 +50,10 @@ describe("outdatedClient", () => {
   it("tech§4.7 answers 426 to build 2, which would write settings back without hideBarWhenIdle", () => {
     expect(outdatedClient(request({ [BUILD_HEADER]: "2" }))?.status).toBe(426);
   });
+
+  it("D21 answers 426 to build 3, which would write all-day events back as timed ones", () => {
+    expect(outdatedClient(request({ [BUILD_HEADER]: "3" }))?.status).toBe(426);
+  });
 });
 
 describe("readRow", () => {

@@ -51,3 +51,27 @@ test("AMB-07 a signed-in screen has no signed-out notice", () => {
 
   expect(screen.queryByText("Signed out · tap to sign in")).not.toBeInTheDocument();
 });
+
+test("AMB-03 an all-day event reads All day on its own date in any zone", () => {
+  const event = {
+    id: "0195f0a0-0000-7000-8000-000000000016",
+    startAt: "2026-10-16T00:00:00.000Z",
+    allDay: true as const,
+    title: "No school",
+    location: "Lincoln Elementary",
+    tone: 4 as const,
+  };
+
+  render(
+    <AmbientView
+      {...BASE}
+      tz="America/Los_Angeles"
+      time={new Date("2026-10-09T19:00:00Z")}
+      nextEvent={{ kind: "ready", data: [event] }}
+    />,
+  );
+
+  expect(
+    screen.getByText("Fri, Oct 16 · All day · No school, Lincoln Elementary"),
+  ).toBeInTheDocument();
+});

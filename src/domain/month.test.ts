@@ -117,6 +117,18 @@ describe("month in a zone", () => {
     expect(markedDays([{ startAt: "2026-10-10T06:30:00Z" }], LA)).toEqual([9]);
   });
 
+  it.each([LA, "Pacific/Guam"])(
+    "CAL-02 a day with only an all-day event is marked on its date in %s",
+    (zone) => {
+      const events = [
+        { startAt: "2026-10-01T00:00:00.000Z", allDay: true as const },
+        { startAt: "2026-10-16T00:00:00.000Z", allDay: true as const },
+      ];
+
+      expect(markedDays(events, zone)).toEqual([1, 16]);
+    },
+  );
+
   it("LOC-06 stepping into the current month selects today in the given zone", () => {
     expect(stepMonth("2026-09-14", 1, new Date("2026-10-10T06:30:00Z"), LA)).toBe("2026-10-09");
   });

@@ -559,6 +559,7 @@ export const copy = {
     nextEvent: "Next event",
     nothing: "Nothing scheduled",
     tomorrow: "Tomorrow",
+    allDay: "All day",
     day: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,
     event: (day: string, start: string, title: string, where?: string) =>
       `${day} · ${start} · ${where ? `${title}, ${where}` : title}`,

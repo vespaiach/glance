@@ -115,6 +115,17 @@ describe("pullChanges", () => {
     });
   });
 
+  it("D21 returns an all-day event with allDay", async () => {
+    const allDay: CalendarEvent = { ...EVENT, startAt: "2026-10-16T00:00:00.000Z", allDay: true };
+
+    await putEvent(harness.deps(), MARIA, allDay);
+
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
+      cursor: "1",
+      changes: [{ entity: "events", row: { ...allDay, updatedAt: STAMP, version: 1 } }],
+    });
+  });
+
   it("tech§5 never returns another account's rows", async () => {
     await putEvent(harness.deps(), OMAR, EVENT);
     await putNote(harness.deps(), OMAR, NOTE);
