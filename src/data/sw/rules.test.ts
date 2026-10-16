@@ -16,7 +16,7 @@ import {
 const ORIGIN = "https://glance.example";
 
 function appPagePaths(): string[] {
-  const appDir = path.join(import.meta.dirname, "../../../app");
+  const appDir = path.join(import.meta.dirname, "../../app");
 
   return readdirSync(appDir, { recursive: true, encoding: "utf8" })
     .filter((file) => path.basename(file) === "page.tsx")
