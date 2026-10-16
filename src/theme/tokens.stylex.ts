@@ -93,6 +93,7 @@ export const sizes = stylex.defineVars({
 export const motion = stylex.defineVars({
   easeOut: "cubic-bezier(.2,.7,.2,1)",
   easeInOut: "cubic-bezier(.6,0,.3,1)",
+  easeSlide: "cubic-bezier(.2,0,0,1)",
   durPress: "120ms",
   durFast: "180ms",
   durBase: { default: "280ms", "@media (prefers-reduced-motion: reduce)": "0ms" },

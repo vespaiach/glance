@@ -38,6 +38,7 @@ const CHOICES = {
   pick: ["all.s", "all.e", "wknd.s", "wknd.e"],
   bar: ["hidden", "float"],
   barauto: ["off"],
+  rail: ["1", "open"],
   events: ["many"],
   chrome: ["0"],
   qr: ["open", "failed"],

@@ -113,6 +113,12 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("bar=auto&barauto=on")).toEqual({});
   });
 
+  it("SHELL-08 reads rail=1 and rail=open", () => {
+    expect(parseFixtureParams("rail=1")).toEqual({ rail: "1" });
+    expect(parseFixtureParams("rail=open")).toEqual({ rail: "open" });
+    expect(parseFixtureParams("rail=0")).toEqual({});
+  });
+
   it("PHOTO-14 reads full=1 and chrome=0", () => {
     expect(parseFixtureParams("full=1&chrome=0")).toEqual({ full: true, chrome: "0" });
     expect(parseFixtureParams("full=0&chrome=1")).toEqual({});

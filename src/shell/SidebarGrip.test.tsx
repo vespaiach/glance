@@ -1,0 +1,22 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { SidebarGrip } from "./SidebarGrip";
+
+test("SHELL-09 the grip is named Show sidebar and is not expanded", () => {
+  render(<SidebarGrip onShow={vi.fn()} />);
+
+  expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+});
+
+test("SHELL-08 tapping the grip asks to show the rail", async () => {
+  const onShow = vi.fn();
+
+  render(<SidebarGrip onShow={onShow} />);
+
+  await userEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
+
+  expect(onShow).toHaveBeenCalledOnce();
+});

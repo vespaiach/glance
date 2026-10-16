@@ -51,6 +51,7 @@ import { GalleryGroup } from "./GalleryGroup";
 import { NotesGallery } from "./NotesGallery";
 import { PhotosGallery } from "./PhotosGallery";
 import { SettingsGallery } from "./SettingsGallery";
+import { SidebarGallery } from "./SidebarGallery";
 import { SignInGallery } from "./SignInGallery";
 import {
   EVENTS,
@@ -372,6 +373,7 @@ function NavigationGroup() {
 
   return (
     <GalleryGroup title={gallery.groups.navigation} column>
+      <SidebarGallery />
       <TopBar brand={copy.appName} right={settings} />
       <div>
         <ShellNavBar active="today" breakpoint="wide" onNavigate={ignore} />
