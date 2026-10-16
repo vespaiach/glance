@@ -13,7 +13,7 @@
 <script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
 <style>html,body{margin:0;height:100%;background:#fff;font-family:var(--font-sans)}a{color:#000}a:hover{color:#000}@keyframes kskPulse{from{opacity:1}to{opacity:.55}}@keyframes kskBlink{0%{opacity:1}50%{opacity:0}}</style>
 </helmet>
-<div data-season="{{ season }}" data-screen-label="{{ screenLabel }}" style="--type-clock-size:clamp(84px,6.8vw,128px);--type-clock-ls:-4px;--type-temp-size:clamp(76px,6.4vw,96px);--type-temp-ls:-3px;--type-display-xl-size:clamp(36px,3.6vw,52px);--type-display-xl-ls:-1px;--type-display-lg-size:clamp(28px,2.6vw,40px);--type-headline-size:20px;--type-headline-ls:-0.2px;--type-body-lg-size:18px;--type-body-size:16px;--type-body-sm-size:15px;--type-button-size:17px;--type-eyebrow-size:14px;--type-caption-size:14px;--kiosk-gutter:clamp(20px,2.6vw,40px);height:100vh;padding-bottom:{{ kbPad }};box-sizing:border-box;display:flex;flex-direction:column;background:{{ bgCss }};color:var(--text-primary);overflow:hidden;transition:background 600ms ease-in-out">
+<div data-season="{{ season }}" data-screen-label="{{ screenLabel }}" style="--type-clock-size:clamp(84px,6.8vw,128px);--type-clock-ls:-4px;--type-temp-size:clamp(76px,6.4vw,96px);--type-temp-ls:-3px;--type-display-xl-size:clamp(36px,3.6vw,52px);--type-display-xl-ls:-1px;--type-display-lg-size:clamp(28px,2.6vw,40px);--type-headline-size:20px;--type-headline-ls:-0.2px;--type-body-lg-size:18px;--type-body-size:16px;--type-body-sm-size:15px;--type-button-size:17px;--type-eyebrow-size:14px;--type-caption-size:14px;--kiosk-gutter:clamp(20px,2.6vw,40px);height:100vh;padding-bottom:{{ kbPad }};box-sizing:border-box;display:flex;flex-direction:column;background:{{ bgCss }};color:var(--text-primary);overflow:hidden;padding-left:{{ nav.padL }};padding-right:{{ nav.padR }};transition:background 600ms ease-in-out,padding 280ms cubic-bezier(0.2,0,0,1)">
 
 <sc-if value="{{ is.signin }}" hint-placeholder-val="{{ false }}">
 <main style="flex:1;min-height:0;overflow:auto;padding:var(--kiosk-gutter);box-sizing:border-box;display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-content:start">
@@ -828,9 +828,59 @@
 </sc-if>
 
 </main>
+<sc-if value="{{ nav.bottom }}" hint-placeholder-val="{{ true }}">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TopBar" brand="" center="{{ barCenter }}" right="{{ bar }}" height="{{ barH }}" dc-props="{{ sx.bar }}" hint-size="100%,88px"></x-import>
 <sc-if value="{{ barHandle.show }}" hint-placeholder-val="{{ false }}">
 <button type="button" aria-label="Show menu" onClick="{{ barHandle.tap }}" style="position:fixed;left:0;right:0;bottom:12px;margin:0 auto;z-index:5;width:72px;height:44px;border:0;border-radius:9999px;background:var(--surface-canvas);color:var(--text-primary);box-shadow:var(--shadow-1),var(--shadow-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-up" size="22" hint-size="22px,22px"></x-import></button>
+</sc-if>
+</sc-if>
+<sc-if value="{{ nav.side }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ nav.hTab }}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-label="Open menu" aria-expanded="{{ nav.expanded }}" onClick="{{ nav.open }}" style="position:fixed;top:50%;left:{{ nav.hl }};right:{{ nav.hr }};z-index:5;width:48px;height:112px;margin-top:-56px;border:0;border-radius:{{ nav.hRad }};background:var(--surface-canvas);color:var(--text-primary);box-shadow:var(--shadow-1),var(--shadow-2);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ nav.hOp }};transition:opacity 180ms ease-out,transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ nav.hIcon }}" size="24" hint-size="24px,24px"></x-import></button>
+</sc-if>
+<sc-if value="{{ nav.hGrip }}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-label="{{ nav.gripLabel }}" aria-expanded="{{ nav.expanded }}" onClick="{{ nav.gripTap }}" style="position:fixed;top:50%;left:{{ nav.hl }};right:{{ nav.hr }};z-index:5;width:44px;height:144px;margin-top:-72px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:{{ nav.hOp }};transition:opacity 180ms ease-out"><span style="display:block;width:5px;height:72px;border-radius:9999px;background:var(--text-primary)"></span></button>
+</sc-if>
+<sc-if value="{{ nav.hCorner }}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-label="Open menu" aria-expanded="{{ nav.expanded }}" onClick="{{ nav.open }}" style="position:fixed;bottom:24px;left:{{ nav.cl }};right:{{ nav.cr }};z-index:5;height:56px;padding:0 24px 0 18px;border:0;border-radius:9999px;background:var(--surface-canvas);color:var(--text-primary);box-shadow:var(--shadow-1),var(--shadow-2);display:flex;align-items:center;gap:12px;font-family:var(--font-sans);font-size:17px;font-weight:480;cursor:pointer;opacity:{{ nav.hOp }};transition:opacity 180ms ease-out,transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="menu" size="22" hint-size="22px,22px"></x-import><span style="white-space:nowrap">{{ nav.curLabel }}</span></button>
+</sc-if>
+<sc-if value="{{ nav.hRail }}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Main" style="position:fixed;top:0;bottom:0;left:{{ nav.hl }};right:{{ nav.hr }};z-index:3;width:80px;box-sizing:border-box;padding:16px 0;background:var(--surface-canvas);box-shadow:{{ nav.railEdge }};display:flex;flex-direction:column;align-items:center;gap:8px;overflow:auto;transform:{{ nav.railTf }};transition:transform 280ms cubic-bezier(0.2,0,0,1)">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="{{ nav.railIcon }}" size="touch" label="Open menu" on-click="{{ nav.open }}" hint-size="56px,56px"></x-import>
+<div style="width:40px;height:1px;flex:none;background:var(--border-hairline);margin:4px 0"></div>
+<sc-for list="{{ nav.main }}" as="it" hint-placeholder-count="5">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="{{ it.icon }}" label="{{ it.label }}" active="{{ it.active }}" size="touch" on-click="{{ it.tap }}" hint-size="56px,56px"></x-import>
+</sc-for>
+<div style="flex:1;min-height:16px"></div>
+<sc-for list="{{ nav.extra }}" as="it" hint-placeholder-count="2">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="{{ it.icon }}" label="{{ it.label }}" active="{{ it.active }}" size="touch" on-click="{{ it.tap }}" hint-size="56px,56px"></x-import>
+</sc-for>
+</nav>
+</sc-if>
+<div aria-hidden="{{ nav.hidden }}" style="position:fixed;inset:0;z-index:4;pointer-events:none">
+<nav aria-label="Main" style="position:absolute;top:12px;bottom:12px;left:{{ nav.pl }};right:{{ nav.pr }};width:320px;box-sizing:border-box;background:var(--surface-canvas);border-radius:24px;box-shadow:var(--shadow-1);pointer-events:{{ nav.pe }};padding:20px 16px 16px;display:flex;flex-direction:column;gap:4px;overflow:auto;transform:{{ nav.tf }};transition:transform 280ms cubic-bezier(0.2,0,0,1)">
+<sc-if value="{{ nav.hRail }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:0 4px 12px 24px">
+<span style="font-size:24px;font-weight:540;letter-spacing:-0.3px">Glance</span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" size="touch" label="Close sidebar" on-click="{{ nav.hideRail }}" hint-size="56px,56px"></x-import>
+</div>
+</sc-if>
+<sc-if value="{{ nav.notRail }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 4px 12px 24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="80px,20px">Menu</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" size="touch" label="Close menu" on-click="{{ nav.close }}" hint-size="56px,56px"></x-import>
+</div>
+</sc-if>
+<sc-for list="{{ nav.main }}" as="it" hint-placeholder-count="2">
+<button type="button" aria-current="{{ it.cur }}" onClick="{{ it.tap }}" style="flex:none;display:flex;align-items:center;gap:16px;height:64px;padding:0 24px;border:0;border-radius:9999px;background:{{ it.bg }};color:{{ it.fg }};font-family:var(--font-sans);font-size:20px;font-weight:480;letter-spacing:-0.2px;text-align:left;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ it.icon }}" size="24" hint-size="24px,24px"></x-import><span>{{ it.label }}</span></button>
+</sc-for>
+<div style="flex:1;min-height:16px"></div>
+<div style="height:1px;flex:none;background:var(--border-hairline);margin:0 24px 8px"></div>
+<sc-for list="{{ nav.extra }}" as="it" hint-placeholder-count="2">
+<button type="button" aria-current="{{ it.cur }}" onClick="{{ it.tap }}" style="flex:none;display:flex;align-items:center;gap:16px;height:64px;padding:0 24px;border:0;border-radius:9999px;background:{{ it.bg }};color:{{ it.fg }};font-family:var(--font-sans);font-size:20px;font-weight:480;letter-spacing:-0.2px;text-align:left;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ it.icon }}" size="24" hint-size="24px,24px"></x-import><span>{{ it.label }}</span></button>
+</sc-for>
+</nav>
+</div>
 </sc-if>
 <sc-if value="{{ offPill }}" hint-placeholder-val="{{ false }}">
 <div role="status" style="position:fixed;left:var(--kiosk-gutter);bottom:{{ pillBottom }};z-index:6;height:48px;display:flex;align-items:center;gap:12px;padding:0 20px 0 16px;border-radius:9999px;background:var(--surface-inverse);color:var(--text-inverse)">
@@ -1001,7 +1051,7 @@
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;},&quot;seasonVideo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;},&quot;seasonVideo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;navPlacement&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;bottom&quot;,&quot;left&quot;,&quot;right&quot;],&quot;default&quot;:&quot;left&quot;,&quot;tsType&quot;:&quot;'bottom'|'left'|'right'&quot;},&quot;handleStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;rail&quot;,&quot;corner&quot;,&quot;grip&quot;,&quot;tab&quot;],&quot;default&quot;:&quot;rail&quot;,&quot;tsType&quot;:&quot;'rail'|'corner'|'grip'|'tab'&quot;}}">
 class Component extends DCLogic {
   static init() {
     const q = new URLSearchParams(window.location.search);
@@ -1069,7 +1119,7 @@ class Component extends DCLogic {
       email: sw ? 'sam.lee@example.com' : siq && siq !== 'form' ? 'maria@example.com' : '', emailErr: siq === 'sendfail' ? 'Couldn’t send. Try again.' : '', ended, pendingN: ended ? Math.max(0, parseInt(q.get('pending'), 10) || 0) : 0, endedEmail: 'maria@example.com', wxStep: '', wxMatches: [], wxQ: '',
       events, notes, selDay: parseInt(q.get('day'), 10) || 9, sheet, photoIdx: 0, full: q.get('full') === '1', fsChrome: q.get('chrome') !== '0', empty, wxLoc: empty || siq === 'location' || siq === 'name' || (wxq && view0 !== 'location') ? '' : 'Portland, OR', wxDraft: '', wxErr: '', hasPhotos: !empty,
       bgMode: q.get('bg') === 'photo' ? 'Photo' : 'Season color', bgId: 'coast', dim: 'Light', rotate: 'Daily',
-      seasonPick: sn ? sn[0].toUpperCase() + sn.slice(1) : 'Auto', clockFmt: q.get('clock') === '24' ? '24-hour' : '12-hour', tempUnit: 'Fahrenheit', idle: '3 min', barMode: ['hidden', 'float'].includes(q.get('bar')) ? q.get('bar') : 'docked', barAuto: q.get('barauto') === 'off' ? 'Off' : 'On', noteKeep: '1 week', calYM: 2026 * 12 + 9, playing: true, uploads: UPM[upq] || (sheet && sheet.kind === 'photo' ? UPM.done : []), phEdits: {}, phGone: [], ...WXS,
+      seasonPick: sn ? sn[0].toUpperCase() + sn.slice(1) : 'Auto', clockFmt: q.get('clock') === '24' ? '24-hour' : '12-hour', tempUnit: 'Fahrenheit', idle: '3 min', barMode: ['hidden', 'float'].includes(q.get('bar')) ? q.get('bar') : 'docked', barAuto: q.get('barauto') === 'off' ? 'Off' : 'On', railHidden: q.get('rail') !== '1', noteKeep: '1 week', calYM: 2026 * 12 + 9, playing: true, uploads: UPM[upq] || (sheet && sheet.kind === 'photo' ? UPM.done : []), phEdits: {}, phGone: [], ...WXS,
     };
   }
   static NOW = 10 * 60 + 41;
@@ -1230,7 +1280,7 @@ class Component extends DCLogic {
   componentDidUpdate() {
     const v = this.state.view, pv = this._lastView;
     this._lastView = v;
-    if (pv !== undefined && pv !== v) { this.pageIn(pv, v); if (this.state.full) this.setState({ full: false, fsChrome: true }); if (this.state.barMode === 'float') this.setState({ barMode: 'docked' }); }
+    if (pv !== undefined && pv !== v) { this.pageIn(pv, v); if (this.state.full) this.setState({ full: false, fsChrome: true }); if (this.state.barMode === 'float') this.setState({ barMode: 'docked' }); if (this.state.drawerOpen) this.setState({ drawerOpen: false }); }
     const a = this._lastSheet, b = this.state.sheet;
     this._lastSheet = b;
     if (b && b.kind === 'event' && ((b.pick && (!a || a.pick !== b.pick)) || (b.endErr && (!a || !a.endErr)))) this.queueReveal();
@@ -1379,7 +1429,24 @@ class Component extends DCLogic {
       h('span', { key: 'div', 'aria-hidden': true, style: { width: 1, height: 40, flex: 'none', alignSelf: LBL ? 'flex-start' : 'center', marginTop: LBL ? 8 : 0, background: 'var(--border-hairline)', margin: PH1 ? 0 : LBL ? '8px 12px 0' : '0 12px' } }),
       navItem('settings', 'Settings', 'Settings', 'settings', setAct, () => this.go('settings'))] : null;
     const barH = LBL ? 88 : 72;
-    const BM = view === 'signin' || view === 'ambient' ? 'docked' : S.barMode || 'docked', barLay = BM === 'docked' ? barH : 0;
+    const NAVP = (() => { const v = new URLSearchParams(location.search).get('nav') || this.props.navPlacement || 'left'; return v === 'left' || v === 'right' ? v : 'bottom'; })();
+    const BM = view === 'signin' || view === 'ambient' ? 'docked' : S.barMode || 'docked', barLay = BM === 'docked' && NAVP === 'bottom' ? barH : 0;
+    const dOpen = NAVP !== 'bottom' && !!S.drawerOpen, isL = NAVP === 'left', closeD = () => this.setState({ drawerOpen: false });
+    const HS = (() => { const v = new URLSearchParams(location.search).get('handle') || this.props.handleStyle || 'rail'; return ['tab', 'grip', 'corner', 'rail'].includes(v) ? v : 'rail'; })();
+    const RAIL = HS === 'rail' && !S.railHidden;
+    const dItem = (k, label, icon, active, tap) => ({ label, icon, active: !!active, cur: active ? 'page' : undefined, bg: active ? 'var(--action-primary)' : 'transparent', fg: active ? 'var(--on-action-primary)' : 'var(--text-primary)', tap: () => { tap(); this.setState({ drawerOpen: false }); } });
+    const noSide = view === 'ambient' || view === 'signin';
+    const nav = { bottom: NAVP === 'bottom', side: NAVP !== 'bottom' && !noSide, expanded: dOpen ? 'true' : 'false', hidden: dOpen ? 'false' : 'true', pe: dOpen ? 'auto' : 'none', op: dOpen ? 1 : 0,
+      open: () => this.setState({ drawerOpen: true }), close: closeD,
+      hl: isL ? '0' : 'auto', hr: isL ? 'auto' : '0', hRad: isL ? '0 24px 24px 0' : '24px 0 0 24px', hIcon: isL ? 'chevron-right' : 'chevron-left', hOp: dOpen || S.full ? 0 : 1,
+      padL: isL && !noSide ? (dOpen ? '332px' : RAIL ? '80px' : '0px') : '0px', padR: !isL && !noSide ? (dOpen ? '332px' : RAIL ? '80px' : '0px') : '0px',
+      hTab: HS === 'tab', hGrip: HS === 'grip' || (HS === 'rail' && !!S.railHidden),
+      gripLabel: HS === 'rail' ? 'Show sidebar' : 'Open menu', notRail: HS !== 'rail', gripTap: HS === 'rail' ? () => this.setState({ railHidden: false }) : () => this.setState({ drawerOpen: true }),
+      railTf: S.railHidden ? (isL ? 'translateX(-100%)' : 'translateX(100%)') : 'none', hideIcon: isL ? 'panel-left-close' : 'panel-right-close',
+      hideRail: () => this.setState({ drawerOpen: false, railHidden: true }), hCorner: HS === 'corner', hRail: HS === 'rail', cl: isL ? 'var(--kiosk-gutter)' : 'auto', cr: isL ? 'auto' : 'var(--kiosk-gutter)',
+      curLabel: (VIEWS.find(([k]) => k === view) || [0, 'Settings'])[1], railIcon: isL ? 'panel-left-open' : 'panel-right-open', railEdge: isL ? 'inset -1px 0 0 var(--border-hairline)' : 'inset 1px 0 0 var(--border-hairline)', pl: isL ? '12px' : 'auto', pr: isL ? 'auto' : '12px', tf: dOpen ? 'none' : isL ? 'translateX(calc(-100% - 24px))' : 'translateX(calc(100% + 24px))',
+      main: VIEWS.map(([k, label, ic]) => dItem(k, label, ic, view === k, () => this.go(k))),
+      extra: [dItem('ambient', 'Ambient', 'moon', false, () => this.go('ambient')), dItem('settings', 'Settings', 'settings', setAct, () => this.go('settings'))] };
     const bar = navBtns && !PH1 ? h(React.Fragment, null, h('nav', { style: { display: 'flex', gap: 8, alignItems: LBL ? 'flex-start' : 'center' } }, navBtns.slice(0, 5)), ...navBtns.slice(5)) : null;
     const barCenter = navBtns && PH1 ? h('nav', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' } }, navBtns) : null;
 
@@ -1627,8 +1694,8 @@ class Component extends DCLogic {
       wxFull: { tone: 3, style: { justifyContent: 'space-between', padding: 'clamp(24px,2.6vw,40px)', minWidth: 0 } },
       colGap24: { style: { display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0 } },
       forecastGrid: { style: { display: 'grid', gridTemplateColumns: bp === 'phone' ? 'repeat(7, 64px)' : 'repeat(7, minmax(0,1fr))', gap: 4, height: '100%', overflowX: 'auto' } },
-      barHandle: { show: view !== 'signin' && view !== 'ambient' && BM === 'hidden' && !(S.full && view === 'photos'), tap: () => this.setState({ barMode: 'float' }) },
-      pillBottom: bp === 'phone' ? (BM === 'hidden' ? '68px' : '84px') : LBL ? '24px' : '12px',
+      nav, barHandle: { show: NAVP === 'bottom' && view !== 'signin' && view !== 'ambient' && BM === 'hidden' && !(S.full && view === 'photos'), tap: () => this.setState({ barMode: 'float' }) },
+      pillBottom: NAVP !== 'bottom' ? (HS === 'corner' && isL ? '96px' : '24px') : bp === 'phone' ? (BM === 'hidden' ? '68px' : '84px') : LBL ? '24px' : '12px',
       nowEvent: { none: !heroEv, has: !!heroEv, eyebrow: nowEv ? 'Happening now' : 'Up next', title: heroEv ? heroEv.title : '', meta: nowEv ? (nowEv.end != null ? `${nowEv.location} · until ${fmtT(lt(toMin(nowEv.end)))}` : `${nowEv.location} · started ${fmtT(lt(toMin(nowEv.start)), true)}`) : nextEv ? `${nextEv.location} · ${fmtT(lt(toMin(nextEv.start)), true)}` : '', open: () => heroEv && this.openEvent(heroEv), noneTitle: todayEvents.length ? 'Nothing else today' : 'Nothing scheduled', noneBody: todayEvents.length ? 'Today’s events have ended.' : 'Events show here while they happen.' },
       todayEvents, todayShown, todayAD: { has: todayADl.length > 0, list: todayADl }, todayLabel: todayN ? `Today · ${todayN} event${todayN > 1 ? 's' : ''}` : 'Today · No events',
       todayMore: { has: hidE + hidL > 0, label: `See all ${todayN} events`, meta: [hidE && `${hidE} earlier`, hidL && `${hidL} later`].filter(Boolean).join(' · '), go: () => { this.setState({ selDay: 9, calYM: OCT }); this.go('calendar'); } },
