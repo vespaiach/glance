@@ -276,5 +276,5 @@ The designer's own revisions in handoff v5 (D03, spec v0.38 decision 23). Plan: 
 |---|---|---|---|---|
 | D01 | ✅ ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | H01 (final SIGNIN-13 screen) | SIGNIN-01 form as-is (spec §8.1) |
 | D02 | ✅ ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |
-| D03 | ⬜ | Design handoff v5 in the repo (the designer's own revisions, no prompt): `docs/design/handoff`, spec v0.38, tech design v1.75, this phase | Phase 9 | None: Phase 9 waits |
+| D03 | 🔄 ([#78](https://github.com/vespaiach/glance/pull/78)) | Design handoff v5 in the repo (the designer's own revisions, no prompt): `docs/design/handoff`, spec v0.38, tech design v1.75, this phase | Phase 9 | None: Phase 9 waits |
 | D04 | ⬜ | Season videos `videos/{spring,summer,fall,winter}.mp4` for AMB-09: source, license, size budget (spec §12.2 O4) | U16 (the video itself) | U16 ships with the AMB-06 background; the files are added when they exist |
