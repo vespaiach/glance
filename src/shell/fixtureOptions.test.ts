@@ -36,6 +36,13 @@ test("tech§6 sheet=event opens the fixture event with its time state", () => {
   });
 });
 
+test("EVT-08 sheet=allday opens the all-day fixture event", () => {
+  expect(fixtureSheet({ sheet: "allday" }, "2026-10-09")).toEqual({
+    kind: "event",
+    id: fixtureSheetTargets.allDay,
+  });
+});
+
 test("tech§6 sheet=newevent opens a new event on today", () => {
   expect(fixtureSheet({ sheet: "newevent" }, "2026-10-09")).toEqual({
     kind: "newevent",

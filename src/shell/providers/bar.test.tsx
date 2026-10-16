@@ -81,6 +81,8 @@ async function renderBar({ settings = {}, params = {} }: BarOptions = {}) {
 
   await screen.findByText(/^bar /);
 
+  await act(async () => {});
+
   return (pathname: string) => {
     navigation.pathname = pathname;
     rerender(tree());

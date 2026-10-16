@@ -2,7 +2,12 @@ import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import Dexie from "dexie";
 import { vi } from "vitest";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import { FIXTURE_ACCOUNT, FIXTURE_EVENTS, FIXTURE_NOW, FIXTURE_PHOTOS } from "@/fixtures/data";
+import {
+  FIXTURE_ACCOUNT,
+  FIXTURE_NOW,
+  FIXTURE_PHOTOS,
+  FIXTURE_SEEDED_EVENTS,
+} from "@/fixtures/data";
 import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
 import {
   deleteMetaDb,
@@ -99,7 +104,7 @@ describe("useDisplayBoot", () => {
 
     expect(store.accountId).toBe(FIXTURE_ACCOUNT.id);
     expect(store.db.name).toBe(FIXTURE_DB_NAME);
-    expect(await store.db.events.count()).toBe(FIXTURE_EVENTS.length);
+    expect(await store.db.events.count()).toBe(FIXTURE_SEEDED_EVENTS.length);
   });
 
   it("tech§4.5 a screen with no glance-meta entry is signed out", async () => {

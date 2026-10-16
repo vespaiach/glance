@@ -25,13 +25,24 @@ const LUNCH: CalendarEvent = {
   tone: 2,
 };
 
+const NOW = new Date(2026, 9, 9, 10, 41);
+
+const NO_SCHOOL: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000010",
+  title: "No school · teacher planning day",
+  startAt: "2026-10-16T00:00:00.000Z",
+  allDay: true,
+  location: "Lincoln Elementary",
+  tone: 4,
+};
+
 const DRAFT = { title: "Lunch", start: 720, end: 780, location: "Café", tone: 2 } as const;
 
 const closed: EventSheetState = initialEventSheet(DRAFT);
 
 describe("event sheet drafts", () => {
   it("EVT-02 an existing event fills the draft in minutes of its day", () => {
-    expect(draftFromEvent(LUNCH, tz)).toEqual({
+    expect(draftFromEvent(LUNCH, tz, NOW)).toEqual({
       title: "Lunch with Aunt Rosa",
       start: 720,
       end: 780,
@@ -43,7 +54,7 @@ describe("event sheet drafts", () => {
   it("TPK-08 an event with no end leaves the draft end empty", () => {
     const { endAt: _, ...noEnd } = LUNCH;
 
-    expect(draftFromEvent(noEnd, tz).end).toBeUndefined();
+    expect(draftFromEvent(noEnd, tz, NOW).end).toBeUndefined();
   });
 
   it("EVT-02 a new event is blank with color 1 and the TPK-05 default times", () => {
@@ -253,7 +264,7 @@ describe("event sheet in a zone", () => {
   it("LOC-06 an existing event fills the draft in minutes of its day in the given zone", () => {
     const late = { ...LUNCH, startAt: "2026-10-10T06:30:00.000Z", endAt: undefined };
 
-    expect(draftFromEvent(late, LA).start).toBe(23 * 60 + 30);
+    expect(draftFromEvent(late, LA, NOW).start).toBe(23 * 60 + 30);
   });
 
   it("LOC-06 the saved event places the draft times on the day in the given zone", () => {
@@ -342,5 +353,69 @@ describe("event sheet discard", () => {
     const deleting = eventSheetReducer(closed, { type: "askDelete" });
 
     expect(eventSheetReducer(deleting, { type: "title", value: "Picnic" }).confirm).toBe("delete");
+  });
+});
+
+describe("event sheet all day", () => {
+  const allDay = eventSheetReducer(closed, { type: "allDay", value: true });
+
+  it("EVT-08 an all-day event fills the draft as all day with the TPK-05 default times", () => {
+    expect(draftFromEvent(NO_SCHOOL, tz, NOW)).toEqual({
+      title: "No school · teacher planning day",
+      start: 660,
+      end: 720,
+      allDay: true,
+      location: "Lincoln Elementary",
+      tone: 4,
+    });
+  });
+
+  it("EVT-08 All day keeps the draft times and closes the open picker", () => {
+    const open = eventSheetReducer(closed, { type: "toggle", field: "start" });
+
+    expect(eventSheetReducer(open, { type: "allDay", value: true })).toMatchObject({
+      draft: { start: 720, end: 780, allDay: true },
+      picker: null,
+    });
+  });
+
+  it("EVT-08 Set times restores the times the draft had", () => {
+    expect(eventSheetReducer(allDay, { type: "allDay", value: false }).draft).toEqual(DRAFT);
+  });
+
+  it("TPK-07 switching to All day clears the end error", () => {
+    const error = initialEventSheet(DRAFT, "error");
+
+    expect(eventSheetReducer(error, { type: "allDay", value: true }).endError).toBe(false);
+  });
+
+  it("TPK-07 an all-day draft skips the end check", () => {
+    const backwards = { ...DRAFT, end: 600, allDay: true } as const;
+
+    expect(canSave(backwards)).toBe(true);
+    expect(eventSheetReducer(initialEventSheet(backwards), { type: "save" }).endError).toBe(false);
+  });
+
+  it("§8.9 switching to All day makes the draft dirty", () => {
+    expect(isDirty(allDay.draft, allDay.opened)).toBe(true);
+  });
+
+  it("§8.9 switching to All day brings the footer back", () => {
+    const asking = eventSheetReducer(closed, { type: "askDiscard" });
+
+    expect(eventSheetReducer(asking, { type: "allDay", value: true }).confirm).toBeNull();
+  });
+
+  it("D21 an all-day draft saves on its date's UTC midnight with no end", () => {
+    const event = eventFromDraft(allDay.draft, "2026-10-16", NO_SCHOOL.id, "America/Los_Angeles");
+
+    expect(event).toEqual({
+      id: NO_SCHOOL.id,
+      title: "Lunch",
+      startAt: "2026-10-16T00:00:00.000Z",
+      allDay: true,
+      location: "Café",
+      tone: 2,
+    });
   });
 });

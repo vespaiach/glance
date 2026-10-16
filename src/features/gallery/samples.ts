@@ -72,6 +72,8 @@ export const gallery = {
     phone: "Phone",
     discardNew: "Discard changes? · new",
     discardEdit: "Discard changes? · edit",
+    allDay: "All day",
+    allDayPhone: "All day · phone",
   },
   button: "Add event",
   danger: "Delete",
@@ -302,6 +304,30 @@ export const TODAY_EVENTS: readonly CalendarEvent[] = [
     endAt: todayAt(13, 0),
     tone: 2,
   },
+];
+
+export const ALL_DAY_EVENTS = {
+  grandpa: {
+    id: sampleId(4),
+    title: "Grandpa staying over",
+    location: "Guest room",
+    startAt: "2026-10-09T00:00:00.000Z",
+    allDay: true,
+    tone: 2,
+  },
+  noSchool: {
+    id: sampleId(5),
+    title: "No school · teacher planning day",
+    location: "Lincoln Elementary",
+    startAt: "2026-10-16T00:00:00.000Z",
+    allDay: true,
+    tone: 4,
+  },
+} as const satisfies Record<string, CalendarEvent>;
+
+export const TODAY_WITH_ALL_DAY: readonly CalendarEvent[] = [
+  ALL_DAY_EVENTS.grandpa,
+  ...TODAY_EVENTS,
 ];
 
 export const TODAY_NOTES: readonly Note[] = [

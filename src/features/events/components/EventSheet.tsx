@@ -5,12 +5,14 @@ import { Trash2, WifiOff } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { copy } from "@/copy";
 import type { Clock } from "@/domain/time";
-import { shadows } from "@/theme/tokens.stylex";
+import { colors, shadows } from "@/theme/tokens.stylex";
+import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
 import { type CloseFrom, closeStep } from "@/ui/discard";
+import { PillTabs } from "@/ui/PillTabs";
 import { Sheet } from "@/ui/Sheet";
 import { TextInput } from "@/ui/TextInput";
 import { TimeField } from "@/ui/TimeField";
@@ -47,6 +49,21 @@ const discard = copy.discard;
 const time = copy.events.time;
 
 const styles = stylex.create({
+  mode: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+  },
+  modeLabel: {
+    fontSize: type.bodyLgSize,
+    fontWeight: type.bodyLgWeight,
+    letterSpacing: type.bodyLgLs,
+  },
+  modeTabs: {
+    backgroundColor: colors.surfaceSoft,
+  },
   times: {
     display: "flex",
     flexDirection: "column",
@@ -163,6 +180,38 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
   );
 }
 
+type TimeMode = "times" | "allDay";
+
+const TIME_MODES = [
+  { value: "times", label: time.setTimes },
+  { value: "allDay", label: copy.events.allDay },
+] as const;
+
+type TimeModeProps = {
+  allDay: boolean;
+  dispatch: (action: EventSheetAction) => void;
+};
+
+function TimeModeRow({ allDay, dispatch }: TimeModeProps) {
+  const onChange = (mode: TimeMode) => dispatch({ type: "allDay", value: mode === "allDay" });
+
+  return (
+    <div {...stylex.props(styles.mode)}>
+      <span aria-hidden="true" {...stylex.props(styles.modeLabel)}>
+        {time.label}
+      </span>
+      <PillTabs
+        label={time.label}
+        options={TIME_MODES}
+        value={allDay ? "allDay" : "times"}
+        onChange={onChange}
+        size="lg"
+        xstyle={styles.modeTabs}
+      />
+    </div>
+  );
+}
+
 function primaryLabel(mode: EventSheetProps["mode"], offline: boolean): string {
   if (offline) return words.saveOffline;
 
@@ -272,7 +321,10 @@ export function EventSheet({
         onChange={(value) => dispatch({ type: "title", value })}
         error={state.titleError ? words.addTitle : undefined}
       />
-      <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
+      <TimeModeRow allDay={draft.allDay === true} dispatch={dispatch} />
+      {!draft.allDay && (
+        <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
+      )}
       <TextInput
         label={words.where}
         placeholder={words.wherePlaceholder}

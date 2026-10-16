@@ -118,3 +118,33 @@ test("FAIL-01 a failed calendar says it is unavailable", () => {
 
   expect(screen.getByText("Calendar unavailable")).toBeInTheDocument();
 });
+
+const NO_SCHOOL: CalendarEvent = {
+  id: "no-school",
+  title: "No school · teacher planning day",
+  startAt: "2026-10-09T00:00:00.000Z",
+  allDay: true,
+  location: "Lincoln Elementary",
+  tone: 4,
+};
+
+test("CAL-06 an all-day event shows as a tile above the timed rows", () => {
+  renderPanel({ kind: "ready", data: [NO_SCHOOL, ...EVENTS] });
+
+  const buttons = screen.getAllByRole("button").map((button) => button.textContent);
+
+  const tile = buttons.indexOf("All dayNo school · teacher planning dayLincoln Elementary");
+
+  expect(tile).toBeGreaterThan(-1);
+  expect(buttons[tile + 1]).toContain(EVENTS[0]?.title);
+});
+
+test("CAL-06 tapping an all-day tile opens that event", async () => {
+  const onOpenEvent = vi.fn<(id: string) => void>();
+
+  renderPanel({ kind: "ready", data: [NO_SCHOOL] }, { onOpenEvent });
+
+  await userEvent.click(screen.getByRole("button", { name: /No school/ }));
+
+  expect(onOpenEvent).toHaveBeenCalledWith("no-school");
+});

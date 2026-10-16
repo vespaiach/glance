@@ -2,7 +2,7 @@ import { zonedInstant } from "@/domain/zone";
 import { FIXTURE_TIME_ZONE } from "./data";
 
 const CHOICES = {
-  sheet: ["event", "newevent", "note", "newnote"],
+  sheet: ["event", "newevent", "note", "newnote", "allday"],
   time: ["start", "end", "error", "noend"],
   season: ["spring", "summer", "fall", "winter"],
   net: ["loading", "offline", "wxerror"],
@@ -44,6 +44,7 @@ type Choices = typeof CHOICES;
 type ChoiceParams = { [K in keyof Choices]?: Choices[K][number] };
 
 export type FixtureParams = ChoiceParams & {
+  allday?: true;
   bg?: "photo";
   clock?: "24h";
   discard?: true;
@@ -98,6 +99,7 @@ function readChoices(query: URLSearchParams): ChoiceParams {
 
 function readFlags(query: URLSearchParams): FixtureParams {
   return {
+    ...(query.get("allday") === "1" && { allday: true }),
     ...(query.get("bg") === "photo" && { bg: "photo" }),
     ...(query.get("clock") === "24" && { clock: "24h" }),
     ...(query.get("discard") === "1" && { discard: true }),

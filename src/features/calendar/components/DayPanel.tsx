@@ -7,6 +7,7 @@ import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { AllDayTiles } from "@/ui/AllDayTile";
 import { Button } from "@/ui/Button";
 import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
@@ -203,21 +204,28 @@ export function DayPanel({
       >
         {(events) => (
           <>
+            <AllDayTiles
+              events={events.filter((event) => event.allDay)}
+              label={copy.events.allDay}
+              onOpenEvent={onOpenEvent}
+            />
             <div>
-              {events.map((event) => (
-                <EventRow
-                  key={event.id}
-                  start={timeOf(event.startAt, clock, tz)}
-                  end={event.endAt && timeOf(event.endAt, clock, tz)}
-                  title={event.title}
-                  location={event.location}
-                  status={eventStatus(event, now, tz)}
-                  dot={event.tone}
-                  nowLabel={copy.events.now}
-                  compact={compact}
-                  onClick={() => onOpenEvent(event.id)}
-                />
-              ))}
+              {events
+                .filter((event) => !event.allDay)
+                .map((event) => (
+                  <EventRow
+                    key={event.id}
+                    start={timeOf(event.startAt, clock, tz)}
+                    end={event.endAt && timeOf(event.endAt, clock, tz)}
+                    title={event.title}
+                    location={event.location}
+                    status={eventStatus(event, now, tz)}
+                    dot={event.tone}
+                    nowLabel={copy.events.now}
+                    compact={compact}
+                    onClick={() => onOpenEvent(event.id)}
+                  />
+                ))}
             </div>
             <Eyebrow size="caption" xstyle={styles.caption}>
               {copy.calendar.caption}

@@ -2,18 +2,19 @@ import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { inAmbient } from "@/domain/idle";
 import { photoTitle, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
-import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Weather, WeatherLocation } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_ALL_DAY,
   FIXTURE_AMBIENT_WEATHER,
-  FIXTURE_EVENTS,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
   FIXTURE_PLACES,
   FIXTURE_SAVED_AT,
+  FIXTURE_SEEDED_EVENTS,
   FIXTURE_SETTINGS,
   FIXTURE_TIME_ZONE,
   FIXTURE_WEATHER,
@@ -127,11 +128,17 @@ function offlineSeed(settings: AccountSettings, weather: Weather | undefined): S
   return { settings, withRows: true, status: OFFLINE_STATUS, ...(saved && { weather: saved }) };
 }
 
-async function writeSeed(db: GlanceDb, seed: Seed): Promise<void> {
+function fixtureEvents(params: FixtureParams): CalendarEvent[] {
+  const extra = params.allday ? [FIXTURE_ALL_DAY.grandpa] : [];
+
+  return [...FIXTURE_SEEDED_EVENTS, ...extra];
+}
+
+async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {
   const accountId = FIXTURE_ACCOUNT.id;
 
   if (seed.withRows) {
-    await db.events.bulkPut(FIXTURE_EVENTS.map(seeded));
+    await db.events.bulkPut(fixtureEvents(params).map(seeded));
     await db.notes.bulkPut(FIXTURE_NOTES.map(seeded));
     await db.photos.bulkPut(FIXTURE_PHOTOS.map(seeded));
   }
@@ -151,7 +158,7 @@ export async function seedFixtureDb(db: GlanceDb, params: FixtureParams): Promis
   await db.transaction("rw", db.tables, async () => {
     await Promise.all(db.tables.map((table) => table.clear()));
 
-    if (seed) await writeSeed(db, seed);
+    if (seed) await writeSeed(db, seed, params);
   });
 }
 

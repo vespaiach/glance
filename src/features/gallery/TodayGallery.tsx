@@ -23,6 +23,7 @@ import {
   TODAY_PHOTO,
   TODAY_PHOTO_SRC,
   TODAY_WEATHER,
+  TODAY_WITH_ALL_DAY,
 } from "./samples";
 
 const ignore = () => {};
@@ -107,6 +108,17 @@ export function TodayGallery({ season }: { season: Season }) {
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule}>
         <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} />
       </TodaySchedule>
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
+        {...schedule}
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
+        {...schedule}
+        compact
+      />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule}>
         <PictureOfDayEmpty canUpload onUpload={ignore} />
       </TodaySchedule>

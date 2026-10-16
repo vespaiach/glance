@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import * as v from "valibot";
+import { eventDayKey } from "@/domain/allDay";
 import { eventStatus } from "@/domain/eventStatus";
 import { noteExpired, noteStamp } from "@/domain/notes";
 import { pictureOfDay } from "@/domain/pictureOfDay";
@@ -18,6 +19,7 @@ import { rainStart } from "@/domain/weather";
 import { wallTime } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_ALL_DAY,
   FIXTURE_AMBIENT_NOW,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
@@ -88,6 +90,24 @@ describe("Appendix A fixtures", () => {
     expect([...new Set(days.map((day) => day.day))].sort((a, b) => a - b)).toEqual([
       2, 9, 14, 22, 28,
     ]);
+  });
+
+  it("EVT-08 the all-day fixtures are No school on the 16th and Grandpa staying over on the 9th", () => {
+    const rows = Object.values(FIXTURE_ALL_DAY).map((event) => [
+      v.parse(CalendarEventSchema, event).title,
+      eventDayKey(event, tz),
+      event.location,
+      event.tone,
+    ]);
+
+    expect(rows).toEqual([
+      ["No school · teacher planning day", "2026-10-16", "Lincoln Elementary", 4],
+      ["Grandpa staying over", "2026-10-09", "Guest room", 2],
+    ]);
+  });
+
+  it("tech§6 sheet=allday opens No school", () => {
+    expect(FIXTURE_SHEET_TARGETS.allDay).toBe(FIXTURE_ALL_DAY.noSchool.id);
   });
 
   it("Appendix A event times match the handoff", () => {

@@ -1,3 +1,4 @@
+import { allDayStart } from "@/domain/allDay";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type {
   Account,
@@ -155,7 +156,32 @@ export const FIXTURE_NOTES: Note[] = [
 
 export const FIXTURE_NEW_NOTE_DRAFT = "Has anyone seen my blue umbr";
 
-export const FIXTURE_SHEET_TARGETS = { event: fixtureId(1, 3), note: fixtureId(2, 1) } as const;
+export const FIXTURE_ALL_DAY = {
+  noSchool: {
+    id: fixtureId(1, 10),
+    startAt: allDayStart("2026-10-16"),
+    allDay: true,
+    title: "No school · teacher planning day",
+    location: "Lincoln Elementary",
+    tone: 4,
+  },
+  grandpa: {
+    id: fixtureId(1, 11),
+    startAt: allDayStart("2026-10-09"),
+    allDay: true,
+    title: "Grandpa staying over",
+    location: "Guest room",
+    tone: 2,
+  },
+} as const satisfies Record<string, CalendarEvent>;
+
+export const FIXTURE_SEEDED_EVENTS: CalendarEvent[] = [...FIXTURE_EVENTS, FIXTURE_ALL_DAY.noSchool];
+
+export const FIXTURE_SHEET_TARGETS = {
+  event: fixtureId(1, 3),
+  allDay: FIXTURE_ALL_DAY.noSchool.id,
+  note: fixtureId(2, 1),
+} as const;
 
 const PHOTO_ROWS = [
   ["forest", "Forest Park trail", "2026-08-22", "Weekend hike"],
