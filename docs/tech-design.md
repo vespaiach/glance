@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.96 — F12: the Next.js `app/` folder moves to `src/app/` (structure only, no behavior change): §3 tree and dependency rules, the Biome route overrides, `swSrc` and the StyleX PostCSS `include` follow it |
+| Status | v1.97 — U18: the Clock's colon animation is `none` under `@media (prefers-reduced-motion: reduce)` (a StyleX conditional value in `ui/Clock`), so it stays on. Spec v0.53 (§9 60) |
 | Date | 2026-10-16 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.52) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.53) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
 
 This document records the technical decisions. **What** the app does is in the product spec (requirement IDs like `SYNC-02` refer to it). This document covers **how** it's built. If they conflict, the spec wins on behavior and this document wins on implementation.
 
@@ -572,3 +572,4 @@ Applied in spec v0.8 (design review):
 57. Spec v0.50 (U13): §12.2 O1 is decided (decision 25): a screen's type and browser are read from the browser that signs in and its name is made from them ("Chrome screen", "Safari tablet"); SET-12 spells out the type rules, the names and the "Active …" captions (minutes, hours, yesterday, a date) and "1 screen signed in"; §7 `Display`, §7.0 `displays.kind`/`browser`, decision 13 and the Appendix A screens follow (renamed from the prototype's "Kitchen screen" and the others).
 58. Spec v0.51 (U14): §12.2 O2 is decided (decision 26): anyone who can see the screen may scan the code, with no confirmation on the screen. SIGNIN-15 adds what the design doesn't draw: the empty code at 5:00 while it is made, "Couldn’t make a code. Try again." with Try again (disabled offline) and Done, leaving Settings voids the code, the fixtures `qr=open|failed`, and a used, voided or expired code opens the email form instead of the expired-link page (no email shown). §7.0 the QR columns are built.
 59. Spec v0.52 (U17): §4.2 the Clock's colon blinks, on and off every 0.6 s (pushed to `main` in 73f1be8, not in the design). No other behavior changes.
+60. Spec v0.53 (U18): §4.2 the Clock's colon stays on, without blinking, when the device asks for reduced motion (`prefers-reduced-motion: reduce`). Not in the design. No other behavior changes.
