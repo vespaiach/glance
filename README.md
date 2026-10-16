@@ -31,7 +31,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 ```
 Browser (one per screen)                               Next.js server (one Node process)
 ┌──────────────────────────────────────────┐          ┌─────────────────────────────────────┐
-│ Screens (features/*)                     │          │ app/api/**/route.ts                 │
+│ Screens (features/*)                     │          │ src/app/api/**/route.ts             │
 │   read ─▶ data hooks (useLiveQuery)      │          │   session → Valibot → service       │
 │   write ─▶ repos ─▶ Dexie (row + outbox) │          │ server/services ─▶ PostgreSQL       │
 │                        ▲                 │  HTTPS   │ server/bus ─▶ SSE per account       │
@@ -47,7 +47,7 @@ Browser (one per screen)                               Next.js server (one Node 
 - **Enforced boundaries.** Biome import rules keep each module in its lane (e.g. `ui` can't touch data, `server` can't import client code).
 
 ```
-app/            thin route files (views, API Route Handlers, service worker)
+src/app/        thin route files (views, API Route Handlers, service worker)
 src/domain/     schemas, types and pure business rules
 src/data/       Dexie store, repos and hooks, sync engine and worker, transports
 src/features/   one folder per view: Screen container + pure components

@@ -328,7 +328,7 @@
       }
     },
     {
-      "includes": ["app/api/**"],
+      "includes": ["src/app/api/**"],
       "linter": {
         "rules": {
           "style": {
@@ -374,7 +374,7 @@
       }
     },
     {
-      "includes": ["app/**", "!app/api/**"],
+      "includes": ["src/app/**", "!src/app/api/**"],
       "linter": {
         "rules": {
           "style": {
@@ -409,7 +409,7 @@
       }
     },
     {
-      "includes": ["app/sw.ts"],
+      "includes": ["src/app/sw.ts"],
       "linter": {
         "rules": {
           "style": {

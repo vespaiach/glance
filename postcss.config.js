@@ -3,7 +3,7 @@ import babelConfig from "./babel.config.js";
 export default {
   plugins: {
     "@stylexjs/postcss-plugin": {
-      include: ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}"],
+      include: ["src/**/*.{ts,tsx}"],
       exclude: ["**/*.test.{ts,tsx}"],
       useCSSLayers: true,
       babelConfig: {

@@ -19,7 +19,7 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 - Styling is StyleX only, with tokens from `src/theme`. No inline `style`, CSS modules or Tailwind.
 
 ## Code style
-- No comments in `src/` or `app/`. Names, types and test titles carry the meaning. Allowed: `// biome-ignore <rule>: <reason>`, `// @ts-expect-error <reason>` and triple-slash directives.
+- No comments in `src/`. Names, types and test titles carry the meaning. Allowed: `// biome-ignore <rule>: <reason>`, `// @ts-expect-error <reason>` and triple-slash directives.
 - Write function bodies as short steps (guards → each read or write → build the result), separated by one blank line, with no blank lines inside a statement. Extract a step into a named function when it has a clear name and at most two inputs, even if it's used once. A function with one or two steps stays one block.
 
 ## Building UI (bottom up)
