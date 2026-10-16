@@ -298,3 +298,123 @@ test("A11Y-04 Tab moves through Close, the fields in visual order, the swatches,
     screen.getByRole("button", { name: "Close" }),
   ]);
 });
+
+async function changeTitle() {
+  await userEvent.type(screen.getByRole("textbox", { name: "Title" }), "!");
+}
+
+function scrim() {
+  return screen.getByRole("dialog").previousElementSibling as HTMLElement;
+}
+
+test("§8.9 Cancel on a changed event asks Discard changes? in place of the footer", async () => {
+  const onClose = vi.fn();
+  renderSheet({ onClose });
+
+  await changeTitle();
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Discard changes?Your edits to this event won’t be saved.",
+  );
+  expect(screen.getByRole("button", { name: "Keep editing" })).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test("§8.9 a changed new event says it won’t be added", async () => {
+  renderSheet({ mode: "new" });
+
+  await changeTitle();
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent("This event won’t be added.");
+});
+
+test("§8.9 the scrim and Escape ask too on a changed event", async () => {
+  const onClose = vi.fn();
+  renderSheet({ onClose });
+
+  await changeTitle();
+  await userEvent.click(scrim());
+
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+  await userEvent.keyboard("{Escape}");
+
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test("§8.9 Discard closes the sheet without saving", async () => {
+  const onClose = vi.fn();
+  const onSave = vi.fn();
+  renderSheet({ onClose, onSave });
+
+  await changeTitle();
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(onSave).not.toHaveBeenCalled();
+});
+
+test("§8.9 Keep editing brings the footer back with the edit kept", async () => {
+  renderSheet();
+
+  await changeTitle();
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Lunch with Aunt Rosa!");
+  expect(screen.getByRole("dialog")).toHaveFocus();
+});
+
+test("§8.9 while it asks, the scrim is ignored and ✕ discards", async () => {
+  const onClose = vi.fn();
+  renderSheet({ onClose });
+
+  await changeTitle();
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(scrim());
+
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test("§8.9 an edit while it asks brings the normal footer back", async () => {
+  renderSheet();
+
+  await changeTitle();
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Coral" }));
+
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+});
+
+test("§8.9 asking closes the open time picker", async () => {
+  renderSheet({ time: "start" });
+
+  await userEvent.click(screen.getByRole("button", { name: "1 PM" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.queryByRole("group", { name: "Start time" })).not.toBeInTheDocument();
+  expect(screen.getByRole("alert")).toBeInTheDocument();
+});
+
+test("§8.9 the discard=1 state opens asking", () => {
+  renderSheet({ mode: "new", initial: initialEventSheet(BLANK, undefined, true) });
+
+  expect(screen.getByRole("alert")).toHaveTextContent("This event won’t be added.");
+});

@@ -54,6 +54,19 @@ test("tech§6 sheet=note and sheet=newnote open the note sheets", () => {
   });
 });
 
+test("§8.9 discard=1 opens the sheet asking Discard changes?", () => {
+  expect(fixtureSheet({ sheet: "newevent", discard: true }, "2026-10-09")).toEqual({
+    kind: "newevent",
+    day: "2026-10-09",
+    discard: true,
+  });
+  expect(fixtureSheet({ sheet: "note", discard: true }, "2026-10-09")).toEqual({
+    kind: "note",
+    id: fixtureSheetTargets.note,
+    discard: true,
+  });
+});
+
 test("tech§6 no sheet= opens no sheet", () => {
   expect(fixtureSheet({ time: "start" }, "2026-10-09")).toBeNull();
 });

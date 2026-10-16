@@ -4,6 +4,7 @@ import {
   draftFromNote,
   initialNoteSheet,
   type NoteDraft,
+  type NoteSheetState,
   newNoteDraft,
   noteSwatches,
 } from "../noteSheet";
@@ -14,6 +15,7 @@ const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad", tone: 1 
 type Options = {
   mode?: "new" | "edit";
   offline?: boolean;
+  initial?: NoteSheetState;
   onClose?: () => void;
   onDelete?: () => void;
   onSave?: (draft: NoteDraft) => void;
@@ -26,7 +28,9 @@ function renderSheet(options: Options = {}) {
     <NoteSheet
       mode={mode}
       eyebrow={mode === "new" ? "Notice board" : "Dad · 8:12 AM"}
-      initial={initialNoteSheet(mode === "new" ? newNoteDraft() : draftFromNote(WIFI))}
+      initial={
+        options.initial ?? initialNoteSheet(mode === "new" ? newNoteDraft() : draftFromNote(WIFI))
+      }
       swatches={noteSwatches("fall")}
       offline={options.offline ?? false}
       onClose={options.onClose ?? (() => {})}
@@ -197,4 +201,44 @@ test("A11Y-04 Tab moves through Close, Message, Your name, the swatches, then th
     screen.getByRole("button", { name: "Save" }),
     screen.getByRole("button", { name: "Close" }),
   ]);
+});
+
+test("§8.9 Cancel on a changed note asks Discard changes? and says it won’t be posted", async () => {
+  const onClose = vi.fn();
+  renderSheet({ onClose });
+
+  await userEvent.type(screen.getByLabelText("Your name"), "dy");
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Discard changes?This note won’t be posted.");
+  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test("§8.9 a new note opened with text asks on the scrim, ignores it while asking, and Discard closes", async () => {
+  const onClose = vi.fn();
+  const typed = initialNoteSheet(newNoteDraft({ text: "Has anyone seen", tone: 2 }), {
+    opened: newNoteDraft(),
+  });
+  renderSheet({ mode: "new", initial: typed, onClose });
+
+  const scrim = screen.getByRole("dialog").previousElementSibling as HTMLElement;
+
+  await userEvent.click(scrim);
+  await userEvent.click(scrim);
+
+  expect(onClose).not.toHaveBeenCalled();
+
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+test("§8.9 typing while it asks brings the normal footer back", async () => {
+  renderSheet({ initial: initialNoteSheet(draftFromNote(WIFI), { discard: true }) });
+
+  await userEvent.type(screen.getByLabelText("Message"), "!");
+
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
 });

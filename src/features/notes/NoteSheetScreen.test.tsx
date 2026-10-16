@@ -101,6 +101,21 @@ test("tech§6 a new note request can carry the fixture draft", async () => {
   expect(await screen.findByLabelText("Message")).toHaveValue("Has anyone seen my blue umbr");
 });
 
+test("§8.9 the fixture draft counts as typed, so Cancel asks", async () => {
+  renderSheet({ kind: "newnote", draft: { text: "Has anyone seen my blue umbr", tone: 2 } });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent("This note won’t be posted.");
+});
+
+test("§8.9 a request with discard opens on Discard changes?", async () => {
+  await store.db.notes.put(synced(WIFI));
+  renderSheet({ kind: "note", id: WIFI.id, discard: true });
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Discard changes?");
+});
+
 test("NOTE-05 offline the sheet saves for later", async () => {
   await putSyncStatus(store, { online: false, weather: { state: "idle" } });
 

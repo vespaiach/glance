@@ -51,7 +51,7 @@ export function shellOptions(params: FixtureParams): ShellOptions {
   };
 }
 
-export function fixtureSheet(params: FixtureParams, today: string): SheetRequest | null {
+function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | null {
   const time = params.time && { time: params.time };
 
   switch (params.sheet) {
@@ -66,6 +66,12 @@ export function fixtureSheet(params: FixtureParams, today: string): SheetRequest
     default:
       return null;
   }
+}
+
+export function fixtureSheet(params: FixtureParams, today: string): SheetRequest | null {
+  const sheet = fixtureSheetKind(params, today);
+
+  return sheet && params.discard ? { ...sheet, discard: true } : sheet;
 }
 
 export function useShellSetup(demo: boolean): ShellSetup | undefined {

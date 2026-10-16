@@ -109,6 +109,15 @@ export const copy = {
     loading: "Loading events",
     unavailable: "Calendar unavailable",
   },
+  discard: {
+    title: "Discard changes?",
+    keepEditing: "Keep editing",
+    discard: "Discard",
+    newEvent: "This event won’t be added.",
+    editEvent: "Your edits to this event won’t be saved.",
+    note: "This note won’t be posted.",
+    photo: "Your edits to this photo won’t be saved.",
+  },
   events: {
     now: "Now",
     sheet: {

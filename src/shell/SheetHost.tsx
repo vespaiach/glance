@@ -7,11 +7,12 @@ import type { NoteTone } from "@/domain/schemas";
 
 export type TimeFixture = NonNullable<FixtureParams["time"]>;
 
-export type SheetRequest =
+export type SheetRequest = (
   | { kind: "event"; id: string; time?: TimeFixture }
   | { kind: "newevent"; day: string; time?: TimeFixture }
   | { kind: "note"; id: string }
-  | { kind: "newnote"; draft?: { text: string; tone: NoteTone } };
+  | { kind: "newnote"; draft?: { text: string; tone: NoteTone } }
+) & { discard?: true };
 
 export type SheetHostValue = {
   sheet: SheetRequest | null;

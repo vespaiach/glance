@@ -3,11 +3,14 @@ import { deviceTimeZone } from "@/domain/zone";
 import {
   canSave,
   draftFromEvent,
+  type EventDraft,
+  type EventSheetAction,
   type EventSheetState,
   eventFromDraft,
   eventSheetReducer,
   eventSwatches,
   initialEventSheet,
+  isDirty,
   newEventDraft,
 } from "./eventSheet";
 
@@ -72,7 +75,8 @@ describe("event sheet fixtures", () => {
       picker: null,
       titleError: false,
       endError: false,
-      confirming: false,
+      confirm: null,
+      opened: DRAFT,
     });
   });
 
@@ -168,7 +172,7 @@ describe("event sheet reducer", () => {
   });
 
   it("EVT-06 Delete asks for the inline confirm", () => {
-    expect(eventSheetReducer(closed, { type: "askDelete" }).confirming).toBe(true);
+    expect(eventSheetReducer(closed, { type: "askDelete" }).confirm).toBe("delete");
   });
 });
 
@@ -264,5 +268,79 @@ describe("event sheet in a zone", () => {
       start: 660,
       end: 720,
     });
+  });
+});
+
+describe("event sheet discard", () => {
+  const asking = eventSheetReducer(eventSheetReducer(closed, { type: "title", value: "Picnic" }), {
+    type: "askDiscard",
+  });
+
+  it("§8.9 the opened draft is not dirty", () => {
+    expect(isDirty(DRAFT, DRAFT)).toBe(false);
+  });
+
+  it("§8.9 spaces around the title and place don't make the draft dirty", () => {
+    expect(isDirty({ ...DRAFT, title: " Lunch ", location: "Café  " }, DRAFT)).toBe(false);
+  });
+
+  it.each<[string, Partial<EventDraft>]>([
+    ["title", { title: "Picnic" }],
+    ["start", { start: 730 }],
+    ["end", { end: 790 }],
+    ["no end", { end: undefined }],
+    ["place", { location: "Park" }],
+    ["color", { tone: "accent" }],
+  ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
+    expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
+  });
+
+  it("§8.9 the time fixtures are part of the opened draft", () => {
+    const error = initialEventSheet(DRAFT, "error");
+
+    expect(isDirty(error.draft, error.opened)).toBe(false);
+  });
+
+  it("§8.9 discard=1 opens on Discard changes?", () => {
+    expect(initialEventSheet(DRAFT, undefined, true).confirm).toBe("discard");
+  });
+
+  it("§8.9 asking to discard closes the time picker", () => {
+    const open = eventSheetReducer(closed, { type: "toggle", field: "start" });
+
+    expect(eventSheetReducer(open, { type: "askDiscard" })).toMatchObject({
+      confirm: "discard",
+      picker: null,
+    });
+  });
+
+  it("§8.9 asking to discard replaces a waiting delete confirm", () => {
+    const deleting = eventSheetReducer(closed, { type: "askDelete" });
+
+    expect(eventSheetReducer(deleting, { type: "askDiscard" }).confirm).toBe("discard");
+  });
+
+  it("§8.9 Keep editing brings the footer back with the draft kept", () => {
+    expect(eventSheetReducer(asking, { type: "keepEditing" })).toMatchObject({
+      confirm: null,
+      draft: { title: "Picnic" },
+    });
+  });
+
+  it.each<EventSheetAction>([
+    { type: "title", value: "Picnic at noon" },
+    { type: "location", value: "Park" },
+    { type: "tone", value: 3 },
+    { type: "start", value: 750 },
+    { type: "end", value: 800 },
+    { type: "noEnd" },
+  ])("§8.9 an edit ($type) brings the footer back", (action) => {
+    expect(eventSheetReducer(asking, action).confirm).toBeNull();
+  });
+
+  it("§8.9 an edit keeps a waiting delete confirm", () => {
+    const deleting = eventSheetReducer(closed, { type: "askDelete" });
+
+    expect(eventSheetReducer(deleting, { type: "title", value: "Picnic" }).confirm).toBe("delete");
   });
 });

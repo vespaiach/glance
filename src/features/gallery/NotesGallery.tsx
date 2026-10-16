@@ -20,6 +20,7 @@ type Demo = {
   mode: "new" | "edit";
   draft?: boolean;
   offline?: boolean;
+  discard?: boolean;
 };
 
 const words = gallery.noteSheet;
@@ -29,6 +30,7 @@ const DEMOS: readonly Demo[] = [
   { label: words.new, mode: "new" },
   { label: words.draft, mode: "new", draft: true },
   { label: words.offline, mode: "new", offline: true },
+  { label: words.discard, mode: "new", draft: true, discard: true },
 ];
 
 const WIFI = BOARD_NOTES[1];
@@ -80,7 +82,10 @@ function NoteSheetDemo({
           ? copy.notes.sheet.eyebrow(edit.author, noteStampText(edit, NOW, "12h", GALLERY_TZ))
           : copy.notes.board
       }
-      initial={initialNoteSheet(edit ? draftFromNote(edit) : draft)}
+      initial={initialNoteSheet(edit ? draftFromNote(edit) : draft, {
+        opened: edit ? draftFromNote(edit) : newNoteDraft(),
+        discard: demo.discard,
+      })}
       swatches={noteSwatches(season)}
       offline={demo.offline ?? false}
       onClose={onClose}

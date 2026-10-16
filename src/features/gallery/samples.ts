@@ -58,6 +58,7 @@ export const gallery = {
     new: "New note",
     draft: "New note · draft",
     offline: "Offline",
+    discard: "Discard changes?",
   },
   eventSheet: {
     edit: "Edit event",
@@ -69,6 +70,8 @@ export const gallery = {
     noEnd: "No end time",
     offline: "Offline",
     phone: "Phone",
+    discardNew: "Discard changes? · new",
+    discardEdit: "Discard changes? · edit",
   },
   button: "Add event",
   danger: "Delete",

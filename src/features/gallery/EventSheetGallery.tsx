@@ -13,6 +13,7 @@ type Demo = {
   clock?: Clock;
   offline?: boolean;
   compact?: boolean;
+  discard?: boolean;
 };
 
 const words = gallery.eventSheet;
@@ -27,6 +28,8 @@ const DEMOS: readonly Demo[] = [
   { label: words.noEnd, mode: "edit", time: "noend" },
   { label: words.offline, mode: "new", offline: true },
   { label: words.phone, mode: "edit", time: "end", compact: true },
+  { label: words.discardNew, mode: "new", discard: true },
+  { label: words.discardEdit, mode: "edit", discard: true, compact: true },
 ];
 
 const LUNCH = {
@@ -56,7 +59,7 @@ export function EventSheetGallery({ season }: { season: Season }) {
           key={open.label}
           mode={open.mode}
           eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
-          initial={initialEventSheet(draft, open.time)}
+          initial={initialEventSheet(draft, open.time, open.discard)}
           clock={open.clock ?? "12h"}
           swatches={eventSwatches(season)}
           offline={open.offline ?? false}

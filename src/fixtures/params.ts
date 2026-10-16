@@ -46,6 +46,7 @@ type ChoiceParams = { [K in keyof Choices]?: Choices[K][number] };
 export type FixtureParams = ChoiceParams & {
   bg?: "photo";
   clock?: "24h";
+  discard?: true;
   empty?: true;
   kb?: true;
   keepPlace?: true;
@@ -99,6 +100,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
   return {
     ...(query.get("bg") === "photo" && { bg: "photo" }),
     ...(query.get("clock") === "24" && { clock: "24h" }),
+    ...(query.get("discard") === "1" && { discard: true }),
     ...(query.get("empty") === "1" && { empty: true }),
     ...(query.get("kb") === "1" && { kb: true }),
     ...(query.get("switch") === "1" && { switch: true }),

@@ -9,6 +9,8 @@ import { shadows } from "@/theme/tokens.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
+import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
+import { type CloseFrom, closeStep } from "@/ui/discard";
 import { Sheet } from "@/ui/Sheet";
 import { TextInput } from "@/ui/TextInput";
 import { TimeField } from "@/ui/TimeField";
@@ -19,6 +21,7 @@ import {
   type EventSheetAction,
   type EventSheetState,
   eventSheetReducer,
+  isDirty,
   type SwatchOption,
   type TimeFieldName,
 } from "../eventSheet";
@@ -38,6 +41,8 @@ type EventSheetProps = {
 };
 
 const words = copy.events.sheet;
+
+const discard = copy.discard;
 
 const time = copy.events.time;
 
@@ -204,9 +209,17 @@ export function EventSheet({
 
   const save = () => (canSave(draft) ? onSave(draft) : dispatch({ type: "save" }));
 
+  const requestClose = (from: CloseFrom) => () => {
+    const step = closeStep(state.confirm, isDirty(draft, state.opened), from);
+
+    if (step === "close") return onClose();
+
+    if (step === "ask") dispatch({ type: "askDiscard" });
+  };
+
   const endActions = (
     <>
-      <Button variant="secondary" onClick={onClose} xstyle={styles.cancel}>
+      <Button variant="secondary" onClick={requestClose("button")} xstyle={styles.cancel}>
         {words.cancel}
       </Button>
       <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
@@ -215,20 +228,38 @@ export function EventSheet({
 
   const startActions = mode === "edit" && (
     <DeleteAction
-      confirming={state.confirming}
+      confirming={state.confirm === "delete"}
       onAsk={() => dispatch({ type: "askDelete" })}
       onDelete={onDelete}
     />
   );
+
+  const asking = state.confirm === "discard";
+
+  const discardBody = mode === "new" ? discard.newEvent : discard.editEvent;
 
   return (
     <Sheet
       title={mode === "new" ? words.newTitle : words.editTitle}
       eyebrow={eyebrow}
       closeLabel={words.close}
-      onClose={onClose}
-      startActions={startActions}
-      endActions={endActions}
+      onClose={requestClose("button")}
+      onScrimTap={requestClose("scrim")}
+      startActions={
+        asking ? <DiscardMessage title={discard.title} body={discardBody} /> : startActions
+      }
+      endActions={
+        asking ? (
+          <DiscardButtons
+            keepLabel={discard.keepEditing}
+            discardLabel={discard.discard}
+            onKeep={() => dispatch({ type: "keepEditing" })}
+            onDiscard={onClose}
+          />
+        ) : (
+          endActions
+        )
+      }
       keyboardInset={keyboardInset}
     >
       {offline && (
