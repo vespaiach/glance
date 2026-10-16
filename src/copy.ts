@@ -22,7 +22,6 @@ export const copy = {
     saved: (time: string) => `Saved ${time}`,
   },
   nav: {
-    label: "Views",
     view: {
       today: "Today",
       calendar: "Calendar",
@@ -35,7 +34,6 @@ export const copy = {
     background: "Background",
     signIn: "Sign in",
     ambient: "Ambient",
-    showMenu: "Show menu",
     main: "Main",
     openMenu: "Open menu",
     showSidebar: "Show sidebar",

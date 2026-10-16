@@ -6,7 +6,6 @@ import type { Photo } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
-import { useBarBlock } from "@/shell/providers/bar";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -63,8 +62,6 @@ export function PhotosScreen() {
   const featured = state.kind === "ready" ? state.data[selected] : undefined;
 
   const thisYear = Number(dateKey(now, tz).slice(0, 4));
-
-  useBarBlock(full.kind === "open" && featured !== undefined);
 
   const step = (delta: number) => dispatch({ type: "step", delta, at: clock.get() });
 

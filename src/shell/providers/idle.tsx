@@ -12,7 +12,6 @@ import {
 import { idleDue, inAmbient } from "@/domain/idle";
 import { isTextField } from "../keyboard";
 import { useSheetHost } from "../SheetHost";
-import { useBar } from "./bar";
 import { type NowStore, useNowStore } from "./now";
 import { useAccountSettings } from "./settings";
 import { useTimeZone } from "./timeZone";
@@ -87,8 +86,6 @@ export function IdleProvider({
 
   const signedOut = useSignedOut();
 
-  const bar = useBar();
-
   const current = {
     pathname,
     close,
@@ -98,7 +95,6 @@ export function IdleProvider({
     outboxEmpty,
     reload,
     updates,
-    bar,
   };
 
   const latest = useRef(current);
@@ -152,15 +148,12 @@ export function IdleProvider({
         const target = ambient ? AMBIENT : awake();
 
         go(target);
-
-        if (target === TODAY) latest.current.bar.hide();
       }
     };
 
     const stopWatching = watchActivity(store, {
       onTouch: (at) => {
         lastActivity = at;
-        latest.current.bar.touch();
       },
       onFieldLeft: (at) => {
         lastActivity = at;

@@ -16,9 +16,7 @@ import type { AccountSettings, CalendarEvent, Photo } from "@/domain/schemas";
 import { todayHero } from "@/domain/todayHero";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
-import { barLayoutHeight } from "@/shell/bar";
 import { useBreakpoint, useViewportHeight, useViewportWidth } from "@/shell/breakpoint";
-import { useBar } from "@/shell/providers/bar";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -113,9 +111,7 @@ function useScheduleCapacity(state: ZoneState<CalendarEvent>): number {
 
   const portrait = useViewportWidth() <= windowHeight;
 
-  const barHeight = barLayoutHeight(useBar().mode, bp);
-
-  return todayCapacity({ bp, portrait, windowHeight, barHeight, allDayCount: allDayCount(state) });
+  return todayCapacity({ bp, portrait, windowHeight, allDayCount: allDayCount(state) });
 }
 
 function Hero({ state, clock, now, tz, onOpenEvent }: HeroProps) {

@@ -1,8 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
 import { PanelLeftOpen } from "lucide-react";
+import { useRef } from "react";
 import { copy } from "@/copy";
 import { colors, motion, space } from "@/theme/tokens.stylex";
 import { IconButton } from "@/ui/IconButton";
+import { useFocusWhenShown } from "./focusWhenShown";
 import type { View } from "./routes";
 import type { SidebarMode } from "./sidebar";
 import { SIDEBAR_PINNED, SIDEBAR_VIEWS, type SidebarItem } from "./sidebarItems";
@@ -52,6 +54,10 @@ const styles = stylex.create({
 });
 
 export function SidebarRail({ mode, active, onOpen, onNavigate }: SidebarRailProps) {
+  const openMenu = useRef<HTMLButtonElement>(null);
+
+  useFocusWhenShown(mode === "rail", openMenu);
+
   const button = (item: SidebarItem) => {
     const current = item.key === active;
 
@@ -75,6 +81,7 @@ export function SidebarRail({ mode, active, onOpen, onNavigate }: SidebarRailPro
       {...stylex.props(styles.rail, mode === "hidden" && styles.hidden)}
     >
       <IconButton
+        ref={openMenu}
         icon={PanelLeftOpen}
         label={copy.nav.openMenu}
         size="touch"

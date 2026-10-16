@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import type { LucideIcon } from "lucide-react";
+import type { Ref } from "react";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { Icon } from "./Icon";
 import { press } from "./press";
@@ -16,6 +17,7 @@ type IconButtonProps = {
   current?: "page";
   expanded?: boolean;
   onClick?: () => void;
+  ref?: Ref<HTMLButtonElement>;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -66,10 +68,12 @@ export function IconButton({
   current,
   expanded,
   onClick,
+  ref,
   xstyle,
 }: IconButtonProps) {
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={label}
       aria-current={current}
