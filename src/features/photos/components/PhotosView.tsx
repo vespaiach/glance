@@ -35,6 +35,7 @@ type PhotosViewProps = {
   onEdit: (photoId: string) => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
+  onFullScreen: () => void;
   onUpload: () => void;
   onRetry: (id: string) => void;
   onRemove: (id: string) => void;
@@ -104,6 +105,7 @@ function PhotoGallery({
             onEdit={() => rest.onEdit(featured.id)}
             onStep={rest.onStep}
             onTogglePlay={rest.onTogglePlay}
+            onFullScreen={rest.onFullScreen}
             frame={layout.featured}
           />
         ) : (

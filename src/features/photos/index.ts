@@ -1,3 +1,4 @@
+export { FullScreenPhoto } from "./components/FullScreenPhoto";
 export { PendingUpload } from "./components/PendingUpload";
 export { PhotoSheet } from "./components/PhotoSheet";
 export { PhotosView } from "./components/PhotosView";

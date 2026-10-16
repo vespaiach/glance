@@ -38,6 +38,7 @@ const CHOICES = {
   bar: ["hidden", "float"],
   barauto: ["off"],
   events: ["many"],
+  chrome: ["0"],
 } as const;
 
 type Choices = typeof CHOICES;
@@ -50,6 +51,7 @@ export type FixtureParams = ChoiceParams & {
   clock?: "24h";
   discard?: true;
   empty?: true;
+  full?: true;
   kb?: true;
   keepPlace?: true;
   now?: Date;
@@ -105,6 +107,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("clock") === "24" && { clock: "24h" }),
     ...(query.get("discard") === "1" && { discard: true }),
     ...(query.get("empty") === "1" && { empty: true }),
+    ...(query.get("full") === "1" && { full: true }),
     ...(query.get("kb") === "1" && { kb: true }),
     ...(query.get("switch") === "1" && { switch: true }),
   };

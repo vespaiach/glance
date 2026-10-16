@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import type { FixtureParams } from "@/data/repos";
@@ -13,6 +13,7 @@ import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
+import { BarProvider, useBar } from "@/shell/providers/bar";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { TimeZoneProvider } from "@/shell/providers/timeZone";
@@ -74,7 +75,9 @@ function renderPhotos(
       <TimeZoneProvider timeZone={timeZone}>
         <NetworkProvider>
           <FixtureParamsProvider params={params}>
-            <SheetHost>{children}</SheetHost>
+            <SheetHost>
+              <BarProvider>{children}</BarProvider>
+            </SheetHost>
           </FixtureParamsProvider>
         </NetworkProvider>
       </TimeZoneProvider>
@@ -85,6 +88,7 @@ function renderPhotos(
     <>
       <PhotosScreen />
       <OpenSheet />
+      <BarMode />
     </>,
     { wrapper },
   );
@@ -94,6 +98,10 @@ function OpenSheet() {
   const { sheet } = useSheetHost();
 
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
+}
+
+function BarMode() {
+  return <output aria-label="Bar">{useBar().mode}</output>;
 }
 
 function featuredTitle() {
@@ -496,4 +504,110 @@ test("PHOTO-11 the pencil opens Photo details for the featured photo and pauses 
   );
   expect(featuredTitle()).toBe("Cannon Beach");
   expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
+});
+
+function fullScreen() {
+  return screen.getByRole("dialog", { name: /· full screen$/ });
+}
+
+test("PHOTO-14 tapping the featured photo opens it full screen, and Exit returns with it featured", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos();
+
+  await userEvent.click(await screen.findByRole("img", { name: "Cannon Beach" }));
+
+  expect(fullScreen()).toHaveAccessibleName("Cannon Beach · full screen");
+  expect(within(fullScreen()).getByText("1 of 3")).toBeInTheDocument();
+
+  await userEvent.click(within(fullScreen()).getByRole("button", { name: "Next photo" }));
+
+  expect(fullScreen()).toHaveAccessibleName("Apple picking · full screen");
+  expect(within(fullScreen()).getByText("2 of 3")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Exit full screen" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(featuredTitle()).toBe("Apple picking");
+});
+
+test("PHOTO-14 the chevrons wrap and Space pauses the shared slideshow", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Full screen" }));
+
+  await userEvent.keyboard("{ArrowLeft}");
+
+  expect(fullScreen()).toHaveAccessibleName("Forest Park trail · full screen");
+
+  await userEvent.keyboard("[Space]{Escape}");
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(featuredTitle()).toBe("Forest Park trail");
+  expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
+});
+
+test("PHOTO-14 the slideshow keeps its 8 s timer in full screen", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos({}, "running");
+
+  await screen.findByRole("img", { name: "Cannon Beach" });
+
+  waitSeconds(5);
+
+  await userEvent.click(screen.getByRole("button", { name: "Full screen" }));
+
+  waitSeconds(3);
+
+  expect(fullScreen()).toHaveAccessibleName("Apple picking · full screen");
+});
+
+test("PHOTO-14 full=1 opens full screen with the rows, chrome=0 without them", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  const { unmount } = renderPhotos({ full: true });
+
+  expect(
+    await screen.findByRole("dialog", { name: "Cannon Beach · full screen" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("1 of 1")).toBeInTheDocument();
+
+  unmount();
+
+  renderPhotos({ full: true, chrome: "0" });
+
+  expect(
+    await screen.findByRole("dialog", { name: "Cannon Beach · full screen" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("1 of 1")).not.toBeInTheDocument();
+});
+
+test("PHOTO-14 full=1 opens nothing until a photo has finished uploading", async () => {
+  await markSynced(store);
+
+  renderPhotos({ full: true, upload: "one" });
+
+  expect(
+    await screen.findByText("Your photos show here once they finish uploading."),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("SHELL-06 the bar doesn't hide while full screen is open", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos({ full: true }, "running");
+
+  await screen.findByRole("dialog");
+
+  waitSeconds(30);
+
+  expect(screen.getByRole("status", { name: "Bar" })).toHaveTextContent("docked");
 });

@@ -6,13 +6,16 @@ import type { Photo } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
+import { useBarBlock } from "@/shell/providers/bar";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone } from "@/shell/sourceZone";
+import { FullScreenPhoto } from "./components/FullScreenPhoto";
 import { PhotosView } from "./components/PhotosView";
+import { fullScreen, initialFullScreen } from "./fullScreen";
 import { newestFirst, slideIndex, slideshow, startSlideshow, wrapIndex } from "./slideshow";
 import { initialUploads } from "./uploads";
 import { usePhotoPicker } from "./usePhotoPicker";
@@ -43,6 +46,8 @@ export function PhotosScreen() {
 
   const [show, dispatch] = useReducer(slideshow, clock, (store) => startSlideshow(store.get()));
 
+  const [full, dispatchFull] = useReducer(fullScreen, fixture, initialFullScreen);
+
   const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads), online);
 
   const picker = usePhotoPicker(uploads.choose);
@@ -54,6 +59,16 @@ export function PhotosScreen() {
   const count = state.kind === "ready" ? state.data.length : 0;
 
   const selected = count > 0 ? wrapIndex(slideIndex(show, now), count) : 0;
+
+  const featured = state.kind === "ready" ? state.data[selected] : undefined;
+
+  const thisYear = Number(dateKey(now, tz).slice(0, 4));
+
+  useBarBlock(full.kind === "open" && featured !== undefined);
+
+  const step = (delta: number) => dispatch({ type: "step", delta, at: clock.get() });
+
+  const togglePlay = () => dispatch({ type: "toggle", at: clock.get() });
 
   const editPhoto = (id: string) => {
     dispatch({ type: "pause", at: clock.get() });
@@ -70,7 +85,7 @@ export function PhotosScreen() {
         onRetrySync={zone.retry}
         clock={clockFormat}
         tz={tz}
-        thisYear={Number(dateKey(now, tz).slice(0, 4))}
+        thisYear={thisYear}
         selected={selected}
         playing={show.kind === "playing"}
         uploads={uploads.tiles}
@@ -80,12 +95,28 @@ export function PhotosScreen() {
         photoSrc={photoSrc}
         onSelect={(index) => dispatch({ type: "select", index, at: clock.get() })}
         onEdit={editPhoto}
-        onStep={(delta) => dispatch({ type: "step", delta, at: clock.get() })}
-        onTogglePlay={() => dispatch({ type: "toggle", at: clock.get() })}
+        onStep={step}
+        onTogglePlay={togglePlay}
+        onFullScreen={() => dispatchFull({ type: "open" })}
         onUpload={picker.open}
         onRetry={uploads.retry}
         onRemove={uploads.remove}
       />
+      {full.kind === "open" && featured && (
+        <FullScreenPhoto
+          photo={featured}
+          src={photoSrc(featured.id, "display")}
+          index={selected}
+          total={count}
+          thisYear={thisYear}
+          playing={show.kind === "playing"}
+          chrome={full.chrome}
+          onExit={() => dispatchFull({ type: "exit" })}
+          onToggleChrome={() => dispatchFull({ type: "toggleChrome" })}
+          onStep={step}
+          onTogglePlay={togglePlay}
+        />
+      )}
     </>
   );
 }

@@ -109,6 +109,11 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("bar=auto&barauto=on")).toEqual({});
   });
 
+  it("PHOTO-14 reads full=1 and chrome=0", () => {
+    expect(parseFixtureParams("full=1&chrome=0")).toEqual({ full: true, chrome: "0" });
+    expect(parseFixtureParams("full=0&chrome=1")).toEqual({});
+  });
+
   it("§6 ignores params that are not fixture params", () => {
     expect(parseFixtureParams("date=2026-10-14&view=weather")).toEqual({});
   });

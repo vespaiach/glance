@@ -22,6 +22,7 @@ export type BarValue = {
   mode: BarMode;
   touch(): void;
   hide(): void;
+  block(): () => void;
 };
 
 const BarContext = createContext<BarValue | undefined>(undefined);
@@ -52,6 +53,8 @@ export function BarProvider({ children }: { children: ReactNode }) {
 
   const lastTouch = useRef<Date | undefined>(undefined);
 
+  const blocks = useRef(0);
+
   const latest = useRef({ enabled, blocked });
 
   useDockOnViewChange(dispatch);
@@ -66,7 +69,9 @@ export function BarProvider({ children }: { children: ReactNode }) {
     return store.subscribe(() => {
       const now = store.get();
 
-      if (latest.current.blocked || isTextField(document.activeElement)) lastTouch.current = now;
+      if (latest.current.blocked || blocks.current > 0 || isTextField(document.activeElement)) {
+        lastTouch.current = now;
+      }
 
       if (!latest.current.enabled || !barIdleDue(lastTouch.current ?? now, now)) return;
 
@@ -86,6 +91,13 @@ export function BarProvider({ children }: { children: ReactNode }) {
       hide: () => {
         if (latest.current.enabled) dispatch({ type: "idle" });
       },
+      block: () => {
+        blocks.current += 1;
+
+        return () => {
+          blocks.current -= 1;
+        };
+      },
     }),
     [mode, store],
   );
@@ -99,4 +111,10 @@ export function useBar(): BarValue {
   if (bar === undefined) throw new Error("useBar needs a BarProvider");
 
   return bar;
+}
+
+export function useBarBlock(active: boolean) {
+  const { block } = useBar();
+
+  useEffect(() => (active ? block() : undefined), [active, block]);
 }

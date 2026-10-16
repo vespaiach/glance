@@ -3,6 +3,7 @@ import { type ComponentProps, useState } from "react";
 import type { Photo } from "@/domain/schemas";
 import {
   draftFromPhoto,
+  FullScreenPhoto,
   initialPhotoSheet,
   PhotoSheet,
   type PhotoSheetState,
@@ -79,6 +80,7 @@ const base: ViewProps = {
   onEdit: ignore,
   onStep: ignore,
   onTogglePlay: ignore,
+  onFullScreen: ignore,
   onUpload: ignore,
   onRetry: ignore,
   onRemove: ignore,
@@ -132,6 +134,46 @@ function PhotoSheetDemo({ demo, onClose }: { demo: SheetDemo; onClose: () => voi
   );
 }
 
+const fullWords = gallery.fullScreen;
+
+function FullScreenDemo() {
+  const [chrome, setChrome] = useState<boolean | null>(null);
+
+  const [index, setIndex] = useState(0);
+
+  const [playing, setPlaying] = useState(true);
+
+  const total = GALLERY_PHOTOS.length;
+
+  const photo = GALLERY_PHOTOS[index];
+
+  return (
+    <>
+      <Button variant="secondary" onClick={() => setChrome(true)}>
+        {fullWords.shown}
+      </Button>
+      <Button variant="secondary" onClick={() => setChrome(false)}>
+        {fullWords.hidden}
+      </Button>
+      {chrome !== null && photo && (
+        <FullScreenPhoto
+          photo={photo}
+          src={galleryPhotoSrc(photo.id)}
+          index={index}
+          total={total}
+          thisYear={2026}
+          playing={playing}
+          chrome={chrome}
+          onExit={() => setChrome(null)}
+          onToggleChrome={() => setChrome(!chrome)}
+          onStep={(delta) => setIndex((index + delta + total) % total)}
+          onTogglePlay={() => setPlaying(!playing)}
+        />
+      )}
+    </>
+  );
+}
+
 export function PhotosGallery() {
   const [open, setOpen] = useState<SheetDemo | null>(null);
 
@@ -151,6 +193,9 @@ export function PhotosGallery() {
           </Button>
         ))}
         {open && <PhotoSheetDemo key={open.label} demo={open} onClose={() => setOpen(null)} />}
+      </GalleryGroup>
+      <GalleryGroup title={gallery.groups.fullScreen}>
+        <FullScreenDemo />
       </GalleryGroup>
     </>
   );
