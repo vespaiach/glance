@@ -358,14 +358,6 @@ export const copy = {
         { value: "C", label: "Celsius" },
       ],
     },
-    hideBar: {
-      title: "Hide bar when idle",
-      body: "After 20 seconds without a touch. Any tap brings it back.",
-      options: [
-        { value: "on", label: "On" },
-        { value: "off", label: "Off" },
-      ],
-    },
     schedule: "Schedule",
     ambient: {
       title: "Ambient screen",

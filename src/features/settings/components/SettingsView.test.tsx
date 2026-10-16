@@ -163,27 +163,11 @@ test("SET-05 the temperature tabs save Fahrenheit or Celsius", async () => {
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
 
-test("SET-11 Hide bar when idle is the last row, under Temperature, and saves On or Off", async () => {
-  const props = renderView();
+test("SET-11 the Settings panel has no Hide bar when idle row, so Temperature is last", () => {
+  renderView();
 
-  expect(selectedPill("Hide bar when idle")).toBe("On");
-  expect(
-    screen.getByText("After 20 seconds without a touch. Any tap brings it back."),
-  ).toBeInTheDocument();
-
-  const titles = screen.getAllByText(/^(Temperature|Hide bar when idle)$/);
-
-  expect(titles.map((title) => title.textContent)).toEqual(["Temperature", "Hide bar when idle"]);
-
-  await userEvent.click(pills("Hide bar when idle").getByRole("button", { name: "Off" }));
-
-  expect(props.onChange).toHaveBeenCalledWith({ hideBarWhenIdle: false });
-});
-
-test("SET-11 shows Off when the bar stays docked", () => {
-  renderView({ settings: { ...DEFAULT_SETTINGS, hideBarWhenIdle: false } });
-
-  expect(selectedPill("Hide bar when idle")).toBe("Off");
+  expect(screen.queryByText("Hide bar when idle")).not.toBeInTheDocument();
+  expect(pills("Temperature").getAllByRole("button").at(-1)).toHaveTextContent("Celsius");
 });
 
 test("SET-06 the Ambient tile shows the hours in the clock format and opens the Ambient screen page", async () => {
