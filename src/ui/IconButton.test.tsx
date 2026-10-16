@@ -48,3 +48,13 @@ test("A11Y-02 IconButton with active reports its pressed state", () => {
   expect(screen.getByRole("button", { name: "Off" })).toHaveAttribute("aria-pressed", "false");
   expect(screen.getByRole("button", { name: "Plain" })).not.toHaveAttribute("aria-pressed");
 });
+
+test("SHELL-09 IconButton reports whether what it opens is expanded", () => {
+  const { rerender } = render(<IconButton icon={Settings} label="Open" expanded={false} />);
+
+  expect(screen.getByRole("button", { name: "Open" })).toHaveAttribute("aria-expanded", "false");
+
+  rerender(<IconButton icon={Settings} label="Open" />);
+
+  expect(screen.getByRole("button", { name: "Open" })).not.toHaveAttribute("aria-expanded");
+});

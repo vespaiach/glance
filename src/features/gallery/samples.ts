@@ -81,6 +81,13 @@ export const gallery = {
     ambientView: "Ambient view",
     signInView: "Sign in view",
   },
+  sidebar: {
+    hidden: "Hidden",
+    rail: "Rail",
+    expanded: "Expanded",
+    wide: "wide",
+    phone: "phone",
+  },
   fullScreen: {
     shown: "Controls shown",
     hidden: "Controls hidden",
