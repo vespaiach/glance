@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.51 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, nav bar, U02, the bar hiding when idle, U03, Discard changes?, U04, all-day events, U05 data and server and U06 UI, the picture of the day, U09, photo details from the file, U10, the Photo details sheet, edits and delete, U11, full-screen photos, U12, the signed-in screens, U13, and the QR sign-in, U14, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
+| Status | Draft v0.52 — the Clock's colon blinks (U17); the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, nav bar, U02, the bar hiding when idle, U03, Discard changes?, U04, all-day events, U05 data and server and U06 UI, the picture of the day, U09, photo details from the file, U10, the Photo details sheet, edits and delete, U11, full-screen photos, U12, the signed-in screens, U13, and the QR sign-in, U14, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D23) |
 | Date | 2026-10-16 |
 | Design requests | Prompts sent to Claude Design, all delivered: [1 time entry](prompts/01-time-entry.md) and [2 family copy](prompts/02-family-copy.md) in handoff v2 (§8.3.1, §10), [3 sign-in and system states](prompts/03-signin-and-system-states.md) in v3 (§8.1, PHOTO-06..09, WX-07..09), [4 signed out](prompts/04-session-ended.md) and [5 location and time zone](prompts/05-location-and-time-zone.md) in v4 (SIGNIN-13, §9.9). v4 also added the Ambient screen page (SET-10) and v5 came with no prompt (decision 23). A new prompt goes in [`prompts/`](prompts/) as `NN-short-name.md` |
@@ -122,7 +122,7 @@ Rebuild these as typed React components with the props below (taken from `_ds_bu
 
 | Component | Props | Notes |
 |---|---|---|
-| `Clock` | `time: Date, hour12=true, showDate=true, size: 'xl'\|'lg', align: 'left'\|'center'` | Tabular numerals. `time` is the live `Date` from `useNow()`; the Clock has no timer of its own. Date line "Friday, October 9" |
+| `Clock` | `time: Date, hour12=true, showDate=true, size: 'xl'\|'lg', align: 'left'\|'center'` | Tabular numerals. The colon blinks (on and off every 0.6 s). `time` is the live `Date` from `useNow()`; the Clock has no timer of its own. Date line "Friday, October 9" |
 | `EventRow` | `start, end, title, location, status: 'past'\|'now'\|'upcoming', dot: Tone, nowLabel, compact, onClick` | Past = struck through, hairline dot (v5: no grey). Now = season fill and NOW pill (`nowLabel`). `compact` = the phone columns (§5.4). With `onClick` the row is a button |
 | `MonthGrid` | `year, month (0-11), selected, today, marked[], onSelect, showTitle, cell` | Selected = black (`aria-pressed`). Today = ring (`aria-current="date"`). Marked = dot. Day buttons are labelled with the full date |
 | `Button` | `variant: primary\|secondary\|ghost\|accent\|inverse\|danger, size: md\|lg, icon, iconRight, fullWidth, disabled` | Always a pill (radius 50). `danger` (handoff v5, not in the DS bundle) = `--danger` fill, white text, in every season: the delete and discard confirms (EVT-06, NOTE-05, PHOTO-13, §8.9) |

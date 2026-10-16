@@ -13,6 +13,7 @@ import type { AccountSettings, CalendarEvent, Weather } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
+import { clockTime } from "@/ui/testClock";
 import { AmbientScreen } from "./AmbientScreen";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
@@ -177,5 +178,5 @@ test("AMB-02 the giant clock shows the frozen time", async () => {
 
   renderAmbient();
 
-  expect(await screen.findByText("7:12")).toBeInTheDocument();
+  expect(await screen.findByText(clockTime("7:12"))).toBeInTheDocument();
 });

@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.95 — F12: the Next.js `app/` folder moves to `src/app/` (structure only, no behavior change): §3 tree and dependency rules, the Biome route overrides, `swSrc` and the StyleX PostCSS `include` follow it |
+| Status | v1.96 — F12: the Next.js `app/` folder moves to `src/app/` (structure only, no behavior change): §3 tree and dependency rules, the Biome route overrides, `swSrc` and the StyleX PostCSS `include` follow it |
 | Date | 2026-10-16 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.51) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.52) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
 
 This document records the technical decisions. **What** the app does is in the product spec (requirement IDs like `SYNC-02` refer to it). This document covers **how** it's built. If they conflict, the spec wins on behavior and this document wins on implementation.
 
@@ -571,3 +571,4 @@ Applied in spec v0.8 (design review):
 56. Spec v0.49 (U11): PHOTO-12 refuses a date after today with "No future dates" [not in the design], lets the date be cleared ("No date"), names the "File name" caption, and the file name eyebrow is stored with the photo (`fileName`, §7). PHOTO-10 lists the "Name guessed from where it was taken." hint the prototype shows. PHOTO-13 / §12.2 O3 is decided (decision 24): the deleted background photo falls back to the oldest upload in Photo and Slideshow, not "Slideshow goes on from the next photo". §8.6 the pencil is the first featured control.
 57. Spec v0.50 (U13): §12.2 O1 is decided (decision 25): a screen's type and browser are read from the browser that signs in and its name is made from them ("Chrome screen", "Safari tablet"); SET-12 spells out the type rules, the names and the "Active …" captions (minutes, hours, yesterday, a date) and "1 screen signed in"; §7 `Display`, §7.0 `displays.kind`/`browser`, decision 13 and the Appendix A screens follow (renamed from the prototype's "Kitchen screen" and the others).
 58. Spec v0.51 (U14): §12.2 O2 is decided (decision 26): anyone who can see the screen may scan the code, with no confirmation on the screen. SIGNIN-15 adds what the design doesn't draw: the empty code at 5:00 while it is made, "Couldn’t make a code. Try again." with Try again (disabled offline) and Done, leaving Settings voids the code, the fixtures `qr=open|failed`, and a used, voided or expired code opens the email form instead of the expired-link page (no email shown). §7.0 the QR columns are built.
+59. Spec v0.52 (U17): §4.2 the Clock's colon blinks, on and off every 0.6 s (pushed to `main` in 73f1be8, not in the design). No other behavior changes.
