@@ -91,11 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>
-      <NavBar
-        active={view}
-        compact={breakpoint === "phone"}
-        onNavigate={(path) => router.push(path)}
-      />
+      <NavBar active={view} breakpoint={breakpoint} onNavigate={(path) => router.push(path)} />
       <OfflineNotice breakpoint={breakpoint} onWeather={view === "weather"} />
     </div>
   );
