@@ -58,7 +58,6 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       online={online}
       demo={demo}
       onAction={flow.act}
-      onDemo={() => router.push(viewPath("today"))}
       onOpenedLink={flow.openedLink}
       onFinishedOnPhone={flow.finishedOnPhone}
     />

@@ -161,6 +161,28 @@ describe("sign-in reducer", () => {
     });
   });
 
+  it("SIGNIN-03 signin=sendfail opens the form with the fixture email and Couldn’t send", () => {
+    expect(initialSignIn({ signin: "sendfail" }, ACCOUNT)).toEqual({
+      step: "form",
+      email: "maria@example.com",
+      error: "failed",
+    });
+  });
+
+  it("SIGNIN-03 the next keystroke clears Couldn’t send", () => {
+    const failed: SignInState = { step: "form", email: "maria@example.com", error: "failed" };
+
+    expect(signInReducer(failed, { type: "email", email: "maria@example.co" })).toEqual(
+      form("maria@example.co"),
+    );
+  });
+
+  it("SIGNIN-03 Send retries after Couldn’t send", () => {
+    const failed: SignInState = { step: "form", email: "maria@example.com", error: "failed" };
+
+    expect(signInReducer(failed, { type: "send" })).toEqual(sending);
+  });
+
   it("SIGNIN-03 link answers are ignored outside Sending", () => {
     const typing = form("ana@example.com");
 

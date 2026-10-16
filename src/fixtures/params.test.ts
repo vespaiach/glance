@@ -69,6 +69,10 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams(query)).toEqual({});
   });
 
+  it("SIGNIN-03 reads signin=sendfail", () => {
+    expect(parseFixtureParams("signin=sendfail")).toEqual({ signin: "sendfail" });
+  });
+
   it("SIGNIN-13 reads signin=ended with the waiting count and another email entered", () => {
     expect(parseFixtureParams("signin=ended&pending=3&switch=1")).toEqual({
       signin: "ended",

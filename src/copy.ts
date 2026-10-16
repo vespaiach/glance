@@ -653,7 +653,6 @@ export const copy = {
       send: "Send sign-in link",
       sending: "Sending…",
       sendingTo: "Sending a link to ",
-      demo: "Continue as guests",
       invalid: "Enter a valid email address",
       failed: "Couldn’t send. Try again.",
       offlineTitle: "You’re offline",
