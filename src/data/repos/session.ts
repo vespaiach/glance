@@ -256,6 +256,7 @@ async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promi
     refreshWeather: host.refreshWeather,
     places: transport.places,
     locate: transport.locate,
+    displays: transport.displays,
     signOut: signOutWith(transport.auth.signout),
     markSignedOut: async () => {},
     ...keepUploadedImages(transport),
@@ -300,6 +301,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     upload: transport.upload,
     places: transport.places,
     locate: transport.locate,
+    displays: transport.displays,
     signOut: async () => {
       close();
 

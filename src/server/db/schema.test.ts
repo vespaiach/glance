@@ -248,3 +248,35 @@ describe("003_photo_details", () => {
     await client.close();
   });
 });
+
+async function insertDisplay(columns: string, values: string): Promise<void> {
+  await db().run(`INSERT INTO displays (id, account_id${columns}) VALUES ('d1', 'a1'${values})`);
+}
+
+describe("005_display_device", () => {
+  it("D23 a display is a monitor with no browser unless told", async () => {
+    await insertAccount("a1");
+    await insertDisplay("", "");
+
+    expect(await db().one("SELECT kind, browser FROM displays")).toEqual({
+      kind: "monitor",
+      browser: null,
+    });
+  });
+
+  it("D23 stores a tablet's kind and browser", async () => {
+    await insertAccount("a1");
+    await insertDisplay(", kind, browser", ", 'tablet', 'Safari'");
+
+    expect(await db().one("SELECT kind, browser FROM displays")).toEqual({
+      kind: "tablet",
+      browser: "Safari",
+    });
+  });
+
+  it("D23 rejects an unknown device kind", async () => {
+    await insertAccount("a1");
+
+    await expect(insertDisplay(", kind", ", 'watch'")).rejects.toThrow(/check constraint/);
+  });
+});

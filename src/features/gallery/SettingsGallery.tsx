@@ -16,6 +16,7 @@ import {
   gallerySetup,
   NOW,
   PLACES,
+  SCREEN_SAMPLES,
   UPLOAD_SAMPLES,
 } from "./samples";
 
@@ -63,6 +64,7 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
       background: COAST && { mode: "slideshow", photo: COAST, rotate: "daily" },
     },
     { key: "photo", background: COAST && { mode: "photo", photo: COAST } },
+    { key: "this-screen-only", screens: SCREEN_SAMPLES.slice(0, 1) },
     { key: "phone", phone: true, breakpoint: "phone" },
   ];
 }
@@ -139,6 +141,9 @@ const AMBIENT_BASE: AmbientProps = {
 function settingsBase(season: Season): SettingsProps {
   return {
     account: ACCOUNT,
+    screens: SCREEN_SAMPLES,
+    now: NOW,
+    tz: GALLERY_TZ,
     settings: { ...DEFAULT_SETTINGS, ...(PORTLAND && { weatherLocation: PORTLAND }) },
     season,
     background: { mode: "season" },

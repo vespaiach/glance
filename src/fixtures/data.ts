@@ -10,6 +10,7 @@ import type {
   WeatherIcon,
   WeatherLocation,
 } from "@/domain/schemas";
+import type { SignedInScreen } from "@/domain/screens";
 import { zonedInstant } from "@/domain/zone";
 
 const fixtureId = (group: number, n: number) =>
@@ -35,6 +36,44 @@ export const FIXTURE_ACCOUNT: Account = {
 };
 
 export const FIXTURE_OTHER_EMAIL = "sam.lee@example.com";
+
+const MINUTE_MS = 60 * 1000;
+
+const before = (now: Date, minutes: number) =>
+  new Date(now.getTime() - minutes * MINUTE_MS).toISOString();
+
+export function fixtureScreens(now: Date): SignedInScreen[] {
+  return [
+    {
+      id: fixtureId(9, 1),
+      kind: "monitor",
+      browser: "Chrome",
+      lastSeenAt: now.toISOString(),
+      current: true,
+    },
+    {
+      id: fixtureId(9, 2),
+      kind: "monitor",
+      browser: "Edge",
+      lastSeenAt: before(now, 12),
+      current: false,
+    },
+    {
+      id: fixtureId(9, 3),
+      kind: "tablet",
+      browser: "Safari",
+      lastSeenAt: before(now, 24 * 60),
+      current: false,
+    },
+    {
+      id: fixtureId(9, 4),
+      kind: "smartphone",
+      browser: "Safari",
+      lastSeenAt: at(2, 18, 30),
+      current: false,
+    },
+  ];
+}
 
 export const FIXTURE_EVENTS: CalendarEvent[] = [
   {

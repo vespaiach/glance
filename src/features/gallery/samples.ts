@@ -10,6 +10,7 @@ import type {
   WeatherIcon,
   WeatherLocation,
 } from "@/domain/schemas";
+import type { SignedInScreen } from "@/domain/screens";
 import { zonedInstant } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import type { UploadTile } from "@/features/photos";
@@ -23,6 +24,31 @@ export const octoberAt = (day: number, hour: number, minute = 0) =>
   zonedInstant(GALLERY_TZ, { year: 2026, month: 10, day }, hour * 60 + minute);
 
 export const NOW = octoberAt(9, 10, 41);
+
+export const SCREEN_SAMPLES: readonly SignedInScreen[] = [
+  { id: "s1", kind: "monitor", browser: "Chrome", lastSeenAt: NOW.toISOString(), current: true },
+  {
+    id: "s2",
+    kind: "monitor",
+    browser: "Edge",
+    lastSeenAt: octoberAt(9, 10, 29).toISOString(),
+    current: false,
+  },
+  {
+    id: "s3",
+    kind: "tablet",
+    browser: "Safari",
+    lastSeenAt: octoberAt(8, 20, 15).toISOString(),
+    current: false,
+  },
+  {
+    id: "s4",
+    kind: "smartphone",
+    browser: null,
+    lastSeenAt: octoberAt(2, 18, 30).toISOString(),
+    current: false,
+  },
+];
 
 export const NOW_DAY = { year: 2026, month: 9, day: 9 } as const;
 

@@ -2,6 +2,7 @@ import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account, Weather, WeatherLocation } from "@/domain/schemas";
+import type { SignedInScreen } from "@/domain/screens";
 import type { OutboxEntry, StoredPhoto } from "../db";
 import type {
   AuthStatus,
@@ -164,6 +165,7 @@ export function createHttpTransport({
     places: (query) =>
       send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
     locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
+    displays: () => send<SignedInScreen[]>("/api/displays"),
     auth: {
       link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
       status: () => send<AuthStatus>("/api/auth/status"),

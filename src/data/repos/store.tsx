@@ -20,6 +20,7 @@ export type RepoStore = {
   upload: Transport["upload"];
   places: Transport["places"];
   locate: Transport["locate"];
+  displays: Transport["displays"];
   signOut: () => Promise<void>;
   markSignedOut: () => Promise<void>;
 };

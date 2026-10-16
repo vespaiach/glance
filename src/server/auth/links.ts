@@ -44,9 +44,11 @@ export async function requestLink(
   return sent.ok ? ok({ pendingId }) : sent;
 }
 
+export type VerifyInput = { token: string; pendingId?: string; userAgent?: string };
+
 export async function verifyLink(
   { db, now }: Clocked,
-  { token, pendingId }: { token: string; pendingId?: string },
+  { token, pendingId, userAgent }: VerifyInput,
 ): Promise<Result<Verified, StaleLink>> {
   const link = await linkByToken(db, token);
 
@@ -68,7 +70,7 @@ export async function verifyLink(
 
     if (claimedPending) await deleteLink(tx, link.token_hash);
 
-    return openDisplay(tx, account.id, at);
+    return openDisplay(tx, account.id, { at, userAgent });
   });
 
   return ok({ sessionToken, claimedPending });

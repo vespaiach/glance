@@ -39,7 +39,7 @@ export function requestLink(input: links.LinkInput) {
   return links.requestLink(deps(), input);
 }
 
-export function verifyLink(input: { token: string; pendingId?: string }) {
+export function verifyLink(input: links.VerifyInput) {
   return links.verifyLink(deps(), input);
 }
 

@@ -9,7 +9,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const pendingId = request.cookies.get("pending")?.value;
 
-  const verified = await verifyLink({ token, pendingId });
+  const verified = await verifyLink({
+    token,
+    pendingId,
+    userAgent: request.headers.get("user-agent") ?? undefined,
+  });
 
   const response = NextResponse.redirect(signInUrl(verified.ok ? "opened" : "stale"), 303);
 

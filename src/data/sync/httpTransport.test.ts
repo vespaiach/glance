@@ -200,6 +200,17 @@ describe("HttpTransport", () => {
     expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
   });
 
+  it("D23 displays reads the account's signed-in screens with the build header", async () => {
+    const screens = [{ id: "d1", kind: "monitor", browser: "Chrome", current: true }];
+    const { calls, fetch } = fakeFetch(json(screens));
+
+    const answer = await transport(fetch).displays();
+
+    expect(answer).toEqual({ ok: true, value: screens });
+    expect(calls[0]?.url).toBe("/api/displays");
+    expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
+  });
+
   it("WX-07 places searches with the query encoded", async () => {
     const places = [{ name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 }];
     const { calls, fetch } = fakeFetch(json(places));

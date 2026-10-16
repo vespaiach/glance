@@ -20,6 +20,7 @@ import {
   FIXTURE_TIME_ZONE,
   FIXTURE_UPLOADED_PHOTOS,
   FIXTURE_WEATHER,
+  fixtureScreens,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
 import { CURSOR_KEY, type GlanceDb, type OutboxEntry, type StoredPhoto } from "../db";
@@ -326,6 +327,7 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
         return params.net === "wxerror" ? err("server") : ok(fixtureWeather(params));
       }),
     ...createFixtureSearch(params),
+    displays: () => online(async () => ok(fixtureScreens(now()))),
     auth: createFixtureAuth(params),
     upload: async (file, modifiedOn, onProgress): Promise<Result<StoredPhoto, UploadError>> => {
       const problem = uploadProblem(file);
