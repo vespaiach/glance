@@ -46,6 +46,11 @@ class Component extends DCLogic {
       ['F', 'Background · uploading', 'view=background&upload=progress'],
       ['G', 'Background · upload failed', 'view=background&upload=error'],
       ['H', 'Background · offline', 'view=background&upload=offline'],
+      ['I', 'Uploaded · name and date guessed from file', 'view=photos&upload=done'],
+      ['J', 'Photo details · guessed from file name', 'view=photos&sheet=photo'],
+      ['K', 'Photo details · date and place from photo', 'view=photos&sheet=photometa'],
+      ['L', 'Full screen · controls shown', 'view=photos&full=1'],
+      ['M', 'Full screen · controls hidden', 'view=photos&full=1&chrome=0'],
     ];
     return {
       screens: screens.map(([id, name, q]) => ({
