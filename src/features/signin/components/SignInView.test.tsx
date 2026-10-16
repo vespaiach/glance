@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { deviceTimeZone } from "@/domain/zone";
 import type { WeatherSetupFlow } from "@/features/weather";
+import { clockTime } from "@/ui/testClock";
 import type { SignInState } from "../signIn";
 import { SignInView } from "./SignInView";
 
@@ -61,7 +62,7 @@ test("SIGNIN-01 the hero shows the wordmark, the season and month, the clock and
 
   expect(screen.getByText("Glance")).toBeInTheDocument();
   expect(screen.getByText("Fall · October")).toBeInTheDocument();
-  expect(screen.getByText("10:41")).toBeInTheDocument();
+  expect(screen.getByText(clockTime("10:41"))).toBeInTheDocument();
   expect(
     screen.getByText(
       "Calendar, weather, notes and photos for your family. Sign in to manage them.",
