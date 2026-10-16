@@ -87,7 +87,7 @@ const styles = stylex.create({
   detailLabel: {
     display: "flex",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   detailValue: {
     fontSize: 28,

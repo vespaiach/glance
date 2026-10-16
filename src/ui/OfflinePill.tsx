@@ -14,7 +14,7 @@ const styles = stylex.create({
   root: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     height: 48,
     boxSizing: "border-box",
     paddingInline: "16px 20px",

@@ -82,7 +82,7 @@ const styles = stylex.create({
   label: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     fontFamily: type.fontMono,
     fontSize: 16,
     letterSpacing: "0.54px",
@@ -103,7 +103,7 @@ const styles = stylex.create({
   weather: {
     display: "flex",
     alignItems: "center",
-    gap: 20,
+    gap: 24,
   },
   column: {
     display: "flex",
@@ -140,7 +140,7 @@ const styles = stylex.create({
   },
   caption: {
     fontFamily: type.fontMono,
-    fontSize: 13,
+    fontSize: type.captionSize,
     letterSpacing: "0.6px",
     textTransform: "uppercase",
   },

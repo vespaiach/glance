@@ -37,9 +37,9 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     alignItems: "inherit",
-    gap: 6,
+    gap: 8,
   },
-  textLg: { gap: 10 },
+  textLg: { gap: 12 },
   titleMd: {
     fontSize: 28,
     fontWeight: 340,

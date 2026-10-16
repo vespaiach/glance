@@ -3,7 +3,7 @@ import * as stylex from "@stylexjs/stylex";
 export const type = stylex.defineVars({
   fontSans: "var(--font-geist-sans),'SF Pro Display',system-ui,helvetica,sans-serif",
   fontMono: "var(--font-geist-mono),'SF Mono',menlo,monospace",
-  clockSize: "clamp(84px, 7.4vw, 112px)",
+  clockSize: "clamp(84px, 6.8vw, 128px)",
   clockWeight: "300",
   clockLh: "0.9",
   clockLs: "-4px",
@@ -51,7 +51,7 @@ export const type = stylex.defineVars({
   eyebrowWeight: "400",
   eyebrowLh: "1.30",
   eyebrowLs: "0.54px",
-  captionSize: "12px",
+  captionSize: "14px",
   captionWeight: "400",
   captionLh: "1.00",
   captionLs: "0.60px",

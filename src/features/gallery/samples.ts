@@ -71,6 +71,7 @@ export const gallery = {
     phone: "Phone",
   },
   button: "Add event",
+  danger: "Delete",
   disabled: "Disabled",
   tabs: ["Auto", "Spring", "Summer", "Fall", "Winter"] as const,
   input: {

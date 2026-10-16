@@ -31,20 +31,20 @@ const styles = stylex.create({
   group: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
   },
   preview: {
     aspectRatio: "16 / 10",
     borderRadius: radii.md,
     overflow: "hidden",
-    backgroundColor: colors.surfaceCanvas,
+    backgroundColor: colors.hairlineSoft,
     paddingTop: space.sm,
     paddingInline: space.sm,
     boxSizing: "border-box",
     display: "grid",
     gridTemplateColumns: "3fr 4fr 3fr",
     gridTemplateRows: "minmax(0, 1fr) 16px",
-    gap: 6,
+    gap: 8,
     transitionProperty: "background",
     transitionDuration: motion.durSeason,
     transitionTimingFunction: motion.easeInOut,
@@ -130,6 +130,7 @@ export function BackgroundOptions({
           options={text.dim.options}
           value={`${background.dim}` as const}
           onChange={(value) => onChange({ dim: DIMS[value] })}
+          size="lg"
         />
       </div>
       {background.mode === "slideshow" && (
@@ -140,6 +141,7 @@ export function BackgroundOptions({
             options={text.rotate.options}
             value={background.rotate}
             onChange={(value) => onChange({ rotate: value })}
+            size="lg"
           />
         </div>
       )}

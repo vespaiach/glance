@@ -20,7 +20,7 @@ const styles = stylex.create({
   root: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
   },
   button: {
     borderWidth: 0,
@@ -41,7 +41,7 @@ const styles = stylex.create({
   skeleton: {
     display: "flex",
     flexDirection: "column",
-    gap: 14,
+    gap: 16,
   },
   body: {
     fontSize: type.bodyLgSize,

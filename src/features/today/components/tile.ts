@@ -16,7 +16,7 @@ export const tile = stylex.create({
   text: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
   },
   title: {
     fontSize: 28,

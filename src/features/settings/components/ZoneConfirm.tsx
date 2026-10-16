@@ -26,7 +26,7 @@ const styles = stylex.create({
   block: {
     display: "flex",
     flexDirection: "column",
-    gap: 20,
+    gap: 24,
   },
   heading: {
     display: "flex",
@@ -53,7 +53,7 @@ const styles = stylex.create({
   tile: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
     minWidth: 0,
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
@@ -62,7 +62,7 @@ const styles = stylex.create({
   },
   tileLabel: {
     fontFamily: type.fontMono,
-    fontSize: 12,
+    fontSize: type.captionSize,
     letterSpacing: "0.6px",
     textTransform: "uppercase",
   },

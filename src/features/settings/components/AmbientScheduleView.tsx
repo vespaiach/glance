@@ -52,7 +52,7 @@ const styles = stylex.create({
   panel: {
     display: "flex",
     flexDirection: "column",
-    gap: 28,
+    gap: 32,
     minWidth: 0,
     backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.lg,
@@ -82,15 +82,11 @@ const styles = stylex.create({
   group: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
   },
   tabs: {
     maxWidth: "100%",
-    overflowX: "auto",
     display: "flex",
-  },
-  softTabs: {
-    backgroundColor: colors.surfaceSoft,
   },
   set: {
     borderWidth: 0,
@@ -132,12 +128,12 @@ const styles = stylex.create({
   strips: {
     display: "flex",
     flexDirection: "column",
-    gap: 20,
+    gap: 24,
   },
   strip: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
   },
   stripHeader: {
     display: "flex",
@@ -174,7 +170,7 @@ const styles = stylex.create({
     display: "flex",
     justifyContent: "space-between",
     fontFamily: type.fontMono,
-    fontSize: 12,
+    fontSize: type.captionSize,
     letterSpacing: "0.6px",
     textTransform: "uppercase",
   },
@@ -387,7 +383,7 @@ export function AmbientScheduleView({
               options={text.modes}
               value={ambient.mode}
               onChange={changeMode}
-              xstyle={styles.softTabs}
+              size="lg"
             />
           </div>
         </div>

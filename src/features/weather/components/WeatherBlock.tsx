@@ -13,7 +13,7 @@ const styles = stylex.create({
     maxWidth: 680,
     display: "flex",
     flexDirection: "column",
-    gap: 28,
+    gap: 32,
   },
 });
 

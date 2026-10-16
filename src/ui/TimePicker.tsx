@@ -95,7 +95,7 @@ const styles = stylex.create({
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-    gap: 6,
+    gap: 8,
   },
   compactGrid: {
     gridTemplateColumns: "repeat(4, minmax(0, 1fr))",

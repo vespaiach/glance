@@ -10,6 +10,7 @@ import {
   Settings,
   StickyNote as StickyNoteGlyph,
   Sun,
+  Trash2,
   Umbrella,
 } from "lucide-react";
 import { useState } from "react";
@@ -130,6 +131,9 @@ function CoreGroup() {
       </Button>
       <Button variant="primary" size="lg">
         {gallery.button}
+      </Button>
+      <Button variant="danger" icon={Trash2}>
+        {gallery.danger}
       </Button>
       <Button disabled>{gallery.disabled}</Button>
       <IconButton icon={Plus} label={gallery.button} />

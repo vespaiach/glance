@@ -4,7 +4,7 @@
 |---|---|
 | Status | v1.10 — P03 is folded into P02 (#81): moving the services onto the `Db` left nothing for the runtime to run on but PostgreSQL, so the `DATABASE_URL` pool, the boot migration and the SQLite and backup removals ship with it |
 | Date | 2026-10-15 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.40) · [`tech-design.md`](tech-design.md) (v1.78) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.41) · [`tech-design.md`](tech-design.md) (v1.79) |
 
 Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 

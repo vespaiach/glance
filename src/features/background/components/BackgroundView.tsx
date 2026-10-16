@@ -81,11 +81,7 @@ const styles = stylex.create({
   },
   modes: {
     maxWidth: "100%",
-    overflowX: "auto",
     display: "flex",
-  },
-  tabs: {
-    backgroundColor: colors.surfaceSoft,
   },
   photos: {
     display: "flex",
@@ -167,7 +163,7 @@ export function BackgroundView({
             options={copy.background.modes}
             value={background.mode}
             onChange={(mode) => onChange({ mode })}
-            xstyle={styles.tabs}
+            size="lg"
           />
         </div>
         <Zone

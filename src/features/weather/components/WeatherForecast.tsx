@@ -78,7 +78,7 @@ const styles = stylex.create({
   },
   hourTime: {
     fontFamily: type.fontMono,
-    fontSize: 12,
+    fontSize: type.captionSize,
     letterSpacing: "0.6px",
     whiteSpace: "nowrap",
   },

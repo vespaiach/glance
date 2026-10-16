@@ -23,7 +23,7 @@ const styles = stylex.create({
     overflow: "hidden",
     position: "relative",
     isolation: "isolate",
-    backgroundColor: colors.surfaceCanvas,
+    backgroundColor: colors.hairlineSoft,
     color: colors.textPrimary,
     transitionProperty: "background-color, padding-bottom",
     transitionDuration: `${motion.durSeason}, ${motion.durBase}`,
@@ -37,7 +37,7 @@ const styles = stylex.create({
     boxSizing: "border-box",
     paddingTop: sizes.kioskGutter,
     paddingInline: sizes.kioskGutter,
-    paddingBottom: space.lg,
+    paddingBottom: space.md,
   },
 });
 

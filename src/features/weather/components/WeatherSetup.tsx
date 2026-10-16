@@ -13,7 +13,7 @@ const styles = stylex.create({
   heading: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
   },
   title: {
     fontSize: type.displayXlSize,

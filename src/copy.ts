@@ -421,7 +421,7 @@ export const copy = {
     },
     interval: { hourly: "hourly", daily: "daily", weekly: "weekly" },
     caption: {
-      season: "Screens use the plain seasonal palette. Pick a photo to switch.",
+      season: "Screens use a plain light gray background. Pick a photo to switch.",
       photo: (title: string) =>
         `${title} is the background on every screen. Panels stay solid on top.`,
       slideshow: (title: string, interval: string) =>

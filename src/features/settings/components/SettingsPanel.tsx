@@ -62,9 +62,6 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
   },
-  tabs: {
-    backgroundColor: colors.surfaceSoft,
-  },
 });
 
 function seasonSubtitle(setting: AccountSettings["season"], season: Season): string {
@@ -139,7 +136,7 @@ export function SettingsPanel({
             options={SEASON_OPTIONS}
             value={settings.season}
             onChange={(value) => onChange({ season: value })}
-            xstyle={styles.tabs}
+            size="lg"
           />
         </SettingsRow>
         <SettingsRow
@@ -155,7 +152,7 @@ export function SettingsPanel({
             options={text.clock.options}
             value={settings.clock}
             onChange={(value) => onChange({ clock: value })}
-            xstyle={styles.tabs}
+            size="lg"
           />
         </SettingsRow>
         <SettingsRow
@@ -168,7 +165,7 @@ export function SettingsPanel({
             options={text.temperature.options}
             value={settings.tempUnit}
             onChange={(value) => onChange({ tempUnit: value })}
-            xstyle={styles.tabs}
+            size="lg"
           />
         </SettingsRow>
       </div>

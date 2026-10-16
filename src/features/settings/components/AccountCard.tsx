@@ -19,7 +19,7 @@ const styles = stylex.create({
   root: {
     display: "flex",
     flexDirection: "column",
-    gap: 20,
+    gap: 24,
     backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.lg,
     boxShadow: shadows.shadow1,
