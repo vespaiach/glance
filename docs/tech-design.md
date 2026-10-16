@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.98 — chore: the PostgreSQL migrations move from `db/migrations/` to the top-level `db-migrations/` (`MIGRATIONS_DIR` in `server/db/migrate.ts`). Spec v0.54 (§9 61) |
+| Status | v1.99 — U19: `motion.durBase` and `motion.durSeason` (`theme/tokens.stylex.ts`) are `0ms` under `@media (prefers-reduced-motion: reduce)` (StyleX `defineVars` conditional values), so every transition and the `PhotoBackdrop` fades that read them finish at once; nothing waits on `transitionend`/`animationend`. `durPress` and `durFast` stay. Spec v0.55 (§9 62) |
 | Date | 2026-10-16 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.54) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.55) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
 
 This document records the technical decisions. **What** the app does is in the product spec (requirement IDs like `SYNC-02` refer to it). This document covers **how** it's built. If they conflict, the spec wins on behavior and this document wins on implementation.
 
@@ -574,3 +574,4 @@ Applied in spec v0.8 (design review):
 59. Spec v0.52 (U17): §4.2 the Clock's colon blinks, on and off every 0.6 s (pushed to `main` in 73f1be8, not in the design). No other behavior changes.
 60. Spec v0.53 (U18): §4.2 the Clock's colon stays on, without blinking, when the device asks for reduced motion (`prefers-reduced-motion: reduce`). Not in the design. No other behavior changes.
 61. Spec v0.54 (chore): §3 Database row, migrations are read from `db-migrations/NNN_*.sql` (was `db/migrations/`). No behavior changes.
+62. Spec v0.55 (U19): §4.4 with reduced motion, every 280 ms and 600 ms change happens at once; press, tab and tile feedback stays. Not in the design. No other behavior changes.
