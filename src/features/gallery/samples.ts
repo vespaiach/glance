@@ -47,12 +47,17 @@ export const gallery = {
     noteSheet: "Note sheet",
     photosView: "Photos view",
     photoSheet: "Photo details",
+    fullScreen: "Full screen photos",
     settingsView: "Settings view",
     backgroundView: "Background view",
     locationView: "Location view",
     ambientScheduleView: "Ambient screen view",
     ambientView: "Ambient view",
     signInView: "Sign in view",
+  },
+  fullScreen: {
+    shown: "Controls shown",
+    hidden: "Controls hidden",
   },
   photoSheet: {
     fileName: "Guessed from file name",

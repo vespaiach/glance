@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft, ChevronRight, Image, Pause, Pencil, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image, Maximize, Pause, Pencil, Play } from "lucide-react";
 import { copy } from "@/copy";
 import type { Photo } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -17,6 +17,7 @@ type FeaturedPhotoProps = {
   onEdit: () => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
+  onFullScreen: () => void;
   frame: stylex.StyleXStyles;
 };
 
@@ -29,6 +30,7 @@ const styles = stylex.create({
     objectFit: "cover",
     borderRadius: radii.md,
     display: "block",
+    cursor: "zoom-in",
   },
   footer: {
     display: "flex",
@@ -94,6 +96,7 @@ export function FeaturedPhoto({
   onEdit,
   onStep,
   onTogglePlay,
+  onFullScreen,
   frame,
 }: FeaturedPhotoProps) {
   const hint = photoHint(photo);
@@ -101,7 +104,13 @@ export function FeaturedPhoto({
   return (
     <>
       {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
-      <img src={src} alt={photo.title} {...stylex.props(styles.image, frame)} />
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: the Full screen button is the keyboard path */}
+      <img
+        src={src}
+        alt={photo.title}
+        onClick={onFullScreen}
+        {...stylex.props(styles.image, frame)}
+      />
       <div {...stylex.props(styles.footer)}>
         <div {...stylex.props(styles.text)}>
           <Eyebrow>{photoMeta(photo, thisYear)}</Eyebrow>
@@ -136,6 +145,13 @@ export function FeaturedPhoto({
             variant="canvas"
             size="touch"
             onClick={() => onStep(1)}
+          />
+          <IconButton
+            icon={Maximize}
+            label={copy.photos.fullScreen}
+            variant="canvas"
+            size="touch"
+            onClick={onFullScreen}
           />
         </div>
       </div>

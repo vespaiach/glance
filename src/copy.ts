@@ -244,6 +244,10 @@ export const copy = {
     noDate: "No date",
     datedInYear: (monthDay: string, year: number) => `${monthDay}, ${year}`,
     edit: "Edit photo details",
+    fullScreen: "Full screen",
+    exitFullScreen: "Exit full screen",
+    fullScreenName: (title: string) => `${title} · full screen`,
+    position: (n: number, total: number) => `${n} of ${total}`,
     hint: {
       both: (from: string) => `Name and date guessed from ${from}.`,
       name: (from: string) => `Name guessed from ${from}.`,

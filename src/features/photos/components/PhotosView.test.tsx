@@ -75,6 +75,7 @@ function renderView(overrides: Partial<Props> = {}) {
     onEdit: vi.fn<(photoId: string) => void>(),
     onStep: vi.fn<(delta: number) => void>(),
     onTogglePlay: vi.fn<() => void>(),
+    onFullScreen: vi.fn<() => void>(),
     onUpload: vi.fn<() => void>(),
     onRetry: vi.fn<(id: string) => void>(),
     onRemove: vi.fn<(id: string) => void>(),
@@ -134,6 +135,19 @@ test("PHOTO-01 the chevrons step back and forward", async () => {
 
   expect(props.onStep).toHaveBeenNthCalledWith(1, -1);
   expect(props.onStep).toHaveBeenNthCalledWith(2, 1);
+});
+
+test("PHOTO-14 Full screen comes last, and it and the featured photo open full screen", async () => {
+  const props = renderView();
+
+  const controls = screen.getAllByRole("button", { name: /photo|slideshow|Full screen/ });
+
+  expect(controls.at(-1)).toHaveAccessibleName("Full screen");
+
+  await userEvent.click(screen.getByRole("button", { name: "Full screen" }));
+  await userEvent.click(screen.getByRole("img", { name: "Apple picking" }));
+
+  expect(props.onFullScreen).toHaveBeenCalledTimes(2);
 });
 
 test("PHOTO-02 a playing slideshow offers Pause, a paused one Play", async () => {
