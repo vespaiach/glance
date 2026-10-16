@@ -1,5 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
+import { type PictureOfDayPick, pictureOfDay } from "@/domain/pictureOfDay";
 import type { Result } from "@/domain/result";
 import type { StoredPhoto } from "../db";
 import { photoFileUrl } from "../sw/rules";
@@ -38,6 +39,17 @@ export function usePhotos(): StoredPhoto[] | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(() => db.photos.orderBy("createdAt").filter(isLive).toArray(), [db]);
+}
+
+export function usePictureOfDay(dayKey: string, tz: string): PictureOfDayPick | null | undefined {
+  const { db, accountId } = useRepoStore();
+
+  const rows = useLiveQuery(() => db.photos.toArray(), [db]);
+
+  return useMemo(
+    () => rows && (pictureOfDay(rows, dayKey, tz, accountId) ?? null),
+    [rows, dayKey, tz, accountId],
+  );
 }
 
 export const apiPhotoSrc = photoFileUrl;

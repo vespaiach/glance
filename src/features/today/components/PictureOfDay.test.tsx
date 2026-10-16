@@ -22,6 +22,13 @@ test("TODAY-07 shows the photo with its title, date and place", () => {
   expect(screen.getByText("Sep 6 · Summer trip")).toBeInTheDocument();
 });
 
+test("TODAY-07 an On this day photo names its year in the eyebrow", () => {
+  render(<PictureOfDay photo={coast} onThisDay={2024} src="/coast.svg" />);
+
+  expect(screen.getByText("On this day · 2024")).toBeInTheDocument();
+  expect(screen.queryByText("Picture of the day")).not.toBeInTheDocument();
+});
+
 test("PHOTO-03 a photo with no place shows the date alone", () => {
   render(<PictureOfDay photo={{ ...coast, place: undefined }} src="/coast.svg" />);
 

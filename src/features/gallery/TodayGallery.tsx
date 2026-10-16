@@ -115,7 +115,9 @@ export function TodayGallery({ season }: { season: Season }) {
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
-      />
+      >
+        <PictureOfDay photo={TODAY_PHOTO} onThisDay={2025} src={TODAY_PHOTO_SRC} />
+      </TodaySchedule>
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
