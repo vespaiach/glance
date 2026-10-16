@@ -62,7 +62,7 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     boxSizing: "border-box",
-    backgroundColor: colors.surfaceCanvas,
+    backgroundColor: colors.hairlineSoft,
     color: colors.textPrimary,
     transitionProperty: "padding-bottom",
     transitionDuration: motion.durBase,
