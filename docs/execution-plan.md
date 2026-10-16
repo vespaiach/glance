@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.7 — D03 design handoff v5: new Phase 9 (U01–U16) and external items D03, D04; P01 and P04 no longer name a spec version (v0.38 is handoff v5) · v1.6 — Phase 8 PostgreSQL (P01–P04): `pg` replaces `better-sqlite3`, PGlite in tests, `timestamptz`, fresh data, deployment moves out of the repo · v1.5 — doc review of the unbuilt v4 work: L03–L08 and H01–H03 rows follow spec v0.34 / tech design v1.61 (first setup on the server in L08, fixture zones in L04, locate failure names, signed-out boot and Ambient routing in H01, SET-06 summary in H02); L08 depends on L07 · v1.4 — D01/D02 design handoff v4: L04, L06–L08 rows follow it, new Phase 7 (H01–H03: signed-out form, editable ambient schedule) · v1.3 — Phase 6 location and time zone (L00–L08), D02 design for it · v1.2 — branch from latest main · v1.1: task status tracking · v1.0: first plan |
+| Status | v1.8 — doc review: the C05, C06 and P04 rows are removed (hosting is outside the project), Q01 depends on C03 and C04, and the status keeps only the current version (history: `git log`) |
 | Date | 2026-10-15 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.38) · [`tech-design.md`](tech-design.md) (v1.75) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.39) · [`tech-design.md`](tech-design.md) (v1.76) |
 
 Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 
@@ -54,7 +54,7 @@ graph LR
   L07 --> L08
   C03 & D01[D01 design, prompt 4] --> H01
   L02 --> H02 --> H03
-  P01 --> P02 --> P03 --> P04
+  P01 --> P02 --> P03
   D03[D03 handoff v5] --> U01 --> U02 --> U03 --> U07
   D03 --> U04 --> U11
   P02 & D03 --> U05 --> U06 --> U07
@@ -183,14 +183,12 @@ All depend on **S07**. They can run in parallel. Each is checked against its `Gl
 | C02 | ✅ ([#55](https://github.com/vespaiach/glance/pull/55)) | **Sync worker:** `sync.worker.ts`, Comlink, `glance-sync` lock, SSE + 30 s polling, backoff, `versionchange` restart, 401/426 handling in the page | C01, S04 | D19, tech §4.6, §5 |
 | C03 | ✅ ([#56](https://github.com/vespaiach/glance/pull/56)) | **Auth wiring:** real sign-in, `navigator.storage.persist()`, account switch deletes the old DB (the 401 → `/signin` redirect with the outbox kept is C02), sign-out cleanup | C01, I09 | SIGNIN-11, SIGNIN-13, tech §4.5 Gaps 2/3/5 |
 | C04 | ✅ ([#57](https://github.com/vespaiach/glance/pull/57)) | **Service worker:** Serwist precache, navigation/RSC strategies, photo cache + warming (the worker's `photosChanged` → page → SW), idle update flow (replaces C02's plain reload after a 426) | C02, S07 | D16, OFF-06, OFF-07, tech §4.5 |
-| C05 | ✅ ([#58](https://github.com/vespaiach/glance/pull/58)) | **Deploy:** Docker image (`standalone`, `/data` volume), Caddy notes, backup README | B07 | D17 |
-| C06 | ✅ ([#75](https://github.com/vespaiach/glance/pull/75)) | **Deploy with shipit:** `deploy.conf` (`next start`, one process, `HEALTH_PATH=/signin`), `.env.example` (the `server/env.ts` keys), shipit section in `deploy.md` (first deploy, `/var/lib/glance`, app config, restore, off-VPS copies); the Docker image stays as the second way | C05 | D17, tech §6.4 |
 
 ### Release
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
-| Q01 | ✅ ([#59](https://github.com/vespaiach/glance/pull/59)) | **Manual QA checklist** (tech §7): visual parity, offline cold start on a production build, two screens syncing, 401 and update paths on a kiosk | C03, C04, C05 | OFF-06/07, SYNC-01..03 |
+| Q01 | ✅ ([#59](https://github.com/vespaiach/glance/pull/59)) | **Manual QA** (tech §7): visual parity, offline cold start on a production build, two screens syncing, 401 and update paths on a kiosk | C03, C04 | OFF-06/07, SYNC-01..03 |
 
 ---
 
@@ -230,14 +228,13 @@ The rest of handoff v4: the signed-out form (prompt 4) and the editable ambient 
 
 ## Phase 8 — PostgreSQL
 
-The server moves from SQLite (`better-sqlite3`) to PostgreSQL (`pg`). The data starts fresh, so there is no SQLite import. Deployment leaves the repo: it is done outside the project and needs only `DATABASE_URL` and `DATA_DIR` (photos). The client (Dexie, outbox, sync engine) doesn't change.
+The server moves from SQLite (`better-sqlite3`) to PostgreSQL (`pg`). The data starts fresh, so there is no SQLite import. The client (Dexie, outbox, sync engine) doesn't change.
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
 | P01 | ⬜ | **Db interface and schema:** `pg` replaces `better-sqlite3`, `@electric-sql/pglite` for tests; `server/db/db.ts` `Db` (`all`, `one`, `run` → row count, `tx(fn)`) with a `pg` Pool adapter and a PGlite adapter, both parsing `timestamptz` to ISO strings (`toISOString()`) and `bigint` to numbers; `001_init.sql` rewritten for Postgres with `002` folded in (`email citext UNIQUE`, timestamps `timestamptz`, `taken_on date`, `settings.json jsonb`, `rotation double precision`, `version bigint`, same `CHECK`s and indexes, the `sync_state` row); `migrate` records versions in `schema_migrations`, one transaction per file; `migratedDbPerTest` gives each test a fresh PGlite DB. Migrate and schema tests pass on Postgres. **Docs:** tech D7, §3 tree (`db/`, `db/migrations`), §7 Testing ("temp SQLite file"); spec (next version): §3 Database row, §7.0 schema, the §7.0 photos note, SYNC-01, §11 phase 5, decision 4, with a tech §9 entry; this plan's Inputs line brought up to date | — | D7, spec §3, §7.0 |
 | P02 | ⬜ | **Async services:** every `services/*`, `auth/*` and `jobs/{notes,links}` function takes the `Db` and is `async`, still returning `Result`; `$n` parameters, `json_extract` → `jsonb ->>`, `.changes` → row count; route handlers and `boot.ts` `await` them. Each write transaction calls `stamp()` first, so the `sync_state` row lock orders versions by commit; `pullChanges` reads in one `REPEATABLE READ` transaction. Every existing service test passes (cross-account tests included), plus a `tech§5` test that concurrent writes get distinct, ordered versions. **Docs:** tech §5 Pull and B04 as-built (why versions commit in order: stamp first under the row lock, `REPEATABLE READ` pull), §6.4 `accountTimeZone` query | P01 | tech §5, §6.1, §6.2, §6.4 |
 | P03 | ⬜ | **Runtime:** `DATABASE_URL` in `server/env.ts` and `.env.example` (`DATA_DIR` stays for photos), `getDb()` is one pool on `globalThis`, boot migrates through it and exits on failure; `jobs/backup.ts`, its test and its timer are removed (backups belong to the database host); local dev Postgres in the README. **Docs:** tech §2 diagram (`server/db` → Postgres, no backup job), §3 tree (`jobs/`, `boot.ts`), §6.4 (no Backup paragraph or nightly backup), §6.5 env keys | P02 | tech §2, §6.4, §6.5 |
-| P04 | ⬜ | **Deployment leaves the repo:** remove `Dockerfile`, `.dockerignore`, `deploy.conf`, `shipit.ini`, `docs/deploy.md`, the CI Docker job, and `output: "standalone"` if only Docker needs it; `qa-checklist.md` uses `psql` for the session delete, README drops the deploy steps. **Docs:** tech D17 (deployed outside the repo: one process, `DATABASE_URL`, `DATA_DIR`), D12 (`{DATA_DIR}/photos`, not `/data`), D18 (no Docker), §3 tree (`deploy.conf`, `Dockerfile` lines), §7 CI (no Docker job), §8 phase 5; spec (next version): §3 hosting note ("No `output: 'export'`"), decision 14, with a tech §9 entry | P03 | D12, D17, D18, spec §3 |
 
 **Phase 8 exit:** `npm test` runs every server test on PGlite with no SQLite left in the repo (`grep -ri sqlite src app db` is empty); `npm run dev` against a local Postgres signs in, and two screens sync events, notes, photos and settings.
 

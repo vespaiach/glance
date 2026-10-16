@@ -1,6 +1,6 @@
 # Prompt 4 — Session no longer valid (SIGNIN-13) ✅ delivered (v4)
 
-[← All prompts](../design-prompts.md)
+[← All prompts](../product-spec.md) (the "Design requests" row)
 
 ```
 Design one new state for Glance's sign-in flow: the screen was signed in, and the server stopped

@@ -1,6 +1,6 @@
 # Prompt 3 — Sign-up/sign-in flow and undesigned system states (upload, location) ✅ delivered (v3)
 
-[← All prompts](../design-prompts.md)
+[← All prompts](../product-spec.md) (the "Design requests" row)
 
 ```
 Redesign the sign-in flow as one sign-up/sign-in flow, and design the states Glance doesn't have
