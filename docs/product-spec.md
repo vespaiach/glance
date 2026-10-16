@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.45 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, nav bar, U02, the bar hiding when idle, U03, Discard changes?, U04, and the all-day event data and server, U05, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
+| Status | Draft v0.46 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, nav bar, U02, the bar hiding when idle, U03, Discard changes?, U04, and all-day events, U05 data and server and U06 UI, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D23) |
 | Date | 2026-10-16 |
 | Design requests | Prompts sent to Claude Design, all delivered: [1 time entry](prompts/01-time-entry.md) and [2 family copy](prompts/02-family-copy.md) in handoff v2 (§8.3.1, §10), [3 sign-in and system states](prompts/03-signin-and-system-states.md) in v3 (§8.1, PHOTO-06..09, WX-07..09), [4 signed out](prompts/04-session-ended.md) and [5 location and time zone](prompts/05-location-and-time-zone.md) in v4 (SIGNIN-13, §9.9). v4 also added the Ambient screen page (SET-10) and v5 came with no prompt (decision 23). A new prompt goes in [`prompts/`](prompts/) as `NN-short-name.md` |
@@ -459,7 +459,7 @@ Left: soft block with month name (year added outside the current year), prev/nex
 | EVT-05 | Primary label: "Add event" (new) / "Save" (edit) / "Save for later" (offline). Secondary "Cancel". |
 | EVT-06 | Delete (edit only): ghost "Delete" → "Delete event" inline confirm → removes. The confirm is a red `danger` button (white text) in every season, no longer the season accent (handoff v5). |
 | EVT-07 | Save closes the sheet. List, dots and Today update immediately. |
-| EVT-08 | **All day** (handoff v5): "All day" hides Starts, Ends and any open picker; the event fills its date (§7 `allDay`). Switching back to "Set times" restores the times the draft had, or the TPK-05 defaults for a new event. All-day events skip the TPK-07 check. They show as tiles on Today and in the day list (TODAY-12, CAL-06), count everywhere, have no status (STATUS-01), and read "All day" in Ambient's "Next event" (AMB-03). Fixture `sheet=allday` (board frame Calendar L). Multi-day events stay out of scope. |
+| EVT-08 | **All day** (handoff v5): "All day" hides Starts, Ends and any open picker; the event fills its date (§7 `allDay`). Switching back to "Set times" restores the times the draft had, or the TPK-05 defaults when it had none (a new event, or an all-day event opened for editing). All-day events skip the TPK-07 check. They show as tiles on Today and in the day list (TODAY-12, CAL-06), count everywhere, have no status (STATUS-01), and read "All day" in Ambient's "Next event" (AMB-03). Fixture `sheet=allday` (board frame Calendar L). Multi-day events stay out of scope. |
 
 #### 8.3.1 Time entry — `TPK` (designed in handoff v2)
 Two new components, built from DS tokens (marked `data-ds-new` in the prototype): **`TimeField`** and **`TimePicker`**. Open them with `sheet=event|newevent` + `time=start|end|error|noend`, `clock=24`, `net=offline`.

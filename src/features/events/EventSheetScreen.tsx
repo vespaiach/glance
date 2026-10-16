@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useEvent, useEventsRepo } from "@/data/repos";
+import { eventDayKey } from "@/domain/allDay";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
 import { formatDayTitle } from "@/domain/time";
-import { dateKey, parseDateKey } from "@/domain/zone";
+import { parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
@@ -81,6 +82,8 @@ function EditEventSheet({ event, time, discard }: EditProps) {
 
   const tz = useTimeZone();
 
+  const now = useNow("minute");
+
   const onDelete = () => {
     close();
     void events.remove(event.id);
@@ -89,9 +92,9 @@ function EditEventSheet({ event, time, discard }: EditProps) {
   return (
     <SheetFrame
       mode="edit"
-      day={dateKey(new Date(event.startAt), tz)}
+      day={eventDayKey(event, tz)}
       id={event.id}
-      initial={initialEventSheet(draftFromEvent(event, tz), time, discard)}
+      initial={initialEventSheet(draftFromEvent(event, tz, now), time, discard)}
       onDelete={onDelete}
     />
   );

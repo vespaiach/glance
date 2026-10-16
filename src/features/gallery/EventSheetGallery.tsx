@@ -14,6 +14,7 @@ type Demo = {
   offline?: boolean;
   compact?: boolean;
   discard?: boolean;
+  allDay?: true;
 };
 
 const words = gallery.eventSheet;
@@ -30,6 +31,8 @@ const DEMOS: readonly Demo[] = [
   { label: words.phone, mode: "edit", time: "end", compact: true },
   { label: words.discardNew, mode: "new", discard: true },
   { label: words.discardEdit, mode: "edit", discard: true, compact: true },
+  { label: words.allDay, mode: "edit", allDay: true },
+  { label: words.allDayPhone, mode: "edit", allDay: true, compact: true },
 ];
 
 const LUNCH = {
@@ -47,6 +50,8 @@ export function EventSheetGallery({ season }: { season: Season }) {
 
   const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ) : LUNCH;
 
+  const allDay = open?.allDay && { allDay: open.allDay };
+
   return (
     <GalleryGroup title={gallery.groups.eventSheet}>
       {DEMOS.map((demo) => (
@@ -59,7 +64,7 @@ export function EventSheetGallery({ season }: { season: Season }) {
           key={open.label}
           mode={open.mode}
           eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
-          initial={initialEventSheet(draft, open.time, open.discard)}
+          initial={initialEventSheet({ ...draft, ...allDay }, open.time, open.discard)}
           clock={open.clock ?? "12h"}
           swatches={eventSwatches(season)}
           offline={open.offline ?? false}

@@ -3,7 +3,17 @@ import { monthTitle } from "@/domain/month";
 import { formatDayTitle } from "@/domain/time";
 import { DayPanel, MonthBlock } from "@/features/calendar";
 import { GalleryGroup } from "./GalleryGroup";
-import { GALLERY_TZ, gallery, MARKED_DAYS, NOW, NOW_DAY, octoberAt, TODAY_EVENTS } from "./samples";
+import {
+  ALL_DAY_EVENTS,
+  GALLERY_TZ,
+  gallery,
+  MARKED_DAYS,
+  NOW,
+  NOW_DAY,
+  octoberAt,
+  TODAY_EVENTS,
+  TODAY_WITH_ALL_DAY,
+} from "./samples";
 
 const styles = stylex.create({
   panel: {
@@ -58,6 +68,18 @@ export function CalendarGallery() {
       />
       <DayPanel tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} />
       <DayPanel tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} compact />
+      <DayPanel
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: [ALL_DAY_EVENTS.noSchool] }}
+        {...panel}
+        title={formatDayTitle(new Date(ALL_DAY_EVENTS.noSchool.startAt), "UTC")}
+      />
+      <DayPanel
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
+        {...panel}
+        compact
+      />
       <DayPanel tz={GALLERY_TZ} state={{ kind: "empty" }} {...panel} />
       <DayPanel tz={GALLERY_TZ} state={{ kind: "empty" }} {...panel} calendarEmpty />
       <DayPanel tz={GALLERY_TZ} state={{ kind: "loading" }} {...panel} />

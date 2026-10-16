@@ -57,6 +57,8 @@ function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | 
   switch (params.sheet) {
     case "event":
       return { kind: "event", id: fixtureSheetTargets.event, ...time };
+    case "allday":
+      return { kind: "event", id: fixtureSheetTargets.allDay };
     case "newevent":
       return { kind: "newevent", day: today, ...time };
     case "note":

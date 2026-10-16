@@ -29,7 +29,7 @@ describe("parseFixtureParams", () => {
   });
 
   it.each([
-    ["sheet", ["event", "newevent", "note", "newnote"]],
+    ["sheet", ["event", "newevent", "note", "newnote", "allday"]],
     ["time", ["start", "end", "error", "noend"]],
     ["season", ["spring", "summer", "fall", "winter"]],
     ["net", ["loading", "offline", "wxerror"]],
@@ -63,6 +63,7 @@ describe("parseFixtureParams", () => {
     "pending=many",
     "switch=yes",
     "discard=yes",
+    "allday=yes",
   ])("§6 ignores the unknown value %s", (query) => {
     expect(parseFixtureParams(query)).toEqual({});
   });
@@ -73,6 +74,10 @@ describe("parseFixtureParams", () => {
       pending: 3,
       switch: true,
     });
+  });
+
+  it("TODAY-12 reads allday=1", () => {
+    expect(parseFixtureParams("allday=1")).toEqual({ allday: true });
   });
 
   it("§8.9 reads discard=1", () => {

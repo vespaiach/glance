@@ -6,6 +6,7 @@ import type { AccountSettings, CalendarEvent } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
+import { TimeZoneProvider } from "@/shell/providers/timeZone";
 import { SheetHost, type SheetRequest, useSheetHost } from "@/shell/SheetHost";
 import { EventSheetScreen } from "./EventSheetScreen";
 
@@ -47,16 +48,28 @@ function OpenSheet() {
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
 }
 
-function renderSheet(initial: SheetRequest, overrides: Partial<AccountSettings> = {}) {
+function renderSheet(
+  initial: SheetRequest,
+  overrides: Partial<AccountSettings> = {},
+  timeZone?: string,
+) {
   const Shell = shellWrapper(store, { frozenAt: NOW, overrides });
+
+  const sheets = (children: ReactNode) => (
+    <SeasonProvider>
+      <NetworkProvider>
+        <SheetHost initial={initial}>{children}</SheetHost>
+      </NetworkProvider>
+    </SeasonProvider>
+  );
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <SeasonProvider>
-        <NetworkProvider>
-          <SheetHost initial={initial}>{children}</SheetHost>
-        </NetworkProvider>
-      </SeasonProvider>
+      {timeZone ? (
+        <TimeZoneProvider timeZone={timeZone}>{sheets(children)}</TimeZoneProvider>
+      ) : (
+        sheets(children)
+      )}
     </Shell>
   );
 
@@ -200,4 +213,32 @@ test("EVT-03 a failed Save keeps the sheet open and writes nothing", async () =>
 
   expect(screen.getByRole("dialog", { name: "New event" })).toBeInTheDocument();
   expect(await store.db.events.count()).toBe(0);
+});
+
+const NO_SCHOOL: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000010",
+  title: "No school · teacher planning day",
+  startAt: "2026-10-16T00:00:00.000Z",
+  allDay: true,
+  location: "Lincoln Elementary",
+  tone: 4,
+};
+
+test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
+  await store.db.events.put(synced(NO_SCHOOL));
+
+  renderSheet({ kind: "event", id: NO_SCHOOL.id }, {}, "America/Los_Angeles");
+
+  expect(await screen.findByText("Friday, Oct 16")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "All day" })).toHaveAttribute("aria-pressed", "true");
+
+  await userEvent.type(screen.getByLabelText("Title"), "!");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.get(NO_SCHOOL.id)).toMatchObject({
+      ...NO_SCHOOL,
+      title: "No school · teacher planning day!",
+    }),
+  );
 });

@@ -1,4 +1,5 @@
 import { copy } from "@/copy";
+import { allDayStart } from "@/domain/allDay";
 import {
   defaultEnd,
   defaultTimes,
@@ -17,6 +18,7 @@ export type EventDraft = EventTimes & {
   title: string;
   location: string;
   tone: Tone;
+  allDay?: true;
 };
 
 export type TimeFieldName = "start" | "end";
@@ -34,6 +36,7 @@ export type EventSheetAction =
   | { type: "title" | "location"; value: string }
   | { type: "tone"; value: Tone }
   | { type: "start" | "end"; value: number }
+  | { type: "allDay"; value: boolean }
   | { type: "toggle"; field: TimeFieldName }
   | { type: "noEnd" }
   | { type: "done" }
@@ -44,16 +47,30 @@ export type EventSheetAction =
 
 export type SwatchOption = { value: Tone; label: string };
 
-export function draftFromEvent(event: CalendarEvent, tz: string): EventDraft {
+function eventTimes(event: CalendarEvent, tz: string, now: Date): EventTimes & { allDay?: true } {
+  if (event.allDay) return { ...defaultTimes(now, tz), allDay: true };
+
   const end = event.endAt === undefined ? {} : { end: minutesOfDay(new Date(event.endAt), tz) };
 
+  return { start: minutesOfDay(new Date(event.startAt), tz), ...end };
+}
+
+export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): EventDraft {
   return {
     title: event.title,
-    start: minutesOfDay(new Date(event.startAt), tz),
-    ...end,
+    ...eventTimes(event, tz, now),
     location: event.location ?? "",
     tone: event.tone,
   };
+}
+
+function eventSpan(draft: EventDraft, dayKey: string, tz: string) {
+  if (draft.allDay) return { startAt: allDayStart(dayKey), allDay: true as const };
+
+  const end =
+    draft.end === undefined ? {} : { endAt: atMinute(dayKey, draft.end, tz).toISOString() };
+
+  return { startAt: atMinute(dayKey, draft.start, tz).toISOString(), ...end };
 }
 
 export function eventFromDraft(
@@ -64,14 +81,10 @@ export function eventFromDraft(
 ): CalendarEvent {
   const location = draft.location.trim();
 
-  const end =
-    draft.end === undefined ? {} : { endAt: atMinute(dayKey, draft.end, tz).toISOString() };
-
   return {
     id,
     title: draft.title.trim(),
-    startAt: atMinute(dayKey, draft.start, tz).toISOString(),
-    ...end,
+    ...eventSpan(draft, dayKey, tz),
     ...(location === "" ? {} : { location }),
     tone: draft.tone,
   };
@@ -92,6 +105,10 @@ export function eventSwatches(season: Season): SwatchOption[] {
     { value: "soft", label: soft },
     { value: "accent", label: copy.events.alert },
   ];
+}
+
+function withAllDay({ allDay: _, ...draft }: EventDraft, allDay: boolean): EventDraft {
+  return allDay ? { ...draft, allDay: true } : draft;
 }
 
 function withoutEnd({ end: _, ...draft }: EventDraft): EventDraft {
@@ -129,12 +146,16 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
     draft.location.trim() !== opened.location.trim() ||
     draft.start !== opened.start ||
     draft.end !== opened.end ||
-    draft.tone !== opened.tone
+    draft.tone !== opened.tone ||
+    draft.allDay !== opened.allDay
   );
 }
 
 function saveErrors(draft: EventDraft) {
-  return { titleError: draft.title.trim() === "", endError: !endsAfterStart(draft) };
+  return {
+    titleError: draft.title.trim() === "",
+    endError: !draft.allDay && !endsAfterStart(draft),
+  };
 }
 
 export function canSave(draft: EventDraft): boolean {
@@ -182,6 +203,8 @@ export function eventSheetReducer(
       return edited(state, { ...draft, ...moveStart(draft, action.value) });
     case "end":
       return edited(state, { ...draft, end: action.value });
+    case "allDay":
+      return { ...edited(state, withAllDay(draft, action.value)), picker: null };
     case "toggle":
       return toggled(state, action.field);
     case "noEnd":

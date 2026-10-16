@@ -120,6 +120,7 @@ export const copy = {
   },
   events: {
     now: "Now",
+    allDay: "All day",
     sheet: {
       newTitle: "New event",
       editTitle: "Edit event",
@@ -147,6 +148,8 @@ export const copy = {
     } satisfies Record<Season, readonly [string, string, string, string, string]>,
     alert: "Alert",
     time: {
+      label: "Time",
+      setTimes: "Set times",
       starts: "Starts",
       ends: "Ends",
       startGroup: "Start time",

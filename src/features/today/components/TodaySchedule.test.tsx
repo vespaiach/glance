@@ -133,3 +133,41 @@ test("LOAD-02 a schedule still loading shows a skeleton", () => {
 
   expect(screen.getByRole("status", { name: "Loading events" })).toBeInTheDocument();
 });
+
+const GRANDPA: CalendarEvent = {
+  id: "grandpa",
+  title: "Grandpa staying over",
+  startAt: "2026-10-09T00:00:00.000Z",
+  allDay: true,
+  location: "Guest room",
+  tone: 2,
+};
+
+const withAllDay = { kind: "ready", data: [GRANDPA, ...EVENTS] } as const;
+
+test("TODAY-12 an all-day event shows as a tile above the timed rows", () => {
+  renderSchedule(withAllDay);
+
+  const buttons = screen.getAllByRole("button").map((button) => button.textContent);
+
+  const tile = buttons.indexOf("All dayGrandpa staying overGuest room");
+
+  expect(tile).toBeGreaterThan(-1);
+  expect(buttons[tile + 1]).toMatch(/School drop-off/);
+});
+
+test("TODAY-04 all-day events count in the eyebrow", () => {
+  renderSchedule(withAllDay);
+
+  expect(screen.getByText("Today · 4 events")).toBeInTheDocument();
+});
+
+test("TODAY-12 tapping an all-day tile opens that event", async () => {
+  const onOpenEvent = vi.fn<(id: string) => void>();
+
+  renderSchedule(withAllDay, { onOpenEvent });
+
+  await userEvent.click(screen.getByRole("button", { name: /Grandpa staying over/ }));
+
+  expect(onOpenEvent).toHaveBeenCalledWith("grandpa");
+});

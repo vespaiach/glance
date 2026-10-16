@@ -3,6 +3,7 @@ import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import type { CalendarEvent, Note } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
+  FIXTURE_ALL_DAY,
   FIXTURE_AMBIENT_NOW,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
@@ -11,6 +12,7 @@ import {
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
   FIXTURE_SAVED_AT,
+  FIXTURE_SEEDED_EVENTS,
   FIXTURE_SETTINGS,
   FIXTURE_WEATHER,
 } from "@/fixtures/data";
@@ -67,16 +69,29 @@ describe("seedFixtureDb", () => {
 
     expect(events.map(({ id, startAt, title }) => ({ id, startAt, title }))).toEqual(
       expect.arrayContaining(
-        FIXTURE_EVENTS.map(({ id, startAt, title }) => ({ id, startAt, title })),
+        FIXTURE_SEEDED_EVENTS.map(({ id, startAt, title }) => ({ id, startAt, title })),
       ),
     );
-    expect(events).toHaveLength(FIXTURE_EVENTS.length);
+    expect(events).toHaveLength(FIXTURE_SEEDED_EVENTS.length);
     expect(events[0]).toMatchObject({ updatedAt: FIXTURE_NOW.toISOString(), version: 1 });
     expect(await db.notes.count()).toBe(FIXTURE_NOTES.length);
     expect(await db.photos.count()).toBe(FIXTURE_PHOTOS.length);
     expect(await db.settings.get(FIXTURE_ACCOUNT.id)).toMatchObject(FIXTURE_SETTINGS);
     expect(await db.weather.get(FIXTURE_ACCOUNT.id)).toMatchObject(FIXTURE_WEATHER);
     expect(await db.meta.get(CURSOR_KEY)).toEqual({ key: CURSOR_KEY, value: FIXTURE_CURSOR });
+  });
+
+  it("EVT-08 the fixture always seeds No school on the 16th, and allday=1 adds Grandpa on the 9th", async () => {
+    await seedFixtureDb(db, {});
+
+    expect(await db.events.get(FIXTURE_ALL_DAY.noSchool.id)).toMatchObject(
+      FIXTURE_ALL_DAY.noSchool,
+    );
+    expect(await db.events.get(FIXTURE_ALL_DAY.grandpa.id)).toBeUndefined();
+
+    await seedFixtureDb(db, { allday: true });
+
+    expect(await db.events.get(FIXTURE_ALL_DAY.grandpa.id)).toMatchObject(FIXTURE_ALL_DAY.grandpa);
   });
 
   it("tech§4.1 reseeding replaces rows and pending writes from an earlier load", async () => {
@@ -120,7 +135,7 @@ describe("seedFixtureDb", () => {
   it("FAIL-01 net=wxerror seeds everything except the saved forecast", async () => {
     await seedFixtureDb(db, { net: "wxerror" });
 
-    expect(await db.events.count()).toBe(FIXTURE_EVENTS.length);
+    expect(await db.events.count()).toBe(FIXTURE_SEEDED_EVENTS.length);
     expect(await db.weather.count()).toBe(0);
   });
 
@@ -190,7 +205,7 @@ describe("seedFixtureDb", () => {
       weather: { state: "idle" },
     });
     expect((await db.weather.get(FIXTURE_ACCOUNT.id))?.fetchedAt).toBe(FIXTURE_SAVED_AT);
-    expect(await db.events.count()).toBe(FIXTURE_EVENTS.length);
+    expect(await db.events.count()).toBe(FIXTURE_SEEDED_EVENTS.length);
   });
 
   it("PHOTO-09 upload=offline seeds the same offline status", async () => {
@@ -211,7 +226,7 @@ describe("seedFixtureDb", () => {
   it("WX-07 wx= seeds everything except the weather location and the forecast", async () => {
     await seedFixtureDb(db, { wx: "searching" });
 
-    expect(await db.events.count()).toBe(FIXTURE_EVENTS.length);
+    expect(await db.events.count()).toBe(FIXTURE_SEEDED_EVENTS.length);
     expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.weatherLocation).toBeUndefined();
     expect(await db.weather.count()).toBe(0);
   });

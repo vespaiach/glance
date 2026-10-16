@@ -7,6 +7,7 @@ import type { CalendarEvent } from "@/domain/schemas";
 import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
+import { AllDayTiles } from "@/ui/AllDayTile";
 import { Button } from "@/ui/Button";
 import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
@@ -173,22 +174,31 @@ export function TodaySchedule({
         }
       >
         {(events) => (
-          <div {...stylex.props(styles.list)}>
-            {events.map((event) => (
-              <EventRow
-                key={event.id}
-                start={timeOf(event.startAt, clock, tz)}
-                end={event.endAt && timeOf(event.endAt, clock, tz)}
-                title={event.title}
-                location={event.location}
-                status={eventStatus(event, now, tz)}
-                dot={event.tone}
-                nowLabel={copy.events.now}
-                compact={compact}
-                onClick={() => onOpenEvent(event.id)}
-              />
-            ))}
-          </div>
+          <>
+            <AllDayTiles
+              events={events.filter((event) => event.allDay)}
+              label={copy.events.allDay}
+              onOpenEvent={onOpenEvent}
+            />
+            <div {...stylex.props(styles.list)}>
+              {events
+                .filter((event) => !event.allDay)
+                .map((event) => (
+                  <EventRow
+                    key={event.id}
+                    start={timeOf(event.startAt, clock, tz)}
+                    end={event.endAt && timeOf(event.endAt, clock, tz)}
+                    title={event.title}
+                    location={event.location}
+                    status={eventStatus(event, now, tz)}
+                    dot={event.tone}
+                    nowLabel={copy.events.now}
+                    compact={compact}
+                    onClick={() => onOpenEvent(event.id)}
+                  />
+                ))}
+            </div>
+          </>
         )}
       </Zone>
       {children}
