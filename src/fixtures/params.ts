@@ -2,7 +2,7 @@ import { zonedInstant } from "@/domain/zone";
 import { FIXTURE_TIME_ZONE } from "./data";
 
 const CHOICES = {
-  sheet: ["event", "newevent", "note", "newnote", "allday"],
+  sheet: ["event", "newevent", "note", "newnote", "allday", "photo", "photometa"],
   time: ["start", "end", "error", "noend"],
   season: ["spring", "summer", "fall", "winter"],
   net: ["loading", "offline", "wxerror"],

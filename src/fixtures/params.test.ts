@@ -29,7 +29,7 @@ describe("parseFixtureParams", () => {
   });
 
   it.each([
-    ["sheet", ["event", "newevent", "note", "newnote", "allday"]],
+    ["sheet", ["event", "newevent", "note", "newnote", "allday", "photo", "photometa"]],
     ["time", ["start", "end", "error", "noend"]],
     ["season", ["spring", "summer", "fall", "winter"]],
     ["net", ["loading", "offline", "wxerror"]],
@@ -45,7 +45,7 @@ describe("parseFixtureParams", () => {
 
   it.each([
     "bg=season",
-    "sheet=photo",
+    "sheet=photos",
     "time=later",
     "clock=12",
     "season=autumn",

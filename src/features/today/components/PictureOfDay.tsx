@@ -13,6 +13,7 @@ import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 type PictureOfDayProps = {
   photo: Photo;
   onThisDay?: number;
+  thisYear: number;
   src: string;
 };
 
@@ -107,7 +108,7 @@ const styles = stylex.create({
   },
 });
 
-export function PictureOfDay({ photo, onThisDay, src }: PictureOfDayProps) {
+export function PictureOfDay({ photo, onThisDay, thisYear, src }: PictureOfDayProps) {
   return (
     <div {...stylex.props(styles.root)}>
       <div {...stylex.props(styles.frame)}>
@@ -122,7 +123,7 @@ export function PictureOfDay({ photo, onThisDay, src }: PictureOfDayProps) {
         </Eyebrow>
         <div {...stylex.props(styles.text)}>
           <span {...stylex.props(styles.title)}>{photo.title}</span>
-          <span {...stylex.props(styles.meta)}>{photoMeta(photo)}</span>
+          <span {...stylex.props(styles.meta)}>{photoMeta(photo, thisYear)}</span>
         </div>
       </div>
     </div>

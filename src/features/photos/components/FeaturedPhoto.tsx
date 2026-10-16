@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft, ChevronRight, Image, Pause, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image, Pause, Pencil, Play } from "lucide-react";
 import { copy } from "@/copy";
 import type { Photo } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -7,12 +7,14 @@ import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
-import { photoMeta } from "../slideshow";
+import { photoHint, photoMeta } from "../slideshow";
 
 type FeaturedPhotoProps = {
   photo: Photo;
   src: string;
+  thisYear: number;
   playing: boolean;
+  onEdit: () => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
   frame: stylex.StyleXStyles;
@@ -48,6 +50,13 @@ const styles = stylex.create({
     letterSpacing: "-0.8px",
     lineHeight: 1.1,
   },
+  hint: {
+    fontSize: 16,
+    fontWeight: 330,
+    lineHeight: 1.4,
+    textWrap: "pretty",
+    maxWidth: 440,
+  },
   controls: {
     display: "flex",
     gap: space.xs,
@@ -80,21 +89,33 @@ const styles = stylex.create({
 export function FeaturedPhoto({
   photo,
   src,
+  thisYear,
   playing,
+  onEdit,
   onStep,
   onTogglePlay,
   frame,
 }: FeaturedPhotoProps) {
+  const hint = photoHint(photo);
+
   return (
     <>
       {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
       <img src={src} alt={photo.title} {...stylex.props(styles.image, frame)} />
       <div {...stylex.props(styles.footer)}>
         <div {...stylex.props(styles.text)}>
-          <Eyebrow>{photoMeta(photo)}</Eyebrow>
+          <Eyebrow>{photoMeta(photo, thisYear)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{photo.title}</h2>
+          {hint && <span {...stylex.props(styles.hint)}>{hint}</span>}
         </div>
         <div {...stylex.props(styles.controls)}>
+          <IconButton
+            icon={Pencil}
+            label={copy.photos.edit}
+            variant="canvas"
+            size="touch"
+            onClick={onEdit}
+          />
           <IconButton
             icon={ChevronLeft}
             label={copy.photos.previous}

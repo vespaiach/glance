@@ -77,3 +77,15 @@ test("§8.9 discard=1 opens the sheet asking Discard changes?", () => {
 test("tech§6 no sheet= opens no sheet", () => {
   expect(fixtureSheet({ time: "start" }, "2026-10-09")).toBeNull();
 });
+
+test("PHOTO-12 sheet=photo and sheet=photometa open Photo details on the two uploaded photos", () => {
+  expect(fixtureSheet({ sheet: "photo" }, "2026-10-09")).toEqual({
+    kind: "photo",
+    id: fixtureSheetTargets.photo,
+  });
+  expect(fixtureSheet({ sheet: "photometa", discard: true }, "2026-10-09")).toEqual({
+    kind: "photo",
+    id: fixtureSheetTargets.photoMeta,
+    discard: true,
+  });
+});

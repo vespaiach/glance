@@ -5,6 +5,9 @@ import { type } from "@/theme/type.stylex";
 
 type TextInputProps = {
   label?: string;
+  caption?: string;
+  type?: "text" | "date";
+  max?: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -20,6 +23,19 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     gap: 8,
+  },
+  labelRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    gap: 8,
+  },
+  caption: {
+    fontFamily: type.fontMono,
+    fontSize: type.captionSize,
+    letterSpacing: type.captionLs,
+    textTransform: "uppercase",
+    textAlign: "right",
   },
   label: {
     fontFamily: type.fontSans,
@@ -104,8 +120,28 @@ function onReturn(event: KeyboardEvent<HTMLInputElement>) {
   else input.blur();
 }
 
+function LabelRow({ id, label, caption }: { id: string; label: string; caption?: string }) {
+  const name = (
+    <label htmlFor={id} {...stylex.props(styles.label)}>
+      {label}
+    </label>
+  );
+
+  if (caption === undefined) return name;
+
+  return (
+    <div {...stylex.props(styles.labelRow)}>
+      {name}
+      <span {...stylex.props(styles.caption)}>{caption}</span>
+    </div>
+  );
+}
+
 export function TextInput({
   label,
+  caption,
+  type: inputType = "text",
+  max,
   value,
   onChange,
   placeholder,
@@ -132,15 +168,17 @@ export function TextInput({
 
   return (
     <div {...stylex.props(styles.root, xstyle)}>
-      {label && (
-        <label htmlFor={id} {...stylex.props(styles.label)}>
-          {label}
-        </label>
-      )}
+      {label && <LabelRow id={id} label={label} caption={caption} />}
       {multiline ? (
         <textarea {...fieldProps} rows={rows} onChange={(e) => onChange(e.target.value)} />
       ) : (
-        <input {...fieldProps} onChange={(e) => onChange(e.target.value)} onKeyDown={onReturn} />
+        <input
+          {...fieldProps}
+          type={inputType}
+          max={max}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onReturn}
+        />
       )}
       {invalid && (
         <span id={errorId} {...stylex.props(styles.error)}>

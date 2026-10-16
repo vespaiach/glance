@@ -91,11 +91,12 @@ export type PhotoSources = v.InferOutput<typeof PhotoSourcesSchema>;
 export const PhotoSchema = v.object({
   id: IdSchema,
   title: v.string(),
-  takenOn: IsoDateSchema,
+  takenOn: v.optional(IsoDateSchema),
   place: v.optional(v.string()),
   createdAt: IsoTimestampSchema,
   sources: PhotoSourcesSchema,
   checked: v.boolean(),
+  fileName: v.optional(v.string()),
 });
 export type Photo = v.InferOutput<typeof PhotoSchema>;
 

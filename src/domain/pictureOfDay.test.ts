@@ -121,6 +121,12 @@ describe("pictureOfDay", () => {
     });
   });
 
+  it("PHOTO-11 a photo with no date is never On this day and still takes its turn in the cycle", () => {
+    const { takenOn: _takenOn, ...undated } = photo("undated", "2026-10-09");
+
+    expect(pictureOfDay([undated], "2026-10-09", tz, SEED)).toEqual({ photo: undated });
+  });
+
   it("TODAY-07 On this day prefers the oldest year, then the oldest upload", () => {
     const rows = [
       photo("y25", "2026-09-01", { takenOn: "2025-09-04" }),

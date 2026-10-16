@@ -138,6 +138,10 @@ function fixtureEvents(params: FixtureParams): CalendarEvent[] {
   return [...FIXTURE_SEEDED_EVENTS, ...allDay, ...many];
 }
 
+function hasUploadedPhotos(params: FixtureParams): boolean {
+  return params.upload === "done" || params.sheet === "photo" || params.sheet === "photometa";
+}
+
 async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {
   const accountId = FIXTURE_ACCOUNT.id;
 
@@ -147,7 +151,7 @@ async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promi
     await db.photos.bulkPut(FIXTURE_PHOTOS.map(seeded));
   }
 
-  if (seed.withRows && params.upload === "done")
+  if (seed.withRows && hasUploadedPhotos(params))
     await db.photos.bulkPut(FIXTURE_UPLOADED_PHOTOS.map(seeded));
 
   await db.settings.put({ ...seeded(seed.settings), accountId });

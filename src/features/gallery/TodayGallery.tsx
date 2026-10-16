@@ -109,14 +109,14 @@ export function TodayGallery({ season }: { season: Season }) {
         <HeroSkeleton />
       </TodayHero>
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule}>
-        <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} />
+        <PictureOfDay photo={TODAY_PHOTO} thisYear={2026} src={TODAY_PHOTO_SRC} />
       </TodaySchedule>
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
       >
-        <PictureOfDay photo={TODAY_PHOTO} onThisDay={2025} src={TODAY_PHOTO_SRC} />
+        <PictureOfDay photo={TODAY_PHOTO} onThisDay={2025} thisYear={2026} src={TODAY_PHOTO_SRC} />
       </TodaySchedule>
       <TodaySchedule
         tz={GALLERY_TZ}

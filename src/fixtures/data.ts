@@ -216,6 +216,8 @@ export const FIXTURE_SHEET_TARGETS = {
   event: fixtureId(1, 3),
   allDay: FIXTURE_ALL_DAY.noSchool.id,
   note: fixtureId(2, 1),
+  photo: fixtureId(3, 8),
+  photoMeta: fixtureId(3, 7),
 } as const;
 
 const PHOTO_ROWS = [
@@ -254,6 +256,7 @@ export const FIXTURE_UPLOADED_PHOTOS: Photo[] = [
     createdAt: at(9, 10, 30),
     sources: { title: "place", takenOn: "photo", place: "photo-location" },
     checked: false,
+    fileName: "IMG_4410.JPG",
   },
   {
     id: fixtureId(3, 8),
@@ -262,6 +265,7 @@ export const FIXTURE_UPLOADED_PHOTOS: Photo[] = [
     createdAt: at(9, 10, 31),
     sources: { title: "file-name", takenOn: "file-name", place: "none" },
     checked: false,
+    fileName: "halloween-costumes-2025-10-31.jpg",
   },
 ];
 

@@ -28,6 +28,7 @@ export {
   createPhotosRepo,
   type PhotosRepo,
   type UploadError,
+  usePhoto,
   usePhotoSrc,
   usePhotos,
   usePhotosRepo,

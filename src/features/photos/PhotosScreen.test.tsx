@@ -16,7 +16,10 @@ import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { TimeZoneProvider } from "@/shell/providers/timeZone";
+import { SheetHost, useSheetHost } from "@/shell/SheetHost";
 import { PhotosScreen } from "./PhotosScreen";
+
+vi.mock("next/navigation", () => ({ usePathname: () => "/photos" }));
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
@@ -70,13 +73,27 @@ function renderPhotos(
     <Shell>
       <TimeZoneProvider timeZone={timeZone}>
         <NetworkProvider>
-          <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
+          <FixtureParamsProvider params={params}>
+            <SheetHost>{children}</SheetHost>
+          </FixtureParamsProvider>
         </NetworkProvider>
       </TimeZoneProvider>
     </Shell>
   );
 
-  return render(<PhotosScreen />, { wrapper });
+  return render(
+    <>
+      <PhotosScreen />
+      <OpenSheet />
+    </>,
+    { wrapper },
+  );
+}
+
+function OpenSheet() {
+  const { sheet } = useSheetHost();
+
+  return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
 }
 
 function featuredTitle() {
@@ -137,6 +154,33 @@ test("PHOTO-08 upload=error opens with the three failed tiles", async () => {
   renderPhotos({ upload: "error" });
 
   expect(await screen.findAllByRole("alert")).toHaveLength(3);
+});
+
+test("PHOTO-11 the featured photo shows its year outside this year, and the guessed hint", async () => {
+  await store.db.photos.put(
+    synced({
+      ...COAST,
+      title: "Halloween costumes",
+      takenOn: "2025-10-31",
+      sources: { title: "file-name", takenOn: "file-name", place: "photo-location" },
+      checked: false,
+    }),
+  );
+
+  renderPhotos();
+
+  expect(await screen.findByText("Oct 31, 2025 · Sauvie Island")).toBeInTheDocument();
+  expect(screen.getByText("Name and date guessed from the file name.")).toBeInTheDocument();
+});
+
+test("PHOTO-11 the thumb caption is the name and the date", async () => {
+  await store.db.photos.put(synced(COAST));
+
+  renderPhotos();
+
+  const thumb = await screen.findByRole("button", { name: "Show Cannon Beach" });
+
+  expect(thumb).toHaveTextContent(/^Cannon BeachSep 27$/);
 });
 
 function runningClock() {
@@ -432,4 +476,24 @@ test("FAIL-01 a failed first sync shows Photos unavailable with a countdown and 
   await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
   expect(store.nudge).toHaveBeenCalledTimes(1);
+});
+
+test("PHOTO-11 the pencil opens Photo details for the featured photo and pauses the slideshow", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos({}, "running");
+
+  await screen.findByRole("img", { name: "Cannon Beach" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit photo details" }));
+
+  waitSeconds(20);
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "photo", id: COAST.id }),
+  );
+  expect(featuredTitle()).toBe("Cannon Beach");
+  expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
 });

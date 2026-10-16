@@ -7,7 +7,9 @@ export type PictureOfDayPick = { photo: PhotoRow; onThisDay?: number };
 
 type Entry = { row: PhotoRow; uploaded: string; deleted?: string };
 
-type Replay = { cycle: number; queue: Entry[]; pick?: Entry; special?: boolean };
+type Dated = { entry: Entry; taken: string };
+
+type Replay = { cycle: number; queue: Entry[]; pick?: Entry; year?: number };
 
 const byUpload = (a: Entry, b: Entry) =>
   a.row.createdAt.localeCompare(b.row.createdAt) || a.row.id.localeCompare(b.row.id);
@@ -47,11 +49,11 @@ function shuffled(entries: readonly Entry[], seed: string, cycle: number): Entry
 type Index = {
   entries: readonly Entry[];
   byDay: Map<string, Entry[]>;
-  byDate: Map<string, Entry[]>;
+  byDate: Map<string, Dated[]>;
 };
 
-function groupBy(entries: readonly Entry[], keyOf: (entry: Entry) => string): Map<string, Entry[]> {
-  const groups = new Map<string, Entry[]>();
+function groupBy<T>(entries: readonly T[], keyOf: (entry: T) => string): Map<string, T[]> {
+  const groups = new Map<string, T[]>();
 
   for (const entry of entries) {
     const group = groups.get(keyOf(entry));
@@ -66,18 +68,22 @@ function groupBy(entries: readonly Entry[], keyOf: (entry: Entry) => string): Ma
 function indexOf(entries: readonly Entry[]): Index {
   const byDay = groupBy(entries, (entry) => entry.uploaded);
 
-  const byDate = groupBy(entries, (entry) => monthDay(entry.row.takenOn));
+  const byDate = groupBy(entries.flatMap(datedOf), (dated) => monthDay(dated.taken));
 
   return { entries, byDay, byDate };
 }
 
-function onThisDay(index: Index, key: string): Entry | undefined {
+function datedOf(entry: Entry): Dated[] {
+  return entry.row.takenOn === undefined ? [] : [{ entry, taken: entry.row.takenOn }];
+}
+
+function onThisDay(index: Index, key: string): Dated | undefined {
   const matches = (index.byDate.get(monthDay(key)) ?? []).filter(
-    (entry) =>
-      entry.uploaded < key && aliveOn(entry, key) && yearOf(entry.row.takenOn) < yearOf(key),
+    ({ entry, taken }) =>
+      entry.uploaded < key && aliveOn(entry, key) && yearOf(taken) < yearOf(key),
   );
 
-  return matches.sort((a, b) => yearOf(a.row.takenOn) - yearOf(b.row.takenOn) || byUpload(a, b))[0];
+  return matches.sort((a, b) => yearOf(a.taken) - yearOf(b.taken) || byUpload(a.entry, b.entry))[0];
 }
 
 function cycleStart(replay: Replay, entries: readonly Entry[], key: string, seed: string): Replay {
@@ -102,9 +108,11 @@ function replayDay(replay: Replay, index: Index, key: string, seed: string): Rep
 
   const queue = [...started.queue, ...(index.byDay.get(key) ?? [])];
 
-  if (special) return { ...started, queue, pick: special, special: true };
+  if (special) return { ...started, queue, pick: special.entry, year: yearOf(special.taken) };
 
-  return { ...started, queue: queue.slice(1), pick: queue[0], special: false };
+  const { year: _year, ...rest } = started;
+
+  return { ...rest, queue: queue.slice(1), pick: queue[0] };
 }
 
 export function pictureOfDay(
@@ -130,8 +138,8 @@ export function pictureOfDay(
   return pickOf(replay);
 }
 
-function pickOf({ pick, special }: Replay): PictureOfDayPick | undefined {
+function pickOf({ pick, year }: Replay): PictureOfDayPick | undefined {
   if (pick === undefined) return undefined;
 
-  return special ? { photo: pick.row, onThisDay: yearOf(pick.row.takenOn) } : { photo: pick.row };
+  return year === undefined ? { photo: pick.row } : { photo: pick.row, onThisDay: year };
 }

@@ -12,6 +12,7 @@ export type SheetRequest = (
   | { kind: "newevent"; day: string; time?: TimeFixture }
   | { kind: "note"; id: string }
   | { kind: "newnote"; draft?: { text: string; tone: NoteTone } }
+  | { kind: "photo"; id: string }
 ) & { discard?: true };
 
 export type SheetHostValue = {

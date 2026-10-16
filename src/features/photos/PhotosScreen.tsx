@@ -3,12 +3,14 @@
 import { useReducer } from "react";
 import { fixtureUploads, usePhotoSrc, usePhotos } from "@/data/repos";
 import type { Photo } from "@/domain/schemas";
+import { dateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
+import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone } from "@/shell/sourceZone";
 import { PhotosView } from "./components/PhotosView";
 import { newestFirst, slideIndex, slideshow, startSlideshow, wrapIndex } from "./slideshow";
@@ -47,9 +49,17 @@ export function PhotosScreen() {
 
   const tz = useTimeZone();
 
+  const sheets = useSheetHost();
+
   const count = state.kind === "ready" ? state.data.length : 0;
 
   const selected = count > 0 ? wrapIndex(slideIndex(show, now), count) : 0;
+
+  const editPhoto = (id: string) => {
+    dispatch({ type: "pause", at: clock.get() });
+
+    sheets.open({ kind: "photo", id });
+  };
 
   return (
     <>
@@ -60,6 +70,7 @@ export function PhotosScreen() {
         onRetrySync={zone.retry}
         clock={clockFormat}
         tz={tz}
+        thisYear={Number(dateKey(now, tz).slice(0, 4))}
         selected={selected}
         playing={show.kind === "playing"}
         uploads={uploads.tiles}
@@ -68,6 +79,7 @@ export function PhotosScreen() {
         breakpoint={breakpoint}
         photoSrc={photoSrc}
         onSelect={(index) => dispatch({ type: "select", index, at: clock.get() })}
+        onEdit={editPhoto}
         onStep={(delta) => dispatch({ type: "step", delta, at: clock.get() })}
         onTogglePlay={() => dispatch({ type: "toggle", at: clock.get() })}
         onUpload={picker.open}
