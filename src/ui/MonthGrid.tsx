@@ -34,7 +34,7 @@ const styles = stylex.create({
   grid: (cell: number) => ({
     display: "grid",
     gridTemplateColumns: `repeat(7, ${cell}px)`,
-    gap: 6,
+    gap: 8,
   }),
   weekday: {
     textAlign: "center",

@@ -183,7 +183,7 @@ test("BG-04 Change photo shows only in Slideshow and saves the interval", async 
 });
 
 test.each([
-  [{ mode: "season" }, "Screens use the plain seasonal palette. Pick a photo to switch."],
+  [{ mode: "season" }, "Screens use a plain light gray background. Pick a photo to switch."],
   [{ mode: "photo" }, "Cannon Beach is the background on every screen. Panels stay solid on top."],
   [
     { mode: "slideshow", rotate: "weekly" },

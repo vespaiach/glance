@@ -24,6 +24,12 @@ const styles = stylex.create({
     borderRadius: radii.pill,
     backgroundColor: colors.surfaceCanvas,
   },
+  wrap: {
+    flexWrap: "wrap",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    borderRadius: radii.xl,
+  },
   tab: {
     borderWidth: 0,
     cursor: "pointer",
@@ -69,7 +75,10 @@ export function PillTabs<T extends string>({
   xstyle,
 }: PillTabsProps<T>) {
   return (
-    <fieldset aria-label={label} {...stylex.props(styles.list, xstyle)}>
+    <fieldset
+      aria-label={label}
+      {...stylex.props(styles.list, size === "lg" && styles.wrap, xstyle)}
+    >
       {options.map(normalize).map((option) => {
         const selected = option.value === value;
 

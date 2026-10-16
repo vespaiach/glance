@@ -67,7 +67,7 @@ const styles = stylex.create({
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gap: 36,
+    gap: 32,
     paddingTop: space.xs,
     paddingInline: space.sm,
     paddingBottom: space.lg,
@@ -87,7 +87,7 @@ const styles = stylex.create({
   emptyText: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
   },
   emptyTitle: {
     fontSize: type.displayLgSize,

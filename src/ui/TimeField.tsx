@@ -89,7 +89,7 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "baseline",
     flexWrap: "wrap",
-    gap: 6,
+    gap: 8,
     minWidth: 0,
   },
   time: {

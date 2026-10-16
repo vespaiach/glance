@@ -34,7 +34,7 @@ const styles = stylex.create({
   swatches: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
   },
   swatch: {
     width: 44,

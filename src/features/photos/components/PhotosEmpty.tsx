@@ -27,13 +27,13 @@ const styles = stylex.create({
     alignItems: "center",
     justifyContent: "center",
     textAlign: "center",
-    gap: 28,
+    gap: 32,
   },
   text: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
   },
   title: {
     margin: 0,

@@ -109,10 +109,6 @@ const styles = stylex.create({
     gap: space.xxs,
     flexShrink: 0,
   },
-  action: {
-    width: 44,
-    height: 44,
-  },
 });
 
 function statusText(tile: Exclude<UploadTile, { state: "failed" }>): string {
@@ -152,15 +148,15 @@ function FailedActions({ tile, onRetry, onRemove }: PendingUploadProps) {
         <IconButton
           icon={RotateCw}
           label={copy.photos.tile.retry}
+          size="touch"
           onClick={() => onRetry(tile.id)}
-          xstyle={styles.action}
         />
       )}
       <IconButton
         icon={X}
         label={copy.photos.tile.remove}
+        size="touch"
         onClick={() => onRemove(tile.id)}
-        xstyle={styles.action}
       />
     </div>
   );

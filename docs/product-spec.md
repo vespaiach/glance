@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | Draft v0.40 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified but not built yet (execution plan Phase 9). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
+| Status | Draft v0.41 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, is in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D23) |
-| Date | 2026-10-15 |
+| Date | 2026-10-16 |
 | Design requests | Prompts sent to Claude Design, all delivered: [1 time entry](prompts/01-time-entry.md) and [2 family copy](prompts/02-family-copy.md) in handoff v2 (§8.3.1, §10), [3 sign-in and system states](prompts/03-signin-and-system-states.md) in v3 (§8.1, PHOTO-06..09, WX-07..09), [4 signed out](prompts/04-session-ended.md) and [5 location and time zone](prompts/05-location-and-time-zone.md) in v4 (SIGNIN-13, §9.9). v4 also added the Ambient screen page (SET-10) and v5 came with no prompt (decision 23). A new prompt goes in [`prompts/`](prompts/) as `NN-short-name.md` |
 | Source of truth | [`docs/design/handoff/Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) |
 | Approach | Design-driven, UI first: build every screen and state against fixtures, then connect real data |
@@ -548,7 +548,7 @@ Settings apply instantly. There is no Save button. Settings, Background and Ambi
 | BG-02 | Thumb grid (16:9) of all photos + "Upload photo" tile (same picker as PHOTO-03). Uploading tiles appear first, as in PHOTO-06/08, and finished uploads join the background list. Offline: the tile reads "Upload when online" (wifi-off) and is disabled. Label "Family photos · select one" / "Family photos · all {n} in rotation". |
 | BG-03 | In Season color mode, thumbs show at 50% opacity. Tapping one switches to Photo. |
 | BG-04 | Right: Preview (mini layout with block-1 / white / block-3 / bar on the current background), "Dim photo" Off 0 · Light 0.2 · Strong 0.4, "Change photo" Hourly · Daily · Weekly (Slideshow only). |
-| BG-05 | Caption: "Screens use the plain seasonal palette. Pick a photo to switch." / "{title} is the background on every screen. Panels stay solid on top." / "Showing {title}. The photo changes {interval}; panels stay solid on top." |
+| BG-05 | Caption: "Screens use a plain light gray background. Pick a photo to switch." / "{title} is the background on every screen. Panels stay solid on top." / "Showing {title}. The photo changes {interval}; panels stay solid on top." |
 | BG-06 | Photo background renders as `linear-gradient(rgba(0,0,0,dim) ×2), url(photo) center/cover`. Slideshow rotates on its interval with a 600 ms cross-fade: photos go in upload order (oldest first, wrapping), the next one showing at each local hour (Hourly), midnight (Daily) or Sunday midnight (Weekly). Tapping a thumb in Slideshow shows that photo now and the rotation goes on from it; changing the mode or the interval keeps the photo on screen. A new photo fades in over the old one; switching to Season color fades the photo out. Photo mode with no photo picked shows the oldest upload. |
 
 ### 8.8 Ambient (quiet hours) — `AMB`

@@ -173,7 +173,7 @@ type DeleteActionProps = {
 function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
   if (confirming)
     return (
-      <Button variant="accent" icon={Trash2} onClick={onDelete}>
+      <Button variant="danger" icon={Trash2} onClick={onDelete}>
         {words.confirmDelete}
       </Button>
     );

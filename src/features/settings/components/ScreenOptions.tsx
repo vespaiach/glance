@@ -37,7 +37,7 @@ const styles = stylex.create({
   group: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
+    gap: 12,
   },
   tile: {
     width: "100%",
@@ -111,6 +111,7 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
           options={text.idle.options}
           value={idleOption(settings.idleTimeout)}
           onChange={(value) => onChange({ idleTimeout: IDLE_TIMEOUTS[value] })}
+          size="lg"
         />
       </div>
       <div {...stylex.props(styles.group)}>
@@ -120,6 +121,7 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
           options={text.noteExpiry.options}
           value={settings.noteExpiry ?? "never"}
           onChange={(value) => onChange({ noteExpiry: value === "never" ? null : value })}
+          size="lg"
         />
       </div>
     </ColorBlock>

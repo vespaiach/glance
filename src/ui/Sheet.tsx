@@ -64,7 +64,7 @@ const styles = stylex.create({
     boxShadow: shadows.shadow3,
     display: "flex",
     flexDirection: "column",
-    gap: 20,
+    gap: 24,
     outline: "none",
   },
   header: {
@@ -76,7 +76,7 @@ const styles = stylex.create({
   heading: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
   },
   title: {
     margin: 0,
@@ -84,10 +84,6 @@ const styles = stylex.create({
     fontWeight: type.displayLgWeight,
     letterSpacing: "-0.8px",
     lineHeight: 1.1,
-  },
-  close: {
-    width: 44,
-    height: 44,
   },
   actions: {
     position: "sticky",
@@ -190,7 +186,7 @@ export function Sheet({
               {title}
             </h2>
           </div>
-          <IconButton icon={X} label={closeLabel} onClick={onClose} xstyle={styles.close} />
+          <IconButton icon={X} label={closeLabel} size="touch" onClick={onClose} />
         </div>
         {children}
         {(startActions || endActions) && (

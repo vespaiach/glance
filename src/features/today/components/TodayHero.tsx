@@ -54,7 +54,6 @@ export function TodayHero({ season, time, clock, tz, children, xstyle }: TodayHe
         <Clock time={time} tz={tz} hour12={clock === "12h"} />
       </div>
       {children}
-      <span {...stylex.props(styles.label)}>{copy.appName}</span>
     </ColorBlock>
   );
 }

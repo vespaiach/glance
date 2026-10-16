@@ -7,7 +7,7 @@ import { type } from "@/theme/type.stylex";
 import { Icon } from "./Icon";
 import { press } from "./press";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "accent" | "inverse";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "accent" | "inverse" | "danger";
 type ButtonSize = "md" | "lg";
 
 type ButtonProps = Omit<ComponentPropsWithoutRef<"button">, "style" | "className"> & {
@@ -46,7 +46,7 @@ const styles = stylex.create({
     minHeight: sizes.touchMin,
   },
   lg: {
-    gap: 10,
+    gap: 12,
     paddingBlock: 16,
     paddingInline: 32,
     fontSize: 24,
@@ -79,6 +79,10 @@ const styles = stylex.create({
   inverse: {
     backgroundColor: colors.white,
     color: colors.black,
+  },
+  danger: {
+    backgroundColor: colors.danger,
+    color: colors.white,
   },
   fullWidth: {
     width: "100%",

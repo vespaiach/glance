@@ -11,7 +11,7 @@ type WeatherFailureProps = {
 };
 
 const styles = stylex.create({
-  failure: { gap: 28 },
+  failure: { gap: 32 },
 });
 
 export function WeatherFailure({ location, minutes, onRetry }: WeatherFailureProps) {

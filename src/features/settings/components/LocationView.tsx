@@ -136,7 +136,7 @@ const styles = stylex.create({
   },
   shared: {
     fontFamily: type.fontMono,
-    fontSize: 12,
+    fontSize: type.captionSize,
     letterSpacing: "0.6px",
     textTransform: "uppercase",
   },

@@ -38,7 +38,7 @@ const styles = stylex.create({
   text: {
     display: "flex",
     flexDirection: "column",
-    gap: 6,
+    gap: 8,
     minWidth: 0,
   },
   title: {

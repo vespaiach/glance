@@ -53,7 +53,6 @@ const styles = stylex.create({
   },
   control: {
     maxWidth: "100%",
-    overflowX: "auto",
     display: "flex",
   },
   link: {

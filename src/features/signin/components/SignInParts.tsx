@@ -93,7 +93,7 @@ const styles = stylex.create({
   lock: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     paddingTop: space.lg,
     boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
     fontSize: 15,

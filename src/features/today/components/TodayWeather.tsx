@@ -46,7 +46,7 @@ const styles = stylex.create({
   skeleton: {
     display: "flex",
     flexDirection: "column",
-    gap: 18,
+    gap: 16,
   },
   reading: {
     display: "flex",

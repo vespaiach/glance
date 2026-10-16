@@ -28,7 +28,7 @@ const lunch = {
 
 const ignore = () => {};
 
-test("TODAY-01 the hero shows the season and month, the clock and the screen label", () => {
+test("TODAY-01 the hero shows the season and month and the clock, with no screen label", () => {
   render(
     <TodayHero tz={tz} season="fall" time={new Date(2026, 9, 9, 10, 41)} clock="12h">
       summary
@@ -38,7 +38,7 @@ test("TODAY-01 the hero shows the season and month, the clock and the screen lab
   expect(screen.getByText("Fall · October")).toBeInTheDocument();
   expect(screen.getByText("Friday, October 9")).toBeInTheDocument();
   expect(screen.getByText("10:41")).toBeInTheDocument();
-  expect(screen.getByText("Glance")).toBeInTheDocument();
+  expect(screen.queryByText("Glance")).not.toBeInTheDocument();
   expect(screen.getByText("summary")).toBeInTheDocument();
 });
 
