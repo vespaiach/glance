@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { CalendarDays, CalendarX2, Plus } from "lucide-react";
+import type { Ref } from "react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
@@ -29,6 +30,7 @@ type DayPanelProps = {
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
   xstyle?: stylex.StyleXStyles;
+  ref?: Ref<HTMLElement>;
 };
 
 const SKELETON_ROWS = [0, 1, 2];
@@ -170,9 +172,10 @@ export function DayPanel({
   onOpenEvent,
   onAddEvent,
   xstyle,
+  ref,
 }: DayPanelProps) {
   return (
-    <section {...stylex.props(styles.root, xstyle)}>
+    <section ref={ref} {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <div {...stylex.props(styles.heading)}>
           <Eyebrow>{eyebrowFor(state, clock, tz)}</Eyebrow>
