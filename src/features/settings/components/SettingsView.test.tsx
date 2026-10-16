@@ -69,6 +69,10 @@ function renderView(overrides: Partial<Props> = {}) {
     screens: [KITCHEN],
     now: NOW,
     tz: TZ,
+    online: true,
+    qr: { tile: { kind: "closed" }, secondsLeft: 300 },
+    onShowQr: vi.fn(),
+    onCloseQr: vi.fn(),
     ...overrides,
   };
 
@@ -323,4 +327,75 @@ test("SET-12 a screen seen hours ago today reads in hours", () => {
   });
 
   expect(screen.getByText("Active 3 hr ago")).toBeInTheDocument();
+});
+
+const CODE_URL = "https://glance.example.com/api/auth/verify?t=abc";
+
+function accountCard() {
+  return within(screen.getByRole("region", { name: "Account" }));
+}
+
+test("SIGNIN-15 Sign in another device sits under the signed-in list and opens the tile", async () => {
+  const props = renderView();
+
+  const button = accountCard().getByRole("button", { name: "Sign in another device" });
+  await userEvent.click(button);
+
+  expect(props.onShowQr).toHaveBeenCalled();
+  expect(
+    screen.getByRole("list", { name: "1 screen signed in" }).compareDocumentPosition(button),
+  ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+});
+
+test("SIGNIN-15 offline Sign in another device is disabled", () => {
+  renderView({ online: false });
+
+  expect(accountCard().getByRole("button", { name: "Sign in another device" })).toBeDisabled();
+});
+
+test("SIGNIN-15 the open tile shows the code, the email and the countdown in place of the button", async () => {
+  const props = renderView({
+    qr: { tile: { kind: "open", url: CODE_URL, issuedAt: NOW.toISOString() }, secondsLeft: 245 },
+  });
+
+  const card = accountCard();
+  expect(card.queryByRole("button", { name: "Sign in another device" })).toBeNull();
+  expect(card.getByRole("img", { name: "Sign-in code" }).querySelector("path")).not.toBeNull();
+  expect(card.getByText("Scan to sign in")).toBeInTheDocument();
+  expect(
+    card.getByText(
+      "Open the camera on the other device and point it at the code. It signs in with maria@example.com.",
+    ),
+  ).toBeInTheDocument();
+  expect(card.getByText("Code expires in 4:05")).toBeInTheDocument();
+
+  await userEvent.click(card.getByRole("button", { name: "Done" }));
+
+  expect(props.onCloseQr).toHaveBeenCalled();
+});
+
+test("SIGNIN-15 while the code is made the tile shows an empty code at 5:00", () => {
+  renderView({ qr: { tile: { kind: "issuing" }, secondsLeft: 300 } });
+
+  const card = accountCard();
+  expect(card.getByRole("img", { name: "Sign-in code" }).querySelector("path")).toBeNull();
+  expect(card.getByText("Code expires in 5:00")).toBeInTheDocument();
+});
+
+test("SIGNIN-15 a code that can't be made says so and Try again asks again", async () => {
+  const props = renderView({ qr: { tile: { kind: "failed" }, secondsLeft: 300 } });
+
+  const card = accountCard();
+  expect(card.getByText("Couldn’t make a code. Try again.")).toBeInTheDocument();
+  expect(card.queryByText(/Code expires/)).toBeNull();
+
+  await userEvent.click(card.getByRole("button", { name: "Try again" }));
+
+  expect(props.onShowQr).toHaveBeenCalled();
+});
+
+test("SIGNIN-15 offline Try again is disabled", () => {
+  renderView({ online: false, qr: { tile: { kind: "failed" }, secondsLeft: 300 } });
+
+  expect(accountCard().getByRole("button", { name: "Try again" })).toBeDisabled();
 });

@@ -3,7 +3,9 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
+import { ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
+import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { SettingsScreen } from "./SettingsScreen";
@@ -74,7 +76,9 @@ function renderSettings() {
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <SeasonProvider>{children}</SeasonProvider>
+      <NetworkProvider>
+        <SeasonProvider>{children}</SeasonProvider>
+      </NetworkProvider>
     </Shell>
   );
 
@@ -221,4 +225,29 @@ test("SET-12 offline the account card shows only this screen", async () => {
   await waitFor(() => expect(store.displays).toHaveBeenCalled());
   const list = screen.getByRole("list", { name: "1 screen signed in" });
   expect(list).toHaveTextContent("Chrome phoneThis screen");
+});
+
+test("SIGNIN-15 Sign in another device shows a code for this account, and Done voids it", async () => {
+  const url = "https://glance.example.com/api/auth/verify?t=abc";
+  store.issueQr.mockResolvedValue(ok({ url }));
+  store.voidQr.mockResolvedValue(ok(undefined));
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sign in another device" }));
+
+  expect(await screen.findByText("Code expires in 5:00")).toBeInTheDocument();
+  expect(screen.getByText(/It signs in with maria@example.com\.$/)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+  expect(store.voidQr).toHaveBeenCalledWith(url);
+  expect(screen.getByRole("button", { name: "Sign in another device" })).toBeInTheDocument();
+});
+
+test("SIGNIN-15 offline Sign in another device is disabled", async () => {
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+  renderSettings();
+
+  expect(await screen.findByRole("button", { name: "Sign in another device" })).toBeDisabled();
 });

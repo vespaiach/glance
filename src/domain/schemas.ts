@@ -217,6 +217,11 @@ export const LinkRequestSchema = v.object({
 });
 export type LinkRequest = v.InferOutput<typeof LinkRequestSchema>;
 
+export const QrVoidRequestSchema = v.object({
+  url: v.pipe(v.string(), v.url()),
+});
+export type QrVoidRequest = v.InferOutput<typeof QrVoidRequestSchema>;
+
 export const NameRequestSchema = v.object({
   name: v.pipe(RequiredTextSchema, v.maxLength(100)),
 });

@@ -114,6 +114,12 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("full=0&chrome=1")).toEqual({});
   });
 
+  it("SIGNIN-15 reads qr=open and qr=failed", () => {
+    expect(parseFixtureParams("qr=open")).toEqual({ qr: "open" });
+    expect(parseFixtureParams("qr=failed")).toEqual({ qr: "failed" });
+    expect(parseFixtureParams("qr=done")).toEqual({});
+  });
+
   it("§6 ignores params that are not fixture params", () => {
     expect(parseFixtureParams("date=2026-10-14&view=weather")).toEqual({});
   });

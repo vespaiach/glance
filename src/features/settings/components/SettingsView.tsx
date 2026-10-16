@@ -6,6 +6,7 @@ import type { SignedInScreen } from "@/domain/screens";
 import { space } from "@/theme/tokens.stylex";
 import { settingsLayout } from "../layout";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
+import type { QrTileShown } from "./QrSignInTile";
 import { ScreenOptions } from "./ScreenOptions";
 import { SettingsPanel } from "./SettingsPanel";
 
@@ -18,6 +19,10 @@ type SettingsViewProps = {
   season: Season;
   background: ShownBackground;
   breakpoint: Breakpoint;
+  online: boolean;
+  qr: QrTileShown;
+  onShowQr: () => void;
+  onCloseQr: () => void;
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
   onOpenLocation: () => void;
@@ -48,6 +53,10 @@ export function SettingsView({
   season,
   background,
   breakpoint,
+  online,
+  qr,
+  onShowQr,
+  onCloseQr,
   onChange,
   onOpenBackground,
   onOpenLocation,
@@ -67,7 +76,17 @@ export function SettingsView({
       />
       <div {...stylex.props(styles.side)}>
         <ScreenOptions settings={settings} onChange={onChange} onOpenAmbient={onOpenAmbient} />
-        <AccountCard account={account} screens={screens} now={now} tz={tz} onSignOut={onSignOut} />
+        <AccountCard
+          account={account}
+          screens={screens}
+          now={now}
+          tz={tz}
+          online={online}
+          qr={qr}
+          onShowQr={onShowQr}
+          onCloseQr={onCloseQr}
+          onSignOut={onSignOut}
+        />
       </div>
     </div>
   );

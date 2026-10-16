@@ -592,3 +592,5 @@ export function gallerySetup(state: WeatherSetupState, canLocate = true): Weathe
     skip: ignoreSetup,
   };
 }
+
+export const QR_SAMPLE_URL = "https://glance.example.com/api/auth/verify?t=gallery-sample-code";

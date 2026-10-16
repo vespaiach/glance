@@ -10,11 +10,14 @@ import {
 } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
+import { useFixtureParams } from "@/shell/fixtureOptions";
+import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { SettingsView } from "./components/SettingsView";
+import { useQrTile } from "./useQrTile";
 
 const BACKGROUND_PATH = "/settings/background";
 
@@ -47,6 +50,10 @@ export function SettingsScreen() {
 
   const screens = useSignedInScreens();
 
+  const { online } = useNetwork();
+
+  const qr = useQrTile(useFixtureParams().qr);
+
   return (
     <SettingsView
       account={account}
@@ -57,6 +64,10 @@ export function SettingsScreen() {
       season={season}
       background={shownBackground(settings.background, photos ?? [], now, tz)}
       breakpoint={breakpoint}
+      online={online}
+      qr={qr}
+      onShowQr={qr.show}
+      onCloseQr={qr.close}
       onChange={(change) => repo.update(change)}
       onOpenBackground={() => router.push(BACKGROUND_PATH)}
       onOpenLocation={() => router.push(LOCATION_PATH)}

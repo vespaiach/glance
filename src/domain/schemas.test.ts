@@ -7,6 +7,7 @@ import {
   NameRequestSchema,
   NoteSchema,
   PhotoSchema,
+  QrVoidRequestSchema,
   type Synced,
   SyncedEventSchema,
   WeatherSchema,
@@ -339,6 +340,16 @@ describe("LinkRequestSchema", () => {
     expect(accepts(LinkRequestSchema, { email: "maria@example.com", timeZone: "Mars/Base" })).toBe(
       false,
     );
+  });
+});
+
+describe("QrVoidRequestSchema", () => {
+  it("SIGNIN-15 accepts the code's link and nothing else", () => {
+    expect(
+      accepts(QrVoidRequestSchema, { url: "https://glance.example.com/api/auth/verify?t=a" }),
+    ).toBe(true);
+    expect(accepts(QrVoidRequestSchema, { url: "not a link" })).toBe(false);
+    expect(accepts(QrVoidRequestSchema, {})).toBe(false);
   });
 });
 

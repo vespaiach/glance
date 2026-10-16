@@ -14,6 +14,7 @@ import {
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
   FIXTURE_PLACES,
+  FIXTURE_QR_URL,
   FIXTURE_SAVED_AT,
   FIXTURE_SEEDED_EVENTS,
   FIXTURE_SETTINGS,
@@ -328,6 +329,8 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
       }),
     ...createFixtureSearch(params),
     displays: () => online(async () => ok(fixtureScreens(now()))),
+    issueQr: () => online(async () => ok({ url: FIXTURE_QR_URL })),
+    voidQr: () => online(async () => ok(undefined)),
     auth: createFixtureAuth(params),
     upload: async (file, modifiedOn, onProgress): Promise<Result<StoredPhoto, UploadError>> => {
       const problem = uploadProblem(file);

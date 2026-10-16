@@ -26,6 +26,8 @@ export type AuthStatus =
   | { state: "finishing-elsewhere" }
   | { state: "signed-in"; account: Account; returning: boolean; setupDone: boolean };
 
+export type QrCode = { url: string };
+
 export type LinkRequest = { email: string; timeZone: string };
 
 type Answer<T, E = TransportError> = Promise<Result<T, E>>;
@@ -37,6 +39,8 @@ export interface Transport {
   places(query: string): Answer<WeatherLocation[]>;
   locate(position: Coordinates): Answer<WeatherLocation, LocateError>;
   displays(): Answer<SignedInScreen[]>;
+  issueQr(): Answer<QrCode>;
+  voidQr(url: string): Answer<void>;
   auth: {
     link(request: LinkRequest): Answer<void>;
     status(): Answer<AuthStatus>;

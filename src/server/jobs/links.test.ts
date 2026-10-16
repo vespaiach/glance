@@ -49,6 +49,23 @@ describe("cleanupLinks", () => {
     expect(await linkHashes()).toEqual(["a-live", "b-expired", "c-used"]);
   });
 
+  it("SIGNIN-15 removes expired QR codes too and keeps a live one", async () => {
+    const db = harness.deps().db;
+    await db.run("INSERT INTO displays (id, account_id) VALUES ('d1', $1)", [MARIA]);
+    const storeQr = (tokenHash: string, expiresAt: Date) =>
+      db.run(
+        `INSERT INTO magic_links (token_hash, email, kind, account_id, display_id, time_zone, expires_at)
+         VALUES ($1, 'maria@example.com', 'qr', $2, 'd1', 'America/New_York', $3)`,
+        [tokenHash, MARIA, expiresAt.toISOString()],
+      );
+    await storeQr("a-old", hoursAgo(25));
+    await storeQr("b-live", new Date(START.getTime() + 5 * 60 * 1000));
+
+    await cleanupLinks(harness.deps());
+
+    expect(await linkHashes()).toEqual(["b-live"]);
+  });
+
   it("SIGNIN-12 leaves accounts and their sessions alone", async () => {
     await storeLink("a-old", hoursAgo(25));
 
