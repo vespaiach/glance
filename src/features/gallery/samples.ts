@@ -330,6 +330,27 @@ export const TODAY_WITH_ALL_DAY: readonly CalendarEvent[] = [
   ...TODAY_EVENTS,
 ];
 
+const LATER_TODAY: readonly [string, string, number, number, CalendarEvent["tone"]][] = [
+  ["Dentist — Leo", "Dr. Patel", 14, 0, "accent"],
+  ["Soccer practice", "Laurelhurst Park", 15, 30, 3],
+  ["Grocery pickup", "Fred Meyer", 17, 0, 4],
+  ["Family dinner", "Home", 18, 0, 1],
+  ["Piano practice — Mia", "Living room", 19, 30, 2],
+  ["Bedtime story", "Kids’ room", 20, 30, "soft"],
+];
+
+export const TODAY_MANY: readonly CalendarEvent[] = [
+  ...TODAY_EVENTS,
+  ...LATER_TODAY.map(([title, location, hour, minute, tone], index) => ({
+    id: sampleId(31 + index),
+    title,
+    location,
+    startAt: todayAt(hour, minute),
+    endAt: todayAt(hour, minute + 30),
+    tone,
+  })),
+];
+
 export const TODAY_NOTES: readonly Note[] = [
   {
     id: sampleId(11),

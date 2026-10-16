@@ -9,6 +9,7 @@ import {
   FIXTURE_ALL_DAY,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_LOCATED_PLACE,
+  FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
@@ -129,9 +130,11 @@ function offlineSeed(settings: AccountSettings, weather: Weather | undefined): S
 }
 
 function fixtureEvents(params: FixtureParams): CalendarEvent[] {
-  const extra = params.allday ? [FIXTURE_ALL_DAY.grandpa] : [];
+  const allDay = params.allday ? [FIXTURE_ALL_DAY.grandpa] : [];
 
-  return [...FIXTURE_SEEDED_EVENTS, ...extra];
+  const many = params.events === "many" ? FIXTURE_MANY_EVENTS : [];
+
+  return [...FIXTURE_SEEDED_EVENTS, ...allDay, ...many];
 }
 
 async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {

@@ -44,3 +44,11 @@ export function useViewportWidth(): number {
     () => 0,
   );
 }
+
+export function useViewportHeight(): number {
+  return useSyncExternalStore(
+    subscribeResize,
+    () => window.innerHeight,
+    () => 0,
+  );
+}

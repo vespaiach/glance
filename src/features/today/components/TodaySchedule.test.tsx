@@ -23,7 +23,11 @@ type Handlers = {
   onOpenCalendar: () => void;
 };
 
-function renderSchedule(state: ZoneState<CalendarEvent>, handlers: Partial<Handlers> = {}) {
+function renderSchedule(
+  state: ZoneState<CalendarEvent>,
+  handlers: Partial<Handlers> = {},
+  capacity = 8,
+) {
   return render(
     <TodaySchedule
       tz={tz}
@@ -33,6 +37,7 @@ function renderSchedule(state: ZoneState<CalendarEvent>, handlers: Partial<Handl
       now={NOW}
       clock="12h"
       compact={false}
+      capacity={capacity}
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
       onAddEvent={handlers.onAddEvent ?? (() => {})}
       onOpenCalendar={handlers.onOpenCalendar ?? (() => {})}
@@ -170,4 +175,60 @@ test("TODAY-12 tapping an all-day tile opens that event", async () => {
   await userEvent.click(screen.getByRole("button", { name: /Grandpa staying over/ }));
 
   expect(onOpenEvent).toHaveBeenCalledWith("grandpa");
+});
+
+const at = (id: string, h: number, m: number): CalendarEvent => ({
+  id,
+  title: id,
+  startAt: iso(h, m),
+  endAt: iso(h, m + 20),
+  tone: 3,
+});
+
+const MANY: CalendarEvent[] = [
+  ...EVENTS,
+  at("Dentist", 14, 0),
+  at("Soccer", 15, 30),
+  at("Grocery pickup", 17, 0),
+  at("Family dinner", 18, 0),
+  at("Piano practice", 19, 30),
+  at("Bedtime story", 20, 30),
+];
+
+const many = { kind: "ready", data: MANY } as const;
+
+test("TODAY-11 more events than fit end with See all and the hidden counts", () => {
+  renderSchedule(many, {}, 4);
+
+  expect(screen.queryByText("School drop-off")).not.toBeInTheDocument();
+  expect(screen.queryByText("Soccer")).not.toBeInTheDocument();
+  expect(screen.getByText("Dentist")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /See all 9 events/ })).toHaveTextContent(
+    "1 earlier · 5 later",
+  );
+});
+
+test("TODAY-11 the hidden count names only the parts that apply", () => {
+  renderSchedule({ kind: "ready", data: MANY.slice(1) }, {}, 4);
+
+  expect(screen.getByRole("button", { name: /See all 8 events/ })).toHaveTextContent(
+    /^See all 8 events5 later$/,
+  );
+});
+
+test("TODAY-11 See all opens the calendar", async () => {
+  const onOpenCalendar = vi.fn<() => void>();
+
+  renderSchedule(many, { onOpenCalendar }, 4);
+
+  await userEvent.click(screen.getByRole("button", { name: /See all 9 events/ }));
+
+  expect(onOpenCalendar).toHaveBeenCalledTimes(1);
+});
+
+test("TODAY-11 rows that all fit show no See all", () => {
+  renderSchedule(many, {}, 9);
+
+  expect(screen.getByText("School drop-off")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /See all/ })).not.toBeInTheDocument();
 });

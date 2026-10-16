@@ -60,6 +60,11 @@ export const copy = {
       failedCount: "Today",
       addEvent: "Add event",
       fullCalendar: "Full calendar",
+      seeAll: (count: number) => `See all ${count} events`,
+      hidden: (earlier: number, later: number) =>
+        [earlier > 0 && `${earlier} earlier`, later > 0 && `${later} later`]
+          .filter(Boolean)
+          .join(" · "),
       emptyTitle: "No events yet",
       emptyBody: "Add the first one. It shows here and on the calendar.",
       loading: "Loading events",

@@ -36,6 +36,7 @@ describe("parseFixtureParams", () => {
     ["signin", ["form", "sending", "sent", "name", "phone", "expired", "offline", "done"]],
     ["upload", ["one", "progress", "error", "offline"]],
     ["wx", ["searching", "unknown", "choose"]],
+    ["events", ["many"]],
   ] as const)("§6 accepts each %s value", (name, values) => {
     for (const value of values) {
       expect(parseFixtureParams(`${name}=${value}`)).toEqual({ [name]: value });
