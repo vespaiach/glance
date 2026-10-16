@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { deviceTimeZone } from "@/domain/zone";
+import { clockTime } from "@/ui/testClock";
 import { HeroSummary } from "./HeroSummary";
 import { TodayHero } from "./TodayHero";
 
@@ -37,7 +38,7 @@ test("TODAY-01 the hero shows the season and month and the clock, with no screen
 
   expect(screen.getByText("Fall · October")).toBeInTheDocument();
   expect(screen.getByText("Friday, October 9")).toBeInTheDocument();
-  expect(screen.getByText("10:41")).toBeInTheDocument();
+  expect(screen.getByText(clockTime("10:41"))).toBeInTheDocument();
   expect(screen.queryByText("Glance")).not.toBeInTheDocument();
   expect(screen.getByText("summary")).toBeInTheDocument();
 });
