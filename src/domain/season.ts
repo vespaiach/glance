@@ -12,3 +12,7 @@ function seasonOfMonth(month: number): Season {
 export function seasonFor(setting: AccountSettings["season"], now: Date, tz: string): Season {
   return setting === "auto" ? seasonOfMonth(wallTime(now, tz).month - 1) : setting;
 }
+
+export function seasonVideoPath(season: Season): string {
+  return `/videos/${season}.mp4`;
+}
