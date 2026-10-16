@@ -56,6 +56,13 @@ class Component extends DCLogic {
       ['P', 'First sign-in · location · location is off', 'signin=location&wx=denied'],
       ['Q', 'First sign-in · location · couldn’t save', 'signin=location&wx=savefail'],
       ['R', 'First sign-in · location with keyboard', 'signin=location&kb=1'],
+      ['S', 'Signed out by the server · nothing waiting (SIGNIN-01)', 'signin=ended'],
+      ['T', 'Signed out by the server · 3 changes waiting to sync', 'signin=ended&pending=3'],
+      ['U', 'Signed out by the server · different email entered while changes wait', 'signin=ended&pending=3&switch=1'],
+      ['V', 'Signed out while a note sheet is open · nothing changes until Post or Cancel, then the form shows', 'signin=ended&pending=3&sheet=newnote'],
+      ['W', 'Signed out during quiet hours · Ambient stays, wake tap opens the form', 'view=ambient&signin=ended&pending=3'],
+      ['X', 'Signed in again · Welcome back (SIGNIN-09) · waiting changes then sync', 'signin=done&acct=returning'],
+      ['Y', 'Couldn’t send · request failed while online', 'signin=sendfail'],
     ];
     return {
       screens: screens.map(([id, name, q]) => ({

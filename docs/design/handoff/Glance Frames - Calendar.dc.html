@@ -48,6 +48,9 @@ class Component extends DCLogic {
       ['H', 'No end time', 'view=calendar&sheet=event&time=noend'],
       ['I', 'Offline · Save for later', 'view=calendar&sheet=newevent&net=offline'],
       ['J', 'Picker on Ends · winter, photo background', 'view=calendar&sheet=event&time=end&season=winter&bg=photo'],
+      ['K', 'Day with an all-day event (Fri, Oct 16)', 'view=calendar&day=16'],
+      ['L', 'Edit event · all day', 'view=calendar&day=16&sheet=allday'],
+      ['M', 'Discard changes? · Cancel on a changed event', 'view=calendar&sheet=newevent&discard=1'],
     ];
     return {
       screens: screens.map(([id, name, q]) => ({

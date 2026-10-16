@@ -37,7 +37,7 @@
 class Component extends DCLogic {
   renderVals() {
     const sizes = [['Large display · 1920×1080', 1920, 1080], ['Desktop · 1440×900', 1440, 900], ['Laptop · Android tablet · 1280×800', 1280, 800], ['iPad landscape · 1180×820', 1180, 820], ['iPad portrait · 820×1180', 820, 1180], ['Phone · 390×844', 390, 844]];
-    const screens = [['A', 'Notes', 'view=notes'], ['B', 'Notes · edit note', 'view=notes&sheet=note']];
+    const screens = [['A', 'Notes', 'view=notes'], ['B', 'Notes · edit note', 'view=notes&sheet=note'], ['C', 'Discard changes? · new note with text', 'view=notes&sheet=newnote&discard=1']];
     return {
       screens: screens.map(([id, name, q]) => ({
         id, name,

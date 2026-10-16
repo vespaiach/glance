@@ -25,26 +25,38 @@
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout</span><ul>
 <li>Fluid web app, not a scaled 1920 canvas. Breakpoints by window width: wide ≥ 1200, mid 1000–1199, narrow 600–999, phone &lt; 600. Layout re-evaluates live on resize.</li>
 <li>Wide and mid fit one screen; narrow stacks into a single scrolling column.</li>
-<li>Phone (390×844): one column everywhere. Today stacks hero, weather, schedule, notes. Hourly and 7-day forecast scroll sideways. Month cells shrink to fit (min 36 px). Photo and background thumbs go to 2 columns. Nav buttons 44 px with a 4 px gap so all six fit. The offline pill sits above the bar.</li>
+<li>Phone (390×844): one column everywhere. Today stacks hero, weather, schedule, notes. Hourly and 7-day forecast scroll sideways. Month cells shrink to fit (min 36 px). Photo and background thumbs go to 2 columns. Nav: all seven buttons (44 px) spread edge to edge across the bar with no brand slot, so Settings stays on screen at 390 px. The offline pill sits above the bar.</li>
 <li>1280×800 Android tablets use the laptop layout; iPad portrait (820) uses narrow. 1920×1080 uses wide.</li>
 <li>Photo background: every zone with text sits on a white panel (radius 24), so every view reads on a photo.</li>
+<li>Canvas: the season-color background (soft gray-tinted) sits behind white panels, the reverse of the design system's white gutters. Deliberate, so one layout works on both the season color and a photo.</li>
+<li>Type: smaller than the design system's 1920 kiosk scale so the app fits laptops and tablets. Clock 84–128 px (6.8 vw), temperature 76–96 px. Mono captions are 14 px minimum (16 px on Ambient). All text is black; no gray or dimmed text.</li>
+<li>Spacing follows the 8 px scale (4, 8, 12, 16, 24, 32).</li>
+<li>Touch: every control is 44 px or more. Settings, Background and Ambient tabs use the large PillTabs (56 px) and wrap onto more rows when they don't fit. Sheet close and upload retry/remove are 56 px icon buttons.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Navigation</span><ul>
-<li>Bottom bar: Today, Calendar, Weather, Notes, Photos, then Settings. 56 px icon buttons (IconButton size “touch”), labels via aria-label/title.</li>
+<li>Bottom bar: Today, Calendar, Weather, Notes, Photos, then Ambient (moon), a 1 px hairline divider, and Settings. The divider and a 24 px gap keep Ambient apart from Settings. Ambient never shows active; it opens Ambient right away from any view, outside the schedule. 56 px icon buttons (IconButton size “touch”), labels via aria-label.</li>
+<li>Labels: wide and mid show a 14 px label under each icon (Today, Calendar, Weather, Notes, Photos, Ambient, Settings; active label 540 weight, others 400). Tapping the label works like the icon. Bar height 88 px with labels, 72 px without. Narrow and phone are icons only.</li>
 <li>Active view = black button. Settings stays active on its Background sub-page.</li>
 <li>Bar is hidden on Sign in and Ambient.</li>
+<li><strong>Hides when idle</strong>: after 20 s with no touch the bar slides down and fades (280 ms) and the view takes the full height. Today shows more event rows when they fit. It doesn't hide while a sheet is open, a field is focused, the keyboard is up, or on full-screen Photos (which has its own controls).</li>
+<li>Handle: while hidden, a white 72×44 pill with a chevron-up sits centered 12 px above the bottom edge (hairline + level-2 shadow, label “Show menu”).</li>
+<li>Reveal: any touch shows the bar and still does its normal job; the first tap is never swallowed. The revealed bar floats over the bottom edge (upward level-2 shadow) so nothing moves under the finger. It docks again on the next view change, and hides again after 20 s without a touch.</li>
+<li>The Back to Today timeout lands on Today with the bar hidden.</li>
+<li>Settings › Hide bar when idle (main panel, under Temperature): On · Off (default On). Off keeps the bar docked.</li>
+<li><strong>Mock</strong>: the 20 s timer runs only when Glance opens with no URL parameters, or with <code>bar=auto</code>. URL: <code>bar=hidden|float</code>, <code>barauto=off</code>. Board frames Today E–F.</li>
 <li>Changing view closes any open sheet and resets scroll to top.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Feedback &amp; motion</span><ul>
 <li>Touch-first: no hover states. Press scales to 0.97 (120 ms); fills never darken.</li>
 <li>Tab/tile state 180 ms, screen change 280 ms fade, season and background cross-fade 600 ms.</li>
-<li>Sheets open over a 60% black scrim covering the bar. Tapping the scrim or Cancel discards the draft.</li>
+<li>Sheets open over a 60% black scrim covering the bar. Closing an unchanged sheet (scrim, Cancel or ×) closes it at once.</li>
+<li><strong>Discard changes?</strong> If the draft differs from what the sheet opened with, Cancel, × or a scrim tap replaces the footer in place with “Discard changes?” and a line naming what’s lost (“This event won’t be added.” · “Your edits to this event won’t be saved.” · “This note won’t be posted.” · “Your edits to this photo won’t be saved.”), plus “Keep editing” (secondary) and “Discard” (red danger button). Scrim taps are ignored while it shows; × confirms the discard. Any edit to a field returns to the normal footer. Closes any open time picker. The idle timeout still discards without asking. URL: <code>discard=1</code>. Board frames Calendar M, Notes C.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Time &amp; data</span><ul>
 <li><strong>Mock</strong>: date and time are fixed to Fri Oct 9, 2026, 10:41 AM. Production: clock ticks every second; event status recomputes every minute.</li>
 <li>Season “Auto” maps month → season (Mar–May Spring, Jun–Aug Summer, Sep–Nov Fall, Dec–Feb Winter) and re-checks at midnight.</li>
 <li><strong>Mock</strong>: nothing persists on reload. Production: settings, notes, events, photos and background save to the one family account (one email) and sync to every screen signed in with it.</li>
-<li>Frames are opened via URL: <code>view=</code>, <code>bg=photo</code>, <code>sheet=event|newevent|note|newnote</code>, <code>time=…</code>, <code>clock=24</code>, <code>season=</code>, <code>empty=1</code>, <code>net=loading|offline|wxerror</code>, <code>kb=1</code>, <code>signin=…</code>, <code>upload=…</code>, <code>wx=…</code>, <code>sub=location</code>, <code>geo=…</code> (see each section).</li>
+<li>Frames are opened via URL: <code>view=</code>, <code>bg=photo</code>, <code>sheet=event|newevent|allday|note|newnote|photo|photometa</code>, <code>discard=1</code>, <code>events=many</code>, <code>allday=1</code>, <code>day=</code>, <code>time=…</code>, <code>clock=24</code>, <code>season=</code>, <code>empty=1</code>, <code>net=loading|offline|wxerror</code>, <code>kb=1</code>, <code>signin=…</code>, <code>upload=…</code>, <code>wx=…</code>, <code>sub=location|ambient</code>, <code>amb=…</code>, <code>pick=…</code>, <code>geo=…</code> (see each section).</li>
 </ul></div>
 </div>
 </section>
@@ -57,13 +69,12 @@
 <li>Same form for new and returning families. Eyebrow “One account per family”, title “Sign in or get started”, body “Enter your email. We’ll send a link that signs this screen in. New here? The same link sets up your family’s Glance.”</li>
 <li>Hero: “Calendar, weather, notes and photos for your family. Sign in to manage them.”</li>
 <li>Email must match name@domain.tld, else “Enter a valid email address” (clears on the next keystroke). The lock footer (“Only your family can see its calendar, notes and photos.”) stays in every form state.</li>
-<li>“Continue as guests” skips sign-in and opens Today (prototype only). Hidden on the signed-out form (9).</li>
 <li>Signed-out variant: when the server stops accepting this screen’s sign-in, the same form shows with a banner, the title “Sign in again” and the email prefilled. See 9. Board frames S–X.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">2 · Sending</span><ul>
-<li>Trigger: “Send sign-in link” with a valid email. Button reads “Sending…” and is disabled; the email can’t be edited; a soft tile reads “Sending a link to {email}” with a slow-pulsing mail icon. “Continue as guests” hides.</li>
+<li>Trigger: “Send sign-in link” with a valid email. Button reads “Sending…” and is disabled; the email can’t be edited; a soft tile reads “Sending a link to {email}” with a slow-pulsing mail icon.</li>
 <li>Clears when the server accepts the request → Check your email. <strong>Mock</strong>: 1.4 s.</li>
-<li>Request fails (online): back to the form with the email kept; field error “Couldn’t send. Try again.” Not drawn.</li>
+<li>Request fails (online): back to the form with the email kept and editable; field error “Couldn’t send. Try again.” in the TextInput error style. The error clears on the next keystroke; Send sign-in link retries. <strong>Mock</strong>: any email containing “fail”. URL: <code>signin=sendfail</code>. Board frame Y.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">3 · Check your email</span><ul>
 <li>Identical for new and known emails, so the flow never reveals whether an account exists: “We sent a link to {email}. Open it and this screen signs in by itself.” + “Link expires in 10 minutes”.</li>
@@ -102,12 +113,14 @@
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">8 · Settings › Account</span><ul>
 <li>Header: “Signed in as {name} · {email}”. Card: initial avatar, name, email. No family name anywhere.</li>
-<li>“Sign out” signs out this screen only; other screens with the same email stay signed in. Caption “Signs out this screen only.” No confirm step. Returns to the email form, empty.</li>
+<li>Signed-in screens: eyebrow “{n} screens signed in”, then a soft-tile list of every device signed in with this email. Row: device-type icon (monitor, tablet, smartphone) in a white circle, device name, mono caption “This screen” for the current device (listed first, with a seasonal accent dot) or “Active {time} ago / yesterday / {date}” for others, newest first. Read-only in v1: no rename or remote sign-out. <strong>Mock</strong>: list is fixed sample data.</li>
+<li>Sign in another device: secondary “Sign in another device” (qr-code icon) under the list. Tap → replaced in place by a block-1 tile: QR code on white, title “Scan to sign in”, body “Open the camera on the other device and point it at the code. It signs in with {email}.”, mono caption “Code expires in {m:ss}” counting down from 5:00 each second (tabular figures), ghost “Done” closes it and stops the timer. The code opens a one-time sign-in link for this account, skipping the email step; at 0:00 a new code is issued and the countdown restarts at 5:00 while the tile is open. The new device joins the list once signed in. <strong>Mock</strong>: the QR is a static pattern.</li>
+<li>“Sign out” signs out this screen only; other screens with the same email stay signed in. Caption “Sign out this device only.”: info icon + black mono caption on the left, button on the right (space-between), below a hairline. Styled as a note so it doesn’t read as a second action. No confirm step. Returns to the email form, empty.</li>
 <li>Out of scope: changing name or email, deleting the account, more than one email per account.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">9 · Signed out by the server</span><ul>
 <li>Trigger: the screen is online and the server no longer accepts its sign-in (for example, the family’s account was reset). Rare: sign-ins don’t expire in v1, and Sign out on another screen signs out only that screen. Never while offline; an offline screen keeps working from saved data and checks again on reconnect. No reason is shown.</li>
-<li>Shows the normal email form (same hero, lock footer, no nav bar) with a soft banner on top: “This screen was signed out” · “Sign in again to keep the calendar, notes and photos up to date.” Title “Sign in again”, body “Check your family’s email below. We’ll send a link that signs this screen back in.” “Continue as guests” is hidden.</li>
+<li>Shows the normal email form (same hero, lock footer, no nav bar) with a soft banner on top: “This screen was signed out” · “Sign in again to keep the calendar, notes and photos up to date.” Title “Sign in again”, body “Check your family’s email below. We’ll send a link that signs this screen back in.”</li>
 <li>Email is prefilled with the account’s last email and stays editable. Send sign-in link → Sending → Check your email → Signed in work as usual.</li>
 <li>Waiting changes (events or notes saved but not synced, shown as “Waiting to post”): the banner adds “Changes waiting on this screen: {n}. They’ll be sent after you sign in.” Same wording for 1 and for n. They stay on this screen until sign-in finishes.</li>
 <li>Different email: inline, no confirm step. When the field holds a different address and changes are waiting, a soft tile under the field reads “Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in.” with ghost “Use {previous email}” (restores the email). The banner drops “They’ll be sent…”. Sending stays allowed; nothing is removed until the other email actually signs in, so going back is always possible before that.</li>
@@ -135,8 +148,11 @@
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul>
 <li>Hero: event running → “Happening now”, title + “{where} · until {end}”. Nothing running but more later → “Up next”, title + “{where} · {start}”. All ended → “Nothing else today”. Empty day → “Nothing scheduled”.</li>
-<li>Rows: past (struck through, grey dot), now (season fill, NOW pill), upcoming.</li>
-<li>Eyebrow: “Today · {n} events” or “Today · No events”.</li>
+<li>Hero: season eyebrow, clock, then the event. No “Glance” wordmark in the hero.</li>
+<li>Rows: past (struck through, hairline dot), now (season fill, NOW pill), upcoming.</li>
+<li>Eyebrow: “Today · {n} events” (all-day events included; “1 event” singular) or “Today · No events”.</li>
+<li><strong>All-day events</strong>: soft tiles (56 px min, radius 8) above the timed rows, in event order: mono “ALL DAY”, color dot, title, place. Tap → Edit event. They never become the hero, never show as Happening now or Up next, and never strike through.</li>
+<li><strong>More events than fit</strong>: the schedule shows as many rows as fit and a full-width soft button at the bottom: “See all {n} events” with a mono count on the right (“1 earlier · 3 later”). Ended events are hidden first, then the latest upcoming ones; Happening now and the next events always stay. Rows that fit: wide and landscape mid = (window height − bar − 360 px − 64 px per all-day tile) ÷ 76, between 4 and 8; portrait mid, narrow and phone = 6. The button takes one row’s place. Tap → Calendar on today. URL: <code>events=many</code>. Board frame C.</li>
 <li>Picture of the day only when photos exist; otherwise an Upload prompt.</li>
 <li>Weather with no location → “Weather needs a location” · “Set the city once. The forecast and the clock follow it.” → Set location opens the Weather setup card (decided: stays on Weather, not Settings › Location; it’s the zone being fixed, and the card has the same search and Use my location).</li>
 <li>On photo background: picture of the day is dropped. Schedule and notes always sit on white panels, so they read on either background.</li>
@@ -144,9 +160,8 @@
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Not visible</span><ul>
 <li>Rows move past → now → upcoming in real time; hero swaps at each start/end.</li>
 <li><strong>Mock</strong>: statuses are hardcoded. Times are stored as minutes of the day. Production needs real timestamps.</li>
-<li>Picture of the day selection rule (daily rotation?) is not defined.</li>
-<li>Overflow when the day has more events than fit: not designed (scroll inside the column is the likely answer).</li>
-<li>Multi-day and all-day events are not designed.</li>
+<li><strong>Picture of the day</strong>: one photo per calendar day, the same on every screen of the account; it changes at midnight in the location’s time zone. First choice: a photo taken on today’s date in an earlier year (eyebrow “On this day · {year}”). Otherwise the next photo in a shuffled cycle: every photo shows once before any repeats; photos added mid-cycle join the end of it. Only finished uploads count. If today’s photo is deleted, the next in the cycle replaces it at once. <strong>Mock</strong>: fixed to Cannon Beach.</li>
+<li>Multi-day events are not designed.</li>
 </ul></div>
 </div>
 </section>
@@ -155,16 +170,18 @@
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 24px/1.2 var(--font-sans)">Calendar and events</h2><a href="Glance%20Frames%20-%20Calendar.dc.html" style="font:500 13px ui-monospace,Menlo,monospace">Open board →</a></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Behavior</span><ul>
-<li>Tap a day → selected (black). Heading “{Weekday}, Oct {d}” and count update. Today keeps its ring.</li>
+<li>Day list: all-day events show as soft tiles (mono “ALL DAY”, dot, title, place) above the timed rows and count toward “{n} events”. Days with only all-day events still get a dot. Board frames K–L (<code>day=16</code>).</li>
+<li>Tap a day → selected (black). Heading “{Weekday}, Oct {d}” and count update. Today keeps its ring. On narrow and phone, if the day heading is below the fold, the view scrolls just enough to show the heading and the first event; the month stays mostly in view.</li>
 <li>Days with events get a dot; dots appear and disappear as events are added or deleted.</li>
 <li>Tap an event → Edit event. “Add event” creates on the selected day.</li>
 <li>Narrow stacks month above the day list; day cells grow up to 84 px for touch and shrink to fit at the low end of narrow.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Event sheet</span><ul>
 <li>New event · Edit event; eyebrow shows the day.</li>
+<li>Time: a “Set times / All day” PillTabs row (large, 56 px) above Starts and Ends. All day hides both time fields and any open picker; switching back restores the times the draft had (new events: the usual defaults). All-day events skip the Ends-before-Starts check. URL: <code>sheet=allday</code>.</li>
 <li>Fields: title (required), start, end, where (label “Where”), color (5 swatches plus Alert, which uses the season accent; default color 1). Notes get the 5 swatches only.</li>
 <li>Empty title → “Add a title”; clears on the next change.</li>
-<li>Delete (edit only) → inline confirm “Delete event” before removal.</li>
+<li>Delete (edit only) → inline confirm “Delete event” before removal. The confirm button is red (design system danger color, white text) in every season; it no longer uses the season accent.</li>
 <li>Save closes the sheet; list, dots and Today update immediately.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Times · TimeField + TimePicker</span><ul>
@@ -187,7 +204,7 @@
 <li>Empty day: “Nothing scheduled. A free day.” Empty calendar: “The calendar is empty”.</li>
 <li>Events on other days always render as upcoming.</li>
 <li>Chevrons step one month (the year rolls over and is shown outside 2026). The selected day becomes the 1st, or today in the current month. The today ring and dots show only in their month.</li>
-<li>Event times show in the location’s time zone (see Location and time zone). Recurring, all-day and multi-day events and calendar-source sync (Google/Outlook) are not designed. <strong>Mock</strong>: “now” is fixed at 10:41 AM for defaults; production uses the device clock. Production needs real timestamps.</li>
+<li>Event times show in the location’s time zone (see Location and time zone). Recurring and multi-day events and calendar-source sync (Google/Outlook) are not designed. <strong>Mock</strong>: “now” is fixed at 10:41 AM for defaults; production uses the device clock. Production needs real timestamps.</li>
 </ul></div>
 </div>
 </section>
@@ -268,7 +285,7 @@
 <li>“Add note” → New note. Tap a note → Edit note (eyebrow shows author · time).</li>
 <li>Message required → “Write a message”. Blank name posts as “Guest”.</li>
 <li>New notes go first, stamped “Just now”, tilt cycles −2°, 1.5°, −1°, 2.5°.</li>
-<li>Delete → inline confirm “Delete note”.</li>
+<li>Delete → inline confirm “Delete note” (red danger button).</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul>
 <li>Count: “{n} notes”, “1 note”, “No notes”.</li>
@@ -288,11 +305,22 @@
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 24px/1.2 var(--font-sans)">Photos</h2><a href="Glance%20Frames%20-%20Photos.dc.html" style="font:500 13px ui-monospace,Menlo,monospace">Open board →</a></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Behavior</span><ul>
-<li>Featured photo + thumbnail grid. Tap a thumb to feature it (ringed).</li>
+<li>Featured photo + thumbnail grid. Tap a thumb to feature it (ringed). Thumb caption: name and date on one center-aligned row; date in black 14 px mono (no gray text).</li>
 <li>Prev/next chevrons step through and wrap around at either end.</li>
 <li>Slideshow auto-advances every 8 s while Photos is open. Pause ↔ Play toggles it; chevrons and thumbs keep it playing.</li>
-<li>Upload opens the system file picker (images, multiple). New photos go first, titled by file name, dated “Just now”.</li>
+<li>Upload opens the system file picker (images, multiple). New photos go first. Name, date and place are filled in from the photo while it uploads (see Photo details).</li>
+<li>Featured photo shows name and “{date} · {place}” (year added outside 2026; “No date” if none). A pencil button opens Photo details and pauses the slideshow.</li>
 <li>Narrow: thumbs switch to 3 columns under the featured photo.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Full screen</span><ul>
+<li>Open: tap the featured photo or the full-screen button (maximize, last in the featured controls). Only when at least one photo has finished uploading.</li>
+<li>Black screen above everything, bar included. The whole photo shows uncropped (contain), letterboxed in black.</li>
+<li>Top row: mono “{n} of {total}” and Exit full screen (minimize). Bottom row: name, “{date} · {place}”, Previous, Play/Pause, Next. White-on-black inverse icon buttons, 56 px.</li>
+<li>Tap the photo to hide or show both rows; hidden gives the photo the full screen. Opening always starts with them shown.</li>
+<li>Slideshow keeps its state and 8 s timer; chevrons wrap as in the grid. No edit button here.</li>
+<li>Keyboard: Esc exits, ← → step, Space plays/pauses.</li>
+<li>Closes on Exit, on any view change and on the idle timeout (back to Today). Returns to Photos with the same photo featured.</li>
+<li>URL: <code>full=1</code>, <code>&amp;chrome=0</code> (rows hidden). Board frames L–M.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul>
 <li>No uploads: “No photos yet” + Upload photos. The same absence hides Picture of the day on Today.</li>
@@ -301,11 +329,24 @@
 <li><strong>Failure, per file</strong> (only that tile changes): “Too large · 20 MB max”, “Not a photo” (not an image file), “Didn’t upload” (network). Network failures get Try again (restarts at 0%) and Remove; too large and not a photo get Remove only, since a retry would fail again. Row reads “{n} photo(s) didn’t upload”. Checks for size and type run before upload starts.</li>
 <li><strong>Offline</strong>: Upload buttons are disabled with the offline pill pattern (black pill, wifi-off): “Offline · upload when back online”. Uploads in progress pause (“Paused”) and resume on reconnect; row reads “Offline · {n} upload paused until back online”.</li>
 <li>Background page: the same tiles appear first in its grid (16:9). The “Upload photo” tile reads “Upload when online” with a wifi-off icon and is disabled while offline. Finished uploads join the background list.</li>
-<li>URL: <code>upload=one|progress|error|offline</code> (with <code>view=photos|background</code>). Snapshots are frozen; real picks animate.</li>
+<li>URL: <code>upload=one|progress|error|offline|done</code> (with <code>view=photos|background</code>). Snapshots are frozen; real picks animate.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Name, date and place from the file</span><ul>
+<li>Read on upload, in order. <strong>Name</strong>: title in the photo’s metadata → words in the file name (camera prefixes like IMG_, DSC, PXL, dates and number runs removed; needs a real word of 3+ letters) → the place’s city → the raw file name.</li>
+<li><strong>Date</strong>: date taken in the metadata → a date in the file name (2025-10-31, 20251031) → the file’s modified date.</li>
+<li><strong>Place</strong>: GPS in the metadata, turned into “City, ST”. No GPS → empty.</li>
+<li>Guessed values get a soft hint under the featured photo: “Name and date guessed from the file name.”, “Date guessed from the file date.”, plus “No place found.” when there’s no GPS. The hint goes once the details are saved.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Photo details sheet</span><ul>
+<li>Title “Photo details”, eyebrow = file name (or “Family photos”). 16:9 preview, then Name (required), Date taken (date field, no future dates), Place (optional). No color.</li>
+<li>Each field has a mono source caption on the right: “From photo”, “From photo location”, “Guessed from file name”, “Guessed from file date”, “Guessed from place”, “Not in photo”. Any change to the field turns it into “Edited”.</li>
+<li>Empty name → “Add a name” on Save. Name and place are trimmed. Save updates the photo everywhere (grid, featured, background list).</li>
+<li>Delete → inline confirm “Delete photo” (red danger button), then the photo leaves Photos and the background list.</li>
+<li>URL: <code>sheet=photo</code> (guessed from file name) · <code>sheet=photometa</code> (date and place from the photo).</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Not visible</span><ul>
-<li><strong>Mock</strong>: uploads stay in the browser tab and progress is simulated. Production needs storage and phone upload.</li>
-<li>Delete photo, rename and albums are not designed.</li>
+<li><strong>Mock</strong>: uploads stay in the browser tab and progress is simulated. Place lookup from GPS is faked. Production needs storage, a reverse-geocoding service and phone upload.</li>
+<li>Albums and deleting the photo currently used as the background (what replaces it) are not designed.</li>
 </ul></div>
 </div>
 </section>
@@ -318,6 +359,7 @@
 <li>Season: Auto · Spring · Summer · Fall · Winter. Subtitle reads “Follows the month · now Fall” or “Fixed to {season}”. Every color block cross-fades.</li>
 <li>Clock: 12-hour · 24-hour. Changes every displayed time: clock, event rows, hero, forecast hours, sunset, ambient schedule, sync time. 12-hour event rows omit AM/PM.</li>
 <li>Temperature: Fahrenheit · Celsius.</li>
+<li>Hide bar when idle: On · Off (default On). Last row of the main Settings panel, under Temperature. Subtitle “After 20 seconds without a touch. Any tap brings it back.” Off keeps the bar docked. See Navigation.</li>
 <li>Schedule › Ambient screen: tile shows the hours (“6:00 PM – 7:30 AM”, “Sun – Thu 6:00 PM – 7:30 AM · Fri &amp; Sat 9:00 PM – 9:00 AM” or “Off”) → Ambient screen page.</li>
 <li>Back to Today after: 1 · 3 · 5 min · Never.</li>
 <li>Remove notes after: 1 day · 1 week · Never (also changes the Notes caption).</li>
@@ -353,10 +395,12 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Behavior</span><ul>
 <li>Full-screen clock, season, current weather, next event. No bar.</li>
+<li>Manual entry: the moon button in the bar, or the moon button on the Ambient screen settings page. A tap wakes it to Today as usual; the idle timer and schedule are unchanged.</li>
 <li>Click or tap anywhere → Today. If the screen was signed out by the server: → the signed-out email form instead (Sign in and account, 9).</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul>
 <li>Season deep color, or photo with dim of at least 0.5.</li>
+<li>Season video: a muted, looping video for the current season (<code>videos/{season}.mp4</code>) fills the screen behind the clock under a 70% deep-color tint (raised from 60% so white text stays readable on bright frames). It covers the photo background too. Missing file → plain deep color, no label. Turned off with the <code>seasonVideo</code> tweak.</li>
 <li>Next event: “Tomorrow” or “{Wkd}, Oct {d}” · start time · title, place. None upcoming → “Nothing scheduled”.</li>
 <li>Offline: “Offline · showing saved data” in the top row.</li>
 <li>Signed out by the server: Ambient stays; “Signed out · tap to sign in” in the top row, same style. Clock and saved weather keep showing.</li>
@@ -374,7 +418,7 @@
 <li>Empty states are per zone, not per app: each clears independently once its data exists (first event, first note, first photo, location set).</li>
 <li>Every empty state has one action. It opens the matching sheet, or goes to the screen that holds the setup (Set location → Weather, Upload → Photos).</li>
 <li>New accounts are asked for the location once, at sign-in (“Where is this screen?”, skippable). Skipping leaves Weather’s setup card in place.</li>
-<li>Not designed: a guided setup that chains location → first event → photos. A new screen joins the family by signing in with the account email.</li>
+<li>Not designed: a guided setup that chains location → first event → photos. A new screen joins the family by signing in with the account email, or by scanning the QR code from Settings › Account on a signed-in screen.</li>
 </ul>
 </section>
 
@@ -382,7 +426,7 @@
 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap"><h2 style="margin:0;font:600 24px/1.2 var(--font-sans)">Loading, offline and keyboard</h2><a href="Glance%20Frames%20-%20System%20states.dc.html" style="font:500 13px ui-monospace,Menlo,monospace">Open board →</a></div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px">
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Loading</span><ul>
-<li>Each source (calendar, weather, notes, photos) loads on its own; zones fill in as they arrive. Clock, season and the “Glance” screen label are local and never wait.</li>
+<li>Each source (calendar, weather, notes, photos) loads on its own; zones fill in as they arrive. Clock and season are local and never wait.</li>
 <li>Skeletons keep the final shape so nothing jumps. They pulse slowly (1.2 s opacity, 0.06–0.1).</li>
 <li>Skeletons only on first load with no saved data. Later refreshes swap silently.</li>
 <li>Over 10 s → that zone shows its failure state.</li>
@@ -393,11 +437,11 @@
 <li>Auto-retry at 1, 2, 5 min, then every 5 min.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Offline</span><ul>
-<li>Black pill in the bar’s left slot: “Offline · showing saved data” + last sync time (time hidden on narrow and phone, and on Weather where the banner already shows it). Appears after 30 s offline to avoid flicker; leaves on reconnect.</li>
+<li>Black pill, fixed bottom-left above the bar (12 px above it without labels, 24 px with labels, 84 px on phone): “Offline · showing saved data” + last sync time (time hidden on narrow and phone, and on Weather where the banner already shows it). Appears after 30 s offline to avoid flicker; leaves on reconnect.</li>
 <li>Saved data stays visible. Event statuses keep updating from the local clock.</li>
 <li>Weather older than 1 hour shows “Forecast from {time}” banner.</li>
 <li>Edits queue locally: sheet shows an offline banner, save reads “Save for later”, new notes show “Waiting to post” until synced.</li>
-<li>Ambient: same message in the top row, white mono text.</li>
+<li>Ambient: same message in the top row, white 16 px mono text.</li>
 <li>A screen is never signed out by the server while offline. Queued edits stay queued; if the server rejects the sign-in on reconnect, see Sign in and account, 9.</li>
 </ul></div>
 <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">On-screen keyboard</span><ul>
