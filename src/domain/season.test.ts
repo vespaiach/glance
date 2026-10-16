@@ -1,4 +1,4 @@
-import { seasonFor } from "./season";
+import { seasonFor, seasonVideoPath } from "./season";
 import { deviceTimeZone } from "./zone";
 
 const tz = deviceTimeZone();
@@ -27,4 +27,13 @@ describe("seasonFor in a zone", () => {
   it("LOC-06 auto reads the month in the given zone", () => {
     expect(seasonFor("auto", new Date("2026-12-01T06:00:00Z"), "America/Los_Angeles")).toBe("fall");
   });
+});
+
+describe("seasonVideoPath", () => {
+  it.each(["spring", "summer", "fall", "winter"] as const)(
+    "AMB-09 the %s video is videos/{season}.mp4",
+    (season) => {
+      expect(seasonVideoPath(season)).toBe(`/videos/${season}.mp4`);
+    },
+  );
 });

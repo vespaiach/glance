@@ -7,6 +7,7 @@ export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } =
     useNativeEsbuild: true,
     esbuildOptions: { format: "iife" },
     globPatterns: [".next/static/**/*.{js,css,woff2,png,svg,ico,webp}", "public/**/*"],
+    globIgnores: ["**/node_modules/**/*", "public/videos/**"],
     additionalPrecacheEntries: [{ url: "/manifest.webmanifest", revision: randomUUID() }],
   },
 );

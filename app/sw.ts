@@ -1,10 +1,12 @@
 /// <reference lib="webworker" />
 import {
+  CacheableResponsePlugin,
   CacheFirst,
   ExpirationPlugin,
   NetworkFirst,
   NetworkOnly,
   type PrecacheEntry,
+  RangeRequestsPlugin,
   Serwist,
   type SerwistGlobalConfig,
   type SerwistPlugin,
@@ -14,6 +16,7 @@ import {
   FALLBACK_PAGE,
   isPhotoFile,
   isRscRequest,
+  isSeasonVideo,
   isWarmPhotos,
   NETWORK_TIMEOUT_SECONDS,
   OFFLINE_PAGES,
@@ -21,6 +24,7 @@ import {
   pageCacheKey,
   photoFileUrls,
   rscCacheKey,
+  VIDEO_CACHE_ENTRIES,
 } from "@/data/sw/rules";
 
 declare global {
@@ -52,6 +56,20 @@ const keepRequestUrl: SerwistPlugin = {
     cachedResponse && new Response(cachedResponse.body, cachedResponse),
 };
 
+const wholeFile: SerwistPlugin = {
+  requestWillFetch: async ({ request }) => new Request(request.url),
+};
+
+const videos = new CacheFirst({
+  cacheName: CACHES.videos,
+  plugins: [
+    wholeFile,
+    new CacheableResponsePlugin({ statuses: [200] }),
+    new RangeRequestsPlugin(),
+    new ExpirationPlugin({ maxEntries: VIDEO_CACHE_ENTRIES }),
+  ],
+});
+
 const photos = new CacheFirst({
   cacheName: CACHES.photos,
   plugins: [new ExpirationPlugin({ maxEntries: PHOTO_CACHE_ENTRIES })],
@@ -66,6 +84,10 @@ const serwist = new Serwist({
     {
       matcher: ({ url, sameOrigin }) => sameOrigin && isPhotoFile(url),
       handler: photos,
+    },
+    {
+      matcher: ({ url, sameOrigin }) => sameOrigin && isSeasonVideo(url),
+      handler: videos,
     },
     {
       matcher: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith("/api/"),
