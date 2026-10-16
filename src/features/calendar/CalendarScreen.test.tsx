@@ -56,6 +56,7 @@ beforeEach(() => {
 afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 
   await store.close();
 });
@@ -286,4 +287,64 @@ test("FAIL-01 a failed first sync shows Calendar unavailable with a countdown an
   await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
   expect(store.nudge).toHaveBeenCalledTimes(1);
+});
+
+function stubLayout(matches: boolean) {
+  vi.stubGlobal("matchMedia", () => ({
+    matches,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    return DOMRect.fromRect({ y: this.tagName === "SECTION" ? 900 : 0, height: 700 });
+  });
+}
+
+function renderCalendarInMain() {
+  const main = document.body.appendChild(document.createElement("main"));
+  Object.defineProperty(main, "clientHeight", { value: 700 });
+  main.scrollTop = 100;
+  const scrollTo = vi.fn();
+  main.scrollTo = scrollTo;
+
+  const Shell = shellWrapper(store, { frozenAt: NOW });
+
+  render(<CalendarScreen />, {
+    container: main,
+    wrapper: ({ children }) => (
+      <Shell>
+        <SheetHost>{children}</SheetHost>
+      </Shell>
+    ),
+  });
+
+  return scrollTo;
+}
+
+test("CAL-07 on phone tapping a day below the fold scrolls the view to its heading and first event", async () => {
+  stubLayout(false);
+  const scrollTo = renderCalendarInMain();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 14" }));
+
+  expect(scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 100 + 420, behavior: "smooth" });
+});
+
+test("CAL-07 on wide tapping a day leaves the view where it is", async () => {
+  stubLayout(true);
+  const scrollTo = renderCalendarInMain();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 14" }));
+
+  expect(screen.getByRole("heading", { name: "Wednesday, Oct 14" })).toBeInTheDocument();
+  expect(scrollTo).not.toHaveBeenCalled();
+});
+
+test("CAL-07 on phone the month chevrons don't scroll the view", async () => {
+  stubLayout(false);
+  const scrollTo = renderCalendarInMain();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Next month" }));
+
+  expect(scrollTo).not.toHaveBeenCalled();
 });

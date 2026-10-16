@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useEventsInMonth, useEventsOnDay, useHasEvents } from "@/data/repos";
 import { markedDays, monthTitle, readDateParam, stepMonth } from "@/domain/month";
 import { formatDayTitle } from "@/domain/time";
@@ -16,7 +16,7 @@ import { useSyncedZone } from "@/shell/sourceZone";
 import { space } from "@/theme/tokens.stylex";
 import { DayPanel } from "./components/DayPanel";
 import { MonthBlock } from "./components/MonthBlock";
-import { calendarCell, calendarLayout } from "./layout";
+import { calendarCell, calendarLayout, dayRevealScroll } from "./layout";
 
 const styles = stylex.create({
   grid: {
@@ -38,6 +38,16 @@ function dayKey(year: number, month: number, day: number): string {
   return dateKey(new Date(Date.UTC(year, month, day)), "UTC");
 }
 
+function revealDayList(list: HTMLElement | null) {
+  const view = list?.closest("main");
+  if (!list || !view) return;
+
+  const top = list.getBoundingClientRect().top - view.getBoundingClientRect().top;
+  const scroll = dayRevealScroll(top, view.clientHeight);
+
+  if (scroll > 0) view.scrollTo({ top: view.scrollTop + scroll, behavior: "smooth" });
+}
+
 export function CalendarScreen() {
   const sheets = useSheetHost();
 
@@ -55,6 +65,8 @@ export function CalendarScreen() {
 
   const [picked, setPicked] = useState(() => readDateParam(searchParams.get("date")));
 
+  const dayList = useRef<HTMLElement>(null);
+
   const today = dateKey(now, tz);
   const day = picked ?? today;
   const selected = parseDateKey(day);
@@ -69,6 +81,12 @@ export function CalendarScreen() {
 
   const dayEvents = useSyncedZone(hasEvents === undefined ? undefined : events);
 
+  const selectDay = (chosen: number) => {
+    setPicked(dayKey(year, month, chosen));
+
+    if (breakpoint === "narrow" || breakpoint === "phone") revealDayList(dayList.current);
+  };
+
   return (
     <div {...stylex.props(styles.grid, calendarLayout(breakpoint))}>
       <MonthBlock
@@ -81,9 +99,10 @@ export function CalendarScreen() {
         cell={calendarCell(breakpoint, width)}
         onPreviousMonth={() => setPicked(stepMonth(day, -1, now, tz))}
         onNextMonth={() => setPicked(stepMonth(day, 1, now, tz))}
-        onSelectDay={(chosen) => setPicked(dayKey(year, month, chosen))}
+        onSelectDay={selectDay}
       />
       <DayPanel
+        ref={dayList}
         state={dayEvents.state}
         retryIn={dayEvents.retryIn}
         onRetry={dayEvents.retry}

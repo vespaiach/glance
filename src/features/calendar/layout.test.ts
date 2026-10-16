@@ -1,4 +1,4 @@
-import { calendarCell } from "./layout";
+import { calendarCell, dayRevealScroll } from "./layout";
 
 describe("calendarCell", () => {
   it.each([
@@ -22,5 +22,25 @@ describe("calendarCell", () => {
     [320, 36],
   ])("spec§5.4 the phone month cell at %i px is %i", (width, cell) => {
     expect(calendarCell("phone", width)).toBe(cell);
+  });
+});
+
+describe("dayRevealScroll", () => {
+  it.each([
+    [900, 700, 420],
+    [481, 700, 1],
+  ])(
+    "CAL-07 a day list at %i px in a %i px view scrolls %i px to show the heading and first event",
+    (top, height, scroll) => {
+      expect(dayRevealScroll(top, height)).toBe(scroll);
+    },
+  );
+
+  it.each([
+    [480, 700],
+    [300, 700],
+    [-200, 700],
+  ])("CAL-07 a day list at %i px in a %i px view stays put", (top, height) => {
+    expect(dayRevealScroll(top, height)).toBe(0);
   });
 });

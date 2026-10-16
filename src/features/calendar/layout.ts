@@ -18,6 +18,8 @@ const DAY_GAPS = 6 * 6;
 
 const PHONE_INSET = 2 * 20 + 2 * 16 + DAY_GAPS;
 
+const DAY_REVEAL = 220;
+
 const clamp = (min: number, value: number, max: number) => Math.min(max, Math.max(min, value));
 
 function narrowCell(width: number): number {
@@ -39,4 +41,8 @@ export function calendarCell(breakpoint: Breakpoint, width: number): number {
 
 export function calendarLayout(breakpoint: Breakpoint): stylex.StyleXStyles {
   return grids[breakpoint];
+}
+
+export function dayRevealScroll(listTop: number, viewHeight: number): number {
+  return Math.max(0, listTop - (viewHeight - DAY_REVEAL));
 }
