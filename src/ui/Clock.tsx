@@ -14,6 +14,11 @@ type ClockProps = {
   xstyle?: stylex.StyleXStyles;
 };
 
+const blink = stylex.keyframes({
+  "0%, 49%": { opacity: 1 },
+  "50%, 100%": { opacity: 0 },
+});
+
 const styles = stylex.create({
   root: {
     display: "flex",
@@ -40,6 +45,12 @@ const styles = stylex.create({
     fontSize: type.displayXlSize,
     letterSpacing: type.displayXlLs,
   },
+  colon: {
+    animationName: blink,
+    animationDuration: "1.2s",
+    animationTimingFunction: "steps(1, end)",
+    animationIterationCount: "infinite",
+  },
   meridiem: {
     fontFamily: type.fontMono,
     letterSpacing: "0.6px",
@@ -58,6 +69,9 @@ export function Clock({
   xstyle,
 }: ClockProps) {
   const reading = timeParts(minutesOfDay(time, tz), hour12 ? "12h" : "24h");
+  const times = reading.time.split(":");
+  const hour = times[0];
+  const minute = times[1];
   const xl = size === "xl";
 
   return (
@@ -65,7 +79,9 @@ export function Clock({
       {showDate && <Eyebrow>{formatLongDate(time, tz)}</Eyebrow>}
       <div {...stylex.props(styles.reading)}>
         <span {...stylex.props(styles.time, xl ? styles.timeXl : styles.timeLg)}>
-          {reading.time}
+          {hour}
+          <span {...stylex.props(styles.colon)}>:</span>
+          {minute}
         </span>
         {reading.meridiem && (
           <span {...stylex.props(styles.meridiem, xl ? styles.meridiemXl : styles.meridiemLg)}>
