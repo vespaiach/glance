@@ -64,6 +64,7 @@ beforeEach(() => {
 afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 
   await store.close();
 });
@@ -180,4 +181,44 @@ test("SIGNIN-11 Sign out signs this screen out and returns to the email form", a
 
   expect(store.signOut).toHaveBeenCalledOnce();
   await waitFor(() => expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/signin"));
+});
+
+test("SET-12 the account card lists the screens read from the server", async () => {
+  store.displays.mockResolvedValue({
+    ok: true,
+    value: [
+      {
+        id: "d1",
+        kind: "monitor",
+        browser: "Chrome",
+        lastSeenAt: NOW.toISOString(),
+        current: true,
+      },
+      {
+        id: "d2",
+        kind: "tablet",
+        browser: "Safari",
+        lastSeenAt: NOW.toISOString(),
+        current: false,
+      },
+    ],
+  });
+
+  renderSettings();
+
+  const list = await screen.findByRole("list", { name: "2 screens signed in" });
+
+  expect(list).toHaveTextContent(/^Chrome screenThis screenSafari tablet/);
+});
+
+test("SET-12 offline the account card shows only this screen", async () => {
+  vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+    "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+  );
+
+  renderSettings();
+
+  await waitFor(() => expect(store.displays).toHaveBeenCalled());
+  const list = screen.getByRole("list", { name: "1 screen signed in" });
+  expect(list).toHaveTextContent("Chrome phoneThis screen");
 });

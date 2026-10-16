@@ -9,6 +9,9 @@ const REQUEST = { email: "Maria@Example.com", timeZone: "America/New_York", ip: 
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
+const TABLET_UA =
+  "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+
 function rows(sql: string): Promise<unknown[]> {
   return harness.deps().db.all(sql);
 }
@@ -133,6 +136,16 @@ describe("verifyLink", () => {
     const display = await requireDisplay(harness.deps(), sessionToken);
     const [account] = (await rows("SELECT id FROM accounts")) as { id: string }[];
     expect(display.ok && display.value.accountId).toBe(account?.id);
+  });
+
+  it("D23 the display a link opens records the opener's device kind and browser", async () => {
+    const { token } = await sendLink();
+
+    await verifyLink(harness.deps(), { token, userAgent: TABLET_UA });
+
+    expect(await rows("SELECT kind, browser FROM displays")).toEqual([
+      { kind: "tablet", browser: "Chrome" },
+    ]);
   });
 
   it("SIGNIN-12 a known email's link signs in to the existing account", async () => {

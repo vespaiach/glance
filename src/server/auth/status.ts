@@ -14,7 +14,12 @@ export type AuthStatusBody =
 
 export type StatusAnswer = { status: AuthStatusBody; sessionToken?: string };
 
-export type StatusInput = { sessionToken?: string; pendingId?: string; linkEmail?: string };
+export type StatusInput = {
+  sessionToken?: string;
+  pendingId?: string;
+  linkEmail?: string;
+  userAgent?: string;
+};
 
 type SessionRow = AccountRow & { session_created_at: string };
 
@@ -26,7 +31,7 @@ export async function authStatus(deps: Clocked, input: StatusInput): Promise<Sta
   const link =
     input.pendingId === undefined ? undefined : await linkByPendingId(deps.db, input.pendingId);
 
-  if (link) return linkStatus(deps, link);
+  if (link) return linkStatus(deps, link, input.userAgent);
 
   return { status: expired(input.linkEmail) };
 }
@@ -43,7 +48,11 @@ async function sessionAccount(
   );
 }
 
-async function linkStatus(deps: Clocked, link: LinkRow): Promise<StatusAnswer> {
+async function linkStatus(
+  deps: Clocked,
+  link: LinkRow,
+  userAgent: string | undefined,
+): Promise<StatusAnswer> {
   if (link.used_at === null) return { status: unopened(deps, link) };
 
   const account = await accountByEmail(deps.db, link.email);
@@ -54,7 +63,7 @@ async function linkStatus(deps: Clocked, link: LinkRow): Promise<StatusAnswer> {
     return { status: { state: "finishing-elsewhere" } };
   }
 
-  return claim(deps, link, account, link.used_at);
+  return claim(deps, link, account, { at: link.used_at, userAgent });
 }
 
 function unopened({ now }: Clocked, link: LinkRow): AuthStatusBody {
@@ -65,15 +74,15 @@ async function claim(
   { db }: Clocked,
   link: LinkRow,
   account: AccountRow,
-  usedAt: string,
+  opened: { at: string; userAgent: string | undefined },
 ): Promise<StatusAnswer> {
   const sessionToken = await db.tx(async (tx) => {
     await deleteLink(tx, link.token_hash);
 
-    return openDisplay(tx, account.id, usedAt);
+    return openDisplay(tx, account.id, opened);
   });
 
-  return { status: signedIn(account, usedAt), sessionToken };
+  return { status: signedIn(account, opened.at), sessionToken };
 }
 
 function signedIn(account: AccountRow, since: string): AuthStatusBody {

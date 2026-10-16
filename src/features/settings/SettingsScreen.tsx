@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAccount, usePhotos, useSettingsRepo, useSignOut } from "@/data/repos";
+import {
+  useAccount,
+  usePhotos,
+  useSettingsRepo,
+  useSignedInScreens,
+  useSignOut,
+} from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
@@ -39,9 +45,14 @@ export function SettingsScreen() {
 
   const signOut = useSignOut();
 
+  const screens = useSignedInScreens();
+
   return (
     <SettingsView
       account={account}
+      screens={screens}
+      now={now}
+      tz={tz}
       settings={settings}
       season={season}
       background={shownBackground(settings.background, photos ?? [], now, tz)}

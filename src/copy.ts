@@ -1,5 +1,6 @@
 import type { AmbientRange, AmbientSummary } from "@/domain/idle";
 import type { Season, WeatherIcon } from "@/domain/schemas";
+import type { ActiveStamp, Device, DeviceKind } from "@/domain/screens";
 import type { WmoCondition } from "@/domain/wmo";
 
 export const copy = {
@@ -387,8 +388,14 @@ export const copy = {
     },
     account: {
       title: "Account",
+      screensSignedIn: (count: number) =>
+        count === 1 ? "1 screen signed in" : `${count} screens signed in`,
+      deviceKind: (kind: DeviceKind) => DEVICE_KIND[kind],
+      screenName: (device: Device) => screenName(device),
+      thisScreen: "This screen",
+      active: (stamp: ActiveStamp) => activeText(stamp),
       signOut: "Sign out",
-      signOutCaption: "Signs out this screen only.",
+      signOutCaption: "Sign out this device only.",
     },
   },
   ambientSchedule: {
@@ -722,4 +729,29 @@ function ambientSummaryText(summary: AmbientSummary): string {
   if (summary.mode === "same") return ambientRangeText(summary.all);
 
   return `Sun – Thu ${ambientRangeText(summary.all)} · Fri & Sat ${ambientRangeText(summary.wknd)}`;
+}
+
+const DEVICE_KIND: Record<DeviceKind, string> = {
+  monitor: "Screen",
+  tablet: "Tablet",
+  smartphone: "Phone",
+};
+
+function screenName({ kind, browser }: Device): string {
+  const noun = DEVICE_KIND[kind];
+
+  return browser === null ? noun : `${browser} ${noun.toLowerCase()}`;
+}
+
+function activeText(stamp: ActiveStamp): string {
+  switch (stamp.kind) {
+    case "minutes":
+      return `Active ${stamp.count} min ago`;
+    case "hours":
+      return `Active ${stamp.count} hr ago`;
+    case "yesterday":
+      return "Active yesterday";
+    case "on":
+      return `Active ${stamp.date}`;
+  }
 }

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Photo } from "@/domain/schemas";
+import type { SignedInScreen } from "@/domain/screens";
 import { SettingsView } from "./SettingsView";
 
 type Props = ComponentProps<typeof SettingsView>;
@@ -16,6 +17,43 @@ const COAST: Photo = {
   createdAt: "2026-10-05T19:00:00.000Z",
 };
 
+const NOW = new Date("2026-10-09T17:41:00.000Z");
+
+const TZ = "America/Los_Angeles";
+
+const KITCHEN: SignedInScreen = {
+  id: "kitchen",
+  kind: "monitor",
+  browser: "Chrome",
+  lastSeenAt: NOW.toISOString(),
+  current: true,
+};
+
+const SCREENS: SignedInScreen[] = [
+  KITCHEN,
+  {
+    id: "hallway",
+    kind: "monitor",
+    browser: "Edge",
+    lastSeenAt: "2026-10-09T17:29:00.000Z",
+    current: false,
+  },
+  {
+    id: "tablet",
+    kind: "tablet",
+    browser: "Safari",
+    lastSeenAt: "2026-10-09T03:15:00.000Z",
+    current: false,
+  },
+  {
+    id: "phone",
+    kind: "smartphone",
+    browser: null,
+    lastSeenAt: "2026-10-03T01:30:00.000Z",
+    current: false,
+  },
+];
+
 function renderView(overrides: Partial<Props> = {}) {
   const props: Props = {
     account: { name: "Maria", email: "maria@example.com" },
@@ -28,6 +66,9 @@ function renderView(overrides: Partial<Props> = {}) {
     onOpenLocation: vi.fn(),
     onOpenAmbient: vi.fn(),
     onSignOut: vi.fn(),
+    screens: [KITCHEN],
+    now: NOW,
+    tz: TZ,
     ...overrides,
   };
 
@@ -228,7 +269,7 @@ test("SET-08 the account card shows the initial, name and email and signs out", 
   expect(card.getByText("M")).toBeInTheDocument();
   expect(card.getByText("Maria")).toBeInTheDocument();
   expect(card.getByText("maria@example.com")).toBeInTheDocument();
-  expect(card.getByText("Signs out this screen only.")).toBeInTheDocument();
+  expect(card.getByText("Sign out this device only.")).toBeInTheDocument();
 
   await userEvent.click(card.getByRole("button", { name: "Sign out" }));
 
@@ -242,4 +283,44 @@ test("SET-08 with no name yet the card falls back to the email", () => {
 
   expect(card.getByText("m")).toBeInTheDocument();
   expect(screen.getByText(/^Signed in as/).textContent).toBe("Signed in as maria@example.com");
+});
+
+test("SET-12 lists the signed-in screens with their type, name and when each was active", () => {
+  renderView({ screens: SCREENS });
+
+  const list = screen.getByRole("list", { name: "4 screens signed in" });
+
+  expect(
+    within(list)
+      .getAllByRole("listitem")
+      .map((row) => row.textContent),
+  ).toEqual([
+    "Chrome screenThis screen",
+    "Edge screenActive 12 min ago",
+    "Safari tabletActive yesterday",
+    "PhoneActive Oct 2",
+  ]);
+  expect(
+    within(list)
+      .getAllByRole("img")
+      .map((icon) => icon.getAttribute("aria-label")),
+  ).toEqual(["Screen", "Screen", "Tablet", "Phone"]);
+});
+
+test("SET-12 a single screen reads 1 screen signed in", () => {
+  renderView();
+
+  expect(screen.getByRole("list", { name: "1 screen signed in" })).toBeInTheDocument();
+  expect(screen.getByText("1 screen signed in")).toBeInTheDocument();
+});
+
+test("SET-12 a screen seen hours ago today reads in hours", () => {
+  renderView({
+    screens: [
+      KITCHEN,
+      { ...KITCHEN, id: "x", current: false, lastSeenAt: "2026-10-09T14:20:00.000Z" },
+    ],
+  });
+
+  expect(screen.getByText("Active 3 hr ago")).toBeInTheDocument();
 });

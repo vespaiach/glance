@@ -1,6 +1,7 @@
 import "server-only";
 import { uuidv7 } from "@/domain/id";
 import { err, ok, type Result } from "@/domain/result";
+import { deviceOf } from "@/domain/screens";
 import type { Db } from "../db/db";
 import type { Clocked } from "./deps";
 import { hashToken, newToken } from "./tokens";
@@ -9,16 +10,21 @@ export type SignedInDisplay = { displayId: string; accountId: string };
 
 type DisplayRow = { display_id: string; account_id: string };
 
-export async function openDisplay(db: Db, accountId: string, at: string): Promise<string> {
-  const displayId = uuidv7(new Date(at));
+export async function openDisplay(
+  db: Db,
+  accountId: string,
+  opened: { at: string; userAgent: string | undefined },
+): Promise<string> {
+  const displayId = uuidv7(new Date(opened.at));
 
-  await db.run("INSERT INTO displays (id, account_id, last_seen_at) VALUES ($1, $2, $3)", [
-    displayId,
-    accountId,
-    at,
-  ]);
+  const { kind, browser } = deviceOf(opened.userAgent);
 
-  return createSession(db, displayId, at);
+  await db.run(
+    "INSERT INTO displays (id, account_id, kind, browser, last_seen_at) VALUES ($1, $2, $3, $4, $5)",
+    [displayId, accountId, kind, browser, opened.at],
+  );
+
+  return createSession(db, displayId, opened.at);
 }
 
 export async function findDisplay(

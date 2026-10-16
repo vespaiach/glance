@@ -18,6 +18,7 @@ import {
   FIXTURE_SETTINGS,
   FIXTURE_TIME_ZONE,
   FIXTURE_WEATHER,
+  fixtureScreens,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
 import { CURSOR_KEY, deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
@@ -437,6 +438,34 @@ describe("FixtureTransport push", () => {
     });
 
     expect(result).toEqual({ ok: false, error: "unauthorized" });
+  });
+});
+
+describe("FixtureTransport displays", () => {
+  it("SET-12 answers with the four Appendix A screens, this one first, seen relative to now", async () => {
+    const answer = await transport().displays();
+
+    expect(answer).toEqual({ ok: true, value: fixtureScreens(NOW) });
+    expect(
+      fixtureScreens(NOW).map(({ kind, browser, lastSeenAt, current }) => [
+        kind,
+        browser,
+        lastSeenAt,
+        current,
+      ]),
+    ).toEqual([
+      ["monitor", "Chrome", "2026-10-09T17:41:00.000Z", true],
+      ["monitor", "Edge", "2026-10-09T17:29:00.000Z", false],
+      ["tablet", "Safari", "2026-10-08T17:41:00.000Z", false],
+      ["smartphone", "Safari", "2026-10-03T01:30:00.000Z", false],
+    ]);
+  });
+
+  it("SET-12 net=offline fails with a network error", async () => {
+    expect(await transport({ net: "offline" }).displays()).toEqual({
+      ok: false,
+      error: "network",
+    });
   });
 });
 

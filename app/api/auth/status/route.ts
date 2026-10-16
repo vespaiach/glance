@@ -9,6 +9,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     sessionToken: request.cookies.get("session")?.value,
     pendingId: request.cookies.get("pending")?.value,
     linkEmail: request.cookies.get("link_email")?.value,
+    userAgent: request.headers.get("user-agent") ?? undefined,
   });
 
   const response = NextResponse.json(answer.status);

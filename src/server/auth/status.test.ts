@@ -6,6 +6,9 @@ import { authHarnessPerTest, linkToken } from "./testAuth";
 
 const harness = authHarnessPerTest();
 
+const PHONE_UA =
+  "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+
 const REQUEST = { email: "maria@example.com", timeZone: "America/New_York", ip: "203.0.113.5" };
 
 async function waitingScreen(): Promise<{ token: string; pendingId: string }> {
@@ -92,6 +95,24 @@ describe("authStatus on the waiting screen", () => {
     expect(answer.sessionToken).not.toBe(opener.sessionToken);
     const display = await requireDisplay(harness.deps(), answer.sessionToken);
     expect(display.ok && display.value.accountId).toBe(opener.accountId);
+  });
+
+  it("D23 the display the waiting screen claims records that screen's device", async () => {
+    const { token, pendingId } = await waitingScreen();
+    const opener = await openElsewhere(token);
+    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await finishSetup(harness.deps(), opener.accountId);
+
+    const answer = await authStatus(harness.deps(), { pendingId, userAgent: PHONE_UA });
+
+    const display = await requireDisplay(harness.deps(), answer.sessionToken);
+    expect(
+      await harness
+        .deps()
+        .db.one("SELECT kind, browser FROM displays WHERE id = $1", [
+          display.ok && display.value.displayId,
+        ]),
+    ).toEqual({ kind: "smartphone", browser: "Safari" });
   });
 
   it("SIGNIN-09 says returning when the account already existed", async () => {

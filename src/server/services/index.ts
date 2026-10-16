@@ -14,6 +14,7 @@ import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
 import type { Coordinates } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
+import * as displays from "./displays";
 import * as events from "./events";
 import * as notes from "./notes";
 import * as photos from "./photos";
@@ -87,6 +88,10 @@ export async function deletePhoto(accountId: string, id: string) {
 
 export function photoFile(accountId: string, id: string, variant: photos.PhotoVariant) {
   return photos.photoFile(photoDeps(), accountId, id, variant);
+}
+
+export function listDisplays(accountId: string, displayId: string) {
+  return displays.listDisplays(deps(), accountId, displayId);
 }
 
 export function accountWeather(accountId: string) {
