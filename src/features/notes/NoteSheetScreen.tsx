@@ -61,7 +61,7 @@ function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps)
   );
 }
 
-function EditNoteSheet({ note }: { note: Note }) {
+function EditNoteSheet({ note, discard }: { note: Note; discard?: true }) {
   const { close } = useSheetHost();
 
   const notes = useNotesRepo();
@@ -81,20 +81,22 @@ function EditNoteSheet({ note }: { note: Note }) {
     <SheetFrame
       mode="edit"
       eyebrow={copy.notes.sheet.eyebrow(note.author, noteStampText(note, now, clock, tz))}
-      initial={initialNoteSheet(draftFromNote(note))}
+      initial={initialNoteSheet(draftFromNote(note), { discard })}
       base={() => note}
       onDelete={onDelete}
     />
   );
 }
 
-function LoadedNoteSheet({ id }: { id: string }) {
+function LoadedNoteSheet({ id, discard }: { id: string; discard?: true }) {
   const note = useNote(id);
 
-  return note ? <EditNoteSheet note={note} /> : null;
+  return note ? <EditNoteSheet note={note} discard={discard} /> : null;
 }
 
-function NewNoteSheet({ draft }: { draft?: Pick<NoteDraft, "text" | "tone"> }) {
+type NewNoteProps = { draft?: Pick<NoteDraft, "text" | "tone">; discard?: true };
+
+function NewNoteSheet({ draft, discard }: NewNoteProps) {
   const nowStore = useNowStore();
 
   const shown = useNotes(useNow("minute"));
@@ -103,7 +105,7 @@ function NewNoteSheet({ draft }: { draft?: Pick<NoteDraft, "text" | "tone"> }) {
     <SheetFrame
       mode="new"
       eyebrow={copy.notes.board}
-      initial={initialNoteSheet(newNoteDraft(draft))}
+      initial={initialNoteSheet(newNoteDraft(draft), { opened: newNoteDraft(), discard })}
       base={() => newNoteBase(nowStore.get(), shown?.length ?? 0)}
       onDelete={() => {}}
     />
@@ -113,9 +115,11 @@ function NewNoteSheet({ draft }: { draft?: Pick<NoteDraft, "text" | "tone"> }) {
 export function NoteSheetScreen() {
   const { sheet } = useSheetHost();
 
-  if (sheet?.kind === "note") return <LoadedNoteSheet key={sheet.id} id={sheet.id} />;
+  if (sheet?.kind === "note")
+    return <LoadedNoteSheet key={sheet.id} id={sheet.id} discard={sheet.discard} />;
 
-  if (sheet?.kind === "newnote") return <NewNoteSheet draft={sheet.draft} />;
+  if (sheet?.kind === "newnote")
+    return <NewNoteSheet draft={sheet.draft} discard={sheet.discard} />;
 
   return null;
 }

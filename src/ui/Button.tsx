@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import type { LucideIcon } from "lucide-react";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithRef } from "react";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, sizes } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -10,7 +10,7 @@ import { press } from "./press";
 type ButtonVariant = "primary" | "secondary" | "ghost" | "accent" | "inverse" | "danger";
 type ButtonSize = "md" | "lg";
 
-type ButtonProps = Omit<ComponentPropsWithoutRef<"button">, "style" | "className"> & {
+type ButtonProps = Omit<ComponentPropsWithRef<"button">, "style" | "className"> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   icon?: LucideIcon;

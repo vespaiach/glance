@@ -2,6 +2,7 @@ import { copy } from "@/copy";
 import { uuidv7 } from "@/domain/id";
 import { noteTilt } from "@/domain/notes";
 import type { Note, NoteTone, Season } from "@/domain/schemas";
+import { afterEdit, type SheetConfirm } from "@/ui/discard";
 
 export type NoteDraft = {
   text: string;
@@ -11,8 +12,14 @@ export type NoteDraft = {
 
 export type NoteSheetState = {
   draft: NoteDraft;
+  opened: NoteDraft;
   textError: boolean;
-  confirming: boolean;
+  confirm: SheetConfirm;
+};
+
+export type NoteSheetOptions = {
+  opened?: NoteDraft;
+  discard?: boolean;
 };
 
 export type NoteBase = Pick<Note, "id" | "createdAt" | "rotation">;
@@ -21,7 +28,9 @@ export type NoteSheetAction =
   | { type: "text" | "author"; value: string }
   | { type: "tone"; value: NoteTone }
   | { type: "save" }
-  | { type: "askDelete" };
+  | { type: "askDelete" }
+  | { type: "askDiscard" }
+  | { type: "keepEditing" };
 
 export type NoteSwatchOption = { value: NoteTone; label: string };
 
@@ -68,20 +77,42 @@ export function noteSwatches(season: Season): NoteSwatchOption[] {
   ];
 }
 
-export function initialNoteSheet(draft: NoteDraft): NoteSheetState {
-  return { draft, textError: false, confirming: false };
+export function initialNoteSheet(
+  draft: NoteDraft,
+  { opened = draft, discard = false }: NoteSheetOptions = {},
+): NoteSheetState {
+  return { draft, opened, textError: false, confirm: discard ? "discard" : null };
+}
+
+export function isDirty(draft: NoteDraft, opened: NoteDraft): boolean {
+  return (
+    draft.text.trim() !== opened.text.trim() ||
+    draft.author.trim() !== opened.author.trim() ||
+    draft.tone !== opened.tone
+  );
+}
+
+function edited(state: NoteSheetState, draft: NoteDraft): NoteSheetState {
+  return { ...state, draft, confirm: afterEdit(state.confirm) };
 }
 
 export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction): NoteSheetState {
   switch (action.type) {
     case "text":
     case "author":
-      return { ...state, draft: { ...state.draft, [action.type]: action.value }, textError: false };
+      return {
+        ...edited(state, { ...state.draft, [action.type]: action.value }),
+        textError: false,
+      };
     case "tone":
-      return { ...state, draft: { ...state.draft, tone: action.value } };
+      return edited(state, { ...state.draft, tone: action.value });
     case "save":
       return { ...state, textError: !canSave(state.draft) };
     case "askDelete":
-      return { ...state, confirming: true };
+      return { ...state, confirm: "delete" };
+    case "askDiscard":
+      return { ...state, confirm: "discard" };
+    case "keepEditing":
+      return { ...state, confirm: null };
   }
 }

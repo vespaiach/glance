@@ -2,6 +2,9 @@ import {
   canSave,
   draftFromNote,
   initialNoteSheet,
+  isDirty,
+  type NoteDraft,
+  type NoteSheetAction,
   newNoteBase,
   newNoteDraft,
   noteFromDraft,
@@ -43,7 +46,7 @@ describe("note sheet reducer", () => {
   const start = initialNoteSheet(draftFromNote(WIFI));
 
   it("NOTE-05 opens without the delete confirm", () => {
-    expect(start.confirming).toBe(false);
+    expect(start.confirm).toBeNull();
   });
 
   it("NOTE-02 message, name and color edits update the draft", () => {
@@ -55,7 +58,7 @@ describe("note sheet reducer", () => {
   });
 
   it("NOTE-05 Delete asks for the inline confirm", () => {
-    expect(noteSheetReducer(start, { type: "askDelete" }).confirming).toBe(true);
+    expect(noteSheetReducer(start, { type: "askDelete" }).confirm).toBe("delete");
   });
 });
 
@@ -117,5 +120,64 @@ describe("note from draft", () => {
     expect([0, 1, 2, 3, 4].map((count) => newNoteBase(now, count).rotation)).toEqual([
       -2, 1.5, -1, 2.5, -2,
     ]);
+  });
+});
+
+describe("note sheet discard", () => {
+  const draft = draftFromNote(WIFI);
+
+  const start = initialNoteSheet(draft);
+
+  const asking = noteSheetReducer(noteSheetReducer(start, { type: "text", value: "Back at 6" }), {
+    type: "askDiscard",
+  });
+
+  it("§8.9 the opened note is not dirty", () => {
+    expect(isDirty(start.draft, start.opened)).toBe(false);
+  });
+
+  it("§8.9 spaces around the message and name don't make the note dirty", () => {
+    expect(isDirty({ ...draft, text: ` ${draft.text} `, author: "Dad " }, draft)).toBe(false);
+  });
+
+  it.each<[string, Partial<NoteDraft>]>([
+    ["message", { text: "Back at 6" }],
+    ["name", { author: "Mom" }],
+    ["color", { tone: "soft" }],
+  ])("§8.9 a changed %s makes the note dirty", (_, change) => {
+    expect(isDirty({ ...draft, ...change }, draft)).toBe(true);
+  });
+
+  it("§8.9 a new note opened with text compares against a blank note", () => {
+    const typed = initialNoteSheet(newNoteDraft({ text: "Has anyone seen", tone: 2 }), {
+      opened: newNoteDraft(),
+    });
+
+    expect(isDirty(typed.draft, typed.opened)).toBe(true);
+  });
+
+  it("§8.9 discard=1 opens on Discard changes?", () => {
+    expect(initialNoteSheet(draft, { discard: true }).confirm).toBe("discard");
+  });
+
+  it("§8.9 asking to discard replaces a waiting delete confirm", () => {
+    const deleting = noteSheetReducer(start, { type: "askDelete" });
+
+    expect(noteSheetReducer(deleting, { type: "askDiscard" }).confirm).toBe("discard");
+  });
+
+  it("§8.9 Keep editing brings the footer back with the draft kept", () => {
+    expect(noteSheetReducer(asking, { type: "keepEditing" })).toMatchObject({
+      confirm: null,
+      draft: { text: "Back at 6" },
+    });
+  });
+
+  it.each<NoteSheetAction>([
+    { type: "text", value: "Back at 7" },
+    { type: "author", value: "Mom" },
+    { type: "tone", value: 3 },
+  ])("§8.9 an edit ($type) brings the footer back", (action) => {
+    expect(noteSheetReducer(asking, action).confirm).toBeNull();
   });
 });

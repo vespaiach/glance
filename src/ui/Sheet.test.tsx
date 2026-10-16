@@ -80,6 +80,21 @@ test("SHEET tapping the scrim closes the sheet", async () => {
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
+test("§8.9 onScrimTap takes the scrim tap instead of onClose", async () => {
+  const onClose = vi.fn();
+  const onScrimTap = vi.fn();
+  render(
+    <Sheet title="New event" closeLabel="Close" onClose={onClose} onScrimTap={onScrimTap}>
+      <p>Body</p>
+    </Sheet>,
+  );
+
+  await userEvent.click(screen.getByRole("dialog").previousElementSibling as HTMLElement);
+
+  expect(onScrimTap).toHaveBeenCalledOnce();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
 test("SHEET the close button closes the sheet", async () => {
   const onClose = renderSheet();
 

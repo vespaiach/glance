@@ -9,6 +9,7 @@ import {
 import type { CalendarEvent, Season, Tone } from "@/domain/schemas";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
+import { afterEdit, type SheetConfirm } from "@/ui/discard";
 
 export type { TimeFixture };
 
@@ -22,10 +23,11 @@ export type TimeFieldName = "start" | "end";
 
 export type EventSheetState = {
   draft: EventDraft;
+  opened: EventDraft;
   picker: TimeFieldName | null;
   titleError: boolean;
   endError: boolean;
-  confirming: boolean;
+  confirm: SheetConfirm;
 };
 
 export type EventSheetAction =
@@ -36,7 +38,9 @@ export type EventSheetAction =
   | { type: "noEnd" }
   | { type: "done" }
   | { type: "save" }
-  | { type: "askDelete" };
+  | { type: "askDelete" }
+  | { type: "askDiscard" }
+  | { type: "keepEditing" };
 
 export type SwatchOption = { value: Tone; label: string };
 
@@ -100,16 +104,33 @@ function fixtureDraft(draft: EventDraft, time?: TimeFixture): EventDraft {
   return time === "noend" ? withoutEnd(draft) : draft;
 }
 
-export function initialEventSheet(draft: EventDraft, time?: TimeFixture): EventSheetState {
+export function initialEventSheet(
+  draft: EventDraft,
+  time?: TimeFixture,
+  discard = false,
+): EventSheetState {
+  const opened = fixtureDraft(draft, time);
+
   const picker = time === "start" || time === "end" ? time : null;
 
   return {
-    draft: fixtureDraft(draft, time),
-    picker,
+    draft: opened,
+    opened,
+    picker: discard ? null : picker,
     titleError: false,
     endError: time === "error",
-    confirming: false,
+    confirm: discard ? "discard" : null,
   };
+}
+
+export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
+  return (
+    draft.title.trim() !== opened.title.trim() ||
+    draft.location.trim() !== opened.location.trim() ||
+    draft.start !== opened.start ||
+    draft.end !== opened.end ||
+    draft.tone !== opened.tone
+  );
 }
 
 function saveErrors(draft: EventDraft) {
@@ -129,7 +150,7 @@ function failedSave(state: EventSheetState): EventSheetState {
 }
 
 function edited(state: EventSheetState, draft: EventDraft): EventSheetState {
-  return { ...state, draft, titleError: false, endError: false };
+  return { ...state, draft, titleError: false, endError: false, confirm: afterEdit(state.confirm) };
 }
 
 function toggled(state: EventSheetState, field: TimeFieldName): EventSheetState {
@@ -170,6 +191,10 @@ export function eventSheetReducer(
     case "save":
       return failedSave(state);
     case "askDelete":
-      return { ...state, confirming: true };
+      return { ...state, confirm: "delete" };
+    case "askDiscard":
+      return { ...state, confirm: "discard", picker: null };
+    case "keepEditing":
+      return { ...state, confirm: null };
   }
 }

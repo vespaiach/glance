@@ -70,9 +70,11 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
   );
 }
 
-type EditProps = { event: CalendarEvent; time?: TimeFixture };
+type Fixtures = { time?: TimeFixture; discard?: true };
 
-function EditEventSheet({ event, time }: EditProps) {
+type EditProps = Fixtures & { event: CalendarEvent };
+
+function EditEventSheet({ event, time, discard }: EditProps) {
   const { close } = useSheetHost();
 
   const events = useEventsRepo();
@@ -89,19 +91,19 @@ function EditEventSheet({ event, time }: EditProps) {
       mode="edit"
       day={dateKey(new Date(event.startAt), tz)}
       id={event.id}
-      initial={initialEventSheet(draftFromEvent(event, tz), time)}
+      initial={initialEventSheet(draftFromEvent(event, tz), time, discard)}
       onDelete={onDelete}
     />
   );
 }
 
-function LoadedEventSheet({ id, time }: { id: string; time?: TimeFixture }) {
+function LoadedEventSheet({ id, ...fixtures }: Fixtures & { id: string }) {
   const event = useEvent(id);
 
-  return event ? <EditEventSheet event={event} time={time} /> : null;
+  return event ? <EditEventSheet event={event} {...fixtures} /> : null;
 }
 
-function NewEventSheet({ day, time }: { day: string; time?: TimeFixture }) {
+function NewEventSheet({ day, time, discard }: Fixtures & { day: string }) {
   const now = useNow("minute");
 
   const tz = useTimeZone();
@@ -113,7 +115,7 @@ function NewEventSheet({ day, time }: { day: string; time?: TimeFixture }) {
       mode="new"
       day={day}
       id={id}
-      initial={initialEventSheet(newEventDraft(now, tz), time)}
+      initial={initialEventSheet(newEventDraft(now, tz), time, discard)}
       onDelete={() => {}}
     />
   );
@@ -123,10 +125,14 @@ export function EventSheetScreen() {
   const { sheet } = useSheetHost();
 
   if (sheet?.kind === "event")
-    return <LoadedEventSheet key={sheet.id} id={sheet.id} time={sheet.time} />;
+    return (
+      <LoadedEventSheet key={sheet.id} id={sheet.id} time={sheet.time} discard={sheet.discard} />
+    );
 
   if (sheet?.kind === "newevent")
-    return <NewEventSheet key={sheet.day} day={sheet.day} time={sheet.time} />;
+    return (
+      <NewEventSheet key={sheet.day} day={sheet.day} time={sheet.time} discard={sheet.discard} />
+    );
 
   return null;
 }

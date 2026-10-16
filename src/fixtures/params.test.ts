@@ -62,6 +62,7 @@ describe("parseFixtureParams", () => {
     "pending=-1",
     "pending=many",
     "switch=yes",
+    "discard=yes",
   ])("§6 ignores the unknown value %s", (query) => {
     expect(parseFixtureParams(query)).toEqual({});
   });
@@ -71,6 +72,13 @@ describe("parseFixtureParams", () => {
       signin: "ended",
       pending: 3,
       switch: true,
+    });
+  });
+
+  it("§8.9 reads discard=1", () => {
+    expect(parseFixtureParams("sheet=newnote&discard=1")).toEqual({
+      sheet: "newnote",
+      discard: true,
     });
   });
 

@@ -131,6 +131,24 @@ test("SHEET Cancel closes the sheet", async () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
+test("§8.9 a request with discard opens on Discard changes?", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-09", discard: true });
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("This event won’t be added.");
+});
+
+test("§8.9 Cancel on a changed event asks, and Discard closes the sheet without saving", async () => {
+  await store.db.events.put(synced(LUNCH));
+  renderSheet({ kind: "event", id: LUNCH.id });
+
+  await userEvent.type(await screen.findByLabelText("Title"), "!");
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
+  expect((await store.db.events.get(LUNCH.id))?.title).toBe(LUNCH.title);
+});
+
 test("tech§4.3 a note request renders no event sheet", () => {
   renderSheet({ kind: "newnote" });
 

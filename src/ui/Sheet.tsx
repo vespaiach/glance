@@ -19,6 +19,7 @@ type SheetProps = {
   eyebrow?: ReactNode;
   closeLabel: string;
   onClose: () => void;
+  onScrimTap?: () => void;
   children: ReactNode;
   startActions?: ReactNode;
   endActions?: ReactNode;
@@ -135,6 +136,7 @@ export function Sheet({
   eyebrow,
   closeLabel,
   onClose,
+  onScrimTap = onClose,
   children,
   startActions,
   endActions,
@@ -167,7 +169,7 @@ export function Sheet({
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        onClick={onClose}
+        onClick={onScrimTap}
         {...stylex.props(styles.scrim)}
       />
       <div
