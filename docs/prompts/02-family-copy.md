@@ -1,6 +1,6 @@
 # Prompt 2 — Re-copy Glance for a family audience ✅ delivered (v2)
 
-[← All prompts](../design-prompts.md)
+[← All prompts](../product-spec.md) (the "Design requests" row)
 
 ```
 Glance's audience is now families: a shared wall calendar in a home (kitchen, hallway), used by

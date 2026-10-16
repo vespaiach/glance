@@ -14,7 +14,7 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 - Every data zone renders through `ZoneState<T>` + `<Zone>` (loading / empty / ready / failed) with its own error boundary (LOAD-*, FAIL-*, OFF-*).
 - Services and the sync worker return `Result<T, ErrorCode>`. A 401 never drops outbox entries (tech-design §5).
 - Server services take `accountId` first and scope every query and write by it. Exceptions: `server/auth` before a session exists, and `server/jobs`, which run across accounts.
-- Route Handlers only resolve the session (`requireDisplay`, plus the `Origin` check on writes), validate with Valibot, call a service and map its `Result` to HTTP (tech-design §6.1). They never touch SQLite.
+- Route Handlers only resolve the session (`requireDisplay`, plus the `Origin` check on writes), validate with Valibot, call a service and map its `Result` to HTTP (tech-design §6.1). They never touch the database.
 - All user-facing text comes from `src/copy.ts`.
 - Styling is StyleX only, with tokens from `src/theme`. No inline `style`, CSS modules or Tailwind.
 

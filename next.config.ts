@@ -10,7 +10,6 @@ export default function nextConfig(phase: string): NextConfig {
   const demo = phase === PHASE_DEVELOPMENT_SERVER || process.env.NEXT_PUBLIC_DEMO === "1";
 
   return withSerwist({
-    output: "standalone",
     pageExtensions: demo ? DEMO_PAGE_EXTENSIONS : PAGE_EXTENSIONS,
     redirects: async () => [{ source: "/", destination: "/today", permanent: false }],
   });

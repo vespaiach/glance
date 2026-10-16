@@ -1,6 +1,6 @@
 # Prompt 1 — Event time entry and validation ✅ delivered (v2)
 
-[← All prompts](../design-prompts.md)
+[← All prompts](../product-spec.md) (the "Design requests" row)
 
 ```
 Design the time entry for the Event sheet in Glance (Glance.dc.html, sheet=event). Today the

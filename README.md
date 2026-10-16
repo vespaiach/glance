@@ -25,21 +25,20 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
 | Email | [Resend](https://resend.com) HTTP API (sign-in links) |
 | Tooling | npm, Node 24, [Biome](https://biomejs.dev) (lint + format), Vitest + Testing Library + `fake-indexeddb` |
-| Hosting | One Docker container with a `/data` volume, Caddy in front for HTTPS |
 
 ## Architecture
 
 ```
 Browser (one per screen)                               Next.js server (one Node process)
-┌──────────────────────────────────────────┐          ┌────────────────────────────────────┐
-│ Screens (features/*)                     │          │ app/api/**/route.ts                │
-│   read ─▶ data hooks (useLiveQuery)      │          │   session → Valibot → service      │
-│   write ─▶ repos ─▶ Dexie (row + outbox) │          │ server/services ─▶ SQLite          │
-│                        ▲                 │  HTTPS   │ server/bus ─▶ SSE per account      │
-│ Sync worker ───────────┘                 │◀────────▶│ server/jobs (expiry, backups)      │
-│   push outbox · pull changes · SSE/poll  │  cookie  │ server/weather · server/mail       │
-│ Service worker: app shell + photo cache  │          │ /data: glance.db, photos/, backups/│
-└──────────────────────────────────────────┘          └────────────────────────────────────┘
+┌──────────────────────────────────────────┐          ┌─────────────────────────────────────┐
+│ Screens (features/*)                     │          │ app/api/**/route.ts                 │
+│   read ─▶ data hooks (useLiveQuery)      │          │   session → Valibot → service       │
+│   write ─▶ repos ─▶ Dexie (row + outbox) │          │ server/services ─▶ SQLite           │
+│                        ▲                 │  HTTPS   │ server/bus ─▶ SSE per account       │
+│ Sync worker ───────────┘                 │◀────────▶│ server/jobs (expiry, backups)       │
+│   push outbox · pull changes · SSE/poll  │  cookie  │ server/weather · server/mail        │
+│ Service worker: app shell + photo cache  │          │ DATA_DIR: glance.db, photos, backups│
+└──────────────────────────────────────────┘          └─────────────────────────────────────┘
 ```
 
 - **Local-first.** Screens never call the network for app data. They read IndexedDB through hooks and write through repos, which save the row and an outbox entry in one transaction. A sync worker pushes the outbox, pulls versioned changes and listens on an SSE stream (polling every 30 s as a fallback). The last write to reach the server wins.
@@ -59,7 +58,7 @@ src/server/     server-only: db, auth, services, weather, mail, jobs, SSE bus
 src/fixtures/   demo data for development
 src/copy.ts     every user-facing string
 db/migrations/  SQLite schema
-docs/           spec, technical design, plan, deploy and QA guides
+docs/           spec, technical design, plan, design handoff and prompts
 ```
 
 ## Development
@@ -67,7 +66,7 @@ docs/           spec, technical design, plan, deploy and QA guides
 ### Requirements
 
 - **Node 24** (see `.nvmrc`) and npm
-- Optional: a [Resend](https://resend.com) API key, to send real sign-in emails
+- A [Resend](https://resend.com) API key: the server needs one to boot, and it sends the sign-in emails
 
 ### Get started
 
@@ -81,9 +80,11 @@ npm run dev
 
 Open <http://localhost:3000>. The dev server reads `.env.development` (committed), with data in `.data/` (git-ignored), then `.env.development.local` (git-ignored) for your own `RESEND_API_KEY`. Migrations run on boot.
 
-The dev server is also a **demo build**: choose **Continue as demo** on the sign-in screen to use seeded fixture data with no backend, and open **`/dev/gallery`** to see every component in all four seasons. Fixture URL params reproduce any design state, e.g. `/today?season=winter&net=offline` or `/notes?sheet=newnote` (full list in [product spec §6](docs/product-spec.md)).
+The dev server is also a **demo build**: it opens Today on seeded fixture data with no backend and no sign-in, and **`/dev/gallery`** shows every component in all four seasons. Fixture URL params reproduce any design state, e.g. `/today?season=winter&net=offline` or `/notes?sheet=newnote` (full list in [product spec §6](docs/product-spec.md)). The server still checks its config at boot, so put your own `RESEND_API_KEY=re_…` in `.env.development.local`; without one it stops with `Invalid server config: RESEND_API_KEY`.
 
-To try real sign-in, put `RESEND_API_KEY=re_…` in `.env.development.local` (and a `MAIL_FROM` on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email), request a link on `/signin` and open it from the email. Without a key the server stops at boot with `Invalid server config: RESEND_API_KEY`.
+### Real sign-in and offline
+
+Sign-in, sync and the service worker only run in a production build. Run `npm run build`, then `npm start` with `DATA_DIR` (an empty folder), `APP_URL=http://localhost:3000`, `RESEND_API_KEY` and `MAIL_FROM` (an address on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email). Request a link on `/signin` and open it from the email. Browsers treat `localhost` as secure, so the service worker and the offline cold start work there too.
 
 ### Commands
 
@@ -96,17 +97,13 @@ To try real sign-in, put `RESEND_API_KEY=re_…` in `.env.development.local` (an
 | `npm run build` | Production build |
 | `npm start` | Serve the production build (needs `DATA_DIR`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`) |
 
-CI runs `check` → `typecheck` → `test` → `build`, then builds and smoke-tests the Docker image. A pre-commit hook in `.githooks/` is installed by `npm ci`.
-
-The service worker only runs in a production build. To test offline behavior locally, follow the "Local run" setup in [`docs/qa-checklist.md`](docs/qa-checklist.md).
+CI runs `check` → `typecheck` → `test` → `build`. A pre-commit hook in `.githooks/` is installed by `npm ci`.
 
 ## Documentation
 
 - [`docs/product-spec.md`](docs/product-spec.md) — what the app does, with requirement IDs (`TODAY-02`, `SYNC-03` …)
 - [`docs/tech-design.md`](docs/tech-design.md) — decisions, architecture, sync protocol, server design
 - [`docs/execution-plan.md`](docs/execution-plan.md) — tasks and status
-- [`docs/deploy.md`](docs/deploy.md) — Docker, Caddy, backups and restore
-- [`docs/qa-checklist.md`](docs/qa-checklist.md) — manual release checks
 - [`CLAUDE.md`](CLAUDE.md) — coding and workflow rules for contributors
 
 ## License
