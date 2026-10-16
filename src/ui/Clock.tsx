@@ -46,7 +46,10 @@ const styles = stylex.create({
     letterSpacing: type.displayXlLs,
   },
   colon: {
-    animationName: blink,
+    animationName: {
+      default: blink,
+      "@media (prefers-reduced-motion: reduce)": "none",
+    },
     animationDuration: "1.2s",
     animationTimingFunction: "steps(1, end)",
     animationIterationCount: "infinite",
