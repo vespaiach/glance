@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.97 — U18: the Clock's colon animation is `none` under `@media (prefers-reduced-motion: reduce)` (a StyleX conditional value in `ui/Clock`), so it stays on. Spec v0.53 (§9 60) |
+| Status | v1.98 — U19: `motion.durBase` and `motion.durSeason` (`theme/tokens.stylex.ts`) are `0ms` under `@media (prefers-reduced-motion: reduce)` (StyleX `defineVars` conditional values), so every transition and the `PhotoBackdrop` fades that read them finish at once; nothing waits on `transitionend`/`animationend`. `durPress` and `durFast` stay. Spec v0.54 (§9 61) |
 | Date | 2026-10-16 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.53) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.54) · [`design/handoff/`](design/handoff/README.md) (v5; its README predates v5, spec §2) |
 
 This document records the technical decisions. **What** the app does is in the product spec (requirement IDs like `SYNC-02` refer to it). This document covers **how** it's built. If they conflict, the spec wins on behavior and this document wins on implementation.
 
@@ -573,3 +573,4 @@ Applied in spec v0.8 (design review):
 58. Spec v0.51 (U14): §12.2 O2 is decided (decision 26): anyone who can see the screen may scan the code, with no confirmation on the screen. SIGNIN-15 adds what the design doesn't draw: the empty code at 5:00 while it is made, "Couldn’t make a code. Try again." with Try again (disabled offline) and Done, leaving Settings voids the code, the fixtures `qr=open|failed`, and a used, voided or expired code opens the email form instead of the expired-link page (no email shown). §7.0 the QR columns are built.
 59. Spec v0.52 (U17): §4.2 the Clock's colon blinks, on and off every 0.6 s (pushed to `main` in 73f1be8, not in the design). No other behavior changes.
 60. Spec v0.53 (U18): §4.2 the Clock's colon stays on, without blinking, when the device asks for reduced motion (`prefers-reduced-motion: reduce`). Not in the design. No other behavior changes.
+61. Spec v0.54 (U19): §4.4 with reduced motion, every 280 ms and 600 ms change happens at once; press, tab and tile feedback stays. Not in the design. No other behavior changes.

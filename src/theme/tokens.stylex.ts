@@ -95,7 +95,7 @@ export const motion = stylex.defineVars({
   easeInOut: "cubic-bezier(.6,0,.3,1)",
   durPress: "120ms",
   durFast: "180ms",
-  durBase: "280ms",
-  durSeason: "600ms",
+  durBase: { default: "280ms", "@media (prefers-reduced-motion: reduce)": "0ms" },
+  durSeason: { default: "600ms", "@media (prefers-reduced-motion: reduce)": "0ms" },
   pressScale: ".97",
 });
