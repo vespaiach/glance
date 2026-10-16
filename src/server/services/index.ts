@@ -1,6 +1,12 @@
 import "server-only";
 import path from "node:path";
-import type { AccountSettings, CalendarEvent, LocationRequest, Note } from "@/domain/schemas";
+import type {
+  AccountSettings,
+  CalendarEvent,
+  LocationRequest,
+  Note,
+  Photo,
+} from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
 import { getDb } from "../db/db";
 import { env } from "../env";
@@ -69,6 +75,14 @@ export function pullChanges(accountId: string, since: number | undefined) {
 
 export async function uploadPhoto(accountId: string, upload: photos.PhotoUpload) {
   return announce(syncBus(), accountId, await photos.uploadPhoto(photoDeps(), accountId, upload));
+}
+
+export async function putPhoto(accountId: string, photo: Photo) {
+  return announce(syncBus(), accountId, await photos.putPhoto(deps(), accountId, photo));
+}
+
+export async function deletePhoto(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await photos.deletePhoto(photoDeps(), accountId, id));
 }
 
 export function photoFile(accountId: string, id: string, variant: photos.PhotoVariant) {

@@ -46,12 +46,20 @@ export const gallery = {
     notesView: "Notes view",
     noteSheet: "Note sheet",
     photosView: "Photos view",
+    photoSheet: "Photo details",
     settingsView: "Settings view",
     backgroundView: "Background view",
     locationView: "Location view",
     ambientScheduleView: "Ambient screen view",
     ambientView: "Ambient view",
     signInView: "Sign in view",
+  },
+  photoSheet: {
+    fileName: "Guessed from file name",
+    fromPhoto: "Date and place from photo",
+    noName: "No name, no date",
+    offline: "Offline",
+    discard: "Discard changes?",
   },
   noteSheet: {
     edit: "Edit note",
@@ -434,6 +442,28 @@ export const GALLERY_PHOTOS: Photo[] = PHOTO_ROWS.map(([slug, title, takenOn, pl
   createdAt: todayAt(8, 59 - index),
   ...CHECKED_FROM_PHOTO,
 }));
+
+export const GUESSED_PHOTOS: readonly Photo[] = [
+  {
+    id: "halloween",
+    title: "Halloween costumes",
+    takenOn: "2025-10-31",
+    createdAt: todayAt(9, 1),
+    sources: { title: "file-name", takenOn: "file-name", place: "none" },
+    checked: false,
+    fileName: "halloween-costumes-2025-10-31.jpg",
+  },
+  {
+    id: "beach",
+    title: "Cannon Beach",
+    takenOn: "2026-08-16",
+    place: "Cannon Beach, OR",
+    createdAt: todayAt(9, 0),
+    sources: { title: "place", takenOn: "photo", place: "photo-location" },
+    checked: false,
+    fileName: "IMG_4410.JPG",
+  },
+];
 
 export const galleryPhotoSrc = (photoId: string) => `/fixtures/photos/${photoId}.svg`;
 

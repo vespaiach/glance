@@ -77,6 +77,17 @@ test("BG-05 a missing or unknown photo falls back to the oldest upload, whatever
   ).toEqual({ mode: "photo", photo: TRAIL });
 });
 
+test("PHOTO-13 deleting the background photo falls back to the oldest upload in Photo and Slideshow", () => {
+  const left = [APPLES, COAST];
+
+  expect(shownTitle(background({ mode: "photo", photoId: TRAIL.id }), left, NOW)).toBe(
+    "Apple picking",
+  );
+  expect(shownTitle(slideshow("daily", TRAIL.id), left, NOW)).toBe(
+    shownTitle(slideshow("daily", APPLES.id), left, NOW),
+  );
+});
+
 test("BG-06 rotationStep counts local hours, days and Sunday-start weeks", () => {
   const thursdayMidnight = new Date(1970, 0, 1);
 

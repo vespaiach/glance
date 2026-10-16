@@ -79,3 +79,32 @@ describe("PhotosRepo.upload", () => {
     expect(await store.db.photos.count()).toBe(0);
   });
 });
+
+describe("PhotosRepo.update and remove", () => {
+  it("PHOTO-12 update writes the edited row with its server fields and a put outbox entry, then nudges", async () => {
+    await store.db.photos.put(synced(NEWER, 7));
+
+    await createPhotosRepo(store).update({ ...NEWER, title: "Lake day", checked: true });
+
+    const row = { ...synced(NEWER, 7), title: "Lake day", checked: true };
+
+    expect(await store.db.photos.get(NEWER.id)).toEqual(row);
+    expect(await store.db.outbox.toArray()).toEqual([
+      { seq: 1, entity: "photos", entityId: NEWER.id, op: "put", payload: row, attempts: 0 },
+    ]);
+    expect(store.nudge).toHaveBeenCalledTimes(1);
+  });
+
+  it("PHOTO-13 remove takes the photo off the list and queues a delete", async () => {
+    await store.db.photos.bulkPut([synced(NEWER), synced(OLDER)]);
+
+    const { result } = renderHook(() => usePhotos(), { wrapper: wrapperFor(store) });
+
+    await createPhotosRepo(store).remove(NEWER.id);
+
+    await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([OLDER.id]));
+    expect(await store.db.outbox.toArray()).toEqual([
+      { seq: 1, entity: "photos", entityId: NEWER.id, op: "delete", attempts: 0 },
+    ]);
+  });
+});

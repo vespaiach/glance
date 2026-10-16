@@ -23,6 +23,7 @@ type PhotosViewProps = {
   onRetrySync: () => void;
   clock: Clock;
   tz: string;
+  thisYear: number;
   selected: number;
   playing: boolean;
   uploads: readonly UploadTile[];
@@ -31,6 +32,7 @@ type PhotosViewProps = {
   breakpoint: Breakpoint;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   onSelect: (index: number) => void;
+  onEdit: (photoId: string) => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
   onUpload: () => void;
@@ -97,7 +99,9 @@ function PhotoGallery({
           <FeaturedPhoto
             photo={featured}
             src={photoSrc(featured.id, "display")}
+            thisYear={rest.thisYear}
             playing={rest.playing}
+            onEdit={() => rest.onEdit(featured.id)}
             onStep={rest.onStep}
             onTogglePlay={rest.onTogglePlay}
             frame={layout.featured}
@@ -108,6 +112,7 @@ function PhotoGallery({
       </ColorBlock>
       <PhotoPanel
         photos={photos}
+        thisYear={rest.thisYear}
         {...(updatedAt !== undefined && {
           updated: clockAt(updatedAt, rest.clock, rest.tz),
         })}

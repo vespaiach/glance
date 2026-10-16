@@ -93,6 +93,7 @@ function Picture({ state, day, tz, canUpload, onUpload }: PictureProps) {
           <PictureOfDay
             photo={pick.photo}
             onThisDay={pick.onThisDay}
+            thisYear={Number(day.slice(0, 4))}
             src={photoSrc(pick.photo.id, "display")}
           />
         );

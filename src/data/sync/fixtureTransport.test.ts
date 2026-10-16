@@ -237,6 +237,20 @@ describe("seedFixtureDb", () => {
     });
   });
 
+  it.each(["photo", "photometa"] as const)(
+    "PHOTO-12 sheet=%s seeds the two uploaded photos with their file names",
+    async (sheet) => {
+      await seedFixtureDb(db, { sheet });
+
+      const newest = await db.photos.orderBy("createdAt").reverse().limit(2).toArray();
+
+      expect(newest.map((photo) => photo.fileName)).toEqual([
+        "halloween-costumes-2025-10-31.jpg",
+        "IMG_4410.JPG",
+      ]);
+    },
+  );
+
   it("PHOTO-03 upload=done seeds the two uploaded photos, guessed and not checked, newest first", async () => {
     await seedFixtureDb(db, { upload: "done" });
 

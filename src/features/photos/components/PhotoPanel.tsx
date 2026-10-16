@@ -14,6 +14,7 @@ import { UploadRow } from "./UploadRow";
 
 type PhotoPanelProps = {
   photos: readonly Photo[];
+  thisYear: number;
   updated?: string;
   selected: number;
   uploads: readonly UploadTile[];
@@ -93,6 +94,7 @@ const styles = stylex.create({
   caption: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "center",
     gap: space.xs,
     width: "100%",
   },
@@ -114,12 +116,13 @@ const styles = stylex.create({
 
 type ThumbProps = {
   photo: Photo;
+  thisYear: number;
   src: string;
   selected: boolean;
   onSelect: () => void;
 };
 
-function Thumb({ photo, src, selected, onSelect }: ThumbProps) {
+function Thumb({ photo, thisYear, src, selected, onSelect }: ThumbProps) {
   return (
     <button
       type="button"
@@ -132,7 +135,7 @@ function Thumb({ photo, src, selected, onSelect }: ThumbProps) {
       <img src={src} alt="" {...stylex.props(styles.image, selected && styles.ring)} />
       <span {...stylex.props(styles.caption)}>
         <span {...stylex.props(styles.title)}>{photo.title}</span>
-        <span {...stylex.props(styles.date)}>{photoDate(photo)}</span>
+        <span {...stylex.props(styles.date)}>{photoDate(photo, thisYear)}</span>
       </span>
     </button>
   );
@@ -146,6 +149,7 @@ function showsRow(summary: UploadSummary, canUpload: boolean) {
 
 export function PhotoPanel({
   photos,
+  thisYear,
   selected,
   uploads,
   summary,
@@ -186,6 +190,7 @@ export function PhotoPanel({
           <li key={photo.id} {...stylex.props(styles.item)}>
             <Thumb
               photo={photo}
+              thisYear={thisYear}
               src={photoSrc(photo.id, "thumb")}
               selected={index === selected}
               onSelect={() => onSelect(index)}

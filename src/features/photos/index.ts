@@ -1,6 +1,9 @@
 export { PendingUpload } from "./components/PendingUpload";
+export { PhotoSheet } from "./components/PhotoSheet";
 export { PhotosView } from "./components/PhotosView";
+export { PhotoSheetScreen } from "./PhotoSheetScreen";
 export { PhotosScreen } from "./PhotosScreen";
+export { draftFromPhoto, initialPhotoSheet, type PhotoSheetState } from "./photoSheet";
 export { newestFirst, photoMeta } from "./slideshow";
 export { initialUploads, type UploadTile } from "./uploads";
 export { usePhotoPicker } from "./usePhotoPicker";

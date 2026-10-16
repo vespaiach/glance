@@ -11,10 +11,19 @@ import { type PhotoDetails, type PhotoFacts, photoDetails } from "@/domain/photo
 import { MAX_PHOTO_BYTES, type UploadProblem, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Photo, PhotoSources, Synced } from "@/domain/schemas";
+import type { Db } from "../db/db";
 import { placeLabel } from "../weather/places";
 import type { Coordinates, PlaceLocator, PlaceName } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
-import { accountTimeZone, optional, type ServerColumns, serverFields, stamp } from "./rows";
+import {
+  accountTimeZone,
+  lockVersions,
+  optional,
+  type ServerColumns,
+  type Stamp,
+  serverFields,
+  stamp,
+} from "./rows";
 import { roundedPoint } from "./weather";
 
 export type SyncedPhoto = Synced<Photo>;
@@ -29,6 +38,7 @@ export type PhotoRow = ServerColumns & {
   date_source: PhotoSources["takenOn"];
   place_source: PhotoSources["place"];
   checked: boolean;
+  file_name: string | null;
 };
 
 export const PHOTO_VARIANTS = ["display", "thumb", "orig"] as const;
@@ -49,7 +59,7 @@ type FileMetadata = PhotoFacts["metadata"] & { gps?: Coordinates };
 
 export type PhotoFile = { path: string; contentType: string };
 
-type StoredFiles = (variant: PhotoVariant) => string;
+export type StoredFiles = (variant: PhotoVariant) => string;
 
 const COPY_MAX_PX = { display: 2560, thumb: 640 } as const;
 
@@ -93,7 +103,58 @@ export async function uploadPhoto(
     ...(await placeOf(deps.locator, metadata.value.gps)),
   });
 
-  return ok(await insertPhoto(deps, accountId, id, details));
+  return ok(await insertPhoto(deps, accountId, id, { ...details, fileName: upload.name }));
+}
+
+export function putPhoto(
+  { db, now }: ServiceDeps,
+  accountId: string,
+  photo: Photo,
+): Promise<Result<SyncedPhoto, "not-found">> {
+  return db.tx(async (tx): Promise<Result<SyncedPhoto, "not-found">> => {
+    await lockVersions(tx);
+
+    const existing = await photoRow(tx, accountId, photo.id);
+
+    if (!existing) return err("not-found");
+
+    if (existing.deleted_at) return ok(toPhoto(existing));
+
+    const { updatedAt, version } = await stamp(tx, now());
+
+    const row = editedRow(existing, photo, { updatedAt, version });
+
+    await tx.run(
+      `UPDATE photos SET title = $1, taken_on = $2, place = $3, title_source = $4, date_source = $5,
+         place_source = $6, checked = $7, updated_at = $8, version = $9 WHERE id = $10`,
+      [
+        row.title,
+        row.taken_on,
+        row.place,
+        row.title_source,
+        row.date_source,
+        row.place_source,
+        row.checked,
+        updatedAt,
+        version,
+        row.id,
+      ],
+    );
+
+    return ok(toPhoto(row));
+  });
+}
+
+export async function deletePhoto(
+  deps: PhotoDeps,
+  accountId: string,
+  id: string,
+): Promise<Result<SyncedPhoto, "not-found">> {
+  const deleted = await tombstonePhoto(deps, accountId, id);
+
+  if (deleted.ok) await removeFilesLogged(storedFiles(deps.photosDir, accountId, id));
+
+  return deleted;
 }
 
 export async function photoFile(
@@ -103,7 +164,7 @@ export async function photoFile(
   variant: PhotoVariant,
 ): Promise<Result<PhotoFile, "not-found">> {
   const row = await db.one<{ file_path: string }>(
-    "SELECT file_path FROM photos WHERE id = $1 AND account_id = $2",
+    "SELECT file_path FROM photos WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL",
     [id, accountId],
   );
 
@@ -121,13 +182,74 @@ export function toPhoto(row: PhotoRow): SyncedPhoto {
   return {
     id: row.id,
     title: row.title,
-    takenOn: row.taken_on ?? row.created_at.slice(0, 10),
+    ...optional("takenOn", row.taken_on),
     ...optional("place", row.place),
     createdAt: row.created_at,
     sources: { title: row.title_source, takenOn: row.date_source, place: row.place_source },
     checked: row.checked,
+    ...optional("fileName", row.file_name),
     ...serverFields(row),
   };
+}
+
+function photoRow(db: Db, accountId: string, id: string): Promise<PhotoRow | undefined> {
+  return db.one<PhotoRow>("SELECT * FROM photos WHERE id = $1 AND account_id = $2", [
+    id,
+    accountId,
+  ]);
+}
+
+function editedRow(existing: PhotoRow, photo: Photo, { updatedAt, version }: Stamp): PhotoRow {
+  return {
+    ...existing,
+    title: photo.title,
+    taken_on: photo.takenOn ?? null,
+    place: photo.place ?? null,
+    title_source: photo.sources.title,
+    date_source: photo.sources.takenOn,
+    place_source: photo.sources.place,
+    checked: photo.checked,
+    updated_at: updatedAt,
+    version,
+  };
+}
+
+function tombstonePhoto(
+  { db, now }: ServiceDeps,
+  accountId: string,
+  id: string,
+): Promise<Result<SyncedPhoto, "not-found">> {
+  return db.tx(async (tx): Promise<Result<SyncedPhoto, "not-found">> => {
+    await lockVersions(tx);
+
+    const existing = await photoRow(tx, accountId, id);
+
+    if (!existing) return err("not-found");
+
+    if (existing.deleted_at) return ok(toPhoto(existing));
+
+    const { updatedAt, version } = await stamp(tx, now());
+
+    await tx.run("UPDATE photos SET deleted_at = $1, updated_at = $1, version = $2 WHERE id = $3", [
+      updatedAt,
+      version,
+      id,
+    ]);
+
+    return ok(toPhoto({ ...existing, deleted_at: updatedAt, updated_at: updatedAt, version }));
+  });
+}
+
+async function removeFilesLogged(files: StoredFiles): Promise<void> {
+  try {
+    await removeFiles(files);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+export function photoFilesOf(photosDir: string, filePath: string): StoredFiles {
+  return (variant) => path.join(photosDir, `${filePath}.${variant}`);
 }
 
 function storedFiles(photosDir: string, accountId: string, id: string): StoredFiles {
@@ -286,7 +408,7 @@ async function placeOf(
   return place ? { place: { city: place.name, label: placeLabel(place) } } : {};
 }
 
-async function removeFiles(files: StoredFiles): Promise<void> {
+export async function removeFiles(files: StoredFiles): Promise<void> {
   await Promise.all(PHOTO_VARIANTS.map((variant) => rm(files(variant), { force: true })));
 }
 
@@ -294,7 +416,7 @@ function insertPhoto(
   { db, now }: PhotoDeps,
   accountId: string,
   id: string,
-  details: PhotoDetails,
+  details: PhotoDetails & { fileName: string },
 ): Promise<SyncedPhoto> {
   return db.tx(async (tx): Promise<SyncedPhoto> => {
     const { updatedAt, version } = await stamp(tx, now());
@@ -302,7 +424,7 @@ function insertPhoto(
     const row: PhotoRow = {
       id,
       title: details.title,
-      taken_on: details.takenOn,
+      taken_on: details.takenOn ?? null,
       place: details.place ?? null,
       created_at: updatedAt,
       updated_at: updatedAt,
@@ -312,12 +434,13 @@ function insertPhoto(
       date_source: details.sources.takenOn,
       place_source: details.sources.place,
       checked: details.checked,
+      file_name: details.fileName,
     };
 
     await tx.run(
       `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, updated_at,
-         version, title_source, date_source, place_source, checked)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, $11, $12)`,
+         version, title_source, date_source, place_source, checked, file_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, $11, $12, $13)`,
       [
         row.id,
         accountId,
@@ -331,6 +454,7 @@ function insertPhoto(
         row.date_source,
         row.place_source,
         row.checked,
+        row.file_name,
       ],
     );
 

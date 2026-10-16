@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { chmodSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import sharp, { type Exif } from "sharp";
@@ -7,7 +7,15 @@ import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import { tempDirPerTest } from "../db/testDir";
 import type { PlaceLocator } from "../weather/provider";
-import { type PhotoDeps, type PhotoUpload, photoFile, uploadPhoto } from "./photos";
+import {
+  deletePhoto,
+  type PhotoDeps,
+  type PhotoUpload,
+  photoFile,
+  putPhoto,
+  type SyncedPhoto,
+  uploadPhoto,
+} from "./photos";
 import { putSettings } from "./settings";
 import { pullChanges } from "./sync";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
@@ -106,6 +114,7 @@ describe("uploadPhoto", () => {
         version: 1,
         sources: { title: "file-name", takenOn: "photo", place: "none" },
         checked: false,
+        fileName: "Beach day.jpg",
       },
     });
     expect(placeAt).not.toHaveBeenCalled();
@@ -349,5 +358,178 @@ describe("photoFile", () => {
     expect(await photoFile(deps(), MARIA, "0192f3a0-3333-7000-8000-000000000001", "thumb")).toEqual(
       { ok: false, error: "not-found" },
     );
+  });
+});
+
+const HOUR_MS = 60 * 60 * 1000;
+
+function edited(photo: SyncedPhoto) {
+  const { updatedAt: _updatedAt, version: _version, ...fields } = photo;
+
+  return {
+    ...fields,
+    title: "Mia at Cannon Beach",
+    takenOn: "2026-08-15",
+    place: "Seaside, OR",
+    sources: { title: "edited", takenOn: "edited", place: "edited" },
+    checked: true,
+  } as const;
+}
+
+describe("putPhoto", () => {
+  it("PHOTO-12 saves the edited name, date, place, sources and checked with the next version", async () => {
+    const photo = await saved(await jpeg());
+    harness.advance(HOUR_MS);
+
+    const answer = await putPhoto(deps(), MARIA, edited(photo));
+
+    expect(answer).toEqual({
+      ok: true,
+      value: { ...edited(photo), updatedAt: "2026-10-09T15:00:00.000Z", version: 2 },
+    });
+    expect((await pullChanges(harness.deps(), MARIA, 1)).changes).toEqual([
+      { entity: "photos", row: answer.ok && answer.value },
+    ]);
+  });
+
+  it("PHOTO-12 keeps the upload time and the file name the client can't change", async () => {
+    const photo = await saved(await jpeg());
+
+    const answer = await putPhoto(deps(), MARIA, {
+      ...edited(photo),
+      createdAt: "2020-01-01T00:00:00.000Z",
+      fileName: "other.jpg",
+    });
+
+    expect(answer).toMatchObject({
+      ok: true,
+      value: { createdAt: photo.createdAt, fileName: "Beach day.jpg" },
+    });
+  });
+
+  it("PHOTO-11 saves a photo with no date or place and answers it without them", async () => {
+    const photo = await saved(await jpeg());
+
+    const { takenOn: _takenOn, place: _place, ...undated } = edited(photo);
+
+    const answer = await putPhoto(deps(), MARIA, undated);
+
+    expect(answer.ok && answer.value).not.toHaveProperty("takenOn");
+    expect(answer.ok && answer.value).not.toHaveProperty("place");
+    expect((await pullChanges(harness.deps(), MARIA, 1)).changes[0]?.row).not.toHaveProperty(
+      "takenOn",
+    );
+  });
+
+  it("SYNC-03 delete wins: a put on a deleted photo answers the tombstone unchanged", async () => {
+    const photo = await saved(await jpeg());
+    const tombstone = await deletePhoto(deps(), MARIA, photo.id);
+
+    const answer = await putPhoto(deps(), MARIA, edited(photo));
+
+    expect(answer).toEqual(tombstone);
+    expect(await harness.globalVersion()).toBe(2);
+  });
+
+  it("tech§5 answers not-found for a photo the server never had and stores nothing", async () => {
+    const photo = await saved(await jpeg());
+
+    const answer = await putPhoto(deps(), MARIA, {
+      ...edited(photo),
+      id: "0192f3a0-3333-7000-8000-000000000001",
+    });
+
+    expect(answer).toEqual({ ok: false, error: "not-found" });
+    expect(await harness.globalVersion()).toBe(1);
+  });
+
+  it("tech§5 refuses to edit another account's photo", async () => {
+    const photo = await saved(await jpeg());
+
+    expect(await putPhoto(deps(), OMAR, edited(photo))).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+    expect((await pullChanges(harness.deps(), MARIA, undefined)).changes[0]?.row).toEqual(photo);
+  });
+});
+
+describe("deletePhoto", () => {
+  it("PHOTO-13 keeps a tombstone stamped with the delete time and removes the photo's files", async () => {
+    const photo = await saved(await jpeg());
+    harness.advance(HOUR_MS);
+
+    const answer = await deletePhoto(deps(), MARIA, photo.id);
+
+    expect(answer).toEqual({
+      ok: true,
+      value: {
+        ...photo,
+        updatedAt: "2026-10-09T15:00:00.000Z",
+        deletedAt: "2026-10-09T15:00:00.000Z",
+        version: 2,
+      },
+    });
+    expect(storedFiles()).toEqual([]);
+  });
+
+  it("SYNC-02 other displays pull the tombstone", async () => {
+    const photo = await saved(await jpeg());
+
+    const answer = await deletePhoto(deps(), MARIA, photo.id);
+
+    expect((await pullChanges(harness.deps(), MARIA, 1)).changes).toEqual([
+      { entity: "photos", row: answer.ok && answer.value },
+    ]);
+  });
+
+  it("SYNC-02 answers the same tombstone when the delete is replayed", async () => {
+    const photo = await saved(await jpeg());
+    const first = await deletePhoto(deps(), MARIA, photo.id);
+    harness.advance(HOUR_MS);
+
+    expect(await deletePhoto(deps(), MARIA, photo.id)).toEqual(first);
+    expect(await harness.globalVersion()).toBe(2);
+  });
+
+  it("PHOTO-13 still deletes the photo when its files can't be removed, and logs it", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const photo = await saved(await jpeg());
+
+    const accountDir = path.join(photosDir(), MARIA);
+    chmodSync(accountDir, 0o500);
+
+    const answer = await deletePhoto(deps(), MARIA, photo.id);
+
+    chmodSync(accountDir, 0o700);
+    expect(answer).toMatchObject({ ok: true, value: { deletedAt: expect.any(String) } });
+    expect(logged).toHaveBeenCalled();
+    expect(storedFiles()).toHaveLength(3);
+    logged.mockRestore();
+  });
+
+  it("tech§5 answers not-found for a photo the server never had", async () => {
+    expect(await deletePhoto(deps(), MARIA, "0192f3a0-3333-7000-8000-000000000001")).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+  });
+
+  it("tech§5 refuses to delete another account's photo and keeps its files", async () => {
+    const photo = await saved(await jpeg());
+
+    expect(await deletePhoto(deps(), OMAR, photo.id)).toEqual({ ok: false, error: "not-found" });
+    expect(storedFiles()).toHaveLength(3);
+    expect((await pullChanges(harness.deps(), MARIA, undefined)).changes[0]?.row).toEqual(photo);
+  });
+
+  it("PHOTO-13 a deleted photo's file is not found", async () => {
+    const photo = await saved(await jpeg());
+    await deletePhoto(deps(), MARIA, photo.id);
+
+    expect(await photoFile(deps(), MARIA, photo.id, "display")).toEqual({
+      ok: false,
+      error: "not-found",
+    });
   });
 });

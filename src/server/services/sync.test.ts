@@ -111,12 +111,12 @@ describe("pullChanges", () => {
     ]);
   });
 
-  it("PHOTO-03 dates a photo with no taken date by its upload day", async () => {
+  it("PHOTO-11 returns a photo with no taken date without takenOn, so it reads No date", async () => {
     await insertPhoto(MARIA, 1, null);
 
-    expect((await pullChanges(harness.deps(), MARIA, undefined)).changes[0]?.row).toMatchObject({
-      takenOn: "2026-10-01",
-    });
+    expect(
+      (await pullChanges(harness.deps(), MARIA, undefined)).changes[0]?.row,
+    ).not.toHaveProperty("takenOn");
   });
 
   it("D21 returns an all-day event with allDay", async () => {

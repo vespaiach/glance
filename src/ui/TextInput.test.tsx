@@ -49,6 +49,31 @@ test("spec§4.2 TextInput shows the error below and marks the field invalid", ()
   expect(input).toHaveAccessibleDescription("Check the email");
 });
 
+test("PHOTO-12 TextInput shows a caption beside its label, outside the field's name", () => {
+  render(<TextInput label="Place" caption="Not in photo" value="" onChange={() => {}} />);
+
+  expect(screen.getByRole("textbox", { name: "Place" })).toBeInTheDocument();
+  expect(screen.getByText("Not in photo")).toBeInTheDocument();
+});
+
+test("PHOTO-12 TextInput can be a date field with a latest day", () => {
+  render(
+    <TextInput
+      label="Date taken"
+      type="date"
+      max="2026-10-09"
+      value="2025-10-31"
+      onChange={() => {}}
+    />,
+  );
+
+  const field = screen.getByLabelText("Date taken");
+
+  expect(field).toHaveAttribute("type", "date");
+  expect(field).toHaveAttribute("max", "2026-10-09");
+  expect(field).toHaveValue("2025-10-31");
+});
+
 test("spec§4.2 TextInput without an error is not marked invalid", () => {
   render(<TextInput label="Email" value="" onChange={() => {}} />);
 

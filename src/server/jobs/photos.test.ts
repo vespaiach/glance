@@ -1,0 +1,54 @@
+import { readdirSync } from "node:fs";
+import { Readable } from "node:stream";
+import sharp from "sharp";
+import { tempDirPerTest } from "../db/testDir";
+import { uploadPhoto } from "../services/photos";
+import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
+import { removeDeletedPhotoFiles } from "./photos";
+
+const harness = serviceHarnessPerTest();
+
+const photosDir = tempDirPerTest();
+
+function deps() {
+  return { ...harness.deps(), photosDir: photosDir() };
+}
+
+async function stored(accountId: string): Promise<string> {
+  const bytes = await sharp({ create: { width: 8, height: 8, channels: 3, background: "#c84" } })
+    .jpeg()
+    .toBuffer();
+
+  const answer = await uploadPhoto({ ...deps(), locator: { placeAt: vi.fn() } }, accountId, {
+    name: "Beach.jpg",
+    type: "image/jpeg",
+    size: bytes.length,
+    body: Readable.from([bytes]),
+  });
+
+  if (!answer.ok) throw new Error(answer.error);
+
+  return answer.value.id;
+}
+
+function storedFiles(): string[] {
+  return readdirSync(photosDir(), { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+describe("removeDeletedPhotoFiles", () => {
+  it("PHOTO-13 removes the files a deleted photo left behind, in every account, and keeps live photos' files", async () => {
+    const gone = await stored(MARIA);
+    const otherGone = await stored(OMAR);
+    const kept = await stored(MARIA);
+    await harness
+      .deps()
+      .db.run("UPDATE photos SET deleted_at = updated_at WHERE id IN ($1, $2)", [gone, otherGone]);
+
+    await removeDeletedPhotoFiles(deps());
+
+    expect(storedFiles()).toEqual([`${kept}.display`, `${kept}.orig`, `${kept}.thumb`]);
+  });
+});

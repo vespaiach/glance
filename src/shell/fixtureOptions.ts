@@ -65,6 +65,10 @@ function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | 
       return { kind: "note", id: fixtureSheetTargets.note };
     case "newnote":
       return { kind: "newnote", draft: fixtureSheetTargets.noteDraft };
+    case "photo":
+      return { kind: "photo", id: fixtureSheetTargets.photo };
+    case "photometa":
+      return { kind: "photo", id: fixtureSheetTargets.photoMeta };
     default:
       return null;
   }
