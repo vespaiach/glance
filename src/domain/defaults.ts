@@ -8,4 +8,5 @@ export const DEFAULT_SETTINGS: AccountSettings = {
   idleTimeout: 180,
   noteExpiry: "1w",
   ambient: DEFAULT_AMBIENT,
+  hideBarWhenIdle: true,
 };

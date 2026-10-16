@@ -46,6 +46,10 @@ describe("outdatedClient", () => {
   it("tech§9-40 answers 426 to build 1, which still writes ambientHours", () => {
     expect(outdatedClient(request({ [BUILD_HEADER]: "1" }))?.status).toBe(426);
   });
+
+  it("tech§4.7 answers 426 to build 2, which would write settings back without hideBarWhenIdle", () => {
+    expect(outdatedClient(request({ [BUILD_HEADER]: "2" }))?.status).toBe(426);
+  });
 });
 
 describe("readRow", () => {

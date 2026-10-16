@@ -89,6 +89,12 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("amb=split&pick=wknd.e")).toEqual({ amb: "split", pick: "wknd.e" });
   });
 
+  it("SHELL-07 reads bar= and barauto=", () => {
+    expect(parseFixtureParams("bar=hidden&barauto=off")).toEqual({ bar: "hidden", barauto: "off" });
+    expect(parseFixtureParams("bar=float")).toEqual({ bar: "float" });
+    expect(parseFixtureParams("bar=auto&barauto=on")).toEqual({});
+  });
+
   it("§6 ignores params that are not fixture params", () => {
     expect(parseFixtureParams("date=2026-10-14&view=weather")).toEqual({});
   });

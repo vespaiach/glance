@@ -11,6 +11,7 @@ import {
   type ShellOptions,
   useShellSetup,
 } from "./fixtureOptions";
+import { BarProvider } from "./providers/bar";
 import { IdleProvider } from "./providers/idle";
 import { NetworkProvider } from "./providers/network";
 import { NowProvider, useNowStore } from "./providers/now";
@@ -60,9 +61,11 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
             <NetworkProvider pillDelayMs={options.pillDelayMs}>
               <FixtureSheetHost params={params}>
                 <FixtureParamsProvider params={params}>
-                  <IdleProvider>
-                    <SessionGuard>{children}</SessionGuard>
-                  </IdleProvider>
+                  <BarProvider>
+                    <IdleProvider>
+                      <SessionGuard>{children}</SessionGuard>
+                    </IdleProvider>
+                  </BarProvider>
                 </FixtureParamsProvider>
               </FixtureSheetHost>
             </NetworkProvider>

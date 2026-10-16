@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Draft v0.42 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, and nav bar, U02, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
+| Status | Draft v0.43 — the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, nav bar, U02, and the bar hiding when idle, U03, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
 | Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D23) |
 | Date | 2026-10-16 |
 | Design requests | Prompts sent to Claude Design, all delivered: [1 time entry](prompts/01-time-entry.md) and [2 family copy](prompts/02-family-copy.md) in handoff v2 (§8.3.1, §10), [3 sign-in and system states](prompts/03-signin-and-system-states.md) in v3 (§8.1, PHOTO-06..09, WX-07..09), [4 signed out](prompts/04-session-ended.md) and [5 location and time zone](prompts/05-location-and-time-zone.md) in v4 (SIGNIN-13, §9.9). v4 also added the Ambient screen page (SET-10) and v5 came with no prompt (decision 23). A new prompt goes in [`prompts/`](prompts/) as `NN-short-name.md` |
@@ -222,7 +222,7 @@ Ambient overrides: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls
 - **No photo upload on phone (decided, future feature).** Hide every upload entry point: Photos "Upload" (PHOTO-03) and "Upload photos" (PHOTO-05), Background "Upload photo" tile (BG-02) and Today's "Upload" link (TODAY-07). Copy stays the same. This deviates from the 390×844 frames that show them.
 - Nav: all seven buttons (44 px) spread edge to edge across the bar (`space-between`) with no brand slot, so Settings stays on screen at 390 px. The divider stays, with no extra space around it.
 - EventRow columns `56px 10px 1fr auto`, gap 12, padding `12px 8px` (other sizes: `84px 14px 1fr auto`, padding `14px 16px`).
-- Offline pill sits 84 px from the bottom (OFF-01 gives the other sizes).
+- Offline pill sits 84 px from the bottom, 68 px while the bar is hidden (OFF-01 gives the other sizes).
 
 ---
 
@@ -601,7 +601,7 @@ Full-screen button (no bar), text on-deep.
 - FAIL-03: Auto-retry at 1, 2 and 5 min, then every 5 min.
 
 ### 9.5 Offline — `OFF`
-- OFF-01: Black pill, fixed bottom-left over the empty left end of the bar (v5: 12 px from the bottom without labels, 24 px with labels; on phone, where the buttons fill the bar, 84 px from the bottom, 12 px above it): wifi-off "Offline · showing saved data" + "Saved {time}" (time hidden on narrow and phone, and on Weather). Appears after **30 s** offline to avoid flicker. Leaves on reconnect.
+- OFF-01: Black pill, fixed bottom-left over the empty left end of the bar (v5: 12 px from the bottom without labels, 24 px with labels; on phone, where the buttons fill the bar, 84 px from the bottom, 12 px above it, or 68 px, 12 px above the "Show menu" handle, while the bar is hidden, SHELL-07): wifi-off "Offline · showing saved data" + "Saved {time}" (time hidden on narrow and phone, and on Weather). Appears after **30 s** offline to avoid flicker. Leaves on reconnect.
 - OFF-02: Saved data stays visible. Event statuses keep updating from the local clock.
 - OFF-03: While offline, weather older than 1 hour → "Forecast from {time}" banner (WX-03) in place of the rain banner. Within the hour the forecast shows as usual.
 - OFF-04: Edits queue locally. The sheet shows an offline banner, save reads "Save for later", and new notes show "Waiting to post" in place of their stamp until synced. An edit to a note that was already posted keeps its stamp.

@@ -89,6 +89,13 @@ function withAmbient(settings: AccountSettings, amb: FixtureParams["amb"]): Acco
   }
 }
 
+function withBarAuto(
+  settings: AccountSettings,
+  barauto: FixtureParams["barauto"],
+): AccountSettings {
+  return barauto === "off" ? { ...settings, hideBarWhenIdle: false } : settings;
+}
+
 function fixtureWeather(params: FixtureParams): Weather {
   const evening = params.now && inAmbient(FIXTURE_SETTINGS.ambient, params.now, FIXTURE_TIME_ZONE);
 
@@ -100,9 +107,9 @@ function fixtureSeed(params: FixtureParams): Seed | undefined {
 
   if (params.empty) return { settings: DEFAULT_SETTINGS, withRows: false };
 
-  const settings = withAmbient(
-    params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS,
-    params.amb,
+  const settings = withBarAuto(
+    withAmbient(params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS, params.amb),
+    params.barauto,
   );
 
   if (params.wx && !params.keepPlace) return { settings: unlocated(settings), withRows: true };

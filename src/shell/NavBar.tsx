@@ -11,16 +11,17 @@ import {
 } from "lucide-react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
-import { colors, motion, radii, sizes, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, shadows, sizes, space } from "@/theme/tokens.stylex";
 import { Icon } from "@/ui/Icon";
 import { press } from "@/ui/press";
 import { TopBar } from "@/ui/TopBar";
-import { barHeight, navLabelsShown } from "./bar";
+import { type BarMode, barHeight, navLabelsShown } from "./bar";
 import { VIEWS, type View, viewPath } from "./routes";
 
 type NavBarProps = {
   active?: View;
   breakpoint: Breakpoint;
+  mode?: BarMode;
   onNavigate: (path: string) => void;
 };
 
@@ -51,13 +52,30 @@ const ICONS: Record<View, LucideIcon> = {
 };
 
 const styles = stylex.create({
-  bar: {
+  dock: {
     flexShrink: 0,
     position: "sticky",
     bottom: 0,
     zIndex: 5,
-    gap: 0,
     boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
+    transitionProperty: "transform, opacity",
+    transitionDuration: motion.durBase,
+    transitionTimingFunction: motion.easeOut,
+  },
+  floating: {
+    position: "fixed",
+    insetInline: 0,
+    boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}, ${shadows.shadow2Up}`,
+  },
+  hidden: {
+    position: "fixed",
+    insetInline: 0,
+    transform: "translateY(100%)",
+    opacity: 0,
+    pointerEvents: "none",
+  },
+  bar: {
+    gap: 0,
   },
   nav: {
     display: "flex",
@@ -157,7 +175,7 @@ function NavItem({ icon, name, label, active, phone, onClick }: NavItemProps) {
   );
 }
 
-export function NavBar({ active, breakpoint, onNavigate }: NavBarProps) {
+export function NavBar({ active, breakpoint, mode = "docked", onNavigate }: NavBarProps) {
   const labels = navLabelsShown(breakpoint);
 
   const phone = breakpoint === "phone";
@@ -204,10 +222,20 @@ export function NavBar({ active, breakpoint, onNavigate }: NavBarProps) {
   );
 
   return (
-    <TopBar
-      height={barHeight(breakpoint)}
-      xstyle={styles.bar}
-      {...(phone ? { center: nav } : { right: nav })}
-    />
+    <div
+      data-bar={mode}
+      inert={mode === "hidden"}
+      {...stylex.props(
+        styles.dock,
+        mode === "floating" && styles.floating,
+        mode === "hidden" && styles.hidden,
+      )}
+    >
+      <TopBar
+        height={barHeight(breakpoint)}
+        xstyle={styles.bar}
+        {...(phone ? { center: nav } : { right: nav })}
+      />
+    </div>
   );
 }

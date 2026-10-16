@@ -10,7 +10,9 @@ import {
   useSyncStatus,
 } from "@/data/repos";
 import { idleDue, inAmbient } from "@/domain/idle";
+import { isTextField } from "../keyboard";
 import { useSheetHost } from "../SheetHost";
+import { useBar } from "./bar";
 import { type NowStore, useNowStore } from "./now";
 import { useAccountSettings } from "./settings";
 import { useTimeZone } from "./timeZone";
@@ -23,27 +25,21 @@ const SIGN_IN = "/signin";
 
 const ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
 
-const TEXT_INPUT_TYPES = new Set(["text", "email", "search", "tel", "url", "password", "number"]);
+type Activity = { onTouch: (at: Date) => void; onFieldLeft: (at: Date) => void };
 
-export function isTextField(element: Element | null): boolean {
-  if (element instanceof HTMLTextAreaElement) return true;
+function watchActivity(store: NowStore, { onTouch, onFieldLeft }: Activity): () => void {
+  const touched = () => onTouch(store.get());
 
-  if (element instanceof HTMLInputElement) return TEXT_INPUT_TYPES.has(element.type);
-
-  return element instanceof HTMLElement && element.isContentEditable;
-}
-
-function watchActivity(store: NowStore, onActive: (at: Date) => void): () => void {
-  const touched = () => onActive(store.get());
+  const left = () => onFieldLeft(store.get());
 
   for (const type of ACTIVITY_EVENTS) document.addEventListener(type, touched, true);
 
-  document.addEventListener("focusout", touched, true);
+  document.addEventListener("focusout", left, true);
 
   return () => {
     for (const type of ACTIVITY_EVENTS) document.removeEventListener(type, touched, true);
 
-    document.removeEventListener("focusout", touched, true);
+    document.removeEventListener("focusout", left, true);
   };
 }
 
@@ -91,6 +87,8 @@ export function IdleProvider({
 
   const signedOut = useSignedOut();
 
+  const bar = useBar();
+
   const current = {
     pathname,
     close,
@@ -100,6 +98,7 @@ export function IdleProvider({
     outboxEmpty,
     reload,
     updates,
+    bar,
   };
 
   const latest = useRef(current);
@@ -150,12 +149,22 @@ export function IdleProvider({
       if (idleDue(lastActivity, now, idleTimeout)) {
         lastActivity = now;
 
-        go(ambient ? AMBIENT : awake());
+        const target = ambient ? AMBIENT : awake();
+
+        go(target);
+
+        if (target === TODAY) latest.current.bar.hide();
       }
     };
 
-    const stopWatching = watchActivity(store, (at) => {
-      lastActivity = at;
+    const stopWatching = watchActivity(store, {
+      onTouch: (at) => {
+        lastActivity = at;
+        latest.current.bar.touch();
+      },
+      onFieldLeft: (at) => {
+        lastActivity = at;
+      },
     });
 
     const unsubscribe = store.subscribe(onTick);

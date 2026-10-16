@@ -1,10 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import type { FixtureParams } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import { AppShell } from "./AppShell";
+import { FixtureParamsProvider } from "./fixtureOptions";
+import { BarProvider } from "./providers/bar";
 import { NetworkProvider } from "./providers/network";
 import { shellWrapper } from "./providers/testShell";
+import { SheetHost } from "./SheetHost";
 
 const navigation = vi.hoisted(() => ({
   pathname: "/today",
@@ -39,12 +43,18 @@ afterEach(async () => {
   await store.close();
 });
 
-async function renderShell(children: ReactNode) {
+async function renderShell(children: ReactNode, params: FixtureParams = {}) {
   const Shell = shellWrapper(store);
 
   const wrapper = ({ children: shell }: { children: ReactNode }) => (
     <Shell>
-      <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
+      <FixtureParamsProvider params={params}>
+        <SheetHost>
+          <BarProvider>
+            <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
+          </BarProvider>
+        </SheetHost>
+      </FixtureParamsProvider>
     </Shell>
   );
 
@@ -116,6 +126,36 @@ test("tech§4.5 prefetches the six views on startup", async () => {
     "/photos",
     "/settings",
   ]);
+});
+
+function barOf() {
+  return screen.getByRole("navigation", { name: "Views" }).closest("[data-bar]");
+}
+
+test("SHELL-06 a docked bar has no Show menu handle", async () => {
+  await renderShell("Today view");
+
+  expect(barOf()).toHaveAttribute("data-bar", "docked");
+  expect(barOf()).not.toHaveAttribute("inert");
+  expect(screen.queryByRole("button", { name: "Show menu" })).not.toBeInTheDocument();
+});
+
+test("SHELL-07 a hidden bar can't be reached and the Show menu handle stands in for it", async () => {
+  await renderShell("Today view", { bar: "hidden" });
+
+  expect(barOf()).toHaveAttribute("data-bar", "hidden");
+  expect(barOf()).toHaveAttribute("inert");
+  expect(screen.getByRole("button", { name: "Show menu" })).toBeInTheDocument();
+});
+
+test("SHELL-07 Show menu brings the bar back floating", async () => {
+  await renderShell("Today view", { bar: "hidden" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Show menu" }));
+
+  expect(barOf()).toHaveAttribute("data-bar", "floating");
+  expect(barOf()).not.toHaveAttribute("inert");
+  expect(screen.queryByRole("button", { name: "Show menu" })).not.toBeInTheDocument();
 });
 
 async function goOffline() {

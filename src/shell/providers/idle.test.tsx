@@ -3,6 +3,7 @@ import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import type { AccountSettings } from "@/domain/schemas";
 import { SheetHost, useSheetHost } from "../SheetHost";
+import { BarProvider } from "./bar";
 import { IdleProvider, type IdleUpdates } from "./idle";
 import { shellWrapper } from "./testShell";
 
@@ -77,9 +78,11 @@ async function renderIdle(
   const tree = () => (
     <Shell>
       <SheetHost>
-        <IdleProvider reload={reload} updates={updates}>
-          <SheetProbe />
-        </IdleProvider>
+        <BarProvider>
+          <IdleProvider reload={reload} updates={updates}>
+            <SheetProbe />
+          </IdleProvider>
+        </BarProvider>
       </SheetHost>
     </Shell>
   );
