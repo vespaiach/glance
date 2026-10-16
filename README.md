@@ -57,7 +57,7 @@ src/theme/      StyleX tokens, season themes, fonts
 src/server/     server-only: db, auth, services, weather, mail, jobs, SSE bus
 src/fixtures/   demo data for development
 src/copy.ts     every user-facing string
-db/migrations/  PostgreSQL schema
+db-migrations/  PostgreSQL schema
 docs/           spec, technical design, plan, design handoff and prompts
 ```
 
