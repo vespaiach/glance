@@ -30,6 +30,7 @@ export const copy = {
       photos: "Photos",
       settings: "Settings",
     },
+    ambientScreen: "Ambient screen",
     background: "Background",
     signIn: "Sign in",
     ambient: "Ambient",
