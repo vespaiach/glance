@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from "./defaults";
 import { AccountSettingsSchema } from "./schemas";
 
 describe("DEFAULT_SETTINGS", () => {
-  it("spec§7.0 are Auto, 12-hour, Fahrenheit, Season color (Light, Daily), 3 min, 1 week, every night 6:00 PM – 7:30 AM, hide bar when idle On", () => {
+  it("spec§7.0 are Auto, 12-hour, Fahrenheit, Season color (Light, Daily), 3 min, 1 week, every night 6:00 PM – 7:30 AM", () => {
     expect(DEFAULT_SETTINGS).toEqual({
       season: "auto",
       clock: "12h",
@@ -16,7 +16,6 @@ describe("DEFAULT_SETTINGS", () => {
         all: { start: "18:00", end: "07:30" },
         wknd: { start: "21:00", end: "09:00" },
       },
-      hideBarWhenIdle: true,
     });
   });
 

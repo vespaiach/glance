@@ -197,16 +197,10 @@ describe("seedFixtureDb", () => {
     expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.ambient).toEqual(ambient);
   });
 
-  it("SET-11 barauto=off seeds Hide bar when idle Off", async () => {
-    await seedFixtureDb(db, { barauto: "off" });
-
-    expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.hideBarWhenIdle).toBe(false);
-  });
-
-  it("SET-11 the fixture hides the bar when idle by default", async () => {
+  it("SET-11 the fixture settings hold no hideBarWhenIdle", async () => {
     await seedFixtureDb(db, {});
 
-    expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.hideBarWhenIdle).toBe(true);
+    expect(await db.settings.get(FIXTURE_ACCOUNT.id)).not.toHaveProperty("hideBarWhenIdle");
   });
 
   it("AMB-03 now= during ambient hours seeds the Appendix A ambient forecast", async () => {

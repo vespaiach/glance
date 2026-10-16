@@ -36,7 +36,6 @@ const CHOICES = {
   ],
   amb: ["same", "split", "off"],
   pick: ["all.s", "all.e", "wknd.s", "wknd.e"],
-  barauto: ["off"],
   rail: ["1", "open"],
   events: ["many"],
   chrome: ["0"],

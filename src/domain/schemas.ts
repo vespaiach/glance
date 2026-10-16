@@ -142,7 +142,6 @@ export const AccountSettingsSchema = v.object({
   idleTimeout: v.nullable(v.picklist([60, 180, 300])),
   noteExpiry: v.nullable(v.picklist(["1d", "1w"])),
   ambient: v.optional(AmbientSchema, DEFAULT_AMBIENT),
-  hideBarWhenIdle: v.optional(v.boolean(), true),
   weatherLocation: v.optional(WeatherLocationSchema),
 });
 export type AccountSettings = v.InferOutput<typeof AccountSettingsSchema>;

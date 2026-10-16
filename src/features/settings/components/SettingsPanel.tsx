@@ -155,21 +155,16 @@ export function SettingsPanel({
             size="lg"
           />
         </SettingsRow>
-        <SettingsRow title={text.temperature.title} description={text.temperature.body}>
+        <SettingsRow
+          title={text.temperature.title}
+          description={text.temperature.body}
+          divider={false}
+        >
           <PillTabs
             label={text.temperature.title}
             options={text.temperature.options}
             value={settings.tempUnit}
             onChange={(value) => onChange({ tempUnit: value })}
-            size="lg"
-          />
-        </SettingsRow>
-        <SettingsRow title={text.hideBar.title} description={text.hideBar.body} divider={false}>
-          <PillTabs
-            label={text.hideBar.title}
-            options={text.hideBar.options}
-            value={settings.hideBarWhenIdle ? "on" : "off"}
-            onChange={(value) => onChange({ hideBarWhenIdle: value === "on" })}
             size="lg"
           />
         </SettingsRow>
