@@ -8,7 +8,9 @@ const coast = {
   takenOn: "2026-09-06",
   place: "Summer trip",
   createdAt: "2026-10-05T19:05:00.000Z",
-};
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
+} as const;
 
 test("TODAY-07 shows the photo with its title, date and place", () => {
   render(<PictureOfDay photo={coast} src="/fixtures/photos/coast.svg" />);

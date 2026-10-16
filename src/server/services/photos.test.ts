@@ -4,7 +4,9 @@ import { Readable } from "node:stream";
 import sharp, { type Exif } from "sharp";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
+import { err, ok } from "@/domain/result";
 import { tempDirPerTest } from "../db/testDir";
+import type { PlaceLocator } from "../weather/provider";
 import { type PhotoDeps, type PhotoUpload, photoFile, uploadPhoto } from "./photos";
 import { putSettings } from "./settings";
 import { pullChanges } from "./sync";
@@ -24,9 +26,27 @@ const PORTLAND = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
+const CANNON_BEACH = { name: "Cannon Beach", region: "Oregon" };
+
+const placeAt = vi.fn<PlaceLocator["placeAt"]>();
+
+beforeEach(() => {
+  placeAt.mockReset();
+  placeAt.mockResolvedValue(ok(CANNON_BEACH));
+});
+
 function deps(): PhotoDeps {
-  return { ...harness.deps(), photosDir: photosDir() };
+  return { ...harness.deps(), photosDir: photosDir(), locator: { placeAt } };
 }
+
+const CANNON_BEACH_GPS: Exif = {
+  IFD3: {
+    GPSLatitudeRef: "N",
+    GPSLatitude: "45/1 53/1 2400/100",
+    GPSLongitudeRef: "W",
+    GPSLongitude: "123/1 57/1 3600/100",
+  },
+};
 
 type Picture = { width?: number; height?: number; exif?: Exif };
 
@@ -70,7 +90,7 @@ async function saved(bytes: Buffer, overrides: Partial<PhotoUpload> = {}) {
 }
 
 describe("uploadPhoto", () => {
-  it("PHOTO-03 saves the photo titled by its file name, dated by its EXIF date, with no place", async () => {
+  it("PHOTO-10 saves the photo named from its file name, dated by its EXIF date, with no place and not checked", async () => {
     const bytes = await jpeg({ exif: { IFD2: { DateTimeOriginal: "2024:07:04 18:30:00" } } });
 
     const answer = await uploadPhoto(deps(), MARIA, upload(bytes));
@@ -84,16 +104,104 @@ describe("uploadPhoto", () => {
         createdAt: "2026-10-09T14:00:00.000Z",
         updatedAt: "2026-10-09T14:00:00.000Z",
         version: 1,
+        sources: { title: "file-name", takenOn: "photo", place: "none" },
+        checked: false,
       },
+    });
+    expect(placeAt).not.toHaveBeenCalled();
+  });
+
+  it("PHOTO-10 takes the name from the photo's description", async () => {
+    const photo = await saved(
+      await jpeg({ exif: { IFD0: { ImageDescription: "Mia at the lake" } } }),
+    );
+
+    expect(photo).toMatchObject({ title: "Mia at the lake", sources: { title: "photo" } });
+  });
+
+  it("PHOTO-10 takes the name from the photo's Windows title when it has no description", async () => {
+    const photo = await saved(await jpeg({ exif: { IFD0: { XPTitle: "Lake day" } } }));
+
+    expect(photo).toMatchObject({ title: "Lake day", sources: { title: "photo" } });
+  });
+
+  it("PHOTO-10 dates a photo by the date in its file name before the file's date", async () => {
+    const photo = await saved(await jpeg(), {
+      name: "halloween-costumes-2025-10-31.jpg",
+      modifiedOn: "2026-08-01",
+    });
+
+    expect(photo).toMatchObject({
+      title: "Halloween costumes",
+      takenOn: "2025-10-31",
+      sources: { title: "file-name", takenOn: "file-name", place: "none" },
     });
   });
 
-  it("PHOTO-03 dates a photo with no EXIF date by the upload day in the account's time zone", async () => {
+  it("D22 dates a photo with no other date by the file's modified date", async () => {
+    const photo = await saved(await jpeg(), { name: "IMG_4410.JPG", modifiedOn: "2026-08-01" });
+
+    expect(photo).toMatchObject({
+      title: "IMG_4410",
+      takenOn: "2026-08-01",
+      sources: { title: "file", takenOn: "file-date" },
+    });
+  });
+
+  it("PHOTO-10 turns the photo's GPS into City, ST at 2 decimals and names it by the city", async () => {
+    const photo = await saved(
+      await jpeg({
+        exif: { ...CANNON_BEACH_GPS, IFD2: { DateTimeOriginal: "2026:08:16 10:00:00" } },
+      }),
+      { name: "IMG_4410.JPG" },
+    );
+
+    expect(placeAt).toHaveBeenCalledWith({ lat: 45.89, lon: -123.96 });
+    expect(photo).toMatchObject({
+      title: "Cannon Beach",
+      takenOn: "2026-08-16",
+      place: "Cannon Beach, OR",
+      sources: { title: "place", takenOn: "photo", place: "photo-location" },
+      checked: false,
+    });
+  });
+
+  it("D22 leaves the place empty for a place outside the US and still saves the photo", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    placeAt.mockResolvedValue(err("not-found"));
+
+    const photo = await saved(await jpeg({ exif: CANNON_BEACH_GPS }), { name: "IMG_4410.JPG" });
+
+    expect(photo).toMatchObject({ title: "IMG_4410", sources: { place: "none" } });
+    expect(photo).not.toHaveProperty("place");
+    expect(logged).not.toHaveBeenCalled();
+    logged.mockRestore();
+  });
+
+  it.each([
+    ["answers weather-failed", () => placeAt.mockResolvedValue(err("weather-failed"))],
+    ["throws", () => placeAt.mockRejectedValue(new Error("socket hang up"))],
+  ])(
+    "D22 logs a lookup that %s, leaves the place empty and still saves the photo",
+    async (_, fail) => {
+      const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+      fail();
+
+      const photo = await saved(await jpeg({ exif: CANNON_BEACH_GPS }));
+
+      expect(photo.sources.place).toBe("none");
+      expect(logged).toHaveBeenCalled();
+      logged.mockRestore();
+    },
+  );
+
+  it("PHOTO-03 dates a photo with no EXIF date or file date by the upload day in the account's time zone", async () => {
     harness.advance(12 * 60 * 60 * 1000);
 
     const photo = await saved(await jpeg());
 
     expect(photo.takenOn).toBe("2026-10-09");
+    expect(photo.sources.takenOn).toBe("file-date");
   });
 
   it("LOC-07 dates a photo with no EXIF date by the upload day in the location's time zone", async () => {

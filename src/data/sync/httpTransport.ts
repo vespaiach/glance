@@ -1,5 +1,5 @@
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
-import { FILE_NAME_HEADER, uploadProblem } from "@/domain/photoUpload";
+import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account, Weather, WeatherLocation } from "@/domain/schemas";
 import type { OutboxEntry, StoredPhoto } from "../db";
@@ -113,6 +113,7 @@ function percentOf(event: ProgressEvent): number {
 function sendFile(
   xhr: XMLHttpRequest,
   file: File,
+  modifiedOn: string,
   onProgress: (percent: number) => void,
 ): Promise<Result<StoredPhoto, UploadError>> {
   return new Promise((resolve) => {
@@ -132,18 +133,19 @@ function sendFile(
     xhr.open("POST", "/api/photos");
     xhr.setRequestHeader("content-type", file.type);
     xhr.setRequestHeader(FILE_NAME_HEADER, encodeURIComponent(file.name));
+    xhr.setRequestHeader(FILE_MODIFIED_HEADER, modifiedOn);
     xhr.setRequestHeader(BUILD_HEADER, BUILD);
     xhr.send(file);
   });
 }
 
 function uploadWith(createXhr: () => XMLHttpRequest): Transport["upload"] {
-  return async (file, onProgress) => {
+  return async (file, modifiedOn, onProgress) => {
     const problem = uploadProblem(file);
 
     if (problem) return err(problem);
 
-    return sendFile(createXhr(), file, onProgress);
+    return sendFile(createXhr(), file, modifiedOn, onProgress);
   };
 }
 

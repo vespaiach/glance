@@ -203,8 +203,8 @@ const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
 function keepUploadedImages(transport: Transport) {
   const images = new Map<string, string>();
 
-  const upload: Transport["upload"] = async (file, onProgress) => {
-    const answer = await transport.upload(file, onProgress);
+  const upload: Transport["upload"] = async (file, modifiedOn, onProgress) => {
+    const answer = await transport.upload(file, modifiedOn, onProgress);
 
     if (answer.ok) images.set(answer.value.id, URL.createObjectURL(file));
 

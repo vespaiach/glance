@@ -42,5 +42,9 @@ export interface Transport {
     location(request: LocationRequest): Answer<void>;
     signout(): Answer<void>;
   };
-  upload(file: File, onProgress: (percent: number) => void): Answer<StoredPhoto, UploadError>;
+  upload(
+    file: File,
+    modifiedOn: string,
+    onProgress: (percent: number) => void,
+  ): Answer<StoredPhoto, UploadError>;
 }

@@ -401,12 +401,18 @@ export const BOARD_NOTES: readonly Note[] = [
   },
 ];
 
+const CHECKED_FROM_PHOTO = {
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
+} as const satisfies Pick<Photo, "sources" | "checked">;
+
 export const TODAY_PHOTO: Photo = {
   id: sampleId(21),
   title: "Cannon Beach",
   takenOn: "2026-09-06",
   place: "Summer trip",
   createdAt: todayAt(8, 0),
+  ...CHECKED_FROM_PHOTO,
 };
 
 export const TODAY_PHOTO_SRC = "/fixtures/photos/coast.svg";
@@ -426,6 +432,7 @@ export const GALLERY_PHOTOS: Photo[] = PHOTO_ROWS.map(([slug, title, takenOn, pl
   takenOn,
   place,
   createdAt: todayAt(8, 59 - index),
+  ...CHECKED_FROM_PHOTO,
 }));
 
 export const galleryPhotoSrc = (photoId: string) => `/fixtures/photos/${photoId}.svg`;

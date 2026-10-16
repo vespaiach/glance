@@ -227,9 +227,14 @@ const PHOTO_ROWS = [
   ["coast", "Cannon Beach", "2026-09-06", "Summer trip"],
 ] as const;
 
-type PhotoSlug = (typeof PHOTO_ROWS)[number][0];
+type PhotoSlug = (typeof PHOTO_ROWS)[number][0] | "beach" | "halloween";
 
 const imagePath = (slug: PhotoSlug) => `/fixtures/photos/${slug}.svg`;
+
+const CHECKED_FROM_PHOTO = {
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
+} as const satisfies Pick<Photo, "sources" | "checked">;
 
 export const FIXTURE_PHOTOS: Photo[] = PHOTO_ROWS.map(([, title, takenOn, place], index) => ({
   id: fixtureId(3, index + 1),
@@ -237,9 +242,34 @@ export const FIXTURE_PHOTOS: Photo[] = PHOTO_ROWS.map(([, title, takenOn, place]
   takenOn,
   place,
   createdAt: at(4, 19, index),
+  ...CHECKED_FROM_PHOTO,
 }));
 
-const PHOTO_IMAGES = new Map(PHOTO_ROWS.map(([slug], index) => [fixtureId(3, index + 1), slug]));
+export const FIXTURE_UPLOADED_PHOTOS: Photo[] = [
+  {
+    id: fixtureId(3, 7),
+    title: "Cannon Beach",
+    takenOn: "2026-08-16",
+    place: "Cannon Beach, OR",
+    createdAt: at(9, 10, 30),
+    sources: { title: "place", takenOn: "photo", place: "photo-location" },
+    checked: false,
+  },
+  {
+    id: fixtureId(3, 8),
+    title: "Halloween costumes",
+    takenOn: "2025-10-31",
+    createdAt: at(9, 10, 31),
+    sources: { title: "file-name", takenOn: "file-name", place: "none" },
+    checked: false,
+  },
+];
+
+const PHOTO_IMAGES = new Map<string, PhotoSlug>([
+  ...PHOTO_ROWS.map(([slug], index) => [fixtureId(3, index + 1), slug] as const),
+  [fixtureId(3, 7), "beach"],
+  [fixtureId(3, 8), "halloween"],
+]);
 
 export function fixturePhotoImage(photoId: string): string | undefined {
   const slug = PHOTO_IMAGES.get(photoId);
@@ -358,7 +388,10 @@ export interface FixtureUpload {
   preview?: string;
 }
 
-export const FIXTURE_UPLOADS: Record<"one" | "progress" | "error" | "offline", FixtureUpload[]> = {
+export const FIXTURE_UPLOADS: Record<
+  "one" | "progress" | "error" | "offline" | "done",
+  FixtureUpload[]
+> = {
   one: [{ title: "IMG_2041", status: "uploading", progress: 64, preview: imagePath("orchard") }],
   progress: [
     { title: "IMG_2041", status: "uploading", progress: 82, preview: imagePath("orchard") },
@@ -377,4 +410,5 @@ export const FIXTURE_UPLOADS: Record<"one" | "progress" | "error" | "offline", F
     },
   ],
   offline: [{ title: "IMG_2041", status: "paused", progress: 40, preview: imagePath("orchard") }],
+  done: [],
 };

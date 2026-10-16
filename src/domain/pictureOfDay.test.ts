@@ -15,6 +15,8 @@ const photo = (
   id,
   title: id,
   takenOn: "2026-06-01",
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   createdAt: noon(uploadedOn),
   ...extra,
 });

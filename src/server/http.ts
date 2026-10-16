@@ -5,9 +5,9 @@ import { Readable } from "node:stream";
 import { type NextRequest, NextResponse } from "next/server";
 import * as v from "valibot";
 import { BUILD_HEADER, isSupportedBuild } from "@/domain/build";
-import { FILE_NAME_HEADER } from "@/domain/photoUpload";
+import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
-import { WeatherLocationSchema } from "@/domain/schemas";
+import { IsoDateSchema, WeatherLocationSchema } from "@/domain/schemas";
 import { appUrl, isAllowedOrigin, requireDisplay, type SignedInDisplay } from "./auth";
 import {
   PHOTO_VARIANTS,
@@ -17,7 +17,7 @@ import {
 } from "./services/photos";
 import type { Coordinates } from "./weather/provider";
 
-const MIN_CLIENT_BUILD = 4;
+const MIN_CLIENT_BUILD = 5;
 
 const DAY_S = 24 * 60 * 60;
 
@@ -146,10 +146,15 @@ export function readUpload(request: NextRequest): Result<PhotoUpload, "invalid">
 
   if (name === undefined) return err("invalid");
 
+  const modifiedOn = request.headers.get(FILE_MODIFIED_HEADER);
+
+  if (modifiedOn !== null && !v.is(IsoDateSchema, modifiedOn)) return err("invalid");
+
   const length = request.headers.get("content-length");
 
   return ok({
     name,
+    ...(modifiedOn !== null && { modifiedOn }),
     type: request.headers.get("content-type") ?? "",
     size: length === null ? undefined : Number(length),
     body: request.body ?? Readable.from([]),

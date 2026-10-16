@@ -7,7 +7,7 @@ const IdSchema = v.pipe(v.string(), v.uuid());
 
 const IsoTimestampSchema = v.pipe(v.string(), v.isoTimestamp());
 
-const IsoDateSchema = v.pipe(v.string(), v.isoDate());
+export const IsoDateSchema = v.pipe(v.string(), v.isoDate());
 
 const RequiredTextSchema = v.pipe(
   v.string(),
@@ -81,12 +81,21 @@ export type Note = v.InferOutput<typeof NoteSchema>;
 
 export const SyncedNoteSchema = v.object({ ...NoteSchema.entries, ...serverEntries });
 
+export const PhotoSourcesSchema = v.object({
+  title: v.picklist(["photo", "file-name", "place", "file", "edited"]),
+  takenOn: v.picklist(["photo", "file-name", "file-date", "none", "edited"]),
+  place: v.picklist(["photo-location", "none", "edited"]),
+});
+export type PhotoSources = v.InferOutput<typeof PhotoSourcesSchema>;
+
 export const PhotoSchema = v.object({
   id: IdSchema,
   title: v.string(),
   takenOn: IsoDateSchema,
   place: v.optional(v.string()),
   createdAt: IsoTimestampSchema,
+  sources: PhotoSourcesSchema,
+  checked: v.boolean(),
 });
 export type Photo = v.InferOutput<typeof PhotoSchema>;
 

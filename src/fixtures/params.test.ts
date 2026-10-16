@@ -34,7 +34,7 @@ describe("parseFixtureParams", () => {
     ["season", ["spring", "summer", "fall", "winter"]],
     ["net", ["loading", "offline", "wxerror"]],
     ["signin", ["form", "sending", "sent", "name", "phone", "expired", "offline", "done"]],
-    ["upload", ["one", "progress", "error", "offline"]],
+    ["upload", ["one", "progress", "error", "offline", "done"]],
     ["wx", ["searching", "unknown", "choose"]],
     ["events", ["many"]],
   ] as const)("§6 accepts each %s value", (name, values) => {
@@ -55,7 +55,7 @@ describe("parseFixtureParams", () => {
     "signin=welcome",
     "on=device",
     "acct=new",
-    "upload=done",
+    "upload=finished",
     "wx=found",
     "now=yesterday",
     "now=2026-10-09",

@@ -42,6 +42,8 @@ const COAST: Photo = {
   id: "0195f0a0-0000-7000-8000-000000000002",
   title: "Cannon Beach",
   takenOn: "2026-09-06",
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   place: "Summer trip",
   createdAt: "2026-10-05T19:05:00.000Z",
 };

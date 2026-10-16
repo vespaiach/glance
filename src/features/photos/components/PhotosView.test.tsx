@@ -9,6 +9,8 @@ import { PhotosView } from "./PhotosView";
 const tz = deviceTimeZone();
 
 const photo = (n: number, title: string, takenOn: string, place: string): Photo => ({
+  sources: { title: "photo", takenOn: "photo", place: "photo-location" },
+  checked: true,
   id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
   title,
   takenOn,

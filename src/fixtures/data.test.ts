@@ -30,6 +30,7 @@ import {
   FIXTURE_SETTINGS,
   FIXTURE_SHEET_TARGETS,
   FIXTURE_TIME_ZONE,
+  FIXTURE_UPLOADED_PHOTOS,
   FIXTURE_UPLOADS,
   FIXTURE_WEATHER,
   fixturePhotoImage,
@@ -163,7 +164,7 @@ describe("Appendix A fixtures", () => {
   });
 
   it("Appendix A every photo has a bundled image, never a network one", () => {
-    for (const photo of FIXTURE_PHOTOS) {
+    for (const photo of [...FIXTURE_PHOTOS, ...FIXTURE_UPLOADED_PHOTOS]) {
       const image = fixturePhotoImage(photo.id);
 
       expect(image).toMatch(/^\/fixtures\/photos\/[a-z-]+\.svg$/);

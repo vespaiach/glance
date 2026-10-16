@@ -1,3 +1,5 @@
+import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
+import { openPglite, pgliteDb } from "./pglite";
 import { migratedDbPerTest } from "./testDb";
 
 const db = migratedDbPerTest();
@@ -107,7 +109,9 @@ describe("001_init", () => {
     await insertAccount("a1");
 
     await db().run(
-      "INSERT INTO photos (id, account_id, title, taken_on, file_path, created_at, version) VALUES ('p1', 'a1', 'Beach', '2026-07-04', 'p1', $1, 1)",
+      `INSERT INTO photos (id, account_id, title, taken_on, file_path, created_at, updated_at, version,
+         title_source, date_source, place_source)
+       VALUES ('p1', 'a1', 'Beach', '2026-07-04', 'p1', $1, $1, 1, 'file-name', 'photo', 'none')`,
       [NOW],
     );
 
@@ -151,5 +155,96 @@ describe("002_event_all_day", () => {
         ["2026-10-16T00:00:00.000Z", "2026-10-16T05:00:00.000Z"],
       ),
     ).rejects.toThrow(/check constraint/);
+  });
+});
+
+async function insertPhoto(
+  id: string,
+  sources: { title: string; date: string; place: string },
+): Promise<void> {
+  await db().run(
+    `INSERT INTO photos (id, account_id, title, taken_on, file_path, created_at, updated_at, version,
+       title_source, date_source, place_source)
+     VALUES ($1, 'a1', 'Beach', NULL, $1, $2, $2, 1, $3, $4, $5)`,
+    [id, NOW, sources.title, sources.date, sources.place],
+  );
+}
+
+describe("003_photo_details", () => {
+  it("D22 stores a photo with no date, its sources and not checked", async () => {
+    await insertAccount("a1");
+    await insertPhoto("p1", { title: "place", date: "none", place: "photo-location" });
+
+    expect(
+      await db().one(
+        "SELECT taken_on, title_source, date_source, place_source, checked, deleted_at FROM photos",
+      ),
+    ).toEqual({
+      taken_on: null,
+      title_source: "place",
+      date_source: "none",
+      place_source: "photo-location",
+      checked: false,
+      deleted_at: null,
+    });
+  });
+
+  it.each([
+    { title: "gps", date: "photo", place: "none" },
+    { title: "photo", date: "exif", place: "none" },
+    { title: "photo", date: "photo", place: "photo" },
+  ])("D22 rejects an unknown source %o", async (sources) => {
+    await insertAccount("a1");
+
+    await expect(insertPhoto("p1", sources)).rejects.toThrow(/check constraint/);
+  });
+
+  it("D22 gives B05's photos their upload time, their sources, checked and a new version", async () => {
+    const client = await openPglite();
+    const old = pgliteDb(client);
+    const migrations = readMigrations(MIGRATIONS_DIR);
+    await migrate(
+      old,
+      migrations.filter((migration) => migration.version < 3),
+    );
+    await old.run(
+      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+      [NOW],
+    );
+    await old.run("UPDATE sync_state SET version = 7");
+    await old.run(
+      `INSERT INTO photos (id, account_id, title, taken_on, file_path, created_at, version) VALUES
+         ('exif', 'a1', 'IMG_1', '2024-07-04', 'exif', '2026-10-09T14:00:00.000Z', 3),
+         ('upload', 'a1', 'IMG_2', '2026-10-09', 'upload', '2026-10-10T02:00:00.000Z', 7)`,
+    );
+
+    await migrate(old, migrations);
+
+    expect(
+      await old.all(
+        "SELECT id, updated_at, title_source, date_source, place_source, checked, version FROM photos ORDER BY id",
+      ),
+    ).toEqual([
+      {
+        id: "exif",
+        updated_at: "2026-10-09T14:00:00.000Z",
+        title_source: "file",
+        date_source: "photo",
+        place_source: "none",
+        checked: true,
+        version: 8,
+      },
+      {
+        id: "upload",
+        updated_at: "2026-10-10T02:00:00.000Z",
+        title_source: "file",
+        date_source: "file-date",
+        place_source: "none",
+        checked: true,
+        version: 8,
+      },
+    ]);
+    expect(await old.one("SELECT version FROM sync_state")).toEqual({ version: 8 });
+    await client.close();
   });
 });

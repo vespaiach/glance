@@ -3,7 +3,9 @@
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { usePhotosRepo } from "@/data/repos";
 import { uuidv7 } from "@/domain/id";
+import { dateKey } from "@/domain/zone";
 import { useNowStore } from "@/shell/providers/now";
+import { useTimeZone } from "@/shell/providers/timeZone";
 import { chosenTile, type UploadTile, uploadFailure, uploads } from "./uploads";
 
 type Chosen = { file: File; preview: string };
@@ -24,6 +26,8 @@ export function useUploads(initial: () => UploadTile[], online: boolean): Upload
 
   const clock = useNowStore();
 
+  const tz = useTimeZone();
+
   const chosen = useRef(new Map<string, Chosen>());
 
   const sending = useRef(new Set<string>());
@@ -43,7 +47,9 @@ export function useUploads(initial: () => UploadTile[], online: boolean): Upload
   const send = async (id: string, file: File) => {
     sending.current.add(id);
 
-    const answer = await repo.upload(file, (percent) =>
+    const modifiedOn = dateKey(new Date(file.lastModified), tz);
+
+    const answer = await repo.upload(file, modifiedOn, (percent) =>
       dispatch({ type: "progress", id, percent }),
     );
 

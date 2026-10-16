@@ -20,7 +20,7 @@ const CHOICES = {
   ],
   on: ["link"],
   acct: ["returning"],
-  upload: ["one", "progress", "error", "offline"],
+  upload: ["one", "progress", "error", "offline", "done"],
   wx: [
     "searching",
     "unknown",

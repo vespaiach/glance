@@ -13,14 +13,15 @@ export type { UploadError };
 export interface PhotosRepo {
   upload(
     file: File,
+    modifiedOn: string,
     onProgress: (percent: number) => void,
   ): Promise<Result<StoredPhoto, UploadError>>;
 }
 
 export function createPhotosRepo(store: RepoStore): PhotosRepo {
   return {
-    upload: async (file, onProgress) => {
-      const answer = await store.upload(file, onProgress);
+    upload: async (file, modifiedOn, onProgress) => {
+      const answer = await store.upload(file, modifiedOn, onProgress);
 
       if (answer.ok) await store.db.photos.put(answer.value);
 
