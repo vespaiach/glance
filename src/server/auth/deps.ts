@@ -1,10 +1,10 @@
 import "server-only";
-import type Database from "better-sqlite3";
+import type { Db } from "../db/db";
 import type { Mailer } from "../mail/mailer";
 import type { RateLimiter } from "./rateLimit";
 
 export type AuthDeps = {
-  db: Database.Database;
+  db: Db;
   now: () => Date;
   mailer: Mailer;
   appUrl: string;

@@ -1,6 +1,7 @@
 import { parseEnv } from "./env";
 
 const VALID = {
+  DATABASE_URL: "postgres://glance@localhost:5432/glance",
   DATA_DIR: "/data",
   APP_URL: "https://glance.example.com",
   RESEND_API_KEY: "re_123",
@@ -8,19 +9,25 @@ const VALID = {
 };
 
 describe("parseEnv", () => {
-  it("tech§6.5 reads DATA_DIR, APP_URL, RESEND_API_KEY and MAIL_FROM", () => {
+  it("tech§6.5 reads DATABASE_URL, DATA_DIR, APP_URL, RESEND_API_KEY and MAIL_FROM", () => {
     expect(parseEnv({ ...VALID, OTHER: "x" })).toEqual(VALID);
   });
 
   it("tech§6.5 fails fast naming every missing variable", () => {
     expect(() => parseEnv({ APP_URL: VALID.APP_URL, MAIL_FROM: VALID.MAIL_FROM })).toThrow(
-      "Invalid server config: DATA_DIR, RESEND_API_KEY",
+      "Invalid server config: DATABASE_URL, DATA_DIR, RESEND_API_KEY",
     );
   });
 
   it("tech§6.5 rejects a blank DATA_DIR, RESEND_API_KEY or MAIL_FROM", () => {
     expect(() => parseEnv({ ...VALID, DATA_DIR: "", RESEND_API_KEY: " ", MAIL_FROM: " " })).toThrow(
       "Invalid server config: DATA_DIR, RESEND_API_KEY, MAIL_FROM",
+    );
+  });
+
+  it("tech§6.5 rejects a DATABASE_URL that isn't a postgres:// URL", () => {
+    expect(() => parseEnv({ ...VALID, DATABASE_URL: "/var/lib/glance/glance.db" })).toThrow(
+      "Invalid server config: DATABASE_URL",
     );
   });
 

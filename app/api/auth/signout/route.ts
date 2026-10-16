@@ -4,12 +4,12 @@ import { clearCookie, crossOrigin } from "@/server/http";
 
 export const runtime = "nodejs";
 
-export function POST(request: NextRequest): NextResponse {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const forbidden = crossOrigin(request);
 
   if (forbidden) return forbidden;
 
-  signOut(request.cookies.get("session")?.value);
+  await signOut(request.cookies.get("session")?.value);
 
   const response = new NextResponse(null, { status: 204 });
 

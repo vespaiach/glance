@@ -10,7 +10,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (forbidden) return forbidden;
 
-  const display = signedInDisplay(request);
+  const display = await signedInDisplay(request);
 
   if (!display.ok) return errorJson(display.error, 401);
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!body.ok) return errorJson(body.error, 400);
 
-  const saved = saveName(display.value.accountId, body.value.name);
+  const saved = await saveName(display.value.accountId, body.value.name);
 
   return saved.ok ? NextResponse.json(saved.value) : errorJson(saved.error, 404);
 }

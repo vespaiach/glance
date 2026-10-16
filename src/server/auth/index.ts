@@ -1,5 +1,5 @@
 import "server-only";
-import { getDb } from "../db/connection";
+import { getDb } from "../db/db";
 import { env } from "../env";
 import { createMailer } from "../mail/mailer";
 import * as account from "./account";
@@ -51,8 +51,8 @@ export function requireDisplay(sessionToken: string | undefined) {
   return sessions.requireDisplay(deps(), sessionToken);
 }
 
-export function signOut(sessionToken: string | undefined): void {
-  sessions.signOut(deps().db, sessionToken);
+export function signOut(sessionToken: string | undefined): Promise<void> {
+  return sessions.signOut(deps().db, sessionToken);
 }
 
 export function saveName(accountId: string, name: string) {

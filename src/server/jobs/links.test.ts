@@ -5,21 +5,22 @@ const harness = serviceHarnessPerTest();
 
 const HOUR_MS = 60 * 60 * 1000;
 
-function storeLink(tokenHash: string, expiresAt: Date, usedAt: Date | null = null): void {
-  harness
-    .deps()
-    .db.prepare(
-      `INSERT INTO magic_links (token_hash, email, pending_id, time_zone, expires_at, used_at)
-       VALUES (?, 'maria@example.com', ?, 'America/New_York', ?, ?)`,
-    )
-    .run(tokenHash, `pending-${tokenHash}`, expiresAt.toISOString(), usedAt?.toISOString() ?? null);
+async function storeLink(
+  tokenHash: string,
+  expiresAt: Date,
+  usedAt: Date | null = null,
+): Promise<void> {
+  await harness.deps().db.run(
+    `INSERT INTO magic_links (token_hash, email, pending_id, time_zone, expires_at, used_at)
+     VALUES ($1, 'maria@example.com', $2, 'America/New_York', $3, $4)`,
+    [tokenHash, `pending-${tokenHash}`, expiresAt.toISOString(), usedAt?.toISOString() ?? null],
+  );
 }
 
-function linkHashes(): string[] {
-  const rows = harness
+async function linkHashes(): Promise<string[]> {
+  const rows = await harness
     .deps()
-    .db.prepare("SELECT token_hash FROM magic_links ORDER BY token_hash")
-    .all() as { token_hash: string }[];
+    .db.all<{ token_hash: string }>("SELECT token_hash FROM magic_links ORDER BY token_hash");
 
   return rows.map((row) => row.token_hash);
 }
@@ -29,31 +30,31 @@ function hoursAgo(hours: number): Date {
 }
 
 describe("cleanupLinks", () => {
-  it("SIGNIN-12 removes links that expired more than a day ago, used or not", () => {
-    storeLink("a-old", hoursAgo(25));
-    storeLink("b-old-used", hoursAgo(30), hoursAgo(30.1));
+  it("SIGNIN-12 removes links that expired more than a day ago, used or not", async () => {
+    await storeLink("a-old", hoursAgo(25));
+    await storeLink("b-old-used", hoursAgo(30), hoursAgo(30.1));
 
-    cleanupLinks(harness.deps());
+    await cleanupLinks(harness.deps());
 
-    expect(linkHashes()).toEqual([]);
+    expect(await linkHashes()).toEqual([]);
   });
 
-  it("SIGNIN-12 keeps live links and links expired within the day, so the waiting screen can still say why", () => {
-    storeLink("a-live", new Date(START.getTime() + 5 * 60 * 1000));
-    storeLink("b-expired", hoursAgo(2));
-    storeLink("c-used", hoursAgo(23), hoursAgo(23.1));
+  it("SIGNIN-12 keeps live links and links expired within the day, so the waiting screen can still say why", async () => {
+    await storeLink("a-live", new Date(START.getTime() + 5 * 60 * 1000));
+    await storeLink("b-expired", hoursAgo(2));
+    await storeLink("c-used", hoursAgo(23), hoursAgo(23.1));
 
-    cleanupLinks(harness.deps());
+    await cleanupLinks(harness.deps());
 
-    expect(linkHashes()).toEqual(["a-live", "b-expired", "c-used"]);
+    expect(await linkHashes()).toEqual(["a-live", "b-expired", "c-used"]);
   });
 
-  it("SIGNIN-12 leaves accounts and their sessions alone", () => {
-    storeLink("a-old", hoursAgo(25));
+  it("SIGNIN-12 leaves accounts and their sessions alone", async () => {
+    await storeLink("a-old", hoursAgo(25));
 
-    cleanupLinks(harness.deps());
+    await cleanupLinks(harness.deps());
 
-    expect(harness.deps().db.prepare("SELECT id FROM accounts WHERE id = ?").get(MARIA)).toEqual({
+    expect(await harness.deps().db.one("SELECT id FROM accounts WHERE id = $1", [MARIA])).toEqual({
       id: MARIA,
     });
   });

@@ -7,44 +7,42 @@ const MARIA = "0192f3a0-0000-7000-8000-000000000001";
 
 const OMAR = "0192f3a0-0000-7000-8000-000000000002";
 
-function addAccounts() {
-  const insert = harness
-    .deps()
-    .db.prepare(
-      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES (?, ?, 'America/New_York', ?)",
-    );
+async function addAccounts(): Promise<void> {
+  const insert =
+    "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ($1, $2, 'America/New_York', $3)";
 
-  insert.run(MARIA, "maria@example.com", START.toISOString());
-  insert.run(OMAR, "omar@example.com", START.toISOString());
+  await harness.deps().db.run(insert, [MARIA, "maria@example.com", START.toISOString()]);
+  await harness.deps().db.run(insert, [OMAR, "omar@example.com", START.toISOString()]);
 }
 
-const setupDoneAt = (accountId: string) => accountById(harness.deps().db, accountId)?.setup_done_at;
+const setupDoneAt = async (accountId: string) =>
+  (await accountById(harness.deps().db, accountId))?.setup_done_at;
 
 describe("finishSetup", () => {
-  it("SIGNIN-14 records when the account's first setup ended", () => {
-    addAccounts();
+  it("SIGNIN-14 records when the account's first setup ended", async () => {
+    await addAccounts();
     harness.advance(60_000);
 
-    finishSetup(harness.deps(), MARIA);
+    await finishSetup(harness.deps(), MARIA);
 
-    expect(setupDoneAt(MARIA)).toBe("2026-10-09T14:01:00.000Z");
+    expect(await setupDoneAt(MARIA)).toBe("2026-10-09T14:01:00.000Z");
   });
 
-  it("SIGNIN-14 keeps the first end when the step ends again", () => {
-    addAccounts();
-    finishSetup(harness.deps(), MARIA);
+  it("SIGNIN-14 keeps the first end when the step ends again", async () => {
+    await addAccounts();
+    await finishSetup(harness.deps(), MARIA);
     harness.advance(60_000);
 
-    finishSetup(harness.deps(), MARIA);
+    await finishSetup(harness.deps(), MARIA);
 
-    expect(setupDoneAt(MARIA)).toBe(START.toISOString());
+    expect(await setupDoneAt(MARIA)).toBe(START.toISOString());
   });
 
-  it("tech§5 ends only its own account's setup", () => {
-    addAccounts();
+  it("tech§5 ends only its own account's setup", async () => {
+    await addAccounts();
 
-    finishSetup(harness.deps(), MARIA);
+    await finishSetup(harness.deps(), MARIA);
 
-    expect(setupDoneAt(OMAR)).toBeNull();
+    expect(await setupDoneAt(OMAR)).toBeNull();
   });
 });

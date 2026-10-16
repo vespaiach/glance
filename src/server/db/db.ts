@@ -1,5 +1,6 @@
 import "server-only";
 import pg from "pg";
+import { env } from "../env";
 
 export type Db = {
   all<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
@@ -48,6 +49,14 @@ export function driverDb(driver: DbDriver): Db {
     },
     tx: (fn) => driver.tx(fn),
   };
+}
+
+const shared = globalThis as typeof globalThis & { glanceDb?: Db };
+
+export function getDb(): Db {
+  shared.glanceDb ??= openPgDb(env().DATABASE_URL);
+
+  return shared.glanceDb;
 }
 
 export function openPgDb(connectionString: string): Db {

@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
 
 export async function GET(request: NextRequest, { params }: Context): Promise<Response> {
-  const display = signedInDisplay(request);
+  const display = await signedInDisplay(request);
 
   if (!display.ok) return errorJson(display.error, 401);
 

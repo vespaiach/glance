@@ -1,7 +1,7 @@
 import "server-only";
-import type Database from "better-sqlite3";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, Weather, WeatherLocation } from "@/domain/schemas";
+import type { Db } from "../db/db";
 import { placeLabel } from "../weather/places";
 import type {
   Coordinates,
@@ -26,13 +26,13 @@ export async function accountWeather(
   { db, now, provider }: WeatherDeps,
   accountId: string,
 ): Promise<Result<Weather, WeatherError>> {
-  const place = weatherLocation(db, accountId);
+  const place = await weatherLocation(db, accountId);
 
   if (!place) return err("no-location");
 
   const asked = now();
 
-  const cached = freshCache(db, accountId, placeKey(place), asked);
+  const cached = await freshCache(db, accountId, placeKey(place), asked);
 
   if (cached) return ok(cached);
 
@@ -42,7 +42,7 @@ export async function accountWeather(
 
   const weather = { location: placeLabel(place), ...fetched.value };
 
-  saveCache(db, accountId, placeKey(place), weather);
+  await saveCache(db, accountId, placeKey(place), weather);
 
   return ok(weather);
 }
@@ -73,27 +73,29 @@ function rounded({ lat, lon }: Coordinates): Coordinates {
   return { lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100 };
 }
 
-function weatherLocation(db: Database.Database, accountId: string): WeatherLocation | undefined {
-  const row = db.prepare("SELECT json FROM settings WHERE account_id = ?").get(accountId) as
-    | { json: string }
-    | undefined;
+async function weatherLocation(db: Db, accountId: string): Promise<WeatherLocation | undefined> {
+  const row = await db.one<{ json: AccountSettings }>(
+    "SELECT json FROM settings WHERE account_id = $1",
+    [accountId],
+  );
 
-  return row && (JSON.parse(row.json) as AccountSettings).weatherLocation;
+  return row?.json.weatherLocation;
 }
 
 function placeKey({ lat, lon }: WeatherLocation): string {
   return `${lat},${lon}`;
 }
 
-function freshCache(
-  db: Database.Database,
+async function freshCache(
+  db: Db,
   accountId: string,
   key: string,
   now: Date,
-): Weather | undefined {
-  const row = db
-    .prepare("SELECT location, json, fetched_at FROM weather_cache WHERE account_id = ?")
-    .get(accountId) as CacheRow | undefined;
+): Promise<Weather | undefined> {
+  const row = await db.one<CacheRow>(
+    "SELECT location, json, fetched_at FROM weather_cache WHERE account_id = $1",
+    [accountId],
+  );
 
   if (!row || row.location !== key) return undefined;
 
@@ -102,10 +104,11 @@ function freshCache(
   return age < WEATHER_CACHE_MS ? (JSON.parse(row.json) as Weather) : undefined;
 }
 
-function saveCache(db: Database.Database, accountId: string, key: string, weather: Weather): void {
-  db.prepare(
-    `INSERT INTO weather_cache (account_id, location, json, fetched_at) VALUES (?, ?, ?, ?)
+async function saveCache(db: Db, accountId: string, key: string, weather: Weather): Promise<void> {
+  await db.run(
+    `INSERT INTO weather_cache (account_id, location, json, fetched_at) VALUES ($1, $2, $3, $4)
      ON CONFLICT (account_id) DO UPDATE SET location = excluded.location, json = excluded.json,
        fetched_at = excluded.fetched_at`,
-  ).run(accountId, key, JSON.stringify(weather), weather.fetchedAt);
+    [accountId, key, JSON.stringify(weather), weather.fetchedAt],
+  );
 }

@@ -71,13 +71,16 @@ function deps(): WeatherDeps {
   return { ...harness.deps(), provider: fake.provider };
 }
 
-function locate(accountId: string, weatherLocation: WeatherLocation | undefined): void {
-  putSettings(harness.deps(), accountId, accountId, { ...DEFAULT_SETTINGS, weatherLocation });
+async function locate(
+  accountId: string,
+  weatherLocation: WeatherLocation | undefined,
+): Promise<void> {
+  await putSettings(harness.deps(), accountId, accountId, { ...DEFAULT_SETTINGS, weatherLocation });
 }
 
 describe("accountWeather", () => {
   it("WX-01 answers the forecast for the account's place, named by city and state code", async () => {
-    locate(MARIA, PORTLAND);
+    await locate(MARIA, PORTLAND);
 
     const answer = await accountWeather(deps(), MARIA);
 
@@ -86,7 +89,7 @@ describe("accountWeather", () => {
   });
 
   it("WX-06 serves the saved forecast for 15 minutes without asking the service again", async () => {
-    locate(MARIA, PORTLAND);
+    await locate(MARIA, PORTLAND);
     const first = await accountWeather(deps(), MARIA);
     harness.advance(15 * MINUTE_MS - 1);
     fake.nextTemp(70);
@@ -96,7 +99,7 @@ describe("accountWeather", () => {
   });
 
   it("WX-06 asks the service again once the saved forecast is 15 minutes old", async () => {
-    locate(MARIA, PORTLAND);
+    await locate(MARIA, PORTLAND);
     await accountWeather(deps(), MARIA);
     harness.advance(15 * MINUTE_MS);
     fake.nextTemp(70);
@@ -108,9 +111,9 @@ describe("accountWeather", () => {
   });
 
   it("WX-04 asks the service again for a newly picked place", async () => {
-    locate(MARIA, PORTLAND);
+    await locate(MARIA, PORTLAND);
     await accountWeather(deps(), MARIA);
-    locate(MARIA, AUSTIN);
+    await locate(MARIA, AUSTIN);
 
     const answer = await accountWeather(deps(), MARIA);
 
@@ -119,7 +122,7 @@ describe("accountWeather", () => {
   });
 
   it("WX-04 answers no-location when the account has picked no place", async () => {
-    locate(MARIA, undefined);
+    await locate(MARIA, undefined);
 
     expect(await accountWeather(deps(), MARIA)).toEqual(err("no-location"));
     expect(fake.provider.forecast).not.toHaveBeenCalled();
@@ -130,7 +133,7 @@ describe("accountWeather", () => {
   });
 
   it("WX-05 answers weather-failed when the service fails, and keeps no forecast", async () => {
-    locate(MARIA, PORTLAND);
+    await locate(MARIA, PORTLAND);
     fake.provider.forecast.mockResolvedValueOnce(err("weather-failed"));
 
     expect(await accountWeather(deps(), MARIA)).toEqual(err("weather-failed"));
@@ -139,8 +142,8 @@ describe("accountWeather", () => {
   });
 
   it("tech§5 never serves another account's saved forecast", async () => {
-    locate(OMAR, PORTLAND);
-    locate(MARIA, PORTLAND);
+    await locate(OMAR, PORTLAND);
+    await locate(MARIA, PORTLAND);
     await accountWeather(deps(), OMAR);
     fake.nextTemp(70);
 
@@ -151,8 +154,8 @@ describe("accountWeather", () => {
   });
 
   it("tech§5 never overwrites another account's saved forecast", async () => {
-    locate(OMAR, PORTLAND);
-    locate(MARIA, AUSTIN);
+    await locate(OMAR, PORTLAND);
+    await locate(MARIA, AUSTIN);
     const omars = await accountWeather(deps(), OMAR);
     await accountWeather(deps(), MARIA);
 

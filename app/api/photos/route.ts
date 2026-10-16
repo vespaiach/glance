@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 const PROBLEM_STATUS: Record<UploadProblem, number> = { "too-large": 413, "not-a-photo": 415 };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const display = syncWriter(request);
+  const display = await syncWriter(request);
 
   if (!display.ok) return display.error;
 

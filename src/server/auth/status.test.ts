@@ -16,12 +16,12 @@ async function waitingScreen(): Promise<{ token: string; pendingId: string }> {
   return { token: linkToken(harness.sent.at(-1)), pendingId: result.value.pendingId };
 }
 
-function openElsewhere(token: string): { sessionToken: string; accountId: string } {
-  const verified = verifyLink(harness.deps(), { token });
+async function openElsewhere(token: string): Promise<{ sessionToken: string; accountId: string }> {
+  const verified = await verifyLink(harness.deps(), { token });
 
   if (!verified.ok) throw new Error(verified.error.code);
 
-  const display = requireDisplay(harness.deps(), verified.value.sessionToken);
+  const display = await requireDisplay(harness.deps(), verified.value.sessionToken);
 
   if (!display.ok) throw new Error(display.error);
 
@@ -32,14 +32,16 @@ describe("authStatus on the waiting screen", () => {
   it("SIGNIN-04 is waiting until the link is opened", async () => {
     const { pendingId } = await waitingScreen();
 
-    expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "waiting" } });
+    expect(await authStatus(harness.deps(), { pendingId })).toEqual({
+      status: { state: "waiting" },
+    });
   });
 
   it("SIGNIN-08 is expired 10 minutes after the link was sent unopened", async () => {
     const { pendingId } = await waitingScreen();
     harness.advance(10 * 60 * 1000);
 
-    expect(authStatus(harness.deps(), { pendingId })).toEqual({
+    expect(await authStatus(harness.deps(), { pendingId })).toEqual({
       status: { state: "expired", email: "maria@example.com" },
     });
   });
@@ -48,36 +50,38 @@ describe("authStatus on the waiting screen", () => {
     const { pendingId } = await waitingScreen();
     await waitingScreen();
 
-    expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "expired" } });
+    expect(await authStatus(harness.deps(), { pendingId })).toEqual({
+      status: { state: "expired" },
+    });
   });
 
   it("SIGNIN-07 waits for the name when a new account's link opened on another device", async () => {
     const { token, pendingId } = await waitingScreen();
-    openElsewhere(token);
+    await openElsewhere(token);
 
-    expect(authStatus(harness.deps(), { pendingId })).toEqual({
+    expect(await authStatus(harness.deps(), { pendingId })).toEqual({
       status: { state: "finishing-elsewhere" },
     });
   });
 
   it("SIGNIN-07 keeps waiting after the name until the location step ends", async () => {
     const { token, pendingId } = await waitingScreen();
-    const opener = openElsewhere(token);
-    saveName(harness.deps().db, opener.accountId, "Maria");
+    const opener = await openElsewhere(token);
+    await saveName(harness.deps().db, opener.accountId, "Maria");
 
-    expect(authStatus(harness.deps(), { pendingId })).toEqual({
+    expect(await authStatus(harness.deps(), { pendingId })).toEqual({
       status: { state: "finishing-elsewhere" },
     });
   });
 
   it("SIGNIN-09 signs in with its own session once the name is saved", async () => {
     const { token, pendingId } = await waitingScreen();
-    const opener = openElsewhere(token);
-    saveName(harness.deps().db, opener.accountId, "Maria");
-    finishSetup(harness.deps(), opener.accountId);
+    const opener = await openElsewhere(token);
+    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await finishSetup(harness.deps(), opener.accountId);
     harness.advance(4000);
 
-    const answer = authStatus(harness.deps(), { pendingId });
+    const answer = await authStatus(harness.deps(), { pendingId });
 
     expect(answer.status).toEqual({
       state: "signed-in",
@@ -86,45 +90,47 @@ describe("authStatus on the waiting screen", () => {
       setupDone: true,
     });
     expect(answer.sessionToken).not.toBe(opener.sessionToken);
-    const display = requireDisplay(harness.deps(), answer.sessionToken);
+    const display = await requireDisplay(harness.deps(), answer.sessionToken);
     expect(display.ok && display.value.accountId).toBe(opener.accountId);
   });
 
   it("SIGNIN-09 says returning when the account already existed", async () => {
     const first = await waitingScreen();
-    const opener = openElsewhere(first.token);
-    saveName(harness.deps().db, opener.accountId, "Maria");
-    finishSetup(harness.deps(), opener.accountId);
+    const opener = await openElsewhere(first.token);
+    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await finishSetup(harness.deps(), opener.accountId);
     harness.advance(60_000);
     const { token, pendingId } = await waitingScreen();
-    openElsewhere(token);
+    await openElsewhere(token);
 
-    const answer = authStatus(harness.deps(), { pendingId });
+    const answer = await authStatus(harness.deps(), { pendingId });
 
     expect(answer.status).toMatchObject({ state: "signed-in", returning: true });
   });
 
   it("tech§6.2 the pending id signs in only once", async () => {
     const { token, pendingId } = await waitingScreen();
-    const opener = openElsewhere(token);
-    saveName(harness.deps().db, opener.accountId, "Maria");
-    finishSetup(harness.deps(), opener.accountId);
-    authStatus(harness.deps(), { pendingId });
+    const opener = await openElsewhere(token);
+    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await finishSetup(harness.deps(), opener.accountId);
+    await authStatus(harness.deps(), { pendingId });
 
-    expect(authStatus(harness.deps(), { pendingId })).toEqual({ status: { state: "expired" } });
+    expect(await authStatus(harness.deps(), { pendingId })).toEqual({
+      status: { state: "expired" },
+    });
   });
 
-  it("SIGNIN-08 is expired with no pending id", () => {
-    expect(authStatus(harness.deps(), {})).toEqual({ status: { state: "expired" } });
+  it("SIGNIN-08 is expired with no pending id", async () => {
+    expect(await authStatus(harness.deps(), {})).toEqual({ status: { state: "expired" } });
   });
 });
 
 describe("authStatus with a session", () => {
   it("SIGNIN-06 the opener of a new account is signed in with no name yet", async () => {
     const { token } = await waitingScreen();
-    const opener = openElsewhere(token);
+    const opener = await openElsewhere(token);
 
-    expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken })).toEqual({
+    expect(await authStatus(harness.deps(), { sessionToken: opener.sessionToken })).toEqual({
       status: {
         state: "signed-in",
         account: { id: opener.accountId, email: "maria@example.com", name: null },
@@ -135,14 +141,16 @@ describe("authStatus with a session", () => {
   });
 
   it("SIGNIN-09 the opener of a known account is returning", async () => {
-    const first = openElsewhere((await waitingScreen()).token);
-    saveName(harness.deps().db, first.accountId, "Maria");
-    finishSetup(harness.deps(), first.accountId);
+    const first = await openElsewhere((await waitingScreen()).token);
+    await saveName(harness.deps().db, first.accountId, "Maria");
+    await finishSetup(harness.deps(), first.accountId);
     harness.advance(60_000);
 
-    const opener = openElsewhere((await waitingScreen()).token);
+    const opener = await openElsewhere((await waitingScreen()).token);
 
-    expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken }).status).toMatchObject({
+    expect(
+      (await authStatus(harness.deps(), { sessionToken: opener.sessionToken })).status,
+    ).toMatchObject({
       state: "signed-in",
       account: { name: "Maria" },
       returning: true,
@@ -151,21 +159,23 @@ describe("authStatus with a session", () => {
   });
 
   it("SIGNIN-14 a named account whose location step never ended is not set up", async () => {
-    const first = openElsewhere((await waitingScreen()).token);
-    saveName(harness.deps().db, first.accountId, "Maria");
+    const first = await openElsewhere((await waitingScreen()).token);
+    await saveName(harness.deps().db, first.accountId, "Maria");
     harness.advance(60_000);
 
-    const opener = openElsewhere((await waitingScreen()).token);
+    const opener = await openElsewhere((await waitingScreen()).token);
 
-    expect(authStatus(harness.deps(), { sessionToken: opener.sessionToken }).status).toMatchObject({
+    expect(
+      (await authStatus(harness.deps(), { sessionToken: opener.sessionToken })).status,
+    ).toMatchObject({
       state: "signed-in",
       account: { name: "Maria" },
       setupDone: false,
     });
   });
 
-  it("SIGNIN-12 a stale link's email is reported to the device that opened it", () => {
-    expect(authStatus(harness.deps(), { linkEmail: "maria@example.com" })).toEqual({
+  it("SIGNIN-12 a stale link's email is reported to the device that opened it", async () => {
+    expect(await authStatus(harness.deps(), { linkEmail: "maria@example.com" })).toEqual({
       status: { state: "expired", email: "maria@example.com" },
     });
   });

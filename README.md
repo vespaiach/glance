@@ -20,7 +20,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Client data | [Dexie](https://dexie.org) (IndexedDB) as the local store, sync engine in a Web Worker via Comlink |
 | Offline | [Serwist](https://serwist.pages.dev) service worker (PWA) |
 | Validation | [Valibot](https://valibot.dev) schemas shared by client and server |
-| Server | Next.js Route Handlers, SQLite via `better-sqlite3` (raw SQL + numbered migrations) |
+| Server | Next.js Route Handlers, PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) |
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
 | Email | [Resend](https://resend.com) HTTP API (sign-in links) |
@@ -33,11 +33,11 @@ Browser (one per screen)                               Next.js server (one Node 
 ┌──────────────────────────────────────────┐          ┌─────────────────────────────────────┐
 │ Screens (features/*)                     │          │ app/api/**/route.ts                 │
 │   read ─▶ data hooks (useLiveQuery)      │          │   session → Valibot → service       │
-│   write ─▶ repos ─▶ Dexie (row + outbox) │          │ server/services ─▶ SQLite           │
+│   write ─▶ repos ─▶ Dexie (row + outbox) │          │ server/services ─▶ PostgreSQL       │
 │                        ▲                 │  HTTPS   │ server/bus ─▶ SSE per account       │
-│ Sync worker ───────────┘                 │◀────────▶│ server/jobs (expiry, backups)       │
+│ Sync worker ───────────┘                 │◀────────▶│ server/jobs (expiry, link cleanup)  │
 │   push outbox · pull changes · SSE/poll  │  cookie  │ server/weather · server/mail        │
-│ Service worker: app shell + photo cache  │          │ DATA_DIR: glance.db, photos, backups│
+│ Service worker: app shell + photo cache  │          │ DATA_DIR: photos                    │
 └──────────────────────────────────────────┘          └─────────────────────────────────────┘
 ```
 
@@ -57,7 +57,7 @@ src/theme/      StyleX tokens, season themes, fonts
 src/server/     server-only: db, auth, services, weather, mail, jobs, SSE bus
 src/fixtures/   demo data for development
 src/copy.ts     every user-facing string
-db/migrations/  SQLite schema
+db/migrations/  PostgreSQL schema
 docs/           spec, technical design, plan, design handoff and prompts
 ```
 
@@ -66,6 +66,7 @@ docs/           spec, technical design, plan, design handoff and prompts
 ### Requirements
 
 - **Node 24** (see `.nvmrc`) and npm
+- **PostgreSQL** (any recent version) running locally, with a `glance` database: `createdb glance`. Tests don't need it (they run on PGlite)
 - A [Resend](https://resend.com) API key: the server needs one to boot, and it sends the sign-in emails
 
 ### Get started
@@ -78,13 +79,13 @@ npm ci
 npm run dev
 ```
 
-Open <http://localhost:3000>. The dev server reads `.env.development` (committed), with data in `.data/` (git-ignored), then `.env.development.local` (git-ignored) for your own `RESEND_API_KEY`. Migrations run on boot.
+Open <http://localhost:3000>. The dev server reads `.env.development` (committed: `DATABASE_URL=postgres://localhost:5432/glance`, photos in `.data/`, git-ignored), then `.env.development.local` (git-ignored) for your own `RESEND_API_KEY` or a different `DATABASE_URL`. Migrations run on boot; without a reachable database the server logs the error and stops.
 
 The dev server is also a **demo build**: it opens Today on seeded fixture data with no backend and no sign-in, and **`/dev/gallery`** shows every component in all four seasons. Fixture URL params reproduce any design state, e.g. `/today?season=winter&net=offline` or `/notes?sheet=newnote` (full list in [product spec §6](docs/product-spec.md)). The server still checks its config at boot, so put your own `RESEND_API_KEY=re_…` in `.env.development.local`; without one it stops with `Invalid server config: RESEND_API_KEY`.
 
 ### Real sign-in and offline
 
-Sign-in, sync and the service worker only run in a production build. Run `npm run build`, then `npm start` with `DATA_DIR` (an empty folder), `APP_URL=http://localhost:3000`, `RESEND_API_KEY` and `MAIL_FROM` (an address on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email). Request a link on `/signin` and open it from the email. Browsers treat `localhost` as secure, so the service worker and the offline cold start work there too.
+Sign-in, sync and the service worker only run in a production build. Run `npm run build`, then `npm start` with `DATABASE_URL`, `DATA_DIR` (an empty folder), `APP_URL=http://localhost:3000`, `RESEND_API_KEY` and `MAIL_FROM` (an address on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email). Request a link on `/signin` and open it from the email. Browsers treat `localhost` as secure, so the service worker and the offline cold start work there too.
 
 ### Commands
 
@@ -95,7 +96,7 @@ Sign-in, sync and the service worker only run in a production build. Run `npm ru
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest (unit, component, data and sync tests) |
 | `npm run build` | Production build |
-| `npm start` | Serve the production build (needs `DATA_DIR`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`) |
+| `npm start` | Serve the production build (needs `DATABASE_URL`, `DATA_DIR`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`) |
 
 CI runs `check` → `typecheck` → `test` → `build`. A pre-commit hook in `.githooks/` is installed by `npm ci`.
 
