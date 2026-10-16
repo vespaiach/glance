@@ -31,6 +31,7 @@ export {
   usePhotoSrc,
   usePhotos,
   usePhotosRepo,
+  usePictureOfDay,
 } from "./photos";
 export {
   type DevicePosition,

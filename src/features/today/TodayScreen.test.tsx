@@ -163,6 +163,14 @@ test("TODAY-07 the picture of the day shows on the season background", async () 
   expect(await screen.findByRole("img", { name: "Cannon Beach" })).toBeInTheDocument();
 });
 
+test("TODAY-07 a photo taken on this date in an earlier year shows as On this day", async () => {
+  await store.db.photos.put(synced({ ...COAST, takenOn: "2025-10-09" }));
+
+  renderToday();
+
+  expect(await screen.findByText("On this day · 2025")).toBeInTheDocument();
+});
+
 test("TODAY-10 a photo background drops the picture of the day", async () => {
   await store.db.photos.put(synced(COAST));
   await createSettingsRepo(store).update({

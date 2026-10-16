@@ -71,6 +71,7 @@ export const copy = {
     },
     picture: {
       eyebrow: "Picture of the day",
+      onThisDay: (year: number) => `On this day · ${year}`,
       emptyBody: "Appears once someone uploads a photo.",
       upload: "Upload",
       loading: "Loading photo",

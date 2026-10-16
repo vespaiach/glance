@@ -9,9 +9,9 @@ import {
   useNotes,
   usePhotoSrc,
   usePhotos,
+  usePictureOfDay,
   useWeather,
 } from "@/data/repos";
-import { pictureOfDay } from "@/domain/pictureOfDay";
 import type { AccountSettings, CalendarEvent, Photo } from "@/domain/schemas";
 import { todayHero } from "@/domain/todayHero";
 import { dateKey } from "@/domain/zone";
@@ -69,23 +69,33 @@ function HeroClock({ children }: { children: ReactNode }) {
 
 type PictureProps = {
   state: ZoneState<Photo>;
-  now: Date;
+  day: string;
   tz: string;
   canUpload: boolean;
   onUpload: () => void;
 };
 
-function Picture({ state, now, tz, canUpload, onUpload }: PictureProps) {
+function Picture({ state, day, tz, canUpload, onUpload }: PictureProps) {
   const photoSrc = usePhotoSrc();
+
+  const pick = usePictureOfDay(day, tz);
 
   const empty = <PictureOfDayEmpty canUpload={canUpload} onUpload={onUpload} />;
 
   return (
     <Zone state={state} loading={<PictureOfDaySkeleton />} empty={empty} failed={null}>
-      {(photos) => {
-        const photo = pictureOfDay(photos, now, tz);
+      {() => {
+        if (pick === undefined) return <PictureOfDaySkeleton />;
 
-        return photo ? <PictureOfDay photo={photo} src={photoSrc(photo.id, "display")} /> : empty;
+        if (pick === null) return empty;
+
+        return (
+          <PictureOfDay
+            photo={pick.photo}
+            onThisDay={pick.onThisDay}
+            src={photoSrc(pick.photo.id, "display")}
+          />
+        );
       }}
     </Zone>
   );
@@ -179,7 +189,7 @@ export function TodayScreen() {
         {settings.background.mode === "season" && (
           <Picture
             state={photos.state}
-            now={now}
+            day={day}
             tz={tz}
             canUpload={breakpoint !== "phone"}
             onUpload={() => go("photos")}

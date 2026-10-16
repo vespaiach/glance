@@ -236,7 +236,7 @@ export const FIXTURE_PHOTOS: Photo[] = PHOTO_ROWS.map(([, title, takenOn, place]
   title,
   takenOn,
   place,
-  createdAt: at(5, 19, index),
+  createdAt: at(4, 19, index),
 }));
 
 const PHOTO_IMAGES = new Map(PHOTO_ROWS.map(([slug], index) => [fixtureId(3, index + 1), slug]));

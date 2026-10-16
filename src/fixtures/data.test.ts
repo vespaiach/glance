@@ -16,7 +16,7 @@ import {
 import { isTimeZone } from "@/domain/signIn";
 import { formatClock, minutesOfDay } from "@/domain/time";
 import { rainStart } from "@/domain/weather";
-import { wallTime } from "@/domain/zone";
+import { dateKey, wallTime } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_ALL_DAY,
@@ -152,7 +152,9 @@ describe("Appendix A fixtures", () => {
   });
 
   it("TODAY-07 Cannon Beach is the picture of the day on Oct 9", () => {
-    expect(pictureOfDay(FIXTURE_PHOTOS, FIXTURE_NOW, tz)?.title).toBe("Cannon Beach");
+    const pick = pictureOfDay(FIXTURE_PHOTOS, dateKey(FIXTURE_NOW, tz), tz, FIXTURE_ACCOUNT.id);
+
+    expect(pick).toEqual({ photo: expect.objectContaining({ title: "Cannon Beach" }) });
   });
 
   it("BG-01 Cannon Beach is the default background photo", () => {
