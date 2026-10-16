@@ -14,11 +14,13 @@ import {
 } from "@/features/today";
 import { GalleryGroup } from "./GalleryGroup";
 import {
+  ALL_DAY_EVENTS,
   GALLERY_TZ,
   gallery,
   NOW,
   octoberAt,
   TODAY_EVENTS,
+  TODAY_MANY,
   TODAY_NOTES,
   TODAY_PHOTO,
   TODAY_PHOTO_SRC,
@@ -62,6 +64,7 @@ const schedule = {
   now: NOW,
   clock: "12h",
   compact: false,
+  capacity: 8,
   onOpenEvent: ignore,
   onAddEvent: ignore,
   onOpenCalendar: ignore,
@@ -117,6 +120,19 @@ export function TodayGallery({ season }: { season: Season }) {
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
+        compact
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_MANY }}
+        {...schedule}
+        capacity={5}
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa, ...TODAY_MANY.slice(1)] }}
+        {...schedule}
+        capacity={6}
         compact
       />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule}>

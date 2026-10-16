@@ -23,8 +23,9 @@ type PictureOfDayEmptyProps = {
 const styles = stylex.create({
   root: {
     flexGrow: 1,
-    flexShrink: 0,
-    minHeight: 180,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 120,
     marginTop: space.xs,
     backgroundColor: colors.surfaceSoft,
     borderRadius: radii.lg,
@@ -34,10 +35,15 @@ const styles = stylex.create({
     gridTemplateColumns: "minmax(0, 1.4fr) minmax(140px, 1fr)",
     gap: space.md,
   },
+  frame: {
+    position: "relative",
+    minHeight: 96,
+  },
   image: {
+    position: "absolute",
+    inset: 0,
     width: "100%",
     height: "100%",
-    minHeight: 156,
     objectFit: "cover",
     borderRadius: radii.md,
     display: "block",
@@ -103,8 +109,10 @@ const styles = stylex.create({
 export function PictureOfDay({ photo, src }: PictureOfDayProps) {
   return (
     <div {...stylex.props(styles.root)}>
-      {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
-      <img src={src} alt={photo.title} {...stylex.props(styles.image)} />
+      <div {...stylex.props(styles.frame)}>
+        {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
+        <img src={src} alt={photo.title} {...stylex.props(styles.image)} />
+      </div>
       <div {...stylex.props(styles.caption)}>
         <Eyebrow>{copy.today.picture.eyebrow}</Eyebrow>
         <div {...stylex.props(styles.text)}>

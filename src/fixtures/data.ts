@@ -177,6 +177,41 @@ export const FIXTURE_ALL_DAY = {
 
 export const FIXTURE_SEEDED_EVENTS: CalendarEvent[] = [...FIXTURE_EVENTS, FIXTURE_ALL_DAY.noSchool];
 
+export const FIXTURE_MANY_EVENTS: CalendarEvent[] = [
+  {
+    id: fixtureId(1, 12),
+    startAt: at(9, 17),
+    endAt: at(9, 17, 30),
+    title: "Grocery pickup",
+    location: "Fred Meyer",
+    tone: 4,
+  },
+  {
+    id: fixtureId(1, 13),
+    startAt: at(9, 18),
+    endAt: at(9, 19),
+    title: "Family dinner",
+    location: "Home",
+    tone: 1,
+  },
+  {
+    id: fixtureId(1, 14),
+    startAt: at(9, 19, 30),
+    endAt: at(9, 20),
+    title: "Piano practice — Mia",
+    location: "Living room",
+    tone: 2,
+  },
+  {
+    id: fixtureId(1, 15),
+    startAt: at(9, 20, 30),
+    endAt: at(9, 21),
+    title: "Bedtime story",
+    location: "Kids’ room",
+    tone: "soft",
+  },
+];
+
 export const FIXTURE_SHEET_TARGETS = {
   event: fixtureId(1, 3),
   allDay: FIXTURE_ALL_DAY.noSchool.id,

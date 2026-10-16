@@ -16,7 +16,9 @@ import type { AccountSettings, CalendarEvent, Photo } from "@/domain/schemas";
 import { todayHero } from "@/domain/todayHero";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
-import { useBreakpoint } from "@/shell/breakpoint";
+import { barLayoutHeight } from "@/shell/bar";
+import { useBreakpoint, useViewportHeight, useViewportWidth } from "@/shell/breakpoint";
+import { useBar } from "@/shell/providers/bar";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -32,7 +34,7 @@ import { TodayHero } from "./components/TodayHero";
 import { TodayNotes } from "./components/TodayNotes";
 import { TodaySchedule } from "./components/TodaySchedule";
 import { TodayWeather } from "./components/TodayWeather";
-import { todayAreas, todayLayout, todayScheduleFit } from "./layout";
+import { todayAreas, todayCapacity, todayLayout, todayScheduleFit } from "./layout";
 
 const styles = stylex.create({
   grid: {
@@ -89,6 +91,22 @@ function Picture({ state, now, tz, canUpload, onUpload }: PictureProps) {
   );
 }
 
+function allDayCount(state: ZoneState<CalendarEvent>): number {
+  return state.kind === "ready" ? state.data.filter((event) => event.allDay).length : 0;
+}
+
+function useScheduleCapacity(state: ZoneState<CalendarEvent>): number {
+  const bp = useBreakpoint();
+
+  const windowHeight = useViewportHeight();
+
+  const portrait = useViewportWidth() <= windowHeight;
+
+  const barHeight = barLayoutHeight(useBar().mode, bp);
+
+  return todayCapacity({ bp, portrait, windowHeight, barHeight, allDayCount: allDayCount(state) });
+}
+
 function Hero({ state, clock, now, tz, onOpenEvent }: HeroProps) {
   if (state.kind === "loading") return <HeroSkeleton />;
 
@@ -125,6 +143,8 @@ export function TodayScreen() {
 
   const photos = useSyncedZone(usePhotos());
 
+  const capacity = useScheduleCapacity(events.state);
+
   const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
   const go = (view: View) => router.push(viewPath(view));
@@ -150,6 +170,7 @@ export function TodayScreen() {
         clock={settings.clock}
         tz={tz}
         compact={breakpoint === "phone"}
+        capacity={capacity}
         onOpenEvent={openEvent}
         onAddEvent={() => sheets.open({ kind: "newevent", day })}
         onOpenCalendar={() => go("calendar")}

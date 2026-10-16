@@ -5,13 +5,16 @@ import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
 import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
+import { todaySchedule } from "@/domain/todaySchedule";
 import type { ZoneState } from "@/domain/zoneState";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, space } from "@/theme/tokens.stylex";
+import { type } from "@/theme/type.stylex";
 import { AllDayTiles } from "@/ui/AllDayTile";
 import { Button } from "@/ui/Button";
 import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
+import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
@@ -25,6 +28,7 @@ type TodayScheduleProps = {
   clock: Clock;
   tz: string;
   compact: boolean;
+  capacity: number;
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
   onOpenCalendar: () => void;
@@ -62,10 +66,7 @@ const styles = stylex.create({
     gap: space.xxs,
   },
   list: {
-    flexGrow: 0,
-    flexShrink: 1,
-    minHeight: 0,
-    overflowY: "auto",
+    flexShrink: 0,
   },
   skeleton: {
     display: "flex",
@@ -77,6 +78,45 @@ const styles = stylex.create({
   failure: {
     paddingBlock: space.md,
     paddingInline: space.xs,
+  },
+  seeAll: {
+    borderWidth: 0,
+    font: "inherit",
+    cursor: "pointer",
+    textAlign: "start",
+    flexShrink: 0,
+    minHeight: 56,
+    width: "100%",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: space.sm,
+    paddingBlock: space.sm,
+    paddingInline: space.md,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceSoft,
+    color: colors.textPrimary,
+    transitionProperty: "transform",
+    transitionDuration: motion.durPress,
+    transitionTimingFunction: motion.easeOut,
+  },
+  seeAllLabel: {
+    fontSize: 17,
+    fontWeight: 480,
+  },
+  seeAllMeta: {
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: space.sm,
+  },
+  seeAllCount: {
+    fontFamily: type.fontMono,
+    fontSize: type.captionSize,
+    letterSpacing: "0.6px",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
   },
   empty: {
     flexGrow: 1,
@@ -129,6 +169,69 @@ function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
   );
 }
 
+type SeeAllProps = {
+  count: number;
+  hidden: { earlier: number; later: number };
+  onClick: () => void;
+};
+
+function SeeAll({ count, hidden, onClick }: SeeAllProps) {
+  return (
+    <button type="button" onClick={onClick} {...stylex.props(styles.seeAll, press.scale)}>
+      <span {...stylex.props(styles.seeAllLabel)}>{copy.today.schedule.seeAll(count)}</span>
+      <span {...stylex.props(styles.seeAllMeta)}>
+        <span {...stylex.props(styles.seeAllCount)}>
+          {copy.today.schedule.hidden(hidden.earlier, hidden.later)}
+        </span>
+        <Icon icon={ArrowRight} size={20} />
+      </span>
+    </button>
+  );
+}
+
+type ScheduleRowsProps = Pick<
+  TodayScheduleProps,
+  "now" | "clock" | "tz" | "compact" | "capacity" | "onOpenEvent" | "onOpenCalendar"
+> & { events: readonly CalendarEvent[] };
+
+function ScheduleRows({
+  events,
+  now,
+  clock,
+  tz,
+  compact,
+  capacity,
+  onOpenEvent,
+  onOpenCalendar,
+}: ScheduleRowsProps) {
+  const { allDay, rows, hidden } = todaySchedule(events, now, tz, capacity);
+
+  return (
+    <>
+      <AllDayTiles events={allDay} label={copy.events.allDay} onOpenEvent={onOpenEvent} />
+      <div {...stylex.props(styles.list)}>
+        {rows.map((event) => (
+          <EventRow
+            key={event.id}
+            start={timeOf(event.startAt, clock, tz)}
+            end={event.endAt && timeOf(event.endAt, clock, tz)}
+            title={event.title}
+            location={event.location}
+            status={eventStatus(event, now, tz)}
+            dot={event.tone}
+            nowLabel={copy.events.now}
+            compact={compact}
+            onClick={() => onOpenEvent(event.id)}
+          />
+        ))}
+      </div>
+      {hidden.earlier + hidden.later > 0 && (
+        <SeeAll count={events.length} hidden={hidden} onClick={onOpenCalendar} />
+      )}
+    </>
+  );
+}
+
 export function TodaySchedule({
   state,
   retryIn,
@@ -137,6 +240,7 @@ export function TodaySchedule({
   clock,
   tz,
   compact,
+  capacity,
   onOpenEvent,
   onAddEvent,
   onOpenCalendar,
@@ -174,31 +278,16 @@ export function TodaySchedule({
         }
       >
         {(events) => (
-          <>
-            <AllDayTiles
-              events={events.filter((event) => event.allDay)}
-              label={copy.events.allDay}
-              onOpenEvent={onOpenEvent}
-            />
-            <div {...stylex.props(styles.list)}>
-              {events
-                .filter((event) => !event.allDay)
-                .map((event) => (
-                  <EventRow
-                    key={event.id}
-                    start={timeOf(event.startAt, clock, tz)}
-                    end={event.endAt && timeOf(event.endAt, clock, tz)}
-                    title={event.title}
-                    location={event.location}
-                    status={eventStatus(event, now, tz)}
-                    dot={event.tone}
-                    nowLabel={copy.events.now}
-                    compact={compact}
-                    onClick={() => onOpenEvent(event.id)}
-                  />
-                ))}
-            </div>
-          </>
+          <ScheduleRows
+            events={events}
+            now={now}
+            clock={clock}
+            tz={tz}
+            compact={compact}
+            capacity={capacity}
+            onOpenEvent={onOpenEvent}
+            onOpenCalendar={onOpenCalendar}
+          />
         )}
       </Zone>
       {children}

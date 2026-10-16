@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import type { CalendarEvent, Note } from "@/domain/schemas";
+import { dateKey } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_ALL_DAY,
@@ -8,12 +9,14 @@ import {
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
   FIXTURE_LOCATED_PLACE,
+  FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
   FIXTURE_SAVED_AT,
   FIXTURE_SEEDED_EVENTS,
   FIXTURE_SETTINGS,
+  FIXTURE_TIME_ZONE,
   FIXTURE_WEATHER,
 } from "@/fixtures/data";
 import type { FixtureParams } from "@/fixtures/params";
@@ -92,6 +95,23 @@ describe("seedFixtureDb", () => {
     await seedFixtureDb(db, { allday: true });
 
     expect(await db.events.get(FIXTURE_ALL_DAY.grandpa.id)).toMatchObject(FIXTURE_ALL_DAY.grandpa);
+  });
+
+  it("TODAY-11 events=many adds four evening events, so Oct 9 has 9", async () => {
+    await seedFixtureDb(db, { events: "many" });
+
+    const day = (await db.events.toArray()).filter(
+      (event) =>
+        !event.allDay && dateKey(new Date(event.startAt), FIXTURE_TIME_ZONE) === "2026-10-09",
+    );
+
+    expect(FIXTURE_MANY_EVENTS.map((event) => event.title)).toEqual([
+      "Grocery pickup",
+      "Family dinner",
+      "Piano practice — Mia",
+      "Bedtime story",
+    ]);
+    expect(day).toHaveLength(9);
   });
 
   it("tech§4.1 reseeding replaces rows and pending writes from an earlier load", async () => {
