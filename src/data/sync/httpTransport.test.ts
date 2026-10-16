@@ -211,6 +211,30 @@ describe("HttpTransport", () => {
     expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
   });
 
+  it("SIGNIN-15 issueQr posts with the build header and reads the code's link", async () => {
+    const code = { url: "https://glance.example.com/api/auth/verify?t=abc" };
+    const { calls, fetch } = fakeFetch(json(code));
+
+    const answer = await transport(fetch).issueQr();
+
+    expect(answer).toEqual({ ok: true, value: code });
+    expect(calls[0]?.url).toBe("/api/auth/qr");
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
+  });
+
+  it("SIGNIN-15 voidQr deletes the code by its link and answers on 204", async () => {
+    const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
+    const url = "https://glance.example.com/api/auth/verify?t=abc";
+
+    const answer = await transport(fetch).voidQr(url);
+
+    expect(answer).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/auth/qr");
+    expect(calls[0]?.init.method).toBe("DELETE");
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ url }));
+  });
+
   it("WX-07 places searches with the query encoded", async () => {
     const places = [{ name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 }];
     const { calls, fetch } = fakeFetch(json(places));

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { deviceOf, type SignedInScreen } from "@/domain/screens";
-import { useRepoStore } from "./store";
+import { type RepoStore, useRepoStore } from "./store";
 
 export type { SignedInScreen };
 
@@ -33,4 +33,12 @@ export function useSignedInScreens(): SignedInScreen[] {
   }, [displays]);
 
   return listed ?? alone;
+}
+
+export type QrCodes = Pick<RepoStore, "issueQr" | "voidQr">;
+
+export function useQrCodes(): QrCodes {
+  const { issueQr, voidQr } = useRepoStore();
+
+  return { issueQr, voidQr };
 }

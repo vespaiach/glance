@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { Info, LogOut, type LucideIcon, Monitor, Smartphone, Tablet } from "lucide-react";
+import { Info, LogOut, type LucideIcon, Monitor, QrCode, Smartphone, Tablet } from "lucide-react";
 import { copy } from "@/copy";
 import type { Account } from "@/domain/schemas";
 import { activeStamp, type DeviceKind, type SignedInScreen } from "@/domain/screens";
@@ -9,6 +9,7 @@ import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
+import { QrSignInTile, type QrTileShown } from "./QrSignInTile";
 
 export type SettingsAccount = Pick<Account, "name" | "email">;
 
@@ -17,6 +18,10 @@ type AccountCardProps = {
   screens: readonly SignedInScreen[];
   now: Date;
   tz: string;
+  online: boolean;
+  qr: QrTileShown;
+  onShowQr: () => void;
+  onCloseQr: () => void;
   onSignOut: () => void;
 };
 
@@ -80,9 +85,11 @@ const styles = stylex.create({
   screens: {
     display: "flex",
     flexDirection: "column",
+    alignItems: "flex-start",
     gap: space.xs,
   },
   list: {
+    alignSelf: "stretch",
     display: "flex",
     flexDirection: "column",
     margin: 0,
@@ -186,7 +193,43 @@ function ScreenRow({
   );
 }
 
-export function AccountCard({ account, screens, now, tz, onSignOut }: AccountCardProps) {
+function QrSignIn({
+  email,
+  online,
+  qr,
+  onShowQr,
+  onCloseQr,
+}: Pick<AccountCardProps, "online" | "qr" | "onShowQr" | "onCloseQr"> & { email: string }) {
+  if (qr.tile.kind === "closed") {
+    return (
+      <Button
+        variant="secondary"
+        icon={QrCode}
+        disabled={!online}
+        onClick={onShowQr}
+        xstyle={styles.button}
+      >
+        {text.qr.show}
+      </Button>
+    );
+  }
+
+  return (
+    <QrSignInTile {...qr} email={email} online={online} onRetry={onShowQr} onClose={onCloseQr} />
+  );
+}
+
+export function AccountCard({
+  account,
+  screens,
+  now,
+  tz,
+  online,
+  qr,
+  onShowQr,
+  onCloseQr,
+  onSignOut,
+}: AccountCardProps) {
   const shownName = account.name ?? account.email;
 
   const count = text.screensSignedIn(screens.length);
@@ -210,6 +253,13 @@ export function AccountCard({ account, screens, now, tz, onSignOut }: AccountCar
             <ScreenRow key={screen.id} screen={screen} divided={index > 0} now={now} tz={tz} />
           ))}
         </ul>
+        <QrSignIn
+          email={account.email}
+          online={online}
+          qr={qr}
+          onShowQr={onShowQr}
+          onCloseQr={onCloseQr}
+        />
       </div>
       <div {...stylex.props(styles.signOut)}>
         <div {...stylex.props(styles.note)}>

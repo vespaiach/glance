@@ -13,6 +13,7 @@ import {
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
+  FIXTURE_QR_URL,
   FIXTURE_SAVED_AT,
   FIXTURE_SEEDED_EVENTS,
   FIXTURE_SETTINGS,
@@ -466,6 +467,20 @@ describe("FixtureTransport displays", () => {
       ok: false,
       error: "network",
     });
+  });
+});
+
+describe("FixtureTransport QR codes", () => {
+  it("SIGNIN-15 issueQr answers the fixture sign-in link", async () => {
+    expect(await transport().issueQr()).toEqual({ ok: true, value: { url: FIXTURE_QR_URL } });
+  });
+
+  it("SIGNIN-15 voidQr answers", async () => {
+    expect(await transport().voidQr(FIXTURE_QR_URL)).toEqual({ ok: true, value: undefined });
+  });
+
+  it("SIGNIN-15 net=offline can't issue a code", async () => {
+    expect(await transport({ net: "offline" }).issueQr()).toEqual({ ok: false, error: "network" });
   });
 });
 

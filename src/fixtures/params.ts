@@ -39,6 +39,7 @@ const CHOICES = {
   barauto: ["off"],
   events: ["many"],
   chrome: ["0"],
+  qr: ["open", "failed"],
 } as const;
 
 type Choices = typeof CHOICES;

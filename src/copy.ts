@@ -396,6 +396,18 @@ export const copy = {
       active: (stamp: ActiveStamp) => activeText(stamp),
       signOut: "Sign out",
       signOutCaption: "Sign out this device only.",
+      qr: {
+        show: "Sign in another device",
+        title: "Scan to sign in",
+        body: (email: string) =>
+          `Open the camera on the other device and point it at the code. It signs in with ${email}.`,
+        label: "Sign-in code",
+        expires: (seconds: number) =>
+          `Code expires in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
+        failed: "Couldn’t make a code. Try again.",
+        retry: "Try again",
+        done: "Done",
+      },
     },
   },
   ambientSchedule: {

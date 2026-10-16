@@ -3,7 +3,7 @@ import { uuidv7 } from "@/domain/id";
 import { err, ok, type Result } from "@/domain/result";
 import type { Db } from "../db/db";
 import { signInMessage } from "../mail/mailer";
-import { type AccountRow, accountByEmail } from "./account";
+import { type AccountRow, accountByEmail, accountById } from "./account";
 import type { AuthDeps, Clocked } from "./deps";
 import { openDisplay } from "./sessions";
 import { hashToken, newToken } from "./tokens";
@@ -13,7 +13,9 @@ const LINK_TTL_MS = 10 * 60 * 1000;
 export type LinkRow = {
   token_hash: string;
   email: string;
-  pending_id: string;
+  kind: "email" | "qr";
+  pending_id: string | null;
+  account_id: string | null;
   time_zone: string;
   expires_at: string;
   used_at: string | null;
@@ -55,7 +57,7 @@ export async function verifyLink(
   const at = now().toISOString();
 
   if (link === undefined || link.used_at !== null || link.expires_at <= at) {
-    return err({ code: "stale", email: link?.email ?? null });
+    return err({ code: "stale", email: link?.kind === "email" ? link.email : null });
   }
 
   const claimedPending = link.pending_id === pendingId;
@@ -66,7 +68,7 @@ export async function verifyLink(
       link.token_hash,
     ]);
 
-    const account = (await accountByEmail(tx, link.email)) ?? (await createAccount(tx, link, at));
+    const account = await linkAccount(tx, link, at);
 
     if (claimedPending) await deleteLink(tx, link.token_hash);
 
@@ -82,6 +84,14 @@ export function linkByPendingId(db: Db, pendingId: string): Promise<LinkRow | un
 
 export async function deleteLink(db: Db, tokenHash: string): Promise<void> {
   await db.run("DELETE FROM magic_links WHERE token_hash = $1", [tokenHash]);
+}
+
+async function linkAccount(db: Db, link: LinkRow, at: string): Promise<AccountRow> {
+  const known = link.account_id
+    ? await accountById(db, link.account_id)
+    : await accountByEmail(db, link.email);
+
+  return known ?? createAccount(db, link, at);
 }
 
 function normalizeEmail(email: string): string {
@@ -103,7 +113,10 @@ async function storeLink(
   const expiresAt = new Date(now().getTime() + LINK_TTL_MS).toISOString();
 
   await db.tx(async (tx) => {
-    await tx.run("DELETE FROM magic_links WHERE email = $1 AND used_at IS NULL", [link.address]);
+    await tx.run(
+      "DELETE FROM magic_links WHERE email = $1 AND kind = 'email' AND used_at IS NULL",
+      [link.address],
+    );
     await tx.run(
       "INSERT INTO magic_links (token_hash, email, pending_id, time_zone, expires_at) VALUES ($1, $2, $3, $4, $5)",
       [hashToken(link.token), link.address, link.pendingId, link.timeZone, expiresAt],
@@ -111,7 +124,7 @@ async function storeLink(
   });
 }
 
-function verifyUrl(appUrl: string, token: string): string {
+export function verifyUrl(appUrl: string, token: string): string {
   const url = new URL("/api/auth/verify", appUrl);
 
   url.searchParams.set("t", token);

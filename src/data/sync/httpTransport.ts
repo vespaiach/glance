@@ -10,6 +10,7 @@ import type {
   Coordinates,
   LocateError,
   PullResponse,
+  QrCode,
   Transport,
   TransportError,
   UploadError,
@@ -166,6 +167,8 @@ export function createHttpTransport({
       send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
     locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
     displays: () => send<SignedInScreen[]>("/api/displays"),
+    issueQr: () => send<QrCode>("/api/auth/qr", { method: "POST" }),
+    voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
     auth: {
       link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
       status: () => send<AuthStatus>("/api/auth/status"),

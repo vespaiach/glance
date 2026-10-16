@@ -16,6 +16,7 @@ import {
   gallerySetup,
   NOW,
   PLACES,
+  QR_SAMPLE_URL,
   SCREEN_SAMPLES,
   UPLOAD_SAMPLES,
 } from "./samples";
@@ -35,6 +36,11 @@ const ignore = () => {};
 const COAST = GALLERY_PHOTOS[0];
 
 const ACCOUNT = { name: "Maria", email: "maria@example.com" };
+
+const QR_OPEN = {
+  tile: { kind: "open", url: QR_SAMPLE_URL, issuedAt: NOW.toISOString() },
+  secondsLeft: 245,
+} as const;
 
 const PHOTO = { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST?.id } as const;
 
@@ -65,7 +71,12 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     },
     { key: "photo", background: COAST && { mode: "photo", photo: COAST } },
     { key: "this-screen-only", screens: SCREEN_SAMPLES.slice(0, 1) },
+    { key: "qr-open", qr: QR_OPEN },
+    { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 300 } },
+    { key: "qr-failed", qr: { tile: { kind: "failed" }, secondsLeft: 300 } },
+    { key: "offline", online: false },
     { key: "phone", phone: true, breakpoint: "phone" },
+    { key: "phone-qr-open", phone: true, breakpoint: "phone", qr: QR_OPEN },
   ];
 }
 
@@ -148,6 +159,10 @@ function settingsBase(season: Season): SettingsProps {
     season,
     background: { mode: "season" },
     breakpoint: "wide",
+    online: true,
+    qr: { tile: { kind: "closed" }, secondsLeft: 300 },
+    onShowQr: ignore,
+    onCloseQr: ignore,
     onChange: ignore,
     onOpenBackground: ignore,
     onOpenLocation: ignore,

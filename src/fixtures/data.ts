@@ -37,6 +37,8 @@ export const FIXTURE_ACCOUNT: Account = {
 
 export const FIXTURE_OTHER_EMAIL = "sam.lee@example.com";
 
+export const FIXTURE_QR_URL = "https://glance.example.com/api/auth/verify?t=fixture-qr-code";
+
 const MINUTE_MS = 60 * 1000;
 
 const before = (now: Date, minutes: number) =>

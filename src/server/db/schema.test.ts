@@ -280,3 +280,54 @@ describe("005_display_device", () => {
     await expect(insertDisplay(", kind", ", 'watch'")).rejects.toThrow(/check constraint/);
   });
 });
+
+async function insertLink(columns: string, values: string): Promise<void> {
+  await db().run(
+    `INSERT INTO magic_links (token_hash, email, time_zone, expires_at${columns}) VALUES ('h1', 'a1@example.com', 'America/New_York', '${NOW}'${values})`,
+  );
+}
+
+describe("006_qr_links", () => {
+  it("D23 a link is an email link with its pending id unless told", async () => {
+    await insertLink(", pending_id", ", 'p1'");
+
+    expect(await db().one("SELECT kind, account_id, display_id FROM magic_links")).toEqual({
+      kind: "email",
+      account_id: null,
+      display_id: null,
+    });
+  });
+
+  it("D23 an email link needs its pending id", async () => {
+    await expect(insertLink("", "")).rejects.toThrow(/check constraint/);
+  });
+
+  it("D23 a QR link needs its account and display and has no pending id", async () => {
+    await insertAccount("a1");
+    await insertDisplay("", "");
+
+    await expect(insertLink(", kind", ", 'qr'")).rejects.toThrow(/check constraint/);
+    await expect(
+      insertLink(", kind, account_id, display_id, pending_id", ", 'qr', 'a1', 'd1', 'p1'"),
+    ).rejects.toThrow(/check constraint/);
+    await expect(
+      insertLink(", kind, account_id, display_id", ", 'qr', 'a1', 'd1'"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("D23 rejects an unknown link kind", async () => {
+    await expect(insertLink(", kind, pending_id", ", 'sms', 'p1'")).rejects.toThrow(
+      /check constraint/,
+    );
+  });
+
+  it("D23 deleting a display deletes its QR links", async () => {
+    await insertAccount("a1");
+    await insertDisplay("", "");
+    await insertLink(", kind, account_id, display_id", ", 'qr', 'a1', 'd1'");
+
+    await db().run("DELETE FROM displays WHERE id = 'd1'");
+
+    expect(await db().all("SELECT token_hash FROM magic_links")).toEqual([]);
+  });
+});

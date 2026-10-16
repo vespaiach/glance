@@ -5,14 +5,19 @@ import { createMailer } from "../mail/mailer";
 import * as account from "./account";
 import type { AuthDeps } from "./deps";
 import * as links from "./links";
+import * as qr from "./qr";
 import { createRateLimiter } from "./rateLimit";
+import type { SignedInDisplay } from "./sessions";
 import * as sessions from "./sessions";
 import * as status from "./status";
 
 export { clientIp, isAllowedOrigin } from "./guards";
+export type { QrCode } from "./qr";
 export type { SignedInDisplay } from "./sessions";
 
 const TEN_MINUTES = 10 * 60 * 1000;
+
+const ONE_HOUR = 60 * 60 * 1000;
 
 const shared = globalThis as typeof globalThis & { glanceAuth?: AuthDeps };
 
@@ -25,6 +30,7 @@ function deps(): AuthDeps {
     limits: {
       email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
       ip: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
+      qr: createRateLimiter({ limit: 30, windowMs: ONE_HOUR }),
     },
   };
 
@@ -41,6 +47,14 @@ export function requestLink(input: links.LinkInput) {
 
 export function verifyLink(input: links.VerifyInput) {
   return links.verifyLink(deps(), input);
+}
+
+export function issueQrLink(display: SignedInDisplay) {
+  return qr.issueQrLink(deps(), display);
+}
+
+export function voidQrLink(display: SignedInDisplay, url: string): Promise<void> {
+  return qr.voidQrLink(deps().db, display, url);
 }
 
 export function authStatus(input: status.StatusInput) {
