@@ -11,7 +11,6 @@ import {
 } from "@/data/repos/testHarness";
 import type { CalendarEvent, Photo, WeatherLocation } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
-import { BarProvider } from "@/shell/providers/bar";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
@@ -82,9 +81,7 @@ function renderToday() {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
       <SeasonProvider>
-        <SheetHost>
-          <BarProvider>{children}</BarProvider>
-        </SheetHost>
+        <SheetHost>{children}</SheetHost>
       </SeasonProvider>
     </Shell>
   );
@@ -217,10 +214,8 @@ test("EVT-07 an event added from Today shows in the schedule at once", async () 
       <SeasonProvider>
         <NetworkProvider>
           <SheetHost>
-            <BarProvider>
-              <TodayScreen />
-              <EventSheetScreen />
-            </BarProvider>
+            <TodayScreen />
+            <EventSheetScreen />
           </SheetHost>
         </NetworkProvider>
       </SeasonProvider>

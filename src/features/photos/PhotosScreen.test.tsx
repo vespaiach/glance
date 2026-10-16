@@ -13,7 +13,6 @@ import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { FixtureParamsProvider } from "@/shell/fixtureOptions";
-import { BarProvider, useBar } from "@/shell/providers/bar";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { TimeZoneProvider } from "@/shell/providers/timeZone";
@@ -75,9 +74,7 @@ function renderPhotos(
       <TimeZoneProvider timeZone={timeZone}>
         <NetworkProvider>
           <FixtureParamsProvider params={params}>
-            <SheetHost>
-              <BarProvider>{children}</BarProvider>
-            </SheetHost>
+            <SheetHost>{children}</SheetHost>
           </FixtureParamsProvider>
         </NetworkProvider>
       </TimeZoneProvider>
@@ -88,7 +85,6 @@ function renderPhotos(
     <>
       <PhotosScreen />
       <OpenSheet />
-      <BarMode />
     </>,
     { wrapper },
   );
@@ -98,10 +94,6 @@ function OpenSheet() {
   const { sheet } = useSheetHost();
 
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
-}
-
-function BarMode() {
-  return <output aria-label="Bar">{useBar().mode}</output>;
 }
 
 function featuredTitle() {
@@ -596,18 +588,4 @@ test("PHOTO-14 full=1 opens nothing until a photo has finished uploading", async
     await screen.findByText("Your photos show here once they finish uploading."),
   ).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-});
-
-test("SHELL-06 the bar doesn't hide while full screen is open", async () => {
-  runningClock();
-
-  await store.db.photos.bulkPut([synced(COAST)]);
-
-  renderPhotos({ full: true }, "running");
-
-  await screen.findByRole("dialog");
-
-  waitSeconds(30);
-
-  expect(screen.getByRole("status", { name: "Bar" })).toHaveTextContent("docked");
 });

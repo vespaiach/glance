@@ -16,8 +16,6 @@ import {
 import { useState } from "react";
 import { copy } from "@/copy";
 import type { Season, Tone } from "@/domain/schemas";
-import { BarHandle } from "@/shell/BarHandle";
-import { NavBar as ShellNavBar } from "@/shell/NavBar";
 import { colors, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
@@ -118,17 +116,6 @@ const styles = stylex.create({
   nav: {
     display: "flex",
     gap: space.xs,
-  },
-  phoneBar: {
-    width: 390,
-    maxWidth: "100%",
-  },
-  barStage: {
-    position: "relative",
-    height: 160,
-    contain: "layout",
-    overflow: "hidden",
-    backgroundColor: colors.hairlineSoft,
   },
 });
 
@@ -375,22 +362,6 @@ function NavigationGroup() {
     <GalleryGroup title={gallery.groups.navigation} column>
       <SidebarGallery />
       <TopBar brand={copy.appName} right={settings} />
-      <div>
-        <ShellNavBar active="today" breakpoint="wide" onNavigate={ignore} />
-      </div>
-      <div>
-        <ShellNavBar active="settings" breakpoint="narrow" onNavigate={ignore} />
-      </div>
-      <div {...stylex.props(styles.phoneBar)}>
-        <ShellNavBar active="photos" breakpoint="phone" onNavigate={ignore} />
-      </div>
-      <div {...stylex.props(styles.barStage)}>
-        <ShellNavBar active="today" breakpoint="wide" mode="hidden" onNavigate={ignore} />
-        <BarHandle onReveal={ignore} />
-      </div>
-      <div {...stylex.props(styles.barStage)}>
-        <ShellNavBar active="today" breakpoint="wide" mode="floating" onNavigate={ignore} />
-      </div>
       <TopBar brand={copy.appName} center={<NavBar inverse />} inverse />
     </GalleryGroup>
   );

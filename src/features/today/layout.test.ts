@@ -1,25 +1,24 @@
 import { todayCapacity } from "./layout";
 
-const base = { portrait: false, barHeight: 88, allDayCount: 0 };
+const base = { portrait: false, allDayCount: 0 };
 
 describe("todayCapacity", () => {
   it.each([
     ["wide", 1080, 8],
-    ["wide", 900, 5],
-    ["wide", 800, 4],
-    ["mid", 820, 4],
+    ["wide", 900, 7],
+    ["wide", 800, 5],
+    ["mid", 820, 6],
     ["wide", 600, 4],
     ["wide", 1600, 8],
-  ] as const)("TODAY-11 %s at %i px high fits %i rows", (bp, windowHeight, rows) => {
-    expect(todayCapacity({ ...base, bp, windowHeight })).toBe(rows);
-  });
+  ] as const)(
+    "TODAY-11 %s at %i px high fits %i rows, with no bar taking height",
+    (bp, windowHeight, rows) => {
+      expect(todayCapacity({ ...base, bp, windowHeight })).toBe(rows);
+    },
+  );
 
   it("TODAY-11 each all-day tile takes 64 px", () => {
-    expect(todayCapacity({ ...base, bp: "wide", windowHeight: 1080, allDayCount: 1 })).toBe(7);
-  });
-
-  it("TODAY-11 a hidden bar has no height, so more rows fit", () => {
-    expect(todayCapacity({ ...base, bp: "wide", windowHeight: 900, barHeight: 0 })).toBe(7);
+    expect(todayCapacity({ ...base, bp: "wide", windowHeight: 900, allDayCount: 1 })).toBe(6);
   });
 
   it.each([

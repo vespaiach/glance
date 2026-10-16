@@ -1,10 +1,12 @@
 import * as stylex from "@stylexjs/stylex";
 import { X } from "lucide-react";
+import { useRef } from "react";
 import { copy } from "@/copy";
 import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
 import { press } from "@/ui/press";
+import { useFocusWhenShown } from "./focusWhenShown";
 import type { View } from "./routes";
 import { SIDEBAR_PINNED, SIDEBAR_VIEWS, type SidebarItem } from "./sidebarItems";
 
@@ -104,12 +106,17 @@ const styles = stylex.create({
 });
 
 export function SidebarDrawer({ open, active, onClose, onNavigate }: SidebarDrawerProps) {
+  const currentRow = useRef<HTMLButtonElement>(null);
+
+  useFocusWhenShown(open, currentRow);
+
   const row = (item: SidebarItem) => {
     const current = item.key === active;
 
     return (
       <button
         key={item.key}
+        ref={current ? currentRow : undefined}
         type="button"
         aria-label={item.name === item.label ? undefined : item.name}
         aria-current={current ? "page" : undefined}

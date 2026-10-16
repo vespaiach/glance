@@ -76,7 +76,7 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
             <Eyebrow>{gallery.groups.today}</Eyebrow>
           </div>
         </div>
-        {state.mode === "hidden" && <SidebarGrip onShow={() => dispatch({ type: "show" })} />}
+        <SidebarGrip shown={state.mode === "hidden"} onShow={() => dispatch({ type: "show" })} />
         <SidebarRail
           mode={state.mode}
           active="today"

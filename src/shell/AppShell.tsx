@@ -2,19 +2,21 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useRef } from "react";
+import { type Dispatch, type ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { useFieldInView } from "@/ui/fieldInView";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
-import { BarHandle } from "./BarHandle";
 import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
+import { useFixtureParams } from "./fixtureOptions";
 import { useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
-import { NavBar } from "./NavBar";
 import { OfflineNotice } from "./OfflineNotice";
-import { useBar } from "./providers/bar";
 import { VIEWS, viewForPath, viewPath } from "./routes";
+import { SidebarDrawer } from "./SidebarDrawer";
+import { SidebarGrip } from "./SidebarGrip";
+import { SidebarRail } from "./SidebarRail";
+import { initialSidebar, type SidebarAction, sidebarInset, sidebarReducer } from "./sidebar";
 
 const styles = stylex.create({
   root: {
@@ -27,11 +29,12 @@ const styles = stylex.create({
     isolation: "isolate",
     backgroundColor: colors.hairlineSoft,
     color: colors.textPrimary,
-    transitionProperty: "background-color, padding-bottom",
-    transitionDuration: `${motion.durSeason}, ${motion.durBase}`,
-    transitionTimingFunction: `${motion.easeInOut}, ${motion.easeOut}`,
+    transitionProperty: "background-color, padding-bottom, padding-left",
+    transitionDuration: `${motion.durSeason}, ${motion.durBase}, ${motion.durBase}`,
+    transitionTimingFunction: `${motion.easeInOut}, ${motion.easeOut}, ${motion.easeSlide}`,
   },
   aboveKeyboard: (inset: number) => ({ paddingBottom: inset }),
+  besideSidebar: (inset: number) => ({ paddingLeft: inset }),
   main: {
     flexGrow: 1,
     minHeight: 0,
@@ -66,6 +69,29 @@ function useScrollTopOnViewChange(pathname: string) {
   return main;
 }
 
+function useRailOnViewChange(pathname: string, dispatch: Dispatch<SidebarAction>) {
+  const [shownOn, setShownOn] = useState(pathname);
+
+  if (pathname !== shownOn) {
+    setShownOn(pathname);
+    dispatch({ type: "viewChanged" });
+  }
+}
+
+function useEscapeToRail(expanded: boolean, dispatch: Dispatch<SidebarAction>) {
+  useEffect(() => {
+    if (!expanded) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dispatch({ type: "back" });
+    };
+
+    document.addEventListener("keydown", onKey);
+
+    return () => document.removeEventListener("keydown", onKey);
+  }, [expanded, dispatch]);
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
@@ -81,7 +107,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const keyboardInset = useKeyboardInset();
 
-  const bar = useBar();
+  const [sidebar, dispatch] = useReducer(sidebarReducer, useFixtureParams().rail, initialSidebar);
+
+  const inset = sidebarInset(sidebar.mode);
+
+  useRailOnViewChange(pathname, dispatch);
+
+  useEscapeToRail(sidebar.mode === "expanded", dispatch);
 
   usePrefetchViews();
 
@@ -90,19 +122,34 @@ export function AppShell({ children }: { children: ReactNode }) {
   useFixtureFieldFocus();
 
   return (
-    <div {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset))}>
+    <div
+      {...stylex.props(
+        styles.root,
+        styles.aboveKeyboard(keyboardInset),
+        styles.besideSidebar(inset),
+      )}
+    >
       <PhotoBackdrop image={photo && photoLayer(photo.dim, photo.src)} />
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>
-      <NavBar
+      <SidebarGrip shown={sidebar.mode === "hidden"} onShow={() => dispatch({ type: "show" })} />
+      <SidebarRail
+        mode={sidebar.mode}
         active={view}
-        breakpoint={breakpoint}
-        mode={bar.mode}
+        onOpen={() => dispatch({ type: "open" })}
         onNavigate={(path) => router.push(path)}
       />
-      {bar.mode === "hidden" && <BarHandle onReveal={bar.touch} />}
-      <OfflineNotice breakpoint={breakpoint} bar={bar.mode} onWeather={view === "weather"} />
+      <SidebarDrawer
+        open={sidebar.mode === "expanded"}
+        active={view}
+        onClose={() => dispatch({ type: "close" })}
+        onNavigate={(path) => {
+          dispatch({ type: "back" });
+          router.push(path);
+        }}
+      />
+      <OfflineNotice breakpoint={breakpoint} inset={inset} onWeather={view === "weather"} />
     </div>
   );
 }
