@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo, type FixtureParams } from "@/data/repos";
@@ -266,9 +266,11 @@ async function idleBackToToday(params: FixtureParams) {
 
   const { rerender } = await renderShell("/calendar view", params);
 
+  await act(() => vi.advanceTimersByTimeAsync(200));
+
   act(() => vi.advanceTimersByTime(60_000));
 
-  expect(navigation.push).toHaveBeenCalledWith("/today");
+  await waitFor(() => expect(navigation.push).toHaveBeenCalledWith("/today"));
 
   changeView(rerender, "/today");
 }
