@@ -554,14 +554,6 @@ test("SIGNIN-04 signin=sent opens Check your email for the fixture account", () 
   expect(screen.getByText("maria@example.com")).toBeInTheDocument();
 });
 
-test("SIGNIN-05 Continue as guests opens Today", async () => {
-  renderScreen();
-
-  await user().click(screen.getByRole("button", { name: "Continue as guests" }));
-
-  expect(navigation.push).toHaveBeenCalledWith("/today");
-});
-
 test("SIGNIN-10 signin=offline shows the offline form", () => {
   renderScreen({ signin: "offline" });
 
@@ -577,4 +569,21 @@ test("SIGNIN-10 the browser going offline disables sending", () => {
   expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeDisabled();
 
   vi.restoreAllMocks();
+});
+
+test("SIGNIN-03 signin=sendfail clears on the next keystroke and Send retries", async () => {
+  const auth = renderScreen({ signin: "sendfail" });
+
+  expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Couldn’t send. Try again.");
+
+  await user().type(screen.getByLabelText("Email"), "{Backspace}m");
+
+  expect(screen.getByLabelText("Email")).not.toHaveAccessibleDescription();
+
+  await user().click(screen.getByRole("button", { name: "Send sign-in link" }));
+
+  expect(auth.link).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ email: "maria@example.com" }),
+  );
+  expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
 });

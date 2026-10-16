@@ -17,6 +17,7 @@ const CHOICES = {
     "offline",
     "done",
     "ended",
+    "sendfail",
   ],
   on: ["link"],
   acct: ["returning"],

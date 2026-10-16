@@ -42,6 +42,7 @@ const DEMOS: readonly Demo[] = [
   { key: "form" },
   { key: "invalid", state: { step: "form", email: "maria@example", error: "invalid" } },
   { key: "sending", state: { step: "sending", email: EMAIL } },
+  { key: "sendfail", state: { step: "form", email: EMAIL, error: "failed" } },
   { key: "offline", state: { step: "form", email: EMAIL }, online: false },
   { key: "sent", state: { step: "sent", email: EMAIL } },
   { key: "name", state: { step: "name", email: EMAIL, draft: "" } },
@@ -104,7 +105,6 @@ function signInBase(season: Season): SignInProps {
     online: true,
     demo: true,
     onAction: ignore,
-    onDemo: ignore,
     onOpenedLink: ignore,
     onFinishedOnPhone: ignore,
   };

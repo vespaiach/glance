@@ -45,7 +45,6 @@ type SignInViewProps = {
   online: boolean;
   demo: boolean;
   onAction: (action: SignInAction) => void;
-  onDemo: () => void;
   onOpenedLink: () => void;
   onFinishedOnPhone: () => void;
   keyboardInset?: number;
@@ -63,7 +62,7 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     boxSizing: "border-box",
-    backgroundColor: colors.surfaceCanvas,
+    backgroundColor: colors.hairlineSoft,
     color: colors.textPrimary,
     transitionProperty: "padding-bottom",
     transitionDuration: motion.durBase,
@@ -139,7 +138,7 @@ function EndedBanner({ signedOut, switching }: { signedOut: SignedOut; switching
   );
 }
 
-function FormStep({ state, signedOut, online, demo, onAction, onDemo }: StepProps) {
+function FormStep({ state, signedOut, online, onAction }: StepProps) {
   const sending = state.step === "sending";
 
   const email = state.step === "form" || sending ? state.email : "";
@@ -203,11 +202,6 @@ function FormStep({ state, signedOut, online, demo, onAction, onDemo }: StepProp
           >
             {sending ? copy.signIn.form.sending : copy.signIn.form.send}
           </Button>
-          {demo && !sending && !signedOut && (
-            <Button variant="ghost" onClick={onDemo}>
-              {copy.signIn.form.demo}
-            </Button>
-          )}
         </Actions>
       </form>
       {sending && (

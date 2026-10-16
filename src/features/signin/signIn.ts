@@ -203,6 +203,8 @@ export function initialSignIn(
       return { step: fixture.signin, email };
     case "offline":
       return { step: "form", email };
+    case "sendfail":
+      return { step: "form", email, error: "failed" };
     case "name":
       return { step: "name", email, draft: "" };
     case "location":

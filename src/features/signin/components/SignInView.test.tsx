@@ -31,7 +31,6 @@ const SETUP: WeatherSetupFlow = {
 function renderView(state: SignInState, props: Partial<Props> = {}) {
   const handlers = {
     onAction: vi.fn(),
-    onDemo: vi.fn(),
     onOpenedLink: vi.fn(),
     onFinishedOnPhone: vi.fn(),
   };
@@ -70,14 +69,13 @@ test("SIGNIN-01 the hero shows the wordmark, the season and month, the clock and
   ).toBeInTheDocument();
 });
 
-test("SIGNIN-01 the email form asks for an email with Send sign-in link and Continue as guests", () => {
+test("SIGNIN-01 the email form asks for an email with Send sign-in link", () => {
   renderView({ step: "form", email: "" });
 
   expect(screen.getByText("One account per family")).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Sign in or get started" })).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveAttribute("placeholder", "name@example.com");
   expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
-  expect(screen.getByRole("button", { name: "Continue as guests" })).toBeInTheDocument();
   expect(screen.getByText(LOCK)).toBeInTheDocument();
 });
 
@@ -105,11 +103,10 @@ test("SIGNIN-02 an invalid email shows the error on the field", () => {
   expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Enter a valid email address");
 });
 
-test("SIGNIN-03 sending disables the button, hides demo and shows the sending tile", () => {
+test("SIGNIN-03 sending disables the button and shows the sending tile", () => {
   renderView({ step: "sending", email: EMAIL });
 
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
-  expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent(`Sending a link to ${EMAIL}`);
   expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
   expect(screen.getByText(LOCK)).toBeInTheDocument();
@@ -146,18 +143,19 @@ test("SIGNIN-04 I opened the link is hidden outside demo builds", () => {
   expect(screen.queryByRole("button", { name: "I opened the link" })).not.toBeInTheDocument();
 });
 
-test("SIGNIN-05 Continue as guests goes out as onDemo", async () => {
-  const { onDemo } = renderView({ step: "form", email: "" });
-
-  await userEvent.click(screen.getByRole("button", { name: "Continue as guests" }));
-
-  expect(onDemo).toHaveBeenCalled();
-});
-
-test("SIGNIN-05 Continue as guests is hidden outside demo builds", () => {
-  renderView({ step: "form", email: "" }, { demo: false });
+test("SIGNIN-05 there is no Continue as guests, also in demo builds", () => {
+  renderView({ step: "form", email: "" });
 
   expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
+  expect(screen.getAllByRole("button")).toHaveLength(1);
+});
+
+test("SIGNIN-03 a failed send shows Couldn’t send on the field with Send enabled", () => {
+  renderView({ step: "form", email: EMAIL, error: "failed" });
+
+  expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
+  expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Couldn’t send. Try again.");
+  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
 });
 
 test("SIGNIN-06 What's your name asks for a name for the new account", async () => {
@@ -280,7 +278,7 @@ const WAITING = { email: EMAIL, pending: 3 };
 
 const OTHER = "sam.lee@example.com";
 
-test("SIGNIN-13 the signed-out form shows the notice, Sign in again and no guests", () => {
+test("SIGNIN-13 the signed-out form shows the notice and Sign in again", () => {
   renderView({ step: "form", email: EMAIL }, { signedOut: SIGNED_OUT });
 
   expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
@@ -295,7 +293,6 @@ test("SIGNIN-13 the signed-out form shows the notice, Sign in again and no guest
     ),
   ).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
-  expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
   expect(screen.getByText(LOCK)).toBeInTheDocument();
 });
 
