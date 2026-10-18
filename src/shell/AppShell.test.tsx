@@ -247,14 +247,16 @@ test("SHELL-04 changing view resets the main scroll to the top", async () => {
 test("tech§4.5 prefetches the six views on startup", async () => {
   await renderShell("Today view");
 
-  expect(navigation.prefetch.mock.calls.map(([path]) => path)).toEqual([
-    "/today",
-    "/calendar",
-    "/weather",
-    "/notes",
-    "/photos",
-    "/settings",
-  ]);
+  await waitFor(() =>
+    expect(navigation.prefetch.mock.calls.map(([path]) => path)).toEqual([
+      "/today",
+      "/calendar",
+      "/weather",
+      "/notes",
+      "/photos",
+      "/settings",
+    ]),
+  );
 });
 
 async function idleBackToToday(params: FixtureParams) {
