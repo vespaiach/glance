@@ -53,35 +53,6 @@ const styles = stylex.create({
 const timeAt = (iso: string, clock: Clock, tz: string) =>
   timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
-function runningMeta({ startAt, endAt }: CalendarEvent, clock: Clock, tz: string): string {
-  if (endAt === undefined) return copy.today.hero.started(clockAt(startAt, clock, tz));
-
-  return copy.today.hero.until(timeAt(endAt, clock, tz));
-}
-
-function eventMeta(
-  hero: Extract<TodayHero<CalendarEvent>, { event: unknown }>,
-  clock: Clock,
-  tz: string,
-) {
-  const when =
-    hero.kind === "now"
-      ? runningMeta(hero.event, clock, tz)
-      : clockAt(hero.event.startAt, clock, tz);
-
-  return [hero.event.location, when].filter(Boolean).join(" · ");
-}
-
-function HeroMessage({ title, body }: { title: string; body: string }) {
-  return (
-    <div {...stylex.props(styles.root)}>
-      <Eyebrow>{copy.today.hero.today}</Eyebrow>
-      <span {...stylex.props(styles.title)}>{title}</span>
-      <span {...stylex.props(styles.body)}>{body}</span>
-    </div>
-  );
-}
-
 export function HeroSummary({ hero, clock, tz, onOpenEvent }: HeroSummaryProps) {
   if (hero.kind === "ended") {
     return <HeroMessage title={copy.today.hero.endedTitle} body={copy.today.hero.endedBody} />;
@@ -111,5 +82,34 @@ export function HeroSkeleton() {
       <SkeletonBlock width="80%" height={40} radius={radii.md} />
       <SkeletonBlock width="50%" height={18} />
     </Skeleton>
+  );
+}
+
+function runningMeta({ startAt, endAt }: CalendarEvent, clock: Clock, tz: string): string {
+  if (endAt === undefined) return copy.today.hero.started(clockAt(startAt, clock, tz));
+
+  return copy.today.hero.until(timeAt(endAt, clock, tz));
+}
+
+function eventMeta(
+  hero: Extract<TodayHero<CalendarEvent>, { event: unknown }>,
+  clock: Clock,
+  tz: string,
+) {
+  const when =
+    hero.kind === "now"
+      ? runningMeta(hero.event, clock, tz)
+      : clockAt(hero.event.startAt, clock, tz);
+
+  return [hero.event.location, when].filter(Boolean).join(" · ");
+}
+
+function HeroMessage({ title, body }: { title: string; body: string }) {
+  return (
+    <div {...stylex.props(styles.root)}>
+      <Eyebrow>{copy.today.hero.today}</Eyebrow>
+      <span {...stylex.props(styles.title)}>{title}</span>
+      <span {...stylex.props(styles.body)}>{body}</span>
+    </div>
   );
 }

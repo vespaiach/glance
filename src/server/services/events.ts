@@ -74,6 +74,19 @@ export function deleteEvent(
   });
 }
 
+export function toEvent(row: EventRow): SyncedEvent {
+  return {
+    id: row.id,
+    title: row.title,
+    startAt: row.start_at,
+    ...optional("endAt", row.end_at),
+    ...optional("location", row.location),
+    tone: toneFromColumn<Tone>(row.tone),
+    ...(row.all_day ? { allDay: true } : {}),
+    ...serverFields(row),
+  };
+}
+
 function eventRow(db: Db, id: string): Promise<EventRow | undefined> {
   return db.one<EventRow>("SELECT * FROM events WHERE id = $1", [id]);
 }
@@ -103,17 +116,4 @@ async function writeEvent(
       version,
     ],
   );
-}
-
-export function toEvent(row: EventRow): SyncedEvent {
-  return {
-    id: row.id,
-    title: row.title,
-    startAt: row.start_at,
-    ...optional("endAt", row.end_at),
-    ...optional("location", row.location),
-    tone: toneFromColumn<Tone>(row.tone),
-    ...(row.all_day ? { allDay: true } : {}),
-    ...serverFields(row),
-  };
 }

@@ -39,14 +39,6 @@ const scheduleFits = stylex.create({
   phone: {},
 });
 
-export function todayScheduleFit(breakpoint: Breakpoint): stylex.StyleXStyles {
-  return scheduleFits[breakpoint];
-}
-
-export function todayLayout(breakpoint: Breakpoint): stylex.StyleXStyles {
-  return grids[breakpoint];
-}
-
 type CapacityInput = {
   bp: Breakpoint;
   portrait: boolean;
@@ -68,6 +60,14 @@ const MAX_ROWS = 8;
 
 const fitsByHeight = (bp: Breakpoint, portrait: boolean) =>
   bp === "wide" || (bp === "mid" && !portrait);
+
+export function todayScheduleFit(breakpoint: Breakpoint): stylex.StyleXStyles {
+  return scheduleFits[breakpoint];
+}
+
+export function todayLayout(breakpoint: Breakpoint): stylex.StyleXStyles {
+  return grids[breakpoint];
+}
 
 export function todayCapacity({ bp, portrait, windowHeight, allDayCount }: CapacityInput): number {
   if (!fitsByHeight(bp, portrait)) return FIXED_ROWS;

@@ -93,6 +93,21 @@ const DEMOS: readonly Demo[] = [
   },
 ];
 
+export function SignInGallery({ season }: { season: Season }) {
+  return (
+    <GalleryGroup title={gallery.groups.signInView}>
+      {DEMOS.map(({ key, phone, ...demo }) => (
+        <SignInView
+          key={key}
+          {...signInBase(season)}
+          {...demo}
+          xstyle={phone ? styles.phone : styles.view}
+        />
+      ))}
+    </GalleryGroup>
+  );
+}
+
 function signInBase(season: Season): SignInProps {
   return {
     state: { step: "form", email: "" },
@@ -108,19 +123,4 @@ function signInBase(season: Season): SignInProps {
     onOpenedLink: ignore,
     onFinishedOnPhone: ignore,
   };
-}
-
-export function SignInGallery({ season }: { season: Season }) {
-  return (
-    <GalleryGroup title={gallery.groups.signInView}>
-      {DEMOS.map(({ key, phone, ...demo }) => (
-        <SignInView
-          key={key}
-          {...signInBase(season)}
-          {...demo}
-          xstyle={phone ? styles.phone : styles.view}
-        />
-      ))}
-    </GalleryGroup>
-  );
 }

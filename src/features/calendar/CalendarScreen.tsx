@@ -26,28 +26,6 @@ const styles = stylex.create({
   },
 });
 
-function todayInMonth(today: string, year: number, month: number): number | undefined {
-  const date = parseDateKey(today);
-
-  const sameMonth = date.getUTCFullYear() === year && date.getUTCMonth() === month;
-
-  return sameMonth ? date.getUTCDate() : undefined;
-}
-
-function dayKey(year: number, month: number, day: number): string {
-  return dateKey(new Date(Date.UTC(year, month, day)), "UTC");
-}
-
-function revealDayList(list: HTMLElement | null) {
-  const view = list?.closest("main");
-  if (!list || !view) return;
-
-  const top = list.getBoundingClientRect().top - view.getBoundingClientRect().top;
-  const scroll = dayRevealScroll(top, view.clientHeight);
-
-  if (scroll > 0) view.scrollTo({ top: view.scrollTop + scroll, behavior: "smooth" });
-}
-
 export function CalendarScreen() {
   const sheets = useSheetHost();
 
@@ -117,4 +95,26 @@ export function CalendarScreen() {
       />
     </div>
   );
+}
+
+function todayInMonth(today: string, year: number, month: number): number | undefined {
+  const date = parseDateKey(today);
+
+  const sameMonth = date.getUTCFullYear() === year && date.getUTCMonth() === month;
+
+  return sameMonth ? date.getUTCDate() : undefined;
+}
+
+function dayKey(year: number, month: number, day: number): string {
+  return dateKey(new Date(Date.UTC(year, month, day)), "UTC");
+}
+
+function revealDayList(list: HTMLElement | null) {
+  const view = list?.closest("main");
+  if (!list || !view) return;
+
+  const top = list.getBoundingClientRect().top - view.getBoundingClientRect().top;
+  const scroll = dayRevealScroll(top, view.clientHeight);
+
+  if (scroll > 0) view.scrollTo({ top: view.scrollTop + scroll, behavior: "smooth" });
 }

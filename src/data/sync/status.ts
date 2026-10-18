@@ -28,14 +28,6 @@ export type StatusEvent =
 
 export const INITIAL_STATUS: SyncStatus = { online: true, weather: { state: "idle" } };
 
-function withoutError({ error: _, retryAt: _retry, ...status }: SyncStatus): SyncStatus {
-  return status;
-}
-
-function retryingAt(retryAt: string | undefined) {
-  return retryAt === undefined ? {} : { retryAt };
-}
-
 export function nextStatus(status: SyncStatus, event: StatusEvent): SyncStatus {
   switch (event.type) {
     case "synced":
@@ -68,4 +60,12 @@ export function recordStatus(db: GlanceDb, event: StatusEvent): Promise<void> {
 
     await db.meta.put({ key: STATUS_KEY, value: nextStatus(current ?? INITIAL_STATUS, event) });
   });
+}
+
+function withoutError({ error: _, retryAt: _retry, ...status }: SyncStatus): SyncStatus {
+  return status;
+}
+
+function retryingAt(retryAt: string | undefined) {
+  return retryAt === undefined ? {} : { retryAt };
 }

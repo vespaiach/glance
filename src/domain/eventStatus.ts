@@ -6,14 +6,6 @@ export type EventStatus = "past" | "now" | "upcoming" | "allDay";
 
 type EventSpan = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
 
-function statusToday({ startAt, endAt }: EventSpan, now: Date): EventStatus {
-  const time = now.getTime();
-
-  if (endAt !== undefined && Date.parse(endAt) <= time) return "past";
-
-  return Date.parse(startAt) <= time ? "now" : "upcoming";
-}
-
 export function eventStatus(event: EventSpan, now: Date, tz: string): EventStatus {
   if (event.allDay) return "allDay";
 
@@ -26,4 +18,12 @@ export function eventStatus(event: EventSpan, now: Date, tz: string): EventStatu
   if (day > today) return "upcoming";
 
   return statusToday(event, now);
+}
+
+function statusToday({ startAt, endAt }: EventSpan, now: Date): EventStatus {
+  const time = now.getTime();
+
+  if (endAt !== undefined && Date.parse(endAt) <= time) return "past";
+
+  return Date.parse(startAt) <= time ? "now" : "upcoming";
 }

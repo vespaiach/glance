@@ -64,43 +64,6 @@ const styles = stylex.create({
   },
 });
 
-function seasonSubtitle(setting: AccountSettings["season"], season: Season): string {
-  const name = copy.season[season];
-
-  return setting === "auto"
-    ? copy.settings.season.following(name)
-    : copy.settings.season.fixed(name);
-}
-
-function backgroundSummary(background: ShownBackground): string {
-  const text = copy.settings.background;
-
-  switch (background.mode) {
-    case "season":
-      return text.season;
-    case "photo":
-      return text.photo(background.photo.title);
-    case "slideshow":
-      return text.slideshow(copy.background.interval[background.rotate]);
-  }
-}
-
-function SignedIn({ account }: { account: SettingsAccount }) {
-  return (
-    <span {...stylex.props(styles.signedIn)}>
-      {copy.settings.signedInAs}{" "}
-      {account.name === null ? (
-        account.email
-      ) : (
-        <>
-          <span {...stylex.props(styles.name)}>{account.name}</span>
-          {copy.settings.signedInEmail(account.email)}
-        </>
-      )}
-    </span>
-  );
-}
-
 export function SettingsPanel({
   account,
   settings,
@@ -170,5 +133,42 @@ export function SettingsPanel({
         </SettingsRow>
       </div>
     </div>
+  );
+}
+
+function seasonSubtitle(setting: AccountSettings["season"], season: Season): string {
+  const name = copy.season[season];
+
+  return setting === "auto"
+    ? copy.settings.season.following(name)
+    : copy.settings.season.fixed(name);
+}
+
+function backgroundSummary(background: ShownBackground): string {
+  const text = copy.settings.background;
+
+  switch (background.mode) {
+    case "season":
+      return text.season;
+    case "photo":
+      return text.photo(background.photo.title);
+    case "slideshow":
+      return text.slideshow(copy.background.interval[background.rotate]);
+  }
+}
+
+function SignedIn({ account }: { account: SettingsAccount }) {
+  return (
+    <span {...stylex.props(styles.signedIn)}>
+      {copy.settings.signedInAs}{" "}
+      {account.name === null ? (
+        account.email
+      ) : (
+        <>
+          <span {...stylex.props(styles.name)}>{account.name}</span>
+          {copy.settings.signedInEmail(account.email)}
+        </>
+      )}
+    </span>
   );
 }

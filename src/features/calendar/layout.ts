@@ -22,15 +22,6 @@ const DAY_REVEAL = 220;
 
 const clamp = (min: number, value: number, max: number) => Math.min(max, Math.max(min, value));
 
-function narrowCell(width: number): number {
-  const gutter = clamp(20, width * 0.026, 40);
-  const padding = clamp(16, width * 0.03, 32);
-
-  const fit = Math.floor((width - 2 * gutter - 2 * padding - DAY_GAPS) / 7);
-
-  return Math.min(NARROW_MAX_CELL, fit);
-}
-
 export function calendarCell(breakpoint: Breakpoint, width: number): number {
   if (breakpoint === "wide" || breakpoint === "mid") return FIXED_CELL[breakpoint];
 
@@ -45,4 +36,13 @@ export function calendarLayout(breakpoint: Breakpoint): stylex.StyleXStyles {
 
 export function dayRevealScroll(listTop: number, viewHeight: number): number {
   return Math.max(0, listTop - (viewHeight - DAY_REVEAL));
+}
+
+function narrowCell(width: number): number {
+  const gutter = clamp(20, width * 0.026, 40);
+  const padding = clamp(16, width * 0.03, 32);
+
+  const fit = Math.floor((width - 2 * gutter - 2 * padding - DAY_GAPS) / 7);
+
+  return Math.min(NARROW_MAX_CELL, fit);
 }

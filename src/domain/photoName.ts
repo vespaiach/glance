@@ -23,14 +23,6 @@ const FILE_DATE = /(?<!\d)((?:19|20)\d{2})([-_.]?)(\d{2})\2(\d{2})(?!\d)/;
 
 const PLACEHOLDER_TITLE = /camera|^default$|^image$/i;
 
-function isNameWord(word: string): boolean {
-  return word !== "" && !/\d/.test(word) && !FILLER_WORDS.has(word.toLowerCase());
-}
-
-function capitalized(name: string): string {
-  return name === name.toLowerCase() ? name.charAt(0).toUpperCase() + name.slice(1) : name;
-}
-
 export function nameFromFile(fileName: string): string | undefined {
   const words = photoTitle(fileName).replace(CAMERA_PREFIX, "").split(SEPARATORS);
 
@@ -39,18 +31,44 @@ export function nameFromFile(fileName: string): string | undefined {
   return REAL_WORD.test(name) ? capitalized(name) : undefined;
 }
 
-function isCalendarDate(year: number, month: number, day: number): boolean {
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
 export function dateFromFile(fileName: string): string | undefined {
   const [, year = "", , month = "", day = ""] = FILE_DATE.exec(fileName) ?? [];
 
   if (!isCalendarDate(Number(year), Number(month), Number(day))) return undefined;
 
   return `${year}-${month}-${day}`;
+}
+
+export function photoDetails(facts: PhotoFacts): PhotoDetails {
+  const title = titleOf(facts);
+
+  const takenOn = takenOnOf(facts);
+
+  return {
+    title: title.title,
+    takenOn: takenOn.takenOn,
+    ...(facts.place && { place: facts.place.label }),
+    sources: {
+      title: title.source,
+      takenOn: takenOn.source,
+      place: facts.place ? "photo-location" : "none",
+    },
+    checked: false,
+  };
+}
+
+function isNameWord(word: string): boolean {
+  return word !== "" && !/\d/.test(word) && !FILLER_WORDS.has(word.toLowerCase());
+}
+
+function capitalized(name: string): string {
+  return name === name.toLowerCase() ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+}
+
+function isCalendarDate(year: number, month: number, day: number): boolean {
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
 function metadataTitle(title: string | undefined): string | undefined {
@@ -86,22 +104,4 @@ function takenOnOf({ fileName, fileDate, metadata }: PhotoFacts): {
   if (fromName) return { takenOn: fromName, source: "file-name" };
 
   return { takenOn: fileDate, source: "file-date" };
-}
-
-export function photoDetails(facts: PhotoFacts): PhotoDetails {
-  const title = titleOf(facts);
-
-  const takenOn = takenOnOf(facts);
-
-  return {
-    title: title.title,
-    takenOn: takenOn.takenOn,
-    ...(facts.place && { place: facts.place.label }),
-    sources: {
-      title: title.source,
-      takenOn: takenOn.source,
-      place: facts.place ? "photo-location" : "none",
-    },
-    checked: false,
-  };
 }

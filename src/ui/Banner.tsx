@@ -57,10 +57,6 @@ const styles = stylex.create({
   },
 });
 
-function toneStyle(tone: BannerTone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
-}
-
 export function Banner({
   title,
   icon,
@@ -84,4 +80,8 @@ export function Banner({
       )}
     </div>
   );
+}
+
+function toneStyle(tone: BannerTone) {
+  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

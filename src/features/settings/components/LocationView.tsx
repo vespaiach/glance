@@ -142,6 +142,43 @@ const styles = stylex.create({
   },
 });
 
+type CurrentProps = Pick<LocationViewProps, "location" | "now" | "clock">;
+
+export function LocationView({
+  location,
+  now,
+  clock,
+  setup,
+  example,
+  breakpoint,
+  onBack,
+}: LocationViewProps) {
+  const { state } = setup;
+
+  return (
+    <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
+      <div {...stylex.props(styles.panel)}>
+        <Header onBack={onBack} />
+        <Current location={location} now={now} clock={clock} />
+        {state.step === "confirm-zone" && location?.timeZone ? (
+          <ZoneConfirm
+            place={state.place}
+            from={location.timeZone}
+            now={now}
+            clock={clock}
+            example={example}
+            onConfirm={setup.confirm}
+            onKeep={setup.keep}
+          />
+        ) : (
+          <Change located={location !== undefined} setup={setup} />
+        )}
+      </div>
+      <WhatItSets zone={location?.timeZone} />
+    </div>
+  );
+}
+
 function Header({ onBack }: { onBack: () => void }) {
   return (
     <div {...stylex.props(styles.header)}>
@@ -152,8 +189,6 @@ function Header({ onBack }: { onBack: () => void }) {
     </div>
   );
 }
-
-type CurrentProps = Pick<LocationViewProps, "location" | "now" | "clock">;
 
 function zoneLine({ location, now, clock }: CurrentProps): string {
   const zone = location?.timeZone;
@@ -233,40 +268,5 @@ function WhatItSets({ zone }: { zone: string | undefined }) {
       <div {...stylex.props(styles.caption)}>{name ? text.caption(name) : text.captionUnset}</div>
       <span {...stylex.props(styles.shared)}>{text.shared}</span>
     </ColorBlock>
-  );
-}
-
-export function LocationView({
-  location,
-  now,
-  clock,
-  setup,
-  example,
-  breakpoint,
-  onBack,
-}: LocationViewProps) {
-  const { state } = setup;
-
-  return (
-    <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
-      <div {...stylex.props(styles.panel)}>
-        <Header onBack={onBack} />
-        <Current location={location} now={now} clock={clock} />
-        {state.step === "confirm-zone" && location?.timeZone ? (
-          <ZoneConfirm
-            place={state.place}
-            from={location.timeZone}
-            now={now}
-            clock={clock}
-            example={example}
-            onConfirm={setup.confirm}
-            onKeep={setup.keep}
-          />
-        ) : (
-          <Change located={location !== undefined} setup={setup} />
-        )}
-      </div>
-      <WhatItSets zone={location?.timeZone} />
-    </div>
   );
 }

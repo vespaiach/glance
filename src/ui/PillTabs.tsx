@@ -62,10 +62,6 @@ const styles = stylex.create({
   },
 });
 
-function normalize<T extends string>(option: PillOption<T>) {
-  return typeof option === "string" ? { value: option, label: option } : option;
-}
-
 export function PillTabs<T extends string>({
   options,
   value,
@@ -96,4 +92,8 @@ export function PillTabs<T extends string>({
       })}
     </fieldset>
   );
+}
+
+function normalize<T extends string>(option: PillOption<T>) {
+  return typeof option === "string" ? { value: option, label: option } : option;
 }

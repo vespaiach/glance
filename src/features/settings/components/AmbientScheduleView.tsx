@@ -186,6 +186,73 @@ const styles = stylex.create({
   },
 });
 
+type SetFieldsProps = {
+  shown: ShownSet;
+  set: AmbientSet;
+  clock: Clock;
+  pick: AmbientPick | null;
+  compact: boolean;
+  onPick: (pick: AmbientPick | null) => void;
+  onChange: (set: AmbientSet) => void;
+};
+
+type OverDayProps = Pick<
+  AmbientScheduleViewProps,
+  "ambient" | "clock" | "idleTimeout" | "onPreview"
+>;
+
+export function AmbientScheduleView({
+  ambient,
+  clock,
+  idleTimeout,
+  breakpoint,
+  initialPick,
+  onChange,
+  onBack,
+  onPreview,
+}: AmbientScheduleViewProps) {
+  const [pick, setPick] = useState<AmbientPick | null>(initialPick ?? null);
+
+  const changeMode = (mode: Ambient["mode"]) => {
+    setPick(null);
+    onChange({ ...ambient, mode });
+  };
+
+  return (
+    <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
+      <div {...stylex.props(styles.panel)}>
+        <Header onBack={onBack} />
+        <div {...stylex.props(styles.group)}>
+          <Eyebrow>{text.schedule}</Eyebrow>
+          <div {...stylex.props(styles.tabs)}>
+            <PillTabs
+              label={text.schedule}
+              options={text.modes}
+              value={ambient.mode}
+              onChange={changeMode}
+              size="lg"
+            />
+          </div>
+        </div>
+        {shownSets(ambient.mode).map((shown) => (
+          <SetFields
+            key={shown.key}
+            shown={shown}
+            set={ambient[shown.key]}
+            clock={clock}
+            pick={pick}
+            compact={breakpoint === "phone"}
+            onPick={setPick}
+            onChange={(set) => onChange({ ...ambient, [shown.key]: set })}
+          />
+        ))}
+        {ambient.mode === "off" && <StaysBright />}
+      </div>
+      <OverDay ambient={ambient} clock={clock} idleTimeout={idleTimeout} onPreview={onPreview} />
+    </div>
+  );
+}
+
 function shownSets(mode: Ambient["mode"]): ShownSet[] {
   if (mode === "off") return [];
 
@@ -226,16 +293,6 @@ function Header({ onBack }: { onBack: () => void }) {
     </div>
   );
 }
-
-type SetFieldsProps = {
-  shown: ShownSet;
-  set: AmbientSet;
-  clock: Clock;
-  pick: AmbientPick | null;
-  compact: boolean;
-  onPick: (pick: AmbientPick | null) => void;
-  onChange: (set: AmbientSet) => void;
-};
 
 function SetFields({ shown, set, clock, pick, compact, onPick, onChange }: SetFieldsProps) {
   const length = ambientLength(set);
@@ -322,11 +379,6 @@ function Strip({ title, set, clock }: { title: string; set: AmbientSet; clock: C
   );
 }
 
-type OverDayProps = Pick<
-  AmbientScheduleViewProps,
-  "ambient" | "clock" | "idleTimeout" | "onPreview"
->;
-
 function OverDay({ ambient, clock, idleTimeout, onPreview }: OverDayProps) {
   const sets = shownSets(ambient.mode);
 
@@ -351,57 +403,5 @@ function OverDay({ ambient, clock, idleTimeout, onPreview }: OverDayProps) {
         {text.preview}
       </Button>
     </ColorBlock>
-  );
-}
-
-export function AmbientScheduleView({
-  ambient,
-  clock,
-  idleTimeout,
-  breakpoint,
-  initialPick,
-  onChange,
-  onBack,
-  onPreview,
-}: AmbientScheduleViewProps) {
-  const [pick, setPick] = useState<AmbientPick | null>(initialPick ?? null);
-
-  const changeMode = (mode: Ambient["mode"]) => {
-    setPick(null);
-    onChange({ ...ambient, mode });
-  };
-
-  return (
-    <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
-      <div {...stylex.props(styles.panel)}>
-        <Header onBack={onBack} />
-        <div {...stylex.props(styles.group)}>
-          <Eyebrow>{text.schedule}</Eyebrow>
-          <div {...stylex.props(styles.tabs)}>
-            <PillTabs
-              label={text.schedule}
-              options={text.modes}
-              value={ambient.mode}
-              onChange={changeMode}
-              size="lg"
-            />
-          </div>
-        </div>
-        {shownSets(ambient.mode).map((shown) => (
-          <SetFields
-            key={shown.key}
-            shown={shown}
-            set={ambient[shown.key]}
-            clock={clock}
-            pick={pick}
-            compact={breakpoint === "phone"}
-            onPick={setPick}
-            onChange={(set) => onChange({ ...ambient, [shown.key]: set })}
-          />
-        ))}
-        {ambient.mode === "off" && <StaysBright />}
-      </div>
-      <OverDay ambient={ambient} clock={clock} idleTimeout={idleTimeout} onPreview={onPreview} />
-    </div>
   );
 }

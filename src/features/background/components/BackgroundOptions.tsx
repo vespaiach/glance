@@ -81,34 +81,6 @@ const styles = stylex.create({
   },
 });
 
-function caption(shown: ShownBackground): string {
-  const text = copy.background.caption;
-
-  switch (shown.mode) {
-    case "season":
-      return text.season;
-    case "photo":
-      return text.photo(shown.photo.title);
-    case "slideshow":
-      return text.slideshow(shown.photo.title, copy.background.interval[shown.rotate]);
-  }
-}
-
-function Preview({ dim, src }: { dim: Background["dim"]; src?: string }) {
-  return (
-    <div
-      role="img"
-      aria-label={copy.background.preview}
-      {...stylex.props(styles.preview, src !== undefined && styles.photo(photoLayer(dim, src)))}
-    >
-      <div {...stylex.props(styles.panel, styles.block1)} />
-      <div {...stylex.props(styles.panel, styles.canvas)} />
-      <div {...stylex.props(styles.panel, styles.block3)} />
-      <div {...stylex.props(styles.bar)} />
-    </div>
-  );
-}
-
 export function BackgroundOptions({
   background,
   shown,
@@ -147,5 +119,33 @@ export function BackgroundOptions({
       )}
       <p {...stylex.props(styles.caption)}>{caption(shown)}</p>
     </ColorBlock>
+  );
+}
+
+function caption(shown: ShownBackground): string {
+  const text = copy.background.caption;
+
+  switch (shown.mode) {
+    case "season":
+      return text.season;
+    case "photo":
+      return text.photo(shown.photo.title);
+    case "slideshow":
+      return text.slideshow(shown.photo.title, copy.background.interval[shown.rotate]);
+  }
+}
+
+function Preview({ dim, src }: { dim: Background["dim"]; src?: string }) {
+  return (
+    <div
+      role="img"
+      aria-label={copy.background.preview}
+      {...stylex.props(styles.preview, src !== undefined && styles.photo(photoLayer(dim, src)))}
+    >
+      <div {...stylex.props(styles.panel, styles.block1)} />
+      <div {...stylex.props(styles.panel, styles.canvas)} />
+      <div {...stylex.props(styles.panel, styles.block3)} />
+      <div {...stylex.props(styles.bar)} />
+    </div>
   );
 }

@@ -119,6 +119,33 @@ const styles = stylex.create({
   },
 });
 
+export function SeasonGallery({ season }: SeasonGalleryProps) {
+  return (
+    <>
+      <h2 {...stylex.props(styles.title)}>{copy.season[season]}</h2>
+      <CoreGroup />
+      <FormsGroup />
+      <SurfacesGroup />
+      <CalendarGroup />
+      <WeatherGroup />
+      <NotesGroup />
+      <NavigationGroup />
+      <TimeGroup />
+      <SharedGroup />
+      <ZoneGroup />
+      <TodayGallery season={season} />
+      <CalendarGallery />
+      <EventSheetGallery season={season} />
+      <WeatherGallery />
+      <NotesGallery season={season} />
+      <PhotosGallery />
+      <SettingsGallery season={season} />
+      <AmbientGallery season={season} />
+      <SignInGallery season={season} />
+    </>
+  );
+}
+
 function CoreGroup() {
   const [tab, setTab] = useState<string>(gallery.tabs[0]);
 
@@ -485,32 +512,5 @@ function ZoneGroup() {
         </div>
       ))}
     </GalleryGroup>
-  );
-}
-
-export function SeasonGallery({ season }: SeasonGalleryProps) {
-  return (
-    <>
-      <h2 {...stylex.props(styles.title)}>{copy.season[season]}</h2>
-      <CoreGroup />
-      <FormsGroup />
-      <SurfacesGroup />
-      <CalendarGroup />
-      <WeatherGroup />
-      <NotesGroup />
-      <NavigationGroup />
-      <TimeGroup />
-      <SharedGroup />
-      <ZoneGroup />
-      <TodayGallery season={season} />
-      <CalendarGallery />
-      <EventSheetGallery season={season} />
-      <WeatherGallery />
-      <NotesGallery season={season} />
-      <PhotosGallery />
-      <SettingsGallery season={season} />
-      <AmbientGallery season={season} />
-      <SignInGallery season={season} />
-    </>
   );
 }

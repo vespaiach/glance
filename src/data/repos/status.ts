@@ -17,23 +17,6 @@ export type SourceStatus = {
 
 export type Retry = { sync(): void; weather(): void };
 
-async function readStatus(db: GlanceDb): Promise<SyncStatus> {
-  return ((await db.meta.get(STATUS_KEY))?.value as SyncStatus | undefined) ?? INITIAL_STATUS;
-}
-
-function sourceStatus(status: SyncStatus, everSynced: boolean, since: Date): SourceStatus {
-  const { online, error, lastSyncedAt, retryAt, weather } = status;
-
-  return {
-    everSynced,
-    failed: error !== undefined || !online,
-    ...(lastSyncedAt !== undefined && { lastSyncedAt }),
-    ...(retryAt !== undefined && { retryAt }),
-    since,
-    weather,
-  };
-}
-
 export function useSyncStatus(): SyncStatus | undefined {
   const { db } = useRepoStore();
 
@@ -67,4 +50,21 @@ export function useRetry(): Retry {
     () => ({ sync: () => void nudge(), weather: () => void refreshWeather() }),
     [nudge, refreshWeather],
   );
+}
+
+async function readStatus(db: GlanceDb): Promise<SyncStatus> {
+  return ((await db.meta.get(STATUS_KEY))?.value as SyncStatus | undefined) ?? INITIAL_STATUS;
+}
+
+function sourceStatus(status: SyncStatus, everSynced: boolean, since: Date): SourceStatus {
+  const { online, error, lastSyncedAt, retryAt, weather } = status;
+
+  return {
+    everSynced,
+    failed: error !== undefined || !online,
+    ...(lastSyncedAt !== undefined && { lastSyncedAt }),
+    ...(retryAt !== undefined && { retryAt }),
+    since,
+    weather,
+  };
 }

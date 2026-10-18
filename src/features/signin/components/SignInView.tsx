@@ -105,6 +105,40 @@ const styles = stylex.create({
   },
 });
 
+export function SignInView({
+  season,
+  time,
+  clock,
+  tz,
+  breakpoint,
+  keyboardInset = 0,
+  xstyle,
+  ...step
+}: SignInViewProps) {
+  const tall = breakpoint === "wide" || breakpoint === "mid";
+
+  const main = useRef<HTMLElement>(null);
+
+  useFieldInView(main, keyboardInset);
+
+  return (
+    <div {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
+      <main ref={main} {...stylex.props(styles.main, signInLayout(breakpoint))}>
+        <SignInHero
+          season={season}
+          time={time}
+          clock={clock}
+          tz={tz}
+          xstyle={tall && styles.heroTall}
+        />
+        <div {...stylex.props(styles.panel)}>
+          <SignInStep {...step} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
 function endedNotice({ pending }: SignedOut, switching: boolean): string {
   const { ended } = copy.signIn;
 
@@ -394,38 +428,4 @@ function SignInStep(props: StepProps) {
     case "done":
       return <DoneStep state={state} />;
   }
-}
-
-export function SignInView({
-  season,
-  time,
-  clock,
-  tz,
-  breakpoint,
-  keyboardInset = 0,
-  xstyle,
-  ...step
-}: SignInViewProps) {
-  const tall = breakpoint === "wide" || breakpoint === "mid";
-
-  const main = useRef<HTMLElement>(null);
-
-  useFieldInView(main, keyboardInset);
-
-  return (
-    <div {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
-      <main ref={main} {...stylex.props(styles.main, signInLayout(breakpoint))}>
-        <SignInHero
-          season={season}
-          time={time}
-          clock={clock}
-          tz={tz}
-          xstyle={tall && styles.heroTall}
-        />
-        <div {...stylex.props(styles.panel)}>
-          <SignInStep {...step} />
-        </div>
-      </main>
-    </div>
-  );
 }

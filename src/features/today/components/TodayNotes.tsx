@@ -76,27 +76,6 @@ const styles = stylex.create({
   },
 });
 
-function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
-  if (state.kind === "loading" || state.kind === "failed") return copy.today.notes.loadingCount;
-
-  if (state.kind === "empty") return copy.today.notes.count(0);
-
-  const count = copy.today.notes.count(state.data.length);
-
-  if (state.updatedAt === undefined) return count;
-
-  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
-}
-
-function NotesSkeleton() {
-  return (
-    <Skeleton label={copy.today.notes.loading} xstyle={styles.grid}>
-      <SkeletonBlock height={150} radius={radii.sm} />
-      <SkeletonBlock height={150} radius={radii.sm} />
-    </Skeleton>
-  );
-}
-
 export function TodayNotes({
   state,
   retryIn,
@@ -158,5 +137,26 @@ export function TodayNotes({
         )}
       </Zone>
     </section>
+  );
+}
+
+function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
+  if (state.kind === "loading" || state.kind === "failed") return copy.today.notes.loadingCount;
+
+  if (state.kind === "empty") return copy.today.notes.count(0);
+
+  const count = copy.today.notes.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
+}
+
+function NotesSkeleton() {
+  return (
+    <Skeleton label={copy.today.notes.loading} xstyle={styles.grid}>
+      <SkeletonBlock height={150} radius={radii.sm} />
+      <SkeletonBlock height={150} radius={radii.sm} />
+    </Skeleton>
   );
 }

@@ -57,6 +57,21 @@ const DEMOS: readonly Demo[] = [
   { key: "phone", phone: true },
 ];
 
+export function AmbientGallery({ season }: { season: Season }) {
+  return (
+    <GalleryGroup title={gallery.groups.ambientView}>
+      {DEMOS.map(({ key, phone, ...demo }) => (
+        <AmbientView
+          key={key}
+          {...ambientBase(season)}
+          {...demo}
+          xstyle={phone ? styles.phone : styles.view}
+        />
+      ))}
+    </GalleryGroup>
+  );
+}
+
 function ambientBase(season: Season): AmbientProps {
   return {
     season,
@@ -71,19 +86,4 @@ function ambientBase(season: Season): AmbientProps {
     dim: 0.5,
     onWake: ignore,
   };
-}
-
-export function AmbientGallery({ season }: { season: Season }) {
-  return (
-    <GalleryGroup title={gallery.groups.ambientView}>
-      {DEMOS.map(({ key, phone, ...demo }) => (
-        <AmbientView
-          key={key}
-          {...ambientBase(season)}
-          {...demo}
-          xstyle={phone ? styles.phone : styles.view}
-        />
-      ))}
-    </GalleryGroup>
-  );
 }

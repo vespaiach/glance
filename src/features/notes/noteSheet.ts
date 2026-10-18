@@ -92,10 +92,6 @@ export function isDirty(draft: NoteDraft, opened: NoteDraft): boolean {
   );
 }
 
-function edited(state: NoteSheetState, draft: NoteDraft): NoteSheetState {
-  return { ...state, draft, confirm: afterEdit(state.confirm) };
-}
-
 export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction): NoteSheetState {
   switch (action.type) {
     case "text":
@@ -115,4 +111,8 @@ export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction)
     case "keepEditing":
       return { ...state, confirm: null };
   }
+}
+
+function edited(state: NoteSheetState, draft: NoteDraft): NoteSheetState {
+  return { ...state, draft, confirm: afterEdit(state.confirm) };
 }

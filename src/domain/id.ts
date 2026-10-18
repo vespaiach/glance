@@ -1,5 +1,14 @@
 const RANDOM_BYTES = 10;
 
+export function uuidv7(
+  now: Date,
+  random: Uint8Array = crypto.getRandomValues(new Uint8Array(RANDOM_BYTES)),
+): string {
+  const [a = 0, b = 0, c = 0, ...rest] = random;
+
+  return hexGroups([...timeBytes(now), 0x70 | (a & 0x0f), b, 0x80 | (c & 0x3f), ...rest]);
+}
+
 function timeBytes(now: Date): number[] {
   const ms = now.getTime();
 
@@ -16,13 +25,4 @@ function hexGroups(bytes: number[]): string {
     hex.slice(16, 20),
     hex.slice(20),
   ].join("-");
-}
-
-export function uuidv7(
-  now: Date,
-  random: Uint8Array = crypto.getRandomValues(new Uint8Array(RANDOM_BYTES)),
-): string {
-  const [a = 0, b = 0, c = 0, ...rest] = random;
-
-  return hexGroups([...timeBytes(now), 0x70 | (a & 0x0f), b, 0x80 | (c & 0x3f), ...rest]);
 }

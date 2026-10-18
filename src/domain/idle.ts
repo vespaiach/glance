@@ -19,6 +19,8 @@ export type AmbientSegment = { left: number; width: number };
 
 type Night = { weekday: number; sinceNoon: number };
 
+const percentOfDay = (minutes: number) => (minutes / DAY) * 100;
+
 export function ambientMinutes(time: string): number {
   const [hours = 0, minutes = 0] = time.split(":").map(Number);
 
@@ -31,15 +33,9 @@ export function ambientTime(minutes: number): string {
   return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
-function pastNoon(minutes: number): number {
-  return (minutes - NOON + DAY) % DAY;
-}
-
 export function ambientLength({ start, end }: AmbientSet): number {
   return (ambientMinutes(end) - ambientMinutes(start) + DAY) % DAY;
 }
-
-const percentOfDay = (minutes: number) => (minutes / DAY) * 100;
 
 export function ambientSegments(set: AmbientSet): AmbientSegment[] {
   const length = ambientLength(set);
@@ -53,22 +49,6 @@ export function ambientSegments(set: AmbientSet): AmbientSegment[] {
   const first = { left: percentOfDay(dim), width: percentOfDay(length - overflow) };
 
   return overflow === 0 ? [first] : [first, { left: 0, width: percentOfDay(overflow) }];
-}
-
-function nightOf(now: Date, tz: string): Night {
-  const { weekday, hour, minute } = wallTime(now, tz);
-
-  const minutes = hour * 60 + minute;
-
-  return { weekday: minutes >= NOON ? weekday : (weekday + 6) % 7, sinceNoon: pastNoon(minutes) };
-}
-
-function nightRuns(set: AmbientSet | null, sinceNoon: number): boolean {
-  if (set === null) return false;
-
-  const dim = pastNoon(ambientMinutes(set.start));
-
-  return sinceNoon >= dim && sinceNoon < dim + ambientLength(set);
 }
 
 export function ambientSetFor(ambient: Ambient, weekday: number): AmbientSet | null {
@@ -89,15 +69,6 @@ export function inAmbient(ambient: Ambient, now: Date, tz: string): boolean {
   return nightRuns(tonight, sinceNoon) || nightRuns(lastNight, sinceNoon + DAY);
 }
 
-function rangeOf(set: AmbientSet, clock: Clock): AmbientRange | null {
-  if (ambientLength(set) === 0) return null;
-
-  return {
-    start: formatClock(ambientMinutes(set.start), clock),
-    end: formatClock(ambientMinutes(set.end), clock),
-  };
-}
-
 export function ambientSummary(ambient: Ambient, clock: Clock): AmbientSummary {
   if (ambient.mode === "off") return { mode: "off" };
 
@@ -116,4 +87,33 @@ export function idleDue(
   if (idleTimeout === null) return false;
 
   return now.getTime() - lastActivity.getTime() >= idleTimeout * 1000;
+}
+
+function pastNoon(minutes: number): number {
+  return (minutes - NOON + DAY) % DAY;
+}
+
+function nightOf(now: Date, tz: string): Night {
+  const { weekday, hour, minute } = wallTime(now, tz);
+
+  const minutes = hour * 60 + minute;
+
+  return { weekday: minutes >= NOON ? weekday : (weekday + 6) % 7, sinceNoon: pastNoon(minutes) };
+}
+
+function nightRuns(set: AmbientSet | null, sinceNoon: number): boolean {
+  if (set === null) return false;
+
+  const dim = pastNoon(ambientMinutes(set.start));
+
+  return sinceNoon >= dim && sinceNoon < dim + ambientLength(set);
+}
+
+function rangeOf(set: AmbientSet, clock: Clock): AmbientRange | null {
+  if (ambientLength(set) === 0) return null;
+
+  return {
+    start: formatClock(ambientMinutes(set.start), clock),
+    end: formatClock(ambientMinutes(set.end), clock),
+  };
 }

@@ -82,32 +82,9 @@ const styles = stylex.create({
   },
 });
 
-function eventLength({ start, end }: EventDraft): number | undefined {
-  return end !== undefined && end > start ? end - start : undefined;
-}
-
 const ACTIONS_ROOM = 96;
 
 const REVEAL_GAP = 16;
-
-function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
-  const times = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const dialog = times.current?.closest("[role=dialog]");
-
-    if ((picker === null && !endError) || !times.current || !dialog) return;
-
-    const box = dialog.getBoundingClientRect();
-    const row = times.current.getBoundingClientRect();
-
-    if (row.bottom <= box.bottom - ACTIONS_ROOM && row.top >= box.top) return;
-
-    dialog.scrollTop += row.top - box.top - REVEAL_GAP;
-  }, [picker, endError]);
-
-  return times;
-}
 
 type TimesProps = {
   state: EventSheetState;
@@ -115,70 +92,6 @@ type TimesProps = {
   compact?: boolean;
   dispatch: (action: EventSheetAction) => void;
 };
-
-function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
-  const { draft, picker } = state;
-
-  const times = useRevealTimes(picker, state.endError);
-
-  const toggle = (field: TimeFieldName) => () => dispatch({ type: "toggle", field });
-
-  return (
-    <div ref={times} {...stylex.props(styles.times)}>
-      <div {...stylex.props(styles.fields)}>
-        <TimeField
-          label={time.starts}
-          value={draft.start}
-          clock={clock}
-          open={picker === "start"}
-          labels={time}
-          onToggle={toggle("start")}
-          compact={compact}
-        />
-        <TimeField
-          label={time.ends}
-          value={draft.end}
-          clock={clock}
-          length={eventLength(draft)}
-          open={picker === "end"}
-          error={state.endError ? time.endsBeforeStart : undefined}
-          labels={time}
-          onToggle={toggle("end")}
-          compact={compact}
-        />
-      </div>
-      {picker === "start" && (
-        <TimePicker
-          label={time.starts}
-          groupLabel={time.startGroup}
-          value={draft.start}
-          clock={clock}
-          labels={time}
-          onChange={(value) => dispatch({ type: "start", value })}
-          onDone={() => dispatch({ type: "done" })}
-          compact={compact}
-        />
-      )}
-      {picker === "end" && (
-        <TimePicker
-          label={time.ends}
-          groupLabel={time.endGroup}
-          value={draft.end ?? draft.start}
-          clock={clock}
-          labels={time}
-          onChange={(value) => dispatch({ type: "end", value })}
-          onDone={() => dispatch({ type: "done" })}
-          ends={{
-            start: draft.start,
-            lengths: time.lengths,
-            onNoEnd: () => dispatch({ type: "noEnd" }),
-          }}
-          compact={compact}
-        />
-      )}
-    </div>
-  );
-}
 
 type TimeMode = "times" | "allDay";
 
@@ -192,52 +105,11 @@ type TimeModeProps = {
   dispatch: (action: EventSheetAction) => void;
 };
 
-function TimeModeRow({ allDay, dispatch }: TimeModeProps) {
-  const onChange = (mode: TimeMode) => dispatch({ type: "allDay", value: mode === "allDay" });
-
-  return (
-    <div {...stylex.props(styles.mode)}>
-      <span aria-hidden="true" {...stylex.props(styles.modeLabel)}>
-        {time.label}
-      </span>
-      <PillTabs
-        label={time.label}
-        options={TIME_MODES}
-        value={allDay ? "allDay" : "times"}
-        onChange={onChange}
-        size="lg"
-        xstyle={styles.modeTabs}
-      />
-    </div>
-  );
-}
-
-function primaryLabel(mode: EventSheetProps["mode"], offline: boolean): string {
-  if (offline) return words.saveOffline;
-
-  return mode === "new" ? words.add : words.save;
-}
-
 type DeleteActionProps = {
   confirming: boolean;
   onAsk: () => void;
   onDelete: () => void;
 };
-
-function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
-  if (confirming)
-    return (
-      <Button variant="danger" icon={Trash2} onClick={onDelete}>
-        {words.confirmDelete}
-      </Button>
-    );
-
-  return (
-    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
-      {words.delete}
-    </Button>
-  );
-}
 
 export function EventSheet({
   mode,
@@ -338,5 +210,133 @@ export function EventSheet({
         onChange={(value) => dispatch({ type: "tone", value })}
       />
     </Sheet>
+  );
+}
+
+function eventLength({ start, end }: EventDraft): number | undefined {
+  return end !== undefined && end > start ? end - start : undefined;
+}
+
+function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
+  const times = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const dialog = times.current?.closest("[role=dialog]");
+
+    if ((picker === null && !endError) || !times.current || !dialog) return;
+
+    const box = dialog.getBoundingClientRect();
+    const row = times.current.getBoundingClientRect();
+
+    if (row.bottom <= box.bottom - ACTIONS_ROOM && row.top >= box.top) return;
+
+    dialog.scrollTop += row.top - box.top - REVEAL_GAP;
+  }, [picker, endError]);
+
+  return times;
+}
+
+function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
+  const { draft, picker } = state;
+
+  const times = useRevealTimes(picker, state.endError);
+
+  const toggle = (field: TimeFieldName) => () => dispatch({ type: "toggle", field });
+
+  return (
+    <div ref={times} {...stylex.props(styles.times)}>
+      <div {...stylex.props(styles.fields)}>
+        <TimeField
+          label={time.starts}
+          value={draft.start}
+          clock={clock}
+          open={picker === "start"}
+          labels={time}
+          onToggle={toggle("start")}
+          compact={compact}
+        />
+        <TimeField
+          label={time.ends}
+          value={draft.end}
+          clock={clock}
+          length={eventLength(draft)}
+          open={picker === "end"}
+          error={state.endError ? time.endsBeforeStart : undefined}
+          labels={time}
+          onToggle={toggle("end")}
+          compact={compact}
+        />
+      </div>
+      {picker === "start" && (
+        <TimePicker
+          label={time.starts}
+          groupLabel={time.startGroup}
+          value={draft.start}
+          clock={clock}
+          labels={time}
+          onChange={(value) => dispatch({ type: "start", value })}
+          onDone={() => dispatch({ type: "done" })}
+          compact={compact}
+        />
+      )}
+      {picker === "end" && (
+        <TimePicker
+          label={time.ends}
+          groupLabel={time.endGroup}
+          value={draft.end ?? draft.start}
+          clock={clock}
+          labels={time}
+          onChange={(value) => dispatch({ type: "end", value })}
+          onDone={() => dispatch({ type: "done" })}
+          ends={{
+            start: draft.start,
+            lengths: time.lengths,
+            onNoEnd: () => dispatch({ type: "noEnd" }),
+          }}
+          compact={compact}
+        />
+      )}
+    </div>
+  );
+}
+
+function TimeModeRow({ allDay, dispatch }: TimeModeProps) {
+  const onChange = (mode: TimeMode) => dispatch({ type: "allDay", value: mode === "allDay" });
+
+  return (
+    <div {...stylex.props(styles.mode)}>
+      <span aria-hidden="true" {...stylex.props(styles.modeLabel)}>
+        {time.label}
+      </span>
+      <PillTabs
+        label={time.label}
+        options={TIME_MODES}
+        value={allDay ? "allDay" : "times"}
+        onChange={onChange}
+        size="lg"
+        xstyle={styles.modeTabs}
+      />
+    </div>
+  );
+}
+
+function primaryLabel(mode: EventSheetProps["mode"], offline: boolean): string {
+  if (offline) return words.saveOffline;
+
+  return mode === "new" ? words.add : words.save;
+}
+
+function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
+  if (confirming)
+    return (
+      <Button variant="danger" icon={Trash2} onClick={onDelete}>
+        {words.confirmDelete}
+      </Button>
+    );
+
+  return (
+    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
+      {words.delete}
+    </Button>
   );
 }

@@ -25,48 +25,6 @@ export function useEventsRepo(): EventsRepo {
   return useMemo(() => createEventsRepo(store), [store]);
 }
 
-function isKind(allDay: boolean) {
-  return (row: StoredEvent) => isLive(row) && (row.allDay === true) === allDay;
-}
-
-function startingBetween(
-  db: GlanceDb,
-  [from, to]: readonly [string, string],
-  allDay: boolean,
-): Promise<StoredEvent[]> {
-  return db.events.where("startAt").between(from, to).filter(isKind(allDay)).toArray();
-}
-
-async function eventsOnDays(
-  db: GlanceDb,
-  [first, end]: readonly [string, string],
-  tz: string,
-): Promise<StoredEvent[]> {
-  const allDay = await startingBetween(db, [allDayStart(first), allDayStart(end)], true);
-
-  const timed = await startingBetween(db, [isoDayStart(first, tz), isoDayStart(end, tz)], false);
-
-  return [...allDay, ...timed];
-}
-
-function isoDayStart(key: string, tz: string): string {
-  return dayStart(key, tz).toISOString();
-}
-
-function firstFrom(db: GlanceDb, from: string, allDay: boolean): Promise<StoredEvent | undefined> {
-  return db.events.where("startAt").aboveOrEqual(from).filter(isKind(allDay)).first();
-}
-
-function earlierDay(
-  allDay: StoredEvent | undefined,
-  timed: StoredEvent | undefined,
-  tz: string,
-): StoredEvent | null {
-  if (!allDay || !timed) return allDay ?? timed ?? null;
-
-  return eventDayKey(timed, tz) < eventDayKey(allDay, tz) ? timed : allDay;
-}
-
 export function useEvent(id: string): StoredEvent | null | undefined {
   const { db } = useRepoStore();
 
@@ -75,10 +33,6 @@ export function useEvent(id: string): StoredEvent | null | undefined {
 
     return row && isLive(row) ? row : null;
   }, [db, id]);
-}
-
-function firstOfMonth(year: number, month: number): string {
-  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
 }
 
 export function useEventsOnDay(dayKey: string, tz: string): StoredEvent[] | undefined {
@@ -130,4 +84,50 @@ export function useHasEvents(): boolean | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(async () => (await db.events.filter(isLive).first()) !== undefined, [db]);
+}
+
+function isKind(allDay: boolean) {
+  return (row: StoredEvent) => isLive(row) && (row.allDay === true) === allDay;
+}
+
+function startingBetween(
+  db: GlanceDb,
+  [from, to]: readonly [string, string],
+  allDay: boolean,
+): Promise<StoredEvent[]> {
+  return db.events.where("startAt").between(from, to).filter(isKind(allDay)).toArray();
+}
+
+async function eventsOnDays(
+  db: GlanceDb,
+  [first, end]: readonly [string, string],
+  tz: string,
+): Promise<StoredEvent[]> {
+  const allDay = await startingBetween(db, [allDayStart(first), allDayStart(end)], true);
+
+  const timed = await startingBetween(db, [isoDayStart(first, tz), isoDayStart(end, tz)], false);
+
+  return [...allDay, ...timed];
+}
+
+function isoDayStart(key: string, tz: string): string {
+  return dayStart(key, tz).toISOString();
+}
+
+function firstFrom(db: GlanceDb, from: string, allDay: boolean): Promise<StoredEvent | undefined> {
+  return db.events.where("startAt").aboveOrEqual(from).filter(isKind(allDay)).first();
+}
+
+function earlierDay(
+  allDay: StoredEvent | undefined,
+  timed: StoredEvent | undefined,
+  tz: string,
+): StoredEvent | null {
+  if (!allDay || !timed) return allDay ?? timed ?? null;
+
+  return eventDayKey(timed, tz) < eventDayKey(allDay, tz) ? timed : allDay;
+}
+
+function firstOfMonth(year: number, month: number): string {
+  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
 }

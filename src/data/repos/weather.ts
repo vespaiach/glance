@@ -24,16 +24,16 @@ export function useWeatherRepo(): WeatherRepo {
   return useMemo(() => createWeatherRepo(store), [store]);
 }
 
+export function useWeather(): Weather | null | undefined {
+  const { db, accountId } = useRepoStore();
+
+  return useLiveQuery(async () => forecast(await db.weather.get(accountId)), [db, accountId]);
+}
+
 function forecast(row: StoredWeather | undefined): Weather | null {
   if (row === undefined) return null;
 
   const { accountId: _account, ...weather } = row;
 
   return weather;
-}
-
-export function useWeather(): Weather | null | undefined {
-  const { db, accountId } = useRepoStore();
-
-  return useLiveQuery(async () => forecast(await db.weather.get(accountId)), [db, accountId]);
 }

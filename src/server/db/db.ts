@@ -31,11 +31,7 @@ export const pgTypes = {
     PG_PARSERS[oid] ?? pg.types.getTypeParser(oid, format)) as typeof pg.types.getTypeParser,
 };
 
-function isoTimestamp(value: string): string {
-  const iso = value.replace(" ", "T").replace(UTC_OFFSET_HOURS, "$1:00");
-
-  return new Date(iso).toISOString();
-}
+const shared = globalThis as typeof globalThis & { glanceDb?: Db };
 
 export function driverDb(driver: DbDriver): Db {
   return {
@@ -50,8 +46,6 @@ export function driverDb(driver: DbDriver): Db {
     tx: (fn) => driver.tx(fn),
   };
 }
-
-const shared = globalThis as typeof globalThis & { glanceDb?: Db };
 
 export function getDb(): Db {
   shared.glanceDb ??= openPgDb(env().DATABASE_URL);
@@ -69,6 +63,12 @@ export function pgDb(pool: pg.Pool): Db {
     exec: (sql) => pool.query(sql),
     tx: (fn) => pgTx(pool, fn),
   });
+}
+
+function isoTimestamp(value: string): string {
+  const iso = value.replace(" ", "T").replace(UTC_OFFSET_HOURS, "$1:00");
+
+  return new Date(iso).toISOString();
 }
 
 async function pgQuery(client: pg.Pool | pg.PoolClient, sql: string, params: unknown[]) {

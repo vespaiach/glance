@@ -3,6 +3,20 @@ import type { Photo } from "@/domain/schemas";
 import { formatMonthDay } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
 
+const GUESSED_FROM: Partial<Record<string, string>> = copy.photos.hint.from;
+
+export const SLIDE_MS = 8_000;
+
+export type Slideshow =
+  | { kind: "playing"; from: number; since: Date }
+  | { kind: "paused"; index: number };
+
+export type SlideshowAction =
+  | { type: "select"; index: number; at: Date }
+  | { type: "step"; delta: number; at: Date }
+  | { type: "toggle"; at: Date }
+  | { type: "pause"; at: Date };
+
 export function newestFirst(photos: readonly Photo[]): Photo[] {
   return [...photos].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
@@ -25,20 +39,6 @@ export function photoMeta(photo: Photo, thisYear: number): string {
   return [photoDate(photo, thisYear), photo.place].filter(Boolean).join(" · ");
 }
 
-const GUESSED_FROM: Partial<Record<string, string>> = copy.photos.hint.from;
-
-function guessFrom(source: string): string | undefined {
-  return GUESSED_FROM[source];
-}
-
-function guessText(name: string | undefined, date: string | undefined): string[] {
-  const { hint } = copy.photos;
-
-  if (name && name === date) return [hint.both(name)];
-
-  return [name && hint.name(name), date && hint.date(date)].filter((part) => part !== undefined);
-}
-
 export function photoHint({ sources, checked }: Photo): string | undefined {
   if (checked) return undefined;
 
@@ -48,18 +48,6 @@ export function photoHint({ sources, checked }: Photo): string | undefined {
 
   return parts.length > 0 ? parts.join(" ") : undefined;
 }
-
-export const SLIDE_MS = 8_000;
-
-export type Slideshow =
-  | { kind: "playing"; from: number; since: Date }
-  | { kind: "paused"; index: number };
-
-export type SlideshowAction =
-  | { type: "select"; index: number; at: Date }
-  | { type: "step"; delta: number; at: Date }
-  | { type: "toggle"; at: Date }
-  | { type: "pause"; at: Date };
 
 export function startSlideshow(at: Date, index = 0): Slideshow {
   return { kind: "playing", from: index, since: at };
@@ -71,10 +59,6 @@ export function slideIndex(show: Slideshow, now: Date): number {
   const slides = Math.floor((now.getTime() - show.since.getTime()) / SLIDE_MS);
 
   return show.from + Math.max(0, slides);
-}
-
-function showIndex(show: Slideshow, index: number, at: Date): Slideshow {
-  return show.kind === "paused" ? { kind: "paused", index } : startSlideshow(at, index);
 }
 
 export function slideshow(show: Slideshow, action: SlideshowAction): Slideshow {
@@ -89,4 +73,20 @@ export function slideshow(show: Slideshow, action: SlideshowAction): Slideshow {
   return show.kind === "paused"
     ? startSlideshow(action.at, shown)
     : { kind: "paused", index: shown };
+}
+
+function guessFrom(source: string): string | undefined {
+  return GUESSED_FROM[source];
+}
+
+function guessText(name: string | undefined, date: string | undefined): string[] {
+  const { hint } = copy.photos;
+
+  if (name && name === date) return [hint.both(name)];
+
+  return [name && hint.name(name), date && hint.date(date)].filter((part) => part !== undefined);
+}
+
+function showIndex(show: Slideshow, index: number, at: Date): Slideshow {
+  return show.kind === "paused" ? { kind: "paused", index } : startSlideshow(at, index);
 }

@@ -102,51 +102,6 @@ const styles = stylex.create({
   },
 });
 
-function useKeys(actions: KeyActions) {
-  const latest = useRef(actions);
-
-  useEffect(() => {
-    latest.current = actions;
-  });
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const { onExit, onStep, onTogglePlay } = latest.current;
-
-      if (event.key === "Escape") return onExit();
-
-      if (event.key === "ArrowLeft") return onStep(-1);
-
-      if (event.key === "ArrowRight") return onStep(1);
-
-      if (event.key !== " ") return;
-
-      event.preventDefault();
-      onTogglePlay();
-    };
-
-    window.addEventListener("keydown", onKey);
-
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-}
-
-function useFocusOnOpen() {
-  const dialog = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const opener = document.activeElement;
-
-    dialog.current?.focus();
-
-    return () => {
-      if (opener instanceof HTMLElement) opener.focus();
-    };
-  }, []);
-
-  return dialog;
-}
-
 export function FullScreenPhoto({
   photo,
   src,
@@ -224,4 +179,49 @@ export function FullScreenPhoto({
       )}
     </div>
   );
+}
+
+function useKeys(actions: KeyActions) {
+  const latest = useRef(actions);
+
+  useEffect(() => {
+    latest.current = actions;
+  });
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const { onExit, onStep, onTogglePlay } = latest.current;
+
+      if (event.key === "Escape") return onExit();
+
+      if (event.key === "ArrowLeft") return onStep(-1);
+
+      if (event.key === "ArrowRight") return onStep(1);
+
+      if (event.key !== " ") return;
+
+      event.preventDefault();
+      onTogglePlay();
+    };
+
+    window.addEventListener("keydown", onKey);
+
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+}
+
+function useFocusOnOpen() {
+  const dialog = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const opener = document.activeElement;
+
+    dialog.current?.focus();
+
+    return () => {
+      if (opener instanceof HTMLElement) opener.focus();
+    };
+  }, []);
+
+  return dialog;
 }

@@ -61,10 +61,6 @@ const styles = stylex.create({
   },
 });
 
-function toneStyle(tone: NoteTone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
-}
-
 export function StickyNote({
   children,
   author,
@@ -108,4 +104,8 @@ export function StickyNote({
   }
 
   return <div {...stylex.props(...rootStyles, xstyle)}>{content}</div>;
+}
+
+function toneStyle(tone: NoteTone) {
+  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

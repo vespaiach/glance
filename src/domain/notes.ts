@@ -20,14 +20,6 @@ export function noteTilt(noteCount: number): number {
   return TILTS[(noteCount % TILTS.length) as TiltIndex];
 }
 
-function stampText(created: Date, now: Date, clock: Clock, tz: string): string {
-  const daysAgo = dayNumber(now, tz) - dayNumber(created, tz);
-
-  if (daysAgo === 0) return formatClock(minutesOfDay(created, tz), clock);
-
-  return daysAgo < 7 ? formatWeekday(created, tz) : formatMonthDay(created, tz);
-}
-
 export function noteStamp(createdAt: string, now: Date, clock: Clock, tz: string): NoteStamp {
   const created = new Date(createdAt);
 
@@ -48,4 +40,12 @@ export function noteExpired(
 
 export function noteWaitingToPost(note: { pending: boolean; version: number }): boolean {
   return note.pending && note.version === 0;
+}
+
+function stampText(created: Date, now: Date, clock: Clock, tz: string): string {
+  const daysAgo = dayNumber(now, tz) - dayNumber(created, tz);
+
+  if (daysAgo === 0) return formatClock(minutesOfDay(created, tz), clock);
+
+  return daysAgo < 7 ? formatWeekday(created, tz) : formatMonthDay(created, tz);
 }

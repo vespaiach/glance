@@ -36,10 +36,6 @@ export function useFixtureParams(): FixtureParams {
   return useContext(FixtureParamsContext);
 }
 
-function startsOffline(params: FixtureParams): boolean {
-  return params.net === "offline" || params.upload === "offline";
-}
-
 export function shellOptions(params: FixtureParams): ShellOptions {
   return {
     ...(params.now && { frozenAt: params.now }),
@@ -49,6 +45,28 @@ export function shellOptions(params: FixtureParams): ShellOptions {
     },
     ...(startsOffline(params) && { pillDelayMs: 0 }),
   };
+}
+
+export function fixtureSheet(params: FixtureParams, today: string): SheetRequest | null {
+  const sheet = fixtureSheetKind(params, today);
+
+  return sheet && params.discard ? { ...sheet, discard: true } : sheet;
+}
+
+export function useShellSetup(demo: boolean): ShellSetup | undefined {
+  const [setup, setSetup] = useState<ShellSetup>();
+
+  useEffect(() => {
+    const params = fixtureParamsFor(demo, window.location.search, window.location.pathname);
+
+    setSetup({ params, options: shellOptions(params) });
+  }, [demo]);
+
+  return setup;
+}
+
+function startsOffline(params: FixtureParams): boolean {
+  return params.net === "offline" || params.upload === "offline";
 }
 
 function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | null {
@@ -72,22 +90,4 @@ function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | 
     default:
       return null;
   }
-}
-
-export function fixtureSheet(params: FixtureParams, today: string): SheetRequest | null {
-  const sheet = fixtureSheetKind(params, today);
-
-  return sheet && params.discard ? { ...sheet, discard: true } : sheet;
-}
-
-export function useShellSetup(demo: boolean): ShellSetup | undefined {
-  const [setup, setSetup] = useState<ShellSetup>();
-
-  useEffect(() => {
-    const params = fixtureParamsFor(demo, window.location.search, window.location.pathname);
-
-    setSetup({ params, options: shellOptions(params) });
-  }, [demo]);
-
-  return setup;
 }

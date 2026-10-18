@@ -20,6 +20,8 @@ const INERT: AppServiceWorker = {
   warmPhotos: () => {},
 };
 
+let shared: AppServiceWorker | undefined;
+
 export function createAppServiceWorker(
   container: ServiceWorkerContainer | undefined,
 ): AppServiceWorker {
@@ -70,7 +72,11 @@ export function createAppServiceWorker(
   };
 }
 
-let shared: AppServiceWorker | undefined;
+export function appServiceWorker(): AppServiceWorker {
+  shared ??= createAppServiceWorker(supported());
+
+  return shared;
+}
 
 function supported(): ServiceWorkerContainer | undefined {
   if (process.env.NODE_ENV === "development") return undefined;
@@ -78,10 +84,4 @@ function supported(): ServiceWorkerContainer | undefined {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return undefined;
 
   return navigator.serviceWorker;
-}
-
-export function appServiceWorker(): AppServiceWorker {
-  shared ??= createAppServiceWorker(supported());
-
-  return shared;
 }

@@ -27,6 +27,8 @@ export type Verified = { sessionToken: string; claimedPending: boolean };
 
 export type StaleLink = { code: "stale"; email: string | null };
 
+export type VerifyInput = { token: string; pendingId?: string; userAgent?: string };
+
 export async function requestLink(
   deps: AuthDeps,
   { email, timeZone, ip }: LinkInput,
@@ -45,8 +47,6 @@ export async function requestLink(
 
   return sent.ok ? ok({ pendingId }) : sent;
 }
-
-export type VerifyInput = { token: string; pendingId?: string; userAgent?: string };
 
 export async function verifyLink(
   { db, now }: Clocked,
@@ -86,6 +86,14 @@ export async function deleteLink(db: Db, tokenHash: string): Promise<void> {
   await db.run("DELETE FROM magic_links WHERE token_hash = $1", [tokenHash]);
 }
 
+export function verifyUrl(appUrl: string, token: string): string {
+  const url = new URL("/api/auth/verify", appUrl);
+
+  url.searchParams.set("t", token);
+
+  return url.toString();
+}
+
 async function linkAccount(db: Db, link: LinkRow, at: string): Promise<AccountRow> {
   const known = link.account_id
     ? await accountById(db, link.account_id)
@@ -122,14 +130,6 @@ async function storeLink(
       [hashToken(link.token), link.address, link.pendingId, link.timeZone, expiresAt],
     );
   });
-}
-
-export function verifyUrl(appUrl: string, token: string): string {
-  const url = new URL("/api/auth/verify", appUrl);
-
-  url.searchParams.set("t", token);
-
-  return url.toString();
 }
 
 function linkByToken(db: Db, token: string): Promise<LinkRow | undefined> {

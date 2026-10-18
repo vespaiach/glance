@@ -18,6 +18,24 @@ export function isTextField(element: Element | null): boolean {
   return element instanceof HTMLElement && element.isContentEditable;
 }
 
+export function useKeyboardInset(): number {
+  const simulated = useFixtureParams().kb === true;
+
+  return useSyncExternalStore(
+    subscribe,
+    () => (simulated ? fixtureKeyboardInset(window.innerHeight) : liveInset()),
+    () => 0,
+  );
+}
+
+export function useFixtureFieldFocus() {
+  const simulated = useFixtureParams().kb === true;
+
+  useEffect(() => {
+    if (simulated) return focusWhenShown();
+  }, [simulated]);
+}
+
 function subscribe(listener: () => void) {
   const viewport = window.visualViewport;
 
@@ -38,16 +56,6 @@ function liveInset(): number {
   if (!viewport) return 0;
 
   return keyboardInset(window.innerHeight, viewport.height, viewport.offsetTop);
-}
-
-export function useKeyboardInset(): number {
-  const simulated = useFixtureParams().kb === true;
-
-  return useSyncExternalStore(
-    subscribe,
-    () => (simulated ? fixtureKeyboardInset(window.innerHeight) : liveInset()),
-    () => 0,
-  );
 }
 
 function focusFirstField() {
@@ -81,12 +89,4 @@ function focusWhenShown(): () => void {
     observer.disconnect();
     clearTimeout(timer);
   };
-}
-
-export function useFixtureFieldFocus() {
-  const simulated = useFixtureParams().kb === true;
-
-  useEffect(() => {
-    if (simulated) return focusWhenShown();
-  }, [simulated]);
 }

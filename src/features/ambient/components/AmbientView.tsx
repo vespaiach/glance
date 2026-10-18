@@ -151,60 +151,7 @@ const styles = stylex.create({
   },
 });
 
-function lowLine(weather: Weather, now: Date, tz: string, unit: Unit): string {
-  const low = copy.ambient.low(displayTemp(weather.current.low, unit));
-
-  const rainy = nextNotableDay(weather.daily, now, tz);
-
-  if (rainy === undefined) return low;
-
-  return `${low} · ${copy.ambient.rain(formatWeekday(parseDateKey(rainy.date), "UTC"), rainy.precip ?? 0)}`;
-}
-
-function eventDay(event: CalendarEvent, now: Date, tz: string): string {
-  if (isTomorrow(event, now, tz)) return copy.ambient.tomorrow;
-
-  const date = parseDateKey(eventDayKey(event, tz));
-
-  return copy.ambient.day(formatWeekday(date, "UTC"), formatMonthDay(date, "UTC"));
-}
-
-function eventLine(event: CalendarEvent, now: Date, clock: ClockSetting, tz: string): string {
-  const start = event.allDay ? copy.ambient.allDay : clockAt(event.startAt, clock, tz);
-
-  return copy.ambient.event(eventDay(event, now, tz), start, event.title, event.location);
-}
-
-function LineSkeleton({ label }: { label: string }) {
-  return (
-    <Skeleton label={label} xstyle={styles.skeleton}>
-      <SkeletonBlock width={240} height={32} />
-    </Skeleton>
-  );
-}
-
 type AmbientWeatherProps = { weather: Weather; now: Date; tz: string; unit: Unit };
-
-function AmbientWeather({ weather, now, tz, unit }: AmbientWeatherProps) {
-  return (
-    <div {...stylex.props(styles.weather)}>
-      <Icon icon={weatherIcons[weather.current.icon]} size={56} strokeWidth={1.25} />
-      <div {...stylex.props(styles.column)}>
-        <span {...stylex.props(styles.temp)}>
-          {copy.ambient.now(
-            displayTemp(weather.current.temp, unit),
-            conditionText(weather.current.condition),
-          )}
-        </span>
-        <span {...stylex.props(styles.low)}>{lowLine(weather, now, tz, unit)}</span>
-      </div>
-    </div>
-  );
-}
-
-function NextEvent({ children }: { children: string }) {
-  return <span {...stylex.props(styles.next)}>{children}</span>;
-}
 
 export function AmbientView({
   season,
@@ -278,4 +225,57 @@ export function AmbientView({
       <span {...stylex.props(styles.caption)}>{copy.ambient.caption}</span>
     </button>
   );
+}
+
+function lowLine(weather: Weather, now: Date, tz: string, unit: Unit): string {
+  const low = copy.ambient.low(displayTemp(weather.current.low, unit));
+
+  const rainy = nextNotableDay(weather.daily, now, tz);
+
+  if (rainy === undefined) return low;
+
+  return `${low} · ${copy.ambient.rain(formatWeekday(parseDateKey(rainy.date), "UTC"), rainy.precip ?? 0)}`;
+}
+
+function eventDay(event: CalendarEvent, now: Date, tz: string): string {
+  if (isTomorrow(event, now, tz)) return copy.ambient.tomorrow;
+
+  const date = parseDateKey(eventDayKey(event, tz));
+
+  return copy.ambient.day(formatWeekday(date, "UTC"), formatMonthDay(date, "UTC"));
+}
+
+function eventLine(event: CalendarEvent, now: Date, clock: ClockSetting, tz: string): string {
+  const start = event.allDay ? copy.ambient.allDay : clockAt(event.startAt, clock, tz);
+
+  return copy.ambient.event(eventDay(event, now, tz), start, event.title, event.location);
+}
+
+function LineSkeleton({ label }: { label: string }) {
+  return (
+    <Skeleton label={label} xstyle={styles.skeleton}>
+      <SkeletonBlock width={240} height={32} />
+    </Skeleton>
+  );
+}
+
+function AmbientWeather({ weather, now, tz, unit }: AmbientWeatherProps) {
+  return (
+    <div {...stylex.props(styles.weather)}>
+      <Icon icon={weatherIcons[weather.current.icon]} size={56} strokeWidth={1.25} />
+      <div {...stylex.props(styles.column)}>
+        <span {...stylex.props(styles.temp)}>
+          {copy.ambient.now(
+            displayTemp(weather.current.temp, unit),
+            conditionText(weather.current.condition),
+          )}
+        </span>
+        <span {...stylex.props(styles.low)}>{lowLine(weather, now, tz, unit)}</span>
+      </div>
+    </div>
+  );
+}
+
+function NextEvent({ children }: { children: string }) {
+  return <span {...stylex.props(styles.next)}>{children}</span>;
 }

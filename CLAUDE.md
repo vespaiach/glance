@@ -21,6 +21,7 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 ## Code style
 - No comments in `src/`. Names, types and test titles carry the meaning. Allowed: `// biome-ignore <rule>: <reason>`, `// @ts-expect-error <reason>` and triple-slash directives.
 - Write function bodies as short steps (guards → each read or write → build the result), separated by one blank line, with no blank lines inside a statement. Extract a step into a named function when it has a clear name and at most two inputs, even if it's used once. A function with one or two steps stays one block.
+- Order each file top-down: imports, types and constants, exported functions, then private helper functions. Write helpers as `function` declarations so they can sit below their callers.
 
 ## Building UI (bottom up)
 1. Pure component in `src/ui` or `src/features/*/components`: props in, callbacks out, local UI state only (open, focus, draft).

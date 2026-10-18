@@ -22,22 +22,6 @@ import * as settings from "./settings";
 import * as sync from "./sync";
 import * as weather from "./weather";
 
-function deps(): ServiceDeps {
-  return { db: getDb(), now: () => new Date() };
-}
-
-function weatherDeps(): weather.WeatherDeps {
-  return { ...deps(), provider: createOpenMeteo(fetch) };
-}
-
-function photoDeps(): photos.PhotoDeps {
-  return {
-    ...deps(),
-    photosDir: path.join(env().DATA_DIR, "photos"),
-    locator: createCensusGeocoder(fetch),
-  };
-}
-
 export async function putEvent(accountId: string, event: CalendarEvent) {
   return announce(syncBus(), accountId, await events.putEvent(deps(), accountId, event));
 }
@@ -108,3 +92,19 @@ export function locatePlace(position: Coordinates) {
   );
 }
 export type { WeatherError } from "./weather";
+
+function deps(): ServiceDeps {
+  return { db: getDb(), now: () => new Date() };
+}
+
+function weatherDeps(): weather.WeatherDeps {
+  return { ...deps(), provider: createOpenMeteo(fetch) };
+}
+
+function photoDeps(): photos.PhotoDeps {
+  return {
+    ...deps(),
+    photosDir: path.join(env().DATA_DIR, "photos"),
+    locator: createCensusGeocoder(fetch),
+  };
+}

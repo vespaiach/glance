@@ -724,6 +724,12 @@ export const copy = {
   },
 } as const;
 
+const DEVICE_KIND: Record<DeviceKind, string> = {
+  monitor: "Screen",
+  tablet: "Tablet",
+  smartphone: "Phone",
+};
+
 function ambientRangeText(range: AmbientRange | null): string {
   return range === null ? "Not set" : `${range.start} – ${range.end}`;
 }
@@ -735,12 +741,6 @@ function ambientSummaryText(summary: AmbientSummary): string {
 
   return `Sun – Thu ${ambientRangeText(summary.all)} · Fri & Sat ${ambientRangeText(summary.wknd)}`;
 }
-
-const DEVICE_KIND: Record<DeviceKind, string> = {
-  monitor: "Screen",
-  tablet: "Tablet",
-  smartphone: "Phone",
-};
 
 function screenName({ kind, browser }: Device): string {
   const noun = DEVICE_KIND[kind];

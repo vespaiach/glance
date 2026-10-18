@@ -35,6 +35,14 @@ class ZoneBoundary extends Component<BoundaryProps, { crashed: boolean }> {
   }
 }
 
+export function Zone<T>(props: ZoneProps<T>) {
+  return (
+    <ZoneBoundary fallback={props.failed} resetKey={props.state}>
+      {zoneContent(props)}
+    </ZoneBoundary>
+  );
+}
+
 function zoneContent<T>({ state, loading, empty, failed, children }: ZoneProps<T>) {
   switch (state.kind) {
     case "loading":
@@ -46,12 +54,4 @@ function zoneContent<T>({ state, loading, empty, failed, children }: ZoneProps<T
     case "ready":
       return children(state.data, state.updatedAt);
   }
-}
-
-export function Zone<T>(props: ZoneProps<T>) {
-  return (
-    <ZoneBoundary fallback={props.failed} resetKey={props.state}>
-      {zoneContent(props)}
-    </ZoneBoundary>
-  );
 }

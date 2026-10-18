@@ -164,61 +164,6 @@ const styles = stylex.create({
   },
 });
 
-function screenCaption(screen: SignedInScreen, now: Date, tz: string): string {
-  return screen.current ? text.thisScreen : text.active(activeStamp(screen.lastSeenAt, now, tz));
-}
-
-function ScreenRow({
-  screen,
-  divided,
-  now,
-  tz,
-}: {
-  screen: SignedInScreen;
-  divided: boolean;
-  now: Date;
-  tz: string;
-}) {
-  return (
-    <li {...stylex.props(styles.row, divided && styles.divided)}>
-      <span {...stylex.props(styles.deviceIcon)}>
-        <Icon icon={DEVICE_ICONS[screen.kind]} size={20} label={text.deviceKind(screen.kind)} />
-      </span>
-      <div {...stylex.props(styles.device)}>
-        <span {...stylex.props(styles.deviceName)}>{text.screenName(screen)}</span>
-        <Eyebrow size="caption">{screenCaption(screen, now, tz)}</Eyebrow>
-      </div>
-      {screen.current && <span aria-hidden {...stylex.props(styles.thisDot)} />}
-    </li>
-  );
-}
-
-function QrSignIn({
-  email,
-  online,
-  qr,
-  onShowQr,
-  onCloseQr,
-}: Pick<AccountCardProps, "online" | "qr" | "onShowQr" | "onCloseQr"> & { email: string }) {
-  if (qr.tile.kind === "closed") {
-    return (
-      <Button
-        variant="secondary"
-        icon={QrCode}
-        disabled={!online}
-        onClick={onShowQr}
-        xstyle={styles.button}
-      >
-        {text.qr.show}
-      </Button>
-    );
-  }
-
-  return (
-    <QrSignInTile {...qr} email={email} online={online} onRetry={onShowQr} onClose={onCloseQr} />
-  );
-}
-
 export function AccountCard({
   account,
   screens,
@@ -273,5 +218,60 @@ export function AccountCard({
         </Button>
       </div>
     </section>
+  );
+}
+
+function screenCaption(screen: SignedInScreen, now: Date, tz: string): string {
+  return screen.current ? text.thisScreen : text.active(activeStamp(screen.lastSeenAt, now, tz));
+}
+
+function ScreenRow({
+  screen,
+  divided,
+  now,
+  tz,
+}: {
+  screen: SignedInScreen;
+  divided: boolean;
+  now: Date;
+  tz: string;
+}) {
+  return (
+    <li {...stylex.props(styles.row, divided && styles.divided)}>
+      <span {...stylex.props(styles.deviceIcon)}>
+        <Icon icon={DEVICE_ICONS[screen.kind]} size={20} label={text.deviceKind(screen.kind)} />
+      </span>
+      <div {...stylex.props(styles.device)}>
+        <span {...stylex.props(styles.deviceName)}>{text.screenName(screen)}</span>
+        <Eyebrow size="caption">{screenCaption(screen, now, tz)}</Eyebrow>
+      </div>
+      {screen.current && <span aria-hidden {...stylex.props(styles.thisDot)} />}
+    </li>
+  );
+}
+
+function QrSignIn({
+  email,
+  online,
+  qr,
+  onShowQr,
+  onCloseQr,
+}: Pick<AccountCardProps, "online" | "qr" | "onShowQr" | "onCloseQr"> & { email: string }) {
+  if (qr.tile.kind === "closed") {
+    return (
+      <Button
+        variant="secondary"
+        icon={QrCode}
+        disabled={!online}
+        onClick={onShowQr}
+        xstyle={styles.button}
+      >
+        {text.qr.show}
+      </Button>
+    );
+  }
+
+  return (
+    <QrSignInTile {...qr} email={email} online={online} onRetry={onShowQr} onClose={onCloseQr} />
   );
 }

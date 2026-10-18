@@ -89,6 +89,64 @@ const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {
 
 const PHOTO_CACHE = "photos";
 
+const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
+  fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
+
+export async function signedOutAccountFor(
+  demo: boolean,
+  params: FixtureParams,
+): Promise<SignedOutAccount | undefined> {
+  return demo ? fixtureSignedOut(params) : signedOutAccount();
+}
+
+export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
+  const { auth, places, locate } = signInTransport(demo, params);
+
+  return {
+    link: auth.link,
+    status: auth.status,
+    name: auth.name,
+    location: auth.location,
+    searchPlaces: places,
+    locate,
+    remember: rememberSignedIn,
+  };
+}
+
+export function fixtureParamsFor(demo: boolean, search: string, pathname = ""): FixtureParams {
+  return demo ? parseFixtureParams(search, pathname) : {};
+}
+
+export function useDisplayBoot({ demo, params, now }: BootOptions): DisplayBoot {
+  const [boot, setBoot] = useState<DisplayBoot>({ kind: "booting" });
+
+  useEffect(() => {
+    let live = true;
+
+    const opening = demo ? openFixtureDisplay(params, now) : openAccountDisplay(now);
+
+    opening.then(
+      (opened) => {
+        if (live) setBoot(opened.boot);
+      },
+      (error: unknown) => {
+        if (live) throw error;
+      },
+    );
+
+    return () => {
+      live = false;
+
+      opening.then(
+        (opened) => opened.close(),
+        () => {},
+      );
+    };
+  }, [demo, params, now]);
+
+  return boot;
+}
+
 async function deleteAccountData(accountId: string): Promise<void> {
   await deleteGlanceDb(accountDbName(accountId));
 
@@ -156,13 +214,6 @@ function fixtureSignedOut(params: FixtureParams): SignedOutAccount | undefined {
   return { email: FIXTURE_ACCOUNT.email, pending: params.pending ?? 0 };
 }
 
-export async function signedOutAccountFor(
-  demo: boolean,
-  params: FixtureParams,
-): Promise<SignedOutAccount | undefined> {
-  return demo ? fixtureSignedOut(params) : signedOutAccount();
-}
-
 async function forgetSignedIn(): Promise<void> {
   const meta = openMetaDb();
 
@@ -183,23 +234,6 @@ function signInTransport(demo: boolean, params: FixtureParams) {
   return { auth: createFixtureAuth(params), ...createFixtureSearch(params) };
 }
 
-export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
-  const { auth, places, locate } = signInTransport(demo, params);
-
-  return {
-    link: auth.link,
-    status: auth.status,
-    name: auth.name,
-    location: auth.location,
-    searchPlaces: places,
-    locate,
-    remember: rememberSignedIn,
-  };
-}
-
-const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
-  fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
-
 function keepUploadedImages(transport: Transport) {
   const images = new Map<string, string>();
 
@@ -215,10 +249,6 @@ function keepUploadedImages(transport: Transport) {
     images.get(photoId) ?? fixturePhotoSrc(photoId, variant);
 
   return { upload, photoSrc };
-}
-
-export function fixtureParamsFor(demo: boolean, search: string, pathname = ""): FixtureParams {
-  return demo ? parseFixtureParams(search, pathname) : {};
 }
 
 async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promise<OpenedDisplay> {
@@ -317,34 +347,4 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
   };
 
   return { boot: { kind: "ready", store }, close };
-}
-
-export function useDisplayBoot({ demo, params, now }: BootOptions): DisplayBoot {
-  const [boot, setBoot] = useState<DisplayBoot>({ kind: "booting" });
-
-  useEffect(() => {
-    let live = true;
-
-    const opening = demo ? openFixtureDisplay(params, now) : openAccountDisplay(now);
-
-    opening.then(
-      (opened) => {
-        if (live) setBoot(opened.boot);
-      },
-      (error: unknown) => {
-        if (live) throw error;
-      },
-    );
-
-    return () => {
-      live = false;
-
-      opening.then(
-        (opened) => opened.close(),
-        () => {},
-      );
-    };
-  }, [demo, params, now]);
-
-  return boot;
 }

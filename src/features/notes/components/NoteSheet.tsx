@@ -46,32 +46,11 @@ const styles = stylex.create({
   },
 });
 
-function primaryLabel(mode: NoteSheetProps["mode"], offline: boolean): string {
-  if (offline) return words.saveOffline;
-
-  return mode === "new" ? words.post : words.save;
-}
-
 type DeleteActionProps = {
   confirming: boolean;
   onAsk: () => void;
   onDelete: () => void;
 };
-
-function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
-  if (confirming)
-    return (
-      <Button variant="danger" icon={Trash2} onClick={onDelete}>
-        {words.confirmDelete}
-      </Button>
-    );
-
-  return (
-    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
-      {words.delete}
-    </Button>
-  );
-}
 
 export function NoteSheet({
   mode,
@@ -166,5 +145,26 @@ export function NoteSheet({
         onChange={(value) => dispatch({ type: "tone", value })}
       />
     </Sheet>
+  );
+}
+
+function primaryLabel(mode: NoteSheetProps["mode"], offline: boolean): string {
+  if (offline) return words.saveOffline;
+
+  return mode === "new" ? words.post : words.save;
+}
+
+function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
+  if (confirming)
+    return (
+      <Button variant="danger" icon={Trash2} onClick={onDelete}>
+        {words.confirmDelete}
+      </Button>
+    );
+
+  return (
+    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
+      {words.delete}
+    </Button>
   );
 }
