@@ -42,7 +42,7 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 ## Workflow
 One task = one branch + one PR, named with the task ID. Follow the plan's "Status tracking" rules.
 1. **Start:** `git fetch origin`, confirm the task's dependencies are ✅ on `origin/main`, then `git switch -c feat/<ID>-<slug> origin/main`. Never branch from a local `main` or another task's branch. Open a draft PR; its first commit sets the task row to 🔄 with the PR link.
-2. **Docs:** in the same PR, behavior changes go to product-spec.md, and decisions, schema, API or structure go to tech-design.md (bump the version, add a tech §9 entry if the spec changed). Fix any plan row the change makes wrong.
+2. **Docs:** in the same PR, behavior changes go to product-spec.md, and decisions, schema, API or structure go to tech-design.md (bump the version). Fix any plan row the change makes wrong.
 3. **Checks:** run `npm run check` → `npm run typecheck` → `npm test` → `npm run build` and fix every failure.
 4. **Ready:** when all pass and no owner approval is pending, merge in the latest `origin/main`, push and mark the PR ready without being asked.
 5. **Done:** the last commit before merge sets the row to ✅. Done means merged to `main`.

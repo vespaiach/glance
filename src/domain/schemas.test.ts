@@ -225,7 +225,7 @@ describe("AccountSettingsSchema", () => {
     expect(accepts(AccountSettingsSchema, { ...settings, ambient })).toBe(false);
   });
 
-  it("tech§9-40 settings saved with ambientHours parse to the default schedule", () => {
+  it("tech§4.5 settings saved with ambientHours parse to the default schedule", () => {
     const { ambient: _, ...rest } = settings;
 
     const saved = { ...rest, ambientHours: { start: "18:00", end: "07:30" } };
