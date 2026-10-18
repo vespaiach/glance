@@ -65,7 +65,7 @@ const schedule = {
   clock: "12h",
   compact: false,
   iconActions: false,
-  capacity: 8,
+  rows: 8,
   onOpenEvent: ignore,
   onAddEvent: ignore,
   onOpenCalendar: ignore,
@@ -131,14 +131,14 @@ export function TodayGallery({ season }: { season: Season }) {
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_MANY }}
         {...schedule}
-        capacity={5}
+        rows={5}
         iconActions
       />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa, ...TODAY_MANY.slice(1)] }}
         {...schedule}
-        capacity={6}
+        rows={6}
         compact
       />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule}>

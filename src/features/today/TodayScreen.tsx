@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useRef } from "react";
 import {
   type ShownNote,
   useEventsOnDay,
@@ -32,14 +32,8 @@ import { TodayHero } from "./components/TodayHero";
 import { TodayNotes } from "./components/TodayNotes";
 import { TodaySchedule } from "./components/TodaySchedule";
 import { TodayWeather } from "./components/TodayWeather";
-import {
-  todayAreas,
-  todayCapacity,
-  todayColumnsType,
-  todayGrids,
-  todayLayout,
-  todayStackedType,
-} from "./layout";
+import { todayAreas, todayColumnsType, todayGrids, todayLayout, todayStackedType } from "./layout";
+import { useScheduleRows } from "./useScheduleRows";
 
 const styles = stylex.create({
   grid: {
@@ -89,7 +83,9 @@ export function TodayScreen() {
 
   const photos = useSyncedZone(usePhotos());
 
-  const capacity = useScheduleCapacity(events.state);
+  const scheduleRef = useRef<HTMLElement>(null);
+
+  const rows = useScheduleRows(scheduleRef, !columns);
 
   const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
@@ -123,11 +119,12 @@ export function TodayScreen() {
         tz={tz}
         compact={breakpoint === "phone"}
         iconActions={breakpoint !== "wide"}
-        capacity={capacity}
+        rows={rows}
         onOpenEvent={openEvent}
         onAddEvent={() => sheets.open({ kind: "newevent", day })}
         onOpenCalendar={() => go("calendar")}
         xstyle={[todayAreas.sched, columns && todayAreas.clipped]}
+        ref={scheduleRef}
       >
         {settings.background.mode === "season" && (
           <Picture
@@ -213,20 +210,6 @@ function Picture({ state, day, tz, canUpload, onUpload }: PictureProps) {
       }}
     </Zone>
   );
-}
-
-function allDayCount(state: ZoneState<CalendarEvent>): number {
-  return state.kind === "ready" ? state.data.filter((event) => event.allDay).length : 0;
-}
-
-function useScheduleCapacity(state: ZoneState<CalendarEvent>): number {
-  const bp = useBreakpoint();
-
-  const windowHeight = useViewportHeight();
-
-  const portrait = useViewportWidth() <= windowHeight;
-
-  return todayCapacity({ bp, portrait, windowHeight, allDayCount: allDayCount(state) });
 }
 
 function Hero({ state, clock, now, tz, onOpenEvent }: HeroProps) {

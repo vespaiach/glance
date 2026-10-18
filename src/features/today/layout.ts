@@ -1,5 +1,4 @@
 import * as stylex from "@stylexjs/stylex";
-import type { Breakpoint } from "@/domain/breakpoint";
 import { type } from "@/theme/type.stylex";
 
 export type TodayGrid = "stacked" | "landscape" | "portrait";
@@ -53,31 +52,15 @@ export const todayColumnsType = stylex.createTheme(type, {
   tempSize: "clamp(56px, 24cqi, 160px)",
 });
 
-type CapacityInput = {
-  bp: Breakpoint;
-  portrait: boolean;
-  windowHeight: number;
-  allDayCount: number;
-};
+type RowsInput = { available: number; rowHeight: number };
 
-const FIXED_ROWS = 6;
+const MIN_ROWS = 2;
 
-const ROW_HEIGHT = 76;
-
-const RESERVED_HEIGHT = 360;
-
-const ALL_DAY_TILE_HEIGHT = 64;
-
-const MIN_ROWS = 4;
-
-const MAX_ROWS = 8;
+const MAX_ROWS = 10;
 
 const COLUMNS_MIN_WIDTH = 768;
 
 const WIDE_NOTES_MIN_WIDTH = 1600;
-
-const fitsByHeight = (bp: Breakpoint, portrait: boolean) =>
-  bp === "wide" || (bp === "mid" && !portrait);
 
 export function todayLayout(width: number, height: number): TodayLayout {
   if (width < COLUMNS_MIN_WIDTH) return { grid: "stacked", noteColumns: 2 };
@@ -87,10 +70,6 @@ export function todayLayout(width: number, height: number): TodayLayout {
   return { grid: "landscape", noteColumns: width >= WIDE_NOTES_MIN_WIDTH ? 2 : 1 };
 }
 
-export function todayCapacity({ bp, portrait, windowHeight, allDayCount }: CapacityInput): number {
-  if (!fitsByHeight(bp, portrait)) return FIXED_ROWS;
-
-  const free = windowHeight - RESERVED_HEIGHT - allDayCount * ALL_DAY_TILE_HEIGHT;
-
-  return Math.min(MAX_ROWS, Math.max(MIN_ROWS, Math.floor(free / ROW_HEIGHT)));
+export function scheduleRows({ available, rowHeight }: RowsInput): number {
+  return Math.min(MAX_ROWS, Math.max(MIN_ROWS, Math.floor(available / rowHeight)));
 }
