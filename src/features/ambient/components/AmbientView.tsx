@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { LogOut, WifiOff } from "lucide-react";
+import type { Ref } from "react";
 import { copy } from "@/copy";
 import { eventDayKey } from "@/domain/allDay";
 import { isTomorrow } from "@/domain/ambient";
@@ -45,6 +46,7 @@ type AmbientViewProps = {
   photoSrc?: string;
   dim: number;
   onWake: () => void;
+  wakeRef?: Ref<HTMLButtonElement>;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -219,10 +221,12 @@ export function AmbientView({
   photoSrc,
   dim,
   onWake,
+  wakeRef,
   xstyle,
 }: AmbientViewProps) {
   return (
     <button
+      ref={wakeRef}
       type="button"
       aria-label={copy.ambient.wake}
       onClick={onWake}

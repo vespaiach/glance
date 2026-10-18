@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useNextEventAfter, useSignedOut, useWeather } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
 import type { CalendarEvent } from "@/domain/schemas";
@@ -13,6 +13,7 @@ import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
+import { usePageTransition } from "@/shell/usePageTransition";
 import { AmbientView } from "./components/AmbientView";
 
 const SIGN_IN = "/signin";
@@ -25,6 +26,8 @@ function eventRows(event: CalendarEvent | null | undefined): CalendarEvent[] | u
 
 export function AmbientScreen() {
   const router = useRouter();
+
+  const wakeRef = usePageTransition<HTMLButtonElement>(usePathname());
 
   const settings = useAccountSettings();
 
@@ -58,6 +61,7 @@ export function AmbientScreen() {
       photoSrc={photo?.src}
       dim={ambientDim(settings.background.dim)}
       onWake={() => router.push(signedOut ? SIGN_IN : viewPath("today"))}
+      wakeRef={wakeRef}
     />
   );
 }

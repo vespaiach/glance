@@ -18,7 +18,10 @@ import { AmbientScreen } from "./AmbientScreen";
 
 const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: navigation.push }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: navigation.push }),
+  usePathname: () => "/ambient",
+}));
 
 const NOW = new Date(2026, 9, 9, 19, 12);
 
