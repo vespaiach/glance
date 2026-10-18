@@ -1,4 +1,5 @@
 import type { FixtureParams } from "@/data/repos";
+import type { View } from "./routes";
 
 export type SidebarMode = "hidden" | "rail" | "expanded";
 
@@ -8,36 +9,52 @@ export type SidebarAction =
   | { type: "show" }
   | { type: "open" }
   | { type: "close" }
+  | { type: "hide" }
   | { type: "back" }
-  | { type: "viewChanged" };
+  | { type: "viewChanged"; view: View | undefined };
 
 const INSET: Record<SidebarMode, number> = { hidden: 0, rail: 80, expanded: 332 };
 
-const TRANSITIONS: Record<SidebarAction["type"], Partial<Record<SidebarMode, SidebarMode>>> = {
+const TRANSITIONS: Record<
+  Exclude<SidebarAction["type"], "viewChanged">,
+  Partial<Record<SidebarMode, SidebarMode>>
+> = {
   show: { hidden: "rail" },
   open: { rail: "expanded" },
   close: { expanded: "hidden" },
+  hide: { rail: "hidden" },
   back: { expanded: "rail" },
-  viewChanged: { expanded: "rail" },
 };
 
 export function sidebarReducer(state: SidebarState, action: SidebarAction): SidebarState {
-  const next = TRANSITIONS[action.type][state.mode];
+  const next =
+    action.type === "viewChanged"
+      ? afterViewChange(state.mode, action.view)
+      : TRANSITIONS[action.type][state.mode];
 
-  return next ? { mode: next } : state;
+  return next && next !== state.mode ? { mode: next } : state;
 }
 
-export function initialSidebar(fixture: FixtureParams["rail"]): SidebarState {
+export function initialSidebar(
+  fixture: FixtureParams["rail"],
+  view: View | undefined,
+): SidebarState {
   switch (fixture) {
     case "1":
       return { mode: "rail" };
     case "open":
       return { mode: "expanded" };
     default:
-      return { mode: "hidden" };
+      return { mode: view === "today" ? "hidden" : "rail" };
   }
 }
 
 export function sidebarInset(mode: SidebarMode): number {
   return INSET[mode];
+}
+
+function afterViewChange(mode: SidebarMode, view: View | undefined): SidebarMode {
+  if (mode === "hidden" && view === "today") return mode;
+
+  return "rail";
 }

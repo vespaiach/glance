@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { useReducer } from "react";
 import { SidebarDrawer } from "@/shell/SidebarDrawer";
 import { SidebarGrip } from "@/shell/SidebarGrip";
+import { SidebarHandle } from "@/shell/SidebarHandle";
 import { SidebarRail } from "@/shell/SidebarRail";
 import { initialSidebar, type SidebarMode, sidebarInset, sidebarReducer } from "@/shell/sidebar";
 import { colors, motion, space } from "@/theme/tokens.stylex";
@@ -77,7 +78,9 @@ export function SidebarGallery() {
 }
 
 function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
-  const [state, dispatch] = useReducer(sidebarReducer, FIXTURE[mode], initialSidebar);
+  const [state, dispatch] = useReducer(sidebarReducer, FIXTURE[mode], (rail) =>
+    initialSidebar(rail, "today"),
+  );
 
   const caption = `${gallery.sidebar[mode]} · ${gallery.sidebar[size]}`;
 
@@ -94,14 +97,19 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
         <SidebarRail
           mode={state.mode}
           active="today"
+          onHide={() => dispatch({ type: "hide" })}
+          onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
+        />
+        <SidebarHandle
+          shown={state.mode !== "hidden"}
+          expanded={state.mode === "expanded"}
           onOpen={() => dispatch({ type: "open" })}
-          onNavigate={() => dispatch({ type: "viewChanged" })}
         />
         <SidebarDrawer
           open={state.mode === "expanded"}
           active="today"
           onClose={() => dispatch({ type: "close" })}
-          onNavigate={() => dispatch({ type: "viewChanged" })}
+          onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
         />
       </div>
     </div>

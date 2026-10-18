@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { copy } from "@/copy";
 import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { Icon } from "@/ui/Icon";
-import { IconButton } from "@/ui/IconButton";
 import { press } from "@/ui/press";
 import { useFocusWhenShown } from "./focusWhenShown";
 import type { View } from "./routes";
@@ -41,7 +40,7 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
     gap: space.xxs,
-    overflow: "auto",
+    overflow: "hidden",
     transitionProperty: "transform",
     transitionDuration: motion.durBase,
     transitionTimingFunction: motion.easeSlide,
@@ -50,20 +49,24 @@ const styles = stylex.create({
     transform: "translateX(calc(-100% - 24px))",
     pointerEvents: "none",
   },
-  header: {
+  list: {
+    flexGrow: 1,
+    minHeight: 0,
+    overflow: "auto",
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: space.md,
+    flexDirection: "column",
+    gap: space.xxs,
+  },
+  title: {
+    flexShrink: 0,
     paddingTop: 0,
     paddingRight: space.xxs,
     paddingBottom: space.sm,
     paddingLeft: space.lg,
-  },
-  title: {
     fontSize: 24,
     fontWeight: 540,
     letterSpacing: "-0.3px",
+    lineHeight: "56px",
   },
   row: {
     flexShrink: 0,
@@ -136,14 +139,22 @@ export function SidebarDrawer({ open, active, onClose, onNavigate }: SidebarDraw
         inert={!open}
         {...stylex.props(styles.drawer, !open && styles.closed)}
       >
-        <div {...stylex.props(styles.header)}>
+        <div {...stylex.props(styles.list)}>
           <span {...stylex.props(styles.title)}>{copy.appName}</span>
-          <IconButton icon={X} label={copy.nav.closeSidebar} size="touch" onClick={onClose} />
+          {SIDEBAR_VIEWS.map(row)}
+          <span aria-hidden="true" {...stylex.props(styles.gap)} />
+          <span aria-hidden="true" {...stylex.props(styles.divider)} />
+          {SIDEBAR_PINNED.map(row)}
         </div>
-        {SIDEBAR_VIEWS.map(row)}
-        <span aria-hidden="true" {...stylex.props(styles.gap)} />
-        <span aria-hidden="true" {...stylex.props(styles.divider)} />
-        {SIDEBAR_PINNED.map(row)}
+        <button
+          type="button"
+          aria-label={copy.nav.closeSidebar}
+          onClick={onClose}
+          {...stylex.props(styles.row, press.scale)}
+        >
+          <Icon icon={X} size={24} />
+          <span>{copy.nav.close}</span>
+        </button>
       </nav>
     </div>
   );

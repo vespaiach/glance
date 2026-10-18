@@ -78,7 +78,7 @@ function trackScroll(element: HTMLElement) {
 }
 
 function rail() {
-  return screen.getByRole("button", { name: "Open menu" }).closest("nav") as HTMLElement;
+  return screen.getByRole("button", { name: "Hide sidebar" }).closest("nav") as HTMLElement;
 }
 
 function drawer() {
@@ -89,8 +89,14 @@ function grip() {
   return screen.queryByRole("button", { name: "Show sidebar" });
 }
 
+function expandMenu() {
+  return screen.getByRole("button", { name: "Expand menu" });
+}
+
 function sidebarMode() {
-  if (!rail().hasAttribute("inert")) return drawer().hasAttribute("inert") ? "rail" : "expanded";
+  if (!drawer().hasAttribute("inert")) return "expanded";
+
+  if (!rail().hasAttribute("inert")) return "rail";
 
   return grip() === null ? "none" : "hidden";
 }
@@ -146,18 +152,55 @@ test("SHELL-01 tapping a view on the rail navigates to it", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/notes");
 });
 
-test("SHELL-08 the grip shows the rail, Open menu expands it and ✕ hides it", async () => {
+test("SHELL-08 a load on Calendar starts on Rail", async () => {
+  navigation.pathname = "/calendar";
+
+  await renderShell("Calendar view");
+
+  expect(sidebarMode()).toBe("rail");
+});
+
+test("SHELL-08 the grip shows the rail, Expand menu expands it and Close hides it", async () => {
   await renderShell("Today view");
 
   await userEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
 
   expect(sidebarMode()).toBe("rail");
 
-  await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+  await userEvent.click(expandMenu());
 
   expect(sidebarMode()).toBe("expanded");
 
   await userEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+test("SHELL-08 the rail's ✕ hides the sidebar", async () => {
+  await renderShell("Today view", { rail: "1" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Hide sidebar" }));
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+test("SHELL-08 going to Calendar from Hidden brings back the Rail and moves no focus", async () => {
+  const { rerender } = await renderShell("Today view");
+
+  changeView(rerender, "/calendar");
+
+  expect(sidebarMode()).toBe("rail");
+  expect(document.body).toHaveFocus();
+});
+
+test("SHELL-08 going to Today keeps a Hidden sidebar hidden", async () => {
+  navigation.pathname = "/calendar";
+
+  const { rerender } = await renderShell("Calendar view");
+
+  await userEvent.click(screen.getByRole("button", { name: "Hide sidebar" }));
+
+  changeView(rerender, "/today");
 
   expect(sidebarMode()).toBe("hidden");
 });
@@ -184,20 +227,28 @@ test("SHELL-09 opening the drawer moves focus to the current view's row", async 
 
   await renderShell("Photos view", { rail: "1" });
 
-  await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+  await userEvent.click(expandMenu());
 
   expect(within(drawer()).getByRole("button", { name: "Photos" })).toHaveFocus();
 });
 
-test("SHELL-09 Escape returns to Rail and focuses Open menu", async () => {
+test("SHELL-09 Escape returns to Rail and focuses Expand menu", async () => {
   await renderShell("Today view", { rail: "1" });
 
-  await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+  await userEvent.click(expandMenu());
 
   await userEvent.keyboard("{Escape}");
 
   expect(sidebarMode()).toBe("rail");
-  expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
+  expect(expandMenu()).toHaveFocus();
+});
+
+test("SHELL-09 picking a drawer row focuses Expand menu", async () => {
+  await renderShell("Today view", { rail: "open" });
+
+  await userEvent.click(within(drawer()).getByRole("button", { name: "Notes" }));
+
+  expect(expandMenu()).toHaveFocus();
 });
 
 test("SHELL-09 Escape does nothing on Rail", async () => {
@@ -208,7 +259,7 @@ test("SHELL-09 Escape does nothing on Rail", async () => {
   expect(sidebarMode()).toBe("rail");
 });
 
-test("SHELL-09 ✕ moves focus to the grip", async () => {
+test("SHELL-09 Close moves focus to the grip", async () => {
   await renderShell("Today view", { rail: "open" });
 
   await userEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
@@ -216,12 +267,20 @@ test("SHELL-09 ✕ moves focus to the grip", async () => {
   expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
 });
 
-test("SHELL-09 the grip's tap moves focus to Open menu", async () => {
+test("SHELL-09 the rail's ✕ moves focus to the grip", async () => {
+  await renderShell("Today view", { rail: "1" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Hide sidebar" }));
+
+  expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
+});
+
+test("SHELL-09 the grip's tap moves focus to Expand menu", async () => {
   await renderShell("Today view");
 
   await userEvent.click(screen.getByRole("button", { name: "Show sidebar" }));
 
-  expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
+  expect(expandMenu()).toHaveFocus();
 });
 
 test("SHELL-09 loading the page moves no focus", async () => {
@@ -259,7 +318,7 @@ test("tech§4.5 prefetches the six views on startup", async () => {
   );
 });
 
-async function idleBackToToday(params: FixtureParams) {
+async function idleBackToToday(params: FixtureParams, hidden = false) {
   await createSettingsRepo(store).update({ idleTimeout: 60 });
 
   vi.useFakeTimers({ now: new Date("2026-10-09T10:41:00"), shouldAdvanceTime: true });
@@ -267,6 +326,8 @@ async function idleBackToToday(params: FixtureParams) {
   navigation.pathname = "/calendar";
 
   const { rerender } = await renderShell("/calendar view", params);
+
+  if (hidden) act(() => screen.getByRole("button", { name: "Hide sidebar" }).click());
 
   await act(() => vi.advanceTimersByTimeAsync(200));
 
@@ -284,7 +345,7 @@ test("IDLE-01 the idle return to Today closes the drawer to Rail", async () => {
 });
 
 test("IDLE-01 the idle return to Today keeps a Hidden sidebar hidden", async () => {
-  await idleBackToToday({});
+  await idleBackToToday({}, true);
 
   expect(sidebarMode()).toBe("hidden");
 });

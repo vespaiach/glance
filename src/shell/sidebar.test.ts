@@ -6,42 +6,58 @@ import {
   sidebarReducer,
 } from "./sidebar";
 
-test.each([
-  ["show", "hidden", "rail"],
-  ["open", "rail", "expanded"],
-  ["close", "expanded", "hidden"],
-  ["back", "expanded", "rail"],
-  ["viewChanged", "expanded", "rail"],
-] as const)("SHELL-08 %s turns %s into %s", (type, from, to) => {
-  expect(sidebarReducer({ mode: from }, { type })).toEqual({ mode: to });
-});
+const ON_CALENDAR = { type: "viewChanged", view: "calendar" } as const;
+
+const ON_TODAY = { type: "viewChanged", view: "today" } as const;
 
 test.each([
-  ["show", "rail"],
-  ["show", "expanded"],
-  ["open", "hidden"],
-  ["open", "expanded"],
-  ["close", "hidden"],
-  ["close", "rail"],
-  ["back", "hidden"],
-  ["back", "rail"],
-  ["viewChanged", "hidden"],
-  ["viewChanged", "rail"],
-] as const satisfies readonly (readonly [SidebarAction["type"], SidebarMode])[])(
-  "SHELL-08 %s leaves a %s sidebar as it is",
-  (type, mode) => {
-    const state = { mode };
-
-    expect(sidebarReducer(state, { type })).toBe(state);
+  ["show", "hidden", "rail", { type: "show" }],
+  ["open", "rail", "expanded", { type: "open" }],
+  ["close", "expanded", "hidden", { type: "close" }],
+  ["hide", "rail", "hidden", { type: "hide" }],
+  ["back", "expanded", "rail", { type: "back" }],
+  ["viewChanged to Calendar", "expanded", "rail", ON_CALENDAR],
+  ["viewChanged to Calendar", "hidden", "rail", ON_CALENDAR],
+  ["viewChanged to Today", "expanded", "rail", ON_TODAY],
+] as const satisfies readonly (readonly [string, SidebarMode, SidebarMode, SidebarAction])[])(
+  "SHELL-08 %s turns %s into %s",
+  (_name, from, to, action) => {
+    expect(sidebarReducer({ mode: from }, action)).toEqual({ mode: to });
   },
 );
 
 test.each([
-  [undefined, "hidden"],
-  ["1", "rail"],
-  ["open", "expanded"],
-] as const)("SHELL-08 rail=%s starts the sidebar %s", (rail, mode) => {
-  expect(initialSidebar(rail)).toEqual({ mode });
+  ["show", "rail", { type: "show" }],
+  ["show", "expanded", { type: "show" }],
+  ["open", "hidden", { type: "open" }],
+  ["open", "expanded", { type: "open" }],
+  ["close", "hidden", { type: "close" }],
+  ["close", "rail", { type: "close" }],
+  ["hide", "hidden", { type: "hide" }],
+  ["hide", "expanded", { type: "hide" }],
+  ["back", "hidden", { type: "back" }],
+  ["back", "rail", { type: "back" }],
+  ["viewChanged to Today", "hidden", ON_TODAY],
+  ["viewChanged to Today", "rail", ON_TODAY],
+  ["viewChanged to Calendar", "rail", ON_CALENDAR],
+] as const satisfies readonly (readonly [string, SidebarMode, SidebarAction])[])(
+  "SHELL-08 %s leaves a %s sidebar as it is",
+  (_name, mode, action) => {
+    const state = { mode };
+
+    expect(sidebarReducer(state, action)).toBe(state);
+  },
+);
+
+test.each([
+  [undefined, "today", "hidden"],
+  [undefined, "calendar", "rail"],
+  [undefined, "settings", "rail"],
+  ["1", "today", "rail"],
+  ["open", "today", "expanded"],
+  ["open", "calendar", "expanded"],
+] as const)("SHELL-08 rail=%s on %s starts the sidebar %s", (rail, view, mode) => {
+  expect(initialSidebar(rail, view)).toEqual({ mode });
 });
 
 test.each([
