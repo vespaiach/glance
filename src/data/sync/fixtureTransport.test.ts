@@ -197,7 +197,7 @@ describe("seedFixtureDb", () => {
     expect((await db.settings.get(FIXTURE_ACCOUNT.id))?.ambient).toEqual(ambient);
   });
 
-  it("SET-11 the fixture settings hold no hideBarWhenIdle", async () => {
+  it("tech§4.5 the fixture settings hold no hideBarWhenIdle", async () => {
     await seedFixtureDb(db, {});
 
     expect(await db.settings.get(FIXTURE_ACCOUNT.id)).not.toHaveProperty("hideBarWhenIdle");

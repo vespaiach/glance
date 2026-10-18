@@ -2,113 +2,70 @@
 
 | | |
 |---|---|
-| Status | Draft v0.58 — handoff v7 (D06): Today uses the Columns layout and fits the screen at 768 px and wider, and stacks below (TODAY-13); the schedule measures how many rows fit (TODAY-11); picture of the day moves into the hero and opens Photos on that photo, paused (TODAY-07, PHOTO-01); the schedule's buttons are icon-only below 1200 px (TODAY-04); the rail gets ✕ "Hide sidebar" and an "Expand menu" handle in place of Open menu, the drawer's ✕ becomes a "Close" row, and every view but Today brings the rail back (SHELL-08/09); to be built in execution plan Phase 11 (decision 28); v0.57 — SHELL-09: the grip hands focus to Open menu, and a load moves no focus (N02); v0.56 — handoff v6 replaces the bottom nav bar with a left sidebar (Hidden · Rail · Expanded, SHELL-08..10); the bar hiding when idle (SHELL-06/07) and its setting (SET-11) go with the bar; to be built in execution plan Phase 10 (decision 27); v0.55: reduced motion makes the 280 ms and 600 ms changes instant (U19); the migrations folder is `db-migrations/` (chore); the Clock's colon stays on with reduced motion (U18); the Clock's colon blinks (U17); the server database is PostgreSQL (execution plan Phase 8); handoff v5 is specified and being built (execution plan Phase 9; its look, U01, nav bar, U02, the bar hiding when idle, U03, Discard changes?, U04, all-day events, U05 data and server and U06 UI, the picture of the day, U09, photo details from the file, U10, the Photo details sheet, edits and delete, U11, full-screen photos, U12, the signed-in screens, U13, and the QR sign-in, U14, are in). Earlier versions: `git log` and the spec changes in [tech design §9](tech-design.md#9-spec-changes-from-this-design) |
-| Technical design | [`docs/tech-design.md`](tech-design.md) — stack, architecture, project structure, sync protocol (D1–D23) |
+| Status | v0.59 |
 | Date | 2026-10-18 |
-| Design requests | Prompts sent to Claude Design, all delivered: [1 time entry](prompts/01-time-entry.md) and [2 family copy](prompts/02-family-copy.md) in handoff v2 (§8.3.1, §10), [3 sign-in and system states](prompts/03-signin-and-system-states.md) in v3 (§8.1, PHOTO-06..09, WX-07..09), [4 signed out](prompts/04-session-ended.md) and [5 location and time zone](prompts/05-location-and-time-zone.md) in v4 (SIGNIN-13, §9.9). v4 also added the Ambient screen page (SET-10) and v5 came with no prompt (decision 23). A new prompt goes in [`prompts/`](prompts/) as `NN-short-name.md` |
-| Source of truth | [`docs/design/handoff/Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) |
-| Approach | Design-driven, UI first: build every screen and state against fixtures, then connect real data |
+| Technical design | [`tech-design.md`](tech-design.md) |
+| Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
 
-Requirement IDs (`TODAY-03`, `NOTE-05` …) are meant to be cited in tickets, PRs and tests. **[Mock]** marks behavior the prototype fakes that needs a real implementation. **[Open]** marks a decision that has not been made yet (see §12.2).
+Requirement IDs (`TODAY-03`, `NOTE-05` …) are cited in tasks, PRs and tests. All copy is exact; `{braces}` are interpolated.
 
 ---
 
 ## 1. Product overview
 
-**Glance** is a responsive web app that works as a **family wall calendar**: a shared calendar, weather, notice board and photo frame for one household. It runs on wall-mounted or stand-mounted touch screens (1920×1080 and 1280×800), laptops, tablets (iPad portrait 820) and phones (390).
+**Glance** is a responsive web app that works as a **family wall calendar**: a shared calendar, weather, notice board and photo frame for one household. It runs on wall or stand-mounted touch screens (1920×1080, 1280×800), laptops, tablets (iPad portrait 820) and phones (390).
 
-- **Primary user: any family member at the display**, kids included. Reads the screen from across the room, taps to see details, adds a note or event. Doesn't sign in at the display.
-- **Secondary user: the account holder (usually a parent).** Owns the family's single account (one email). Signs screens in, manages settings, uploads photos.
-- **Voice:** "a calm family noticeboard." Warm but brief, sentence case, readable from 2 m, words a child can read. Never "I". "You" only in instructions.
-
-> **Decided (2026-10-11): the audience is family members.** Handoff v2 re-copied the prototype, boards and mock data for families (the copy changelog is at the top of the behavior notes). Layouts, components and behavior are unchanged from v1.
+- **Primary user:** any family member at the screen, kids included. Reads it from across the room, taps for details, adds a note or event. Never signs in at the screen.
+- **Account holder** (usually a parent): owns the family's one account (one email), signs screens in, manages settings, uploads photos.
+- **Voice:** "a calm family noticeboard". Warm but brief, sentence case, readable from 2 m, words a child can read. Never "I"; "you" only in instructions.
 
 ### 1.1 Goals
-1. Anyone in the room can see "what's happening now / next", today's weather and family notes at a glance.
-2. Anyone at the display can add or edit events and notes without signing in.
-3. The display stays readable and useful when offline, when a data source fails, and during quiet hours (Ambient).
+1. Anyone in the room sees what's happening now and next, today's weather and family notes at a glance.
+2. Anyone at the screen can add or edit events and notes without signing in.
+3. The screen stays useful offline, when a source fails, and during quiet hours (Ambient).
 
-### 1.2 Non-goals for v1 (not designed)
-Calendar sync (Google/Outlook) · recurring and multi-day events · note moderation, character limit, board overflow · photo albums · photo upload on phones (future: hidden in v1, §5.4) · weather alert rules, forecast-day detail · places outside the United States, more than one location per account or per-screen locations · guided setup, renaming or remotely signing out other screens (the signed-in list is read-only, SET-12), roles (e.g. parent vs. child permissions) · per-person colors or filters · session expiry, kiosk lock · burn-in protection.
+### 1.2 Out of scope
+Calendar sync (Google/Outlook) · recurring and multi-day events · note moderation, character limit, board overflow · photo albums · photo upload on phones · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming or remotely signing out screens · roles and permissions · per-person colors or filters · changing the account name or email, deleting the account · session expiry, kiosk lock.
 
----
-
-## 2. Precedence of sources
-
-**Primary source of truth: [`docs/design/handoff/Glance.dc.html`](design/handoff/Glance.dc.html)**, the working prototype (markup and logic). Layout, copy, states and component usage are taken from it first.
-
-Secondary references fill in what the prototype can't show. If one conflicts with the prototype, the prototype wins. If secondary references conflict with each other, the earlier one wins:
-
-2. [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html): interactions, timers and states the screens can't show
-3. [`docs/design/handoff/README.md`](design/handoff/README.md): handoff overview and data needs
-4. Design system `docs/design/handoff/_ds/…/readme.md`: tokens and component foundations
-
-The handoff README was last updated in v4: its nav bar, "Not designed" list and URL params predate v5, so the v5 behavior notes win where they differ. Handoff v6 (2026-10-16) changed only the prototype and the behavior notes (the left sidebar); the `Glance Frames - *` boards still draw the v5 bottom bar, so the sidebar is checked against the prototype, and the boards are checked for everything else. Handoff v7 (2026-10-18) changed the prototype, the behavior notes, the README and the Today board's caption, and adds `Glance Today Layouts.dc.html`, which compares three Today layouts at 768 px and up (`?lay=a|b|c`); only **a, Columns**, the default, is built (decision 28). The board frames embed the live prototype, so the Today board shows the v7 Today. Where the v7 notes and prototype differ, the prototype wins (above): the notes drop the picture of the day when fewer than 3 events fit, but the prototype's code for it only looks inside the schedule, where the picture no longer is, so it never runs; it isn't built (TODAY-11).
-
-Known conflicts where the handoff overrides the design system:
-
-| Topic | Design system says | Glance does |
-|---|---|---|
-| Navigation | TopBar at the top (88 px) plus a bottom Ticker | **Left sidebar** (handoff v6): a grip while hidden, an 80 px icon rail, a 320 px drawer that pushes the page (SHELL-08), **no Ticker** |
-| Canvas | White gutters around color blocks | The season-color canvas (soft grey-tinted, `--hairline-soft`) sits behind white panels, so one layout works on the season color and on a photo (handoff v5) |
-| Backgrounds | Solid flat color only, no photos | Photo, Slideshow and dim modes. Text zones sit on white panels |
-| Brand | "Kiosk" | "Glance" (plain Geist 540, no logo) |
-| Audience and copy | Lobbies, offices, schools | Family home (handoff v2 copy, §10) |
-| Tokens | CSS custom properties | StyleX `defineVars` / `createTheme` (§4.1). Values unchanged |
-| Type sizes | Fixed px for the 1920 kiosk (clock 168, display-xl 86…) | Smaller fluid `clamp()` overrides on the app root so the app fits laptops and tablets (§4.3). Mono captions 14 px minimum (16 px on Ambient). All text black, no grey or dimmed text |
-| Spacing | Free values | The 8 px scale only: 4, 8, 12, 16, 24, 32 (handoff v5) |
-| 12-hour times | Always mono AM/PM | Event rows **omit** AM/PM. Hero, forecast, sunset and ambient include it |
+### 1.3 Open questions
+- Burn-in protection and screen dimming (Ambient).
+- The four season video files (AMB-09): source, license, size budget. Until then Ambient shows its AMB-06 background.
 
 ---
 
-## 3. Technical baseline (decided 2026-10-11)
+## 2. Sources and overrides
 
-| Concern | Choice | Notes |
-|---|---|---|
-| Framework | **Next.js** (App Router), run as a **single-page app** | One root layout keeps the shell (sidebar, season, clock, offline pill) mounted. Each view is a client-rendered route segment (`'use client'`) reached through soft navigation (`<Link>` / `router.push`). Server components render only the HTML shell. No per-view server data fetching |
-| Language | **TypeScript**, `strict: true` | Domain types in §7 are the shared contract between client and API |
-| Lint/format | **Biome** | Replaces ESLint and Prettier. `biome check` runs in CI and pre-commit |
-| Styling | **StyleX** via `@stylexjs/babel-plugin` + `@stylexjs/postcss-plugin` | The official Next.js setup (works with Webpack and Turbopack from Next 16.0.3): `babel.config.js` with `next/babel` + the StyleX plugin, `postcss.config.js` sharing that config, and `src/app/globals.css` containing `@stylex;`. No CSS modules and no Tailwind |
-| Database | **PostgreSQL** | Accessed only from Next.js Route Handlers (`src/app/api/**/route.ts`), never from the client. Driver: `pg` (a connection pool, already in Next's default `serverExternalPackages`); server tests run on PGlite (Postgres in WebAssembly). The database is hosted outside the app |
-| API | Route Handlers, JSON | `/api/events`, `/api/notes`, `/api/photos`, `/api/settings`, `/api/weather` (server proxy to the provider), `/api/auth/*`, `/api/sync` (pull) + `/api/sync/stream` (SSE change ping) |
-| Client data | **Local-first store** on IndexedDB (Dexie) | Screens read local data only. Writes go to IndexedDB plus an outbox, and a sync engine pushes and pulls ([tech design](tech-design.md) D4, §5) |
-| Validation | **Valibot** | Schemas in `src/domain` are the runtime contract for the §7 types, on the client and in Route Handlers |
+The **prototype** wins on layout, copy, states and component use. Then, in order: the behavior notes, the handoff README, the design-system readme. Only the prototype's defaults are built: the left sidebar with the Rail handle, and Today's Columns layout (`lay=a`). The boards don't draw the sidebar, so it is checked against the prototype; everything else is checked against the boards at the 6 sizes.
 
-**Consequences of these choices:**
-- **No `output: 'export'`.** The photo files and the SSE bus need one running Node server (`next build && next start`) with a **persistent disk** (tech design D17). PostgreSQL runs outside that process.
-- **"SPA" here means:** after the first load, view changes never trigger a full page load, and the shell's timers (clock, idle, slideshow, sync) keep running across views. Deep links like `/calendar` still work because each view is a real route.
-- **Data flow:** screens read and write through client repositories (§11) backed by IndexedDB. A sync engine pushes queued writes to the API and pulls changes (§9.7). The server is the source of truth.
-- **Migrations:** plain versioned SQL files applied at startup (`db-migrations/NNN_*.sql`, tracked with `PRAGMA user_version`). No ORM (decided): raw SQL with small typed helpers.
-- **Icons:** Lucide **0.460.0** (`lucide-react` pinned to the same version). Stroke 1.75, or 1.25–1.5 at sizes ≥ 48.
-- **Fonts:** Geist and Geist Mono, variable 100–900 (fine weights 320/330/340/480/540 are required). Self-host for offline use rather than loading from Google Fonts at runtime.
-- **Offline:** service worker plus local persistence (IndexedDB) are required by §9. The app is an **installable PWA** that cold-starts offline (OFF-06). Serving it needs HTTPS. On iPad kiosks, install it to the home screen so the browser doesn't evict saved data. See [tech design](tech-design.md) D16, §4.5.
-- `support.js` and `archive/` in the handoff are **not** part of the build.
+Where Glance departs from the design system:
 
----
-
-## 4. Design system port (Phase 0)
-
-### 4.1 Tokens
-Port the values verbatim from `docs/design/handoff/_ds/…/tokens/` into StyleX:
-
-- `src/theme/tokens.stylex.ts` uses `stylex.defineVars` for `colors`, `space`, `radii`, `shadows`, `motion` and `type`. Files that define vars must use the `.stylex.ts` suffix and export the vars by name.
-- **Seasons** are a `defineVars` group (`season.block1..4`, `soft`, `deep`, `onDeep`, `accent`, `onAccent`) with Spring as the default. `summer`, `fall` and `winter` are `stylex.createTheme(season, {...})`. The root element applies the active theme. A change cross-fades via `transition` on background colors (600 ms).
-- **Fluid type (§4.3)** goes into the `type` vars as `clamp()` values. Ambient overrides them with a `createTheme` scoped to the Ambient root.
-- **Runtime values** (photo URL, dim amount, per-event tone colors) are passed through StyleX dynamic styles (`stylex.create({ bg: (url) => ({ backgroundImage: url }) })`), never inline `style` strings.
-- `@keyframes` (skeleton pulse) uses `stylex.keyframes`.
-- Fonts are self-hosted with `next/font/local` (Geist and Geist Mono variable). The font CSS variable is fed into the `type.fontSans` / `type.fontMono` vars.
-
-Token source files:
-
-| File | Contents |
+| Topic | Glance does |
 |---|---|
-| `colors.css` | Monochrome core, pastel block family, seasonal extensions, semantic (`--success`, `--danger`, `--scrim` 60%, `--on-inverse-soft` 16%) |
-| `seasons.css` | `[data-season=spring\|summer\|fall\|winter]` → `--season-block-1..4`, `--season-soft`, `--season-deep`, `--season-accent` plus surface aliases |
-| `typography.css` | Type roles plus `.t-*` helpers |
-| `spacing.css` | Space scale, radii, shadows 0–3, touch sizes, motion durations and easings |
-| `base.css`, `fonts.css` | Reset, font import |
+| Navigation | Left sidebar (SHELL-08), no TopBar nav, no Ticker |
+| Canvas | Light grey `--hairline-soft` canvas behind white panels, so one layout works on season color and on a photo |
+| Backgrounds | Season color, Photo or Slideshow, with dim. Text zones sit on white panels |
+| Brand | "Glance", plain Geist 540, no logo |
+| Type | Smaller fluid `clamp()` sizes (§4.3). Mono captions 14 px minimum (16 on Ambient). All text black or white, never grey |
+| Spacing | 8 px scale only: 4, 8, 12, 16, 24, 32 |
+| 12-hour times | Event rows omit AM/PM; hero, forecast, sunset and Ambient include it |
 
-Season → block roles: **block-1 = hero/now, block-2 = notes, block-3 = weather, block-4 = highlight**, soft = warm neutral, deep = ambient background, accent = alerts (at most one accent CTA per screen).
+---
+
+## 3. Technical baseline
+
+Next.js (App Router) as a single-page app, TypeScript strict, Biome, StyleX, Valibot, PostgreSQL, a local-first IndexedDB store with a sync engine. Details in [tech design](tech-design.md) §1.
+
+- After the first load, view changes never reload the page, and the shell's timers (clock, idle, slideshow, sync) keep running. Every view is a real route, so deep links work.
+- One Node server with a persistent disk for photos; PostgreSQL runs outside it.
+- The app is an **installable PWA** that cold-starts offline (OFF-06). It needs HTTPS. On iPad kiosks, install it to the home screen so saved data isn't evicted.
+- Icons: Lucide 0.460.0, stroke 1.75 (1.25–1.5 at ≥ 48 px). Fonts: Geist and Geist Mono variable 100–900, self-hosted.
+
+---
+
+## 4. Design system
+
+### 4.1 Tokens and seasons
+The handoff tokens are ported verbatim as StyleX vars. Season roles: **block-1 = hero/now, block-2 = notes, block-3 = weather, block-4 = highlight**, soft = warm neutral, deep = Ambient, accent = alerts (at most one accent action per screen). A season change cross-fades 600 ms.
 
 | Season | 1 | 2 | 3 | 4 | soft | deep | accent | Icon |
 |---|---|---|---|---|---|---|---|---|
@@ -118,105 +75,82 @@ Season → block roles: **block-1 = hero/now, block-2 = notes, block-3 = weather
 | Winter | Ice | Lilac | Glacier | Mint | Frost | Midnight | Cobalt | `snowflake` |
 
 ### 4.2 Components
-Rebuild these as typed React components with the props below (taken from `_ds_bundle.js`):
+Typed components in `src/ui`, styled with StyleX only, each with an optional `xstyle`. Words come in as props.
 
-| Component | Props | Notes |
-|---|---|---|
-| `Clock` | `time: Date, hour12=true, showDate=true, size: 'xl'\|'lg', align: 'left'\|'center'` | Tabular numerals. The colon blinks (on and off every 0.6 s), and stays on when the device asks for reduced motion. `time` is the live `Date` from `useNow()`; the Clock has no timer of its own. Date line "Friday, October 9" |
-| `EventRow` | `start, end, title, location, status: 'past'\|'now'\|'upcoming', dot: Tone, nowLabel, compact, onClick` | Past = struck through, hairline dot (v5: no grey). Now = season fill and NOW pill (`nowLabel`). `compact` = the phone columns (§5.4). With `onClick` the row is a button |
-| `MonthGrid` | `year, month (0-11), selected, today, marked[], onSelect, showTitle, cell` | Selected = black (`aria-pressed`). Today = ring (`aria-current="date"`). Marked = dot. Day buttons are labelled with the full date |
-| `Button` | `variant: primary\|secondary\|ghost\|accent\|inverse\|danger, size: md\|lg, icon, iconRight, fullWidth, disabled` | Always a pill (radius 50). `danger` (handoff v5, not in the DS bundle) = `--danger` fill, white text, in every season: the delete and discard confirms (EVT-06, NOTE-05, PHOTO-13, §8.9) |
-| `IconButton` | `icon, variant: soft\|canvas\|solid\|inverse, size: md\|touch\|lg, label, active, current` | `md` = 40, `touch` = 56, `lg` = 72 px. `active` = black. `current="page"` sets `aria-current` (sidebar rail) |
-| `PillTabs` | `options[], value, onChange, size, label` | Segmented control used for every Settings choice. A group named by `label`, options are buttons with `aria-pressed` (A11Y-02) |
-| `TextInput` | `label, value, onChange, placeholder, multiline, rows, error` | 2 px black focus ring. Error text below |
-| `TopBar` | `brand, center, right, height, inverse` | Ported (DS-01, gallery). **Not used by the app since v0.56:** the nav is the sidebar (SHELL-01). Up to v0.55 it was the bottom nav bar |
-| `ColorBlock` | `tone: 1-4\|soft, padding, radius` | Never shadowed |
-| `Card` | `variant: hairline\|soft\|canvas\|elevated, title, eyebrow, onClick` | With `onClick` the card is a button |
-| `Banner` | `icon, title, body, actionLabel, onAction, tone` | |
-| `WeatherNow` | `location, temp, condition, icon, high, low, feelsLike, details[], labels, tone=3` | Temperatures arrive already in the display unit, so there is no `unit` prop (WX-02). `labels` = the "H" / "L" / "Feels like" copy. `tone` also takes `deep` |
-| `ForecastDay` | `day, icon, high, low, precip?, active, onClick?` | With `onClick` the tile is a button |
-| `StickyNote` | `children, author, time, tone: NoteTone, rotate, width, minHeight, onClick` | Radius 6, shadow-2. With `onClick` the note is a button |
-| `Eyebrow`, `Icon` | — | Mono uppercase label. Lucide wrapper |
-| `Ticker` | — | **Not used** in Glance |
+| Component | Notes |
+|---|---|
+| `Clock` | Tabular numerals, date line "Friday, October 9". The colon blinks every 0.6 s, and stays on with reduced motion. Takes the time from the screen; no timer of its own |
+| `EventRow` | Past = struck through with a hairline dot. Now = season fill and NOW pill. `compact` = phone columns (§5.4). A button with `onClick` |
+| `MonthGrid` | Selected = black (`aria-pressed`), today = ring (`aria-current="date"`), marked = dot. Day buttons named by the full date |
+| `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (`--danger`, white text, every season: delete and discard confirms) |
+| `IconButton` | `md` 40, `touch` 56, `lg` 72 px; `active` = black; `current="page"` |
+| `PillTabs` | Segmented control, a group of `aria-pressed` buttons. `lg` (56 px) wraps onto more rows |
+| `TextInput` | 2 px black focus ring, error below, optional mono caption right of the label, `type="date"` |
+| `ColorBlock`, `Card`, `Banner`, `Eyebrow`, `Icon`, `TopBar` | As in the design system. Blocks are never shadowed. `TopBar` is in the gallery only |
+| `WeatherNow`, `ForecastDay` | Values arrive in the display unit; no unit letter |
+| `StickyNote` | Radius 6, shadow-2, tilted |
+| `TimeField`, `TimePicker` | §8.3.1 |
+| `Skeleton`, `EmptyState`, `SourceFailure`, `Zone` | §9.3–9.4. `Zone` renders loading / empty / ready / failed in its own error boundary |
+| `Sheet` | §8.9 |
+| `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring |
+| `OfflinePill`, `SettingsRow`, `AllDayTile` | OFF-01, §8.7, TODAY-12 |
 
-New components designed in handoff v2 (not in the DS bundle): **`TimeField`**, **`TimePicker`** (§8.3.1). Other shared pieces the screens need (not in the DS):
-
-| Component | Props | Notes |
-|---|---|---|
-| `TimeField` | `label, value?, clock, length?, open, error, labels{noEnd, change}, onToggle, compact` | TPK-01. `value` in minutes of the day; none = "No end time" (TPK-08). `length` in minutes, shown as `formatLength`. `compact` = phone (19 px time) |
-| `TimePicker` | `label, groupLabel, value, clock, labels, onChange, onDone, ends?{start, lengths[{value, label}], onNoEnd}, compact` | TPK-03/04/10. `onChange` gets the new minutes of the day. `ends` adds the Length chips and "No end time". `compact` = phone (4 columns, 48 px cells, 12 px padding) |
-| `Skeleton`, `SkeletonBlock` | `label` · `width, height, radius` | The group pulses 1.2 s; blocks are black at 0.1, so they read 0.06–0.1. The group is a busy `status` named by `label` ("Loading events") |
-| `EmptyState` | `icon, title, body, eyebrow, action, size: md\|lg, align: start\|center` | Icon · title · body · one action (any button the screen passes). `md` = zone (28 px title), `lg` = whole view (display-xl title) |
-| `SourceFailure` | `icon, title, body, retryLabel, onRetry, eyebrow, size` | An `EmptyState` with a secondary "Try again" (`rotate-cw`). `body` carries the retry countdown text. A `status` |
-| `Sheet` | `title, eyebrow, closeLabel, onClose, children, startActions, endActions` | §8.9. `role="dialog"`, `aria-modal`, labelled by its title |
-| `ColorSwatchPicker` | `label, options[{value: Tone, label}], value, onChange` | 44 px round swatches, `aria-pressed`, named by color. Selected = white + black ring |
-| `OfflinePill` | `label, meta` | Black pill, wifi-off, `status`. The shell places it (§5.4) |
-| `SettingsRow` | `title, description, children, onClick, divider` | Title + description on the left, control on the right. With `onClick` the row is a button with a chevron |
-| `Zone` | `state: ZoneState<T>, loading, empty, failed, children(data, updatedAt)` | Renders one of the four states (§9.3–9.5) inside its own error boundary, which shows `failed` if the content throws |
-
-Components live in `src/ui/` and are styled only with StyleX. Each accepts an optional `xstyle` prop (a StyleX style) for layout overrides from the caller, in place of the prototype's `style` prop. `ui` can't import `copy.ts`, so any words a component shows (NOW, H/L) come in as props from the screen. Weather `icon` props take the domain `WeatherIcon` key.
-
-**Acceptance (DS-01):** a dev-only gallery route (`/dev/gallery`, excluded from production builds) renders every component in all 4 seasons, grouped like the DS cards (Core, Forms, Surfaces, Calendar, Weather, Notes, Navigation) plus Time entry, Shared pieces and Zone states. The DS card HTML is not in the handoff, so the cards are compared by eye, not embedded.
+**DS-01:** `/dev/gallery` (dev and demo builds only) shows every component in all 4 seasons and every state the boards show.
 
 ### 4.3 Fluid type and gutters
-Values for the `type` vars (exact values from the prototype, shown here as CSS for reference):
-
 ```css
---type-clock-size: clamp(84px, 6.8vw, 128px);   --type-clock-ls: -4px;   /* v5: was clamp(84px, 7.4vw, 112px) */
+--type-clock-size: clamp(84px, 6.8vw, 128px);   --type-clock-ls: -4px;
 --type-temp-size:  clamp(76px, 6.4vw, 96px);    --type-temp-ls:  -3px;
 --type-display-xl-size: clamp(36px, 3.6vw, 52px); --type-display-xl-ls: -1px;
 --type-display-lg-size: clamp(28px, 2.6vw, 40px);
 --type-headline-size: 20px; --type-headline-ls: -0.2px;
 --type-body-lg-size: 18px; --type-body-size: 16px; --type-body-sm-size: 15px;
---type-button-size: 17px; --type-eyebrow-size: 14px; --type-caption-size: 14px;   /* v5: captions 14 px minimum */
+--type-button-size: 17px; --type-eyebrow-size: 14px; --type-caption-size: 14px;
 --kiosk-gutter: clamp(20px, 2.6vw, 40px);
 ```
-Ambient overrides: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls: -8px; --type-eyebrow-size: clamp(14px, 1.4vw, 20px)`.
+Ambient: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls: -8px; --type-eyebrow-size: clamp(14px, 1.4vw, 20px)`. Today at 768 px and up scales further (TODAY-13).
 
 ### 4.4 Motion and feedback
-- Touch-first: **no hover states.** Press scales to 0.97 over 120 ms ease-out. Fills never darken.
-- Tab/tile state 180 ms · screen change 280 ms fade · season and background cross-fade 600 ms ease-in-out · keyboard resize 280 ms.
-- No bounces, no backdrop blur.
-- **Reduced motion:** when the device asks for reduced motion, every 280 ms and 600 ms change (screen change, season and background cross-fade, the sidebar sliding and the page moving with it, sheets opening, keyboard resize) happens at once. Press, tab and tile feedback stays. The Clock's colon stays on (§4.2).
+- Touch first: no hover states. Press scales to 0.97 over 120 ms ease-out. Fills never darken. No bounces, no blur.
+- Tab/tile state 180 ms · screen change 280 ms fade · season and background cross-fade 600 ms · keyboard resize 280 ms.
+- **Reduced motion:** every 280 ms and 600 ms change happens at once. Press, tab and tile feedback stay.
 
 ---
 
 ## 5. App shell and layout
 
-### 5.1 Breakpoints (by window width, re-evaluated live on resize)
+### 5.1 Breakpoints (window width, live on resize)
 
 | Name | Width | Behavior | Devices |
 |---|---|---|---|
 | `wide` | ≥ 1200 | Fits one screen, no page scroll | 1920×1080, 1440×900, 1280×800 |
 | `mid` | 1000–1199 | Fits one screen | 1180×820 |
-| `narrow` | 600–999 | One scrolling column (stacked) | iPad portrait 820×1180 |
-| `phone` | < 600 | One column everywhere, phone tweaks (§5.4) | 390×844 |
+| `narrow` | 600–999 | One scrolling column | iPad portrait 820×1180 |
+| `phone` | < 600 | One column, phone tweaks (§5.4) | 390×844 |
 
-The breakpoint is read from the **window** width, as in the prototype: the sidebar's rail (80 px) and drawer (332 px) narrow the page but don't change the breakpoint (v0.56). Today's layout doesn't follow these breakpoints from v0.58: it switches at **768 px** and on orientation (TODAY-13). Its schedule buttons still use them (TODAY-04).
+The sidebar narrows the page but doesn't change the breakpoint. Today's grid follows TODAY-13 instead.
 
 ### 5.2 Shell
-- Root: `height: 100vh`, flex column, `data-season` attribute, background = season canvas or photo layer (§8.7).
-- `<main>` scrolls. Padding = gutter on top and sides, 16 px at the bottom (v5, was 24).
-- **Nav (SHELL-01, handoff v6):** a **left sidebar** replaces the v5 bottom bar, so the views get the full height. Seven items, each a `nav` named "Main" (the rail and the drawer each have one): **Today** `house`, **Calendar** `calendar-days`, **Weather** `cloud-sun`, **Notes** `sticky-note`, **Photos** `image`, then, pinned to the bottom, **Ambient** `moon` (named "Ambient screen") and **Settings** `settings`. Its three states are SHELL-08. The v5 bottom bar, its labels and divider are gone.
-- **SHELL-02:** active view = black (the rail's IconButton, the drawer's row in the primary fill) with `aria-current="page"`. Settings stays active on its sub-pages (Background, Location, Ambient screen). Ambient is never shown active: it opens the Ambient screen at once from any view, outside the schedule too (AMB-08).
-- **SHELL-03:** the sidebar (grip, rail, expand handle and drawer) is hidden on Sign in and Ambient, and the page takes the full width.
-- **SHELL-04:** changing view closes any open sheet and resets `main` scroll to the top.
-- **SHELL-05:** with a photo background, every zone with text sits on a white panel (radius 24). Color blocks and the sidebar stay solid. Without a photo, the canvas behind the panels is the season-color canvas (`--hairline-soft`, §2).
-- **SHELL-06, SHELL-07: removed in v0.56.** The bar hiding when idle, its "Show menu" handle and the floating reveal went with the bottom bar (handoff v6: "Hide-when-idle does not apply in drawer mode"). The 20 s bar timer, `bar=hidden|float` and `barauto=off` are gone.
-- **SHELL-08: sidebar states.** **Hidden → Rail → Expanded → Hidden**, plus Rail → Hidden with the rail's ✕ (v0.58). A load on **Today starts Hidden**; a load on any other view starts on Rail. **Opening any view other than Today brings back the Rail**, even from Hidden; going to Today leaves the sidebar as it is (handoff v7). The state belongs to this screen's tab, isn't saved and isn't shared with the account's other screens.
-  - **Hidden:** only the grip shows, a 5×72 black pill centered on the left edge with a 44×144 touch area, named "Show sidebar". The page takes the full width. Tap → Rail.
-  - **Rail:** an 80 px white rail, full height on the left, hairline inner edge, 16 px padding top and bottom, 8 px gap: the five views as 56 px IconButtons (`touch`), then a flexible gap, Ambient and Settings, and last, 8 px below Settings, a 56 px ✕ "Hide sidebar" (→ Hidden). The ✕ is a fixed footer: on short windows the items above it scroll and the ✕ stays visible. The page is inset 80 px. v0.58: the v6 "Open menu" button and its hairline are gone. **Expand handle:** the grip's 5×72 black pill, centered on the rail's inner edge and vertically centered, in a 56×96 touch area, named "Expand menu" → Expanded. It fades out (180 ms) while the drawer is open and in full-screen Photos.
-  - **Expanded:** a 320 px white panel 12 px from the top, bottom and left edges, radius 24, hairline (`shadow-1`), no other shadow and **no scrim**, on the same layer as the page. Header: "Glance" (Geist 540, 24 px, 56 px line). Then the five views as 64 px pill rows (icon + 20 px label, weight 480; the current view in the black primary fill), a flexible gap, a hairline, Ambient and Settings, and last a **"Close" row** (✕ icon + label, the same 64 px row style, named "Close sidebar") as a fixed footer, like the rail's ✕ (v0.58: replaces the header's ✕). While the drawer is open the rail fades out (180 ms), so only the drawer shows on that edge. The page is pushed 332 px and reflows, and **stays usable** while the drawer is open: a tap outside the drawer goes to the page and doesn't close it. Close → Hidden. Picking a row goes to that view and returns to Rail; any view change returns to Rail.
-  - **Motion:** the rail slides off or on, the drawer slides in or out and the page's inset follows, all over 280 ms `cubic-bezier(0.2, 0, 0, 1)`; at once with reduced motion (§4.4).
-  - Fixtures (on Today; other views start on Rail anyway): `rail=1` starts on Rail (the prototype's param), `rail=open` starts Expanded (not in the prototype; it gives the frame checks a URL). As with every fixture, these are only the initial state.
-- **SHELL-09: keyboard and assistive tech** (not in the design). Expand menu and the grip carry `aria-expanded`. Escape in Expanded returns to Rail. Opening the drawer moves focus to the current view's row; closing it moves focus to what opens it next (Expand menu after Escape or a row, the grip after Close or the rail's ✕). Showing the rail from the grip moves focus to Expand menu, since the grip leaves (v0.58: was Open menu, v0.57). A view change that brings the rail back moves no focus. Loading the page moves no focus. The parts not shown (the rail while Hidden, the drawer while closed) are `inert`. No focus trap: the page stays usable next to the drawer.
-- **SHELL-10: offsets.** The sidebar's inset (0, 80 or 332 px) pads the shell, so the views and the offline pill (OFF-01) follow it. Sheets' scrims (§8.9) and full-screen Photos (PHOTO-14) cover the sidebar.
+- Root `100vh`, season theme, background = season canvas or photo layer (BG-06). `<main>` scrolls, padding = gutter, 16 px at the bottom.
+- **SHELL-01 Nav:** a left sidebar with seven items in a `nav` named "Main": **Today** `house`, **Calendar** `calendar-days`, **Weather** `cloud-sun`, **Notes** `sticky-note`, **Photos** `image`, then pinned to the bottom **Ambient** `moon` (named "Ambient screen") and **Settings** `settings`.
+- **SHELL-02:** the active view is black with `aria-current="page"`. Settings stays active on its sub-pages. Ambient is never active: it opens the Ambient screen at once (AMB-08).
+- **SHELL-03:** no sidebar on Sign in and Ambient; the page takes the full width.
+- **SHELL-04:** changing view closes any open sheet and scrolls `main` to the top.
+- **SHELL-05:** on a photo background every zone with text sits on a white panel (radius 24). Color blocks and the sidebar stay solid.
+- **SHELL-08 Sidebar states:** Hidden → Rail → Expanded → Hidden, plus Rail → Hidden with the rail's ✕. A load on Today starts Hidden, on any other view Rail. Opening any view but Today brings the Rail back; going to Today leaves it as it is. The state belongs to this tab and isn't saved.
+  - **Hidden:** a 5×72 black pill on the left edge (44×144 touch area), "Show sidebar" → Rail.
+  - **Rail:** 80 px white, full height, hairline inner edge, 16 px padding, 8 px gap: the five views as 56 px IconButtons, a flexible gap, Ambient and Settings, then a 56 px ✕ "Hide sidebar" as a fixed footer (the items above scroll on short windows). Page inset 80 px. **Expand handle:** the same pill on the rail's inner edge, vertically centered, 56×96 touch area, "Expand menu" → Expanded. It fades out (180 ms) while the drawer is open and in full-screen Photos.
+  - **Expanded:** a 320 px white panel 12 px from the top, bottom and left, radius 24, `shadow-1`, no scrim. Header "Glance" (Geist 540, 24 px). The five views as 64 px pill rows (icon + 20 px label, weight 480; current = black fill), a gap, a hairline, Ambient and Settings, then a fixed "Close" row (named "Close sidebar") → Hidden. The rail fades out (180 ms). The page is pushed 332 px and stays usable: a tap on it doesn't close the drawer. Picking a row, or any view change, returns to Rail.
+  - **Motion:** slides over 280 ms `cubic-bezier(0.2, 0, 0, 1)`; at once with reduced motion.
+  - Fixtures: `rail=1` (Rail), `rail=open` (Expanded).
+- **SHELL-09 Keyboard and focus:** the grip and Expand menu carry `aria-expanded`. Escape in Expanded → Rail. Opening the drawer focuses the current view's row. Escape or a row → focus to Expand menu; Close or ✕ → the grip; the grip → Expand menu. A view change that brings the rail back, and a page load, move no focus. Parts not shown are `inert`. No focus trap.
+- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
 
-### 5.3 Grid templates per view (`layout(view, bp)`)
+### 5.3 Grid templates
 
 | View | wide | mid | narrow |
 |---|---|---|---|
-| Today | v0.58: by width and orientation, not by these columns (TODAY-13) | | |
+| Today | TODAY-13 | | |
 | Calendar | `auto 1fr`, cell 60 | `auto 1fr`, cell 54 | 1 col, cell 84 |
 | Weather | `minmax(380px,.85fr) 1.4fr` | `minmax(340px,.8fr) 1.2fr` | 1 col |
 | Photos | `1.6fr minmax(300px,1fr)`, photo min-h 320, thumbs 2 col | same | 1 col, photo 440, thumbs 3 col |
@@ -224,35 +158,38 @@ The breakpoint is read from the **window** width, as in the prototype: the sideb
 | Background | `1.4fr minmax(320px,1fr)`, thumbs 4 col | thumbs 3 col | 1 col, thumbs 3 col |
 | Sign in | `1fr 1fr` | same | 1 col |
 
-### 5.4 Phone (< 600) overrides
-- Starts from the `narrow` layout. Today stacks in one column below 768 px, so on phone too (TODAY-13).
-- Hourly forecast `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways.
-- Month cell = `max(36, floor((vw − 108) / 7))`.
+### 5.4 Phone (< 600)
+- Starts from `narrow`. Hourly `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways. Month cell `max(36, floor((vw − 108) / 7))`.
 - Photos: featured 260 px, thumbs 2 col. Background thumbs 2 col.
-- **No photo upload on phone (decided, future feature).** Hide every upload entry point: Photos "Upload" (PHOTO-03) and "Upload photos" (PHOTO-05), Background "Upload photo" tile (BG-02) and Today's "Upload a photo" slot (TODAY-07; v5's "Upload" link before v0.58). Copy stays the same. This deviates from the 390×844 frames that show them.
-- Nav: the same sidebar as the other sizes (handoff v6 has no phone variant): 56 px rail buttons, and the Expanded drawer leaves about 58 px of the page visible at 390 px. Accepted as designed (decision 27).
-- EventRow columns `56px 10px 1fr auto`, gap 12, padding `12px 8px` (other sizes: `84px 14px 1fr auto`, padding `14px 16px`).
-- Offline pill: as on the other sizes (OFF-01).
+- **No photo upload:** every upload entry point is hidden (PHOTO-03/05, BG-02, Today's "Upload a photo").
+- Same sidebar as other sizes; the drawer leaves about 58 px of page visible.
+- EventRow columns `56px 10px 1fr auto`, gap 12, padding `12px 8px` (other sizes `84px 14px 1fr auto`, padding `14px 16px`).
 
 ---
 
-## 6. Routing and URL state
-
-Each view is an App Router segment under one `(app)` route group whose `layout.tsx` holds the persistent shell. `/signin` and `/ambient` sit outside that group, so they render without the sidebar. Navigation between views is client-side only (SPA). The prototype's query parameters stay supported in **dev/fixture builds** so every frame can be opened directly (used for visual QA, §11).
+## 6. Routes and fixtures
 
 | Route | View |
 |---|---|
 | `/signin` | Sign in |
 | `/` → `/today` | Today |
-| `/calendar` | Calendar (optional `?date=YYYY-MM-DD`) |
-| `/weather` | Weather |
-| `/notes` | Notes |
-| `/photos` | Photos (optional `?photo={id}`, PHOTO-01) |
-| `/settings`, `/settings/background` | Settings, Background |
-| `/settings/location`, `/settings/ambient` | Location (SET-09), Ambient screen (SET-10) |
+| `/calendar` | Calendar (`?date=YYYY-MM-DD`) |
+| `/weather` · `/notes` | Weather · Notes |
+| `/photos` | Photos (`?photo={id}`, PHOTO-01) |
+| `/settings` · `/settings/background` · `/settings/location` · `/settings/ambient` | Settings · Background · Location (SET-09) · Ambient screen (SET-10) |
 | `/ambient` | Ambient |
 
-Fixture params: `bg=photo`, `sheet=event|newevent|note|newnote`, `time=start|end|error|noend`, `clock=24`, `season=spring|summer|fall|winter`, `empty=1`, `net=loading|offline|wxerror`, `kb=1`, `signin=form|sending|sent|name|phone|expired|offline|done` (+ `on=link` with `expired` = the device that opened the link, `acct=returning` with `done` = "Welcome back"), `upload=one|progress|error|offline` (with `/photos` or `/settings/background`), `wx=searching|unknown|choose`, plus the handoff v4 states: `signin=ended|location` (+ `pending={n}` waiting changes, `switch=1` another email entered), `wx=locating|no-position|denied|outside|lookup|tz|savefail` (with `/weather`, `/settings/location` or `signin=location`), `amb=same|split|off` and `pick=all.s|all.e|wknd.s|wknd.e` (with `/settings/ambient`), plus the handoff v5 states: `sheet=allday|photo|photometa` (the all-day fixture event, a photo whose details were guessed from the file name, one whose date and place came from the photo), `discard=1` (the open sheet asks "Discard changes?"), `events=many` (9 events on Oct 9, TODAY-11), `allday=1` (an all-day event on Oct 9), `upload=done` (with `/photos`), `full=1` (+ `chrome=0`, with `/photos`), `signin=sendfail`, `qr=open|failed` (with `/settings`), plus the handoff v6 states: `rail=1|open` (SHELL-08; v5's `bar=` and `barauto=` are gone), plus the handoff v7 route state `/photos?photo={id}` (the picture of the day opens Photos on that photo, paused, PHOTO-01; like `?date=`, it isn't a fixture). The prototype's `?lay=b|c` layout options aren't built (decision 28). The prototype's `day=16` is `/calendar?date=2026-10-16`. The prototype's `view=` and `sub=` become the routes above (`view=settings&sub=location` → `/settings/location`, `view=ambient` → `/ambient`). Plus `now=ISO` to freeze the clock (replaces the hardcoded Fri Oct 9 2026 10:41). URL states are frozen snapshots; timers only run after a tap.
+**Fixture params** (dev and demo builds only) open any frame directly. They are frozen snapshots: the reducer's or seed's initial state, and timers run only after a tap. `now=ISO` freezes the clock (default Fri Oct 9 2026 10:41 AM Pacific).
+
+| Area | Params |
+|---|---|
+| Shell, data | `clock=24`, `season=…`, `bg=photo`, `empty=1`, `net=loading\|offline\|wxerror`, `kb=1`, `rail=1\|open` |
+| Sheets | `sheet=event\|newevent\|note\|newnote\|allday\|photo\|photometa`, `time=start\|end\|error\|noend`, `discard=1` |
+| Today, Calendar | `events=many`, `allday=1` |
+| Photos, Background | `upload=one\|progress\|error\|offline\|done`, `full=1`, `chrome=0` |
+| Weather setup | `wx=searching\|unknown\|choose\|locating\|no-position\|denied\|outside\|lookup\|tz\|savefail` |
+| Settings | `amb=same\|split\|off`, `pick=all.s\|all.e\|wknd.s\|wknd.e`, `qr=open\|failed` |
+| Sign in | `signin=form\|sending\|sendfail\|sent\|name\|location\|phone\|expired\|offline\|done\|ended`, `on=link`, `acct=returning`, `pending={n}`, `switch=1` |
 
 ---
 
@@ -261,489 +198,371 @@ Fixture params: `bg=photo`, `sheet=event|newevent|note|newnote`, `time=start|end
 ```ts
 type Tone = 1 | 2 | 3 | 4 | 'soft' | 'accent';      // 'accent' = Alert, events only
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
-
-// Synced rows (events, notes, photos, settings) also carry server fields:
 type Synced<T> = T & { updatedAt: string; version: number; deletedAt?: string };  // stamped by the server
 
 interface CalendarEvent {
   id: string;
-  startAt: string;  // ISO timestamp, UTC (the prototype stores minutes of the day) [Mock]
-  endAt?: string;   // ISO, optional ("No end time"); must be after startAt on the same local day (TPK-07, checked on the screen)
-  allDay?: true;    // v5 (EVT-08): the event fills its date; startAt is that date's UTC midnight and endAt is absent,
-                    // so it stays on its date in every time zone (tech design D21)
-  title: string;  // required
+  startAt: string;  // ISO, UTC
+  endAt?: string;   // absent = "No end time"; after startAt on the same local day (TPK-07)
+  allDay?: true;    // fills its date: startAt = the date's UTC midnight, no endAt (EVT-08)
+  title: string;    // required
   location?: string;
-  tone: Tone;     // default 1
+  tone: Tone;       // default 1
 }
 
 interface Note {
   id: string;
-  text: string;          // required, multiline [Open: character limit]
-  author: string;        // blank → "Guest"
-  createdAt: string;     // ISO
+  text: string;     // required, multiline
+  author: string;   // blank → "Guest"
+  createdAt: string;
   tone: Exclude<Tone, 'accent'>;
-  rotation: number;      // degrees, cycles −2, 1.5, −1, 2.5
+  rotation: number; // degrees, cycles −2, 1.5, −1, 2.5
 }
-// "Waiting to post" (pending) is derived from the local outbox, never stored (tech design §4.1).
 
 interface Photo {
   id: string;
-  title: string;          // "Name" in Photo details (PHOTO-12), required
-  takenOn?: string;       // ISO date; absent = "No date"
-  place?: string;         // "City, ST" or free text
+  title: string;    // required
+  takenOn?: string; // ISO date; absent = "No date"
+  place?: string;   // "City, ST" or free text
   createdAt: string;
-  sources: {              // v5 (PHOTO-10/12): where each value came from, for the source captions
-    title: 'photo' | 'file-name' | 'place' | 'file' | 'edited';            // metadata title · file name words · the place's city · raw file name
-    takenOn: 'photo' | 'file-name' | 'file-date' | 'none' | 'edited';      // date taken · date in the name · file modified date
-    place: 'photo-location' | 'none' | 'edited';                            // GPS turned into "City, ST"
+  sources: {        // where each value came from (PHOTO-10/12)
+    title: 'photo' | 'file-name' | 'place' | 'file' | 'edited';
+    takenOn: 'photo' | 'file-name' | 'file-date' | 'none' | 'edited';
+    place: 'photo-location' | 'none' | 'edited';
   };
-  checked: boolean;       // details saved once in Photo details; the "guessed" hint shows until then (PHOTO-10)
-  fileName?: string;      // v0.49: the uploaded file's name, the Photo details eyebrow (PHOTO-12); absent on photos uploaded before
+  checked: boolean; // saved once in Photo details; the guessed hint shows until then
+  fileName?: string;
 }
-// The image URL is derived: /api/photos/{id}/file?v=display|thumb|orig
-// v5: photos are editable (PHOTO-12) and deletable (PHOTO-13), so they sync like events: Synced<Photo> with tombstones.
+// Image URL: /api/photos/{id}/file?v=display|thumb|orig
 
 interface Weather {
   location: string;
   fetchedAt: string;
-  current: { temp: number; condition: string; icon: LucideWeatherIcon; high: number; low: number;
+  current: { temp: number; condition: string; icon: WeatherIcon; high: number; low: number;
              feelsLike: number; windMph: number; windDir: string; humidity: number; uv: number; sunset: string };
-  hourly: Array<{ time: string; icon: LucideWeatherIcon; temp: number; precip?: number }>; // 8 points; precip % feeds the WX-03 rain banner
-  daily:  Array<{ date: string; icon: LucideWeatherIcon; high: number; low: number; precip?: number }>; // 7 days
+  hourly: Array<{ time: string; icon: WeatherIcon; temp: number; precip?: number }>; // 8 points
+  daily:  Array<{ date: string; icon: WeatherIcon; high: number; low: number; precip?: number }>; // 7 days
 }
-// Temperatures are stored in °F and converted for display: C = round((F − 32) × 5/9). No unit letter is shown.
+// Stored in °F; C = round((F − 32) × 5/9). No unit letter is shown.
 
-interface AccountSettings {           // persisted PER ACCOUNT (decided): every display signed in to the family account shares them
-  season: 'auto' | Season;            // Auto: Mar–May Spring, Jun–Aug Summer, Sep–Nov Fall, Dec–Feb Winter
+interface AccountSettings {            // per account: every screen of the family shares them
+  season: 'auto' | Season;             // Auto: Mar–May Spring, Jun–Aug Summer, Sep–Nov Fall, Dec–Feb Winter
   clock: '12h' | '24h';
   tempUnit: 'F' | 'C';
   background: { mode: 'season' | 'photo' | 'slideshow'; photoId?: string;
                 dim: 0 | 0.2 | 0.4; rotate: 'hourly' | 'daily' | 'weekly' };
-  idleTimeout: 60 | 180 | 300 | null; // default 3 min
-  noteExpiry: '1d' | '1w' | null;     // default 1 week
-  ambient: { mode: 'same' | 'split' | 'off';        // SET-10: Every night · Weekends differ · Off. Default 'same'
-             all:  { start: string; end: string };  // "HH:MM", 15-min steps. Every night, or Sun–Thu nights when split. Default 18:00–07:30
-             wknd: { start: string; end: string } };// Fri & Sat nights when split. Default 21:00–09:00. Kept while not split
-                      // end < start = the next morning; start = end = that set is "Not set" and never runs (SET-10)
-                      // a night belongs to the day it starts, or to the day before when it starts before noon (SET-10)
+  idleTimeout: 60 | 180 | 300 | null;
+  noteExpiry: '1d' | '1w' | null;
+  ambient: { mode: 'same' | 'split' | 'off';
+             all:  { start: string; end: string };   // "HH:MM", 15-min steps; every night, or Sun–Thu when split
+             wknd: { start: string; end: string } }; // Fri & Sat nights when split
   weatherLocation?: { name: string; region: string; lat: number; lon: number; timeZone?: string };
-                      // the place picked in WX-04/09, LOC-01 or SET-09; lat/lon rounded to 2 decimals;
-                      // timeZone = its IANA zone (LOC-05), absent on places saved before v0.32
 }
 
-interface Account { id: string; email: string; name: string | null; /* person's name, "Maria"; null until first sign-in completes */ }
-interface Display { id: string; accountId: string; }  // one signed-in screen; the screen label is always "Glance"
-// v5 (SET-12) lists the account's screens with a device type (monitor, tablet, smartphone), a name and when each was
-// last active. Decision 25: the type and the browser are read from the browser that signed in and stored with the
-// display; the name is made from them ("Chrome screen", "Safari tablet"). No name is typed or stored (decision 13).
+interface Account { id: string; email: string; name: string | null } // name null until SIGNIN-06
+interface Display { id: string; accountId: string; kind: 'monitor' | 'tablet' | 'smartphone'; browser?: string; lastSeenAt?: string }
 ```
 
-**Account model (decided 2026-10-11):** one family = **one account = one email**. There are **no members** and no per-person logins. Sign-up and sign-in are the same magic-link flow (SIGNIN-12).
+**Defaults:** season Auto, 12-hour, °F, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM).
 
-**Scope rule:** events, notes, photos and settings belong to the **account**. A display is a signed-in session on one screen. It holds no settings of its own, so changing a setting on one display changes it on every display of that family (synced via §9.7).
+**Account model:** one family = one account = one email, no members. Sign-up and sign-in are the same magic-link flow. Events, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
 
-### 7.0 PostgreSQL schema (v1)
+### 7.0 Database
+PostgreSQL, from `db-migrations/`:
 
-```sql
-CREATE EXTENSION IF NOT EXISTS citext;                                    -- case-insensitive emails
-CREATE TABLE accounts  (id text PRIMARY KEY, email citext NOT NULL UNIQUE,
-                        name text, time_zone text NOT NULL,                -- IANA zone sent by the waiting screen with the link request
-                        setup_done_at timestamptz,                         -- set when the first-run location step ends (saved or skipped, SIGNIN-14)
-                        created_at timestamptz NOT NULL);                  -- name NULL until the first-sign-in step
-CREATE TABLE displays  (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
-                        last_seen_at timestamptz);
-CREATE TABLE sessions  (token_hash text PRIMARY KEY, display_id text NOT NULL REFERENCES displays(id),
-                        created_at timestamptz NOT NULL);                  -- account comes from the display
-CREATE TABLE magic_links (token_hash text PRIMARY KEY, email text NOT NULL,
-                        pending_id text NOT NULL, time_zone text NOT NULL, -- waiting screen's cookie id; its display row is created on verify
-                        expires_at timestamptz NOT NULL, used_at timestamptz); -- 10-minute expiry, single use; a new link voids older ones for that email (SIGNIN-12)
-CREATE TABLE events    (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
-                        title text NOT NULL, start_at timestamptz NOT NULL, end_at timestamptz, location text,
-                        tone text NOT NULL DEFAULT '1', updated_at timestamptz NOT NULL, deleted_at timestamptz,
-                        version bigint NOT NULL,
-                        CHECK (end_at IS NULL OR end_at > start_at));  -- same local day is checked on the screen (TPK-07); the API also rejects spans ≥ 24 h
-CREATE TABLE notes     (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
-                        text text NOT NULL, author text NOT NULL DEFAULT 'Guest', tone text NOT NULL,
-                        rotation double precision NOT NULL, created_at timestamptz NOT NULL, updated_at timestamptz NOT NULL,
-                        deleted_at timestamptz, version bigint NOT NULL);
-CREATE TABLE photos    (id text PRIMARY KEY, account_id text NOT NULL REFERENCES accounts(id),
-                        title text NOT NULL, taken_on date, place text, file_path text NOT NULL,
-                        created_at timestamptz NOT NULL, version bigint NOT NULL);
-CREATE TABLE settings  (account_id text PRIMARY KEY REFERENCES accounts(id),
-                        json jsonb NOT NULL, updated_at timestamptz NOT NULL,
-                        version bigint NOT NULL);                          -- AccountSettings as JSON
-CREATE TABLE weather_cache (account_id text PRIMARY KEY, location text NOT NULL,  -- "lat,lon" the cache was fetched for
-                        json text NOT NULL, fetched_at timestamptz NOT NULL);
-CREATE TABLE sync_state (id integer PRIMARY KEY CHECK (id = 1), version bigint NOT NULL);  -- global change counter
-CREATE INDEX events_account_start ON events(account_id, start_at);
-CREATE INDEX notes_account_created ON notes(account_id, created_at);
-```
+| Table | Columns |
+|---|---|
+| `accounts` | `id`, `email citext UNIQUE`, `name`, `time_zone` (the first browser's zone), `setup_done_at` (first-run location step ended), `created_at` |
+| `displays` | `id`, `account_id`, `last_seen_at`, `kind` (`monitor` default), `browser` |
+| `sessions` | `token_hash`, `display_id`, `created_at` |
+| `magic_links` | `token_hash`, `kind` (`email \| qr`), `email`, `time_zone`, `pending_id` (email links), `account_id` + `display_id` (QR links), `expires_at`, `used_at` |
+| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `tone`, `updated_at`, `deleted_at`, `version` |
+| `notes` | `id`, `account_id`, `text`, `author`, `tone`, `rotation`, `created_at`, `updated_at`, `deleted_at`, `version` |
+| `photos` | `id`, `account_id`, `title`, `taken_on date`, `place`, `title_source`, `date_source`, `place_source`, `checked`, `file_path`, `file_name`, `created_at`, `updated_at`, `deleted_at`, `version` |
+| `settings` | `account_id`, `json jsonb` (AccountSettings), `updated_at`, `version` |
+| `weather_cache` | `account_id`, `location` ("lat,lon"), `json`, `fetched_at` |
+| `sync_state` | the one global `version` counter |
 
-- IDs are UUIDv7 generated on the client, so items created offline keep their ID after sync.
-- Timestamps are `timestamptz` in the database and ISO-8601 UTC strings everywhere else (the server reads them back with `toISOString()`); `taken_on` is a `YYYY-MM-DD` date. Display uses the location's time zone (`weatherLocation.timeZone`), else the browser's (LOC-06). Server jobs use the location's time zone, else `accounts.time_zone` (LOC-07).
-- `updated_at` and `version` are always stamped by the server. Every write bumps `sync_state.version` in the same transaction and copies it to the row. `/api/sync?since=` returns rows with a higher `version` (§9.7).
-- Soft deletes (`deleted_at`) let other displays receive deletions through `/api/sync`.
-- Photo files are stored on disk (`{DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}`) and served through an authenticated route. On upload, `sharp` makes a display copy (≤ 2560 px) and a thumb (≤ 640 px) in WebP. Only metadata goes in the database.
-- **Handoff v5 additions** (execution plan Phase 9, one migration per task after the PostgreSQL schema of Phase 8): `events.all_day` (built in U05, `002_event_all_day.sql`: boolean, default false; an all-day row has `end_at` NULL, which a `CHECK` enforces, and `start_at` at its date's UTC midnight); `photos` gains `updated_at`, `deleted_at`, the three `*_source` columns and `checked` (built in U10, `003_photo_details.sql`, PHOTO-10..13; photos uploaded before keep their values, read as checked), and `taken_on` may be NULL ("No date"); `photos.file_name` (built in U11, `004_photo_file_name.sql`, nullable: the uploaded file's name, PHOTO-12); `displays.kind` and `displays.browser` (built in U13, `005_display_device.sql`, SET-12: the device type, `monitor` by default, and the browser, NULL when unknown); `magic_links.kind` (`email | qr`), `account_id` and `display_id`, with `pending_id` nullable (built in U14, `006_qr_links.sql`, SIGNIN-15: a QR row belongs to one account and the screen that showed it; tech design §6.6). Deleting a photo also deletes its files.
-- Note expiry (NOTE-08) runs server-side on an hourly timer: soft-delete notes whose age since `createdAt` is past `noteExpiry` (24 hours or 7 days). It is the same rule the screens use to hide notes, so the server and the screen agree and the time zone doesn't change the result.
+- IDs are UUIDv7 made on the client, so offline creates keep their id.
+- Timestamps are `timestamptz` and ISO-8601 UTC strings everywhere else; `taken_on` is `YYYY-MM-DD`.
+- The server stamps `updated_at` and `version`; every write bumps `sync_state.version` in the same transaction. Deletes are soft (`deleted_at`) so other screens receive them.
+- Photo files live at `{DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}`, served through an authenticated route. Deleting a photo deletes its files.
 
-Defaults: season Auto, 12-hour, Fahrenheit, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week. (v0.56: `hideBarWhenIdle` is gone with SET-11; rows that still hold it parse, the key is dropped.)
-
-### 7.1 Derived event status (STATUS-01)
-For each event on today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, otherwise `upcoming`. An event with no end (TPK-08) is `now` from its start to the end of its day. **All-day events (EVT-08) have no status:** they never become the hero, never show as Happening now or Up next, and are never struck through. Recompute every minute. Events on other days: past days → `past` (struck through, decided), future days → `upcoming`. The prototype rendered every non-today event as upcoming.
+### 7.1 Event status (STATUS-01)
+For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcoming`. No end → `now` from its start to the end of its day. Recomputed every minute. Past days → `past`, future days → `upcoming`. **All-day events have no status:** never the hero, never now or next, never struck through.
 
 ### 7.2 Time formatting (TIME-01)
 | Context | 12-hour | 24-hour |
 |---|---|---|
-| Clock, hero start ("Up next", "started"), sunset, ambient, sync time | `10:41 AM` (mono AM/PM) | `10:41` |
-| Hero "until {end}" | `until 11:15` (no AM/PM) | `until 11:15` |
-| Event rows, ranges | `10:30 – 11:15` (no AM/PM) | `10:30 – 11:15` |
+| Clock, hero start, sunset, Ambient, sync time | `10:41 AM` (mono AM/PM) | `10:41` |
+| Hero "until {end}" | `until 11:15` | `until 11:15` |
+| Event rows, ranges | `10:30 – 11:15` | `10:30 – 11:15` |
 | Hourly forecast | `4 PM` | `16:00` |
 
 ---
 
 ## 8. Screens
 
-Each screen lists **Behavior**, **States** and **Acceptance**. All copy is exact. Copy in `{braces}` is interpolated.
-
-### 8.1 Sign in & account — `SIGNIN` (designed in handoff v3; SIGNIN-13 and SIGNIN-14 in v4)
-Layout: left = season block-1 hero ("Glance" wordmark, season eyebrow "{Season} · {Month}", live Clock, "Calendar, weather, notes and photos for your family. Sign in to manage them."). Right = form, max-width 560. The lock footer "Only your family can see its calendar, notes and photos." stays in every form state.
-
-One flow for sign-up and sign-in (account model §7). The screen that asks for the link becomes the **waiting screen**. The link can be opened on that screen or on another device, usually a phone.
+### 8.1 Sign in & account — `SIGNIN`
+Layout: left = block-1 hero ("Glance" wordmark, "{Season} · {Month}", live Clock, "Calendar, weather, notes and photos for your family. Sign in to manage them."). Right = form, max width 560, with the lock footer "Only your family can see its calendar, notes and photos." in every form state. The screen that asks for the link is the **waiting screen**; the link may be opened there or on another device.
 
 | ID | Requirement |
 |---|---|
-| SIGNIN-01 | **Email form**, the same for new and returning families: eyebrow "One account per family", title "Sign in or get started", body "Enter your email. We'll send a link that signs this screen in. New here? The same link sets up your family's Glance." Email field (placeholder `name@example.com`), primary "Send sign-in link" (→ icon). No "Continue as guests" (removed in handoff v5, SIGNIN-05). |
-| SIGNIN-02 | Validation `name@domain.tld`. Invalid → "Enter a valid email address", cleared on the next keystroke. |
-| SIGNIN-03 | **Sending:** after a valid "Send sign-in link", the button reads "Sending…" and is disabled, the email can't be edited, a soft tile reads "Sending a link to {email}" with a slow-pulsing mail icon. It clears when the server accepts the request → Check your email. If the request fails while online: back to the form with the email kept and editable, and the field error "Couldn’t send. Try again." in the TextInput error style; it clears on the next keystroke, and "Send sign-in link" retries (drawn in handoff v5: Account board frame Y, fixture `signin=sendfail`). [Mock] 1.4 s. |
-| SIGNIN-04 | **Check your email**, identical for new and known emails (never reveals whether an account exists): title "Check your email", "We sent a link to **{email}**. Open it and this screen signs in by itself.", info tile (mail icon) "Link expires in 10 minutes", ghost "Use a different email" (returns to the form, email kept). The waiting screen polls `/api/auth/status` every 2 s until the link is opened, then moves to SIGNIN-06, SIGNIN-09 or SIGNIN-07. "I opened the link" is **dev only** [Mock]. |
-| SIGNIN-05 | ~~"Continue as guests"~~ **Removed** (handoff v5: it was a prototype shortcut). Demo builds don't need it: they open on fixture data and skip the sign-in gate (tech design §6.5), so `/today` opens directly and `/signin` shows only for its own fixture states. |
-| SIGNIN-06 | **First sign-in · "What's your name?"**, only when a new email opens its link (the account has no name yet), on the device that opened it, before Today. Returning sign-ins skip it. "Continue" goes on to SIGNIN-14. Eyebrow "New family account", title "What's your name?", body "This is the first sign-in for {email}. Your name shows in Settings." One field "Your name" (placeholder "First name is fine"), primary "Continue". Empty → "Add your name" (clears on the next keystroke). The name is trimmed and saved to `accounts.name`. A waiting screen whose own browser opened the link (another tab) is that device too, so it asks for the name as well. "Continue" is disabled while it saves; if the save fails, the name step stays with the name kept and the field error "Couldn’t save. Try again." (not drawn). |
-| SIGNIN-07 | **Finish on your phone:** when the link opened on another device and the account has no name yet, the waiting screen shows "Finish on your phone" · "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself." with a "Waiting for your phone" tile. The name and location steps (SIGNIN-06, SIGNIN-14) run on the phone. The waiting screen signs in by itself once the name is saved and the location step has ended (a place saved or skipped); the server records that end, so the waiting screen keeps showing this step until then. If the phone leaves the location step unfinished, the waiting screen keeps waiting until its link expires or someone taps "Use a different email". "I finished on my phone" is dev only [Mock]. |
-| SIGNIN-08 | **Expired link, waiting screen:** 10 minutes with no open → "This link has expired" · "Sign-in links work for 10 minutes. Send a new one to {email}." Actions "Send a new link" and "Use a different email". |
-| SIGNIN-09 | **Signed in:** on the waiting screen (or the device that opened the link), check icon, eyebrow "Signed in", title "Welcome, {first name}" (new account) or "Welcome back, {first name}" (returning), body "Opening Today…". Today opens after **2.2 s**, with no action needed. First name = the first word of `accounts.name`. The device that opened the link lands on the sign-in screen and checks the link first (nothing shows in the panel meanwhile): a named account whose first setup is finished → this step; an account with no name → SIGNIN-06, then SIGNIN-14; a named account whose location step never ended → SIGNIN-14; a stale link → SIGNIN-12; if the check can’t reach the server, the empty email form (not drawn). |
-| SIGNIN-10 | **Offline (form):** soft banner "You're offline" · "A link can't be sent right now. Sending turns back on when the screen reconnects." The send button is disabled and the email can still be typed. It clears on reconnect. Nothing is queued: the person taps Send again. Offline while waiting: keep Check your email and resume polling on reconnect. |
-| SIGNIN-11 | Settings › Account › "Sign out" signs out **this screen only** (caption "Sign out this device only.", SET-08). Other screens with the same email stay signed in. No confirm step. Returns to the email form, empty. Changes still waiting to sync on this screen are discarded (accepted for v1). |
-| SIGNIN-12 | **Link rules:** passwordless magic link for sign-up and sign-in. Opening a valid link for an unknown email creates the account; for a known email it signs in. Each link works **once, for 10 minutes**. Sending a new link voids older ones, so only the newest works. On the device that opened a stale link: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". "Send a new link" → Sending → Check your email (on that device). A stale link opened on a screen that is still signed in signs it in (SIGNIN-09) instead. When the stale link’s email isn’t known (an unknown or already removed link), the device opens the empty email form. **The email** (plain text): subject "Your Glance sign-in link"; body "Open this link to sign in to Glance:", the link, "It works once, for 10 minutes. New here? The same link sets up your family’s Glance." and "If you didn’t ask for it, you can ignore this email." |
-
-| SIGNIN-13 | **Signed out by the server** (designed in handoff v4). **Trigger:** the screen is online and the server no longer accepts its sign-in (a 401, for example after the family's account was reset). Rare: sign-ins don't expire in v1, and Sign out on another screen signs out only that screen (SIGNIN-11). Never while offline: an offline screen keeps working from saved data and checks again on reconnect. No reason is shown. **Form:** the SIGNIN-01 form (same hero, lock footer, no bar) with a soft banner on top, "This screen was signed out" · "Sign in again to keep the calendar, notes and photos up to date.", title "Sign in again", body "Check your family’s email below. We’ll send a link that signs this screen back in." The email is prefilled with the account's last email and stays editable. Send sign-in link → Sending → Check your email → Signed in work as usual. **Waiting changes** (events or notes saved but not synced, OFF-04): the banner adds "Changes waiting on this screen: {n}. They’ll be sent after you sign in." (the same wording for 1 and for n). They stay on this screen until a sign-in finishes. **Different email:** inline, no confirm step. When the field holds another address and changes are waiting, a soft tile under the field reads "Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in." with a ghost "Use {previous email}" that puts the email back, and the banner drops "They’ll be sent after you sign in." Sending stays allowed; nothing is removed until the other email's sign-in finishes. **Timing:** it never interrupts an edit. While an event or note sheet is open or a text field is focused, the view stays; Save or Post keeps the change on this screen as waiting (it joins the count), Cancel discards as usual. The form shows as soon as the sheet closes, or at the idle timeout (IDLE-01, which pauses while a field is focused and discards open sheets as usual). During ambient hours the idle timeout goes to Ambient instead, with the AMB-07 notice. A screen already on the form stays on it when ambient hours start. In Ambient, see AMB-07. **Signed in again:** SIGNIN-09 "Welcome back, {first name}", then Today. The same email: the waiting changes sync as usual. A different email: they are removed from this screen when its sign-in finishes, and a new email goes through SIGNIN-06 and SIGNIN-14. **Clears** only when a sign-in finishes (any email). A reload, "Use a different email" and an expired link keep the screen signed out and the notice on the form. Fixtures: `signin=ended`, `&pending=3`, `&switch=1` (another email entered), `&sheet=newnote` (a sheet open when it happens), `/ambient?signin=ended`, `signin=done&acct=returning` (signed in again). Account board frames S–X (drawn in handoff v5). |
-| SIGNIN-14 | **First sign-in · "Where is this screen?"** (designed in handoff v4), only while the account's first setup isn't finished: right after SIGNIN-06 on the same device, before Signed in, or on the next sign-in of an account whose location step never ended (a phone closed mid-step). Same hero, full-page form and keyboard rules as SIGNIN-06 (KB-03). Eyebrow "New family account", title "Where is this screen?", body "The weather and the clock’s time zone follow this place. You can change it later in Settings." The setup card (WX-04): field "City or ZIP code", primary "Continue", secondary "Use my location" (LOC-01); below a hairline, ghost "Skip for now". Searching, several matches, locating and every failure behave as WX-07..09 and LOC-02..03. A found place (a single match, a picked match or a located one) is saved to the account's settings (it carries the time zone, LOC-05) → Signed in. No time zone confirm here: the first place always sets the zone (LOC-09). "Skip for now" → Signed in and cancels any search or locating; Weather then shows WX-04 and Settings › Location reads "Not set". Saving or skipping ends the first setup on the server (§7.0 `setup_done_at`), which lets a waiting screen sign in (SIGNIN-07). If the save fails, the step stays with the place kept in the field and the field error "Couldn’t save. Try again."; "Continue" saves the same place again. Editing the field drops that place, and "Continue" then searches as usual. A skip that fails shows the same error and "Skip for now" retries. On a phone that opened the link this step runs on the phone (SIGNIN-07). Returning sign-ins skip it. Fixtures: `signin=location` with `wx=locating\|choose\|denied\|savefail`, `kb=1`. |
-| SIGNIN-15 | **Sign in another device with a QR code** (handoff v5). In Settings › Account, under the signed-in list (SET-12): secondary "Sign in another device" (`qr-code` icon). Tap → replaced in place by a block-1 tile: the QR code on white, title "Scan to sign in", body "Open the camera on the other device and point it at the code. It signs in with {email}.", mono caption "Code expires in {m:ss}" counting down from 5:00 each second (tabular figures), ghost "Done" closes it and stops the countdown. The code opens a **one-time sign-in link for this account** that skips the email step: the device that opens it signs in as SIGNIN-09 "Welcome back, {first name}" (the account always has a name and a finished setup here). At 0:00 a new code replaces it and the countdown restarts at 5:00 while the tile is open; a code works once and for 5 minutes, and a new code voids the old one. Not in the design, added here: closing the tile voids the open code, and offline the button is disabled, like the other online-only actions. The new device joins the list (SET-12) once signed in. Anyone who can see the screen may scan the code; the screen asks nothing (decision 26). Also added here: while a code is being made the white box is empty and the caption reads 5:00; if it can't be made the body reads "Couldn’t make a code. Try again." with no caption, and secondary "Try again" (`rotate-cw`, disabled offline) sits before "Done"; leaving Settings voids the open code like "Done"; a used, voided or expired code opens the email form (SIGNIN-01), not the expired-link page, so the page never shows the account's email to whoever scanned it. Fixtures `qr=open` (with `/settings`, the tile open with a fixed fixture link) and `qr=failed`. |
-
-Out of scope: changing the name or email, deleting the account, more than one email per account.
+| SIGNIN-01 | **Email form:** eyebrow "One account per family", title "Sign in or get started", body "Enter your email. We'll send a link that signs this screen in. New here? The same link sets up your family's Glance." Field placeholder `name@example.com`, primary "Send sign-in link" (→ icon). |
+| SIGNIN-02 | Invalid email → "Enter a valid email address", cleared on the next keystroke. |
+| SIGNIN-03 | **Sending:** "Sending…" disabled, email locked, soft tile "Sending a link to {email}" with a pulsing mail icon → Check your email. A failed send returns to the form with the email kept and "Couldn’t send. Try again." under the field (clears on the next keystroke). |
+| SIGNIN-04 | **Check your email** (the same for new and known emails): "Check your email" · "We sent a link to **{email}**. Open it and this screen signs in by itself." Tile "Link expires in 10 minutes", ghost "Use a different email" (email kept). Polls every 2 s. "I opened the link" is a dev-only button. |
+| SIGNIN-06 | **"What's your name?"** on the device that opened the link, only for a new account: eyebrow "New family account", body "This is the first sign-in for {email}. Your name shows in Settings." Field "Your name" ("First name is fine"), primary "Continue" → SIGNIN-14. Empty → "Add your name". Continue is disabled while saving; a failed save shows "Couldn’t save. Try again." Another tab of the same browser counts as that device. |
+| SIGNIN-07 | **Finish on your phone:** when the link opened elsewhere for a new account, the waiting screen shows "Finish on your phone" · "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself." with a "Waiting for your phone" tile. It signs in once the name is saved and the location step has ended. "I finished on my phone" is dev only. |
+| SIGNIN-08 | **Expired, waiting screen** (10 min): "This link has expired" · "Sign-in links work for 10 minutes. Send a new one to {email}." + "Send a new link", "Use a different email". |
+| SIGNIN-09 | **Signed in:** check icon, "Signed in", "Welcome, {first name}" (new) or "Welcome back, {first name}", "Opening Today…"; Today opens after 2.2 s. The device that opened the link checks it first: setup done → this step; no name → SIGNIN-06; location step unfinished → SIGNIN-14; stale → SIGNIN-12; server unreachable → the empty form. |
+| SIGNIN-10 | **Offline form:** banner "You're offline" · "A link can't be sent right now. Sending turns back on when the screen reconnects." Send disabled, email still editable. Offline while waiting: keep waiting and poll on reconnect. |
+| SIGNIN-11 | Settings › Sign out signs out **this screen only**, with no confirm, back to the empty form. Changes not yet synced on this screen are discarded. |
+| SIGNIN-12 | **Links:** one link signs up or in. Each works once, for 10 minutes; a new link voids older ones. A stale link on the opening device: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". A stale link on a still-signed-in screen just signs it in; with no known email it opens the empty form. **Email** (plain text): subject "Your Glance sign-in link"; body "Open this link to sign in to Glance:", the link, "It works once, for 10 minutes. New here? The same link sets up your family’s Glance." and "If you didn’t ask for it, you can ignore this email." |
+| SIGNIN-13 | **Signed out by the server** (an online 401; never while offline; no reason shown). **Form:** the SIGNIN-01 form with a banner "This screen was signed out" · "Sign in again to keep the calendar, notes and photos up to date.", title "Sign in again", body "Check your family’s email below. We’ll send a link that signs this screen back in.", the last email prefilled. **Waiting changes:** the banner adds "Changes waiting on this screen: {n}. They’ll be sent after you sign in." **Different email:** with changes waiting, a tile under the field reads "Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in." with ghost "Use {previous email}", and the banner drops its second sentence. **Timing:** never interrupts an edit; the form shows once the sheet closes or no field is focused, or at the idle timeout (to Ambient during ambient hours, AMB-07). **Clears** only when a sign-in finishes: the same email syncs the waiting changes, another email removes them. |
+| SIGNIN-14 | **"Where is this screen?"** while the first setup isn't finished: after SIGNIN-06, or on the next sign-in of an account whose step never ended. Eyebrow "New family account", body "The weather and the clock’s time zone follow this place. You can change it later in Settings." The setup card (WX-04) with primary "Continue", "Use my location", and below a hairline ghost "Skip for now". A found place is saved → Signed in (no zone confirm). Skip → Signed in, cancelling any search or locating. Either ends the first setup. A failed save or skip shows "Couldn’t save. Try again." with the place kept; Continue saves it again, editing the field drops it. |
+| SIGNIN-15 | **QR sign-in** (Settings › Account, under the screen list): secondary "Sign in another device" (`qr-code`) → a block-1 tile with the code on white, "Scan to sign in", "Open the camera on the other device and point it at the code. It signs in with {email}.", mono "Code expires in {m:ss}" from 5:00, ghost "Done". The code is a one-time link for this account that signs the opener in (SIGNIN-09 "Welcome back"). At 0:00 a new code replaces it. A code works once, for 5 minutes, and a new one voids the old. While a code is made the box is empty at 5:00; a failure reads "Couldn’t make a code. Try again." with "Try again" (`rotate-cw`) before "Done". Done or leaving Settings voids the code. Offline the buttons are disabled. A used or expired code opens the email form, never showing the account email. Anyone who can see the screen may scan it. |
 
 ### 8.2 Today — `TODAY`
-Zones: **hero** (block-1), **schedule** (white panel), **weather** (block-3), **notes** (white panel).
+Zones: hero (block-1), schedule (white panel), weather (block-3), notes (white panel).
 
 | ID | Requirement |
 |---|---|
-| TODAY-01 | Hero: season eyebrow, Clock, then the event summary, then the picture of the day (TODAY-07, v0.58). No "Glance" label or wordmark in the hero (handoff v5 removed v3's footer label). |
-| TODAY-02 | Hero states (timed events only; all-day events never take the hero, STATUS-01): event running → eyebrow "Happening now", title, "{location} · until {end}". Running with no end → "{location} · started {start with AM/PM}" (TPK-08). None running but more later → "Up next", title, "{location} · {start with AM/PM}". All ended → "Nothing else today" / "Today's events have ended." No events → "Nothing scheduled" / "Events show here while they happen." |
+| TODAY-01 | Hero: season eyebrow, Clock, the event summary, then the picture of the day. |
+| TODAY-02 | Hero (timed events only): running → "Happening now", title, "{location} · until {end}"; running with no end → "{location} · started {start}"; next → "Up next", title, "{location} · {start}"; all ended → "Nothing else today" / "Today's events have ended."; none → "Nothing scheduled" / "Events show here while they happen." |
 | TODAY-03 | Tapping the hero event or any row opens Edit event. |
-| TODAY-04 | Schedule eyebrow "Today · {n} events" / "Today · 1 event" / "Today · No events"; all-day events count. Buttons: ghost "Add event" (+, only when the day has events) → New event on today. Ghost "Full calendar" → Calendar. Below 1200 px (mid, narrow, phone) they are **icon-only** 56 px white IconButtons (`plus`, `calendar-days`) named "Add event" and "Full calendar"; wide keeps the text buttons (handoff v7). |
-| TODAY-05 | Rows move past → now → upcoming in real time. The hero swaps at each start and end (STATUS-01). |
-| TODAY-06 | Empty schedule: soft tile, calendar icon, "No events yet" / "Add the first one. It shows here and on the calendar." + "Add event". |
-| TODAY-07 | Picture of the day **at the bottom of the hero**, 32 px below the event (handoff v7; v5 put it under the schedule, which now gets the full height for rows). A button with no panel behind it, max width 420 px: a square thumbnail, size `clamp(56px, min(14vh, 40% of the slot), 120px)` and at most 40% of the hero's width, radius 8, then 20 px gap and mono "Picture of the day" (14 px; "On this day · {year}" on those days) over the title (18 px, weight 480), each one line with an ellipsis; named "Picture of the day: {title}". The "{date} · {place}" line is gone. **Tap → Photos with that photo featured** (selected in the grid) and the slideshow paused (PHOTO-01). No photos → the same slot reads "Picture of the day" / "Upload a photo" beside an outlined square of the same size with an `image-plus` icon; tap → Photos (hidden on phone, §5.4). v5's hairline tile, "Appears once someone uploads a photo." and the ghost "Upload" are gone. **Selection** (handoff v5, replaces the v1 rotation): one photo per calendar day, the same on every screen of the account; it changes at midnight in the location's time zone (LOC-06). First choice: a photo taken on today's month and day in an earlier year, with the eyebrow "On this day · {year}" (several → the oldest year first [not in the design]). Otherwise the next photo in a **shuffled cycle**: every photo shows once before any repeats, and photos added mid-cycle join the end of it. "On this day" days don't use up a cycle turn [not in the design]. Only finished uploads count. An upload never changes the day's photo, unless there was none: a photo uploaded today joins the cycle (or starts showing on an empty tile) and counts for "On this day" from tomorrow [not in the design]. If today's photo is deleted (PHOTO-13), the next one in the cycle replaces it at once. [Mock] fixed to Cannon Beach; the fixtures keep Cannon Beach on Oct 9 (Appendix A). |
-| TODAY-08 | Weather: `WeatherNow` (location, temp, condition, high/low, feels like). No location → "Weather needs a location" / "Set the city once. The forecast and the clock follow it." + "Set location" → the Weather setup card (decided in handoff v4: it stays on Weather, not Settings › Location). |
-| TODAY-09 | Notes eyebrow "Notes · {n}", ghost "All notes" → Notes. Shows only the **first two** notes (the two newest, NOTE-04). Tap → Edit note. Empty → "No notes yet" + "Add note". |
-| TODAY-10 | On a photo background, the hero's picture of the day is dropped; with no photos the "Upload a photo" slot still shows (handoff v7). Schedule and notes sit on white panels. |
-| TODAY-11 | **More events than fit** (handoff v5, replaces scrolling inside the column): the schedule shows as many rows as fit and, at the bottom, a full-width soft button "See all {n} events" with a mono count on the right ("1 earlier · 3 later"; only the parts that apply). Ended events are hidden first, then the latest upcoming ones; Happening now and the next events always stay. Rows that fit (v0.58, handoff v7): at 768 px and wider the schedule **measures its card**: the rows that fit in the height left after its header, all-day tiles and the button, kept between 2 and 10, re-measured when the card resizes; below 768 px = 6. The button takes one row's place. The v5/v6 formula from the window height is gone. The v7 notes also drop the picture of the day when fewer than 3 rows fit; the prototype never does (§2), so it isn't built. Tap → Calendar on today. Fixture `events=many` (board frame Today C). |
-| TODAY-12 | **All-day events** (EVT-08) show as soft tiles (min height 56, radius 8) above the timed rows, in event order: mono "ALL DAY", color dot, title, place. Tap → Edit event. They are never struck through. Fixture `allday=1` (board frame Today D). |
-| TODAY-13 | **Layout** (handoff v7, Columns). **768 px and wider: Today fits the window with no page scroll**; the schedule and notes cards clip and never scroll the page. Landscape (width ≥ height): columns `0.95fr 1.35fr 1fr`, areas `"hero sched wx" "hero sched notes"`, rows `auto 1fr`: the hero takes the left column at full height, the schedule the middle, weather over notes on the right. Portrait (height > width): columns `1fr 1fr`, areas `"hero wx" "sched sched" "notes notes"`, rows `auto 1fr auto`. Notes show in **one column** in landscape below 1600 px wide, two otherwise. The Clock scales with the hero's width (`clamp(56px, 27% of the hero, 200px)`) and the temperature with the weather card's (`clamp(56px, 24%, 160px)`). Body type (body-lg 18, body 16, body-sm 15, headline 20, eyebrow 14, caption 14, button 17) grows past 1920×1080 by min(width ÷ 1920, height ÷ 1080), up to 1.5×. **Below 768 px** Today stacks in one scrolling column: hero, weather, schedule, notes, with the §4.3 sizes. Checked against the Today board (it embeds the live prototype) at the 6 sizes. |
+| TODAY-04 | Eyebrow "Today · {n} events" / "Today · 1 event" / "Today · No events" (all-day events count). Ghost "Add event" (+, only when the day has events) and "Full calendar". Below 1200 px both are 56 px icon-only IconButtons (`plus`, `calendar-days`) named by their labels. |
+| TODAY-05 | Rows move past → now → upcoming live; the hero swaps at each start and end. |
+| TODAY-06 | Empty: soft tile, calendar icon, "No events yet" / "Add the first one. It shows here and on the calendar." + "Add event". |
+| TODAY-07 | **Picture of the day** at the bottom of the hero, 32 px below the event: a button, max width 420 px, with a square thumb (`clamp(56px, min(14vh, 40% of the slot), 120px)`, radius 8), 20 px gap, mono "Picture of the day" (or "On this day · {year}") over the title (18 px, 480), each one line; named "Picture of the day: {title}". Tap → Photos on that photo, paused (PHOTO-01). No photos → "Picture of the day" / "Upload a photo" beside an outlined square with `image-plus`; tap → Photos. **Selection:** one photo per day, the same on every screen, changing at local midnight. First a photo taken on today's month and day in an earlier year (oldest year first); else the next photo in a shuffled cycle where every photo shows once before any repeats, new photos joining the end. "On this day" days don't use a cycle turn. Only finished uploads count, and an upload never changes the day's photo unless there was none. Deleting today's photo moves to the next one at once. |
+| TODAY-08 | Weather: `WeatherNow`. No location → "Weather needs a location" / "Set the city once. The forecast and the clock follow it." + "Set location" → Weather setup. |
+| TODAY-09 | Notes eyebrow "Notes · {n}", ghost "All notes". Shows the two newest. Tap → Edit note. Empty → "No notes yet" + "Add note". |
+| TODAY-10 | On a photo background the picture of the day is hidden (the "Upload a photo" slot still shows). |
+| TODAY-11 | **More events than fit:** a full-width soft "See all {n} events" with a mono count ("1 earlier · 3 later", only the parts that apply) → Calendar on today. Ended events hide first, then the latest upcoming; now and next always stay. At 768 px and up the rows that fit are measured from the card (2–10, re-measured on resize; the button takes one); below, 6. |
+| TODAY-12 | **All-day events:** soft tiles (min height 56, radius 8) above the timed rows: mono "ALL DAY", dot, title, place. Tap → Edit event. |
+| TODAY-13 | **Layout. 768 px and up: no page scroll**; the cards clip. Landscape (width ≥ height): columns `0.95fr 1.35fr 1fr`, areas `"hero sched wx" "hero sched notes"`, rows `auto 1fr`. Portrait: columns `1fr 1fr`, areas `"hero wx" "sched sched" "notes notes"`, rows `auto 1fr auto`. Notes in one column in landscape below 1600 px, else two. Clock `clamp(56px, 27% of the hero, 200px)`, temperature `clamp(56px, 24% of the weather card, 160px)`. Body type grows past 1920×1080 by min(width ÷ 1920, height ÷ 1080), up to 1.5×. **Below 768 px:** one scrolling column: hero, weather, schedule, notes. |
 
 ### 8.3 Calendar & events — `CAL`, `EVT`
-Left: soft block with month name (year added outside the current year), prev/next IconButtons (56), `MonthGrid`. Right: white panel with eyebrow count, title "{Weekday}, {Mon} {d}", "Add event", rows, caption "Select an event to edit or delete it".
+Left: soft block with the month (year added outside the current year), prev/next IconButtons (56), `MonthGrid`. Right: white panel with count, "{Weekday}, {Mon} {d}", "Add event", rows, caption "Select an event to edit or delete it".
 
 | ID | Requirement |
 |---|---|
-| CAL-01 | Tapping a day selects it (black). Heading and count update. Today keeps its ring. |
-| CAL-02 | Days with events get a dot, including days with only all-day events. Dots update as events are added or deleted. |
-| CAL-03 | Chevrons step one month. The year rolls over. The selected day becomes the 1st, or today in the current month. The today ring shows only in its month. |
-| CAL-04 | Count "{n} event(s)" / "No events"; all-day events count. Empty day: "Nothing scheduled. A free day." No events at all: soft tile "The calendar is empty" / "Select a day, then add an event. Days with events get a dot." |
-| CAL-05 | "Add event" creates on the selected day. Tapping a row → Edit event. |
-| CAL-06 | **All-day events** in the day list: soft tiles (mono "ALL DAY", dot, title, place) above the timed rows, as TODAY-12. Tap → Edit event. Fixture `/calendar?date=2026-10-16` (board frames Calendar K–L). |
-| CAL-07 | On narrow and phone, tapping a day whose heading is below the fold scrolls the view just enough to show the heading and the first event; the month stays mostly in view (handoff v5). |
-| EVT-01 | Sheet title "New event" / "Edit event". Eyebrow "{Weekday}, {Mon} {d}". |
-| EVT-02 | Fields: Title* (placeholder "What's happening"), a "Time" row with "Set times · All day" PillTabs (large, 56 px, EVT-08), Starts and Ends (TimeField, §8.3.1), Where ("Home, school, park…"), Color: 5 season swatches + **Alert** (accent). Default color 1. Swatches named by season color (e.g. Amber, Rust, Sage, Coral, Cream) with `aria-pressed`. |
+| CAL-01 | Tapping a day selects it (black); heading and count update; today keeps its ring. |
+| CAL-02 | Days with events (all-day included) get a dot, updated live. |
+| CAL-03 | Chevrons step a month, rolling the year. The selection becomes the 1st, or today in the current month. |
+| CAL-04 | Count "{n} event(s)" / "No events". Empty day: "Nothing scheduled. A free day." No events at all: tile "The calendar is empty" / "Select a day, then add an event. Days with events get a dot." |
+| CAL-05 | "Add event" creates on the selected day; a row opens Edit event. |
+| CAL-06 | All-day tiles above the timed rows, as TODAY-12. |
+| CAL-07 | On narrow and phone, tapping a day whose list is below the fold scrolls just enough to show the heading and the first event. |
+| EVT-01 | Sheet "New event" / "Edit event", eyebrow "{Weekday}, {Mon} {d}". |
+| EVT-02 | Fields: Title* ("What's happening"), "Time" PillTabs "Set times · All day" (lg), Starts and Ends (§8.3.1), Where ("Home, school, park…"), Color: 5 season swatches + **Alert**. Default color 1. |
 | EVT-03 | Empty title → "Add a title", cleared on the next change. |
-| EVT-04 | Time entry and end-after-start validation: see §8.3.1 (`TPK-*`). |
-| EVT-05 | Primary label: "Add event" (new) / "Save" (edit) / "Save for later" (offline). Secondary "Cancel". |
-| EVT-06 | Delete (edit only): ghost "Delete" → "Delete event" inline confirm → removes. The confirm is a red `danger` button (white text) in every season, no longer the season accent (handoff v5). |
-| EVT-07 | Save closes the sheet. List, dots and Today update immediately. |
-| EVT-08 | **All day** (handoff v5): "All day" hides Starts, Ends and any open picker; the event fills its date (§7 `allDay`). Switching back to "Set times" restores the times the draft had, or the TPK-05 defaults when it had none (a new event, or an all-day event opened for editing). All-day events skip the TPK-07 check. They show as tiles on Today and in the day list (TODAY-12, CAL-06), count everywhere, have no status (STATUS-01), and read "All day" in Ambient's "Next event" (AMB-03). Fixture `sheet=allday` (board frame Calendar L). Multi-day events stay out of scope. |
+| EVT-04 | Time entry and validation: §8.3.1. |
+| EVT-05 | Primary "Add event" / "Save" / "Save for later" (offline). Secondary "Cancel". |
+| EVT-06 | Delete (edit only): ghost "Delete" → `danger` "Delete event" inline confirm. |
+| EVT-07 | Save closes the sheet; lists, dots and Today update at once. |
+| EVT-08 | **All day** hides Starts, Ends and any picker; the event fills its date. "Set times" restores the draft's times, or the TPK-05 defaults. No TPK-07 check. Ambient reads "All day". |
 
-#### 8.3.1 Time entry — `TPK` (designed in handoff v2)
-Two new components, built from DS tokens (marked `data-ds-new` in the prototype): **`TimeField`** and **`TimePicker`**. Open them with `sheet=event|newevent` + `time=start|end|error|noend`, `clock=24`, `net=offline`.
+#### 8.3.1 Time entry — `TPK`
 
 | ID | Requirement |
 |---|---|
-| TPK-01 | **TimeField:** label (body-lg) with the length on the right for Ends, in mono caption ("1 hr", "45 min", "1 hr 30 min"). A 56 px button with radius 8 and a 1 px hairline border shows the time (22 px tabular, 19 px on phone) plus mono AM/PM (15 px) and a chevron down/up. Open = black border + 2 px ring. Error = `--danger` border/ring + mono caption error below (`role="alert"`). `aria-expanded`, `aria-label` "{Starts\|Ends}, {time}. Change". |
-| TPK-02 | Starts and Ends sit side by side (2 columns). Tapping a field opens the **TimePicker** below the row. One picker at a time. Tapping the open field or "Done" closes it. The sheet scrolls so the picker is in view (the picker scrolls itself into view when it opens). **No keyboard opens, and there is no typing path.** |
-| TPK-03 | **TimePicker:** soft tile (radius 24, padding 16, or 12 on phone), `role="group"` labelled "Start time"/"End time". Header: eyebrow "{Starts\|Ends} · {time}" + AM/PM `PillTabs size="lg"` (12-hour only). "Hour" grid: 12-hour reads 12, 1 … 11; 24-hour reads 00 … 23. "Minutes" grid: 00 … 55 in 5-minute steps. Grid has 6 columns (4 on phone). Cells are 56 px pills (48 on phone): selected = black with weight 540, unselected = white with a hairline. Each tap changes one part and keeps the others, so any time takes 2–3 taps. |
-| TPK-04 | The Ends picker adds "Length" chips (30 min · 1 hr · 1.5 hr · 2 hr), measured from Starts, and a ghost "No end time" (✕) button. The footer has a secondary "Done". |
-| TPK-05 | **Defaults:** a new event starts at the next full half hour after now (10:41 → 11:00, 11:00 → 11:30), capped at 11:30 PM. Ends = Starts + 1 h, capped at 11:55 PM. The day comes from the eyebrow and can't be changed here. |
-| TPK-06 | Changing Starts moves Ends by the same amount, keeping the length (capped at 11:55 PM). If Ends is empty or not after Starts, Ends stays put. |
-| TPK-07 | **Validation:** Ends must be later than Starts **on the same day**. Equal times fail. Not checked for an all-day event (EVT-08). The check runs on Save together with the title. Save stays enabled. A failed Save closes the picker and shows "Ends before it starts" under Ends. The error clears on the next change to any field. |
-| TPK-08 | **No end:** the field reads "No end time" (weight 330). The event row shows only the start. Today's hero reads "{where} · started {time}". Tapping Ends again fills Starts + 1 h. |
-| TPK-09 | The Clock setting drives both fields, the picker and the rows. Offline uses the same picker and rules, and Save reads "Save for later". |
-| TPK-10 | Accessibility: cells use `aria-pressed`. Hour cells say "3 PM" in 12-hour or "15 hundred" in 24-hour. Minute cells say "{n} minutes". |
-
-Internally the prototype stores times as **minutes of the day** (0–1435). Production converts them to ISO timestamps (§7) using the event's day and the screen's time zone (LOC-06).
+| TPK-01 | **TimeField:** label (body-lg), and for Ends the length in mono ("1 hr", "45 min", "1 hr 30 min"). A 56 px button, radius 8, hairline border: time (22 px tabular, 19 on phone), mono AM/PM, chevron. Open = black border + 2 px ring. Error = `--danger` border + mono error below (`role="alert"`). `aria-label` "{Starts\|Ends}, {time}. Change". |
+| TPK-02 | Starts and Ends side by side. Tapping one opens the TimePicker below the row; one at a time; tapping the open field or "Done" closes it; it scrolls into view. No keyboard and no typing. |
+| TPK-03 | **TimePicker:** soft tile (radius 24, padding 16, 12 on phone), a group named "Start time"/"End time". Header "{Starts\|Ends} · {time}" + AM/PM PillTabs (12-hour only). "Hour": 12, 1 … 11, or 00 … 23. "Minutes": 00 … 55 by 5. 6 columns (4 on phone), 56 px pill cells (48 on phone): selected black/540, else white with hairline. Each tap changes one part. |
+| TPK-04 | Ends adds "Length" chips (30 min · 1 hr · 1.5 hr · 2 hr) from Starts and a ghost "No end time" (✕). Footer: secondary "Done". |
+| TPK-05 | **Defaults:** start at the next full half hour (10:41 → 11:00, 11:00 → 11:30), capped at 11:30 PM; end = start + 1 h, capped at 11:55 PM. |
+| TPK-06 | Moving Starts moves Ends by the same amount (capped at 11:55 PM). An empty or invalid Ends stays put. |
+| TPK-07 | Ends must be later than Starts on the same day; equal fails. Checked on Save with the title; Save stays enabled. A failure closes the picker and shows "Ends before it starts"; any change clears it. |
+| TPK-08 | **No end:** the field reads "No end time" (330); the row shows only the start; the hero reads "{where} · started {time}". Tapping Ends fills Starts + 1 h. |
+| TPK-09 | The Clock setting drives fields, picker and rows. Offline is the same, with "Save for later". |
+| TPK-10 | Cells use `aria-pressed`. Hours say "3 PM" or "15 hundred"; minutes "{n} minutes". |
 
 ### 8.4 Weather — `WX`
+
 | ID | Requirement |
 |---|---|
-| WX-01 | Read-only. Left: `WeatherNow` "{location} · Now" with 4 details: Wind ("8 mph NW"), Humidity, UV index, Sunset. Right panel: Banner, "Next 8 hours" (8 soft tiles: time, icon, temp°), "7-day forecast" (7 `ForecastDay`, today highlighted, precip % only when present: a chance of 10% or more). The place reads "{city}, {state code}", e.g. "Portland, OR". |
-| WX-02 | All values follow the unit setting. No unit letter. With °C the wind shows in km/h ("13 km/h NW"). |
-| WX-03 | Banner (online): icon cloud-rain, e.g. "Rain moving in after 4 PM" / "Grab an umbrella if you're heading out." Shown when any of the next 8 hours has precip ≥ 50% (decided); the time is the first such hour. Offline: "Forecast from {time}" / "Updates when the screen is back online. Conditions may have changed." |
-| WX-04 | Setup (no location): block-3 card, eyebrow "Weather · setup", "Where is this screen?", "The forecast and the clock’s time zone follow this place. You can change it later in Settings.", input "City or ZIP code" (placeholder "Portland, OR"), then one row: primary "Show weather" and secondary "Use my location" (locate icon, LOC-01, shown only when the device can locate itself; otherwise the card is as before). Empty → "Enter a city or ZIP code". The same card is used by Settings › Location (primary "Search", SET-09) and the first-run step (primary "Continue", SIGNIN-14). |
-| WX-05 | Loading skeleton and failure state "Weather unavailable" / "The forecast service isn't responding. Trying again in {n} min." + "Try again" (§9). |
-| WX-06 | Refresh every 15 min (decided). The location is changed from Settings › Location (SET-09). |
-| WX-07 | **Searching:** after "Show weather", the button is replaced by "Looking for {query}…" with a slow-pulsing search icon. Typing cancels the search (its answer is ignored). If the search fails (offline, or the service errors), the field shows "Place search isn’t responding. Try again in a moment." and keeps the text; it clears on the next keystroke. [Mock] 1.2 s. |
-| WX-08 | **Unknown place:** error on the input "We couldn't find that place. Try a city and state, like Austin, TX". Clears on the next keystroke. |
-| WX-09 | **Several matches** (e.g. "Portland"): eyebrow "{n} places called {city}", one 64 px row per match (city, with "{state}, United States · {time zone name}" below, LOC-08, e.g. "Maine, United States · Eastern time"). Tapping a row sets the location, and with it the screen's time zone (LOC-05), with no extra confirm. Typing clears the list and brings back "Show weather". A single match (e.g. a ZIP code) is set at once with no list, and "Looking for {query}…" stays until the forecast view takes over. The search covers the United States, takes a city, "City, ST" / "City, State" or a ZIP code, and lists at most 5 matches (largest first). |
+| WX-01 | Read-only. Left: `WeatherNow` "{city}, {state code} · Now" with Wind ("8 mph NW"), Humidity, UV index, Sunset. Right: Banner, "Next 8 hours" (time, icon, temp°), "7-day forecast" (today highlighted, rain % from 10%). |
+| WX-02 | Values follow the unit setting, no unit letter. With °C wind is km/h. |
+| WX-03 | Rain banner (cloud-rain) "Rain moving in after {time}" / "Grab an umbrella if you're heading out." when any of the next 8 hours is ≥ 50%, at the first such hour. Offline and the forecast over an hour old: "Forecast from {time}" / "Updates when the screen is back online. Conditions may have changed." |
+| WX-04 | **Setup card** (no location): block-3, eyebrow "Weather · setup", "Where is this screen?", "The forecast and the clock’s time zone follow this place. You can change it later in Settings.", field "City or ZIP code" ("Portland, OR"), primary "Show weather" and secondary "Use my location" (LOC-01). Empty → "Enter a city or ZIP code". The same card is used by SET-09 (primary "Search") and SIGNIN-14 ("Continue"). |
+| WX-05 | Loading skeleton; failure "Weather unavailable" / "The forecast service isn't responding. Trying again in {n} min." + "Try again". |
+| WX-06 | Refreshes every 15 min. The location is changed in Settings › Location. |
+| WX-07 | **Searching:** the buttons become "Looking for {query}…" with a pulsing search icon. Typing cancels. A failed search: "Place search isn’t responding. Try again in a moment." (text kept, cleared on the next keystroke). |
+| WX-08 | Unknown place: "We couldn't find that place. Try a city and state, like Austin, TX". |
+| WX-09 | **Several matches:** "{n} places called {city}", one 64 px row each (city, "{state}, United States · {time zone name}"). A tap sets the place and its time zone. Typing clears the list. A single match is set at once. US only; city, "City, ST" or ZIP; at most 5, largest first. |
 
 ### 8.5 Notes — `NOTE`
-White panel: eyebrow count, title "Notice board", "Add note". Grid `auto-fill minmax(220px,1fr)`, gap 36, StickyNotes (min-height 200). Caption "Select a note to edit or delete it · {expiry caption}".
+White panel: count, "Notice board", "Add note". Grid `auto-fill minmax(220px,1fr)`, gap 36, notes min height 200. Caption "Select a note to edit or delete it · {expiry caption}".
 
 | ID | Requirement |
 |---|---|
-| NOTE-01 | "Add note" → New note (eyebrow "Notice board"). Tap a note → Edit note (eyebrow "{author} · {time}"). |
-| NOTE-02 | Fields: Message* (multiline, 3 rows, "Leave a note for the family"), Your name ("Optional"). Color: 5 swatches (no Alert). |
+| NOTE-01 | "Add note" → New note (eyebrow "Notice board"); a note → Edit note (eyebrow "{author} · {time}"). |
+| NOTE-02 | Message* (3 rows, "Leave a note for the family"), Your name ("Optional"), 5 swatches (no Alert). |
 | NOTE-03 | Empty message → "Write a message". Blank name → "Guest". |
-| NOTE-04 | Notes are listed newest first (by creation time), so new notes go first, stamped "Just now". Tilt cycles −2°, 1.5°, −1°, 2.5°. "Just now" ages into a time, then a weekday: "Just now" for the first 5 minutes, then the time (TIME-01 clock format) on the same day, the short weekday ("Tue") within the last 6 days, then "{Mon} {d}". |
-| NOTE-05 | Primary "Post note" / "Save" / "Save for later". Delete → inline confirm "Delete note" (red `danger` button, handoff v5). |
+| NOTE-04 | Newest first everywhere. Tilt cycles −2°, 1.5°, −1°, 2.5°. Stamp: "Just now" for 5 min, then the time the same day, the short weekday within 6 days, then "{Mon} {d}". |
+| NOTE-05 | Primary "Post note" / "Save" / "Save for later". Delete → `danger` "Delete note". |
 | NOTE-06 | Count "{n} notes" / "1 note" / "No notes". Caption "Notes are removed after {1 day\|1 week}" or "Notes stay until deleted". |
-| NOTE-07 | Empty board: "No notes yet" / "Leave a note for the family. Notes show on Today. {They're removed after X. \| They stay until someone deletes them.}" |
-| NOTE-08 | Notes are deleted automatically after the expiry setting. **[Mock]** The server deletes them. Each screen also hides expired notes on its own, so they disappear even while offline. |
-| NOTE-09 | Anyone at the display can edit or delete any note. Many notes: the board scrolls (decided). Moderation and character limit remain out of scope. |
+| NOTE-07 | Empty: "No notes yet" / "Leave a note for the family. Notes show on Today. {They're removed after X. \| They stay until someone deletes them.}" |
+| NOTE-08 | Notes past the expiry (24 h or 7 days since created) are deleted by the server and hidden by every screen, offline too. |
+| NOTE-09 | Anyone can edit or delete any note. The board scrolls. |
 
 ### 8.6 Photos — `PHOTO`
-Left: soft block with featured image (radius 8), name and "{date} · {place}" (PHOTO-11), pencil (PHOTO-11) / prev / play-pause / next IconButtons, then full screen (`maximize`, last, PHOTO-14). Right: white panel "Family photos · {n}", ghost "Upload", thumb grid (4:3; the selected thumb gets a ring `0 0 0 3px white, 0 0 0 5px black`). Thumb caption (v5): name and date on one center-aligned row, the date in black 14 px mono.
+Left: soft block with the featured image (radius 8), name, "{date} · {place}", and pencil / prev / play-pause / next / full screen IconButtons. Right: white panel "Family photos · {n}", ghost "Upload", 4:3 thumb grid (selected ring `0 0 0 3px white, 0 0 0 5px black`), each with name and mono date centered below.
 
 | ID | Requirement |
 |---|---|
-| PHOTO-01 | Tapping a thumb features it. Chevrons step through and wrap at both ends. **Opened from Today's picture of the day** (`/photos?photo={id}`, TODAY-07, handoff v7): that photo is featured with the selected ring in the grid and the slideshow starts paused, so it stays until someone steps, picks a thumb or presses play. An unknown or deleted `id` opens Photos as usual [not in the design]. |
-| PHOTO-02 | Slideshow auto-advances every **8 s** while Photos is open. Pause ↔ Play toggles it. Chevrons and thumbs keep it playing. |
-| PHOTO-03 | Upload opens the system file picker (`image/*`, multiple). New photos go first. Their name, date and place are filled in from the photo as it uploads (PHOTO-10), replacing v1's "file name, upload date, no place". Board frame Photos I (`upload=done`). |
-| PHOTO-04 | Production upload: files are saved to disk via `/api/photos` (§7.0) with real progress. Size (≤ **20 MB**) and type (image) checks run **before** upload starts. |
-| PHOTO-05 | Empty: soft block centered, image icon, eyebrow "Family photos · 0", "No photos yet", "Upload family photos to show them here, as the picture of the day and as a background." + "Upload photos". |
-| PHOTO-06 | **Uploading:** each chosen file appears first in the grid right away: image at 60%, an 8 px progress bar inside the frame, mono "{n}%" ("Waiting" at 0). A soft row above the grid reads "Uploading {name}" (one) or "Uploading {n} photos" (several) + average %. Each tile becomes a normal photo at 100%. The row leaves when nothing is uploading. |
-| PHOTO-07 | Uploading **never blocks the slideshow**: the featured photo and the 8 s timer use finished photos only. On a first upload, the featured frame reads "Your photos show here once they finish uploading." |
-| PHOTO-08 | **Failure per file** (only that tile changes): "Too large · 20 MB max", "Not a photo", "Didn't upload" (network). Network failures get "Try again" (restarts at 0%) and "Remove". Too large and not a photo get "Remove" only, since a retry would fail again. Row reads "{n} photo(s) didn't upload". |
-| PHOTO-09 | **Offline:** Upload buttons are disabled with the offline pill pattern (black pill, wifi-off) "Offline · upload when back online". Uploads in progress pause ("Paused") and resume on reconnect: an upload still running carries on, and one whose send failed while offline starts again from 0%. Paused uploads are held in memory only and are lost if the page reloads (decided for v1). Row reads "Offline · {n} upload paused until back online". |
-| PHOTO-10 | **Name, date and place from the file** (handoff v5), read on upload, each in this order. **Name:** the title in the photo's metadata → words in the file name (camera prefixes such as `IMG_`, `DSC`, `PXL`, dates and runs of digits removed; it needs a real word of 3+ letters) → the place's city → the raw file name without its extension. **Date:** the date taken in the metadata → a date in the file name (`2025-10-31`, `20251031`) → the file's modified date. **Place:** GPS in the metadata, turned into "City, ST" (US only, like LOC-04); no GPS or no US place → empty. A metadata title that is blank or a camera placeholder ("OLYMPUS DIGITAL CAMERA", "Default", "Image") doesn't count. The file name also drops the filler words at, am, pm, copy, edited and final ("Screenshot 2026-01-02 at 10.11.12 AM" has no name), and a name in all lowercase gets a capital first letter (as in the prototype). The file's modified date is the day in the screen's zone; without it the server uses the upload day (LOC-07). Each value remembers its source (§7 `Photo.sources`). Guessed values get a soft hint under the featured photo: "Name and date guessed from the file name.", "Date guessed from the file date.", "Name guessed from where it was taken." (a name from the place's city), plus "No place found." when there is no place. The hint goes once the details are saved in Photo details (PHOTO-12). [Mock] the place lookup is faked. Fixtures: `halloween-costumes-2025-10-31.jpg` → "Halloween costumes", Oct 31 2025, no place (`sheet=photo`); `IMG_4410.JPG` with metadata → "Cannon Beach", Aug 16 2026, Cannon Beach, OR (`sheet=photometa`). |
-| PHOTO-11 | **Featured photo** shows its name and "{date} · {place}": the year is added outside the current year, and a photo with no date reads "No date". A pencil button opens Photo details and pauses the slideshow. |
-| PHOTO-12 | **Photo details sheet** (Sheet, §8.9): title "Photo details", eyebrow = the file name (or "Family photos"). A 16:9 preview, then **Name** (required), **Date taken** (a date field, no future dates), **Place** (optional). No color. Each field has a mono source caption on the right: "From photo", "From photo location", "Guessed from file name", "Guessed from file date", "Guessed from place", "Not in photo", and "File name" for a name that is the raw file name (as in the prototype); any change to the field turns it into "Edited". Empty name → "Add a name" on Save. A date after today (typed past the field's limit) → "No future dates" under the field on Save [not in the design]. Clearing the date saves the photo with no date ("No date", PHOTO-11). Name and place are trimmed; a field typed back to how it opened is not "Edited". Photos uploaded before v0.49 have no stored file name, so their eyebrow is "Family photos". Save updates the photo everywhere (grid, featured, background list, picture of the day). Changes sync like events (§9.7); offline, Save reads "Save for later" with the sheet's offline banner [not in the design]. Board frames Photos J–K (`sheet=photo`, `sheet=photometa`). |
-| PHOTO-13 | **Delete photo** (in Photo details): ghost "Delete" → inline confirm "Delete photo" (red `danger` button), then the photo leaves Photos, the background list, the slideshow and picture of the day (TODAY-07) on every screen, and its files are deleted. **The background photo** (decision 24, was §12.2 O3): Photo and Slideshow both fall back to the oldest upload, as BG-05 already does with no photo picked, and Slideshow rotates on from there; with no photos left the background is Season color. |
-| PHOTO-14 | **Full screen** (handoff v5). Opens by tapping the featured photo or the full-screen button, only when at least one photo has finished uploading. A black screen above everything, sidebar included; the whole photo shows uncropped (contain), letterboxed in black. Top row: mono "{n} of {total}" and "Exit full screen" (`minimize`). Bottom row: name, "{date} · {place}", Previous, Play/Pause, Next. White-on-black `inverse` IconButtons, 56 px. Tapping the photo hides or shows both rows (hidden gives the photo the whole screen); opening always starts with them shown. The slideshow keeps its state and 8 s timer; the chevrons wrap as in the grid. No edit button here. Keyboard: Esc exits, ← → step, Space plays or pauses. It closes on Exit, on any view change and on the idle timeout (IDLE-01, back to Today), and returns to Photos with the same photo featured. A `dialog` named "{name} · full screen". Fixtures `full=1`, `&chrome=0` (rows hidden; board frames Photos L–M). |
+| PHOTO-01 | A thumb features its photo. Chevrons wrap. `/photos?photo={id}` features that photo with the slideshow paused until someone steps, picks or plays; an unknown id opens as usual. |
+| PHOTO-02 | Slideshow advances every 8 s while open. Pause ↔ Play. Chevrons and thumbs keep it playing. |
+| PHOTO-03 | Upload opens the file picker (`image/*`, multiple). New photos go first, with details read from the file (PHOTO-10). |
+| PHOTO-04 | Size (≤ 20 MB) and type checks run before upload; upload shows real progress. |
+| PHOTO-05 | Empty: image icon, "Family photos · 0", "No photos yet", "Upload family photos to show them here, as the picture of the day and as a background." + "Upload photos". |
+| PHOTO-06 | **Uploading:** each file shows first in the grid at 60% with an 8 px progress bar and mono "{n}%" ("Waiting" at 0). A row above reads "Uploading {name}" / "Uploading {n} photos" + average %. A tile becomes a normal photo at 100%. |
+| PHOTO-07 | Uploads never block the slideshow; it uses finished photos only. With none yet: "Your photos show here once they finish uploading." |
+| PHOTO-08 | **Per-file failure:** "Too large · 20 MB max", "Not a photo" (Remove only), "Didn't upload" (Try again from 0% and Remove). Row "{n} photo(s) didn't upload". |
+| PHOTO-09 | **Offline:** upload buttons disabled with the pill "Offline · upload when back online". Uploads pause ("Paused") and resume on reconnect (restarting from 0% if their send failed). Paused uploads are lost on reload. Row "Offline · {n} upload paused until back online". |
+| PHOTO-10 | **Details from the file**, read on upload. **Name:** metadata title → words from the file name (camera prefixes, dates, digit runs and the words at, am, pm, copy, edited, final removed; needs a 3+ letter word; all-lowercase gets a capital) → the place's city → the file name without extension. Blank or camera-placeholder titles ("OLYMPUS DIGITAL CAMERA", "Default", "Image") don't count. **Date:** metadata date taken → a date in the name (`2025-10-31`, `20251031`) → the file's modified day → the upload day. **Place:** GPS → "City, ST" (US only), else empty. Until saved in Photo details, a hint under the featured photo: "Name and date guessed from the file name.", "Date guessed from the file date.", "Name guessed from where it was taken.", plus "No place found." |
+| PHOTO-11 | The featured photo shows name and "{date} · {place}" (year outside the current year; "No date" without one). The pencil opens Photo details and pauses the slideshow. |
+| PHOTO-12 | **Photo details** sheet: eyebrow = file name (or "Family photos"), 16:9 preview, **Name** (required), **Date taken** (date field, no future dates), **Place**. Each field has a mono source caption: "From photo", "From photo location", "Guessed from file name", "Guessed from file date", "Guessed from place", "Not in photo", "File name"; a change reads "Edited" (typing back to the original isn't). Empty name → "Add a name"; a future date → "No future dates". Clearing the date saves "No date". Save updates the photo everywhere and syncs; offline it reads "Save for later". |
+| PHOTO-13 | **Delete:** ghost "Delete" → `danger` "Delete photo"; it leaves every list on every screen and its files are deleted. A deleted background photo falls back to the oldest upload (Season color when none are left). |
+| PHOTO-14 | **Full screen** (tap the photo or `maximize`, with at least one finished photo): black, above everything, photo uncropped. Top: mono "{n} of {total}", "Exit full screen" (`minimize`). Bottom: name, "{date} · {place}", Previous, Play/Pause, Next as 56 px `inverse` IconButtons. Tapping the photo hides or shows both rows (shown on open). The slideshow keeps its state. Esc exits, ← → step, Space plays/pauses. Closes on Exit, a view change or the idle timeout. A `dialog` named "{name} · full screen". |
 
 ### 8.7 Settings & Background — `SET`, `BG`
-Settings apply instantly. There is no Save button. Settings, Background and Ambient screen choices use the large PillTabs (56 px), which wrap onto more rows when they don't fit (handoff v5).
+Settings apply instantly, with no Save button. Choices use the large wrapping PillTabs.
 
 | ID | Requirement |
 |---|---|
-| SET-01 | Header: eyebrow "Screen settings", "Settings", "Signed in as **{name}** · {email}" (the account's person name from SIGNIN-06). |
-| SET-02 | **Season** PillTabs Auto · Spring · Summer · Fall · Winter. Subtitle "Follows the month · now {Season}" / "Fixed to {Season}". Every color block cross-fades 600 ms. Auto re-checks at midnight. |
-| SET-03 | **Background** row → Background page. Summary: "Season color" / "Photo · {title}" / "Slideshow · {interval}". |
-| SET-04 | **Clock** 12-hour · 24-hour ("Used for every time on the screen"). Changes every time on screen (TIME-01). |
-| SET-05 | **Temperature** Fahrenheit · Celsius ("Weather is shown without a unit letter"). |
-| SET-06 | Schedule tile: "Ambient screen" · its hours ("6:00 PM – 7:30 AM", "Sun – Thu 6:00 PM – 7:30 AM · Fri & Sat 9:00 PM – 9:00 AM" or "Off") → Ambient screen page (SET-10). A set with the same dim and wake time reads "Not set" in its place ("Not set", or "Sun – Thu Not set · Fri & Sat 9:00 PM – 9:00 AM"). |
+| SET-01 | Header "Screen settings", "Settings", "Signed in as **{name}** · {email}". |
+| SET-02 | **Season** Auto · Spring · Summer · Fall · Winter; "Follows the month · now {Season}" / "Fixed to {Season}". Auto re-checks at midnight. |
+| SET-03 | **Background** row → Background page; summary "Season color" / "Photo · {title}" / "Slideshow · {interval}". |
+| SET-04 | **Clock** 12-hour · 24-hour ("Used for every time on the screen"). |
+| SET-05 | **Temperature** Fahrenheit · Celsius ("Weather is shown without a unit letter"). Last row. |
+| SET-06 | Tile "Ambient screen" · its hours ("6:00 PM – 7:30 AM", "Sun – Thu 6:00 PM – 7:30 AM · Fri & Sat 9:00 PM – 9:00 AM", "Off"; a set with equal times reads "Not set") → SET-10. |
 | SET-07 | "Back to Today after" 1 min · 3 min · 5 min · Never. "Remove notes after" 1 day · 1 week · Never. |
-| SET-08 | Account card: initial avatar (block-4, first letter of the name), name, "{email}" (no family name), then the signed-in screens (SET-12) and "Sign in another device" (SIGNIN-15). Last, below a hairline: "Sign out" (SIGNIN-11) with the caption "Sign out this device only." as a note on the left (info icon + black mono caption) and the button on the right (space-between), so it doesn't read as a second action. Changing name/email is out of scope. |
-| SET-09 | **Location** row, **first** in the Settings panel (it changes the clock and every time on the screen): "Location" · "Sets the weather and the time zone" · summary "{city}, {state code} · {time zone name}" ("Portland, OR · Pacific time", LOC-08) or "Not set" → **Location page** (like Background: "‹ Settings" back button, white panel; Settings stays active in the bar; fixture `/settings/location`). Left: a "Now set to" tile with the place and "{time zone name} · {clock}" ("Pacific time · 10:41 AM"), or "Not set" · "Times follow this device’s own clock"; then "Change location" ("Set location" while not set) with the setup card (WX-04, primary "Search", "Use my location") and its states (WX-07..09, LOC-02..03). Right: a soft block "What the location sets": Weather ("The forecast on Today, Weather and the ambient screen") and Time zone ("Pacific time for the clock, Today, the calendar and event times", or "The clock, Today, the calendar and event times" while no zone is set), a caption ("The clock and event times follow Pacific time, even if this device is set to a different time.", or "Until a location is set, times follow this device’s own clock.") and the line "Shared by every screen on this account". A found place in the **same** time zone saves at once and returns to Settings, and the row summary updates; one in a **different** time zone asks first (LOC-09). A place saved before v0.32 (no zone) shows its name with "Times follow this device’s own clock" and a summary without a zone. |
-| SET-10 | **Ambient screen page** (same shell as Location and Background, fixture `/settings/ambient`). "Schedule" PillTabs Every night · Weekends differ · Off (default Every night, 6:00 PM – 7:30 AM). Weekends differ splits it into "Sun – Thu nights" and "Fri & Sat nights" (default 9:00 PM – 9:00 AM); a night belongs to the day it starts, and a dim time before noon belongs to the night before (12:30 AM early Saturday is Friday night, so it uses the Fri & Sat set), matching the noon-to-noon bars. Switching modes keeps both sets of times. Each set has two TimeFields, "Dims at" and "Wakes at"; Wakes at shows the length ("13 hr 30 min"), counted past midnight when the wake time is earlier than the dim time (the next morning). Tapping a field opens the TimePicker under its set (TPK-02/03): AM/PM, hour cells, minutes 00 · 15 · 30 · 45 only, "Done"; one picker at a time; tapping the open field closes it; with the 24-hour clock, 24 hour cells and no AM/PM. The same dim and wake time: Wakes at shows the error "Same as dim time", that set's bar reads "Not set", and Ambient doesn't run for that set until it is fixed. Off: the times hide and a tile reads "The screen stays bright all day and night."; the right block reads "No ambient hours." and "Touch-to-wake and the idle timer work as usual." Right: a soft block "Over 24 hours" with one bar per set, noon to noon, the ambient span filled dark, and under it "After a touch it dims again when nobody has touched it for {n} min." (from SET-07; Never → "After a touch it stays awake until the next ambient start."), plus "Preview" (moon) → Ambient (a manual entry, AMB-08). Changes apply at once, like every setting. Fixtures: `amb=same\|split\|off` (`same` = Every night with the same dim and wake time, 6:00 PM – 6:00 PM, board frame Q; `split` and `off` set the mode), `pick=all.s\|all.e\|wknd.s\|wknd.e` (that field's picker open). |
-| SET-11 | **Removed in v0.56** (handoff v6: "Has no effect with the sidebar"). Was "Hide bar when idle", the last row of the main Settings panel; Temperature is the last row again. |
-| SET-12 | **Signed-in screens** (handoff v5), in the Account card: eyebrow "{n} screens signed in", then a soft-tile list of every device signed in with this email. Row: device-type icon (`monitor`, `tablet`, `smartphone`) in a white circle, the device name, and a mono caption: "This screen" for this device (listed first, with a seasonal accent dot), else "Active {time} ago" / "Active yesterday" / "Active {Mon} {d}", newest first. Read-only in v1: no rename and no remote sign-out. The list is read from the server when Settings opens; offline, or if that read fails, it shows only this screen [not in the design]. **Type and name** (decision 25, was §12.2 O1): read from the browser that signed in. The type is `smartphone` for an iPhone or an Android phone, `tablet` for an iPad or an Android tablet, else `monitor`; an iPad that reports itself as a Mac lists as a screen. The name is "{browser} {screen | tablet | phone}" ("Chrome screen", "Safari tablet", "Edge phone"), or just "Screen", "Tablet", "Phone" when the browser isn't Chrome, Edge, Firefox or Safari; no name is typed and there's no rename in v1. **Captions:** under an hour "Active {n} min ago" (at least 1), the same day "Active {n} hr ago", the day before "Active yesterday", else "Active {Mon} {d}", in the screen's time zone. One screen reads "1 screen signed in". [Mock] the list is sample data (Appendix A). |
-| BG-01 | Back link "‹ Settings", title "Background", PillTabs Season color · Photo · Slideshow. |
-| BG-02 | Thumb grid (16:9) of all photos + "Upload photo" tile (same picker as PHOTO-03). Uploading tiles appear first, as in PHOTO-06/08, and finished uploads join the background list. Offline: the tile reads "Upload when online" (wifi-off) and is disabled. Label "Family photos · select one" / "Family photos · all {n} in rotation". |
-| BG-03 | In Season color mode, thumbs show at 50% opacity. Tapping one switches to Photo. |
-| BG-04 | Right: Preview (mini layout with block-1 / white / block-3 / bar on the current background), "Dim photo" Off 0 · Light 0.2 · Strong 0.4, "Change photo" Hourly · Daily · Weekly (Slideshow only). |
+| SET-08 | Account card: block-4 initial, name, email, the screen list (SET-12), "Sign in another device" (SIGNIN-15), then below a hairline the note "Sign out this device only." (info icon, mono) on the left and "Sign out" on the right. |
+| SET-09 | **Location** row, first: "Location" · "Sets the weather and the time zone" · "{city}, {state code} · {time zone name}" or "Not set" → **Location page** ("‹ Settings", white panel). Left: "Now set to" with the place and "{time zone name} · {clock}", or "Not set" · "Times follow this device’s own clock"; then "Change location" ("Set location" when unset) with the setup card (primary "Search") and its states. Right: soft block "What the location sets": Weather ("The forecast on Today, Weather and the ambient screen"), Time zone ("{zone} for the clock, Today, the calendar and event times"), a caption ("The clock and event times follow {zone}, even if this device is set to a different time." / "Until a location is set, times follow this device’s own clock.") and "Shared by every screen on this account". A place in the same zone saves and returns to Settings; another zone asks first (LOC-09). |
+| SET-10 | **Ambient screen page:** "Schedule" Every night · Weekends differ · Off. Weekends differ splits it into "Sun – Thu nights" and "Fri & Sat nights"; a night belongs to the day it starts, and a dim time before noon belongs to the night before. Modes keep both sets. Each set has TimeFields "Dims at" and "Wakes at" (with the length, past midnight when earlier); the picker has minutes 00 · 15 · 30 · 45. Equal times: "Same as dim time", the bar reads "Not set", and that set never runs. Off: "The screen stays bright all day and night.", right block "No ambient hours." / "Touch-to-wake and the idle timer work as usual." Right: "Over 24 hours", one noon-to-noon bar per set with the span dark, "After a touch it dims again when nobody has touched it for {n} min." (Never → "After a touch it stays awake until the next ambient start."), and "Preview" (moon) → Ambient. |
+| SET-12 | **Signed-in screens:** "{n} screens signed in" ("1 screen signed in"), soft rows: type icon (`monitor`, `tablet`, `smartphone`) in a white circle, name, mono caption "This screen" (first, with an accent dot) or "Active {n} min ago" / "Active {n} hr ago" / "Active yesterday" / "Active {Mon} {d}". Type from the browser that signed in: iPhone or Android phone → smartphone, iPad or Android tablet → tablet, else monitor. Name "{browser} {screen \| tablet \| phone}" (Chrome, Edge, Firefox, Safari), else "Screen", "Tablet", "Phone". Read-only. Read from the server when Settings opens; offline or on failure only this screen shows. |
+| BG-01 | "‹ Settings", "Background", Season color · Photo · Slideshow. |
+| BG-02 | 16:9 thumb grid + "Upload photo" tile; uploads behave as PHOTO-06/08. Offline: "Upload when online", disabled. Label "Family photos · select one" / "Family photos · all {n} in rotation". |
+| BG-03 | In Season color, thumbs are at 50%; tapping one switches to Photo. |
+| BG-04 | Right: Preview (mini layout on the current background), "Dim photo" Off · Light · Strong (0, 0.2, 0.4), "Change photo" Hourly · Daily · Weekly (Slideshow only). |
 | BG-05 | Caption: "Screens use a plain light gray background. Pick a photo to switch." / "{title} is the background on every screen. Panels stay solid on top." / "Showing {title}. The photo changes {interval}; panels stay solid on top." |
-| BG-06 | Photo background renders as `linear-gradient(rgba(0,0,0,dim) ×2), url(photo) center/cover`. Slideshow rotates on its interval with a 600 ms cross-fade: photos go in upload order (oldest first, wrapping), the next one showing at each local hour (Hourly), midnight (Daily) or Sunday midnight (Weekly). Tapping a thumb in Slideshow shows that photo now and the rotation goes on from it; changing the mode or the interval keeps the photo on screen. A new photo fades in over the old one; switching to Season color fades the photo out. Photo mode with no photo picked shows the oldest upload. |
+| BG-06 | Photo background = `linear-gradient(rgba(0,0,0,dim) ×2), url(photo) center/cover`, cross-fading 600 ms. Slideshow goes in upload order, the next photo at each local hour, midnight or Sunday midnight. A tapped thumb shows now and the rotation continues from it; mode or interval changes keep the photo on screen. Photo mode with none picked shows the oldest upload. |
 
-### 8.8 Ambient (quiet hours) — `AMB`
-Full-screen button (no bar), text on-deep.
+### 8.8 Ambient — `AMB`
+One full-screen button, text on deep.
 
 | ID | Requirement |
 |---|---|
-| AMB-01 | Top row: season icon + "{Season} · {Month}"; right: offline notice (if offline) and the screen label "Glance". |
-| AMB-02 | Giant Clock (clamp 84–300 px). |
-| AMB-03 | Bottom grid (hairline 20% white top): current weather "{temp}° · {condition}" / "Low {low}° overnight · {next notable day}". Next notable day (decided): the first of the next 6 days with precip ≥ 50% → "{Wkd} {p}% rain" (e.g. "Sat 80% rain"). None → "Low {low}° overnight" alone. Next to it, "Next event": "Tomorrow" or "{Wkd}, {Mon} {d}" · {start} · {title}, {where} — or "Nothing scheduled". An all-day event reads "All day" in place of {start} and comes before that day's timed events. |
-| AMB-04 | Caption "Click or tap anywhere to wake". Tap anywhere → Today (or the signed-out form, AMB-07). The whole screen is one button with `aria-label` "Wake screen". |
-| AMB-05 | Enters automatically at the dim time of the night's set (SET-10: every night, or Sun – Thu / Fri & Sat by the day the night belongs to, with the noon cutoff) and leaves at its wake time (to Today, or to the signed-out form after SIGNIN-13, only if the Ambient screen is showing; a view someone woke into stays). Never when the schedule is Off or the night's set is "Not set". After a wake tap during hours, it returns after the idle timeout. A screen that starts during hours reaches Ambient the same way, after the idle timeout. |
-| AMB-06 | Background: season deep, or the background photo (Photo or Slideshow mode) with dim ≥ 0.55 (A11Y-05). The season video (AMB-09) covers both when it plays. |
-| AMB-07 | **Signed out by the server** (SIGNIN-13) during Ambient: Ambient stays, with "Signed out · tap to sign in" in the top row (the OFF-05 style). The clock and the saved weather keep showing. The next wake tap, or the end of ambient hours, opens the signed-out form instead of Today. A screen signed out by day whose idle timeout lands in ambient hours comes here too (SIGNIN-13). |
-| AMB-08 | **Manual entry** (handoff v5): the Ambient (moon) item in the sidebar (SHELL-01) or "Preview" on the Ambient screen page (SET-10) opens Ambient at once, outside the schedule too. A tap wakes it to Today as usual. The idle timer and the schedule are unchanged. |
-| AMB-09 | **Season video** (handoff v5): a muted, looping video for the current season (`videos/{season}.mp4`) fills the screen behind the clock under a 70% season-deep tint (raised from 60% so white text stays readable on bright frames). It covers the photo background too. A missing or failing file shows the AMB-06 background, with no label. Decorative: hidden from assistive tech. The video files aren't in the handoff (execution plan D04) [Open]. |
-| — | Burn-in drift and screen dimming are recommended, not designed **[Open]**. |
+| AMB-01 | Top row: season icon + "{Season} · {Month}"; right: the offline notice and "Glance". |
+| AMB-02 | Giant Clock. |
+| AMB-03 | Bottom grid (20% white hairline): "{temp}° · {condition}" / "Low {low}° overnight · {Wkd} {p}% rain" (the first of the next 6 days at ≥ 50%; none → the low alone). "Next event": "Tomorrow" or "{Wkd}, {Mon} {d}" · {start} · {title}, {where} — or "Nothing scheduled". All-day reads "All day" and comes first. |
+| AMB-04 | "Click or tap anywhere to wake". A tap → Today (or the signed-out form). Named "Wake screen". |
+| AMB-05 | Enters at the night's dim time and leaves at its wake time (only if Ambient is showing). Never when Off or "Not set". After a wake tap during hours it returns after the idle timeout; a screen that starts during hours gets there the same way. |
+| AMB-06 | Background: season deep, or the photo background dimmed at least 0.55. |
+| AMB-07 | Signed out during Ambient: it stays, with "Signed out · tap to sign in" in the top row; the next tap or the end of hours opens the signed-out form. |
+| AMB-08 | The sidebar's Ambient item and SET-10 "Preview" open Ambient at once, outside the schedule too. |
+| AMB-09 | A muted looping season video (`videos/{season}.mp4`) under a 70% deep tint covers the background; a missing file shows AMB-06. Hidden from assistive tech. |
 
-### 8.9 Sheets (shared) — `SHEET`
-- Modal over a 60% scrim that also covers the sidebar. Card radius 32, max-width 560, padding `clamp(24px,3vw,40px)`, shadow-3. Close IconButton 56 (v5, was 44).
-- Closing an **unchanged** sheet (scrim, Cancel, ✕ or Escape on a hardware keyboard) closes it at once.
-- **Discard changes?** (handoff v5, replaces "no dirty-check"): when the draft differs from what the sheet opened with, Cancel, ✕, a scrim tap or Escape replaces the footer in place with "Discard changes?", a line naming what's lost ("This event won’t be added." · "Your edits to this event won’t be saved." · "This note won’t be posted." · "Your edits to this photo won’t be saved."), a secondary "Keep editing" and a red `danger` "Discard". While it shows, scrim taps are ignored and ✕ confirms the discard. Any edit to a field brings the normal footer back. It closes any open time picker. The idle timeout (IDLE-01) still discards without asking. Escape is not in the design and follows Cancel; while the question shows (Cancel is hidden then), Escape discards like ✕. Showing it moves focus to "Keep editing", which brings the normal footer back with the edits kept. Fixture `discard=1` (board frames Calendar M, Notes C).
-- The action row is sticky at the bottom: Delete on the left, Cancel + primary on the right.
-- Offline: banner "You're offline" — event: "Changes save on this screen and sync when the connection is back."; note: "The note saves on this screen and posts when the connection is back."
-- Focus is trapped while open. Opening moves focus to the sheet itself, not a field, so tablets don't raise the keyboard; closing returns it to what opened the sheet. Focus order inside sheets follows the visual order (A11Y-04).
+### 8.9 Sheets — `SHEET`
+- Modal over a 60% scrim (also over the sidebar). Card radius 32, max width 560, padding `clamp(24px,3vw,40px)`, shadow-3, 56 px close button.
+- An unchanged sheet closes at once on scrim, Cancel, ✕ or Escape.
+- **Discard changes?** When the draft changed, those replace the footer with "Discard changes?", a line ("This event won’t be added." · "Your edits to this event won’t be saved." · "This note won’t be posted." · "Your edits to this photo won’t be saved."), secondary "Keep editing" (focused) and `danger` "Discard". While shown, the scrim is ignored and ✕ or Escape discards. An edit or "Keep editing" brings the footer back. The idle timeout discards without asking.
+- Sticky action row: Delete left, Cancel + primary right.
+- Offline banner "You're offline": event "Changes save on this screen and sync when the connection is back."; note "The note saves on this screen and posts when the connection is back."
+- Focus is trapped; opening focuses the sheet itself (no keyboard pops up), closing returns focus to the opener.
 
 ---
 
 ## 9. Cross-cutting behavior
 
-### 9.1 Time & clock — `TIME`
-- TIME-02: The clock ticks every second. Event status recomputes every minute. Season Auto re-checks at midnight.
-- TIME-03: A single `now` source (injectable for tests and the `?now=` fixture).
-- "Local" time everywhere in this spec (today, midnight, the clock, event times, hourly boundaries) means the screen's time zone (LOC-06), not the device clock's zone.
+### 9.1 Time — `TIME`
+- TIME-02: the clock ticks every second, status every minute; Season Auto re-checks at midnight.
+- TIME-03: one injectable `now` source.
+- "Local" always means the screen's time zone (LOC-06).
 
-### 9.2 Idle timeout — `IDLE`
-- IDLE-01: After no touch for the chosen time, any view returns to Today and open sheets are discarded (without "Discard changes?", §8.9). Full-screen Photos closes too (PHOTO-14). An Expanded sidebar returns to Rail, as on any view change (SHELL-08); Hidden stays Hidden. A tap, key press or scroll counts as a touch. Already on Today, only the sheet closes.
-- IDLE-02: Paused while a text field is focused. Leaving the field starts the wait again.
-- IDLE-03: During ambient hours, after a wake tap, idle returns to Ambient instead.
+### 9.2 Idle — `IDLE`
+- IDLE-01: after no touch for the chosen time, any view returns to Today; sheets are discarded and full-screen Photos closes; Expanded returns to Rail. A tap, key press or scroll counts as a touch.
+- IDLE-02: paused while a text field is focused; leaving it restarts the wait.
+- IDLE-03: during ambient hours, idle returns to Ambient.
 
 ### 9.3 Loading — `LOAD`
-- LOAD-01: Each source (calendar, weather, notes, photos) loads on its own. Zones fill in as they arrive. Clock and season are local and never wait.
-- LOAD-02: Skeletons keep the final shape (no layout shift) and pulse 1.2 s. Shown only on first load with no saved data. Later refreshes swap in silently.
-- LOAD-03: Over 10 s → that zone shows its failure state. The 10 s count starts when the screen opens (weather: when its fetch starts). Before the first sync the weather location isn't known yet, so the weather zone loads instead of asking for one (WX-04).
-- Sources read saved data on the screen. "Loading" means nothing is saved yet and the first sync hasn't finished. "Failure" means that first sync, or the weather fetch, failed. Once data is saved, a failed sync only adds "Updated {time}" (FAIL-02). See [tech design](tech-design.md) §4.4.
+- LOAD-01: each source loads on its own; clock and season never wait.
+- LOAD-02: skeletons keep the final shape and pulse 1.2 s, only when nothing is saved yet.
+- LOAD-03: over 10 s (from screen open; weather from its fetch) → that zone's failure. Before the first sync the weather loads rather than asking for a location.
 
-### 9.4 Source failure (online) — `FAIL`
-- FAIL-01: Only the failing zone changes: icon, "{Source} unavailable", retry countdown, "Try again". Weather reads "The forecast service isn’t responding. Trying again in {n} min." (WX-05); calendar, notes and photos read "The Glance server isn’t responding. Trying again in {n} min." (not drawn). "Try again" retries at once. On a calendar failure the Today hero shows only the clock and Picture of the day hides. Ambient has no buttons (the whole screen wakes it), so its failed zones stay blank while the retries run.
-- FAIL-02: If saved data exists, keep showing it and mark the zone "Updated {time}".
-- FAIL-03: Auto-retry at 1, 2 and 5 min, then every 5 min.
+### 9.4 Failure (online) — `FAIL`
+- FAIL-01: only the failing zone changes: icon, "{Source} unavailable", "The Glance server isn’t responding. Trying again in {n} min." (weather: WX-05), "Try again". On a calendar failure the hero shows only the clock and the picture hides. Ambient's failed zones stay blank.
+- FAIL-02: with saved data, keep showing it and add "Updated {time}".
+- FAIL-03: retry after 1, 2 and 5 min, then every 5 min.
 
 ### 9.5 Offline — `OFF`
-- OFF-01: Black pill, fixed bottom-left, 24 px from the bottom on every size, and the gutter plus the sidebar's inset (SHELL-10) from the left (v0.56; the prototype keeps it at the gutter, where it would cover the rail's Settings button): wifi-off "Offline · showing saved data" + "Saved {time}" (time hidden on narrow and phone, and on Weather). Appears after **30 s** offline to avoid flicker. Leaves on reconnect.
-- OFF-02: Saved data stays visible. Event statuses keep updating from the local clock.
-- OFF-03: While offline, weather older than 1 hour → "Forecast from {time}" banner (WX-03) in place of the rain banner. Within the hour the forecast shows as usual.
-- OFF-04: Edits queue locally. The sheet shows an offline banner, save reads "Save for later", and new notes show "Waiting to post" in place of their stamp until synced. An edit to a note that was already posted keeps its stamp.
-- OFF-05: Ambient shows the same message in its top row (white 16 px mono).
-- OFF-06: **Cold start offline.** A signed-in screen that reloads or restarts while offline opens Today from saved data, and every view works. Photos already synced to the account (background, slideshow, picture of the day) show even if this screen never displayed them.
-- OFF-07: **Updates** to the app apply only while the screen is idle (Ambient, or Today after the idle timeout) and nothing is waiting to sync. The screen reloads itself once. Exception: if the server no longer accepts this version, the update applies at the next idle even with changes waiting. They're kept and sent by the new version.
+- OFF-01: black pill bottom-left, 24 px up, at the gutter plus the sidebar inset: wifi-off "Offline · showing saved data" + "Saved {time}" (time hidden on narrow, phone and Weather). Appears after 30 s offline.
+- OFF-02: saved data stays; statuses keep updating.
+- OFF-03: weather over an hour old shows the "Forecast from" banner (WX-03).
+- OFF-04: edits queue locally; sheets show the offline banner and "Save for later"; new notes read "Waiting to post" until sent.
+- OFF-05: Ambient shows the notice in its top row (white 16 px mono).
+- OFF-06: **Cold start offline:** a signed-in screen opens from saved data with every view working, including photos it never displayed.
+- OFF-07: **Updates** apply only while idle (Ambient, or Today after the timeout) with nothing waiting to sync; the screen reloads once. If the server rejects this version, the update applies at the next idle anyway and the waiting changes are kept.
 
-### 9.6 On-screen keyboard — `KB`
-- KB-01: Use the OS keyboard. Build on `visualViewport` resize (or `interactive-widget=resizes-content`), not fixed heights.
-- KB-02: Sheets shrink to the space above the keyboard (280 ms), re-center, and scroll inside. The action row stays sticky.
-- KB-03: Full-page forms (Sign in email, First sign-in name, First sign-in location, Weather setup, the Settings › Location setup card) pad the page by the keyboard height and scroll the focused field into view, 24 px below the top of the scroll area. Rows size to content, so the page scrolls instead of squeezing the hero.
-- KB-04: Return in single-line fields moves to the next field. In Message it adds a line. In the last single-line field, Return submits a full-page form (Sign in email, First sign-in name, First sign-in location, Weather setup, the Settings › Location setup card) and hides the keyboard in a sheet (sheets never save on Return).
-- The drawn keyboard in the prototype (`kb=1`) is a visual mock only. Do not build it. In the app, `kb=1` applies the prototype's keyboard height (36% of the window height, 260–380 px) as the inset and focuses the first field of the open sheet or form, caret at the end, so the frames can be checked without a device. The space the keyboard would cover stays empty.
+### 9.6 Keyboard — `KB`
+- KB-01: use the OS keyboard, sized from `visualViewport`.
+- KB-02: sheets shrink above the keyboard (280 ms) and scroll inside; actions stay sticky.
+- KB-03: full-page forms (Sign in email, name, location, Weather setup, Location card) pad by the keyboard and scroll the focused field 24 px below the top.
+- KB-04: Return moves to the next field; Message adds a line; in the last field it submits a full-page form, or hides the keyboard in a sheet.
+- `kb=1` fakes the keyboard height (36% of the window, 260–380 px) and focuses the first field; the drawn keyboard isn't built.
 
 ### 9.7 Sync — `SYNC`
-- SYNC-01: Settings, notes, events, photos and background are saved to the **account** in the server database (PostgreSQL) and sync to every display signed in to that account (the prototype persists nothing).
-- SYNC-02: Transport (decided, [tech design](tech-design.md) §5). **Push:** each write is saved in IndexedDB together with an outbox entry. The sync engine sends outbox entries in order as idempotent `PUT`/`DELETE /api/{entity}/{id}`. **Pull:** `GET /api/sync?since={version}` returns every changed row, deletions included, plus the new cursor. `GET /api/sync/stream` (SSE) only signals that the account changed, which triggers a pull. Without SSE the client polls every 30 s. A pull never overwrites a row that still has a pending outbox entry.
-- SYNC-03: Conflicts: last write **to reach the server** wins. The server stamps `updated_at` and `version`, so display clock drift doesn't matter. Offline edits (OFF-04) replay in order on reconnect. **Delete wins:** an edit to an event or note that another screen deleted doesn't bring it back. Settings are one record: if two screens change settings at the same moment, the later one replaces the whole set (accepted for v1).
+- SYNC-01: events, notes, photos and settings are saved to the account and sync to every screen.
+- SYNC-02: writes go to IndexedDB with an outbox entry; the engine pushes them in order and pulls changes since its cursor; an SSE ping triggers a pull, else polling every 30 s. A pull never overwrites a row with a pending write (tech design §5).
+- SYNC-03: last write to reach the server wins; offline edits replay in order. **Delete wins** over a concurrent edit. Settings are one record: the later change replaces the whole set.
 
 ### 9.8 Accessibility — `A11Y`
+
 | ID | Requirement |
 |---|---|
-| A11Y-01 | Every control has a name: IconButtons use `aria-label`; an icon that carries meaning with no text beside it is an image named by it (the hourly and 7-day weather icons are named by their condition, "Rain", "Partly cloudy"). Decorative icons are hidden. |
-| A11Y-02 | Choices show their state with `aria-pressed`: swatches (named by color), PillTabs, MonthGrid days, TimePicker cells, background and photo thumbs, and an IconButton with `active`. PillTabs are a group of buttons named by their label, not tabs, since they switch a value rather than a panel. |
-| A11Y-03 | Sheets use `role="dialog"` with `aria-modal`, labelled by their title. Touch targets ≥ 44 px (56 on the sidebar rail, 64 px drawer rows; the grip's touch area is 44×144, the expand handle's 56×96, v0.58); the sheet close and the upload Try again / Remove buttons are 56 px IconButtons (v5). |
-| A11Y-04 | Focus order in sheets follows the visual order: ✕ (in the header) → the fields top to bottom, title field first → the color swatches → the actions (Delete, Cancel, primary). Tab wraps from the last action to ✕ and Shift+Tab back. Opening focuses the sheet itself (§8.9), so the first Tab lands on ✕. |
-| A11Y-05 | Text hierarchy comes from weight, not opacity (DS rule): all text is black (or white on deep), never grey or dimmed (v5). Text reads at WCAG AA (4.5:1) everywhere: black on every season block and soft surface and on the white panels over photos, white on deep and on Winter's cobalt accent, **black on the Spring, Summer and Fall accents** (white on magenta, tangerine and ember is 3.3, 2.8 and 4.1:1), and white over the Ambient photo, dimmed at least 0.55 (4.8:1 over a white photo). |
+| A11Y-01 | Every control has a name. Meaningful icons without text are named images (hourly and 7-day icons by condition); decorative icons are hidden. |
+| A11Y-02 | Choices use `aria-pressed`: swatches, PillTabs, MonthGrid days, picker cells, thumbs, active IconButtons. |
+| A11Y-03 | Sheets are `role="dialog"` + `aria-modal`, named by their title. Targets ≥ 44 px (rail 56, drawer rows 64, grip 44×144, handle 56×96; sheet close and upload buttons 56). |
+| A11Y-04 | Sheet focus follows the visual order: ✕ → fields → swatches → actions, wrapping. |
+| A11Y-05 | Hierarchy by weight, never opacity. WCAG AA 4.5:1 everywhere: black on season blocks, soft surfaces and panels; white on deep and Winter's accent; **black on the Spring, Summer and Fall accents**; white over the Ambient photo at dim ≥ 0.55. |
 
 ### 9.9 Location and time zone — `LOC`
-The location sets both the weather and the screen's time zone. It is one place per account, in the United States, and every screen of the account uses it. The clock, Today, the calendar, event times, the hourly forecast and Ambient all follow it. The same setup card appears in three places: Weather setup (WX-04), Settings › Location (SET-09) and the first sign-in (SIGNIN-14). Designed in handoff v4 ("Location and time zone" in the behavior notes; Weather, Settings and Account boards).
+One US place per account sets the weather and the screen's time zone for every screen. The setup card appears in Weather (WX-04), Settings › Location (SET-09) and the first sign-in (SIGNIN-14).
 
 | ID | Requirement |
 |---|---|
-| LOC-01 | **Use my location:** a secondary action (locate icon) next to the setup card's primary (WX-04, SET-09, SIGNIN-14), shown only when the device can locate itself: the browser offers geolocation on a secure page and its permission isn't already blocked. Otherwise the card is exactly as before. The place found is saved at once, like a single search match (WX-09): the forecast loads on Weather, Settings returns to Settings (or asks LOC-09), sign-in goes to Signed in. |
-| LOC-02 | **Locating** (timing rule): the tap replaces the button row at once with "Finding where this screen is…" · "If the browser asks, choose Allow." and a slow-pulsing locate icon, announced as a status. The browser's permission question is not timed. Once allowed, the position has 10 s (low accuracy; a reading up to 10 minutes old is fine), then the place lookup has 5 s; past either limit → the matching failure. The field stays editable: typing cancels locating (a late answer is dropped, as WX-07) and brings the buttons back. Leaving the page or "Skip for now" also cancels. |
-| LOC-03 | **Failures** return to the card with the draft kept, as a soft row under the field with an icon (not a red field error, since the field wasn't at fault), cleared on the next keystroke. Only the card changes; the rest of the screen and the saved location stay. Permission denied (map-pin-off): "Location is off for this screen. Type a city or ZIP instead.", and Use my location hides from then on (the browser won't ask again). No position or timed out (locate-off): "Couldn’t find where this screen is. Try again, or type a city or ZIP." Outside the United States (globe): "This screen seems to be outside the US. Glance works for US places only. Type a US city or ZIP." Lookup failed (search-x): "Couldn’t look up this place. Try again, or type a city or ZIP." It is also the failure when the Glance server can't be reached (offline). "Try again" means tapping Use my location again. |
-| LOC-04 | **Place from a position:** the server turns the coordinates into a place (city or nearest named area, state) and its time zone. Coordinates are rounded to 2 decimals (about 1 km) before they are looked up or saved. A position with no US state is "outside" (LOC-03). |
-| LOC-05 | Every saved place carries its IANA time zone, from search (WX-09) or from LOC-04. A search result the geocoder gives no valid zone for is left out of the matches. A place saved before v0.32 has none until it is picked again. |
-| LOC-06 | **Screen time zone:** every time and date on screen (clock, today, midnight, Season Auto, event times and days, the calendar, note stamps, the slideshow boundaries, ambient hours, "Updated {time}") uses the location's time zone, else the device's. A screen whose own clock is set to another zone still shows the location's time. Changing the location changes the time zone on every screen at the next sync. Daylight saving: a wall time skipped by the change (2:30 AM in spring) moves forward by the gap (3:30 AM), and a repeated one (1:30 AM in fall) is the first of the two. |
-| LOC-07 | **Server time zone:** server rules that need a local day (the upload date of a photo with no date in its metadata, its file name or its file, PHOTO-03, PHOTO-10) use the location's time zone, else `accounts.time_zone` (the first browser's zone, SIGNIN-12). |
-| LOC-08 | **Time zone names**, the way families say them: always "{Name} time": Eastern time, Central time, Mountain time, Arizona time (most of Arizona, no clock change), Pacific time, Alaska time, Hawaii time; territories: Atlantic time (Puerto Rico, US Virgin Islands), Chamorro time (Guam, Northern Mariana Islands), Samoa time. No abbreviations (PT, PDT), offsets, "standard"/"daylight" or zone IDs; the name doesn't change twice a year. Shown only in the Settings row summary, the Location page, the LOC-09 confirm and the WX-09 match rows; the clock itself carries no zone label. |
-| LOC-09 | **Time zone change confirm** (decided in handoff v4): only in Settings › Location, only when a place is already set with a zone and the new place's time zone name (LOC-08) differs. The card is replaced in place by a highlight block: eyebrow "Time zone change", title "Switch to {new} time?", body "{place} is in {new} time. The clock moves {n} hours {ahead\|back}, and event times change to match on every screen." ("1 hour" for one) Two tiles "Now · {old} time {clock}" and "After · {new} time {clock}", plus one example from the next upcoming timed event: "{title} at {time} will show at {new time}." (no upcoming event → no example; all-day events are skipped, since they have no time and keep their date, EVT-08). When the two zones read the same time today but differ later in the year (Arizona vs Pacific in October), the body is "The time is the same right now, but it can differ later in the year." Primary "Switch to {new} time" saves and returns to Settings; the clock jumps at once (no animation). Secondary "Keep {old} time" goes back to the card with the draft kept. Not asked when the first place is set (WX-04, SIGNIN-14). Events keep their moment and show at the new local time. Fixture `wx=tz` (Portland, OR → Portland, ME: 3 hours ahead, "Lunch with Aunt Rosa at 12:00 PM will show at 3:00 PM.", the first event after 10:41 AM; the prototype hard-codes Soccer practice). |
+| LOC-01 | **Use my location** (locate icon), only when the browser can locate on a secure page and permission isn't blocked. The place found is saved like a single match. |
+| LOC-02 | **Locating:** the buttons become "Finding where this screen is…" · "If the browser asks, choose Allow." with a pulsing icon (a status). The permission prompt isn't timed; then 10 s for the position (low accuracy, up to 10 min old) and 5 s for the lookup. Typing, leaving or "Skip for now" cancels. |
+| LOC-03 | **Failures** return to the card with the draft kept, as a soft row with an icon under the field, cleared on the next keystroke. Denied (map-pin-off): "Location is off for this screen. Type a city or ZIP instead." and the button hides. No position (locate-off): "Couldn’t find where this screen is. Try again, or type a city or ZIP." Outside the US (globe): "This screen seems to be outside the US. Glance works for US places only. Type a US city or ZIP." Lookup failed or offline (search-x): "Couldn’t look up this place. Try again, or type a city or ZIP." |
+| LOC-04 | The server turns the position (rounded to 2 decimals) into a city or named area, state and time zone. No US state = outside. |
+| LOC-05 | Every saved place carries its IANA zone; search results without a valid zone are left out. |
+| LOC-06 | **Screen time zone:** every time and date on screen uses the location's zone, else the device's, even if the device clock is set elsewhere. A skipped DST time moves forward by the gap; a repeated one is the first. |
+| LOC-07 | Server rules that need a local day (a photo's upload-day date) use the location's zone, else `accounts.time_zone`. |
+| LOC-08 | **Zone names:** "{Name} time": Eastern, Central, Mountain, Arizona, Pacific, Alaska, Hawaii, Atlantic, Chamorro, Samoa. No abbreviations, offsets or IDs. Shown only in the Settings summary, the Location page, LOC-09 and WX-09 rows. |
+| LOC-09 | **Zone change confirm** (Settings › Location only, when a zoned place exists and the new zone name differs): highlight block "Time zone change", "Switch to {new} time?", "{place} is in {new} time. The clock moves {n} hours {ahead\|back}, and event times change to match on every screen." ("1 hour"), tiles "Now · {old} time {clock}" and "After · {new} time {clock}", and "{title} at {time} will show at {new time}." for the next timed event (none → no line). Same time today but not all year: "The time is the same right now, but it can differ later in the year." Primary "Switch to {new} time" saves and returns; secondary "Keep {old} time" returns to the card. |
 
 ---
 
-## 10. Copy deck
-All user-facing strings live in one module (`src/copy.ts`) so they can be reviewed and translated later. The copy is the prototype's, re-copied for families in handoff v2 (prompt 2); strings for states the prototype doesn't draw are in §8.
-
-New in handoff v4 (v0.33): the signed-out form (SIGNIN-13, AMB-07), "Use my location" and its locating and failure copy (LOC-01..03), the Location row and page (SET-09), the time zone confirm (LOC-09), the first-run location step with "Skip for now" (SIGNIN-14), the Ambient screen page (SET-10), and "Continue as guests" (was "Continue as demo"). Time zones are named the family way ("Pacific time", LOC-08), never by zone ID or UTC offset.
-
-New in handoff v5 (v0.38): nav labels (SHELL-01), "Show menu" (SHELL-07), "Hide bar when idle" (SET-11), "See all {n} events" (TODAY-11), "ALL DAY" and "Set times · All day" (EVT-08), "Discard changes?" and its lines (§8.9), "On this day · {year}" (TODAY-07), Photo details and its source captions, the guessed-value hints and "Delete photo" (PHOTO-10..13), full-screen Photos (PHOTO-14), the signed-in screens list (SET-12), "Scan to sign in" (SIGNIN-15), "Sign out this device only." (SET-08, was "Signs out this screen only."), "Couldn’t send. Try again." (SIGNIN-03, now drawn). "Continue as guests" is gone (SIGNIN-05).
-
-New in handoff v6 (v0.56): "Open menu", "Show sidebar", "Close sidebar" and the drawer header "Glance" (SHELL-08); the drawer rows reuse the v5 nav labels. "Show menu" (SHELL-07) and "Hide bar when idle" (SET-11) and its subtitle are gone.
-
-New in handoff v7 (v0.58): "Expand menu", "Hide sidebar" and the drawer's "Close" row (still named "Close sidebar") (SHELL-08); "Upload a photo" and the button name "Picture of the day: {title}" (TODAY-07). "Open menu" (SHELL-08) and "Appears once someone uploads a photo." and Today's "Upload" (TODAY-07) are gone.
-
-Voice check for family copy: short words, no jargon ("display" → "screen" in user-facing text), and nothing that assumes an office (rooms, desk, booking, clients).
-
-## 11. UI-first delivery plan
-
-| Phase | Scope | Exit criteria |
-|---|---|---|
-| **0. Foundations** | Next.js + TS strict + Biome + StyleX scaffold (§3). Tokens as StyleX vars and season themes, `next/font/local`, Lucide, 15 DS components + shared pieces (§4.2), gallery route | DS-01 passes. Components match DS cards in all 4 seasons |
-| **1. Shell & fixtures** | Routing, breakpoints, nav bar, season provider, `now` provider, fixture store loaded from the family fixtures (Appendix A), URL fixture params (§6) | Every route renders at the 6 board sizes |
-| **2. Screens (static states)** | Family copy (§10). Today, Calendar, Weather, Notes, Photos, Settings, Background, Ambient, Sign in, Sheets — every state in §8 from fixtures | **Visual parity** with each `Glance Frames - *` board at 1920×1080, 1440×900, 1280×800, 1180×820, 820×1180, 390×844 (screenshot review) |
-| **3. Interactions (local)** | Create/edit/delete events and notes, validation, calendar navigation, photo slideshow and upload (local), settings applied live, idle timeout, ambient schedule | Behavior notes reproduced end to end. Includes TimeField/TimePicker and the TPK rules (§8.3.1). Unit tests for status, time formatting, season mapping, temp conversion |
-| **4. System states** | Skeletons, per-source failure and retry, offline pill and queue, keyboard handling | `net=loading\|offline\|wxerror` and `kb=1` frames match the System states board |
-| **5. Real data** | Database schema and migrations (§7.0; built on SQLite, moved to PostgreSQL in execution plan Phase 8), Route Handlers, magic-link auth, account settings, SSE sync, weather proxy, photo storage on disk, offline shell (service worker) and sync worker, designed sign-in, upload and location states (§8.1, PHOTO-06..09, WX-07..09) | `FixtureTransport` swapped for `HttpTransport`. Repos and screens unchanged |
-| **6. Location and time zone** | Screen time zone from the location (LOC-05..07), "Use my location" (LOC-01..04), Settings › Location (SET-09), first-run location step (SIGNIN-14), time zone names and confirm (LOC-08/09). UI from handoff v4 | A screen whose clock is set to UTC shows the location's time everywhere. The new states match the v4 Weather, Settings and Account boards at the 6 sizes |
-| **7. Handoff v4 follow-ups** | Signed-out form (SIGNIN-13, AMB-07), editable ambient schedule (§7 `ambient`, SET-06, SET-10, AMB-05) | A 401 with a sheet open waits for the sheet; the form keeps the waiting changes. The Ambient screen page matches the Settings board frames N–R; schedule rules have table tests (weekend nights, past midnight, "Not set") |
-| **9. Handoff v5** (execution plan Phase 9; phase 8 there moves the server to PostgreSQL) | Look and nav bar (§2, §4.3, SHELL-01/02/06/07, SET-11, AMB-08), Discard changes? (§8.9), all-day events (EVT-08, TODAY-12, CAL-06), Today overflow (TODAY-11), picture of the day (TODAY-07), photo details, delete and full screen (PHOTO-10..14), signed-in screens and QR sign-in (SET-12, SIGNIN-15), sign-in changes (SIGNIN-01/03/05), Ambient season video (AMB-09) | Every new frame of the v5 Today, Calendar, Notes, Photos and Account boards matches at the 6 sizes; all-day events stay on their date when the location's time zone changes; a photo edited or deleted on one screen changes on the others |
-| **10. Handoff v6** (execution plan Phase 10) | Left sidebar (SHELL-01/02/03/05, SHELL-08..10), the bottom bar and SET-11 removed (SHELL-06/07, SET-11), offsets (OFF-01, TODAY-11, IDLE-01) | The sidebar matches the v6 prototype in its three states at the 6 sizes; every other v5 frame still matches; no bar, "Show menu" or "Hide bar when idle" is left |
-| **11. Handoff v7** (execution plan Phase 11) | Today's Columns layout and type scale (TODAY-13), measured schedule rows (TODAY-11), picture of the day in the hero and its Photos link (TODAY-01/07/10, PHOTO-01), icon-only schedule buttons (TODAY-04), the rail's ✕ and expand handle, the drawer's Close row and the rail on every view but Today (SHELL-08/09) | Today matches the v7 Today board at the 6 sizes with no page scroll at 768 px and up; the sidebar matches the v7 prototype; "Open menu" is left nowhere |
-
-Phases 0–4 need no backend: each data source sits behind a repository interface (`EventsRepo`, `NotesRepo`, `PhotosRepo`, `WeatherRepo`, `SettingsRepo`). Repos always read and write the local IndexedDB store. Phases 0–4 use a `FixtureTransport` that seeds the store with Appendix A data, accepts pushes locally, and simulates weather, place search, sign-in and upload with the [Mock] delays. Phase 5 swaps in an `HttpTransport` that calls the Route Handlers. Screens never import a repo implementation or a transport directly.
+## 10. Copy
+All user-facing strings live in `src/copy.ts`. Strings are exact as written in §8–9. Use short words, "screen" not "display", nothing that assumes an office; name time zones the family way (LOC-08).
 
 ---
-
-## 12. Decisions
-
-### 12.1 Resolved (2026-10-11)
-| # | Question | Decision |
-|---|---|---|
-| 1 | Audience | **Family members.** Family copy deck (§10) |
-| 2 | Settings scope | **Per account.** All displays of a family share settings (§7) |
-| 3 | Time entry | **Designed in handoff v2** (TimeField + TimePicker, §8.3.1) |
-| 4 | Stack | **Next.js (SPA) + TypeScript + Biome + StyleX + PostgreSQL** (§3; ~~SQLite~~ until execution plan Phase 8) |
-| 5 | "Continue as guests" (was "Continue as demo") | ~~Dev/demo builds only~~ **Removed** in handoff v5 (SIGNIN-05) |
-| 6 | Picture of the day | ~~Deterministic daily rotation by local date~~ Handoff v5: "On this day" first, else a shuffled cycle, the same on every screen (TODAY-07) |
-| 7 | Weather | Refresh every 15 min. Rain banner when precip ≥ 50% in the next 8 h. Provider still open (below) |
-| 8 | Past-day events | Struck through (past) |
-| 9 | Overflow (events, notes) | Notes: scroll inside the zone. Events on Today: "See all {n} events" (handoff v5, TODAY-11) |
-| 10 | Sync | SSE with polling fallback, last write wins (§9.7) |
-| 11 | Undesigned states | **Designed in handoff v3** (prompt 3): sign-up/sign-in flow (§8.1), upload progress/failure/offline (PHOTO-06..09), location search (WX-07..09) |
-| 12 | Account model | **One account per family, one email, no members.** Magic link for sign-up and sign-in. First sign-in asks for the person's name. Events, notes, photos and settings are per account |
-| 13 | Screen label | **"Glance"** on Ambient (AMB-01) and the sign-in wordmark; handoff v5 removed it from the Today hero (TODAY-01). No family or screen name is stored (SET-12 makes one from the device type and browser, decision 25) |
-
-| 14 | Runtime | One Node server process with a persistent disk (§3, tech design D17) |
-| 15 | Weather provider | Open-Meteo (forecast + geocoding), behind a `WeatherProvider` adapter |
-| 16 | Time zone | **The location's IANA zone** (`weatherLocation.timeZone`) for the screens and server jobs (LOC-06/07). Before a location is set: the device's zone on screen, and on the server the zone stored on `accounts` from the first display's browser (v0.32) |
-| 17 | Query layer | Raw SQL with small typed helpers, no ORM. Runtime validation with Valibot |
-| 18 | Magic-link email | [Resend](https://resend.com) HTTP API, configured by env vars (v0.37) |
-| 19 | Client data and sync | Local-first IndexedDB store with an outbox. Server-stamped versions, last write to reach the server wins (§9.7) |
-| 20 | Place from a position | US Census Geocoder (place and state) + Open-Meteo (time zone), keyless, called by the server (LOC-04, v0.32) |
-| 21 | Designs for prompts 4 and 5 | **Handoff v4** (2026-10-12): the signed-out form waits for open edits and keeps waiting changes (SIGNIN-13); a time zone change in Settings asks first (LOC-09); "Set location" on Today stays on Weather (TODAY-08) |
-| 22 | Ambient hours | **Editable** (handoff v4, SET-10): Every night · Weekends differ (Sun – Thu / Fri & Sat) · Off, in 15-minute steps. Replaces the fixed 6:00 PM – 7:30 AM of v1 |
-| 23 | Design handoff v5 (2026-10-15) | The designer's own revisions, no prompt: all-day events, photo details and delete, a bar that hides when idle, Discard changes?, signed-in screens and QR sign-in, and the look changes listed in the status line (v0.38). Built in execution plan Phase 9 |
-| 24 | Deleting the background photo (PHOTO-13, was O3) | **Fall back to the oldest upload** in Photo and Slideshow, as BG-05 does with no photo picked; no photos left → Season color (v0.49). The proposed "Slideshow goes on from the next photo" was dropped: the slideshow is placed by the photo count, so any upload or delete already moves it, and the anchor rule needs no deleted rows |
-| 25 | Screen names and types (SET-12, was O1) | **Read from the browser that signs in:** the device type (phone, tablet, else screen) and the browser are stored with the display, and the list names it "{browser} {type}" ("Chrome screen", "Safari tablet"). No name is asked for at sign-in (no step is designed for it) and there's no rename in v1 (v0.50) |
-| 26 | Who may use the QR code (SIGNIN-15, was O2) | **Anyone who can see the screen.** The code only exists while someone at the screen has opened the tile, lasts 5 minutes, works once and is voided by Done; the screen is in the family's home, like the notes. No confirmation step on the screen (none is designed) (v0.51) |
-| 27 | Design handoff v6 (2026-10-16) | **Left sidebar, Rail handle, only.** The prototype also explores a right side, the old bottom bar and three other handles (corner, grip, tab); only its default is built, and the bottom bar, its idle hiding and SET-11 are removed. **Phone keeps the sidebar** as drawn. Not in the design and decided here: Escape and focus (SHELL-09), `rail=open`, the offline pill clearing the rail (OFF-01). Built in execution plan Phase 10 (v0.56) |
-| 28 | Design handoff v7 (2026-10-18) | **Today Columns layout (`lay=a`), only.** `Glance Today Layouts.dc.html` and the prototype's `?lay=b|c` explore two more; only the default is built. The schedule's row count is **measured** (as the prototype does) and the picture of the day is never dropped for room (the prototype wins over the notes, §2). Not in the design and decided here: `/photos?photo={id}` as the link (like `?date=`), focus moving to Expand menu (SHELL-09), and the no-photos "Upload a photo" slot hidden on phone like every upload entry (§5.4). Built in execution plan Phase 11 (v0.58) |
-
-The full technical decision list (D1–D23) is in [`tech-design.md`](tech-design.md).
-
-### 12.2 Still open
-No technical items are open. The remaining **[Open]** markers are product and design questions: note character limit (§7) and burn-in protection (§8.8), plus these from handoff v5:
-
-| # | Question | Blocks |
-|---|---|---|
-| O4 | **Season videos** (AMB-09). The four `videos/{season}.mp4` files aren't in the handoff; they need a source, a license and a size budget (they are large for an offline kiosk cache) | U16 (ships without them: AMB-06 background) |
 
 ## Appendix A — Fixture data
-Family fixtures for Phases 1–4, **identical to the handoff v3 mock data** (v4 adds the states below), so screens can be compared pixel for pixel with the frames. Frozen now: **Fri Oct 9 2026, 10:41 AM Pacific** (Ambient 7:12 PM). Fixture times are Pacific wall times (`America/Los_Angeles`, the fixture place's zone), and a `now=` without an offset is read in that zone, so the frames match in any device zone (LOC-06). Account: maria@example.com (the known account), name "Maria". Any other email is a new account. Screen label "Glance". Upload fixtures (`upload=error`): "IMG_3307" too large, "Recipe card" not a photo, "Halloween costumes" network failure. Place search fixtures: "Portland" → Portland, OR / Portland, ME; "Springfield" → IL / MO / MA. The mock accepts any 5-digit ZIP or any query containing a comma, and treats anything else it doesn't know as unknown (`wx=unknown` uses "Pordland"). Weather location "Portland, OR" with `America/Los_Angeles` ("Portland, OR · Pacific time"). Place search fixtures carry their zones: Portland, OR Pacific; Portland, ME Eastern; Springfield, IL and MO Central; Springfield, MA Eastern. The ZIP or comma fallback place gets the fixture zone, so it never asks LOC-09. **Handoff v4 states:** the v4 prototype names zones by a small state → zone table ("Portland, OR · Pacific time", Portland, ME is Eastern, 3 hours ahead) and treats "Use my location" as always finding Portland, OR after 2.6 s. Its `geo=denied\|unavailable\|outside\|lookup` failures are the app's `wx=denied\|no-position\|outside\|lookup`; `geo=none` (no button) has no fixture, since the button hides by itself when the browser can't locate. The signed-out fixture uses maria@example.com as the last email; `pending={n}` sets the waiting changes. Ambient schedule fixtures use the SET-10 defaults.
+Frozen at **Fri Oct 9 2026, 10:41 AM Pacific** (Ambient 7:12 PM). Fixture times are Pacific wall times, and a `now=` without offset is read in that zone. Account maria@example.com, name "Maria"; any other email is new. Location "Portland, OR · Pacific time".
 
-**Events (Oct 2026):** 9th — School drop-off 9:00–9:30 AM Lincoln Elementary (soft) · Grandma's video call 10:30–11:15 AM Living room (1, *now*) · Lunch with Aunt Rosa 12:00–1:00 PM Café Lumen (2) · Dentist — Leo 2:00–2:20 PM Dr. Patel (accent) · Soccer practice 3:30–4:30 PM Laurelhurst Park (3). 2nd — Movie night 7:00–9:00 PM Living room (2). 14th — Parent-teacher conference 4:00–4:30 PM Lincoln Elementary (4). 22nd — Leo's birthday party 4:00–6:00 PM Home (3). 28th — Pumpkin carving 5:00–6:30 PM Back porch (1).
+**Events (Oct 2026):** 9th — School drop-off 9:00–9:30 AM Lincoln Elementary (soft) · Grandma's video call 10:30–11:15 AM Living room (1, now) · Lunch with Aunt Rosa 12:00–1:00 PM Café Lumen (2) · Dentist — Leo 2:00–2:20 PM Dr. Patel (accent) · Soccer practice 3:30–4:30 PM Laurelhurst Park (3). 2nd — Movie night 7:00–9:00 PM Living room (2). 14th — Parent-teacher conference 4:00–4:30 PM Lincoln Elementary (4). 16th — No school · teacher planning day, Lincoln Elementary (4, all day). 22nd — Leo's birthday party 4:00–6:00 PM Home (3). 28th — Pumpkin carving 5:00–6:30 PM Back porch (1). `allday=1` adds 9th — Grandpa staying over, Guest room (2, all day). `events=many` adds on the 9th Grocery pickup 5:00–5:30 PM Fred Meyer (4) · Family dinner 6:00–7:00 PM Home (1) · Piano practice — Mia 7:30–8:00 PM Living room (2) · Bedtime story 8:30–9:00 PM Kids’ room (soft).
 
-**Notes:** "Wi-Fi password is on the fridge!" Dad 8:12 AM (1, −2°) · "Package for Mia at the front door." Mom 9:05 AM (2, 1.5°) · "Window cleaner comes Wednesday — please leave blinds up." Mom Mon (3, −1°) · "Welcome home, Grandpa!" Mia Tue (4, 2.5°) · "Bike lock code changes Friday. Ask Dad." Dad Tue (soft, −1.5°).
+**Notes:** "Wi-Fi password is on the fridge!" Dad 8:12 AM (1, −2°) · "Package for Mia at the front door." Mom 9:05 AM (2, 1.5°) · "Window cleaner comes Wednesday — please leave blinds up." Mom Mon (3, −1°) · "Welcome home, Grandpa!" Mia Tue (4, 2.5°) · "Bike lock code changes Friday. Ask Dad." Dad Tue (soft, −1.5°). Keyboard-frame draft: "Has anyone seen my blue umbr".
 
-**Weather (°F):** unchanged from the prototype. Now 64 Partly cloudy, H 68 / L 51, feels 62, wind 8 mph NW, humidity 62%, UV 3, sunset 6:42 PM. Hourly 11 AM–6 PM: 64, 66, 67, 68, 65, 61, 58, 56. Daily: Today 68/51 20% · Sat 59/48 80% · Sun 61/47 30% · Mon 66/49 · Tue 69/50 · Wed 65/50 10% · Thu 58/46 70%. Ambient: 56° Light rain.
+**Weather (°F):** now 64 Partly cloudy, H 68 / L 51, feels 62, wind 8 mph NW, humidity 62%, UV 3, sunset 6:42 PM. Hourly 11 AM–6 PM: 64, 66, 67, 68, 65, 61, 58, 56. Daily: Today 68/51 20% · Sat 59/48 80% · Sun 61/47 30% · Mon 66/49 · Tue 69/50 · Wed 65/50 10% · Thu 58/46 70%. Ambient: 56° Light rain.
 
-**Photos:** Apple picking (Sep 27, Sauvie Island) · Pumpkin patch (Oct 4, Family outing) · Cannon Beach (Sep 6, Summer trip — default background and picture of the day) · First day of school (Sep 2, Lincoln Elementary) · Bike ride (Aug 30, Waterfront) · Forest Park trail (Aug 22, Weekend hike). Upload order (oldest first), all on the evening of Oct 4: Forest Park trail, Bike ride, First day of school, Pumpkin patch, Apple picking, Cannon Beach, so the first TODAY-07 cycle shows them in that order from Oct 4 and Cannon Beach falls on Oct 9. Use bundled fixture images (not picsum.photos) so the app works offline. New-note draft in the keyboard frame: "Has anyone seen my blue umbr".
+**Places:** "Portland" → Portland, OR (Pacific) / Portland, ME (Eastern); "Springfield" → IL, MO (Central) / MA (Eastern). Any 5-digit ZIP or query with a comma is one place in the fixture zone; anything else is unknown ("Pordland"). Use my location finds Portland, OR after 2.6 s. `wx=tz` moves Portland, OR → Portland, ME (3 hours ahead; "Lunch with Aunt Rosa at 12:00 PM will show at 3:00 PM.").
 
-**Handoff v5 fixtures.** All-day events: 16th — No school · teacher planning day, Lincoln Elementary (4), always present; with `allday=1` also 9th — Grandpa staying over, Guest room (2). `events=many` adds four events on the 9th: Grocery pickup 5:00–5:30 PM Fred Meyer (4) · Family dinner 6:00–7:00 PM Home (1) · Piano practice — Mia 7:30–8:00 PM Living room (2) · Bedtime story 8:30–9:00 PM Kids’ room (soft), 9 events in all. Uploaded photos (`upload=done`, `sheet=photo|photometa`): `halloween-costumes-2025-10-31.jpg` → Halloween costumes, Oct 31 2025, no place (name from the file name, date from the file name, place not in photo); `IMG_4410.JPG` → Cannon Beach, Aug 16 2026, Cannon Beach, OR (name from the place, date from the photo, place from the photo location). Both are uploaded on Oct 9 at 10:30 (Cannon Beach) and 10:31 (Halloween costumes), so they come first, and use their own bundled images (`halloween.svg`, `beach.svg`); they are not checked, so they show the hint. The Appendix A photos are `checked` with sources "photo" and "photo-location", so they show no hint. Picture of the day: no fixture photo was taken on Oct 9, so the cycle decides; the first cycle runs in upload order, which keeps Cannon Beach on Oct 9 whatever the account id (tech design §4.7). Signed-in screens (SET-12): the prototype's Kitchen screen · Hallway screen · Living room tablet · Maria’s phone are named by decision 25 instead: Chrome screen (monitor, This screen) · Edge screen (monitor, Active 12 min ago) · Safari tablet (tablet, Active yesterday) · Safari phone (smartphone, Active Oct 2): "4 screens signed in". The times are relative to the fixture's now (12 minutes and a day before it); the phone's is Oct 2, 6:30 PM. Offline (`net=offline`) the list shows only this screen.
+**Photos:** Apple picking (Sep 27, Sauvie Island) · Pumpkin patch (Oct 4, Family outing) · Cannon Beach (Sep 6, Summer trip — default background and picture of the day) · First day of school (Sep 2, Lincoln Elementary) · Bike ride (Aug 30, Waterfront) · Forest Park trail (Aug 22, Weekend hike). Uploaded the evening of Oct 4 in the order Forest Park trail, Bike ride, First day of school, Pumpkin patch, Apple picking, Cannon Beach, so the first cycle lands Cannon Beach on Oct 9. All checked. Bundled images, so the app works offline. `upload=done` adds two unchecked uploads from Oct 9: `halloween-costumes-2025-10-31.jpg` → Halloween costumes, Oct 31 2025, no place (`sheet=photo`); `IMG_4410.JPG` → Cannon Beach, Aug 16 2026, Cannon Beach, OR (`sheet=photometa`). `upload=error`: "IMG_3307" too large, "Recipe card" not a photo, "Halloween costumes" network failure.
+
+**Screens (SET-12):** Chrome screen (this screen) · Edge screen (12 min ago) · Safari tablet (yesterday) · Safari phone (Oct 2): "4 screens signed in". Offline, only this screen.
+
+**Signed out:** last email maria@example.com; `pending={n}` sets the waiting changes; `switch=1` enters sam.lee@example.com.

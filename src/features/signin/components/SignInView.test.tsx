@@ -144,7 +144,7 @@ test("SIGNIN-04 I opened the link is hidden outside demo builds", () => {
   expect(screen.queryByRole("button", { name: "I opened the link" })).not.toBeInTheDocument();
 });
 
-test("SIGNIN-05 there is no Continue as guests, also in demo builds", () => {
+test("SIGNIN-01 there is no Continue as guests, also in demo builds", () => {
   renderView({ step: "form", email: "" });
 
   expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();

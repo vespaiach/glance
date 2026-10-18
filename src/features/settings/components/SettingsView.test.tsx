@@ -163,7 +163,7 @@ test("SET-05 the temperature tabs save Fahrenheit or Celsius", async () => {
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
 
-test("SET-11 the Settings panel has no Hide bar when idle row, so Temperature is last", () => {
+test("SET-05 the Settings panel has no Hide bar when idle row, so Temperature is last", () => {
   renderView();
 
   expect(screen.queryByText("Hide bar when idle")).not.toBeInTheDocument();
