@@ -23,7 +23,8 @@ Built only from the bound design system (`_ds/…/`, namespace `KioskDisplayDesi
 - Not a scaled canvas. Breakpoints by window width: **wide ≥ 1200**, **mid 1000–1199**, **narrow 600–999**, **phone < 600**. Wide and mid fit one screen; narrow and phone stack into one scrolling column. Phone specifics are in the behavior notes.
 - Type and gutters use `clamp()`. The exact values are the CSS variables on the app's root element in `Glance.dc.html` (`--type-*` and the gutter variable).
 - Per-view grid templates are in the `layout(view, bp)` method of the logic class.
-- Bottom bar (TopBar): Today, Calendar, Weather, Notes, Photos, then Settings. 56 px IconButtons (`size="touch"`). Hidden on Sign in and Ambient.
+- Navigation (default): left sidebar. An 80 px icon rail (Today, Calendar, Weather, Notes, Photos; Ambient and Settings at the bottom; an X last that hides the rail to a grip). The edge grip expands it to a 320 px drawer with labelled rows and a “Close” row pinned at the bottom. Rail and drawer close only with their X; taps outside go to the page. Hidden on Sign in and Ambient. `nav=bottom` switches to the bottom bar (TopBar) with the same items as 56 px IconButtons (`size="touch"`).
+- Today: tapping Picture of the day opens Photos with that photo featured and the slideshow paused. Below 1200 px the schedule's “Add event” and “Full calendar” buttons are icon-only.
 - Photo background: every zone with text sits on a white panel (radius 24). Color blocks and the bar stay solid.
 
 ## Data needed

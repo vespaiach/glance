@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v1.11 — Phase 10 (handoff v6: a left sidebar replaces the bottom nav bar) and D05 are added. v1.10: P03 is folded into P02 (#81) |
-| Date | 2026-10-16 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.56) · [`tech-design.md`](tech-design.md) (v2.00) |
+| Status | v1.12 — Phase 11 (handoff v7: Today's Columns layout, picture of the day in the hero, the rail's ✕ and expand handle) and D06 are added. v1.11: Phase 10 (handoff v6: a left sidebar replaces the bottom nav bar) and D05 are added. v1.10: P03 is folded into P02 (#81) |
+| Date | 2026-10-18 |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.58) · [`tech-design.md`](tech-design.md) (v2.04) |
 
 Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 
@@ -67,6 +67,9 @@ graph LR
   D03 --> U16
   D04[D04 season videos] -.-> U16
   D05[D05 handoff v6] --> N01 --> N02 --> N03
+  D06[D06 handoff v7] --> T01
+  D06 --> T02 --> T03
+  T02 --> T04
 ```
 
 **Critical path:** F01 → F02 → F03 → F07 → F09 → S07 → V01 → I01 → Y01 → C01 → C02 → C04 → Q01.
@@ -286,6 +289,21 @@ Handoff v6 (D05, spec v0.56 decision 27) replaces the bottom nav bar with a **le
 
 ---
 
+## Phase 11 — Handoff v7
+
+Handoff v7 (D06, spec v0.58 decision 28) makes Today fit the screen in a **Columns layout** at 768 px and up, measures the schedule's rows, moves the **picture of the day into the hero** (it opens Photos on that photo) and gives the **rail an ✕ and an expand handle**. Only the default Today layout (`lay=a`) is built. Plan: tech design §4.9. The Today board embeds the live v7 prototype, so Today is checked against it at the 6 sizes; the sidebar against the prototype (`?rail=1`, then Expand menu). T01 and T02 can run in parallel.
+
+| ID | Status | Task | Depends on | Covers |
+|---|---|---|---|---|
+| T01 | ⬜ | **Sidebar v7:** `sidebarReducer` `hide` (rail → hidden) and `viewChanged { view }` (hidden → rail off Today), `initialSidebar(rail, view)` (rail on any view but Today); `SidebarRail` without Open menu and its hairline, with the fixed footer ✕ "Hide sidebar" and a scrolling list, fading out while expanded; new `SidebarHandle` "Expand menu" (56×96, the grip's pill on the rail's edge); `SidebarDrawer` without the header ✕, with the fixed "Close" row; copy in and "Open menu" out; SHELL-09 focus to Expand menu; gallery. Tests: the new transitions and no-ops, the load on `/calendar` starts on Rail and on `/today` Hidden, going to Today keeps Hidden, names and `aria-expanded`, focus after the grip, Escape, Close and ✕ | D06 | SHELL-03, SHELL-08, SHELL-09, A11Y-03 |
+| T02 | ⬜ | **Today Columns layout:** `todayLayout({ stacked, portrait, wideNotes })` (768 px, orientation, 1600 px notes columns) replaces the breakpoint grid; no page scroll at 768 px and up (schedule and notes clip); Clock and temperature by container width (`cqi`); the CSS-only body type scale past 1920×1080 (max 1.5×) on Today; icon-only "Add event" / "Full calendar" below 1200 px (`TodaySchedule compact`). Tests: `todayLayout` picks per width and height; the compact buttons keep their names and callbacks. Today A–D match the v7 Today board at the 6 sizes; 2560×1440 shows the larger type | D06 | TODAY-13, TODAY-04, §5.3, §5.4 |
+| T03 | ⬜ | **Measured schedule rows:** pure `scheduleRows({ available, rowHeight })` (2..10) replaces `todayCapacity`; `useScheduleRows(cardRef)` measures with a `ResizeObserver` (6 when stacked); "See all" keeps one row's place. Table tests for `scheduleRows`; `events=many` and `allday=1` fill the card without clipping a row at the 6 sizes and on resize | T02 | TODAY-11, TODAY-12 |
+| T04 | ⬜ | **Picture of the day in the hero:** `PictureOfDay` as the hero's bottom button (thumb, label, one-line title, TODAY-07 sizes) and `PictureOfDayEmpty` as "Upload a photo" (hidden on phone); off the schedule column, with its skeleton; dropped on a photo background, the empty slot kept; tap → `/photos?photo={id}`; Photos' slideshow starts `pinned` on that photo and paused. Tests: the button's name and route, the empty slot's route, photo background drops it but keeps the empty slot, the slideshow reducer's `pinned` (known id, unknown id, then play), PhotosScreen features the photo from the URL. Matches the v7 Today board and the prototype's tap | T02 | TODAY-01, TODAY-07, TODAY-10, PHOTO-01, §5.4 |
+
+**Phase 11 exit:** at 1920×1080, 1440×900, 1280×800, 1180×820 and 820×1180 Today shows no page scroll and the schedule fills its card; at 390×844 it scrolls in one column; tapping the picture of the day opens Photos on it, paused; opening Calendar from a Hidden sidebar shows the rail, and its ✕ hides it; `grep -rn "openMenu\|Open menu" src` is empty.
+
+---
+
 ## External dependency
 
 | ID | Status | Item | Blocks | Fallback |
@@ -295,3 +313,4 @@ Handoff v6 (D05, spec v0.56 decision 27) replaces the bottom nav bar with a **le
 | D03 | ✅ ([#78](https://github.com/vespaiach/glance/pull/78)) | Design handoff v5 in the repo (the designer's own revisions, no prompt): `docs/design/handoff`, spec v0.38, tech design v1.75, this phase | Phase 9 | None: Phase 9 waits |
 | D04 | ⬜ | Season videos `videos/{spring,summer,fall,winter}.mp4` for AMB-09: source, license, size budget (spec §12.2 O4) | U16 (the video itself) | U16 ships with the AMB-06 background; the files are added when they exist |
 | D05 | ✅ ([#103](https://github.com/vespaiach/glance/pull/103)) | Design handoff v6 in the repo (the left sidebar, the designer's own revision, no prompt): `docs/design/handoff`, spec v0.56, tech design v2.00 (§4.8), this phase | Phase 10 | None: Phase 10 waits |
+| D06 | ✅ ([#109](https://github.com/vespaiach/glance/pull/109)) | Design handoff v7 in the repo (Today Columns layout, the sidebar's ✕ and expand handle, picture of the day in the hero, the designer's own revision, no prompt): `docs/design/handoff`, spec v0.58, tech design v2.04 (§4.9), this phase | Phase 11 | None: Phase 11 waits |
