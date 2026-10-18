@@ -75,6 +75,8 @@ const PHOTO_TYPES: Partial<Record<string, string>> = {
 
 class TooLargeError extends Error {}
 
+type ExifTags = ReturnType<typeof exifReader>;
+
 export async function uploadPhoto(
   deps: PhotoDeps,
   accountId: string,
@@ -192,6 +194,14 @@ export function toPhoto(row: PhotoRow): SyncedPhoto {
   };
 }
 
+export function photoFilesOf(photosDir: string, filePath: string): StoredFiles {
+  return (variant) => path.join(photosDir, `${filePath}.${variant}`);
+}
+
+export async function removeFiles(files: StoredFiles): Promise<void> {
+  await Promise.all(PHOTO_VARIANTS.map((variant) => rm(files(variant), { force: true })));
+}
+
 function photoRow(db: Db, accountId: string, id: string): Promise<PhotoRow | undefined> {
   return db.one<PhotoRow>("SELECT * FROM photos WHERE id = $1 AND account_id = $2", [
     id,
@@ -246,10 +256,6 @@ async function removeFilesLogged(files: StoredFiles): Promise<void> {
   } catch (error) {
     console.error(error);
   }
-}
-
-export function photoFilesOf(photosDir: string, filePath: string): StoredFiles {
-  return (variant) => path.join(photosDir, `${filePath}.${variant}`);
 }
 
 function storedFiles(photosDir: string, accountId: string, id: string): StoredFiles {
@@ -317,8 +323,6 @@ function webpCopy(original: string, target: string, maxPx: number) {
     .webp()
     .toFile(target);
 }
-
-type ExifTags = ReturnType<typeof exifReader>;
 
 function exifMetadata(exif: Buffer | undefined): FileMetadata {
   if (!exif) return {};
@@ -406,10 +410,6 @@ async function placeOf(
   const place = gps && (await lookUpPlace(locator, gps));
 
   return place ? { place: { city: place.name, label: placeLabel(place) } } : {};
-}
-
-export async function removeFiles(files: StoredFiles): Promise<void> {
-  await Promise.all(PHOTO_VARIANTS.map((variant) => rm(files(variant), { force: true })));
 }
 
 function insertPhoto(

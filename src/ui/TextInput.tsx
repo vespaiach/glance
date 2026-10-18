@@ -97,46 +97,6 @@ const styles = stylex.create({
 
 const FIELDS = "input:not([disabled]):not([type=hidden]), textarea:not([disabled])";
 
-function nextField(input: HTMLInputElement): HTMLElement | undefined {
-  const scope = input.form ?? input.closest('[role="dialog"]') ?? document.body;
-
-  const fields = [...scope.querySelectorAll<HTMLElement>(FIELDS)];
-
-  return fields[fields.indexOf(input) + 1];
-}
-
-function onReturn(event: KeyboardEvent<HTMLInputElement>) {
-  if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-
-  const input = event.currentTarget;
-
-  const next = nextField(input);
-
-  if (!next && input.form) return;
-
-  event.preventDefault();
-
-  if (next) next.focus();
-  else input.blur();
-}
-
-function LabelRow({ id, label, caption }: { id: string; label: string; caption?: string }) {
-  const name = (
-    <label htmlFor={id} {...stylex.props(styles.label)}>
-      {label}
-    </label>
-  );
-
-  if (caption === undefined) return name;
-
-  return (
-    <div {...stylex.props(styles.labelRow)}>
-      {name}
-      <span {...stylex.props(styles.caption)}>{caption}</span>
-    </div>
-  );
-}
-
 export function TextInput({
   label,
   caption,
@@ -185,6 +145,46 @@ export function TextInput({
           {error}
         </span>
       )}
+    </div>
+  );
+}
+
+function nextField(input: HTMLInputElement): HTMLElement | undefined {
+  const scope = input.form ?? input.closest('[role="dialog"]') ?? document.body;
+
+  const fields = [...scope.querySelectorAll<HTMLElement>(FIELDS)];
+
+  return fields[fields.indexOf(input) + 1];
+}
+
+function onReturn(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+
+  const input = event.currentTarget;
+
+  const next = nextField(input);
+
+  if (!next && input.form) return;
+
+  event.preventDefault();
+
+  if (next) next.focus();
+  else input.blur();
+}
+
+function LabelRow({ id, label, caption }: { id: string; label: string; caption?: string }) {
+  const name = (
+    <label htmlFor={id} {...stylex.props(styles.label)}>
+      {label}
+    </label>
+  );
+
+  if (caption === undefined) return name;
+
+  return (
+    <div {...stylex.props(styles.labelRow)}>
+      {name}
+      <span {...stylex.props(styles.caption)}>{caption}</span>
     </div>
   );
 }

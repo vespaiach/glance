@@ -34,10 +34,6 @@ const styles = stylex.create({
   radius: (radius: string) => ({ borderRadius: radius }),
 });
 
-function toneStyle(tone: BlockTone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
-}
-
 export function ColorBlock({
   tone = 1,
   padding,
@@ -60,4 +56,8 @@ export function ColorBlock({
       {children}
     </section>
   );
+}
+
+function toneStyle(tone: BlockTone) {
+  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

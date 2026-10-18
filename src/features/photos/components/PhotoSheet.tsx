@@ -61,21 +61,6 @@ type DeleteActionProps = {
   onDelete: () => void;
 };
 
-function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
-  if (confirming)
-    return (
-      <Button variant="danger" icon={Trash2} onClick={onDelete}>
-        {words.confirmDelete}
-      </Button>
-    );
-
-  return (
-    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
-      {words.delete}
-    </Button>
-  );
-}
-
 export function PhotoSheet({
   photo,
   src,
@@ -178,5 +163,20 @@ export function PhotoSheet({
         onChange={edit("place")}
       />
     </Sheet>
+  );
+}
+
+function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
+  if (confirming)
+    return (
+      <Button variant="danger" icon={Trash2} onClick={onDelete}>
+        {words.confirmDelete}
+      </Button>
+    );
+
+  return (
+    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
+      {words.delete}
+    </Button>
   );
 }

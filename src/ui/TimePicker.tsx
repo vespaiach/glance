@@ -159,65 +159,11 @@ type CellProps = {
   variant?: "time" | "length";
 };
 
-function Cell({ label, ariaLabel, selected, onClick, compact, variant = "time" }: CellProps) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      aria-label={ariaLabel}
-      onClick={onClick}
-      {...stylex.props(
-        styles.cell,
-        compact && styles.compactCell,
-        variant === "length" && styles.lengthCell,
-        selected && styles.selected,
-        press.scale,
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
 type SectionProps = {
   title: string;
   children: ReactNode;
   grid?: stylex.StyleXStyles;
 };
-
-function Section({ title, children, grid }: SectionProps) {
-  const titleId = useId();
-
-  return (
-    <div {...stylex.props(styles.section)}>
-      <span id={titleId} {...stylex.props(styles.caption)}>
-        {title}
-      </span>
-      <fieldset aria-labelledby={titleId} {...stylex.props(styles.fieldset, styles.grid, grid)}>
-        {children}
-      </fieldset>
-    </div>
-  );
-}
-
-function hourCell(hour: number, clock: Clock, labels: TimePickerLabels) {
-  if (clock === "12h")
-    return { label: String(hour % 12 || 12), ariaLabel: formatHour(hour * 60, clock) };
-
-  const label = String(hour).padStart(2, "0");
-
-  return { label, ariaLabel: labels.hour24Cell(label) };
-}
-
-function useScrollIntoView() {
-  const ref = useRef<HTMLFieldSetElement>(null);
-
-  useEffect(() => {
-    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, []);
-
-  return ref;
-}
 
 export function TimePicker({
   label,
@@ -319,4 +265,58 @@ export function TimePicker({
       </div>
     </fieldset>
   );
+}
+
+function Cell({ label, ariaLabel, selected, onClick, compact, variant = "time" }: CellProps) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      {...stylex.props(
+        styles.cell,
+        compact && styles.compactCell,
+        variant === "length" && styles.lengthCell,
+        selected && styles.selected,
+        press.scale,
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Section({ title, children, grid }: SectionProps) {
+  const titleId = useId();
+
+  return (
+    <div {...stylex.props(styles.section)}>
+      <span id={titleId} {...stylex.props(styles.caption)}>
+        {title}
+      </span>
+      <fieldset aria-labelledby={titleId} {...stylex.props(styles.fieldset, styles.grid, grid)}>
+        {children}
+      </fieldset>
+    </div>
+  );
+}
+
+function hourCell(hour: number, clock: Clock, labels: TimePickerLabels) {
+  if (clock === "12h")
+    return { label: String(hour % 12 || 12), ariaLabel: formatHour(hour * 60, clock) };
+
+  const label = String(hour).padStart(2, "0");
+
+  return { label, ariaLabel: labels.hour24Cell(label) };
+}
+
+function useScrollIntoView() {
+  const ref = useRef<HTMLFieldSetElement>(null);
+
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, []);
+
+  return ref;
 }

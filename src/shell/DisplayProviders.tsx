@@ -22,6 +22,33 @@ import { SheetHost } from "./SheetHost";
 
 const SIGN_IN = "/signin";
 
+type SessionProps = {
+  demo: boolean;
+  params: FixtureParams;
+  options: ShellOptions;
+  children: ReactNode;
+};
+
+export function DisplayProviders({
+  demo = DEMO_BUILD,
+  children,
+}: {
+  demo?: boolean;
+  children: ReactNode;
+}) {
+  const setup = useShellSetup(demo);
+
+  if (setup === undefined) return null;
+
+  return (
+    <NowProvider frozenAt={setup.options.frozenAt}>
+      <DisplaySession demo={demo} params={setup.params} options={setup.options}>
+        {children}
+      </DisplaySession>
+    </NowProvider>
+  );
+}
+
 function FixtureSheetHost({ params, children }: { params: FixtureParams; children: ReactNode }) {
   const { get } = useNowStore();
 
@@ -29,13 +56,6 @@ function FixtureSheetHost({ params, children }: { params: FixtureParams; childre
 
   return <SheetHost initial={fixtureSheet(params, dateKey(get(), tz))}>{children}</SheetHost>;
 }
-
-type SessionProps = {
-  demo: boolean;
-  params: FixtureParams;
-  options: ShellOptions;
-  children: ReactNode;
-};
 
 function DisplaySession({ demo, params, options, children }: SessionProps) {
   const { get } = useNowStore();
@@ -70,25 +90,5 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
         </TimeZoneProvider>
       </SettingsProvider>
     </RepoProvider>
-  );
-}
-
-export function DisplayProviders({
-  demo = DEMO_BUILD,
-  children,
-}: {
-  demo?: boolean;
-  children: ReactNode;
-}) {
-  const setup = useShellSetup(demo);
-
-  if (setup === undefined) return null;
-
-  return (
-    <NowProvider frozenAt={setup.options.frozenAt}>
-      <DisplaySession demo={demo} params={setup.params} options={setup.options}>
-        {children}
-      </DisplaySession>
-    </NowProvider>
   );
 }

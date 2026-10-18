@@ -119,6 +119,16 @@ const serwist = new Serwist({
   ],
 });
 
+self.addEventListener("activate", (event) => {
+  event.waitUntil(cachePages());
+});
+
+self.addEventListener("message", (event) => {
+  if (isWarmPhotos(event.data)) event.waitUntil(warmPhotos(event.data.ids, event));
+});
+
+serwist.addEventListeners();
+
 async function cachePage(cache: Cache, path: string): Promise<void> {
   const response = await fetch(path);
 
@@ -136,13 +146,3 @@ async function warmPhotos(ids: string[], event: ExtendableEvent): Promise<void> 
     await photos.handle({ request: new Request(url), event }).catch(() => undefined);
   }
 }
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(cachePages());
-});
-
-self.addEventListener("message", (event) => {
-  if (isWarmPhotos(event.data)) event.waitUntil(warmPhotos(event.data.ids, event));
-});
-
-serwist.addEventListeners();

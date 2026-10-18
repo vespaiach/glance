@@ -20,27 +20,6 @@ const formatters = new Map<string, Intl.DateTimeFormat>();
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function formatterFor(tz: string): Intl.DateTimeFormat {
-  const cached = formatters.get(tz);
-
-  if (cached) return cached;
-
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    weekday: "short",
-  });
-
-  formatters.set(tz, formatter);
-
-  return formatter;
-}
-
 export function wallTime(instant: Date, tz: string): WallTime {
   const parts = formatterFor(tz).formatToParts(instant);
   const part = (type: Intl.DateTimeFormatPartTypes) =>
@@ -54,16 +33,6 @@ export function wallTime(instant: Date, tz: string): WallTime {
     minute: Number(part("minute")),
     weekday: WEEKDAYS.indexOf(part("weekday")),
   };
-}
-
-function wallMs(wall: WallTime): number {
-  return Date.UTC(wall.year, wall.month - 1, wall.day, wall.hour, wall.minute);
-}
-
-function offsetMs(instantMs: number, tz: string): number {
-  const minuteMs = Math.floor(instantMs / MINUTE_MS) * MINUTE_MS;
-
-  return wallMs(wallTime(new Date(minuteMs), tz)) - minuteMs;
 }
 
 export function zonedInstant(tz: string, date: CalendarDate, minutes: number): Date {
@@ -118,4 +87,35 @@ export function displayTimeZone(
 
 export function deviceTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+function formatterFor(tz: string): Intl.DateTimeFormat {
+  const cached = formatters.get(tz);
+
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    weekday: "short",
+  });
+
+  formatters.set(tz, formatter);
+
+  return formatter;
+}
+
+function wallMs(wall: WallTime): number {
+  return Date.UTC(wall.year, wall.month - 1, wall.day, wall.hour, wall.minute);
+}
+
+function offsetMs(instantMs: number, tz: string): number {
+  const minuteMs = Math.floor(instantMs / MINUTE_MS) * MINUTE_MS;
+
+  return wallMs(wallTime(new Date(minuteMs), tz)) - minuteMs;
 }

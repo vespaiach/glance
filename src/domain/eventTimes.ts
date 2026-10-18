@@ -9,6 +9,10 @@ export const LATEST_START = 23 * 60 + 30;
 
 export const LATEST_END = 23 * 60 + 55;
 
+export type Meridiem = NonNullable<TimeParts["meridiem"]>;
+
+export type MinuteStep = 5 | 15;
+
 export function nextHalfHour(now: Date, tz: string): number {
   const next = (Math.floor(minutesOfDay(now, tz) / 30) + 1) * 30;
 
@@ -34,10 +38,6 @@ export function moveStart(times: EventTimes, start: number): EventTimes {
 
   return { start, end: Math.min(start + times.end - times.start, LATEST_END) };
 }
-
-export type Meridiem = NonNullable<TimeParts["meridiem"]>;
-
-export type MinuteStep = 5 | 15;
 
 export function pickerMinutes(step: MinuteStep): number[] {
   return Array.from({ length: 60 / step }, (_, i) => i * step);

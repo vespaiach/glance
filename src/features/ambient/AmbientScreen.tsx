@@ -18,12 +18,6 @@ import { AmbientView } from "./components/AmbientView";
 
 const SIGN_IN = "/signin";
 
-function eventRows(event: CalendarEvent | null | undefined): CalendarEvent[] | undefined {
-  if (event === undefined) return undefined;
-
-  return event ? [event] : [];
-}
-
 export function AmbientScreen() {
   const router = useRouter();
 
@@ -64,4 +58,10 @@ export function AmbientScreen() {
       wakeRef={wakeRef}
     />
   );
+}
+
+function eventRows(event: CalendarEvent | null | undefined): CalendarEvent[] | undefined {
+  if (event === undefined) return undefined;
+
+  return event ? [event] : [];
 }

@@ -123,42 +123,6 @@ const styles = stylex.create({
 const timeOf = (iso: string, clock: Clock, tz: string) =>
   timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
-function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock, tz: string): string {
-  if (state.kind === "loading") return copy.calendar.loadingCount;
-
-  if (state.kind === "failed") return copy.calendar.failedCount;
-
-  if (state.kind === "empty") return copy.calendar.count(0);
-
-  const count = copy.calendar.count(state.data.length);
-
-  if (state.updatedAt === undefined) return count;
-
-  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
-}
-
-function DaySkeleton() {
-  return (
-    <Skeleton label={copy.calendar.loading} xstyle={styles.skeleton}>
-      {SKELETON_ROWS.map((row) => (
-        <SkeletonBlock key={row} height={44} radius={radii.md} />
-      ))}
-    </Skeleton>
-  );
-}
-
-function EmptyCalendar() {
-  return (
-    <div {...stylex.props(styles.emptyTile)}>
-      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
-      <div {...stylex.props(styles.emptyText)}>
-        <span {...stylex.props(styles.emptyTitle)}>{copy.calendar.emptyTitle}</span>
-        <span {...stylex.props(styles.emptyBody)}>{copy.calendar.emptyBody}</span>
-      </div>
-    </div>
-  );
-}
-
 export function DayPanel({
   state,
   retryIn,
@@ -237,5 +201,41 @@ export function DayPanel({
         )}
       </Zone>
     </section>
+  );
+}
+
+function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock, tz: string): string {
+  if (state.kind === "loading") return copy.calendar.loadingCount;
+
+  if (state.kind === "failed") return copy.calendar.failedCount;
+
+  if (state.kind === "empty") return copy.calendar.count(0);
+
+  const count = copy.calendar.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
+}
+
+function DaySkeleton() {
+  return (
+    <Skeleton label={copy.calendar.loading} xstyle={styles.skeleton}>
+      {SKELETON_ROWS.map((row) => (
+        <SkeletonBlock key={row} height={44} radius={radii.md} />
+      ))}
+    </Skeleton>
+  );
+}
+
+function EmptyCalendar() {
+  return (
+    <div {...stylex.props(styles.emptyTile)}>
+      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
+      <div {...stylex.props(styles.emptyText)}>
+        <span {...stylex.props(styles.emptyTitle)}>{copy.calendar.emptyTitle}</span>
+        <span {...stylex.props(styles.emptyBody)}>{copy.calendar.emptyBody}</span>
+      </div>
+    </div>
   );
 }

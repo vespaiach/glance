@@ -59,42 +59,6 @@ const board = {
   onAddNote: ignore,
 } as const;
 
-function NoteSheetDemo({
-  season,
-  demo,
-  onClose,
-}: {
-  season: Season;
-  demo: Demo;
-  onClose: () => void;
-}) {
-  const draft = demo.draft
-    ? newNoteDraft({ text: gallery.input.notesValue, tone: 2 })
-    : newNoteDraft();
-
-  const edit = demo.mode === "edit" && WIFI;
-
-  return (
-    <NoteSheet
-      mode={demo.mode}
-      eyebrow={
-        edit
-          ? copy.notes.sheet.eyebrow(edit.author, noteStampText(edit, NOW, "12h", GALLERY_TZ))
-          : copy.notes.board
-      }
-      initial={initialNoteSheet(edit ? draftFromNote(edit) : draft, {
-        opened: edit ? draftFromNote(edit) : newNoteDraft(),
-        discard: demo.discard,
-      })}
-      swatches={noteSwatches(season)}
-      offline={demo.offline ?? false}
-      onClose={onClose}
-      onDelete={onClose}
-      onSave={onClose}
-    />
-  );
-}
-
 export function NotesGallery({ season }: { season: Season }) {
   const [open, setOpen] = useState<Demo | null>(null);
 
@@ -154,5 +118,41 @@ export function NotesGallery({ season }: { season: Season }) {
         )}
       </GalleryGroup>
     </>
+  );
+}
+
+function NoteSheetDemo({
+  season,
+  demo,
+  onClose,
+}: {
+  season: Season;
+  demo: Demo;
+  onClose: () => void;
+}) {
+  const draft = demo.draft
+    ? newNoteDraft({ text: gallery.input.notesValue, tone: 2 })
+    : newNoteDraft();
+
+  const edit = demo.mode === "edit" && WIFI;
+
+  return (
+    <NoteSheet
+      mode={demo.mode}
+      eyebrow={
+        edit
+          ? copy.notes.sheet.eyebrow(edit.author, noteStampText(edit, NOW, "12h", GALLERY_TZ))
+          : copy.notes.board
+      }
+      initial={initialNoteSheet(edit ? draftFromNote(edit) : draft, {
+        opened: edit ? draftFromNote(edit) : newNoteDraft(),
+        discard: demo.discard,
+      })}
+      swatches={noteSwatches(season)}
+      offline={demo.offline ?? false}
+      onClose={onClose}
+      onDelete={onClose}
+      onSave={onClose}
+    />
   );
 }

@@ -26,6 +26,49 @@ type RunningNowStore = NowStore & {
 
 const TICK_MS = 1000;
 
+const NowContext = createContext<NowStore | undefined>(undefined);
+
+export function NowProvider({ frozenAt, children }: { frozenAt?: Date; children: ReactNode }) {
+  const [store] = useState(() => createNowStore(frozenAt));
+
+  useEffect(() => store.start(), [store]);
+
+  useReleaseOnFirstTap(store, frozenAt !== undefined);
+
+  return <NowContext value={store}>{children}</NowContext>;
+}
+
+export function useNowStore(): NowStore {
+  const store = useContext(NowContext);
+
+  if (store === undefined) throw new Error("useNow needs a NowProvider");
+
+  return store;
+}
+
+export function useNow(granularity: Granularity = "second"): Date {
+  const store = useNowStore();
+
+  const tz = useTimeZone();
+
+  const shown = useRef<Date | undefined>(undefined);
+
+  const snapshot = () => {
+    const now = store.get();
+
+    if (
+      shown.current === undefined ||
+      bucket(shown.current, granularity, tz) !== bucket(now, granularity, tz)
+    ) {
+      shown.current = now;
+    }
+
+    return shown.current;
+  };
+
+  return useSyncExternalStore(store.subscribe, snapshot, snapshot);
+}
+
 function createNowStore(frozenAt: Date | undefined): RunningNowStore {
   const listeners = new Set<() => void>();
 
@@ -62,8 +105,6 @@ function createNowStore(frozenAt: Date | undefined): RunningNowStore {
   };
 }
 
-const NowContext = createContext<NowStore | undefined>(undefined);
-
 function useReleaseOnFirstTap(store: RunningNowStore, frozen: boolean) {
   useEffect(() => {
     if (!frozen) return;
@@ -76,49 +117,8 @@ function useReleaseOnFirstTap(store: RunningNowStore, frozen: boolean) {
   }, [store, frozen]);
 }
 
-export function NowProvider({ frozenAt, children }: { frozenAt?: Date; children: ReactNode }) {
-  const [store] = useState(() => createNowStore(frozenAt));
-
-  useEffect(() => store.start(), [store]);
-
-  useReleaseOnFirstTap(store, frozenAt !== undefined);
-
-  return <NowContext value={store}>{children}</NowContext>;
-}
-
-export function useNowStore(): NowStore {
-  const store = useContext(NowContext);
-
-  if (store === undefined) throw new Error("useNow needs a NowProvider");
-
-  return store;
-}
-
 function bucket(date: Date, granularity: Granularity, tz: string): number {
   if (granularity === "day") return dayNumber(date, tz);
 
   return Math.floor(date.getTime() / (granularity === "minute" ? 60_000 : TICK_MS));
-}
-
-export function useNow(granularity: Granularity = "second"): Date {
-  const store = useNowStore();
-
-  const tz = useTimeZone();
-
-  const shown = useRef<Date | undefined>(undefined);
-
-  const snapshot = () => {
-    const now = store.get();
-
-    if (
-      shown.current === undefined ||
-      bucket(shown.current, granularity, tz) !== bucket(now, granularity, tz)
-    ) {
-      shown.current = now;
-    }
-
-    return shown.current;
-  };
-
-  return useSyncExternalStore(store.subscribe, snapshot, snapshot);
 }

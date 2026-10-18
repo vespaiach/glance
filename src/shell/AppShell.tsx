@@ -139,3 +139,49 @@ export function AppShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+function usePrefetchViews() {
+  const router = useRouter();
+
+  useEffect(() => {
+    for (const view of VIEWS) router.prefetch(viewPath(view));
+  }, [router]);
+}
+
+function useScrollTopOnViewChange(pathname: string) {
+  const main = useRef<HTMLElement>(null);
+
+  const shownPath = useRef(pathname);
+
+  useEffect(() => {
+    if (shownPath.current === pathname || main.current === null) return;
+
+    shownPath.current = pathname;
+    main.current.scrollTop = 0;
+  }, [pathname]);
+
+  return main;
+}
+
+function useRailOnViewChange(pathname: string, dispatch: Dispatch<SidebarAction>) {
+  const [shownOn, setShownOn] = useState(pathname);
+
+  if (pathname !== shownOn) {
+    setShownOn(pathname);
+    dispatch({ type: "viewChanged" });
+  }
+}
+
+function useEscapeToRail(expanded: boolean, dispatch: Dispatch<SidebarAction>) {
+  useEffect(() => {
+    if (!expanded) return;
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") dispatch({ type: "back" });
+    };
+
+    document.addEventListener("keydown", onKey);
+
+    return () => document.removeEventListener("keydown", onKey);
+  }, [expanded, dispatch]);
+}

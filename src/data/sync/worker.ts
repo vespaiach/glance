@@ -35,6 +35,47 @@ export type WorkerDeps = {
 
 type Session = { engine(): SyncEngine | undefined; stop(): void };
 
+type Triggered = { sync: () => void; retrying: () => boolean };
+
+type Activation = { db: GlanceDb; accountId: string; page: PageCallbacks; signal: AbortSignal };
+
+export function createSyncWorker(deps: WorkerDeps): SyncWorkerApi {
+  let session: Session | undefined;
+
+  const run = async (task: (engine: SyncEngine) => Promise<unknown>) => {
+    const engine = session?.engine();
+
+    if (engine) await task(engine);
+  };
+
+  return {
+    start: async (accountId, page) => {
+      session?.stop();
+
+      session = startSession(deps, accountId, page);
+    },
+    nudge: () => run((engine) => engine.nudge()),
+    resync: () => run((engine) => engine.resync()),
+    refreshWeather: () => run((engine) => engine.refreshWeather()),
+    stop: async () => {
+      session?.stop();
+
+      session = undefined;
+    },
+  };
+}
+
+export function liveWorkerDeps(events: EventTarget): WorkerDeps {
+  return {
+    openDb: (accountId) => openGlanceDb(accountDbName(accountId)),
+    transport: createHttpTransport(),
+    now: () => new Date(),
+    locks: navigator.locks,
+    openStream: typeof EventSource === "undefined" ? undefined : openEventSource,
+    events,
+  };
+}
+
 function holdLock(locks: LockManager | undefined, signal: AbortSignal, onHeld: () => void) {
   if (locks === undefined) return onHeld();
 
@@ -66,8 +107,6 @@ function watchOutbox(db: GlanceDb, onQueued: () => void, signal: AbortSignal) {
   signal.addEventListener("abort", () => subscription.unsubscribe());
 }
 
-type Triggered = { sync: () => void; retrying: () => boolean };
-
 function openTriggers(deps: WorkerDeps, { sync, retrying }: Triggered, signal: AbortSignal) {
   let everOpened = false;
 
@@ -85,8 +124,6 @@ function openTriggers(deps: WorkerDeps, { sync, retrying }: Triggered, signal: A
 
   return stream;
 }
-
-type Activation = { db: GlanceDb; accountId: string; page: PageCallbacks; signal: AbortSignal };
 
 function activate(deps: WorkerDeps, { db, accountId, page, signal }: Activation) {
   const { transport, now } = deps;
@@ -147,32 +184,6 @@ function startSession(deps: WorkerDeps, accountId: string, page: PageCallbacks):
   return { engine: () => engine, stop };
 }
 
-export function createSyncWorker(deps: WorkerDeps): SyncWorkerApi {
-  let session: Session | undefined;
-
-  const run = async (task: (engine: SyncEngine) => Promise<unknown>) => {
-    const engine = session?.engine();
-
-    if (engine) await task(engine);
-  };
-
-  return {
-    start: async (accountId, page) => {
-      session?.stop();
-
-      session = startSession(deps, accountId, page);
-    },
-    nudge: () => run((engine) => engine.nudge()),
-    resync: () => run((engine) => engine.resync()),
-    refreshWeather: () => run((engine) => engine.refreshWeather()),
-    stop: async () => {
-      session?.stop();
-
-      session = undefined;
-    },
-  };
-}
-
 function openEventSource(url: string, { opened, pinged }: StreamHandlers): SyncStream {
   const source = new EventSource(url);
 
@@ -180,15 +191,4 @@ function openEventSource(url: string, { opened, pinged }: StreamHandlers): SyncS
   source.onmessage = pinged;
 
   return { isOpen: () => source.readyState === EventSource.OPEN, close: () => source.close() };
-}
-
-export function liveWorkerDeps(events: EventTarget): WorkerDeps {
-  return {
-    openDb: (accountId) => openGlanceDb(accountDbName(accountId)),
-    transport: createHttpTransport(),
-    now: () => new Date(),
-    locks: navigator.locks,
-    openStream: typeof EventSource === "undefined" ? undefined : openEventSource,
-    events,
-  };
 }

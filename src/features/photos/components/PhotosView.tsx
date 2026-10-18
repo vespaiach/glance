@@ -66,6 +66,43 @@ const styles = stylex.create({
   },
 });
 
+export function PhotosView({ state, retryIn, onRetrySync, ...gallery }: PhotosViewProps) {
+  return (
+    <Zone
+      state={state}
+      loading={<PhotosSkeleton breakpoint={gallery.breakpoint} />}
+      empty={
+        gallery.uploads.length > 0 ? (
+          <PhotoGallery {...gallery} photos={[]} />
+        ) : (
+          <PhotosEmpty
+            online={gallery.online}
+            canUpload={gallery.canUpload}
+            onUpload={gallery.onUpload}
+          />
+        )
+      }
+      failed={
+        <SourceFailure
+          icon={Image}
+          title={copy.photos.unavailable}
+          body={copy.zone.failedBody(retryIn)}
+          retryLabel={copy.zone.retry}
+          onRetry={onRetrySync}
+        />
+      }
+    >
+      {(photos, updatedAt) => (
+        <PhotoGallery
+          {...gallery}
+          photos={photos}
+          {...(updatedAt !== undefined && { updatedAt })}
+        />
+      )}
+    </Zone>
+  );
+}
+
 function PhotosSkeleton({ breakpoint }: { breakpoint: Breakpoint }) {
   const layout = photosLayout(breakpoint);
 
@@ -131,42 +168,5 @@ function PhotoGallery({
         onRemove={rest.onRemove}
       />
     </div>
-  );
-}
-
-export function PhotosView({ state, retryIn, onRetrySync, ...gallery }: PhotosViewProps) {
-  return (
-    <Zone
-      state={state}
-      loading={<PhotosSkeleton breakpoint={gallery.breakpoint} />}
-      empty={
-        gallery.uploads.length > 0 ? (
-          <PhotoGallery {...gallery} photos={[]} />
-        ) : (
-          <PhotosEmpty
-            online={gallery.online}
-            canUpload={gallery.canUpload}
-            onUpload={gallery.onUpload}
-          />
-        )
-      }
-      failed={
-        <SourceFailure
-          icon={Image}
-          title={copy.photos.unavailable}
-          body={copy.zone.failedBody(retryIn)}
-          retryLabel={copy.zone.retry}
-          onRetry={onRetrySync}
-        />
-      }
-    >
-      {(photos, updatedAt) => (
-        <PhotoGallery
-          {...gallery}
-          photos={photos}
-          {...(updatedAt !== undefined && { updatedAt })}
-        />
-      )}
-    </Zone>
   );
 }

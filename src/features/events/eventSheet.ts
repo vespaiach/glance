@@ -47,14 +47,6 @@ export type EventSheetAction =
 
 export type SwatchOption = { value: Tone; label: string };
 
-function eventTimes(event: CalendarEvent, tz: string, now: Date): EventTimes & { allDay?: true } {
-  if (event.allDay) return { ...defaultTimes(now, tz), allDay: true };
-
-  const end = event.endAt === undefined ? {} : { end: minutesOfDay(new Date(event.endAt), tz) };
-
-  return { start: minutesOfDay(new Date(event.startAt), tz), ...end };
-}
-
 export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): EventDraft {
   return {
     title: event.title,
@@ -62,15 +54,6 @@ export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): Eve
     location: event.location ?? "",
     tone: event.tone,
   };
-}
-
-function eventSpan(draft: EventDraft, dayKey: string, tz: string) {
-  if (draft.allDay) return { startAt: allDayStart(dayKey), allDay: true as const };
-
-  const end =
-    draft.end === undefined ? {} : { endAt: atMinute(dayKey, draft.end, tz).toISOString() };
-
-  return { startAt: atMinute(dayKey, draft.start, tz).toISOString(), ...end };
 }
 
 export function eventFromDraft(
@@ -107,20 +90,6 @@ export function eventSwatches(season: Season): SwatchOption[] {
   ];
 }
 
-function withAllDay({ allDay: _, ...draft }: EventDraft, allDay: boolean): EventDraft {
-  return allDay ? { ...draft, allDay: true } : draft;
-}
-
-function withoutEnd({ end: _, ...draft }: EventDraft): EventDraft {
-  return draft;
-}
-
-function fixtureDraft(draft: EventDraft, time?: TimeFixture): EventDraft {
-  if (time === "error") return { ...draft, end: draft.start - 30 };
-
-  return time === "noend" ? withoutEnd(draft) : draft;
-}
-
 export function initialEventSheet(
   draft: EventDraft,
   time?: TimeFixture,
@@ -151,40 +120,10 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
   );
 }
 
-function saveErrors(draft: EventDraft) {
-  return {
-    titleError: draft.title.trim() === "",
-    endError: !draft.allDay && !endsAfterStart(draft),
-  };
-}
-
 export function canSave(draft: EventDraft): boolean {
   const { titleError, endError } = saveErrors(draft);
 
   return !titleError && !endError;
-}
-
-function failedSave(state: EventSheetState): EventSheetState {
-  const errors = saveErrors(state.draft);
-
-  return { ...state, ...errors, picker: errors.endError ? null : state.picker };
-}
-
-function edited(state: EventSheetState, draft: EventDraft): EventSheetState {
-  return { ...state, draft, titleError: false, endError: false, confirm: afterEdit(state.confirm) };
-}
-
-function toggled(state: EventSheetState, field: TimeFieldName): EventSheetState {
-  if (state.picker === field) return { ...state, picker: null };
-
-  const { draft } = state;
-
-  const filled = field === "end" && draft.end === undefined;
-
-  return {
-    ...(filled ? edited(state, { ...draft, end: defaultEnd(draft.start) }) : state),
-    picker: field,
-  };
 }
 
 export function eventSheetReducer(
@@ -220,4 +159,65 @@ export function eventSheetReducer(
     case "keepEditing":
       return { ...state, confirm: null };
   }
+}
+
+function eventTimes(event: CalendarEvent, tz: string, now: Date): EventTimes & { allDay?: true } {
+  if (event.allDay) return { ...defaultTimes(now, tz), allDay: true };
+
+  const end = event.endAt === undefined ? {} : { end: minutesOfDay(new Date(event.endAt), tz) };
+
+  return { start: minutesOfDay(new Date(event.startAt), tz), ...end };
+}
+
+function eventSpan(draft: EventDraft, dayKey: string, tz: string) {
+  if (draft.allDay) return { startAt: allDayStart(dayKey), allDay: true as const };
+
+  const end =
+    draft.end === undefined ? {} : { endAt: atMinute(dayKey, draft.end, tz).toISOString() };
+
+  return { startAt: atMinute(dayKey, draft.start, tz).toISOString(), ...end };
+}
+
+function withAllDay({ allDay: _, ...draft }: EventDraft, allDay: boolean): EventDraft {
+  return allDay ? { ...draft, allDay: true } : draft;
+}
+
+function withoutEnd({ end: _, ...draft }: EventDraft): EventDraft {
+  return draft;
+}
+
+function fixtureDraft(draft: EventDraft, time?: TimeFixture): EventDraft {
+  if (time === "error") return { ...draft, end: draft.start - 30 };
+
+  return time === "noend" ? withoutEnd(draft) : draft;
+}
+
+function saveErrors(draft: EventDraft) {
+  return {
+    titleError: draft.title.trim() === "",
+    endError: !draft.allDay && !endsAfterStart(draft),
+  };
+}
+
+function failedSave(state: EventSheetState): EventSheetState {
+  const errors = saveErrors(state.draft);
+
+  return { ...state, ...errors, picker: errors.endError ? null : state.picker };
+}
+
+function edited(state: EventSheetState, draft: EventDraft): EventSheetState {
+  return { ...state, draft, titleError: false, endError: false, confirm: afterEdit(state.confirm) };
+}
+
+function toggled(state: EventSheetState, field: TimeFieldName): EventSheetState {
+  if (state.picker === field) return { ...state, picker: null };
+
+  const { draft } = state;
+
+  const filled = field === "end" && draft.end === undefined;
+
+  return {
+    ...(filled ? edited(state, { ...draft, end: defaultEnd(draft.start) }) : state),
+    picker: field,
+  };
 }

@@ -9,6 +9,9 @@ export const MIGRATIONS_DIR = path.join(process.cwd(), "db-migrations");
 
 const MIGRATION_FILE = /^(\d{3})_.+\.sql$/;
 
+const CREATE_SCHEMA_MIGRATIONS =
+  "CREATE TABLE IF NOT EXISTS schema_migrations (version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())";
+
 export function readMigrations(dir: string): Migration[] {
   const files = readdirSync(dir).filter((file) => MIGRATION_FILE.test(file));
 
@@ -19,9 +22,6 @@ export function readMigrations(dir: string): Migration[] {
     }))
     .sort((a, b) => a.version - b.version);
 }
-
-const CREATE_SCHEMA_MIGRATIONS =
-  "CREATE TABLE IF NOT EXISTS schema_migrations (version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())";
 
 export async function migrate(db: Db, migrations: Migration[]): Promise<void> {
   await db.exec(CREATE_SCHEMA_MIGRATIONS);

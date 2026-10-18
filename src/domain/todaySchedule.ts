@@ -13,25 +13,6 @@ type Groups<T> = Record<Exclude<EventStatus, "allDay">, T[]>;
 
 const byStart = (a: ScheduleEvent, b: ScheduleEvent) => a.startAt.localeCompare(b.startAt);
 
-function groupByStatus<T extends ScheduleEvent>(
-  timed: readonly T[],
-  status: (event: T) => EventStatus,
-): Groups<T> {
-  return {
-    past: timed.filter((event) => status(event) === "past"),
-    now: timed.filter((event) => status(event) === "now"),
-    upcoming: timed.filter((event) => status(event) === "upcoming"),
-  };
-}
-
-function keptRows<T>({ past, now, upcoming }: Groups<T>, places: number): Set<T> {
-  const always = [...now, ...upcoming.slice(0, 1)];
-
-  const byPriority = [...always, ...upcoming.slice(1), ...[...past].reverse()];
-
-  return new Set(byPriority.slice(0, Math.max(places, always.length)));
-}
-
 export function todaySchedule<T extends ScheduleEvent>(
   events: readonly T[],
   now: Date,
@@ -55,4 +36,23 @@ export function todaySchedule<T extends ScheduleEvent>(
     rows: timed.filter((event) => kept.has(event)),
     hidden: { earlier: hiddenIn(groups.past), later: hiddenIn(groups.upcoming) },
   };
+}
+
+function groupByStatus<T extends ScheduleEvent>(
+  timed: readonly T[],
+  status: (event: T) => EventStatus,
+): Groups<T> {
+  return {
+    past: timed.filter((event) => status(event) === "past"),
+    now: timed.filter((event) => status(event) === "now"),
+    upcoming: timed.filter((event) => status(event) === "upcoming"),
+  };
+}
+
+function keptRows<T>({ past, now, upcoming }: Groups<T>, places: number): Set<T> {
+  const always = [...now, ...upcoming.slice(0, 1)];
+
+  const byPriority = [...always, ...upcoming.slice(1), ...[...past].reverse()];
+
+  return new Set(byPriority.slice(0, Math.max(places, always.length)));
 }

@@ -9,22 +9,6 @@ type NewEntry = Omit<OutboxEntry, "seq">;
 
 const NEW_ROW_VERSION = 0;
 
-async function queued(
-  { db, nudge }: RepoStore,
-  entity: WritableEntity,
-  write: () => Promise<NewEntry | undefined>,
-): Promise<void> {
-  const entry = await db.transaction("rw", db.table(entity), db.outbox, async () => {
-    const next = await write();
-
-    if (next) await db.outbox.add(next as OutboxEntry);
-
-    return next;
-  });
-
-  if (entry) nudge();
-}
-
 export function putQueued<T extends object>(
   store: RepoStore,
   entity: WritableEntity,
@@ -74,4 +58,20 @@ export async function pendingIds(db: GlanceDb, entity: WritableEntity): Promise<
 
 export function isLive(row: { deletedAt?: string }): boolean {
   return row.deletedAt === undefined;
+}
+
+async function queued(
+  { db, nudge }: RepoStore,
+  entity: WritableEntity,
+  write: () => Promise<NewEntry | undefined>,
+): Promise<void> {
+  const entry = await db.transaction("rw", db.table(entity), db.outbox, async () => {
+    const next = await write();
+
+    if (next) await db.outbox.add(next as OutboxEntry);
+
+    return next;
+  });
+
+  if (entry) nudge();
 }

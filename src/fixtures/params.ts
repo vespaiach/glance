@@ -67,6 +67,24 @@ const ISO_DATE_TIME =
 
 const HAS_OFFSET = /(Z|[+-]\d{2}:\d{2})$/;
 
+export function parseFixtureParams(search: string | URLSearchParams, pathname = ""): FixtureParams {
+  const query = new URLSearchParams(search);
+
+  const now = parseNow(query.get("now"));
+
+  const keepPlace = pathname === PLACE_PAGE;
+
+  const pending = parseCount(query.get("pending"));
+
+  return {
+    ...readChoices(query),
+    ...readFlags(query),
+    ...(now && { now }),
+    ...(keepPlace && { keepPlace }),
+    ...(pending !== undefined && { pending }),
+  };
+}
+
 function fixtureWallTime(value: string): Date {
   const wall = new Date(`${value}Z`);
 
@@ -116,22 +134,4 @@ function readFlags(query: URLSearchParams): FixtureParams {
 
 function parseCount(value: string | null): number | undefined {
   return value !== null && /^\d+$/.test(value) ? Number(value) : undefined;
-}
-
-export function parseFixtureParams(search: string | URLSearchParams, pathname = ""): FixtureParams {
-  const query = new URLSearchParams(search);
-
-  const now = parseNow(query.get("now"));
-
-  const keepPlace = pathname === PLACE_PAGE;
-
-  const pending = parseCount(query.get("pending"));
-
-  return {
-    ...readChoices(query),
-    ...readFlags(query),
-    ...(now && { now }),
-    ...(keepPlace && { keepPlace }),
-    ...(pending !== undefined && { pending }),
-  };
 }

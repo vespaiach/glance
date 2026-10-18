@@ -17,10 +17,6 @@ export type Uploads = {
   remove(id: string): void;
 };
 
-function canRetry(tile: UploadTile): boolean {
-  return tile.state === "failed" && tile.reason === "network";
-}
-
 export function useUploads(initial: () => UploadTile[], online: boolean): Uploads {
   const repo = usePhotosRepo();
 
@@ -124,4 +120,8 @@ export function useUploads(initial: () => UploadTile[], online: boolean): Upload
   };
 
   return { tiles, choose, retry, remove };
+}
+
+function canRetry(tile: UploadTile): boolean {
+  return tile.state === "failed" && tile.reason === "network";
 }

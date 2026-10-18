@@ -26,36 +26,12 @@ const ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel"] as const;
 
 type Activity = { onTouch: (at: Date) => void; onFieldLeft: (at: Date) => void };
 
-function watchActivity(store: NowStore, { onTouch, onFieldLeft }: Activity): () => void {
-  const touched = () => onTouch(store.get());
-
-  const left = () => onFieldLeft(store.get());
-
-  for (const type of ACTIVITY_EVENTS) document.addEventListener(type, touched, true);
-
-  document.addEventListener("focusout", left, true);
-
-  return () => {
-    for (const type of ACTIVITY_EVENTS) document.removeEventListener(type, touched, true);
-
-    document.removeEventListener("focusout", left, true);
-  };
-}
-
-function loadPage(path: string) {
-  window.location.assign(path);
-}
-
 export type IdleUpdates = Pick<
   AppServiceWorker,
   "updateWaiting" | "applyUpdate" | "checkForUpdate"
 >;
 
 type UpdateState = { updates: IdleUpdates; outdated: boolean; outboxEmpty: boolean };
-
-function updateDue({ updates, outdated, outboxEmpty }: UpdateState): boolean {
-  return updates.updateWaiting() && (outdated || outboxEmpty);
-}
 
 type IdleProps = {
   reload?: (path: string) => void;
@@ -169,4 +145,28 @@ export function IdleProvider({
   }, [store, idleTimeout, schedule, tz]);
 
   return children;
+}
+
+function watchActivity(store: NowStore, { onTouch, onFieldLeft }: Activity): () => void {
+  const touched = () => onTouch(store.get());
+
+  const left = () => onFieldLeft(store.get());
+
+  for (const type of ACTIVITY_EVENTS) document.addEventListener(type, touched, true);
+
+  document.addEventListener("focusout", left, true);
+
+  return () => {
+    for (const type of ACTIVITY_EVENTS) document.removeEventListener(type, touched, true);
+
+    document.removeEventListener("focusout", left, true);
+  };
+}
+
+function loadPage(path: string) {
+  window.location.assign(path);
+}
+
+function updateDue({ updates, outdated, outboxEmpty }: UpdateState): boolean {
+  return updates.updateWaiting() && (outdated || outboxEmpty);
 }

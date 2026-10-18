@@ -49,22 +49,6 @@ type HeroProps = {
   onOpenEvent: (id: string) => void;
 };
 
-function HeroClock({ children }: { children: ReactNode }) {
-  const season = useSeason();
-
-  const settings = useAccountSettings();
-
-  const time = useNow("second");
-
-  const tz = useTimeZone();
-
-  return (
-    <TodayHero season={season} time={time} clock={settings.clock} tz={tz} xstyle={todayAreas.hero}>
-      {children}
-    </TodayHero>
-  );
-}
-
 type PictureProps = {
   state: ZoneState<Photo>;
   day: string;
@@ -72,62 +56,6 @@ type PictureProps = {
   canUpload: boolean;
   onUpload: () => void;
 };
-
-function Picture({ state, day, tz, canUpload, onUpload }: PictureProps) {
-  const photoSrc = usePhotoSrc();
-
-  const pick = usePictureOfDay(day, tz);
-
-  const empty = <PictureOfDayEmpty canUpload={canUpload} onUpload={onUpload} />;
-
-  return (
-    <Zone state={state} loading={<PictureOfDaySkeleton />} empty={empty} failed={null}>
-      {() => {
-        if (pick === undefined) return <PictureOfDaySkeleton />;
-
-        if (pick === null) return empty;
-
-        return (
-          <PictureOfDay
-            photo={pick.photo}
-            onThisDay={pick.onThisDay}
-            thisYear={Number(day.slice(0, 4))}
-            src={photoSrc(pick.photo.id, "display")}
-          />
-        );
-      }}
-    </Zone>
-  );
-}
-
-function allDayCount(state: ZoneState<CalendarEvent>): number {
-  return state.kind === "ready" ? state.data.filter((event) => event.allDay).length : 0;
-}
-
-function useScheduleCapacity(state: ZoneState<CalendarEvent>): number {
-  const bp = useBreakpoint();
-
-  const windowHeight = useViewportHeight();
-
-  const portrait = useViewportWidth() <= windowHeight;
-
-  return todayCapacity({ bp, portrait, windowHeight, allDayCount: allDayCount(state) });
-}
-
-function Hero({ state, clock, now, tz, onOpenEvent }: HeroProps) {
-  if (state.kind === "loading") return <HeroSkeleton />;
-
-  if (state.kind === "failed") return null;
-
-  return (
-    <HeroSummary
-      hero={todayHero(state.kind === "ready" ? state.data : [], now, tz)}
-      clock={clock}
-      tz={tz}
-      onOpenEvent={onOpenEvent}
-    />
-  );
-}
 
 export function TodayScreen() {
   const router = useRouter();
@@ -216,5 +144,77 @@ export function TodayScreen() {
         xstyle={todayAreas.notes}
       />
     </div>
+  );
+}
+
+function HeroClock({ children }: { children: ReactNode }) {
+  const season = useSeason();
+
+  const settings = useAccountSettings();
+
+  const time = useNow("second");
+
+  const tz = useTimeZone();
+
+  return (
+    <TodayHero season={season} time={time} clock={settings.clock} tz={tz} xstyle={todayAreas.hero}>
+      {children}
+    </TodayHero>
+  );
+}
+
+function Picture({ state, day, tz, canUpload, onUpload }: PictureProps) {
+  const photoSrc = usePhotoSrc();
+
+  const pick = usePictureOfDay(day, tz);
+
+  const empty = <PictureOfDayEmpty canUpload={canUpload} onUpload={onUpload} />;
+
+  return (
+    <Zone state={state} loading={<PictureOfDaySkeleton />} empty={empty} failed={null}>
+      {() => {
+        if (pick === undefined) return <PictureOfDaySkeleton />;
+
+        if (pick === null) return empty;
+
+        return (
+          <PictureOfDay
+            photo={pick.photo}
+            onThisDay={pick.onThisDay}
+            thisYear={Number(day.slice(0, 4))}
+            src={photoSrc(pick.photo.id, "display")}
+          />
+        );
+      }}
+    </Zone>
+  );
+}
+
+function allDayCount(state: ZoneState<CalendarEvent>): number {
+  return state.kind === "ready" ? state.data.filter((event) => event.allDay).length : 0;
+}
+
+function useScheduleCapacity(state: ZoneState<CalendarEvent>): number {
+  const bp = useBreakpoint();
+
+  const windowHeight = useViewportHeight();
+
+  const portrait = useViewportWidth() <= windowHeight;
+
+  return todayCapacity({ bp, portrait, windowHeight, allDayCount: allDayCount(state) });
+}
+
+function Hero({ state, clock, now, tz, onOpenEvent }: HeroProps) {
+  if (state.kind === "loading") return <HeroSkeleton />;
+
+  if (state.kind === "failed") return null;
+
+  return (
+    <HeroSummary
+      hero={todayHero(state.kind === "ready" ? state.data : [], now, tz)}
+      clock={clock}
+      tz={tz}
+      onOpenEvent={onOpenEvent}
+    />
   );
 }

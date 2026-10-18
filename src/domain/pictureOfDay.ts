@@ -18,6 +18,35 @@ const yearOf = (key: string) => Number(key.slice(0, 4));
 
 const monthDay = (key: string) => key.slice(5);
 
+type Index = {
+  entries: readonly Entry[];
+  byDay: Map<string, Entry[]>;
+  byDate: Map<string, Dated[]>;
+};
+
+export function pictureOfDay(
+  photos: readonly PhotoRow[],
+  dayKey: string,
+  tz: string,
+  seed: string,
+): PictureOfDayPick | undefined {
+  const entries = photos.map((row) => entryOf(row, tz)).sort(byUpload);
+
+  const first = entries[0]?.uploaded;
+
+  if (first === undefined || first > dayKey) return undefined;
+
+  const index = indexOf(entries);
+
+  let replay: Replay = { cycle: -1, queue: [] };
+
+  for (let key = first; key <= dayKey; key = addDays(key, 1)) {
+    replay = replayDay(replay, index, key, seed);
+  }
+
+  return pickOf(replay);
+}
+
 function entryOf(row: PhotoRow, tz: string): Entry {
   const uploaded = dateKey(new Date(row.createdAt), tz);
 
@@ -45,12 +74,6 @@ function shuffled(entries: readonly Entry[], seed: string, cycle: number): Entry
     (a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0) || a.row.id.localeCompare(b.row.id),
   );
 }
-
-type Index = {
-  entries: readonly Entry[];
-  byDay: Map<string, Entry[]>;
-  byDate: Map<string, Dated[]>;
-};
 
 function groupBy<T>(entries: readonly T[], keyOf: (entry: T) => string): Map<string, T[]> {
   const groups = new Map<string, T[]>();
@@ -113,29 +136,6 @@ function replayDay(replay: Replay, index: Index, key: string, seed: string): Rep
   const { year: _year, ...rest } = started;
 
   return { ...rest, queue: queue.slice(1), pick: queue[0] };
-}
-
-export function pictureOfDay(
-  photos: readonly PhotoRow[],
-  dayKey: string,
-  tz: string,
-  seed: string,
-): PictureOfDayPick | undefined {
-  const entries = photos.map((row) => entryOf(row, tz)).sort(byUpload);
-
-  const first = entries[0]?.uploaded;
-
-  if (first === undefined || first > dayKey) return undefined;
-
-  const index = indexOf(entries);
-
-  let replay: Replay = { cycle: -1, queue: [] };
-
-  for (let key = first; key <= dayKey; key = addDays(key, 1)) {
-    replay = replayDay(replay, index, key, seed);
-  }
-
-  return pickOf(replay);
 }
 
 function pickOf({ pick, year }: Replay): PictureOfDayPick | undefined {

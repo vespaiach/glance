@@ -75,26 +75,6 @@ const styles = stylex.create({
   },
 });
 
-function idleOption(timeout: AccountSettings["idleTimeout"]): IdleOption {
-  return timeout === null ? "never" : (`${timeout}` as const);
-}
-
-function AmbientTile({ settings, onOpenAmbient }: Omit<ScreenOptionsProps, "onChange">) {
-  const text = copy.settings.ambient;
-
-  return (
-    <button type="button" onClick={onOpenAmbient} {...stylex.props(styles.tile, press.scale)}>
-      <span {...stylex.props(styles.tileText)}>
-        <span {...stylex.props(styles.tileTitle)}>{text.title}</span>
-        <span {...stylex.props(styles.tileBody)}>
-          {text.summary(ambientSummary(settings.ambient, settings.clock))}
-        </span>
-      </span>
-      <Icon icon={ChevronRight} size={22} />
-    </button>
-  );
-}
-
 export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptionsProps) {
   const text = copy.settings;
 
@@ -125,5 +105,25 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
         />
       </div>
     </ColorBlock>
+  );
+}
+
+function idleOption(timeout: AccountSettings["idleTimeout"]): IdleOption {
+  return timeout === null ? "never" : (`${timeout}` as const);
+}
+
+function AmbientTile({ settings, onOpenAmbient }: Omit<ScreenOptionsProps, "onChange">) {
+  const text = copy.settings.ambient;
+
+  return (
+    <button type="button" onClick={onOpenAmbient} {...stylex.props(styles.tile, press.scale)}>
+      <span {...stylex.props(styles.tileText)}>
+        <span {...stylex.props(styles.tileTitle)}>{text.title}</span>
+        <span {...stylex.props(styles.tileBody)}>
+          {text.summary(ambientSummary(settings.ambient, settings.clock))}
+        </span>
+      </span>
+      <Icon icon={ChevronRight} size={22} />
+    </button>
   );
 }

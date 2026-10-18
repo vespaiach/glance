@@ -56,40 +56,6 @@ const styles = stylex.create({
   },
 });
 
-function WeatherBlock({ children, xstyle }: { children: ReactNode; xstyle?: stylex.StyleXStyles }) {
-  return (
-    <ColorBlock tone={3} padding={PADDING} xstyle={[styles.block, xstyle]}>
-      {children}
-    </ColorBlock>
-  );
-}
-
-function WeatherSkeleton({ xstyle }: { xstyle?: stylex.StyleXStyles }) {
-  return (
-    <WeatherBlock xstyle={xstyle}>
-      <Skeleton label={copy.today.weather.loading} xstyle={styles.skeleton}>
-        <SkeletonBlock width={120} height={14} />
-        <div {...stylex.props(styles.reading)}>
-          <SkeletonBlock width={150} height={84} radius="12px" />
-          <SkeletonBlock width={72} height={72} radius={radii.full} />
-        </div>
-        <SkeletonBlock width="60%" height={18} />
-      </Skeleton>
-    </WeatherBlock>
-  );
-}
-
-function locationLabel(
-  weather: Weather,
-  updatedAt: string | undefined,
-  clock: Clock,
-  tz: string,
-): string {
-  if (updatedAt === undefined) return weather.location;
-
-  return copy.zone.updated(weather.location, clockAt(updatedAt, clock, tz));
-}
-
 export function TodayWeather({
   state,
   retryIn,
@@ -151,4 +117,38 @@ export function TodayWeather({
       }
     </Zone>
   );
+}
+
+function WeatherBlock({ children, xstyle }: { children: ReactNode; xstyle?: stylex.StyleXStyles }) {
+  return (
+    <ColorBlock tone={3} padding={PADDING} xstyle={[styles.block, xstyle]}>
+      {children}
+    </ColorBlock>
+  );
+}
+
+function WeatherSkeleton({ xstyle }: { xstyle?: stylex.StyleXStyles }) {
+  return (
+    <WeatherBlock xstyle={xstyle}>
+      <Skeleton label={copy.today.weather.loading} xstyle={styles.skeleton}>
+        <SkeletonBlock width={120} height={14} />
+        <div {...stylex.props(styles.reading)}>
+          <SkeletonBlock width={150} height={84} radius="12px" />
+          <SkeletonBlock width={72} height={72} radius={radii.full} />
+        </div>
+        <SkeletonBlock width="60%" height={18} />
+      </Skeleton>
+    </WeatherBlock>
+  );
+}
+
+function locationLabel(
+  weather: Weather,
+  updatedAt: string | undefined,
+  clock: Clock,
+  tz: string,
+): string {
+  if (updatedAt === undefined) return weather.location;
+
+  return copy.zone.updated(weather.location, clockAt(updatedAt, clock, tz));
 }

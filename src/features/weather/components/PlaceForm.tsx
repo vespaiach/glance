@@ -137,77 +137,12 @@ type MatchesProps = {
   onPick: (place: WeatherLocation) => void;
 };
 
-function Matches({ matches, onPick }: MatchesProps) {
-  const city = matches[0]?.name ?? "";
-
-  return (
-    <div {...stylex.props(styles.matches)}>
-      <Eyebrow>{copy.weather.setup.matches(matches.length, city)}</Eyebrow>
-      {matches.map((place) => (
-        <button
-          key={`${place.lat},${place.lon}`}
-          type="button"
-          onClick={() => onPick(place)}
-          {...stylex.props(styles.match, press.scale)}
-        >
-          <span {...stylex.props(styles.place)}>
-            <span {...stylex.props(styles.city)}>{place.name}</span>
-            <span {...stylex.props(styles.region)}>
-              {copy.weather.setup.region(
-                place.region,
-                place.timeZone && timeZoneName(place.timeZone),
-              )}
-            </span>
-          </span>
-          <Icon icon={ChevronRight} size={22} />
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Searching({ query }: { query: string }) {
-  return (
-    <div role="status" {...stylex.props(styles.searching)}>
-      <span {...stylex.props(styles.pulse)}>
-        <Icon icon={Search} size={22} />
-      </span>
-      <span>{copy.weather.setup.searching(query)}</span>
-    </div>
-  );
-}
-
-function Locating() {
-  return (
-    <div role="status" {...stylex.props(styles.searching)}>
-      <span {...stylex.props(styles.pulse)}>
-        <Icon icon={LocateFixed} size={22} />
-      </span>
-      <span {...stylex.props(styles.locating)}>
-        <span>{copy.weather.setup.locating}</span>
-        <span {...stylex.props(styles.hint)}>{copy.weather.setup.locatingHint}</span>
-      </span>
-    </div>
-  );
-}
-
 const NOTICE_ICONS: Record<LocateFailure, LucideIcon> = {
   denied: MapPinOff,
   "no-position": LocateOff,
   outside: Globe,
   lookup: SearchX,
 };
-
-function Notice({ notice }: { notice: LocateFailure }) {
-  return (
-    <div role="status" {...stylex.props(styles.notice)}>
-      <span {...stylex.props(styles.noticeIcon)}>
-        <Icon icon={NOTICE_ICONS[notice]} size={22} />
-      </span>
-      <span {...stylex.props(styles.noticeText)}>{copy.weather.setup.notice[notice]}</span>
-    </div>
-  );
-}
 
 export type PlaceFormProps = {
   state: WeatherSetupState;
@@ -264,5 +199,70 @@ export function PlaceForm({
         </div>
       )}
     </form>
+  );
+}
+
+function Matches({ matches, onPick }: MatchesProps) {
+  const city = matches[0]?.name ?? "";
+
+  return (
+    <div {...stylex.props(styles.matches)}>
+      <Eyebrow>{copy.weather.setup.matches(matches.length, city)}</Eyebrow>
+      {matches.map((place) => (
+        <button
+          key={`${place.lat},${place.lon}`}
+          type="button"
+          onClick={() => onPick(place)}
+          {...stylex.props(styles.match, press.scale)}
+        >
+          <span {...stylex.props(styles.place)}>
+            <span {...stylex.props(styles.city)}>{place.name}</span>
+            <span {...stylex.props(styles.region)}>
+              {copy.weather.setup.region(
+                place.region,
+                place.timeZone && timeZoneName(place.timeZone),
+              )}
+            </span>
+          </span>
+          <Icon icon={ChevronRight} size={22} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Searching({ query }: { query: string }) {
+  return (
+    <div role="status" {...stylex.props(styles.searching)}>
+      <span {...stylex.props(styles.pulse)}>
+        <Icon icon={Search} size={22} />
+      </span>
+      <span>{copy.weather.setup.searching(query)}</span>
+    </div>
+  );
+}
+
+function Locating() {
+  return (
+    <div role="status" {...stylex.props(styles.searching)}>
+      <span {...stylex.props(styles.pulse)}>
+        <Icon icon={LocateFixed} size={22} />
+      </span>
+      <span {...stylex.props(styles.locating)}>
+        <span>{copy.weather.setup.locating}</span>
+        <span {...stylex.props(styles.hint)}>{copy.weather.setup.locatingHint}</span>
+      </span>
+    </div>
+  );
+}
+
+function Notice({ notice }: { notice: LocateFailure }) {
+  return (
+    <div role="status" {...stylex.props(styles.notice)}>
+      <span {...stylex.props(styles.noticeIcon)}>
+        <Icon icon={NOTICE_ICONS[notice]} size={22} />
+      </span>
+      <span {...stylex.props(styles.noticeText)}>{copy.weather.setup.notice[notice]}</span>
+    </div>
   );
 }

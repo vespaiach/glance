@@ -28,20 +28,6 @@ const MINUTE_MS = 60 * 1000;
 
 const HOUR_MS = 60 * MINUTE_MS;
 
-function deviceKind(userAgent: string): DeviceKind {
-  if (/\b(iPhone|iPod)\b/.test(userAgent)) return "smartphone";
-
-  if (/\biPad\b/.test(userAgent)) return "tablet";
-
-  if (!/\bAndroid\b/.test(userAgent)) return "monitor";
-
-  return /\bMobile\b/.test(userAgent) ? "smartphone" : "tablet";
-}
-
-function browserOf(userAgent: string): Browser | null {
-  return BROWSERS.find(([, pattern]) => pattern.test(userAgent))?.[0] ?? null;
-}
-
 export function deviceOf(userAgent: string | null | undefined): Device {
   const agent = userAgent ?? "";
 
@@ -60,4 +46,18 @@ export function activeStamp(lastSeenAt: string, now: Date, tz: string): ActiveSt
   if (daysAgo === 0) return { kind: "hours", count: Math.floor(ago / HOUR_MS) };
 
   return daysAgo === 1 ? { kind: "yesterday" } : { kind: "on", date: formatMonthDay(seen, tz) };
+}
+
+function deviceKind(userAgent: string): DeviceKind {
+  if (/\b(iPhone|iPod)\b/.test(userAgent)) return "smartphone";
+
+  if (/\biPad\b/.test(userAgent)) return "tablet";
+
+  if (!/\bAndroid\b/.test(userAgent)) return "monitor";
+
+  return /\bMobile\b/.test(userAgent) ? "smartphone" : "tablet";
+}
+
+function browserOf(userAgent: string): Browser | null {
+  return BROWSERS.find(([, pattern]) => pattern.test(userAgent))?.[0] ?? null;
 }

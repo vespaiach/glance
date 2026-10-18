@@ -69,95 +69,6 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 
 const never = <T>() => new Promise<T>(() => {});
 
-function unlocated({ weatherLocation: _, ...settings }: AccountSettings): AccountSettings {
-  return settings;
-}
-
-function onPhoto(settings: AccountSettings): AccountSettings {
-  return { ...settings, background: { ...settings.background, mode: "photo" } };
-}
-
-function withAmbient(settings: AccountSettings, amb: FixtureParams["amb"]): AccountSettings {
-  const { ambient } = settings;
-
-  switch (amb) {
-    case "same":
-      return {
-        ...settings,
-        ambient: { ...ambient, all: { ...ambient.all, end: ambient.all.start } },
-      };
-    case "split":
-    case "off":
-      return { ...settings, ambient: { ...ambient, mode: amb } };
-    default:
-      return settings;
-  }
-}
-
-function fixtureWeather(params: FixtureParams): Weather {
-  const evening = params.now && inAmbient(FIXTURE_SETTINGS.ambient, params.now, FIXTURE_TIME_ZONE);
-
-  return evening ? FIXTURE_AMBIENT_WEATHER : FIXTURE_WEATHER;
-}
-
-function fixtureSeed(params: FixtureParams): Seed | undefined {
-  if (params.net === "loading") return undefined;
-
-  if (params.empty) return { settings: DEFAULT_SETTINGS, withRows: false };
-
-  const settings = withAmbient(
-    params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS,
-    params.amb,
-  );
-
-  if (params.wx && !params.keepPlace) return { settings: unlocated(settings), withRows: true };
-
-  const weather = params.net === "wxerror" ? undefined : fixtureWeather(params);
-
-  if (isOffline(params)) return offlineSeed(settings, weather);
-
-  return { settings, withRows: true, ...(weather && { weather }) };
-}
-
-function offlineSeed(settings: AccountSettings, weather: Weather | undefined): Seed {
-  const saved = weather && { ...weather, fetchedAt: FIXTURE_SAVED_AT };
-
-  return { settings, withRows: true, status: OFFLINE_STATUS, ...(saved && { weather: saved }) };
-}
-
-function fixtureEvents(params: FixtureParams): CalendarEvent[] {
-  const allDay = params.allday ? [FIXTURE_ALL_DAY.grandpa] : [];
-
-  const many = params.events === "many" ? FIXTURE_MANY_EVENTS : [];
-
-  return [...FIXTURE_SEEDED_EVENTS, ...allDay, ...many];
-}
-
-function hasUploadedPhotos(params: FixtureParams): boolean {
-  return params.upload === "done" || params.sheet === "photo" || params.sheet === "photometa";
-}
-
-async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {
-  const accountId = FIXTURE_ACCOUNT.id;
-
-  if (seed.withRows) {
-    await db.events.bulkPut(fixtureEvents(params).map(seeded));
-    await db.notes.bulkPut(FIXTURE_NOTES.map(seeded));
-    await db.photos.bulkPut(FIXTURE_PHOTOS.map(seeded));
-  }
-
-  if (seed.withRows && hasUploadedPhotos(params))
-    await db.photos.bulkPut(FIXTURE_UPLOADED_PHOTOS.map(seeded));
-
-  await db.settings.put({ ...seeded(seed.settings), accountId });
-
-  if (seed.weather) await db.weather.put({ ...seed.weather, accountId });
-
-  if (seed.status) await db.meta.put({ key: STATUS_KEY, value: seed.status });
-
-  await db.meta.put({ key: CURSOR_KEY, value: FIXTURE_CURSOR });
-}
-
 export async function seedFixtureDb(db: GlanceDb, params: FixtureParams): Promise<void> {
   const seed = fixtureSeed(params);
 
@@ -166,86 +77,6 @@ export async function seedFixtureDb(db: GlanceDb, params: FixtureParams): Promis
 
     if (seed) await writeSeed(db, seed, params);
   });
-}
-
-function isOffline(params: FixtureParams): boolean {
-  return params.net === "offline" || params.signin === "offline" || params.upload === "offline";
-}
-
-function onlineOnly(offline: boolean) {
-  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
-    offline ? err<TransportError>("network") : answer();
-}
-
-function signedInOnly(ended: boolean) {
-  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
-    ended ? err<TransportError>("unauthorized") : answer();
-}
-
-function authStatus(params: FixtureParams): AuthStatus {
-  if (params.signin === "phone") return { state: "finishing-elsewhere" };
-
-  if (params.signin === "expired") return { state: "expired" };
-
-  if (params.signin !== "done") return { state: "waiting" };
-
-  return {
-    state: "signed-in",
-    account: FIXTURE_ACCOUNT,
-    returning: params.acct === "returning",
-    setupDone: true,
-  };
-}
-
-function unlistedPlace(query: string): WeatherLocation[] {
-  const [name = "", ...region] = query.split(",");
-
-  return [
-    {
-      name: name.trim(),
-      region: region.join(",").trim(),
-      lat: 0,
-      lon: 0,
-      timeZone: FIXTURE_TIME_ZONE,
-    },
-  ];
-}
-
-function matchPlaces(query: string): WeatherLocation[] {
-  const key = query.trim().toLowerCase().replace(/\s+/g, " ");
-
-  const known = FIXTURE_PLACES[key];
-
-  if (known) return [...known];
-
-  return /^\d{5}$/.test(key) || key.includes(",") ? unlistedPlace(query.trim()) : [];
-}
-
-async function acceptPush(db: GlanceDb, entry: OutboxEntry, stamp: Stamp, now: () => Date) {
-  if (entry.op === "put") {
-    return ok({
-      entity: entry.entity,
-      row: { ...(entry.payload as object), ...stamp() },
-    } as Change);
-  }
-
-  const row = await db.table(entry.entity).get(entry.entityId);
-
-  if (row === undefined) return err<TransportError>("invalid");
-
-  const tombstone = { ...row, deletedAt: now().toISOString(), ...stamp() };
-
-  return ok({ entity: entry.entity, row: tombstone } as Change);
-}
-
-async function reportProgress(onProgress: (percent: number) => void): Promise<void> {
-  for (let percent = 0; percent < 100; ) {
-    await wait(UPLOAD_TICK_MS);
-
-    percent = Math.min(100, percent + UPLOAD_STEP_PERCENT);
-
-    onProgress(percent);
-  }
 }
 
 export function createFixtureAuth(params: FixtureParams): Transport["auth"] {
@@ -337,4 +168,173 @@ export function createFixtureTransport({ db, params, now }: Options): Transport 
       return ok(uploaded(file, modifiedOn));
     },
   };
+}
+
+function unlocated({ weatherLocation: _, ...settings }: AccountSettings): AccountSettings {
+  return settings;
+}
+
+function onPhoto(settings: AccountSettings): AccountSettings {
+  return { ...settings, background: { ...settings.background, mode: "photo" } };
+}
+
+function withAmbient(settings: AccountSettings, amb: FixtureParams["amb"]): AccountSettings {
+  const { ambient } = settings;
+
+  switch (amb) {
+    case "same":
+      return {
+        ...settings,
+        ambient: { ...ambient, all: { ...ambient.all, end: ambient.all.start } },
+      };
+    case "split":
+    case "off":
+      return { ...settings, ambient: { ...ambient, mode: amb } };
+    default:
+      return settings;
+  }
+}
+
+function fixtureWeather(params: FixtureParams): Weather {
+  const evening = params.now && inAmbient(FIXTURE_SETTINGS.ambient, params.now, FIXTURE_TIME_ZONE);
+
+  return evening ? FIXTURE_AMBIENT_WEATHER : FIXTURE_WEATHER;
+}
+
+function fixtureSeed(params: FixtureParams): Seed | undefined {
+  if (params.net === "loading") return undefined;
+
+  if (params.empty) return { settings: DEFAULT_SETTINGS, withRows: false };
+
+  const settings = withAmbient(
+    params.bg === "photo" ? onPhoto(FIXTURE_SETTINGS) : FIXTURE_SETTINGS,
+    params.amb,
+  );
+
+  if (params.wx && !params.keepPlace) return { settings: unlocated(settings), withRows: true };
+
+  const weather = params.net === "wxerror" ? undefined : fixtureWeather(params);
+
+  if (isOffline(params)) return offlineSeed(settings, weather);
+
+  return { settings, withRows: true, ...(weather && { weather }) };
+}
+
+function offlineSeed(settings: AccountSettings, weather: Weather | undefined): Seed {
+  const saved = weather && { ...weather, fetchedAt: FIXTURE_SAVED_AT };
+
+  return { settings, withRows: true, status: OFFLINE_STATUS, ...(saved && { weather: saved }) };
+}
+
+function fixtureEvents(params: FixtureParams): CalendarEvent[] {
+  const allDay = params.allday ? [FIXTURE_ALL_DAY.grandpa] : [];
+
+  const many = params.events === "many" ? FIXTURE_MANY_EVENTS : [];
+
+  return [...FIXTURE_SEEDED_EVENTS, ...allDay, ...many];
+}
+
+function hasUploadedPhotos(params: FixtureParams): boolean {
+  return params.upload === "done" || params.sheet === "photo" || params.sheet === "photometa";
+}
+
+async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {
+  const accountId = FIXTURE_ACCOUNT.id;
+
+  if (seed.withRows) {
+    await db.events.bulkPut(fixtureEvents(params).map(seeded));
+    await db.notes.bulkPut(FIXTURE_NOTES.map(seeded));
+    await db.photos.bulkPut(FIXTURE_PHOTOS.map(seeded));
+  }
+
+  if (seed.withRows && hasUploadedPhotos(params))
+    await db.photos.bulkPut(FIXTURE_UPLOADED_PHOTOS.map(seeded));
+
+  await db.settings.put({ ...seeded(seed.settings), accountId });
+
+  if (seed.weather) await db.weather.put({ ...seed.weather, accountId });
+
+  if (seed.status) await db.meta.put({ key: STATUS_KEY, value: seed.status });
+
+  await db.meta.put({ key: CURSOR_KEY, value: FIXTURE_CURSOR });
+}
+
+function isOffline(params: FixtureParams): boolean {
+  return params.net === "offline" || params.signin === "offline" || params.upload === "offline";
+}
+
+function onlineOnly(offline: boolean) {
+  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
+    offline ? err<TransportError>("network") : answer();
+}
+
+function signedInOnly(ended: boolean) {
+  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
+    ended ? err<TransportError>("unauthorized") : answer();
+}
+
+function authStatus(params: FixtureParams): AuthStatus {
+  if (params.signin === "phone") return { state: "finishing-elsewhere" };
+
+  if (params.signin === "expired") return { state: "expired" };
+
+  if (params.signin !== "done") return { state: "waiting" };
+
+  return {
+    state: "signed-in",
+    account: FIXTURE_ACCOUNT,
+    returning: params.acct === "returning",
+    setupDone: true,
+  };
+}
+
+function unlistedPlace(query: string): WeatherLocation[] {
+  const [name = "", ...region] = query.split(",");
+
+  return [
+    {
+      name: name.trim(),
+      region: region.join(",").trim(),
+      lat: 0,
+      lon: 0,
+      timeZone: FIXTURE_TIME_ZONE,
+    },
+  ];
+}
+
+function matchPlaces(query: string): WeatherLocation[] {
+  const key = query.trim().toLowerCase().replace(/\s+/g, " ");
+
+  const known = FIXTURE_PLACES[key];
+
+  if (known) return [...known];
+
+  return /^\d{5}$/.test(key) || key.includes(",") ? unlistedPlace(query.trim()) : [];
+}
+
+async function acceptPush(db: GlanceDb, entry: OutboxEntry, stamp: Stamp, now: () => Date) {
+  if (entry.op === "put") {
+    return ok({
+      entity: entry.entity,
+      row: { ...(entry.payload as object), ...stamp() },
+    } as Change);
+  }
+
+  const row = await db.table(entry.entity).get(entry.entityId);
+
+  if (row === undefined) return err<TransportError>("invalid");
+
+  const tombstone = { ...row, deletedAt: now().toISOString(), ...stamp() };
+
+  return ok({ entity: entry.entity, row: tombstone } as Change);
+}
+
+async function reportProgress(onProgress: (percent: number) => void): Promise<void> {
+  for (let percent = 0; percent < 100; ) {
+    await wait(UPLOAD_TICK_MS);
+
+    percent = Math.min(100, percent + UPLOAD_STEP_PERCENT);
+
+    onProgress(percent);
+  }
 }

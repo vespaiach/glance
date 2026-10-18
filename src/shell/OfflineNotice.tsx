@@ -28,10 +28,6 @@ const styles = stylex.create({
   besideSidebar: (inset: number) => ({ marginLeft: inset }),
 });
 
-function savedLabel(savedAt: string, clock: Clock, tz: string): string {
-  return copy.offline.saved(clockAt(savedAt, clock, tz));
-}
-
 export function OfflineNotice({ breakpoint, inset, onWeather }: OfflineNoticeProps) {
   const { showOfflinePill, savedAt } = useNetwork();
 
@@ -50,4 +46,8 @@ export function OfflineNotice({ breakpoint, inset, onWeather }: OfflineNoticePro
       xstyle={[styles.pill, styles.besideSidebar(inset)]}
     />
   );
+}
+
+function savedLabel(savedAt: string, clock: Clock, tz: string): string {
+  return copy.offline.saved(clockAt(savedAt, clock, tz));
 }

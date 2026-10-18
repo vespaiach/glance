@@ -19,26 +19,6 @@ import { TimeZoneProvider } from "./providers/timeZone";
 
 type Loaded = { account: SignedOutAccount | undefined };
 
-function useSignedOutLoad(demo: boolean, params: FixtureParams | undefined): Loaded | undefined {
-  const [loaded, setLoaded] = useState<Loaded>();
-
-  useEffect(() => {
-    if (params === undefined) return;
-
-    let live = true;
-
-    void signedOutAccountFor(demo, params).then((account) => {
-      if (live) setLoaded({ account });
-    });
-
-    return () => {
-      live = false;
-    };
-  }, [demo, params]);
-
-  return loaded;
-}
-
 export function SignedOutProviders({
   demo = DEMO_BUILD,
   children,
@@ -76,4 +56,24 @@ export function SignedOutProviders({
       </DefaultSettingsProvider>
     </NowProvider>
   );
+}
+
+function useSignedOutLoad(demo: boolean, params: FixtureParams | undefined): Loaded | undefined {
+  const [loaded, setLoaded] = useState<Loaded>();
+
+  useEffect(() => {
+    if (params === undefined) return;
+
+    let live = true;
+
+    void signedOutAccountFor(demo, params).then((account) => {
+      if (live) setLoaded({ account });
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [demo, params]);
+
+  return loaded;
 }

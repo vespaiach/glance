@@ -81,14 +81,14 @@ export function pageCacheKey(url: URL): string {
   return `${url.origin}${url.pathname}`;
 }
 
-function rscPart(headers: Headers): string {
-  return (
-    headers.get(SEGMENT_HEADER) ?? (headers.get(PREFETCH_HEADER) === "1" ? "prefetch" : "full")
-  );
-}
-
 export function rscCacheKey(request: Request): string {
   const url = new URL(request.url);
 
   return `${pageCacheKey(url)}?rsc=${encodeURIComponent(rscPart(request.headers))}`;
+}
+
+function rscPart(headers: Headers): string {
+  return (
+    headers.get(SEGMENT_HEADER) ?? (headers.get(PREFETCH_HEADER) === "1" ? "prefetch" : "full")
+  );
 }

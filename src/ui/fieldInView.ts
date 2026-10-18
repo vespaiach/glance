@@ -2,6 +2,21 @@ import { type RefObject, useEffect } from "react";
 
 const FIELD_GAP = 24;
 
+export function useFieldInView(area: RefObject<HTMLElement | null>, keyboardInset: number) {
+  useEffect(() => {
+    const element = area.current;
+
+    if (!element || keyboardInset === 0) return;
+
+    const onFocus = () => reveal(element);
+
+    reveal(element);
+    element.addEventListener("focusin", onFocus);
+
+    return () => element.removeEventListener("focusin", onFocus);
+  }, [area, keyboardInset]);
+}
+
 function focusedField(area: HTMLElement): HTMLInputElement | HTMLTextAreaElement | undefined {
   const active = document.activeElement;
 
@@ -20,19 +35,4 @@ function reveal(area: HTMLElement) {
   const offset = target.getBoundingClientRect().top - area.getBoundingClientRect().top;
 
   area.scrollTop += offset - FIELD_GAP;
-}
-
-export function useFieldInView(area: RefObject<HTMLElement | null>, keyboardInset: number) {
-  useEffect(() => {
-    const element = area.current;
-
-    if (!element || keyboardInset === 0) return;
-
-    const onFocus = () => reveal(element);
-
-    reveal(element);
-    element.addEventListener("focusin", onFocus);
-
-    return () => element.removeEventListener("focusin", onFocus);
-  }, [area, keyboardInset]);
 }

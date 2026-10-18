@@ -111,6 +111,32 @@ const styles = stylex.create({
   },
 });
 
+export function PendingUpload({ tile, onRetry, onRemove, frame }: PendingUploadProps) {
+  return (
+    <div {...stylex.props(styles.root)}>
+      <div {...stylex.props(styles.frame, frame)}>
+        {tile.state !== "failed" && tile.preview && (
+          // biome-ignore lint/performance/noImgElement: the preview is a local object URL of the chosen file, which the Next image optimizer can't load
+          <img src={tile.preview} alt="" {...stylex.props(styles.preview)} />
+        )}
+        {tile.state === "failed" ? (
+          <Failure reason={tile.reason} />
+        ) : (
+          <Progress title={tile.title} percent={tile.percent} />
+        )}
+      </div>
+      <div {...stylex.props(styles.caption)}>
+        <span {...stylex.props(styles.title)}>{tile.title}</span>
+        {tile.state === "failed" ? (
+          <FailedActions tile={tile} onRetry={onRetry} onRemove={onRemove} />
+        ) : (
+          <span {...stylex.props(styles.status)}>{statusText(tile)}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function statusText(tile: Exclude<UploadTile, { state: "failed" }>): string {
   if (tile.state === "paused") return copy.photos.tile.paused;
 
@@ -158,32 +184,6 @@ function FailedActions({ tile, onRetry, onRemove }: PendingUploadProps) {
         size="touch"
         onClick={() => onRemove(tile.id)}
       />
-    </div>
-  );
-}
-
-export function PendingUpload({ tile, onRetry, onRemove, frame }: PendingUploadProps) {
-  return (
-    <div {...stylex.props(styles.root)}>
-      <div {...stylex.props(styles.frame, frame)}>
-        {tile.state !== "failed" && tile.preview && (
-          // biome-ignore lint/performance/noImgElement: the preview is a local object URL of the chosen file, which the Next image optimizer can't load
-          <img src={tile.preview} alt="" {...stylex.props(styles.preview)} />
-        )}
-        {tile.state === "failed" ? (
-          <Failure reason={tile.reason} />
-        ) : (
-          <Progress title={tile.title} percent={tile.percent} />
-        )}
-      </div>
-      <div {...stylex.props(styles.caption)}>
-        <span {...stylex.props(styles.title)}>{tile.title}</span>
-        {tile.state === "failed" ? (
-          <FailedActions tile={tile} onRetry={onRetry} onRemove={onRemove} />
-        ) : (
-          <span {...stylex.props(styles.status)}>{statusText(tile)}</span>
-        )}
-      </div>
     </div>
   );
 }

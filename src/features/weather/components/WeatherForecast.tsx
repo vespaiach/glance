@@ -107,6 +107,62 @@ const styles = stylex.create({
   },
 });
 
+type NoticeProps = { weather: Weather; clock: Clock; tz: string; stale: boolean };
+
+type HourlyProps = {
+  hourly: Weather["hourly"];
+  unit: Unit;
+  clock: Clock;
+  tz: string;
+  xstyle: stylex.StyleXStyles;
+};
+
+type DailyProps = {
+  daily: Weather["daily"];
+  unit: Unit;
+  today: string;
+  xstyle: stylex.StyleXStyles;
+};
+
+export function WeatherForecast({
+  weather,
+  updatedAt,
+  unit,
+  clock,
+  tz,
+  today,
+  stale,
+  breakpoint,
+}: WeatherForecastProps) {
+  const layout = weatherLayout(breakpoint);
+
+  const temp = (fahrenheit: number) => displayTemp(fahrenheit, unit);
+
+  const { current } = weather;
+
+  return (
+    <div {...stylex.props(styles.grid, layout.grid)}>
+      <WeatherNow
+        location={nowLabel(weather, updatedAt, clock, tz)}
+        temp={temp(current.temp)}
+        condition={conditionText(current.condition)}
+        icon={current.icon}
+        high={temp(current.high)}
+        low={temp(current.low)}
+        feelsLike={temp(current.feelsLike)}
+        details={details(current, unit, clock, tz)}
+        labels={copy.weather.range}
+        xstyle={styles.now}
+      />
+      <div {...stylex.props(styles.panel)}>
+        <Notice weather={weather} clock={clock} tz={tz} stale={stale} />
+        <Hourly hourly={weather.hourly} unit={unit} clock={clock} tz={tz} xstyle={layout.hourly} />
+        <Daily daily={weather.daily} unit={unit} today={dateKey(today, tz)} xstyle={layout.daily} />
+      </div>
+    </div>
+  );
+}
+
 function details(
   current: Weather["current"],
   unit: Unit,
@@ -126,8 +182,6 @@ function details(
     { label: labels.sunset, value: clockAt(current.sunset, clock, tz), icon: Sunset },
   ];
 }
-
-type NoticeProps = { weather: Weather; clock: Clock; tz: string; stale: boolean };
 
 function Notice({ weather, clock, tz, stale }: NoticeProps) {
   if (stale) {
@@ -155,14 +209,6 @@ function Notice({ weather, clock, tz, stale }: NoticeProps) {
   );
 }
 
-type HourlyProps = {
-  hourly: Weather["hourly"];
-  unit: Unit;
-  clock: Clock;
-  tz: string;
-  xstyle: stylex.StyleXStyles;
-};
-
 function Hourly({ hourly, unit, clock, tz, xstyle }: HourlyProps) {
   return (
     <div {...stylex.props(styles.section)}>
@@ -186,13 +232,6 @@ function Hourly({ hourly, unit, clock, tz, xstyle }: HourlyProps) {
     </div>
   );
 }
-
-type DailyProps = {
-  daily: Weather["daily"];
-  unit: Unit;
-  today: string;
-  xstyle: stylex.StyleXStyles;
-};
 
 function Daily({ daily, unit, today, xstyle }: DailyProps) {
   const dayName = (date: string) =>
@@ -232,43 +271,4 @@ function nowLabel(
   const label = copy.weather.now(weather.location);
 
   return updatedAt === undefined ? label : copy.zone.updated(label, clockAt(updatedAt, clock, tz));
-}
-
-export function WeatherForecast({
-  weather,
-  updatedAt,
-  unit,
-  clock,
-  tz,
-  today,
-  stale,
-  breakpoint,
-}: WeatherForecastProps) {
-  const layout = weatherLayout(breakpoint);
-
-  const temp = (fahrenheit: number) => displayTemp(fahrenheit, unit);
-
-  const { current } = weather;
-
-  return (
-    <div {...stylex.props(styles.grid, layout.grid)}>
-      <WeatherNow
-        location={nowLabel(weather, updatedAt, clock, tz)}
-        temp={temp(current.temp)}
-        condition={conditionText(current.condition)}
-        icon={current.icon}
-        high={temp(current.high)}
-        low={temp(current.low)}
-        feelsLike={temp(current.feelsLike)}
-        details={details(current, unit, clock, tz)}
-        labels={copy.weather.range}
-        xstyle={styles.now}
-      />
-      <div {...stylex.props(styles.panel)}>
-        <Notice weather={weather} clock={clock} tz={tz} stale={stale} />
-        <Hourly hourly={weather.hourly} unit={unit} clock={clock} tz={tz} xstyle={layout.hourly} />
-        <Daily daily={weather.daily} unit={unit} today={dateKey(today, tz)} xstyle={layout.daily} />
-      </div>
-    </div>
-  );
 }

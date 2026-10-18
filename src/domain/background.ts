@@ -13,14 +13,6 @@ const DAYS_FROM_SUNDAY_TO_EPOCH = 4;
 const byUpload = (a: Photo, b: Photo) =>
   a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
 
-function uploadOrder(photos: readonly Photo[]): Photo[] {
-  return [...photos].sort(byUpload);
-}
-
-function wrap(index: number, count: number): number {
-  return ((index % count) + count) % count;
-}
-
 export function rotationStep(rotate: Background["rotate"], now: Date, tz: string): number {
   const day = dayNumber(now, tz);
 
@@ -29,24 +21,6 @@ export function rotationStep(rotate: Background["rotate"], now: Date, tz: string
   if (rotate === "daily") return day;
 
   return Math.floor((day + DAYS_FROM_SUNDAY_TO_EPOCH) / 7);
-}
-
-function anchorIndex(ordered: readonly Photo[], photoId: string | undefined): number {
-  return Math.max(
-    0,
-    ordered.findIndex((each) => each.id === photoId),
-  );
-}
-
-function slideshowPhoto(
-  ordered: readonly Photo[],
-  background: Background,
-  now: Date,
-  tz: string,
-): Photo {
-  const index = anchorIndex(ordered, background.photoId) + rotationStep(background.rotate, now, tz);
-
-  return ordered[wrap(index, ordered.length)] as Photo;
 }
 
 export function shownBackground(
@@ -67,6 +41,52 @@ export function shownBackground(
     photo: slideshowPhoto(ordered, background, now, tz),
     rotate: background.rotate,
   };
+}
+
+export function changeBackground(
+  background: Background,
+  photos: readonly Photo[],
+  change: Partial<Background>,
+  now: Date,
+  tz: string,
+): Background {
+  const next = { ...background, ...change };
+
+  const photoId = change.photoId ?? photoOnScreen(background, photos, now, tz);
+
+  if (photoId === undefined || next.mode !== "slideshow") return { ...next, photoId };
+
+  return { ...next, photoId: slideshowAnchor(photos, photoId, next.rotate, now, tz) ?? photoId };
+}
+
+export function pickPhoto(mode: Background["mode"], photoId: string): Partial<Background> {
+  return { mode: mode === "season" ? "photo" : mode, photoId };
+}
+
+function uploadOrder(photos: readonly Photo[]): Photo[] {
+  return [...photos].sort(byUpload);
+}
+
+function wrap(index: number, count: number): number {
+  return ((index % count) + count) % count;
+}
+
+function anchorIndex(ordered: readonly Photo[], photoId: string | undefined): number {
+  return Math.max(
+    0,
+    ordered.findIndex((each) => each.id === photoId),
+  );
+}
+
+function slideshowPhoto(
+  ordered: readonly Photo[],
+  background: Background,
+  now: Date,
+  tz: string,
+): Photo {
+  const index = anchorIndex(ordered, background.photoId) + rotationStep(background.rotate, now, tz);
+
+  return ordered[wrap(index, ordered.length)] as Photo;
 }
 
 function photoOnScreen(
@@ -92,24 +112,4 @@ function slideshowAnchor(
   const index = ordered.findIndex((each) => each.id === photoId) - rotationStep(rotate, now, tz);
 
   return ordered[wrap(index, ordered.length)]?.id;
-}
-
-export function changeBackground(
-  background: Background,
-  photos: readonly Photo[],
-  change: Partial<Background>,
-  now: Date,
-  tz: string,
-): Background {
-  const next = { ...background, ...change };
-
-  const photoId = change.photoId ?? photoOnScreen(background, photos, now, tz);
-
-  if (photoId === undefined || next.mode !== "slideshow") return { ...next, photoId };
-
-  return { ...next, photoId: slideshowAnchor(photos, photoId, next.rotate, now, tz) ?? photoId };
-}
-
-export function pickPhoto(mode: Background["mode"], photoId: string): Partial<Background> {
-  return { mode: mode === "season" ? "photo" : mode, photoId };
 }

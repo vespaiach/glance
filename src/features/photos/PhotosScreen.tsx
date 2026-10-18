@@ -20,10 +20,6 @@ import { initialUploads } from "./uploads";
 import { usePhotoPicker } from "./usePhotoPicker";
 import { useUploads } from "./useUploads";
 
-function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
-  return photos && newestFirst(photos);
-}
-
 export function PhotosScreen() {
   const breakpoint = useBreakpoint();
 
@@ -116,4 +112,8 @@ export function PhotosScreen() {
       )}
     </>
   );
+}
+
+function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
+  return photos && newestFirst(photos);
 }

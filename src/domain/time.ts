@@ -20,20 +20,6 @@ const DAY_TITLE: Intl.DateTimeFormatOptions = { weekday: "long", month: "short",
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
-function formatIn(options: Intl.DateTimeFormatOptions, tz: string): Intl.DateTimeFormat {
-  const key = `${JSON.stringify(options)}@${tz}`;
-
-  const cached = formatters.get(key);
-
-  if (cached) return cached;
-
-  const formatter = new Intl.DateTimeFormat("en-US", { ...options, timeZone: tz });
-
-  formatters.set(key, formatter);
-
-  return formatter;
-}
-
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function minutesOfDay(date: Date, tz: string): number {
@@ -106,4 +92,18 @@ export function formatMonth(date: Date, tz: string): string {
 
 export function formatDayTitle(date: Date, tz: string): string {
   return formatIn(DAY_TITLE, tz).format(date);
+}
+
+function formatIn(options: Intl.DateTimeFormatOptions, tz: string): Intl.DateTimeFormat {
+  const key = `${JSON.stringify(options)}@${tz}`;
+
+  const cached = formatters.get(key);
+
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat("en-US", { ...options, timeZone: tz });
+
+  formatters.set(key, formatter);
+
+  return formatter;
 }

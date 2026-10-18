@@ -25,18 +25,6 @@ import { WeatherSkeleton } from "./components/WeatherSkeleton";
 import { useWeatherSetup } from "./useWeatherSetup";
 import { initialWeatherSetup } from "./weatherSetup";
 
-function placeName(location: WeatherLocation | undefined): string {
-  return location ? copy.weather.place(location.name, location.region) : "";
-}
-
-function saveLocation(settings: SettingsRepo) {
-  return (place: WeatherLocation) =>
-    settings.update({ weatherLocation: place }).then(
-      () => true,
-      () => false,
-    );
-}
-
 export function WeatherScreen() {
   const breakpoint = useBreakpoint();
 
@@ -98,4 +86,16 @@ export function WeatherScreen() {
       }
     </Zone>
   );
+}
+
+function placeName(location: WeatherLocation | undefined): string {
+  return location ? copy.weather.place(location.name, location.region) : "";
+}
+
+function saveLocation(settings: SettingsRepo) {
+  return (place: WeatherLocation) =>
+    settings.update({ weatherLocation: place }).then(
+      () => true,
+      () => false,
+    );
 }

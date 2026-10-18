@@ -19,12 +19,6 @@ export type SidebarItem = {
   path: string;
 };
 
-function viewItem(key: Exclude<View, "settings">, icon: LucideIcon): SidebarItem {
-  const label = copy.nav.view[key];
-
-  return { key, icon, name: label, label, path: viewPath(key) };
-}
-
 export const SIDEBAR_VIEWS: readonly SidebarItem[] = [
   viewItem("today", House),
   viewItem("calendar", CalendarDays),
@@ -49,3 +43,9 @@ export const SIDEBAR_PINNED: readonly SidebarItem[] = [
     path: viewPath("settings"),
   },
 ];
+
+function viewItem(key: Exclude<View, "settings">, icon: LucideIcon): SidebarItem {
+  const label = copy.nav.view[key];
+
+  return { key, icon, name: label, label, path: viewPath(key) };
+}

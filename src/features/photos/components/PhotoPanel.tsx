@@ -122,31 +122,6 @@ type ThumbProps = {
   onSelect: () => void;
 };
 
-function Thumb({ photo, thisYear, src, selected, onSelect }: ThumbProps) {
-  return (
-    <button
-      type="button"
-      aria-label={copy.photos.show(photo.title)}
-      aria-pressed={selected}
-      onClick={onSelect}
-      {...stylex.props(styles.thumb)}
-    >
-      {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
-      <img src={src} alt="" {...stylex.props(styles.image, selected && styles.ring)} />
-      <span {...stylex.props(styles.caption)}>
-        <span {...stylex.props(styles.title)}>{photo.title}</span>
-        <span {...stylex.props(styles.date)}>{photoDate(photo, thisYear)}</span>
-      </span>
-    </button>
-  );
-}
-
-function showsRow(summary: UploadSummary, canUpload: boolean) {
-  if (summary.kind === "none") return undefined;
-
-  return canUpload || summary.kind !== "offline" || summary.paused > 0 ? summary : undefined;
-}
-
 export function PhotoPanel({
   photos,
   thisYear,
@@ -200,4 +175,29 @@ export function PhotoPanel({
       </ul>
     </div>
   );
+}
+
+function Thumb({ photo, thisYear, src, selected, onSelect }: ThumbProps) {
+  return (
+    <button
+      type="button"
+      aria-label={copy.photos.show(photo.title)}
+      aria-pressed={selected}
+      onClick={onSelect}
+      {...stylex.props(styles.thumb)}
+    >
+      {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
+      <img src={src} alt="" {...stylex.props(styles.image, selected && styles.ring)} />
+      <span {...stylex.props(styles.caption)}>
+        <span {...stylex.props(styles.title)}>{photo.title}</span>
+        <span {...stylex.props(styles.date)}>{photoDate(photo, thisYear)}</span>
+      </span>
+    </button>
+  );
+}
+
+function showsRow(summary: UploadSummary, canUpload: boolean) {
+  if (summary.kind === "none") return undefined;
+
+  return canUpload || summary.kind !== "offline" || summary.paused > 0 ? summary : undefined;
 }

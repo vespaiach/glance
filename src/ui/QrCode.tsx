@@ -26,12 +26,6 @@ const styles = stylex.create({
   },
 });
 
-function modulesPath(modules: readonly (readonly boolean[])[]): string {
-  return modules
-    .flatMap((row, y) => row.flatMap((dark, x) => (dark ? [`M${x} ${y}h1v1h-1z`] : [])))
-    .join("");
-}
-
 export function QrCode({ value, label }: QrCodeProps) {
   const code = value === undefined ? undefined : encode(value, { ecc: "M", border: 1 });
 
@@ -48,4 +42,10 @@ export function QrCode({ value, label }: QrCodeProps) {
       </svg>
     </span>
   );
+}
+
+function modulesPath(modules: readonly (readonly boolean[])[]): string {
+  return modules
+    .flatMap((row, y) => row.flatMap((dark, x) => (dark ? [`M${x} ${y}h1v1h-1z`] : [])))
+    .join("");
 }

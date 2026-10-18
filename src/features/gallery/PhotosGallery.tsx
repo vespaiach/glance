@@ -119,6 +119,35 @@ const SHEET_DEMOS: readonly SheetDemo[] = [
   },
 ];
 
+const fullWords = gallery.fullScreen;
+
+export function PhotosGallery() {
+  const [open, setOpen] = useState<SheetDemo | null>(null);
+
+  return (
+    <>
+      <GalleryGroup title={gallery.groups.photosView}>
+        {DEMOS.map(({ key, phone, ...demo }) => (
+          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+            <PhotosView {...base} {...demo} />
+          </div>
+        ))}
+      </GalleryGroup>
+      <GalleryGroup title={gallery.groups.photoSheet}>
+        {SHEET_DEMOS.map((demo) => (
+          <Button key={demo.label} variant="secondary" onClick={() => setOpen(demo)}>
+            {demo.label}
+          </Button>
+        ))}
+        {open && <PhotoSheetDemo key={open.label} demo={open} onClose={() => setOpen(null)} />}
+      </GalleryGroup>
+      <GalleryGroup title={gallery.groups.fullScreen}>
+        <FullScreenDemo />
+      </GalleryGroup>
+    </>
+  );
+}
+
 function PhotoSheetDemo({ demo, onClose }: { demo: SheetDemo; onClose: () => void }) {
   return (
     <PhotoSheet
@@ -133,8 +162,6 @@ function PhotoSheetDemo({ demo, onClose }: { demo: SheetDemo; onClose: () => voi
     />
   );
 }
-
-const fullWords = gallery.fullScreen;
 
 function FullScreenDemo() {
   const [chrome, setChrome] = useState<boolean | null>(null);
@@ -170,33 +197,6 @@ function FullScreenDemo() {
           onTogglePlay={() => setPlaying(!playing)}
         />
       )}
-    </>
-  );
-}
-
-export function PhotosGallery() {
-  const [open, setOpen] = useState<SheetDemo | null>(null);
-
-  return (
-    <>
-      <GalleryGroup title={gallery.groups.photosView}>
-        {DEMOS.map(({ key, phone, ...demo }) => (
-          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
-            <PhotosView {...base} {...demo} />
-          </div>
-        ))}
-      </GalleryGroup>
-      <GalleryGroup title={gallery.groups.photoSheet}>
-        {SHEET_DEMOS.map((demo) => (
-          <Button key={demo.label} variant="secondary" onClick={() => setOpen(demo)}>
-            {demo.label}
-          </Button>
-        ))}
-        {open && <PhotoSheetDemo key={open.label} demo={open} onClose={() => setOpen(null)} />}
-      </GalleryGroup>
-      <GalleryGroup title={gallery.groups.fullScreen}>
-        <FullScreenDemo />
-      </GalleryGroup>
     </>
   );
 }

@@ -119,12 +119,6 @@ const styles = stylex.create({
   },
 });
 
-function dotStyle(dot: Tone, status: EventStatus) {
-  if (status === "past") return styles.pastDot;
-
-  return typeof dot === "number" ? styles[`tone${dot}`] : styles[dot];
-}
-
 export function EventRow({
   start,
   end,
@@ -172,4 +166,10 @@ export function EventRow({
   }
 
   return <div {...stylex.props(...rowStyles, xstyle)}>{content}</div>;
+}
+
+function dotStyle(dot: Tone, status: EventStatus) {
+  if (status === "past") return styles.pastDot;
+
+  return typeof dot === "number" ? styles[`tone${dot}`] : styles[dot];
 }
