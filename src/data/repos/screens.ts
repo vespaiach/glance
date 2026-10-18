@@ -4,14 +4,7 @@ import { type RepoStore, useRepoStore } from "./store";
 
 export type { SignedInScreen };
 
-function thisScreen(now: Date): SignedInScreen {
-  return {
-    id: "this-screen",
-    ...deviceOf(navigator.userAgent),
-    lastSeenAt: now.toISOString(),
-    current: true,
-  };
-}
+export type QrCodes = Pick<RepoStore, "issueQr" | "voidQr">;
 
 export function useSignedInScreens(): SignedInScreen[] {
   const { displays, now } = useRepoStore();
@@ -35,10 +28,17 @@ export function useSignedInScreens(): SignedInScreen[] {
   return listed ?? alone;
 }
 
-export type QrCodes = Pick<RepoStore, "issueQr" | "voidQr">;
-
 export function useQrCodes(): QrCodes {
   const { issueQr, voidQr } = useRepoStore();
 
   return { issueQr, voidQr };
+}
+
+function thisScreen(now: Date): SignedInScreen {
+  return {
+    id: "this-screen",
+    ...deviceOf(navigator.userAgent),
+    lastSeenAt: now.toISOString(),
+    current: true,
+  };
 }

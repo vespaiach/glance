@@ -27,6 +27,35 @@ const BUILD = String(CLIENT_BUILD);
 
 const JSON_TYPE = "application/json";
 
+export function createHttpTransport({
+  fetch = globalThis.fetch.bind(globalThis),
+  createXhr = () => new XMLHttpRequest(),
+}: HttpTransportOptions = {}): Transport {
+  const send = sender(fetch, transportError);
+
+  const sendLocate = sender(fetch, locateError);
+
+  return {
+    push: pushWith(send),
+    pull: (cursor) => send<PullResponse>(pullPath(cursor)),
+    weather: () => send<Weather>("/api/weather"),
+    places: (query) =>
+      send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
+    locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
+    displays: () => send<SignedInScreen[]>("/api/displays"),
+    issueQr: () => send<QrCode>("/api/auth/qr", { method: "POST" }),
+    voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
+    auth: {
+      link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
+      status: () => send<AuthStatus>("/api/auth/status"),
+      name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
+      location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
+      signout: () => send<void>("/api/auth/signout", { method: "POST" }),
+    },
+    upload: uploadWith(createXhr),
+  };
+}
+
 function transportError(status: number): TransportError {
   if (status === 401) return "unauthorized";
 
@@ -148,34 +177,5 @@ function uploadWith(createXhr: () => XMLHttpRequest): Transport["upload"] {
     if (problem) return err(problem);
 
     return sendFile(createXhr(), file, modifiedOn, onProgress);
-  };
-}
-
-export function createHttpTransport({
-  fetch = globalThis.fetch.bind(globalThis),
-  createXhr = () => new XMLHttpRequest(),
-}: HttpTransportOptions = {}): Transport {
-  const send = sender(fetch, transportError);
-
-  const sendLocate = sender(fetch, locateError);
-
-  return {
-    push: pushWith(send),
-    pull: (cursor) => send<PullResponse>(pullPath(cursor)),
-    weather: () => send<Weather>("/api/weather"),
-    places: (query) =>
-      send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
-    locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
-    displays: () => send<SignedInScreen[]>("/api/displays"),
-    issueQr: () => send<QrCode>("/api/auth/qr", { method: "POST" }),
-    voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
-    auth: {
-      link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
-      status: () => send<AuthStatus>("/api/auth/status"),
-      name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
-      location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
-      signout: () => send<void>("/api/auth/signout", { method: "POST" }),
-    },
-    upload: uploadWith(createXhr),
   };
 }

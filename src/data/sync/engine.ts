@@ -30,101 +30,6 @@ type Halt = Extract<SyncError, "unauthorized" | "outdated">;
 
 const DONE: SyncResult = ok(undefined);
 
-function isHalt(error: TransportError): error is Halt {
-  return error === "unauthorized" || error === "outdated";
-}
-
-function reported(error: TransportError): Exclude<TransportError, "invalid"> {
-  return error === "invalid" ? "server" : error;
-}
-
-function rowKey(change: Change): string {
-  return change.entity === "settings" ? change.row.accountId : change.row.id;
-}
-
-function placeKey(location: WeatherLocation | undefined): string | undefined {
-  return location && `${location.lat},${location.lon}`;
-}
-
-function serialQueue() {
-  let tail: Promise<unknown> = Promise.resolve();
-
-  return <T>(task: () => Promise<T>): Promise<T> => {
-    const run = tail.then(task);
-
-    tail = run.catch(() => undefined);
-
-    return run;
-  };
-}
-
-async function isPending(db: GlanceDb, entity: SyncedEntity, id: string): Promise<boolean> {
-  const count = await db.outbox
-    .where("entityId")
-    .equals(id)
-    .and((entry) => entry.entity === entity)
-    .count();
-
-  return count > 0;
-}
-
-async function applyChange(db: GlanceDb, change: Change): Promise<void> {
-  if (await isPending(db, change.entity, rowKey(change))) return;
-
-  await db.table(change.entity).put(change.row);
-}
-
-function settle(db: GlanceDb, entry: OutboxEntry, change: Change): Promise<void> {
-  return db.transaction("rw", db.outbox, db.table(entry.entity), async () => {
-    await db.outbox.delete(entry.seq);
-
-    await applyChange(db, change);
-  });
-}
-
-function discard(db: GlanceDb, entry: OutboxEntry): Promise<void> {
-  return db.transaction("rw", db.outbox, db.table(entry.entity), async () => {
-    await db.outbox.delete(entry.seq);
-
-    if (!(await isPending(db, entry.entity, entry.entityId))) {
-      await db.table(entry.entity).delete(entry.entityId);
-    }
-  });
-}
-
-async function readLocation(db: GlanceDb, accountId: string) {
-  return (await db.settings.get(accountId))?.weatherLocation;
-}
-
-async function serverPlace(db: GlanceDb, accountId: string): Promise<string | undefined> {
-  if (await isPending(db, "settings", accountId)) return undefined;
-
-  return placeKey(await readLocation(db, accountId));
-}
-
-function livePhotoIds(changes: Change[]): string[] {
-  return changes.flatMap((change) =>
-    change.entity === "photos" && !change.row.deletedAt ? [change.row.id] : [],
-  );
-}
-
-function savedPhotoIds(db: GlanceDb): Promise<string[]> {
-  return db.photos
-    .filter((photo) => !photo.deletedAt)
-    .primaryKeys()
-    .then((ids) => ids as string[]);
-}
-
-function applyPull(db: GlanceDb, response: PullResponse): Promise<void> {
-  const tables = [db.events, db.notes, db.photos, db.settings, db.outbox, db.meta];
-
-  return db.transaction("rw", tables, async () => {
-    for (const change of response.changes) await applyChange(db, change);
-
-    await db.meta.put({ key: CURSOR_KEY, value: response.cursor });
-  });
-}
-
 export function createSyncEngine({
   db,
   transport,
@@ -350,4 +255,99 @@ export function createSyncEngine({
       clearSyncTimer();
     },
   };
+}
+
+function isHalt(error: TransportError): error is Halt {
+  return error === "unauthorized" || error === "outdated";
+}
+
+function reported(error: TransportError): Exclude<TransportError, "invalid"> {
+  return error === "invalid" ? "server" : error;
+}
+
+function rowKey(change: Change): string {
+  return change.entity === "settings" ? change.row.accountId : change.row.id;
+}
+
+function placeKey(location: WeatherLocation | undefined): string | undefined {
+  return location && `${location.lat},${location.lon}`;
+}
+
+function serialQueue() {
+  let tail: Promise<unknown> = Promise.resolve();
+
+  return <T>(task: () => Promise<T>): Promise<T> => {
+    const run = tail.then(task);
+
+    tail = run.catch(() => undefined);
+
+    return run;
+  };
+}
+
+async function isPending(db: GlanceDb, entity: SyncedEntity, id: string): Promise<boolean> {
+  const count = await db.outbox
+    .where("entityId")
+    .equals(id)
+    .and((entry) => entry.entity === entity)
+    .count();
+
+  return count > 0;
+}
+
+async function applyChange(db: GlanceDb, change: Change): Promise<void> {
+  if (await isPending(db, change.entity, rowKey(change))) return;
+
+  await db.table(change.entity).put(change.row);
+}
+
+function settle(db: GlanceDb, entry: OutboxEntry, change: Change): Promise<void> {
+  return db.transaction("rw", db.outbox, db.table(entry.entity), async () => {
+    await db.outbox.delete(entry.seq);
+
+    await applyChange(db, change);
+  });
+}
+
+function discard(db: GlanceDb, entry: OutboxEntry): Promise<void> {
+  return db.transaction("rw", db.outbox, db.table(entry.entity), async () => {
+    await db.outbox.delete(entry.seq);
+
+    if (!(await isPending(db, entry.entity, entry.entityId))) {
+      await db.table(entry.entity).delete(entry.entityId);
+    }
+  });
+}
+
+async function readLocation(db: GlanceDb, accountId: string) {
+  return (await db.settings.get(accountId))?.weatherLocation;
+}
+
+async function serverPlace(db: GlanceDb, accountId: string): Promise<string | undefined> {
+  if (await isPending(db, "settings", accountId)) return undefined;
+
+  return placeKey(await readLocation(db, accountId));
+}
+
+function livePhotoIds(changes: Change[]): string[] {
+  return changes.flatMap((change) =>
+    change.entity === "photos" && !change.row.deletedAt ? [change.row.id] : [],
+  );
+}
+
+function savedPhotoIds(db: GlanceDb): Promise<string[]> {
+  return db.photos
+    .filter((photo) => !photo.deletedAt)
+    .primaryKeys()
+    .then((ids) => ids as string[]);
+}
+
+function applyPull(db: GlanceDb, response: PullResponse): Promise<void> {
+  const tables = [db.events, db.notes, db.photos, db.settings, db.outbox, db.meta];
+
+  return db.transaction("rw", tables, async () => {
+    for (const change of response.changes) await applyChange(db, change);
+
+    await db.meta.put({ key: CURSOR_KEY, value: response.cursor });
+  });
 }

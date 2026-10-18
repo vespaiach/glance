@@ -43,6 +43,14 @@ export function useNote(id: string): StoredNote | null | undefined {
   }, [db, id]);
 }
 
+export function useNotes(now: Date): ShownNote[] | undefined {
+  const { db, accountId } = useRepoStore();
+
+  const read = useLiveQuery(() => readNotes(db, accountId), [db, accountId]);
+
+  return useMemo(() => read && shownNotes(read, now), [read, now]);
+}
+
 async function readNotes(db: GlanceDb, accountId: string): Promise<NotesRead> {
   const notes = await db.notes.orderBy("createdAt").reverse().filter(isLive).toArray();
 
@@ -60,12 +68,4 @@ function shownNotes({ notes, pending, expiry }: NotesRead, now: Date): ShownNote
       ...note,
       waiting: noteWaitingToPost({ pending: pending.has(note.id), version: note.version }),
     }));
-}
-
-export function useNotes(now: Date): ShownNote[] | undefined {
-  const { db, accountId } = useRepoStore();
-
-  const read = useLiveQuery(() => readNotes(db, accountId), [db, accountId]);
-
-  return useMemo(() => read && shownNotes(read, now), [read, now]);
 }

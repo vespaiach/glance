@@ -14,6 +14,14 @@ export type SyncHost = {
 
 type Options = { db: GlanceDb; transport: Transport; now: () => Date };
 
+export type SpawnedWorker = { api: SyncWorkerApi; terminate(): void };
+
+type WorkerHostOptions = {
+  db: GlanceDb;
+  spawn: () => SpawnedWorker;
+  photosChanged: (ids: string[]) => void;
+};
+
 export function createInlineSyncHost(options: Options): SyncHost {
   let engine: SyncEngine | undefined;
 
@@ -39,14 +47,6 @@ export function createInlineSyncHost(options: Options): SyncHost {
     },
   };
 }
-
-export type SpawnedWorker = { api: SyncWorkerApi; terminate(): void };
-
-type WorkerHostOptions = {
-  db: GlanceDb;
-  spawn: () => SpawnedWorker;
-  photosChanged: (ids: string[]) => void;
-};
 
 export function spawnSyncWorker(): SpawnedWorker {
   if (typeof Worker === "undefined") {

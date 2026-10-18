@@ -3,6 +3,8 @@ import type { SignedOutAccount, SignInAuth } from "./session";
 
 const SignInAuthContext = createContext<SignInAuth | undefined>(undefined);
 
+const SignedOutAccountContext = createContext<SignedOutAccount | undefined>(undefined);
+
 export function SignInAuthProvider({ auth, children }: { auth: SignInAuth; children: ReactNode }) {
   return <SignInAuthContext value={auth}>{children}</SignInAuthContext>;
 }
@@ -14,8 +16,6 @@ export function useSignInAuth(): SignInAuth {
 
   return auth;
 }
-
-const SignedOutAccountContext = createContext<SignedOutAccount | undefined>(undefined);
 
 export function SignedOutAccountProvider({
   account,

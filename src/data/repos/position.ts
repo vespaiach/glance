@@ -16,9 +16,7 @@ const POSITION_OPTIONS: PositionOptions = {
   maximumAge: 600_000,
 };
 
-function positionError({ code }: GeolocationPositionError): PositionError {
-  return code === PERMISSION_DENIED ? "denied" : "no-position";
-}
+export const devicePosition: DevicePosition = { available: canLocate, current: currentPosition };
 
 export function currentPosition(): Promise<Result<Coordinates, PositionError>> {
   return new Promise((resolve) =>
@@ -30,6 +28,16 @@ export function currentPosition(): Promise<Result<Coordinates, PositionError>> {
   );
 }
 
+export async function canLocate(): Promise<boolean> {
+  if (!globalThis.isSecureContext || !("geolocation" in navigator)) return false;
+
+  return !(await permissionBlocked());
+}
+
+function positionError({ code }: GeolocationPositionError): PositionError {
+  return code === PERMISSION_DENIED ? "denied" : "no-position";
+}
+
 async function permissionBlocked(): Promise<boolean> {
   if (navigator.permissions === undefined) return false;
 
@@ -37,11 +45,3 @@ async function permissionBlocked(): Promise<boolean> {
 
   return status?.state === "denied";
 }
-
-export async function canLocate(): Promise<boolean> {
-  if (!globalThis.isSecureContext || !("geolocation" in navigator)) return false;
-
-  return !(await permissionBlocked());
-}
-
-export const devicePosition: DevicePosition = { available: canLocate, current: currentPosition };

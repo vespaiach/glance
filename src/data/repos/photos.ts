@@ -21,6 +21,8 @@ export interface PhotosRepo {
   remove(id: string): Promise<void>;
 }
 
+export const apiPhotoSrc = photoFileUrl;
+
 export function createPhotosRepo(store: RepoStore): PhotosRepo {
   return {
     upload: async (file, modifiedOn, onProgress) => {
@@ -67,8 +69,6 @@ export function usePictureOfDay(dayKey: string, tz: string): PictureOfDayPick | 
     [rows, dayKey, tz, accountId],
   );
 }
-
-export const apiPhotoSrc = photoFileUrl;
 
 export function usePhotoSrc(): RepoStore["photoSrc"] {
   return useRepoStore().photoSrc;
