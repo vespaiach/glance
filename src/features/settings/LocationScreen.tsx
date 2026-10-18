@@ -19,18 +19,6 @@ import { LocationView } from "./components/LocationView";
 
 const SETTINGS_PATH = "/settings";
 
-function saveThen(settings: SettingsRepo, done: () => void) {
-  return (place: WeatherLocation) =>
-    settings.update({ weatherLocation: place }).then(
-      () => {
-        done();
-
-        return true;
-      },
-      () => false,
-    );
-}
-
 export function LocationScreen() {
   const router = useRouter();
 
@@ -64,4 +52,16 @@ export function LocationScreen() {
       onBack={() => router.push(SETTINGS_PATH)}
     />
   );
+}
+
+function saveThen(settings: SettingsRepo, done: () => void) {
+  return (place: WeatherLocation) =>
+    settings.update({ weatherLocation: place }).then(
+      () => {
+        done();
+
+        return true;
+      },
+      () => false,
+    );
 }

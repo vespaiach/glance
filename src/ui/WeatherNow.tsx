@@ -96,19 +96,6 @@ const styles = stylex.create({
   },
 });
 
-function rangeText(
-  { high, low, feelsLike }: Pick<WeatherNowProps, "high" | "low" | "feelsLike">,
-  labels: WeatherNowLabels,
-) {
-  const parts = [
-    high !== undefined && `${labels.high} ${high}°`,
-    low !== undefined && `${labels.low} ${low}°`,
-    feelsLike !== undefined && `${labels.feelsLike} ${feelsLike}°`,
-  ].filter(Boolean);
-
-  return parts.join(" · ");
-}
-
 export function WeatherNow({
   location,
   temp,
@@ -152,4 +139,17 @@ export function WeatherNow({
       )}
     </ColorBlock>
   );
+}
+
+function rangeText(
+  { high, low, feelsLike }: Pick<WeatherNowProps, "high" | "low" | "feelsLike">,
+  labels: WeatherNowLabels,
+) {
+  const parts = [
+    high !== undefined && `${labels.high} ${high}°`,
+    low !== undefined && `${labels.low} ${low}°`,
+    feelsLike !== undefined && `${labels.feelsLike} ${feelsLike}°`,
+  ].filter(Boolean);
+
+  return parts.join(" · ");
 }

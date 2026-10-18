@@ -20,6 +20,8 @@ const DAY_MS = 86_400_000;
 
 const firstOf = (year: number, month: number) => new Date(Date.UTC(year, month, 1));
 
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
 export function monthCells(year: number, month: number): (number | null)[] {
   const leading = firstOf(year, month).getUTCDay();
   const length = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
@@ -54,8 +56,6 @@ export function markedDays(
 
   return [...days].sort((a, b) => a - b);
 }
-
-const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 export function readDateParam(value: string | null): string | undefined {
   if (value === null || !DATE_KEY.test(value)) return undefined;

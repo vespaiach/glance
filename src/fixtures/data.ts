@@ -44,39 +44,6 @@ const MINUTE_MS = 60 * 1000;
 const before = (now: Date, minutes: number) =>
   new Date(now.getTime() - minutes * MINUTE_MS).toISOString();
 
-export function fixtureScreens(now: Date): SignedInScreen[] {
-  return [
-    {
-      id: fixtureId(9, 1),
-      kind: "monitor",
-      browser: "Chrome",
-      lastSeenAt: now.toISOString(),
-      current: true,
-    },
-    {
-      id: fixtureId(9, 2),
-      kind: "monitor",
-      browser: "Edge",
-      lastSeenAt: before(now, 12),
-      current: false,
-    },
-    {
-      id: fixtureId(9, 3),
-      kind: "tablet",
-      browser: "Safari",
-      lastSeenAt: before(now, 24 * 60),
-      current: false,
-    },
-    {
-      id: fixtureId(9, 4),
-      kind: "smartphone",
-      browser: "Safari",
-      lastSeenAt: at(2, 18, 30),
-      current: false,
-    },
-  ];
-}
-
 export const FIXTURE_EVENTS: CalendarEvent[] = [
   {
     id: fixtureId(1, 1),
@@ -316,12 +283,6 @@ const PHOTO_IMAGES = new Map<string, PhotoSlug>([
   [fixtureId(3, 8), "halloween"],
 ]);
 
-export function fixturePhotoImage(photoId: string): string | undefined {
-  const slug = PHOTO_IMAGES.get(photoId);
-
-  return slug && imagePath(slug);
-}
-
 const PORTLAND_OR: WeatherLocation = {
   name: "Portland",
   region: "Oregon",
@@ -457,3 +418,42 @@ export const FIXTURE_UPLOADS: Record<
   offline: [{ title: "IMG_2041", status: "paused", progress: 40, preview: imagePath("orchard") }],
   done: [],
 };
+
+export function fixtureScreens(now: Date): SignedInScreen[] {
+  return [
+    {
+      id: fixtureId(9, 1),
+      kind: "monitor",
+      browser: "Chrome",
+      lastSeenAt: now.toISOString(),
+      current: true,
+    },
+    {
+      id: fixtureId(9, 2),
+      kind: "monitor",
+      browser: "Edge",
+      lastSeenAt: before(now, 12),
+      current: false,
+    },
+    {
+      id: fixtureId(9, 3),
+      kind: "tablet",
+      browser: "Safari",
+      lastSeenAt: before(now, 24 * 60),
+      current: false,
+    },
+    {
+      id: fixtureId(9, 4),
+      kind: "smartphone",
+      browser: "Safari",
+      lastSeenAt: at(2, 18, 30),
+      current: false,
+    },
+  ];
+}
+
+export function fixturePhotoImage(photoId: string): string | undefined {
+  const slug = PHOTO_IMAGES.get(photoId);
+
+  return slug && imagePath(slug);
+}

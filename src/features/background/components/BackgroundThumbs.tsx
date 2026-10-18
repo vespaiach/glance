@@ -107,44 +107,6 @@ type ThumbProps = {
   onPick: () => void;
 };
 
-function Thumb({ photo, src, selected, faded, onPick }: ThumbProps) {
-  return (
-    <button
-      type="button"
-      aria-label={copy.background.use(photo.title)}
-      aria-pressed={selected}
-      onClick={onPick}
-      {...stylex.props(styles.tile, faded && styles.faded)}
-    >
-      {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
-      <img src={src} alt="" {...stylex.props(styles.image, selected && styles.ring)} />
-      <span {...stylex.props(styles.title, selected && styles.selectedTitle)}>{photo.title}</span>
-    </button>
-  );
-}
-
-function UploadPhoto({ online, onUpload }: { online: boolean; onUpload: () => void }) {
-  return (
-    <button
-      type="button"
-      disabled={!online}
-      onClick={onUpload}
-      {...stylex.props(styles.tile, !online && styles.disabled)}
-    >
-      <span {...stylex.props(styles.uploadFrame)}>
-        <Icon icon={online ? Upload : WifiOff} size={24} />
-      </span>
-      <span {...stylex.props(styles.uploadLabel)}>
-        {online ? copy.background.upload : copy.background.uploadOffline}
-      </span>
-    </button>
-  );
-}
-
-function selectedId(shown: ShownBackground): string | undefined {
-  return shown.mode === "season" ? undefined : shown.photo.id;
-}
-
 export function BackgroundThumbs({
   photos,
   shown,
@@ -185,4 +147,42 @@ export function BackgroundThumbs({
       )}
     </ul>
   );
+}
+
+function Thumb({ photo, src, selected, faded, onPick }: ThumbProps) {
+  return (
+    <button
+      type="button"
+      aria-label={copy.background.use(photo.title)}
+      aria-pressed={selected}
+      onClick={onPick}
+      {...stylex.props(styles.tile, faded && styles.faded)}
+    >
+      {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
+      <img src={src} alt="" {...stylex.props(styles.image, selected && styles.ring)} />
+      <span {...stylex.props(styles.title, selected && styles.selectedTitle)}>{photo.title}</span>
+    </button>
+  );
+}
+
+function UploadPhoto({ online, onUpload }: { online: boolean; onUpload: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={!online}
+      onClick={onUpload}
+      {...stylex.props(styles.tile, !online && styles.disabled)}
+    >
+      <span {...stylex.props(styles.uploadFrame)}>
+        <Icon icon={online ? Upload : WifiOff} size={24} />
+      </span>
+      <span {...stylex.props(styles.uploadLabel)}>
+        {online ? copy.background.upload : copy.background.uploadOffline}
+      </span>
+    </button>
+  );
+}
+
+function selectedId(shown: ShownBackground): string | undefined {
+  return shown.mode === "season" ? undefined : shown.photo.id;
 }

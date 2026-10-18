@@ -30,73 +30,6 @@ const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const sameEmail = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-function isWaiting(state: SignInState): boolean {
-  return state.step === "sent" || state.step === "phone";
-}
-
-function usePolling(
-  waiting: boolean,
-  status: SignInAuth["status"],
-  onStatus: (answer: AuthStatus) => void,
-) {
-  const answered = useEffectEvent(onStatus);
-
-  useEffect(() => {
-    if (!waiting) return;
-
-    let live = true;
-
-    const poll = async () => {
-      const answer = await status();
-
-      if (live && answer.ok) answered(answer.value);
-    };
-
-    const timer = setInterval(() => void poll(), POLL_MS);
-
-    return () => {
-      live = false;
-      clearInterval(timer);
-    };
-  }, [waiting, status]);
-}
-
-function useLinkCheck(
-  checking: boolean,
-  status: SignInAuth["status"],
-  onAnswer: (answer: Awaited<ReturnType<SignInAuth["status"]>>) => void,
-) {
-  const answered = useEffectEvent(onAnswer);
-
-  useEffect(() => {
-    if (!checking) return;
-
-    let live = true;
-
-    void status().then((answer) => {
-      if (live) answered(answer);
-    });
-
-    return () => {
-      live = false;
-    };
-  }, [checking, status]);
-}
-
-function useMounted() {
-  const mounted = useRef(true);
-
-  useEffect(() => {
-    mounted.current = true;
-
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-
-  return mounted;
-}
-
 export function useSignIn({
   initial,
   initialSetup,
@@ -202,4 +135,71 @@ export function useSignIn({
   };
 
   return { state, setup, act, openedLink, finishedOnPhone };
+}
+
+function isWaiting(state: SignInState): boolean {
+  return state.step === "sent" || state.step === "phone";
+}
+
+function usePolling(
+  waiting: boolean,
+  status: SignInAuth["status"],
+  onStatus: (answer: AuthStatus) => void,
+) {
+  const answered = useEffectEvent(onStatus);
+
+  useEffect(() => {
+    if (!waiting) return;
+
+    let live = true;
+
+    const poll = async () => {
+      const answer = await status();
+
+      if (live && answer.ok) answered(answer.value);
+    };
+
+    const timer = setInterval(() => void poll(), POLL_MS);
+
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [waiting, status]);
+}
+
+function useLinkCheck(
+  checking: boolean,
+  status: SignInAuth["status"],
+  onAnswer: (answer: Awaited<ReturnType<SignInAuth["status"]>>) => void,
+) {
+  const answered = useEffectEvent(onAnswer);
+
+  useEffect(() => {
+    if (!checking) return;
+
+    let live = true;
+
+    void status().then((answer) => {
+      if (live) answered(answer);
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [checking, status]);
+}
+
+function useMounted() {
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  return mounted;
 }

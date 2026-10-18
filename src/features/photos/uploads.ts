@@ -40,12 +40,6 @@ const FAILURES: Record<NonNullable<FixtureUpload["error"]>, UploadFailure> = {
   network: "network",
 };
 
-function averagePercent(tiles: readonly { percent: number }[]): number {
-  const total = tiles.reduce((sum, tile) => sum + tile.percent, 0);
-
-  return Math.round(total / tiles.length);
-}
-
 export function uploadSummary(tiles: readonly UploadTile[], online: boolean): UploadSummary {
   const paused = tiles.filter((tile) => tile.state === "paused").length;
 
@@ -64,19 +58,6 @@ export function uploadSummary(tiles: readonly UploadTile[], online: boolean): Up
     percent: averagePercent(running),
     failed,
   };
-}
-
-function tileFrom(upload: FixtureUpload, index: number): UploadTile {
-  const base = {
-    id: `upload-${index}`,
-    title: upload.title,
-    ...(upload.preview && { preview: upload.preview }),
-  };
-
-  if (upload.status === "failed")
-    return { ...base, state: "failed", reason: FAILURES[upload.error ?? "network"] };
-
-  return { ...base, state: upload.status, percent: upload.progress };
 }
 
 export function initialUploads(
@@ -100,6 +81,36 @@ export function chosenTile(id: string, file: ChosenFile, preview?: string): Uplo
 
 export function uploadFailure(error: UploadError): UploadFailure {
   return error === "too-large" || error === "not-a-photo" ? error : "network";
+}
+
+export function uploads(tiles: readonly UploadTile[], action: UploadAction): UploadTile[] {
+  if (action.type === "add") return [...action.tiles, ...tiles];
+
+  if (action.type === "done" || action.type === "remove")
+    return tiles.filter((tile) => tile.id !== action.id);
+
+  if (action.type === "pause") return tiles.map(paused);
+
+  return tiles.map((tile) => (tile.id === action.id ? changed(tile, action) : tile));
+}
+
+function averagePercent(tiles: readonly { percent: number }[]): number {
+  const total = tiles.reduce((sum, tile) => sum + tile.percent, 0);
+
+  return Math.round(total / tiles.length);
+}
+
+function tileFrom(upload: FixtureUpload, index: number): UploadTile {
+  const base = {
+    id: `upload-${index}`,
+    title: upload.title,
+    ...(upload.preview && { preview: upload.preview }),
+  };
+
+  if (upload.status === "failed")
+    return { ...base, state: "failed", reason: FAILURES[upload.error ?? "network"] };
+
+  return { ...base, state: upload.status, percent: upload.progress };
 }
 
 function changed(tile: UploadTile, action: UploadAction): UploadTile {
@@ -128,15 +139,4 @@ function changed(tile: UploadTile, action: UploadAction): UploadTile {
 
 function paused(tile: UploadTile): UploadTile {
   return tile.state === "uploading" ? { ...tile, state: "paused" } : tile;
-}
-
-export function uploads(tiles: readonly UploadTile[], action: UploadAction): UploadTile[] {
-  if (action.type === "add") return [...action.tiles, ...tiles];
-
-  if (action.type === "done" || action.type === "remove")
-    return tiles.filter((tile) => tile.id !== action.id);
-
-  if (action.type === "pause") return tiles.map(paused);
-
-  return tiles.map((tile) => (tile.id === action.id ? changed(tile, action) : tile));
 }

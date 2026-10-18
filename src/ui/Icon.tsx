@@ -9,10 +9,6 @@ type IconProps = {
   label?: string;
 };
 
-function defaultStroke(size: number) {
-  return size >= LARGE_ICON_SIZE ? 1.5 : 1.75;
-}
-
 export function Icon({
   icon: Glyph,
   size = 24,
@@ -31,4 +27,8 @@ export function Icon({
       {...naming}
     />
   );
+}
+
+function defaultStroke(size: number) {
+  return size >= LARGE_ICON_SIZE ? 1.5 : 1.75;
 }

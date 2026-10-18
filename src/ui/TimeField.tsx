@@ -119,10 +119,6 @@ const styles = stylex.create({
   },
 });
 
-function spokenTime(value: number | undefined, clock: Clock, noEnd: string) {
-  return value === undefined ? noEnd : formatClock(value, clock);
-}
-
 export function TimeField({
   label,
   value,
@@ -186,4 +182,8 @@ export function TimeField({
       )}
     </div>
   );
+}
+
+function spokenTime(value: number | undefined, clock: Clock, noEnd: string) {
+  return value === undefined ? noEnd : formatClock(value, clock);
 }

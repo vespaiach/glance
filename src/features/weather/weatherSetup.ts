@@ -47,58 +47,6 @@ export function placeQuery(draft: string): string {
   return draft.trim();
 }
 
-function submit(state: WeatherSetupState): WeatherSetupState {
-  if (state.step === "editing" && state.place) {
-    return { step: "editing", draft: state.draft, place: state.place };
-  }
-
-  const query = placeQuery(state.draft);
-
-  if (query === "") return { step: "editing", draft: state.draft, error: "empty" };
-
-  return { step: "searching", draft: state.draft, query };
-}
-
-function found(state: WeatherSetupState, matches: readonly WeatherLocation[]): WeatherSetupState {
-  if (matches.length === 0) return { step: "editing", draft: state.draft, error: "unknown" };
-
-  if (matches.length === 1) return state;
-
-  return { step: "choosing", draft: state.draft, matches };
-}
-
-function answered(state: WeatherSetupState, action: WeatherSetupAction): WeatherSetupState {
-  if (state.step !== "searching") return state;
-
-  if (action.type === "found") return found(state, action.matches);
-
-  return { step: "editing", draft: state.draft, error: "unavailable" };
-}
-
-function locate(state: WeatherSetupState): WeatherSetupState {
-  if (state.step === "searching") return state;
-
-  return { step: "locating", draft: state.draft };
-}
-
-function locateFailed(state: WeatherSetupState, notice: LocateFailure): WeatherSetupState {
-  if (state.step !== "locating") return state;
-
-  return { step: "editing", draft: state.draft, notice };
-}
-
-function keep(state: WeatherSetupState): WeatherSetupState {
-  if (state.step !== "confirm-zone") return state;
-
-  return { step: "editing", draft: state.draft };
-}
-
-function cancel(state: WeatherSetupState): WeatherSetupState {
-  if (state.step === "editing") return state;
-
-  return { step: "editing", draft: state.draft };
-}
-
 export function weatherSetupReducer(
   state: WeatherSetupState,
   action: WeatherSetupAction,
@@ -156,4 +104,56 @@ export function initialWeatherSetup(
     default:
       return { step: "editing", draft: "" };
   }
+}
+
+function submit(state: WeatherSetupState): WeatherSetupState {
+  if (state.step === "editing" && state.place) {
+    return { step: "editing", draft: state.draft, place: state.place };
+  }
+
+  const query = placeQuery(state.draft);
+
+  if (query === "") return { step: "editing", draft: state.draft, error: "empty" };
+
+  return { step: "searching", draft: state.draft, query };
+}
+
+function found(state: WeatherSetupState, matches: readonly WeatherLocation[]): WeatherSetupState {
+  if (matches.length === 0) return { step: "editing", draft: state.draft, error: "unknown" };
+
+  if (matches.length === 1) return state;
+
+  return { step: "choosing", draft: state.draft, matches };
+}
+
+function answered(state: WeatherSetupState, action: WeatherSetupAction): WeatherSetupState {
+  if (state.step !== "searching") return state;
+
+  if (action.type === "found") return found(state, action.matches);
+
+  return { step: "editing", draft: state.draft, error: "unavailable" };
+}
+
+function locate(state: WeatherSetupState): WeatherSetupState {
+  if (state.step === "searching") return state;
+
+  return { step: "locating", draft: state.draft };
+}
+
+function locateFailed(state: WeatherSetupState, notice: LocateFailure): WeatherSetupState {
+  if (state.step !== "locating") return state;
+
+  return { step: "editing", draft: state.draft, notice };
+}
+
+function keep(state: WeatherSetupState): WeatherSetupState {
+  if (state.step !== "confirm-zone") return state;
+
+  return { step: "editing", draft: state.draft };
+}
+
+function cancel(state: WeatherSetupState): WeatherSetupState {
+  if (state.step === "editing") return state;
+
+  return { step: "editing", draft: state.draft };
 }

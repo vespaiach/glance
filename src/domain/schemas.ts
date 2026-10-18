@@ -44,16 +44,6 @@ const eventEntries = {
 
 type EventSpan = { startAt: string; endAt?: string; allDay?: true };
 
-function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
-  if (allDay) return endAt === undefined && Date.parse(startAt) % DAY_MS === 0;
-
-  if (endAt === undefined) return true;
-
-  const span = Date.parse(endAt) - Date.parse(startAt);
-
-  return span > 0 && span < DAY_MS;
-}
-
 const EventObjectSchema = v.object(eventEntries);
 
 export const CalendarEventSchema = v.pipe(
@@ -237,3 +227,13 @@ export const DisplaySchema = v.object({
   accountId: IdSchema,
 });
 export type Display = v.InferOutput<typeof DisplaySchema>;
+
+function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
+  if (allDay) return endAt === undefined && Date.parse(startAt) % DAY_MS === 0;
+
+  if (endAt === undefined) return true;
+
+  const span = Date.parse(endAt) - Date.parse(startAt);
+
+  return span > 0 && span < DAY_MS;
+}

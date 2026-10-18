@@ -38,6 +38,82 @@ export type OpenedLink = "opened" | "stale";
 
 const EMPTY_FORM: SignInState = { step: "form", email: "" };
 
+export function signInReducer(state: SignInState, action: SignInAction): SignInState {
+  switch (action.type) {
+    case "email":
+      return state.step === "form" ? { step: "form", email: action.email } : state;
+    case "send":
+      return send(state);
+    case "back":
+      return back(state);
+    case "name":
+      return typeName(state, action.draft);
+    case "submit-name":
+      return submitName(state);
+    case "link-sent":
+      return linkAnswered(state, true);
+    case "link-failed":
+      return linkAnswered(state, false);
+    case "status":
+      return statusAnswered(state, action.status);
+    case "status-failed":
+      return state.step === "opening" ? EMPTY_FORM : state;
+    case "opened-link":
+      return state.step === "sent" ? { step: "name", email: state.email, draft: "" } : state;
+    case "named":
+      return named(state, action.account);
+    case "name-failed":
+      return nameFailed(state);
+    case "skip":
+      return skip(state);
+    case "skip-failed":
+      return skipFailed(state);
+    case "setup-done":
+      return setupDone(state);
+  }
+}
+
+export function openedLinkFrom(search: string): OpenedLink | undefined {
+  const link = new URLSearchParams(search).get("link");
+
+  return link === "opened" || link === "stale" ? link : undefined;
+}
+
+export function initialSignIn(
+  fixture: SignInFixture,
+  account: FixtureAccount,
+  link?: OpenedLink,
+  signedOut?: { email: string },
+): SignInState {
+  const { email, name } = account;
+
+  if (link) return { step: "opening" };
+
+  if (signedOut)
+    return { step: "form", email: fixture.switch ? fixtureOtherEmail : signedOut.email };
+
+  switch (fixture.signin) {
+    case "sending":
+    case "sent":
+    case "phone":
+      return { step: fixture.signin, email };
+    case "offline":
+      return { step: "form", email };
+    case "sendfail":
+      return { step: "form", email, error: "failed" };
+    case "name":
+      return { step: "name", email, draft: "" };
+    case "location":
+      return { step: "location", account, returning: false };
+    case "expired":
+      return { step: "expired", email, onLink: fixture.on === "link" };
+    case "done":
+      return { step: "done", name, returning: fixture.acct === "returning" };
+    default:
+      return EMPTY_FORM;
+  }
+}
+
 function send(state: SignInState): SignInState {
   if (state.step === "expired") return { step: "sending", email: state.email };
 
@@ -140,80 +216,4 @@ function setupDone(state: SignInState): SignInState {
   if (state.step !== "location") return state;
 
   return { step: "done", name: state.account.name ?? "", returning: state.returning };
-}
-
-export function signInReducer(state: SignInState, action: SignInAction): SignInState {
-  switch (action.type) {
-    case "email":
-      return state.step === "form" ? { step: "form", email: action.email } : state;
-    case "send":
-      return send(state);
-    case "back":
-      return back(state);
-    case "name":
-      return typeName(state, action.draft);
-    case "submit-name":
-      return submitName(state);
-    case "link-sent":
-      return linkAnswered(state, true);
-    case "link-failed":
-      return linkAnswered(state, false);
-    case "status":
-      return statusAnswered(state, action.status);
-    case "status-failed":
-      return state.step === "opening" ? EMPTY_FORM : state;
-    case "opened-link":
-      return state.step === "sent" ? { step: "name", email: state.email, draft: "" } : state;
-    case "named":
-      return named(state, action.account);
-    case "name-failed":
-      return nameFailed(state);
-    case "skip":
-      return skip(state);
-    case "skip-failed":
-      return skipFailed(state);
-    case "setup-done":
-      return setupDone(state);
-  }
-}
-
-export function openedLinkFrom(search: string): OpenedLink | undefined {
-  const link = new URLSearchParams(search).get("link");
-
-  return link === "opened" || link === "stale" ? link : undefined;
-}
-
-export function initialSignIn(
-  fixture: SignInFixture,
-  account: FixtureAccount,
-  link?: OpenedLink,
-  signedOut?: { email: string },
-): SignInState {
-  const { email, name } = account;
-
-  if (link) return { step: "opening" };
-
-  if (signedOut)
-    return { step: "form", email: fixture.switch ? fixtureOtherEmail : signedOut.email };
-
-  switch (fixture.signin) {
-    case "sending":
-    case "sent":
-    case "phone":
-      return { step: fixture.signin, email };
-    case "offline":
-      return { step: "form", email };
-    case "sendfail":
-      return { step: "form", email, error: "failed" };
-    case "name":
-      return { step: "name", email, draft: "" };
-    case "location":
-      return { step: "location", account, returning: false };
-    case "expired":
-      return { step: "expired", email, onLink: fixture.on === "link" };
-    case "done":
-      return { step: "done", name, returning: fixture.acct === "returning" };
-    default:
-      return EMPTY_FORM;
-  }
 }

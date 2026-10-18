@@ -105,32 +105,6 @@ const styles = stylex.create({
   },
 });
 
-function useFocusOnOpen(dialog: RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const opener = document.activeElement;
-
-    dialog.current?.focus();
-
-    return () => {
-      if (opener instanceof HTMLElement) opener.focus();
-    };
-  }, [dialog]);
-}
-
-function wrapTarget(event: KeyboardEvent<HTMLDivElement>) {
-  const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)];
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-
-  if (event.shiftKey) {
-    const atStart =
-      document.activeElement === first || document.activeElement === event.currentTarget;
-    return atStart ? last : undefined;
-  }
-
-  return document.activeElement === last ? first : undefined;
-}
-
 export function Sheet({
   title,
   eyebrow,
@@ -200,4 +174,30 @@ export function Sheet({
       </div>
     </div>
   );
+}
+
+function useFocusOnOpen(dialog: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const opener = document.activeElement;
+
+    dialog.current?.focus();
+
+    return () => {
+      if (opener instanceof HTMLElement) opener.focus();
+    };
+  }, [dialog]);
+}
+
+function wrapTarget(event: KeyboardEvent<HTMLDivElement>) {
+  const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)];
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey) {
+    const atStart =
+      document.activeElement === first || document.activeElement === event.currentTarget;
+    return atStart ? last : undefined;
+  }
+
+  return document.activeElement === last ? first : undefined;
 }

@@ -87,23 +87,6 @@ const styles = stylex.create({
   },
 });
 
-function changeBody(change: ZoneChange, place: string, zone: string): string {
-  const text = copy.location.confirm;
-
-  if (change.kind === "same-now") return text.sameNow(place, zone);
-
-  return text.moves(place, zone, text.hours(change.hours), change.direction);
-}
-
-function Tile({ label, time }: { label: string; time: string }) {
-  return (
-    <div {...stylex.props(styles.tile)}>
-      <span {...stylex.props(styles.tileLabel)}>{label}</span>
-      <span {...stylex.props(styles.tileTime)}>{time}</span>
-    </div>
-  );
-}
-
 export function ZoneConfirm({
   place,
   from,
@@ -154,5 +137,22 @@ export function ZoneConfirm({
         </Button>
       </div>
     </ColorBlock>
+  );
+}
+
+function changeBody(change: ZoneChange, place: string, zone: string): string {
+  const text = copy.location.confirm;
+
+  if (change.kind === "same-now") return text.sameNow(place, zone);
+
+  return text.moves(place, zone, text.hours(change.hours), change.direction);
+}
+
+function Tile({ label, time }: { label: string; time: string }) {
+  return (
+    <div {...stylex.props(styles.tile)}>
+      <span {...stylex.props(styles.tileLabel)}>{label}</span>
+      <span {...stylex.props(styles.tileTime)}>{time}</span>
+    </div>
   );
 }

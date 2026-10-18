@@ -25,6 +25,8 @@ const MAX_AGE_S = { session: 400 * DAY_S, pending: DAY_S, link_email: 10 * 60 } 
 
 export type CookieName = keyof typeof MAX_AGE_S;
 
+const CoordinatesSchema = v.pick(WeatherLocationSchema, ["lat", "lon"]);
+
 export function setCookie(response: NextResponse, name: CookieName, value: string): void {
   response.cookies.set(name, value, {
     httpOnly: true,
@@ -124,8 +126,6 @@ export function readPlaceQuery(request: NextRequest): Result<string, "invalid"> 
   return query ? ok(query) : err("invalid");
 }
 
-const CoordinatesSchema = v.pick(WeatherLocationSchema, ["lat", "lon"]);
-
 export function readCoordinates(request: NextRequest): Result<Coordinates, "invalid"> {
   const params = request.nextUrl.searchParams;
 
@@ -135,10 +135,6 @@ export function readCoordinates(request: NextRequest): Result<Coordinates, "inva
   });
 
   return parsed.success ? ok(parsed.output) : err("invalid");
-}
-
-function coordinate(param: string | null): number {
-  return param?.trim() ? Number(param) : Number.NaN;
 }
 
 export function readUpload(request: NextRequest): Result<PhotoUpload, "invalid"> {
@@ -178,6 +174,10 @@ export async function fileResponse(file: PhotoFile): Promise<Response> {
       "x-content-type-options": "nosniff",
     },
   });
+}
+
+function coordinate(param: string | null): number {
+  return param?.trim() ? Number(param) : Number.NaN;
 }
 
 function decodedName(header: string | null): string | undefined {

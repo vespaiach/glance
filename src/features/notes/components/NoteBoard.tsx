@@ -109,44 +109,6 @@ const styles = stylex.create({
 
 const keepKey = (expiry: Expiry) => expiry ?? "never";
 
-function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
-  if (state.kind === "loading") return copy.notes.loadingCount;
-
-  if (state.kind === "failed") return copy.notes.failedCount;
-
-  if (state.kind === "empty") return copy.notes.count(0);
-
-  const count = copy.notes.count(state.data.length);
-
-  if (state.updatedAt === undefined) return count;
-
-  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
-}
-
-function BoardSkeleton() {
-  return (
-    <Skeleton label={copy.notes.loading} xstyle={styles.grid}>
-      {SKELETON_NOTES.map((note) => (
-        <SkeletonBlock key={note} height={200} radius={radii.sm} />
-      ))}
-    </Skeleton>
-  );
-}
-
-function EmptyBoard({ expiry }: { expiry: Expiry }) {
-  return (
-    <div {...stylex.props(styles.emptyTile)}>
-      <Icon icon={StickyNoteGlyph} size={40} strokeWidth={1.5} />
-      <div {...stylex.props(styles.emptyText)}>
-        <span {...stylex.props(styles.emptyTitle)}>{copy.notes.emptyTitle}</span>
-        <span {...stylex.props(styles.emptyBody)}>
-          {copy.notes.emptyBody(copy.notes.emptyKeep[keepKey(expiry)])}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export function NoteBoard({
   state,
   retryIn,
@@ -209,5 +171,43 @@ export function NoteBoard({
         )}
       </Zone>
     </section>
+  );
+}
+
+function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
+  if (state.kind === "loading") return copy.notes.loadingCount;
+
+  if (state.kind === "failed") return copy.notes.failedCount;
+
+  if (state.kind === "empty") return copy.notes.count(0);
+
+  const count = copy.notes.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
+}
+
+function BoardSkeleton() {
+  return (
+    <Skeleton label={copy.notes.loading} xstyle={styles.grid}>
+      {SKELETON_NOTES.map((note) => (
+        <SkeletonBlock key={note} height={200} radius={radii.sm} />
+      ))}
+    </Skeleton>
+  );
+}
+
+function EmptyBoard({ expiry }: { expiry: Expiry }) {
+  return (
+    <div {...stylex.props(styles.emptyTile)}>
+      <Icon icon={StickyNoteGlyph} size={40} strokeWidth={1.5} />
+      <div {...stylex.props(styles.emptyText)}>
+        <span {...stylex.props(styles.emptyTitle)}>{copy.notes.emptyTitle}</span>
+        <span {...stylex.props(styles.emptyBody)}>
+          {copy.notes.emptyBody(copy.notes.emptyKeep[keepKey(expiry)])}
+        </span>
+      </div>
+    </div>
   );
 }

@@ -32,6 +32,20 @@ type SheetFrameProps = {
   onDelete: () => void;
 };
 
+type NewNoteProps = { draft?: Pick<NoteDraft, "text" | "tone">; discard?: true };
+
+export function NoteSheetScreen() {
+  const { sheet } = useSheetHost();
+
+  if (sheet?.kind === "note")
+    return <LoadedNoteSheet key={sheet.id} id={sheet.id} discard={sheet.discard} />;
+
+  if (sheet?.kind === "newnote")
+    return <NewNoteSheet draft={sheet.draft} discard={sheet.discard} />;
+
+  return null;
+}
+
 function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
 
@@ -94,8 +108,6 @@ function LoadedNoteSheet({ id, discard }: { id: string; discard?: true }) {
   return note ? <EditNoteSheet note={note} discard={discard} /> : null;
 }
 
-type NewNoteProps = { draft?: Pick<NoteDraft, "text" | "tone">; discard?: true };
-
 function NewNoteSheet({ draft, discard }: NewNoteProps) {
   const nowStore = useNowStore();
 
@@ -110,16 +122,4 @@ function NewNoteSheet({ draft, discard }: NewNoteProps) {
       onDelete={() => {}}
     />
   );
-}
-
-export function NoteSheetScreen() {
-  const { sheet } = useSheetHost();
-
-  if (sheet?.kind === "note")
-    return <LoadedNoteSheet key={sheet.id} id={sheet.id} discard={sheet.discard} />;
-
-  if (sheet?.kind === "newnote")
-    return <NewNoteSheet draft={sheet.draft} discard={sheet.discard} />;
-
-  return null;
 }

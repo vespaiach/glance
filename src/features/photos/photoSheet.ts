@@ -36,10 +36,6 @@ export function initialPhotoSheet(
   return { draft, opened: draft, error: null, confirm: discard ? "discard" : null };
 }
 
-function changed(draft: PhotoDraft, opened: PhotoDraft, field: PhotoField): boolean {
-  return draft[field].trim() !== opened[field].trim();
-}
-
 export function isDirty(draft: PhotoDraft, opened: PhotoDraft): boolean {
   return FIELDS.some((field) => changed(draft, opened, field));
 }
@@ -58,17 +54,6 @@ export function draftProblem(draft: PhotoDraft, today: string): PhotoSheetError 
   return draft.takenOn > today ? "future" : null;
 }
 
-function savedSources(photo: Photo, draft: PhotoDraft, opened: PhotoDraft): PhotoSources {
-  const source = <F extends PhotoField>(field: F) =>
-    changed(draft, opened, field) ? "edited" : photo.sources[field];
-
-  return { title: source("title"), takenOn: source("takenOn"), place: source("place") };
-}
-
-function filled<K extends string>(key: K, value: string) {
-  return (value === "" ? {} : { [key]: value }) as { [P in K]?: string };
-}
-
 export function photoFromDraft(photo: Photo, draft: PhotoDraft, opened: PhotoDraft): Photo {
   return {
     id: photo.id,
@@ -79,17 +64,6 @@ export function photoFromDraft(photo: Photo, draft: PhotoDraft, opened: PhotoDra
     sources: savedSources(photo, draft, opened),
     checked: true,
     ...(photo.fileName !== undefined && { fileName: photo.fileName }),
-  };
-}
-
-function edited(state: PhotoSheetState, field: PhotoField, value: string): PhotoSheetState {
-  const error = state.error && ERROR_FIELD[state.error] === field ? null : state.error;
-
-  return {
-    draft: { ...state.draft, [field]: value },
-    opened: state.opened,
-    error,
-    confirm: afterEdit(state.confirm),
   };
 }
 
@@ -109,4 +83,30 @@ export function photoSheetReducer(
     case "keepEditing":
       return { ...state, confirm: null };
   }
+}
+
+function changed(draft: PhotoDraft, opened: PhotoDraft, field: PhotoField): boolean {
+  return draft[field].trim() !== opened[field].trim();
+}
+
+function savedSources(photo: Photo, draft: PhotoDraft, opened: PhotoDraft): PhotoSources {
+  const source = <F extends PhotoField>(field: F) =>
+    changed(draft, opened, field) ? "edited" : photo.sources[field];
+
+  return { title: source("title"), takenOn: source("takenOn"), place: source("place") };
+}
+
+function filled<K extends string>(key: K, value: string) {
+  return (value === "" ? {} : { [key]: value }) as { [P in K]?: string };
+}
+
+function edited(state: PhotoSheetState, field: PhotoField, value: string): PhotoSheetState {
+  const error = state.error && ERROR_FIELD[state.error] === field ? null : state.error;
+
+  return {
+    draft: { ...state.draft, [field]: value },
+    opened: state.opened,
+    error,
+    confirm: afterEdit(state.confirm),
+  };
 }

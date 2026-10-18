@@ -20,32 +20,12 @@ export type Network = {
 
 const NetworkContext = createContext<Network | undefined>(undefined);
 
-function subscribeBrowserOnline(listener: () => void) {
-  window.addEventListener("online", listener);
-  window.addEventListener("offline", listener);
-
-  return () => {
-    window.removeEventListener("online", listener);
-    window.removeEventListener("offline", listener);
-  };
-}
-
 export function useBrowserOnline(): boolean {
   return useSyncExternalStore(
     subscribeBrowserOnline,
     () => navigator.onLine,
     () => true,
   );
-}
-
-function useOfflineSince(online: boolean, now: Date): Date | undefined {
-  const [since, setSince] = useState<Date | undefined>(undefined);
-
-  if (online && since !== undefined) setSince(undefined);
-
-  if (!online && since === undefined) setSince(now);
-
-  return online ? undefined : (since ?? now);
 }
 
 export function NetworkProvider({
@@ -83,4 +63,24 @@ export function useNetwork(): Network {
   if (network === undefined) throw new Error("useNetwork needs a NetworkProvider");
 
   return network;
+}
+
+function subscribeBrowserOnline(listener: () => void) {
+  window.addEventListener("online", listener);
+  window.addEventListener("offline", listener);
+
+  return () => {
+    window.removeEventListener("online", listener);
+    window.removeEventListener("offline", listener);
+  };
+}
+
+function useOfflineSince(online: boolean, now: Date): Date | undefined {
+  const [since, setSince] = useState<Date | undefined>(undefined);
+
+  if (online && since !== undefined) setSince(undefined);
+
+  if (!online && since === undefined) setSince(now);
+
+  return online ? undefined : (since ?? now);
 }

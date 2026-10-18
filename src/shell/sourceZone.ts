@@ -14,30 +14,6 @@ export type SourceZone<T> = {
 
 const LOADING = { kind: "loading" } as const;
 
-function useTimedOut(since: Date | undefined): boolean {
-  const store = useNowStore();
-
-  const snapshot = () => since !== undefined && loadingTimedOut(since, store.get());
-
-  return useSyncExternalStore(store.subscribe, snapshot, snapshot);
-}
-
-function weatherSince(source: SourceStatus | undefined): Date | undefined {
-  if (source === undefined) return undefined;
-
-  if (source.weather.state === "loading") return new Date(source.weather.since);
-
-  return source.everSynced ? undefined : source.since;
-}
-
-function knownLocation(located: boolean, source: SourceStatus | undefined): boolean | undefined {
-  return located || source?.everSynced ? located : undefined;
-}
-
-function weatherRetryAt(source: SourceStatus | undefined): string | undefined {
-  return source?.weather.state === "failed" ? source.weather.retryAt : undefined;
-}
-
 export function useSyncedZone<T>(rows: readonly T[] | undefined): SourceZone<T> {
   const source = useSourceStatus();
 
@@ -75,4 +51,28 @@ export function useWeatherZone(
   });
 
   return { state, retryIn: retryMinutes(retryAt, now), retry: retry.weather };
+}
+
+function useTimedOut(since: Date | undefined): boolean {
+  const store = useNowStore();
+
+  const snapshot = () => since !== undefined && loadingTimedOut(since, store.get());
+
+  return useSyncExternalStore(store.subscribe, snapshot, snapshot);
+}
+
+function weatherSince(source: SourceStatus | undefined): Date | undefined {
+  if (source === undefined) return undefined;
+
+  if (source.weather.state === "loading") return new Date(source.weather.since);
+
+  return source.everSynced ? undefined : source.since;
+}
+
+function knownLocation(located: boolean, source: SourceStatus | undefined): boolean | undefined {
+  return located || source?.everSynced ? located : undefined;
+}
+
+function weatherRetryAt(source: SourceStatus | undefined): string | undefined {
+  return source?.weather.state === "failed" ? source.weather.retryAt : undefined;
 }

@@ -11,6 +11,15 @@ import { useSheetHost } from "@/shell/SheetHost";
 import { PhotoSheet } from "./components/PhotoSheet";
 import { draftFromPhoto, initialPhotoSheet } from "./photoSheet";
 
+export function PhotoSheetScreen() {
+  const { sheet } = useSheetHost();
+
+  if (sheet?.kind === "photo")
+    return <LoadedPhotoSheet key={sheet.id} id={sheet.id} discard={sheet.discard} />;
+
+  return null;
+}
+
 function EditPhotoSheet({ photo, discard }: { photo: Photo; discard?: true }) {
   const { close } = useSheetHost();
 
@@ -51,13 +60,4 @@ function LoadedPhotoSheet({ id, discard }: { id: string; discard?: true }) {
   const photo = usePhoto(id);
 
   return photo ? <EditPhotoSheet photo={photo} discard={discard} /> : null;
-}
-
-export function PhotoSheetScreen() {
-  const { sheet } = useSheetHost();
-
-  if (sheet?.kind === "photo")
-    return <LoadedPhotoSheet key={sheet.id} id={sheet.id} discard={sheet.discard} />;
-
-  return null;
 }

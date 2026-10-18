@@ -26,14 +26,6 @@ const SETUPS: readonly WeatherSetupState[] = [
   { step: "choosing", draft: "Portland", matches: PLACES },
 ];
 
-function setupKey(setup: WeatherSetupState): string {
-  const error = "error" in setup ? setup.error : "";
-
-  const notice = "notice" in setup ? setup.notice : "";
-
-  return `${setup.step}-${setup.draft}-${error}-${notice}`;
-}
-
 const styles = stylex.create({
   view: {
     width: 1200,
@@ -89,4 +81,12 @@ export function WeatherGallery() {
       </div>
     </GalleryGroup>
   );
+}
+
+function setupKey(setup: WeatherSetupState): string {
+  const error = "error" in setup ? setup.error : "";
+
+  const notice = "notice" in setup ? setup.notice : "";
+
+  return `${setup.step}-${setup.draft}-${error}-${notice}`;
 }

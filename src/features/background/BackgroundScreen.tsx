@@ -16,10 +16,6 @@ import { BackgroundView } from "./components/BackgroundView";
 
 const SETTINGS_PATH = "/settings";
 
-function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
-  return photos && newestFirst(photos);
-}
-
 export function BackgroundScreen() {
   const router = useRouter();
 
@@ -75,4 +71,8 @@ export function BackgroundScreen() {
       />
     </>
   );
+}
+
+function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
+  return photos && newestFirst(photos);
 }

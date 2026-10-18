@@ -42,51 +42,6 @@ const NEVER_ASKS = () => false;
 
 const LOOKUP_LIMIT_MS = 5_000;
 
-function lookupFailure(error: LocateError): LocateFailure {
-  return error === "outside" ? "outside" : "lookup";
-}
-
-function withinLimit(
-  answer: Promise<Result<WeatherLocation, LocateError>>,
-): Promise<Result<WeatherLocation, LocateError>> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  const limit = new Promise<Result<WeatherLocation, LocateError>>((resolve) => {
-    timer = setTimeout(() => resolve(err("network")), LOOKUP_LIMIT_MS);
-  });
-
-  return Promise.race([answer, limit]).finally(() => clearTimeout(timer));
-}
-
-async function placeAt(
-  source: SetupSource,
-  position: DevicePosition,
-): Promise<Result<WeatherLocation, LocateFailure>> {
-  const coords = await position.current();
-
-  if (!coords.ok) return coords;
-
-  const answer = await withinLimit(source.locate(coords.value));
-
-  return answer.ok ? answer : err(lookupFailure(answer.error));
-}
-
-function useAvailable(position: DevicePosition): boolean {
-  const [available, setAvailable] = useState(false);
-
-  useEffect(() => {
-    let live = true;
-
-    void position.available().then((answer) => live && setAvailable(answer));
-
-    return () => {
-      live = false;
-    };
-  }, [position]);
-
-  return available;
-}
-
 export function useWeatherSetup({
   initial,
   source,
@@ -192,4 +147,49 @@ export function useWeatherSetup({
     keep: () => dispatch({ type: "keep" }),
     skip: (end) => void skip(end),
   };
+}
+
+function lookupFailure(error: LocateError): LocateFailure {
+  return error === "outside" ? "outside" : "lookup";
+}
+
+function withinLimit(
+  answer: Promise<Result<WeatherLocation, LocateError>>,
+): Promise<Result<WeatherLocation, LocateError>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const limit = new Promise<Result<WeatherLocation, LocateError>>((resolve) => {
+    timer = setTimeout(() => resolve(err("network")), LOOKUP_LIMIT_MS);
+  });
+
+  return Promise.race([answer, limit]).finally(() => clearTimeout(timer));
+}
+
+async function placeAt(
+  source: SetupSource,
+  position: DevicePosition,
+): Promise<Result<WeatherLocation, LocateFailure>> {
+  const coords = await position.current();
+
+  if (!coords.ok) return coords;
+
+  const answer = await withinLimit(source.locate(coords.value));
+
+  return answer.ok ? answer : err(lookupFailure(answer.error));
+}
+
+function useAvailable(position: DevicePosition): boolean {
+  const [available, setAvailable] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+
+    void position.available().then((answer) => live && setAvailable(answer));
+
+    return () => {
+      live = false;
+    };
+  }, [position]);
+
+  return available;
 }

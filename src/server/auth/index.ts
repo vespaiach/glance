@@ -21,22 +21,6 @@ const ONE_HOUR = 60 * 60 * 1000;
 
 const shared = globalThis as typeof globalThis & { glanceAuth?: AuthDeps };
 
-function deps(): AuthDeps {
-  shared.glanceAuth ??= {
-    db: getDb(),
-    now: () => new Date(),
-    mailer: createMailer(env().RESEND_API_KEY, env().MAIL_FROM),
-    appUrl: env().APP_URL,
-    limits: {
-      email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
-      ip: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
-      qr: createRateLimiter({ limit: 30, windowMs: ONE_HOUR }),
-    },
-  };
-
-  return shared.glanceAuth;
-}
-
 export function appUrl(): string {
   return deps().appUrl;
 }
@@ -71,4 +55,20 @@ export function signOut(sessionToken: string | undefined): Promise<void> {
 
 export function saveName(accountId: string, name: string) {
   return account.saveName(deps().db, accountId, name);
+}
+
+function deps(): AuthDeps {
+  shared.glanceAuth ??= {
+    db: getDb(),
+    now: () => new Date(),
+    mailer: createMailer(env().RESEND_API_KEY, env().MAIL_FROM),
+    appUrl: env().APP_URL,
+    limits: {
+      email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
+      ip: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
+      qr: createRateLimiter({ limit: 30, windowMs: ONE_HOUR }),
+    },
+  };
+
+  return shared.glanceAuth;
 }

@@ -62,6 +62,20 @@ const styles = stylex.create({
   },
 });
 
+export function SidebarGallery() {
+  return (
+    <>
+      {SIZES.map((size) => (
+        <div key={size} {...stylex.props(styles.row)}>
+          {MODES.map((mode) => (
+            <SidebarDemo key={mode} mode={mode} size={size} />
+          ))}
+        </div>
+      ))}
+    </>
+  );
+}
+
 function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
   const [state, dispatch] = useReducer(sidebarReducer, FIXTURE[mode], initialSidebar);
 
@@ -91,19 +105,5 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
         />
       </div>
     </div>
-  );
-}
-
-export function SidebarGallery() {
-  return (
-    <>
-      {SIZES.map((size) => (
-        <div key={size} {...stylex.props(styles.row)}>
-          {MODES.map((mode) => (
-            <SidebarDemo key={mode} mode={mode} size={size} />
-          ))}
-        </div>
-      ))}
-    </>
   );
 }

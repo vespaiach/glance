@@ -46,16 +46,6 @@ const styles = stylex.create({
   },
 });
 
-function Layer({ image, fade }: { image: string; fade?: stylex.StyleXStyles }) {
-  return (
-    <div
-      aria-hidden="true"
-      data-backdrop={image}
-      {...stylex.props(styles.layer, styles.image(image), fade)}
-    />
-  );
-}
-
 export function PhotoBackdrop({ image }: { image: string | undefined }) {
   const [layers, setLayers] = useState<Layers>({
     current: image,
@@ -77,5 +67,15 @@ export function PhotoBackdrop({ image }: { image: string | undefined }) {
         <Layer key={current} image={current} fade={changed && styles.enter} />
       )}
     </>
+  );
+}
+
+function Layer({ image, fade }: { image: string; fade?: stylex.StyleXStyles }) {
+  return (
+    <div
+      aria-hidden="true"
+      data-backdrop={image}
+      {...stylex.props(styles.layer, styles.image(image), fade)}
+    />
   );
 }

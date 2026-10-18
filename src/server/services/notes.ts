@@ -72,6 +72,18 @@ export function deleteNote(
   });
 }
 
+export function toNote(row: NoteRow): SyncedNote {
+  return {
+    id: row.id,
+    text: row.text,
+    author: row.author,
+    createdAt: row.created_at,
+    tone: toneFromColumn<NoteTone>(row.tone),
+    rotation: row.rotation,
+    ...serverFields(row),
+  };
+}
+
 function noteRow(db: Db, id: string): Promise<NoteRow | undefined> {
   return db.one<NoteRow>("SELECT * FROM notes WHERE id = $1", [id]);
 }
@@ -100,16 +112,4 @@ async function writeNote(
       version,
     ],
   );
-}
-
-export function toNote(row: NoteRow): SyncedNote {
-  return {
-    id: row.id,
-    text: row.text,
-    author: row.author,
-    createdAt: row.created_at,
-    tone: toneFromColumn<NoteTone>(row.tone),
-    rotation: row.rotation,
-    ...serverFields(row),
-  };
 }

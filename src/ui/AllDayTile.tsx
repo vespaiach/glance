@@ -81,9 +81,11 @@ const styles = stylex.create({
   },
 });
 
-function dotStyle(dot: Tone) {
-  return typeof dot === "number" ? styles[`tone${dot}`] : styles[dot];
-}
+type AllDayTilesProps = {
+  events: readonly CalendarEvent[];
+  label: string;
+  onOpenEvent: (id: string) => void;
+};
 
 export function AllDayTile({ label, title, location, dot, onClick }: AllDayTileProps) {
   return (
@@ -97,12 +99,6 @@ export function AllDayTile({ label, title, location, dot, onClick }: AllDayTileP
     </button>
   );
 }
-
-type AllDayTilesProps = {
-  events: readonly CalendarEvent[];
-  label: string;
-  onOpenEvent: (id: string) => void;
-};
 
 export function AllDayTiles({ events, label, onOpenEvent }: AllDayTilesProps) {
   if (events.length === 0) return null;
@@ -121,4 +117,8 @@ export function AllDayTiles({ events, label, onOpenEvent }: AllDayTilesProps) {
       ))}
     </div>
   );
+}
+
+function dotStyle(dot: Tone) {
+  return typeof dot === "number" ? styles[`tone${dot}`] : styles[dot];
 }

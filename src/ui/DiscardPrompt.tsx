@@ -49,22 +49,6 @@ export function DiscardMessage({ title, body }: DiscardMessageProps) {
   );
 }
 
-function useFocusWhileShown() {
-  const keep = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const dialog = keep.current?.closest<HTMLElement>("[role=dialog]");
-
-    keep.current?.focus();
-
-    return () => {
-      if (document.activeElement === document.body) dialog?.focus();
-    };
-  }, []);
-
-  return keep;
-}
-
 export function DiscardButtons({
   keepLabel,
   discardLabel,
@@ -83,4 +67,20 @@ export function DiscardButtons({
       </Button>
     </>
   );
+}
+
+function useFocusWhileShown() {
+  const keep = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const dialog = keep.current?.closest<HTMLElement>("[role=dialog]");
+
+    keep.current?.focus();
+
+    return () => {
+      if (document.activeElement === document.body) dialog?.focus();
+    };
+  }, []);
+
+  return keep;
 }

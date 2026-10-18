@@ -10,6 +10,26 @@ const SIGN_IN = "/signin";
 
 const AMBIENT = "/ambient";
 
+export function SessionGuard({ children }: { children: ReactNode }) {
+  const router = useRouter();
+
+  const pathname = usePathname();
+
+  const { sheet } = useSheetHost();
+
+  const editing = useEditingField();
+
+  const marked = useMarkedSignedOut(useSignedOut());
+
+  const leave = marked && sheet === null && !editing && pathname !== AMBIENT;
+
+  useEffect(() => {
+    if (leave) router.replace(SIGN_IN);
+  }, [leave, router]);
+
+  return children;
+}
+
 function useEditingField(): boolean {
   const [editing, setEditing] = useState(() => isTextField(document.activeElement));
 
@@ -51,24 +71,4 @@ function useMarkedSignedOut(signedOut: boolean): boolean {
   }, [signedOut, markSignedOut]);
 
   return marked;
-}
-
-export function SessionGuard({ children }: { children: ReactNode }) {
-  const router = useRouter();
-
-  const pathname = usePathname();
-
-  const { sheet } = useSheetHost();
-
-  const editing = useEditingField();
-
-  const marked = useMarkedSignedOut(useSignedOut());
-
-  const leave = marked && sheet === null && !editing && pathname !== AMBIENT;
-
-  useEffect(() => {
-    if (leave) router.replace(SIGN_IN);
-  }, [leave, router]);
-
-  return children;
 }

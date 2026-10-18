@@ -59,10 +59,6 @@ const styles = stylex.create({
   accent: { backgroundColor: season.accent },
 });
 
-function toneStyle(tone: Tone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
-}
-
 export function ColorSwatchPicker<T extends Tone>({
   label,
   options,
@@ -100,4 +96,8 @@ export function ColorSwatchPicker<T extends Tone>({
       </div>
     </fieldset>
   );
+}
+
+function toneStyle(tone: Tone) {
+  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

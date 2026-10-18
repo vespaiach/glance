@@ -61,29 +61,10 @@ const MINUTE_MS = 60_000;
 
 const NAMED_AT = new Date("2026-01-01T00:00:00Z");
 
-function genericName(zone: string): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: zone,
-    timeZoneName: "longGeneric",
-  }).formatToParts(NAMED_AT);
-
-  const name = parts.find((part) => part.type === "timeZoneName")?.value ?? zone;
-
-  return name.replace(/ Time$/, " time");
-}
-
 export function timeZoneName(zone: string): string {
   const name = ZONE_NAMES.get(zone);
 
   return name ? `${name} time` : genericName(zone);
-}
-
-function offsetMinutes(at: Date, zone: string): number {
-  const wall = wallTime(at, zone);
-
-  const asUtc = Date.UTC(wall.year, wall.month - 1, wall.day, wall.hour, wall.minute);
-
-  return Math.round((asUtc - Math.floor(at.getTime() / MINUTE_MS) * MINUTE_MS) / MINUTE_MS);
 }
 
 export function zoneChange(from: string, to: string, at: Date): ZoneChange {
@@ -102,4 +83,23 @@ export function asksZoneChange(saved: string | undefined, next: string | undefin
   if (saved === undefined || next === undefined) return false;
 
   return timeZoneName(saved) !== timeZoneName(next);
+}
+
+function genericName(zone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: zone,
+    timeZoneName: "longGeneric",
+  }).formatToParts(NAMED_AT);
+
+  const name = parts.find((part) => part.type === "timeZoneName")?.value ?? zone;
+
+  return name.replace(/ Time$/, " time");
+}
+
+function offsetMinutes(at: Date, zone: string): number {
+  const wall = wallTime(at, zone);
+
+  const asUtc = Date.UTC(wall.year, wall.month - 1, wall.day, wall.hour, wall.minute);
+
+  return Math.round((asUtc - Math.floor(at.getTime() / MINUTE_MS) * MINUTE_MS) / MINUTE_MS);
 }

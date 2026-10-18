@@ -94,49 +94,6 @@ const styles = stylex.create({
   },
 });
 
-function gridLabel(mode: Background["mode"], count: number): string {
-  return mode === "slideshow" ? copy.background.inRotation(count) : copy.background.selectOne;
-}
-
-function ThumbsSkeleton({ columns }: { columns: stylex.StyleXStyles }) {
-  return (
-    <Skeleton label={copy.background.loading} xstyle={[styles.skeleton, columns]}>
-      {SKELETON_THUMBS.map((thumb) => (
-        <SkeletonBlock key={thumb} height={96} radius={radii.md} />
-      ))}
-    </Skeleton>
-  );
-}
-
-function Photos({ photos, background, now, tz, onChange, ...rest }: PhotosProps) {
-  return (
-    <div {...stylex.props(styles.photos)}>
-      <Eyebrow>{gridLabel(background.mode, photos.length)}</Eyebrow>
-      <BackgroundThumbs
-        {...rest}
-        photos={photos}
-        shown={shownBackground(background, photos, now, tz)}
-        onPick={(photoId) => onChange(pickPhoto(background.mode, photoId))}
-      />
-    </div>
-  );
-}
-
-function Header({ onBack }: { onBack: () => void }) {
-  return (
-    <div {...stylex.props(styles.header)}>
-      <Button variant="ghost" icon={ChevronLeft} onClick={onBack}>
-        {copy.background.back}
-      </Button>
-      <h2 {...stylex.props(styles.title)}>{copy.background.title}</h2>
-    </div>
-  );
-}
-
-function readyPhotos(state: ZoneState<Photo>): readonly Photo[] {
-  return state.kind === "ready" ? state.data : [];
-}
-
 export function BackgroundView({
   state,
   retryIn,
@@ -191,4 +148,47 @@ export function BackgroundView({
       />
     </div>
   );
+}
+
+function gridLabel(mode: Background["mode"], count: number): string {
+  return mode === "slideshow" ? copy.background.inRotation(count) : copy.background.selectOne;
+}
+
+function ThumbsSkeleton({ columns }: { columns: stylex.StyleXStyles }) {
+  return (
+    <Skeleton label={copy.background.loading} xstyle={[styles.skeleton, columns]}>
+      {SKELETON_THUMBS.map((thumb) => (
+        <SkeletonBlock key={thumb} height={96} radius={radii.md} />
+      ))}
+    </Skeleton>
+  );
+}
+
+function Photos({ photos, background, now, tz, onChange, ...rest }: PhotosProps) {
+  return (
+    <div {...stylex.props(styles.photos)}>
+      <Eyebrow>{gridLabel(background.mode, photos.length)}</Eyebrow>
+      <BackgroundThumbs
+        {...rest}
+        photos={photos}
+        shown={shownBackground(background, photos, now, tz)}
+        onPick={(photoId) => onChange(pickPhoto(background.mode, photoId))}
+      />
+    </div>
+  );
+}
+
+function Header({ onBack }: { onBack: () => void }) {
+  return (
+    <div {...stylex.props(styles.header)}>
+      <Button variant="ghost" icon={ChevronLeft} onClick={onBack}>
+        {copy.background.back}
+      </Button>
+      <h2 {...stylex.props(styles.title)}>{copy.background.title}</h2>
+    </div>
+  );
+}
+
+function readyPhotos(state: ZoneState<Photo>): readonly Photo[] {
+  return state.kind === "ready" ? state.data : [];
 }

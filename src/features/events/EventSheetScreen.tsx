@@ -34,6 +34,26 @@ type SheetFrameProps = {
   onDelete: () => void;
 };
 
+type Fixtures = { time?: TimeFixture; discard?: true };
+
+type EditProps = Fixtures & { event: CalendarEvent };
+
+export function EventSheetScreen() {
+  const { sheet } = useSheetHost();
+
+  if (sheet?.kind === "event")
+    return (
+      <LoadedEventSheet key={sheet.id} id={sheet.id} time={sheet.time} discard={sheet.discard} />
+    );
+
+  if (sheet?.kind === "newevent")
+    return (
+      <NewEventSheet key={sheet.day} day={sheet.day} time={sheet.time} discard={sheet.discard} />
+    );
+
+  return null;
+}
+
 function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
 
@@ -70,10 +90,6 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
     />
   );
 }
-
-type Fixtures = { time?: TimeFixture; discard?: true };
-
-type EditProps = Fixtures & { event: CalendarEvent };
 
 function EditEventSheet({ event, time, discard }: EditProps) {
   const { close } = useSheetHost();
@@ -122,20 +138,4 @@ function NewEventSheet({ day, time, discard }: Fixtures & { day: string }) {
       onDelete={() => {}}
     />
   );
-}
-
-export function EventSheetScreen() {
-  const { sheet } = useSheetHost();
-
-  if (sheet?.kind === "event")
-    return (
-      <LoadedEventSheet key={sheet.id} id={sheet.id} time={sheet.time} discard={sheet.discard} />
-    );
-
-  if (sheet?.kind === "newevent")
-    return (
-      <NewEventSheet key={sheet.day} day={sheet.day} time={sheet.time} discard={sheet.discard} />
-    );
-
-  return null;
 }

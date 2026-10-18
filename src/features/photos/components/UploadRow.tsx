@@ -52,6 +52,20 @@ const ICONS: Record<ShownSummary["kind"], LucideIcon> = {
   uploading: Upload,
 };
 
+export function UploadRow({ summary }: { summary: ShownSummary }) {
+  const offline = summary.kind === "offline";
+
+  return (
+    <div role="status" {...stylex.props(styles.root, offline && styles.offline)}>
+      <Icon icon={ICONS[summary.kind]} size={20} />
+      <span {...stylex.props(styles.text, offline && styles.offlineText)}>{rowText(summary)}</span>
+      {summary.kind === "uploading" && (
+        <span {...stylex.props(styles.meta)}>{copy.photos.tile.percent(summary.percent)}</span>
+      )}
+    </div>
+  );
+}
+
 function uploadingText(summary: Extract<UploadSummary, { kind: "uploading" }>): string {
   const running = summary.one
     ? copy.photos.row.uploadingOne(summary.one)
@@ -71,18 +85,4 @@ function rowText(summary: ShownSummary): string {
     case "uploading":
       return uploadingText(summary);
   }
-}
-
-export function UploadRow({ summary }: { summary: ShownSummary }) {
-  const offline = summary.kind === "offline";
-
-  return (
-    <div role="status" {...stylex.props(styles.root, offline && styles.offline)}>
-      <Icon icon={ICONS[summary.kind]} size={20} />
-      <span {...stylex.props(styles.text, offline && styles.offlineText)}>{rowText(summary)}</span>
-      {summary.kind === "uploading" && (
-        <span {...stylex.props(styles.meta)}>{copy.photos.tile.percent(summary.percent)}</span>
-      )}
-    </div>
-  );
 }

@@ -130,107 +130,16 @@ const styles = stylex.create({
 const timeOf = (iso: string, clock: Clock, tz: string) =>
   timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
-function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock, tz: string): string {
-  if (state.kind === "loading") return copy.today.schedule.loadingCount;
-
-  if (state.kind === "failed") return copy.today.schedule.failedCount;
-
-  if (state.kind === "empty") return copy.today.schedule.count(0);
-
-  const count = copy.today.schedule.count(state.data.length);
-
-  if (state.updatedAt === undefined) return count;
-
-  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
-}
-
-function ScheduleSkeleton() {
-  return (
-    <Skeleton label={copy.today.schedule.loading} xstyle={styles.skeleton}>
-      {SKELETON_ROWS.map((row) => (
-        <SkeletonBlock key={row} height={44} radius={radii.md} />
-      ))}
-    </Skeleton>
-  );
-}
-
-function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
-  return (
-    <div {...stylex.props(tile.root, tile.start, styles.empty)}>
-      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
-      <div {...stylex.props(tile.text)}>
-        <span {...stylex.props(tile.title)}>{copy.today.schedule.emptyTitle}</span>
-        <span {...stylex.props(tile.body)}>{copy.today.schedule.emptyBody}</span>
-      </div>
-      <Button icon={Plus} onClick={onAddEvent}>
-        {copy.today.schedule.addEvent}
-      </Button>
-    </div>
-  );
-}
-
 type SeeAllProps = {
   count: number;
   hidden: { earlier: number; later: number };
   onClick: () => void;
 };
 
-function SeeAll({ count, hidden, onClick }: SeeAllProps) {
-  return (
-    <button type="button" onClick={onClick} {...stylex.props(styles.seeAll, press.scale)}>
-      <span {...stylex.props(styles.seeAllLabel)}>{copy.today.schedule.seeAll(count)}</span>
-      <span {...stylex.props(styles.seeAllMeta)}>
-        <span {...stylex.props(styles.seeAllCount)}>
-          {copy.today.schedule.hidden(hidden.earlier, hidden.later)}
-        </span>
-        <Icon icon={ArrowRight} size={20} />
-      </span>
-    </button>
-  );
-}
-
 type ScheduleRowsProps = Pick<
   TodayScheduleProps,
   "now" | "clock" | "tz" | "compact" | "capacity" | "onOpenEvent" | "onOpenCalendar"
 > & { events: readonly CalendarEvent[] };
-
-function ScheduleRows({
-  events,
-  now,
-  clock,
-  tz,
-  compact,
-  capacity,
-  onOpenEvent,
-  onOpenCalendar,
-}: ScheduleRowsProps) {
-  const { allDay, rows, hidden } = todaySchedule(events, now, tz, capacity);
-
-  return (
-    <>
-      <AllDayTiles events={allDay} label={copy.events.allDay} onOpenEvent={onOpenEvent} />
-      <div {...stylex.props(styles.list)}>
-        {rows.map((event) => (
-          <EventRow
-            key={event.id}
-            start={timeOf(event.startAt, clock, tz)}
-            end={event.endAt && timeOf(event.endAt, clock, tz)}
-            title={event.title}
-            location={event.location}
-            status={eventStatus(event, now, tz)}
-            dot={event.tone}
-            nowLabel={copy.events.now}
-            compact={compact}
-            onClick={() => onOpenEvent(event.id)}
-          />
-        ))}
-      </div>
-      {hidden.earlier + hidden.later > 0 && (
-        <SeeAll count={events.length} hidden={hidden} onClick={onOpenCalendar} />
-      )}
-    </>
-  );
-}
 
 export function TodaySchedule({
   state,
@@ -292,5 +201,96 @@ export function TodaySchedule({
       </Zone>
       {children}
     </section>
+  );
+}
+
+function eyebrowFor(state: ZoneState<CalendarEvent>, clock: Clock, tz: string): string {
+  if (state.kind === "loading") return copy.today.schedule.loadingCount;
+
+  if (state.kind === "failed") return copy.today.schedule.failedCount;
+
+  if (state.kind === "empty") return copy.today.schedule.count(0);
+
+  const count = copy.today.schedule.count(state.data.length);
+
+  if (state.updatedAt === undefined) return count;
+
+  return copy.zone.updated(count, clockAt(state.updatedAt, clock, tz));
+}
+
+function ScheduleSkeleton() {
+  return (
+    <Skeleton label={copy.today.schedule.loading} xstyle={styles.skeleton}>
+      {SKELETON_ROWS.map((row) => (
+        <SkeletonBlock key={row} height={44} radius={radii.md} />
+      ))}
+    </Skeleton>
+  );
+}
+
+function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
+  return (
+    <div {...stylex.props(tile.root, tile.start, styles.empty)}>
+      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
+      <div {...stylex.props(tile.text)}>
+        <span {...stylex.props(tile.title)}>{copy.today.schedule.emptyTitle}</span>
+        <span {...stylex.props(tile.body)}>{copy.today.schedule.emptyBody}</span>
+      </div>
+      <Button icon={Plus} onClick={onAddEvent}>
+        {copy.today.schedule.addEvent}
+      </Button>
+    </div>
+  );
+}
+
+function SeeAll({ count, hidden, onClick }: SeeAllProps) {
+  return (
+    <button type="button" onClick={onClick} {...stylex.props(styles.seeAll, press.scale)}>
+      <span {...stylex.props(styles.seeAllLabel)}>{copy.today.schedule.seeAll(count)}</span>
+      <span {...stylex.props(styles.seeAllMeta)}>
+        <span {...stylex.props(styles.seeAllCount)}>
+          {copy.today.schedule.hidden(hidden.earlier, hidden.later)}
+        </span>
+        <Icon icon={ArrowRight} size={20} />
+      </span>
+    </button>
+  );
+}
+
+function ScheduleRows({
+  events,
+  now,
+  clock,
+  tz,
+  compact,
+  capacity,
+  onOpenEvent,
+  onOpenCalendar,
+}: ScheduleRowsProps) {
+  const { allDay, rows, hidden } = todaySchedule(events, now, tz, capacity);
+
+  return (
+    <>
+      <AllDayTiles events={allDay} label={copy.events.allDay} onOpenEvent={onOpenEvent} />
+      <div {...stylex.props(styles.list)}>
+        {rows.map((event) => (
+          <EventRow
+            key={event.id}
+            start={timeOf(event.startAt, clock, tz)}
+            end={event.endAt && timeOf(event.endAt, clock, tz)}
+            title={event.title}
+            location={event.location}
+            status={eventStatus(event, now, tz)}
+            dot={event.tone}
+            nowLabel={copy.events.now}
+            compact={compact}
+            onClick={() => onOpenEvent(event.id)}
+          />
+        ))}
+      </div>
+      {hidden.earlier + hidden.later > 0 && (
+        <SeeAll count={events.length} hidden={hidden} onClick={onOpenCalendar} />
+      )}
+    </>
   );
 }
