@@ -43,6 +43,26 @@ test("TODAY-01 the hero shows the season and month and the clock, with no screen
   expect(screen.getByText("summary")).toBeInTheDocument();
 });
 
+test("TODAY-01 the picture of the day sits at the bottom of the hero, after the summary", () => {
+  render(
+    <TodayHero
+      tz={tz}
+      season="fall"
+      time={new Date(2026, 9, 9, 10, 41)}
+      clock="12h"
+      picture={<span>picture</span>}
+    >
+      <span>summary</span>
+    </TodayHero>,
+  );
+
+  const summary = screen.getByText("summary");
+
+  const picture = screen.getByText("picture");
+
+  expect(summary.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
 test("TODAY-02 a running event is happening now, with its place and end", () => {
   render(
     <HeroSummary tz={tz} hero={{ kind: "now", event: call }} clock="12h" onOpenEvent={ignore} />,

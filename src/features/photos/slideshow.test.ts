@@ -1,8 +1,10 @@
 import type { Photo } from "@/domain/schemas";
 import {
   newestFirst,
+  openSlideshow,
   photoHint,
   photoMeta,
+  settleSlideshow,
   slideIndex,
   slideshow,
   startSlideshow,
@@ -120,50 +122,107 @@ test("PHOTO-02 a playing slideshow advances one photo every 8 s", () => {
 });
 
 test("PHOTO-02 pausing keeps the photo shown at that moment", () => {
-  const paused = slideshow(startSlideshow(AT), { type: "toggle", at: later(9_000) });
+  const paused = slideshow(startSlideshow(AT), { type: "toggle", at: later(9_000), ids: [] });
 
   expect(paused).toEqual({ kind: "paused", index: 1 });
   expect(slideIndex(paused, later(60_000))).toBe(1);
 });
 
 test("PHOTO-02 playing again waits a full 8 s before the next photo", () => {
-  const paused = slideshow(startSlideshow(AT), { type: "toggle", at: later(9_000) });
+  const paused = slideshow(startSlideshow(AT), { type: "toggle", at: later(9_000), ids: [] });
 
-  const playing = slideshow(paused, { type: "toggle", at: later(20_000) });
+  const playing = slideshow(paused, { type: "toggle", at: later(20_000), ids: [] });
 
   expect(slideIndex(playing, later(27_999))).toBe(1);
   expect(slideIndex(playing, later(28_000))).toBe(2);
 });
 
 test("PHOTO-02 a thumb features that photo, keeps playing and restarts the 8 s wait", () => {
-  const show = slideshow(startSlideshow(AT), { type: "select", index: 4, at: later(7_000) });
+  const show = slideshow(startSlideshow(AT), {
+    type: "select",
+    index: 4,
+    at: later(7_000),
+    ids: [],
+  });
 
   expect(slideIndex(show, later(14_999))).toBe(4);
   expect(slideIndex(show, later(15_000))).toBe(5);
 });
 
 test("PHOTO-02 a chevron steps from the photo shown now and keeps playing", () => {
-  const show = slideshow(startSlideshow(AT), { type: "step", delta: -1, at: later(8_500) });
+  const show = slideshow(startSlideshow(AT), {
+    type: "step",
+    delta: -1,
+    at: later(8_500),
+    ids: [],
+  });
 
   expect(slideIndex(show, later(8_500))).toBe(0);
   expect(slideIndex(show, later(16_500))).toBe(1);
 });
 
 test("PHOTO-01 thumbs and chevrons while paused stay paused", () => {
-  const paused = slideshow(startSlideshow(AT), { type: "toggle", at: AT });
+  const paused = slideshow(startSlideshow(AT), { type: "toggle", at: AT, ids: [] });
 
-  const stepped = slideshow(paused, { type: "step", delta: 1, at: later(1_000) });
+  const stepped = slideshow(paused, { type: "step", delta: 1, at: later(1_000), ids: [] });
 
   expect(stepped).toEqual({ kind: "paused", index: 1 });
-  expect(slideshow(stepped, { type: "select", index: 3, at: later(2_000) })).toEqual({
+  expect(slideshow(stepped, { type: "select", index: 3, at: later(2_000), ids: [] })).toEqual({
     kind: "paused",
     index: 3,
   });
 });
 
 test("PHOTO-11 opening Photo details pauses on the photo shown", () => {
-  const paused = slideshow(startSlideshow(AT), { type: "pause", at: later(9_000) });
+  const paused = slideshow(startSlideshow(AT), { type: "pause", at: later(9_000), ids: [] });
 
   expect(paused).toEqual({ kind: "paused", index: 1 });
-  expect(slideshow(paused, { type: "pause", at: later(20_000) })).toEqual(paused);
+  expect(slideshow(paused, { type: "pause", at: later(20_000), ids: [] })).toEqual(paused);
+});
+
+const IDS = ["coast", "apples", "trail"];
+
+test("PHOTO-01 opened on a known photo, the slideshow features it paused", () => {
+  const show = settleSlideshow(openSlideshow(AT, "apples"), IDS);
+
+  expect(show).toEqual({ kind: "paused", index: 1 });
+  expect(slideIndex(show, later(60_000))).toBe(1);
+});
+
+test("PHOTO-01 opened on an unknown photo, the slideshow plays from the first photo as usual", () => {
+  const show = settleSlideshow(openSlideshow(AT, "gone"), IDS);
+
+  expect(show).toEqual(startSlideshow(AT));
+});
+
+test("PHOTO-01 opened with no photo, the slideshow plays as usual", () => {
+  expect(openSlideshow(AT, null)).toEqual(startSlideshow(AT));
+});
+
+test("PHOTO-01 the pinned photo is found once the photos load", () => {
+  const show = openSlideshow(AT, "apples");
+
+  expect(settleSlideshow(show, [])).toEqual(startSlideshow(AT));
+  expect(settleSlideshow(show, IDS)).toEqual({ kind: "paused", index: 1 });
+});
+
+test("PHOTO-01 play on the pinned photo plays on from it", () => {
+  const playing = slideshow(openSlideshow(AT, "trail"), {
+    type: "toggle",
+    at: later(5_000),
+    ids: IDS,
+  });
+
+  expect(playing).toEqual(startSlideshow(later(5_000), 2));
+});
+
+test("PHOTO-01 a chevron on the pinned photo steps from it and stays paused", () => {
+  const stepped = slideshow(openSlideshow(AT, "apples"), {
+    type: "step",
+    delta: 1,
+    at: later(5_000),
+    ids: IDS,
+  });
+
+  expect(stepped).toEqual({ kind: "paused", index: 2 });
 });

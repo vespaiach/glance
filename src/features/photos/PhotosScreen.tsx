@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useReducer } from "react";
 import { fixtureUploads, usePhotoSrc, usePhotos } from "@/data/repos";
 import type { Photo } from "@/domain/schemas";
@@ -15,13 +16,22 @@ import { useSyncedZone } from "@/shell/sourceZone";
 import { FullScreenPhoto } from "./components/FullScreenPhoto";
 import { PhotosView } from "./components/PhotosView";
 import { fullScreen, initialFullScreen } from "./fullScreen";
-import { newestFirst, slideIndex, slideshow, startSlideshow, wrapIndex } from "./slideshow";
+import {
+  newestFirst,
+  openSlideshow,
+  settleSlideshow,
+  slideIndex,
+  slideshow,
+  wrapIndex,
+} from "./slideshow";
 import { initialUploads } from "./uploads";
 import { usePhotoPicker } from "./usePhotoPicker";
 import { useUploads } from "./useUploads";
 
 export function PhotosScreen() {
   const breakpoint = useBreakpoint();
+
+  const photoParam = useSearchParams().get("photo");
 
   const { online } = useNetwork();
 
@@ -39,7 +49,9 @@ export function PhotosScreen() {
 
   const clock = useNowStore();
 
-  const [show, dispatch] = useReducer(slideshow, clock, (store) => startSlideshow(store.get()));
+  const [pinned, dispatch] = useReducer(slideshow, clock, (store) =>
+    openSlideshow(store.get(), photoParam),
+  );
 
   const [full, dispatchFull] = useReducer(fullScreen, fixture, initialFullScreen);
 
@@ -51,7 +63,11 @@ export function PhotosScreen() {
 
   const sheets = useSheetHost();
 
-  const count = state.kind === "ready" ? state.data.length : 0;
+  const ids = state.kind === "ready" ? state.data.map((photo) => photo.id) : [];
+
+  const show = settleSlideshow(pinned, ids);
+
+  const count = ids.length;
 
   const selected = count > 0 ? wrapIndex(slideIndex(show, now), count) : 0;
 
@@ -59,12 +75,12 @@ export function PhotosScreen() {
 
   const thisYear = Number(dateKey(now, tz).slice(0, 4));
 
-  const step = (delta: number) => dispatch({ type: "step", delta, at: clock.get() });
+  const step = (delta: number) => dispatch({ type: "step", delta, at: clock.get(), ids });
 
-  const togglePlay = () => dispatch({ type: "toggle", at: clock.get() });
+  const togglePlay = () => dispatch({ type: "toggle", at: clock.get(), ids });
 
   const editPhoto = (id: string) => {
-    dispatch({ type: "pause", at: clock.get() });
+    dispatch({ type: "pause", at: clock.get(), ids });
 
     sheets.open({ kind: "photo", id });
   };
@@ -86,7 +102,7 @@ export function PhotosScreen() {
         canUpload={breakpoint !== "phone"}
         breakpoint={breakpoint}
         photoSrc={photoSrc}
-        onSelect={(index) => dispatch({ type: "select", index, at: clock.get() })}
+        onSelect={(index) => dispatch({ type: "select", index, at: clock.get(), ids })}
         onEdit={editPhoto}
         onStep={step}
         onTogglePlay={togglePlay}

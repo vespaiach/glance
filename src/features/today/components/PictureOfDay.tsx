@@ -1,158 +1,167 @@
 import * as stylex from "@stylexjs/stylex";
-import { Image, Upload } from "lucide-react";
+import { ImagePlus } from "lucide-react";
+import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { Photo } from "@/domain/schemas";
-import { photoMeta } from "@/features/photos";
-import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
+import { motion, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
-import { Button } from "@/ui/Button";
-import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
+import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 
 type PictureOfDayProps = {
   photo: Photo;
   onThisDay?: number;
-  thisYear: number;
   src: string;
+  onOpen: () => void;
 };
 
 type PictureOfDayEmptyProps = {
-  canUpload: boolean;
   onUpload: () => void;
 };
 
+type SlotProps = {
+  label: string;
+  title: string;
+  name?: string;
+  thumb: ReactNode;
+  onClick: () => void;
+};
+
+const THUMB_SIZE = "clamp(56px, min(14vh, 40%), 120px)";
+
 const styles = stylex.create({
   root: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 0,
-    minHeight: 120,
-    marginTop: space.xs,
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: radii.lg,
-    padding: space.sm,
-    boxSizing: "border-box",
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1.4fr) minmax(140px, 1fr)",
-    gap: space.md,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+    padding: 0,
+    font: "inherit",
+    color: "inherit",
+    textAlign: "start",
+    cursor: "pointer",
+    minHeight: 56,
+    maxWidth: 420,
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: 20,
+    transitionProperty: "transform",
+    transitionDuration: motion.durPress,
+    transitionTimingFunction: motion.easeOut,
   },
-  frame: {
-    position: "relative",
-    minHeight: 96,
-  },
-  image: {
-    position: "absolute",
-    inset: 0,
-    width: "100%",
-    height: "100%",
+  thumb: {
+    width: THUMB_SIZE,
+    aspectRatio: "1",
+    flexShrink: 0,
     objectFit: "cover",
     borderRadius: radii.md,
     display: "block",
   },
-  caption: {
+  outline: {
+    boxShadow: "inset 0 0 0 1px rgba(0,0,0,.25)",
     display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    gap: space.sm,
-    paddingBlock: space.xxs,
-    paddingInlineEnd: space.xxs,
+    alignItems: "center",
+    justifyContent: "center",
   },
   text: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
     display: "flex",
     flexDirection: "column",
-    gap: 8,
+    gap: 6,
+  },
+  label: {
+    fontFamily: type.fontMono,
+    fontSize: type.eyebrowSize,
+    letterSpacing: type.eyebrowLs,
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   title: {
-    fontSize: type.headlineSize,
-    fontWeight: type.headlineWeight,
-    letterSpacing: type.headlineLs,
+    fontSize: 18,
+    fontWeight: 480,
     lineHeight: 1.25,
-    textWrap: "pretty",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
-  meta: {
-    fontFamily: type.fontMono,
-    fontSize: type.captionSize,
-    letterSpacing: "0.6px",
-    textTransform: "uppercase",
-  },
-  empty: {
-    flexShrink: 0,
-    minHeight: 120,
-    marginTop: space.xs,
-    borderRadius: radii.lg,
-    boxShadow: shadows.shadow1,
-    paddingBlock: 20,
-    paddingInline: space.lg,
-    boxSizing: "border-box",
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: space.md,
-  },
-  emptyText: {
+  skeleton: {
     display: "flex",
     alignItems: "center",
-    gap: space.md,
-    minWidth: 0,
+    gap: 20,
+    maxWidth: 420,
   },
-  emptyLines: {
+  skeletonLines: {
+    flexGrow: 1,
     display: "flex",
     flexDirection: "column",
-    gap: space.xxs,
-  },
-  emptyBody: {
-    fontSize: 17,
-    fontWeight: 330,
+    gap: space.xs,
   },
 });
 
-export function PictureOfDay({ photo, onThisDay, thisYear, src }: PictureOfDayProps) {
+export function PictureOfDay({ photo, onThisDay, src, onOpen }: PictureOfDayProps) {
   return (
-    <div {...stylex.props(styles.root)}>
-      <div {...stylex.props(styles.frame)}>
-        {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
-        <img src={src} alt={photo.title} {...stylex.props(styles.image)} />
-      </div>
-      <div {...stylex.props(styles.caption)}>
-        <Eyebrow>
-          {onThisDay === undefined
-            ? copy.today.picture.eyebrow
-            : copy.today.picture.onThisDay(onThisDay)}
-        </Eyebrow>
-        <div {...stylex.props(styles.text)}>
-          <span {...stylex.props(styles.title)}>{photo.title}</span>
-          <span {...stylex.props(styles.meta)}>{photoMeta(photo, thisYear)}</span>
-        </div>
-      </div>
-    </div>
+    <Slot
+      label={
+        onThisDay === undefined
+          ? copy.today.picture.eyebrow
+          : copy.today.picture.onThisDay(onThisDay)
+      }
+      title={photo.title}
+      name={copy.today.picture.name(photo.title)}
+      thumb={
+        // biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer
+        <img src={src} alt="" {...stylex.props(styles.thumb)} />
+      }
+      onClick={onOpen}
+    />
   );
 }
 
-export function PictureOfDayEmpty({ canUpload, onUpload }: PictureOfDayEmptyProps) {
+export function PictureOfDayEmpty({ onUpload }: PictureOfDayEmptyProps) {
   return (
-    <div {...stylex.props(styles.empty)}>
-      <div {...stylex.props(styles.emptyText)}>
-        <Icon icon={Image} size={28} strokeWidth={1.5} />
-        <div {...stylex.props(styles.emptyLines)}>
-          <Eyebrow>{copy.today.picture.eyebrow}</Eyebrow>
-          <span {...stylex.props(styles.emptyBody)}>{copy.today.picture.emptyBody}</span>
-        </div>
-      </div>
-      {canUpload && (
-        <Button variant="ghost" icon={Upload} onClick={onUpload}>
-          {copy.today.picture.upload}
-        </Button>
-      )}
-    </div>
+    <Slot
+      label={copy.today.picture.eyebrow}
+      title={copy.today.picture.upload}
+      thumb={
+        <span {...stylex.props(styles.thumb, styles.outline)}>
+          <Icon icon={ImagePlus} size={32} strokeWidth={1.5} />
+        </span>
+      }
+      onClick={onUpload}
+    />
   );
 }
 
 export function PictureOfDaySkeleton() {
   return (
-    <Skeleton label={copy.today.picture.loading} xstyle={styles.root}>
-      <SkeletonBlock height="100%" radius={radii.md} />
+    <Skeleton label={copy.today.picture.loading} xstyle={styles.skeleton}>
+      <SkeletonBlock width={THUMB_SIZE} height={THUMB_SIZE} radius={radii.md} />
+      <div {...stylex.props(styles.skeletonLines)}>
+        <SkeletonBlock width="60%" height={14} />
+        <SkeletonBlock width="80%" height={18} />
+      </div>
     </Skeleton>
+  );
+}
+
+function Slot({ label, title, name, thumb, onClick }: SlotProps) {
+  return (
+    <button
+      type="button"
+      aria-label={name}
+      onClick={onClick}
+      {...stylex.props(styles.root, press.scale)}
+    >
+      {thumb}
+      <span {...stylex.props(styles.text)}>
+        <span {...stylex.props(styles.label)}>{label}</span>
+        <span {...stylex.props(styles.title)}>{title}</span>
+      </span>
+    </button>
   );
 }

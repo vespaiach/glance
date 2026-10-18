@@ -38,11 +38,28 @@ const LATER = octoberAt(9, 9, 45);
 
 const EVENING = octoberAt(9, 19, 0);
 
+const NOW_HERO = todayHero(TODAY_EVENTS, NOW, GALLERY_TZ);
+
 const HEROES = [
-  todayHero(TODAY_EVENTS, NOW, GALLERY_TZ),
+  NOW_HERO,
   todayHero(TODAY_EVENTS, LATER, GALLERY_TZ),
   todayHero(TODAY_EVENTS, EVENING, GALLERY_TZ),
   todayHero([], NOW, GALLERY_TZ),
+];
+
+const PICTURES = [
+  {
+    key: "photo",
+    picture: <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} onOpen={ignore} />,
+  },
+  {
+    key: "on-this-day",
+    picture: (
+      <PictureOfDay photo={TODAY_PHOTO} onThisDay={2025} src={TODAY_PHOTO_SRC} onOpen={ignore} />
+    ),
+  },
+  { key: "empty", picture: <PictureOfDayEmpty onUpload={ignore} /> },
+  { key: "photo-background", picture: null },
 ];
 
 const styles = stylex.create({
@@ -107,19 +124,35 @@ export function TodayGallery({ season }: { season: Season }) {
           <HeroSummary tz={GALLERY_TZ} hero={hero} clock="12h" onOpenEvent={ignore} />
         </TodayHero>
       ))}
-      <TodayHero tz={GALLERY_TZ} season={season} time={NOW} clock="24h" xstyle={styles.hero}>
+      {PICTURES.map(({ key, picture }) => (
+        <TodayHero
+          tz={GALLERY_TZ}
+          key={key}
+          season={season}
+          time={NOW}
+          clock="12h"
+          picture={picture}
+          xstyle={styles.hero}
+        >
+          <HeroSummary tz={GALLERY_TZ} hero={NOW_HERO} clock="12h" onOpenEvent={ignore} />
+        </TodayHero>
+      ))}
+      <TodayHero
+        tz={GALLERY_TZ}
+        season={season}
+        time={NOW}
+        clock="24h"
+        picture={<PictureOfDaySkeleton />}
+        xstyle={styles.hero}
+      >
         <HeroSkeleton />
       </TodayHero>
-      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule}>
-        <PictureOfDay photo={TODAY_PHOTO} thisYear={2026} src={TODAY_PHOTO_SRC} />
-      </TodaySchedule>
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule} />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
-      >
-        <PictureOfDay photo={TODAY_PHOTO} onThisDay={2025} thisYear={2026} src={TODAY_PHOTO_SRC} />
-      </TodaySchedule>
+      />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
@@ -141,21 +174,15 @@ export function TodayGallery({ season }: { season: Season }) {
         rows={6}
         compact
       />
-      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule}>
-        <PictureOfDayEmpty canUpload onUpload={ignore} />
-      </TodaySchedule>
-      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule}>
-        <PictureOfDaySkeleton />
-      </TodaySchedule>
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} />
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule} />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_EVENTS }}
         {...schedule}
         compact
         iconActions
-      >
-        <PictureOfDayEmpty canUpload={false} onUpload={ignore} />
-      </TodaySchedule>
+      />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "failed" }} {...schedule} />
       <TodaySchedule
         tz={GALLERY_TZ}

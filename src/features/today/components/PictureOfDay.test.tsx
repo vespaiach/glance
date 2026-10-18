@@ -12,46 +12,48 @@ const coast = {
   checked: true,
 } as const;
 
-test("TODAY-07 shows the photo with its title, date and place", () => {
-  render(<PictureOfDay thisYear={2026} photo={coast} src="/fixtures/photos/coast.svg" />);
+const ignore = () => {};
 
-  expect(screen.getByText("Picture of the day")).toBeInTheDocument();
-  expect(screen.getByRole("img", { name: "Cannon Beach" })).toHaveAttribute(
-    "src",
-    "/fixtures/photos/coast.svg",
+test("TODAY-07 the picture of the day is a button named with its title, showing the thumb, label and title", () => {
+  const { container } = render(
+    <PictureOfDay photo={coast} src="/fixtures/photos/coast.svg" onOpen={ignore} />,
   );
-  expect(screen.getByText("Cannon Beach")).toBeInTheDocument();
-  expect(screen.getByText("Sep 6 · Summer trip")).toBeInTheDocument();
+
+  const button = screen.getByRole("button", { name: "Picture of the day: Cannon Beach" });
+
+  expect(button).toHaveTextContent(/^Picture of the dayCannon Beach$/);
+  expect(container.querySelector("img")).toHaveAttribute("src", "/fixtures/photos/coast.svg");
+  expect(screen.queryByText("Sep 6 · Summer trip")).not.toBeInTheDocument();
 });
 
-test("TODAY-07 an On this day photo names its year in the eyebrow", () => {
-  render(<PictureOfDay thisYear={2026} photo={coast} onThisDay={2024} src="/coast.svg" />);
+test("TODAY-07 tapping the picture of the day opens it", async () => {
+  const onOpen = vi.fn<() => void>();
+
+  render(<PictureOfDay photo={coast} src="/coast.svg" onOpen={onOpen} />);
+
+  await userEvent.click(screen.getByRole("button", { name: "Picture of the day: Cannon Beach" }));
+
+  expect(onOpen).toHaveBeenCalledTimes(1);
+});
+
+test("TODAY-07 an On this day photo names its year in the label", () => {
+  render(<PictureOfDay photo={coast} onThisDay={2024} src="/coast.svg" onOpen={ignore} />);
 
   expect(screen.getByText("On this day · 2024")).toBeInTheDocument();
   expect(screen.queryByText("Picture of the day")).not.toBeInTheDocument();
 });
 
-test("PHOTO-03 a photo with no place shows the date alone", () => {
-  render(<PictureOfDay thisYear={2026} photo={{ ...coast, place: undefined }} src="/coast.svg" />);
-
-  expect(screen.getByText("Sep 6")).toBeInTheDocument();
-});
-
-test("TODAY-07 with no photos the tile explains and Upload goes to Photos", async () => {
+test("TODAY-07 with no photos the slot reads Upload a photo and tapping it uploads", async () => {
   const onUpload = vi.fn<() => void>();
 
-  render(<PictureOfDayEmpty canUpload onUpload={onUpload} />);
+  render(<PictureOfDayEmpty onUpload={onUpload} />);
 
-  expect(screen.getByText("Picture of the day")).toBeInTheDocument();
-  expect(screen.getByText("Appears once someone uploads a photo.")).toBeInTheDocument();
+  const button = screen.getByRole("button", { name: /Upload a photo/ });
 
-  await userEvent.click(screen.getByRole("button", { name: "Upload" }));
+  expect(button).toHaveTextContent(/^Picture of the dayUpload a photo$/);
+  expect(screen.queryByText("Appears once someone uploads a photo.")).not.toBeInTheDocument();
+
+  await userEvent.click(button);
 
   expect(onUpload).toHaveBeenCalledTimes(1);
-});
-
-test("spec§5.4 the phone has no Upload link", () => {
-  render(<PictureOfDayEmpty canUpload={false} onUpload={() => {}} />);
-
-  expect(screen.queryByRole("button", { name: "Upload" })).not.toBeInTheDocument();
 });
