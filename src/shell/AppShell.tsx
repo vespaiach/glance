@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { usePathname, useRouter } from "next/navigation";
-import { type Dispatch, type ReactNode, useEffect, useReducer, useRef, useState } from "react";
+import { type Dispatch, type ReactNode, useEffect, useReducer, useState } from "react";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { useFieldInView } from "@/ui/fieldInView";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
@@ -17,6 +17,7 @@ import { SidebarDrawer } from "./SidebarDrawer";
 import { SidebarGrip } from "./SidebarGrip";
 import { SidebarRail } from "./SidebarRail";
 import { initialSidebar, type SidebarAction, sidebarInset, sidebarReducer } from "./sidebar";
+import { usePageTransition } from "./usePageTransition";
 
 const styles = stylex.create({
   root: {
@@ -53,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const breakpoint = useBreakpoint();
 
-  const main = useScrollTopOnViewChange(pathname);
+  const main = usePageTransition<HTMLElement>(pathname);
 
   const photo = useBackgroundPhoto();
 
@@ -114,21 +115,6 @@ function usePrefetchViews() {
   useEffect(() => {
     for (const view of VIEWS) router.prefetch(viewPath(view));
   }, [router]);
-}
-
-function useScrollTopOnViewChange(pathname: string) {
-  const main = useRef<HTMLElement>(null);
-
-  const shownPath = useRef(pathname);
-
-  useEffect(() => {
-    if (shownPath.current === pathname || main.current === null) return;
-
-    shownPath.current = pathname;
-    main.current.scrollTop = 0;
-  }, [pathname]);
-
-  return main;
 }
 
 function useRailOnViewChange(pathname: string, dispatch: Dispatch<SidebarAction>) {
