@@ -35,9 +35,11 @@ export const copy = {
     signIn: "Sign in",
     ambient: "Ambient",
     main: "Main",
-    openMenu: "Open menu",
+    expandMenu: "Expand menu",
     showSidebar: "Show sidebar",
+    hideSidebar: "Hide sidebar",
     closeSidebar: "Close sidebar",
+    close: "Close",
   },
   today: {
     seasonMonth: (season: string, month: string) => `${season} · ${month}`,

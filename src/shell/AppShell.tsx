@@ -2,7 +2,16 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { usePathname, useRouter } from "next/navigation";
-import { type Dispatch, type ReactNode, useEffect, useReducer, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
+import { flushSync } from "react-dom";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { useFieldInView } from "@/ui/fieldInView";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
@@ -12,9 +21,10 @@ import { useBreakpoint } from "./breakpoint";
 import { useFixtureParams } from "./fixtureOptions";
 import { useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
 import { OfflineNotice } from "./OfflineNotice";
-import { VIEWS, viewForPath, viewPath } from "./routes";
+import { VIEWS, type View, viewForPath, viewPath } from "./routes";
 import { SidebarDrawer } from "./SidebarDrawer";
 import { SidebarGrip } from "./SidebarGrip";
+import { SidebarHandle } from "./SidebarHandle";
 import { SidebarRail } from "./SidebarRail";
 import { initialSidebar, type SidebarAction, sidebarInset, sidebarReducer } from "./sidebar";
 import { usePageTransition } from "./usePageTransition";
@@ -62,13 +72,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const keyboardInset = useKeyboardInset();
 
-  const [sidebar, dispatch] = useReducer(sidebarReducer, useFixtureParams().rail, initialSidebar);
+  const rail = useFixtureParams().rail;
+
+  const [sidebar, dispatch] = useReducer(sidebarReducer, rail, (fixture) =>
+    initialSidebar(fixture, view),
+  );
+
+  const handle = useRef<HTMLButtonElement>(null);
 
   const inset = sidebarInset(sidebar.mode);
 
-  useRailOnViewChange(pathname, dispatch);
+  useRailOnViewChange(pathname, view, dispatch);
 
-  useEscapeToRail(sidebar.mode === "expanded", dispatch);
+  useEscapeToRail(sidebar.mode === "expanded", dispatch, handle);
 
   usePrefetchViews();
 
@@ -88,19 +104,28 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>
-      <SidebarGrip shown={sidebar.mode === "hidden"} onShow={() => dispatch({ type: "show" })} />
+      <SidebarGrip
+        shown={sidebar.mode === "hidden"}
+        onShow={() => returnToRail(dispatch, handle, { type: "show" })}
+      />
       <SidebarRail
         mode={sidebar.mode}
         active={view}
-        onOpen={() => dispatch({ type: "open" })}
+        onHide={() => dispatch({ type: "hide" })}
         onNavigate={(path) => router.push(path)}
+      />
+      <SidebarHandle
+        ref={handle}
+        shown={sidebar.mode !== "hidden"}
+        expanded={sidebar.mode === "expanded"}
+        onOpen={() => dispatch({ type: "open" })}
       />
       <SidebarDrawer
         open={sidebar.mode === "expanded"}
         active={view}
         onClose={() => dispatch({ type: "close" })}
         onNavigate={(path) => {
-          dispatch({ type: "back" });
+          returnToRail(dispatch, handle, { type: "back" });
           router.push(path);
         }}
       />
@@ -117,25 +142,43 @@ function usePrefetchViews() {
   }, [router]);
 }
 
-function useRailOnViewChange(pathname: string, dispatch: Dispatch<SidebarAction>) {
+function useRailOnViewChange(
+  pathname: string,
+  view: View | undefined,
+  dispatch: Dispatch<SidebarAction>,
+) {
   const [shownOn, setShownOn] = useState(pathname);
 
   if (pathname !== shownOn) {
     setShownOn(pathname);
-    dispatch({ type: "viewChanged" });
+    dispatch({ type: "viewChanged", view });
   }
 }
 
-function useEscapeToRail(expanded: boolean, dispatch: Dispatch<SidebarAction>) {
+function useEscapeToRail(
+  expanded: boolean,
+  dispatch: Dispatch<SidebarAction>,
+  handle: RefObject<HTMLButtonElement | null>,
+) {
   useEffect(() => {
     if (!expanded) return;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dispatch({ type: "back" });
+      if (event.key === "Escape") returnToRail(dispatch, handle, { type: "back" });
     };
 
     document.addEventListener("keydown", onKey);
 
     return () => document.removeEventListener("keydown", onKey);
-  }, [expanded, dispatch]);
+  }, [expanded, dispatch, handle]);
+}
+
+function returnToRail(
+  dispatch: Dispatch<SidebarAction>,
+  handle: RefObject<HTMLButtonElement | null>,
+  action: SidebarAction,
+) {
+  flushSync(() => dispatch(action));
+
+  handle.current?.focus();
 }

@@ -13,19 +13,19 @@ function rowNames(): string[] {
     .map((button) => button.getAttribute("aria-label") ?? button.textContent ?? "");
 }
 
-test("SHELL-08 the drawer has the Glance header and Close sidebar", () => {
+test("SHELL-08 the drawer has the Glance header and a Close row named Close sidebar", () => {
   render(<SidebarDrawer open active="today" onClose={vi.fn()} onNavigate={vi.fn()} />);
 
   const nav = screen.getByRole("navigation", { name: "Main" });
 
   expect(within(nav).getByText("Glance")).toBeInTheDocument();
-  expect(within(nav).getByRole("button", { name: "Close sidebar" })).toBeInTheDocument();
+  expect(within(nav).getByRole("button", { name: "Close sidebar" })).toHaveTextContent("Close");
 });
 
-test("SHELL-01 the drawer lists the five views, then Ambient and Settings", () => {
+test("SHELL-01 the drawer lists the five views, then Ambient and Settings, then Close last", () => {
   render(<SidebarDrawer open active="today" onClose={vi.fn()} onNavigate={vi.fn()} />);
 
-  expect(rowNames()).toEqual(["Close sidebar", ...ROWS]);
+  expect(rowNames()).toEqual([...ROWS, "Close sidebar"]);
   expect(screen.getByRole("button", { name: "Ambient screen" })).toHaveTextContent("Ambient");
 });
 
@@ -64,7 +64,7 @@ test("SHELL-09 the drawer is inert while closed", () => {
   expect(container.querySelector("nav")).not.toHaveAttribute("inert");
 });
 
-test("SHELL-08 ✕ asks to close the sidebar", async () => {
+test("SHELL-08 Close asks to close the sidebar", async () => {
   const onClose = vi.fn();
 
   render(<SidebarDrawer open active="today" onClose={onClose} onNavigate={vi.fn()} />);
