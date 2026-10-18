@@ -55,6 +55,7 @@ function renderNotes(state: ZoneState<BoardNote>, handlers: Partial<Handlers> = 
       onOpenNote={handlers.onOpenNote ?? (() => {})}
       onAddNote={handlers.onAddNote ?? (() => {})}
       onOpenNotes={handlers.onOpenNotes ?? (() => {})}
+      columns={2}
     />,
   );
 }

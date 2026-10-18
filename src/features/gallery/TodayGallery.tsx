@@ -64,6 +64,7 @@ const schedule = {
   now: NOW,
   clock: "12h",
   compact: false,
+  iconActions: false,
   capacity: 8,
   onOpenEvent: ignore,
   onAddEvent: ignore,
@@ -78,6 +79,7 @@ const notes = {
   onOpenNote: ignore,
   onAddNote: ignore,
   onOpenNotes: ignore,
+  columns: 2,
   ...failure,
   xstyle: styles.side,
 } as const;
@@ -123,12 +125,14 @@ export function TodayGallery({ season }: { season: Season }) {
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
         compact
+        iconActions
       />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_MANY }}
         {...schedule}
         capacity={5}
+        iconActions
       />
       <TodaySchedule
         tz={GALLERY_TZ}
@@ -148,6 +152,7 @@ export function TodayGallery({ season }: { season: Season }) {
         state={{ kind: "ready", data: TODAY_EVENTS }}
         {...schedule}
         compact
+        iconActions
       >
         <PictureOfDayEmpty canUpload={false} onUpload={ignore} />
       </TodaySchedule>
@@ -167,6 +172,12 @@ export function TodayGallery({ season }: { season: Season }) {
         {...weather}
       />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_NOTES }} {...notes} />
+      <TodayNotes
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_NOTES }}
+        {...notes}
+        columns={1}
+      />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "empty" }} {...notes} />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "loading" }} {...notes} />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "failed" }} {...notes} />

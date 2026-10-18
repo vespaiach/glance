@@ -14,6 +14,7 @@ import { Button } from "@/ui/Button";
 import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
+import { IconButton } from "@/ui/IconButton";
 import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
@@ -28,6 +29,7 @@ type TodayScheduleProps = {
   clock: Clock;
   tz: string;
   compact: boolean;
+  iconActions: boolean;
   capacity: number;
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
@@ -130,6 +132,12 @@ const styles = stylex.create({
 const timeOf = (iso: string, clock: Clock, tz: string) =>
   timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
+type ActionsProps = {
+  canAdd: boolean;
+  onAddEvent: () => void;
+  onOpenCalendar: () => void;
+};
+
 type SeeAllProps = {
   count: number;
   hidden: { earlier: number; later: number };
@@ -149,6 +157,7 @@ export function TodaySchedule({
   clock,
   tz,
   compact,
+  iconActions,
   capacity,
   onOpenEvent,
   onAddEvent,
@@ -156,19 +165,18 @@ export function TodaySchedule({
   children,
   xstyle,
 }: TodayScheduleProps) {
+  const Actions = iconActions ? IconActions : TextActions;
+
   return (
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <Eyebrow>{eyebrowFor(state, clock, tz)}</Eyebrow>
         <div {...stylex.props(styles.actions)}>
-          {state.kind === "ready" && (
-            <Button variant="ghost" icon={Plus} onClick={onAddEvent}>
-              {copy.today.schedule.addEvent}
-            </Button>
-          )}
-          <Button variant="ghost" iconRight={ArrowRight} onClick={onOpenCalendar}>
-            {copy.today.schedule.fullCalendar}
-          </Button>
+          <Actions
+            canAdd={state.kind === "ready"}
+            onAddEvent={onAddEvent}
+            onOpenCalendar={onOpenCalendar}
+          />
         </div>
       </div>
       <Zone
@@ -201,6 +209,44 @@ export function TodaySchedule({
       </Zone>
       {children}
     </section>
+  );
+}
+
+function TextActions({ canAdd, onAddEvent, onOpenCalendar }: ActionsProps) {
+  return (
+    <>
+      {canAdd && (
+        <Button variant="ghost" icon={Plus} onClick={onAddEvent}>
+          {copy.today.schedule.addEvent}
+        </Button>
+      )}
+      <Button variant="ghost" iconRight={ArrowRight} onClick={onOpenCalendar}>
+        {copy.today.schedule.fullCalendar}
+      </Button>
+    </>
+  );
+}
+
+function IconActions({ canAdd, onAddEvent, onOpenCalendar }: ActionsProps) {
+  return (
+    <>
+      {canAdd && (
+        <IconButton
+          icon={Plus}
+          label={copy.today.schedule.addEvent}
+          variant="canvas"
+          size="touch"
+          onClick={onAddEvent}
+        />
+      )}
+      <IconButton
+        icon={CalendarDays}
+        label={copy.today.schedule.fullCalendar}
+        variant="canvas"
+        size="touch"
+        onClick={onOpenCalendar}
+      />
+    </>
   );
 }
 

@@ -23,6 +23,7 @@ type TodayNotesProps = {
   onOpenNote: (id: string) => void;
   onAddNote: () => void;
   onOpenNotes: () => void;
+  columns: 1 | 2;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -50,11 +51,12 @@ const styles = stylex.create({
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: 24,
     paddingBlock: space.xxs,
     paddingInline: space.sm,
   },
+  one: { gridTemplateColumns: "minmax(0, 1fr)" },
+  two: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
   empty: {
     marginInline: space.xs,
     minHeight: 160,
@@ -86,8 +88,11 @@ export function TodayNotes({
   onOpenNote,
   onAddNote,
   onOpenNotes,
+  columns,
   xstyle,
 }: TodayNotesProps) {
+  const grid = [styles.grid, columns === 1 ? styles.one : styles.two];
+
   return (
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
@@ -118,7 +123,7 @@ export function TodayNotes({
         }
       >
         {(notes) => (
-          <div {...stylex.props(styles.grid)}>
+          <div {...stylex.props(grid)}>
             {notes.slice(0, SHOWN).map((note) => (
               <StickyNote
                 key={note.id}
@@ -154,7 +159,7 @@ function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string
 
 function NotesSkeleton() {
   return (
-    <Skeleton label={copy.today.notes.loading} xstyle={styles.grid}>
+    <Skeleton label={copy.today.notes.loading} xstyle={[styles.grid, styles.two]}>
       <SkeletonBlock height={150} radius={radii.sm} />
       <SkeletonBlock height={150} radius={radii.sm} />
     </Skeleton>

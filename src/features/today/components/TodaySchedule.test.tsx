@@ -27,6 +27,7 @@ function renderSchedule(
   state: ZoneState<CalendarEvent>,
   handlers: Partial<Handlers> = {},
   capacity = 8,
+  iconActions = false,
 ) {
   return render(
     <TodaySchedule
@@ -37,6 +38,7 @@ function renderSchedule(
       now={NOW}
       clock="12h"
       compact={false}
+      iconActions={iconActions}
       capacity={capacity}
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
       onAddEvent={handlers.onAddEvent ?? (() => {})}
@@ -231,4 +233,30 @@ test("TODAY-11 rows that all fit show no See all", () => {
 
   expect(screen.getByText("School drop-off")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /See all/ })).not.toBeInTheDocument();
+});
+
+test("TODAY-04 below wide, Add event and Full calendar are icon-only and keep their names and callbacks", async () => {
+  const onAddEvent = vi.fn<() => void>();
+
+  const onOpenCalendar = vi.fn<() => void>();
+
+  renderSchedule(ready, { onAddEvent, onOpenCalendar }, 8, true);
+
+  const add = screen.getByRole("button", { name: "Add event" });
+
+  const calendar = screen.getByRole("button", { name: "Full calendar" });
+
+  await userEvent.click(add);
+
+  await userEvent.click(calendar);
+
+  expect([add.textContent, calendar.textContent]).toEqual(["", ""]);
+
+  expect([onAddEvent, onOpenCalendar].map((fn) => fn.mock.calls.length)).toEqual([1, 1]);
+});
+
+test("TODAY-04 icon-only, an empty day still has no Add event in the header", () => {
+  renderSchedule({ kind: "empty" }, {}, 8, true);
+
+  expect(screen.getAllByRole("button", { name: "Add event" })).toHaveLength(1);
 });
