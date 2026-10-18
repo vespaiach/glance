@@ -43,9 +43,7 @@ function renderSchedule(
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
       onAddEvent={handlers.onAddEvent ?? (() => {})}
       onOpenCalendar={handlers.onOpenCalendar ?? (() => {})}
-    >
-      picture slot
-    </TodaySchedule>,
+    />,
   );
 }
 
@@ -127,12 +125,6 @@ test("TODAY-06 an empty day shows the empty tile with its own Add event", async 
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   expect(onAddEvent).toHaveBeenCalledTimes(1);
-});
-
-test("TODAY-07 the picture of the day sits under the schedule", () => {
-  renderSchedule(ready);
-
-  expect(screen.getByText("picture slot")).toBeInTheDocument();
 });
 
 test("LOAD-02 a schedule still loading shows a skeleton", () => {

@@ -154,12 +154,16 @@ test("TODAY-11 See all goes to the Calendar on today", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/calendar");
 });
 
-test("TODAY-07 the picture of the day shows on the season background", async () => {
+test("TODAY-07 tapping the picture of the day opens Photos on that photo", async () => {
   await store.db.photos.put(synced(COAST));
 
   renderToday();
 
-  expect(await screen.findByRole("img", { name: "Cannon Beach" })).toBeInTheDocument();
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Picture of the day: Cannon Beach" }),
+  );
+
+  expect(navigation.push).toHaveBeenCalledWith(`/photos?photo=${COAST.id}`);
 });
 
 test("TODAY-07 a photo taken on this date in an earlier year shows as On this day", async () => {
@@ -168,6 +172,16 @@ test("TODAY-07 a photo taken on this date in an earlier year shows as On this da
   renderToday();
 
   expect(await screen.findByText("On this day · 2025")).toBeInTheDocument();
+});
+
+test("TODAY-07 with no photos Upload a photo goes to Photos", async () => {
+  await markSynced(store);
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Upload a photo/ }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/photos");
 });
 
 test("TODAY-10 a photo background drops the picture of the day", async () => {
@@ -180,6 +194,17 @@ test("TODAY-10 a photo background drops the picture of the day", async () => {
 
   expect(await screen.findByText("Full calendar")).toBeInTheDocument();
   await waitFor(() => expect(screen.queryByText("Picture of the day")).not.toBeInTheDocument());
+});
+
+test("TODAY-10 a photo background with no photos keeps the Upload a photo slot", async () => {
+  await markSynced(store);
+  await createSettingsRepo(store).update({
+    background: { mode: "photo", photoId: COAST.id, dim: 0.2, rotate: "daily" },
+  });
+
+  renderToday();
+
+  expect(await screen.findByRole("button", { name: /Upload a photo/ })).toBeInTheDocument();
 });
 
 test("TODAY-08 with no location the weather zone asks for one", async () => {

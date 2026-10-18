@@ -19,7 +19,12 @@ import { TimeZoneProvider } from "@/shell/providers/timeZone";
 import { SheetHost, useSheetHost } from "@/shell/SheetHost";
 import { PhotosScreen } from "./PhotosScreen";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/photos" }));
+let search = "";
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/photos",
+  useSearchParams: () => new URLSearchParams(search),
+}));
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
@@ -43,6 +48,7 @@ let store: Harness;
 
 beforeEach(() => {
   store = openHarness("glance-photos-screen-test");
+  search = "";
 
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
@@ -128,6 +134,20 @@ test("PHOTO-01 tapping a thumb features it and the chevrons wrap at both ends", 
   await userEvent.click(screen.getByRole("button", { name: "Previous photo" }));
 
   expect(featuredTitle()).toBe("Forest Park trail");
+});
+
+test("PHOTO-01 opened from the picture of the day, that photo is featured and the slideshow paused", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+  search = `photo=${APPLES.id}`;
+
+  renderPhotos();
+
+  expect(await screen.findByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
+  expect(featuredTitle()).toBe("Apple picking");
+  expect(screen.getByRole("button", { name: "Show Apple picking" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 test("PHOTO-02 Pause and Play toggle the slideshow button", async () => {

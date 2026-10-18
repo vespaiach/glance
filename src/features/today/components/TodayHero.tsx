@@ -16,6 +16,7 @@ type TodayHeroProps = {
   clock: ClockSetting;
   tz: string;
   children: ReactNode;
+  picture?: ReactNode;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -41,9 +42,15 @@ const styles = stylex.create({
     letterSpacing: type.eyebrowLs,
     textTransform: "uppercase",
   },
+  bottom: {
+    display: "flex",
+    flexDirection: "column",
+    gap: space.xl,
+    minWidth: 0,
+  },
 });
 
-export function TodayHero({ season, time, clock, tz, children, xstyle }: TodayHeroProps) {
+export function TodayHero({ season, time, clock, tz, children, picture, xstyle }: TodayHeroProps) {
   return (
     <ColorBlock tone={1} padding="clamp(24px, 2.6vw, 40px)" xstyle={[styles.root, xstyle]}>
       <div {...stylex.props(styles.top)}>
@@ -53,7 +60,10 @@ export function TodayHero({ season, time, clock, tz, children, xstyle }: TodayHe
         </span>
         <Clock time={time} tz={tz} hour12={clock === "12h"} />
       </div>
-      {children}
+      <div {...stylex.props(styles.bottom)}>
+        {children}
+        {picture}
+      </div>
     </ColorBlock>
   );
 }

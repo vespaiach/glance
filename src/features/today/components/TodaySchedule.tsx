@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, CalendarDays, CalendarX2, Plus } from "lucide-react";
-import type { ReactNode, Ref } from "react";
+import type { Ref } from "react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
@@ -34,7 +34,6 @@ type TodayScheduleProps = {
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
   onOpenCalendar: () => void;
-  children?: ReactNode;
   xstyle?: stylex.StyleXStyles;
   ref?: Ref<HTMLElement>;
 };
@@ -166,7 +165,6 @@ export function TodaySchedule({
   onOpenEvent,
   onAddEvent,
   onOpenCalendar,
-  children,
   xstyle,
   ref,
 }: TodayScheduleProps) {
@@ -212,7 +210,6 @@ export function TodaySchedule({
           />
         )}
       </Zone>
-      {children}
     </section>
   );
 }

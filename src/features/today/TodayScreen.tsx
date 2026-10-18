@@ -50,11 +50,19 @@ type HeroProps = {
   onOpenEvent: (id: string) => void;
 };
 
+type HeroClockProps = {
+  children: ReactNode;
+  picture: ReactNode;
+  xstyle: stylex.StyleXStyles;
+};
+
 type PictureProps = {
   state: ZoneState<Photo>;
   day: string;
   tz: string;
+  showPhoto: boolean;
   canUpload: boolean;
+  onOpen: (id: string) => void;
   onUpload: () => void;
 };
 
@@ -101,7 +109,20 @@ export function TodayScreen() {
         todayGrids[layout.grid],
       )}
     >
-      <HeroClock xstyle={columns && [todayAreas.container, todayAreas.clipped]}>
+      <HeroClock
+        xstyle={columns && [todayAreas.container, todayAreas.clipped]}
+        picture={
+          <Picture
+            state={photos.state}
+            day={day}
+            tz={tz}
+            showPhoto={settings.background.mode === "season"}
+            canUpload={breakpoint !== "phone"}
+            onOpen={(id) => router.push(`${viewPath("photos")}?photo=${id}`)}
+            onUpload={() => go("photos")}
+          />
+        }
+      >
         <Hero
           state={events.state}
           clock={settings.clock}
@@ -125,17 +146,7 @@ export function TodayScreen() {
         onOpenCalendar={() => go("calendar")}
         xstyle={[todayAreas.sched, columns && todayAreas.clipped]}
         ref={scheduleRef}
-      >
-        {settings.background.mode === "season" && (
-          <Picture
-            state={photos.state}
-            day={day}
-            tz={tz}
-            canUpload={breakpoint !== "phone"}
-            onUpload={() => go("photos")}
-          />
-        )}
-      </TodaySchedule>
+      />
       <TodayWeather
         state={weather.state}
         retryIn={weather.retryIn}
@@ -163,7 +174,7 @@ export function TodayScreen() {
   );
 }
 
-function HeroClock({ children, xstyle }: { children: ReactNode; xstyle: stylex.StyleXStyles }) {
+function HeroClock({ children, picture, xstyle }: HeroClockProps) {
   const season = useSeason();
 
   const settings = useAccountSettings();
@@ -178,6 +189,7 @@ function HeroClock({ children, xstyle }: { children: ReactNode; xstyle: stylex.S
       time={time}
       clock={settings.clock}
       tz={tz}
+      picture={picture}
       xstyle={[todayAreas.hero, xstyle]}
     >
       {children}
@@ -185,26 +197,30 @@ function HeroClock({ children, xstyle }: { children: ReactNode; xstyle: stylex.S
   );
 }
 
-function Picture({ state, day, tz, canUpload, onUpload }: PictureProps) {
+function Picture({ state, day, tz, showPhoto, canUpload, onOpen, onUpload }: PictureProps) {
   const photoSrc = usePhotoSrc();
 
   const pick = usePictureOfDay(day, tz);
 
-  const empty = <PictureOfDayEmpty canUpload={canUpload} onUpload={onUpload} />;
+  const empty = canUpload ? <PictureOfDayEmpty onUpload={onUpload} /> : null;
+
+  const loading = showPhoto ? <PictureOfDaySkeleton /> : null;
 
   return (
-    <Zone state={state} loading={<PictureOfDaySkeleton />} empty={empty} failed={null}>
+    <Zone state={state} loading={loading} empty={empty} failed={null}>
       {() => {
-        if (pick === undefined) return <PictureOfDaySkeleton />;
+        if (pick === undefined) return loading;
 
         if (pick === null) return empty;
+
+        if (!showPhoto) return null;
 
         return (
           <PictureOfDay
             photo={pick.photo}
             onThisDay={pick.onThisDay}
-            thisYear={Number(day.slice(0, 4))}
-            src={photoSrc(pick.photo.id, "display")}
+            src={photoSrc(pick.photo.id, "thumb")}
+            onOpen={() => onOpen(pick.photo.id)}
           />
         );
       }}

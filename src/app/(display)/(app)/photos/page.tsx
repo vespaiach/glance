@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { PhotosScreen } from "@/features/photos";
 
 export default function PhotosPage() {
-  return <PhotosScreen />;
+  return (
+    <Suspense>
+      <PhotosScreen />
+    </Suspense>
+  );
 }
