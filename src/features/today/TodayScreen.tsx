@@ -32,7 +32,14 @@ import { TodayHero } from "./components/TodayHero";
 import { TodayNotes } from "./components/TodayNotes";
 import { TodaySchedule } from "./components/TodaySchedule";
 import { TodayWeather } from "./components/TodayWeather";
-import { todayAreas, todayCapacity, todayLayout, todayScheduleFit } from "./layout";
+import {
+  todayAreas,
+  todayCapacity,
+  todayColumnsType,
+  todayGrids,
+  todayLayout,
+  todayStackedType,
+} from "./layout";
 
 const styles = stylex.create({
   grid: {
@@ -64,6 +71,10 @@ export function TodayScreen() {
 
   const breakpoint = useBreakpoint();
 
+  const layout = todayLayout(useViewportWidth(), useViewportHeight());
+
+  const columns = layout.grid !== "stacked";
+
   const settings = useAccountSettings();
 
   const now = useNow("minute");
@@ -87,8 +98,14 @@ export function TodayScreen() {
   const openEvent = (id: string) => sheets.open({ kind: "event", id });
 
   return (
-    <div {...stylex.props(styles.grid, todayLayout(breakpoint))}>
-      <HeroClock>
+    <div
+      {...stylex.props(
+        columns ? todayColumnsType : todayStackedType,
+        styles.grid,
+        todayGrids[layout.grid],
+      )}
+    >
+      <HeroClock xstyle={columns && [todayAreas.container, todayAreas.clipped]}>
         <Hero
           state={events.state}
           clock={settings.clock}
@@ -105,11 +122,12 @@ export function TodayScreen() {
         clock={settings.clock}
         tz={tz}
         compact={breakpoint === "phone"}
+        iconActions={breakpoint !== "wide"}
         capacity={capacity}
         onOpenEvent={openEvent}
         onAddEvent={() => sheets.open({ kind: "newevent", day })}
         onOpenCalendar={() => go("calendar")}
-        xstyle={[todayAreas.sched, todayScheduleFit(breakpoint)]}
+        xstyle={[todayAreas.sched, columns && todayAreas.clipped]}
       >
         {settings.background.mode === "season" && (
           <Picture
@@ -129,7 +147,7 @@ export function TodayScreen() {
         clock={settings.clock}
         tz={tz}
         onSetLocation={() => go("weather")}
-        xstyle={todayAreas.wx}
+        xstyle={[todayAreas.wx, columns && todayAreas.container]}
       />
       <TodayNotes
         state={notes.state}
@@ -141,13 +159,14 @@ export function TodayScreen() {
         onOpenNote={(id) => sheets.open({ kind: "note", id })}
         onAddNote={() => sheets.open({ kind: "newnote" })}
         onOpenNotes={() => go("notes")}
-        xstyle={todayAreas.notes}
+        columns={layout.noteColumns}
+        xstyle={[todayAreas.notes, columns && todayAreas.clipped]}
       />
     </div>
   );
 }
 
-function HeroClock({ children }: { children: ReactNode }) {
+function HeroClock({ children, xstyle }: { children: ReactNode; xstyle: stylex.StyleXStyles }) {
   const season = useSeason();
 
   const settings = useAccountSettings();
@@ -157,7 +176,13 @@ function HeroClock({ children }: { children: ReactNode }) {
   const tz = useTimeZone();
 
   return (
-    <TodayHero season={season} time={time} clock={settings.clock} tz={tz} xstyle={todayAreas.hero}>
+    <TodayHero
+      season={season}
+      time={time}
+      clock={settings.clock}
+      tz={tz}
+      xstyle={[todayAreas.hero, xstyle]}
+    >
       {children}
     </TodayHero>
   );
