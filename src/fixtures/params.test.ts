@@ -107,7 +107,7 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("amb=split&pick=wknd.e")).toEqual({ amb: "split", pick: "wknd.e" });
   });
 
-  it("SHELL-08 SET-11 ignores the removed bar= and barauto=", () => {
+  it("SHELL-08 ignores the removed bar= and barauto=", () => {
     expect(parseFixtureParams("barauto=off")).toEqual({});
     expect(parseFixtureParams("bar=hidden")).toEqual({});
     expect(parseFixtureParams("bar=auto&barauto=on")).toEqual({});

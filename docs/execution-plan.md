@@ -4,9 +4,9 @@
 |---|---|
 | Status | v1.12 — Phase 11 (handoff v7: Today's Columns layout, picture of the day in the hero, the rail's ✕ and expand handle) and D06 are added. v1.11: Phase 10 (handoff v6: a left sidebar replaces the bottom nav bar) and D05 are added. v1.10: P03 is folded into P02 (#81) |
 | Date | 2026-10-18 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.58) · [`tech-design.md`](tech-design.md) (v2.09) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`tech-design.md`](tech-design.md) (v2.09) |
 
-Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. Phases follow spec §11. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
+Tasks are PR-sized (about 0.5–2 days). Each one cites the requirement IDs it covers. **Depends on** lists hard dependencies only: a task can start once they are **Done**. The backend lane (B) depends only on `domain` and can run in parallel with phases 2–4 if there is a second person.
 
 Every task meets its done-when criterion with CI green (`biome check → tsc → Vitest → next build`) and unit tests for its new domain logic.
 
@@ -247,7 +247,7 @@ The server moves from SQLite (`better-sqlite3`) to PostgreSQL (`pg`). The data s
 
 ## Phase 9 — Handoff v5
 
-The designer's own revisions in handoff v5 (D03, spec v0.38 decision 23). The client-only tasks can start once D03 is done; the server tasks (U05, U10, U13) wait for P02, so they are written once, against PostgreSQL. Every task that adds a field to a synced row raises the minimum client build (tech §4.5). Frames are checked at the 6 sizes against the v5 boards.
+The designer's own revisions in handoff v5 (D03). The client-only tasks can start once D03 is done; the server tasks (U05, U10, U13) wait for P02, so they are written once, against PostgreSQL. Every task that adds a field to a synced row raises the minimum client build (tech §4.5). Frames are checked at the 6 sizes against the v5 boards.
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
@@ -277,7 +277,7 @@ The designer's own revisions in handoff v5 (D03, spec v0.38 decision 23). The cl
 
 ## Phase 10 — Handoff v6
 
-Handoff v6 (D05, spec v0.56 decision 27) replaces the bottom nav bar with a **left sidebar**: a grip while Hidden, an 80 px icon rail, and a 320 px drawer that pushes the page. Only the prototype's default is built (left side, Rail handle). The bottom bar, its idle hiding and the SET-11 setting are removed. No board draws the sidebar, so it is checked against the prototype (`Glance.dc.html?rail=1`, then Open menu) at the 6 sizes, and the v5 boards are still checked for everything else.
+Handoff v6 (D05) replaces the bottom nav bar with a **left sidebar**: a grip while Hidden, an 80 px icon rail, and a 320 px drawer that pushes the page. Only the prototype's default is built (left side, Rail handle). The bottom bar, its idle hiding and the SET-11 setting are removed. No board draws the sidebar, so it is checked against the prototype (`Glance.dc.html?rail=1`, then Open menu) at the 6 sizes, and the v5 boards are still checked for everything else.
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
@@ -291,7 +291,7 @@ Handoff v6 (D05, spec v0.56 decision 27) replaces the bottom nav bar with a **le
 
 ## Phase 11 — Handoff v7
 
-Handoff v7 (D06, spec v0.58 decision 28) makes Today fit the screen in a **Columns layout** at 768 px and up, measures the schedule's rows, moves the **picture of the day into the hero** (it opens Photos on that photo) and gives the **rail an ✕ and an expand handle**. Only the default Today layout (`lay=a`) is built. The Today board embeds the live v7 prototype, so Today is checked against it at the 6 sizes; the sidebar against the prototype (`?rail=1`, then Expand menu). T01 and T02 can run in parallel.
+Handoff v7 (D06) makes Today fit the screen in a **Columns layout** at 768 px and up, measures the schedule's rows, moves the **picture of the day into the hero** (it opens Photos on that photo) and gives the **rail an ✕ and an expand handle**. Only the default Today layout (`lay=a`) is built. The Today board embeds the live v7 prototype, so Today is checked against it at the 6 sizes; the sidebar against the prototype (`?rail=1`, then Expand menu). T01 and T02 can run in parallel.
 
 | ID | Status | Task | Depends on | Covers |
 |---|---|---|---|---|
@@ -311,6 +311,6 @@ Handoff v7 (D06, spec v0.58 decision 28) makes Today fit the screen in a **Colum
 | D01 | ✅ ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for SIGNIN-13 ([prompt 4](prompts/04-session-ended.md)) | H01 (final SIGNIN-13 screen) | SIGNIN-01 form as-is (spec §8.1) |
 | D02 | ✅ ([#62](https://github.com/vespaiach/glance/pull/62)) | Design for LOC-01..03, SET-09 and SIGNIN-14 ([prompt 5](prompts/05-location-and-time-zone.md)) | L06, L07, L08 | None: these tasks wait. L01–L05 don't need it |
 | D03 | ✅ ([#78](https://github.com/vespaiach/glance/pull/78)) | Design handoff v5 in the repo (the designer's own revisions, no prompt): `docs/design/handoff`, spec v0.38, tech design v1.75, this phase | Phase 9 | None: Phase 9 waits |
-| D04 | ⬜ | Season videos `videos/{spring,summer,fall,winter}.mp4` for AMB-09: source, license, size budget (spec §12.2 O4) | U16 (the video itself) | U16 ships with the AMB-06 background; the files are added when they exist |
+| D04 | ⬜ | Season videos `videos/{spring,summer,fall,winter}.mp4` for AMB-09: source, license, size budget (spec §1.3) | U16 (the video itself) | U16 ships with the AMB-06 background; the files are added when they exist |
 | D05 | ✅ ([#103](https://github.com/vespaiach/glance/pull/103)) | Design handoff v6 in the repo (the left sidebar, the designer's own revision, no prompt): `docs/design/handoff`, spec v0.56, tech design v2.00 (§4.8), this phase | Phase 10 | None: Phase 10 waits |
 | D06 | ✅ ([#109](https://github.com/vespaiach/glance/pull/109)) | Design handoff v7 in the repo (Today Columns layout, the sidebar's ✕ and expand handle, picture of the day in the hero, the designer's own revision, no prompt): `docs/design/handoff`, spec v0.58, tech design v2.04 (§4.9), this phase | Phase 11 | None: Phase 11 waits |

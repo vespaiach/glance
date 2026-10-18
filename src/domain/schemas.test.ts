@@ -233,7 +233,7 @@ describe("AccountSettingsSchema", () => {
     expect(v.parse(AccountSettingsSchema, saved)).toEqual({ ...rest, ambient: settings.ambient });
   });
 
-  it("SET-11 a settings row that still holds hideBarWhenIdle parses and drops it", () => {
+  it("tech§4.5 a settings row that still holds hideBarWhenIdle parses and drops it", () => {
     expect(v.parse(AccountSettingsSchema, { ...settings, hideBarWhenIdle: false })).toEqual(
       settings,
     );
