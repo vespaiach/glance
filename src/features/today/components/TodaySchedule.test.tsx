@@ -26,7 +26,7 @@ type Handlers = {
 function renderSchedule(
   state: ZoneState<CalendarEvent>,
   handlers: Partial<Handlers> = {},
-  capacity = 8,
+  rows = 8,
   iconActions = false,
 ) {
   return render(
@@ -39,7 +39,7 @@ function renderSchedule(
       clock="12h"
       compact={false}
       iconActions={iconActions}
-      capacity={capacity}
+      rows={rows}
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
       onAddEvent={handlers.onAddEvent ?? (() => {})}
       onOpenCalendar={handlers.onOpenCalendar ?? (() => {})}

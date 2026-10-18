@@ -5,6 +5,12 @@ import { afterEach } from "vitest";
 
 Element.prototype.scrollIntoView = () => {};
 
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 afterEach(() => {
   cleanup();
 });

@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, CalendarDays, CalendarX2, Plus } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent } from "@/domain/schemas";
@@ -30,12 +30,13 @@ type TodayScheduleProps = {
   tz: string;
   compact: boolean;
   iconActions: boolean;
-  capacity: number;
+  rows: number;
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
   onOpenCalendar: () => void;
   children?: ReactNode;
   xstyle?: stylex.StyleXStyles;
+  ref?: Ref<HTMLElement>;
 };
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
@@ -67,8 +68,11 @@ const styles = stylex.create({
     display: "flex",
     gap: space.xxs,
   },
-  list: {
+  rows: {
     flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: space.xs,
   },
   skeleton: {
     display: "flex",
@@ -146,7 +150,7 @@ type SeeAllProps = {
 
 type ScheduleRowsProps = Pick<
   TodayScheduleProps,
-  "now" | "clock" | "tz" | "compact" | "capacity" | "onOpenEvent" | "onOpenCalendar"
+  "now" | "clock" | "tz" | "compact" | "rows" | "onOpenEvent" | "onOpenCalendar"
 > & { events: readonly CalendarEvent[] };
 
 export function TodaySchedule({
@@ -158,17 +162,18 @@ export function TodaySchedule({
   tz,
   compact,
   iconActions,
-  capacity,
+  rows,
   onOpenEvent,
   onAddEvent,
   onOpenCalendar,
   children,
   xstyle,
+  ref,
 }: TodayScheduleProps) {
   const Actions = iconActions ? IconActions : TextActions;
 
   return (
-    <section {...stylex.props(styles.root, xstyle)}>
+    <section ref={ref} {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <Eyebrow>{eyebrowFor(state, clock, tz)}</Eyebrow>
         <div {...stylex.props(styles.actions)}>
@@ -201,7 +206,7 @@ export function TodaySchedule({
             clock={clock}
             tz={tz}
             compact={compact}
-            capacity={capacity}
+            rows={rows}
             onOpenEvent={onOpenEvent}
             onOpenCalendar={onOpenCalendar}
           />
@@ -309,34 +314,36 @@ function ScheduleRows({
   clock,
   tz,
   compact,
-  capacity,
+  rows,
   onOpenEvent,
   onOpenCalendar,
 }: ScheduleRowsProps) {
-  const { allDay, rows, hidden } = todaySchedule(events, now, tz, capacity);
+  const { allDay, rows: shown, hidden } = todaySchedule(events, now, tz, rows);
 
   return (
     <>
       <AllDayTiles events={allDay} label={copy.events.allDay} onOpenEvent={onOpenEvent} />
-      <div {...stylex.props(styles.list)}>
-        {rows.map((event) => (
-          <EventRow
-            key={event.id}
-            start={timeOf(event.startAt, clock, tz)}
-            end={event.endAt && timeOf(event.endAt, clock, tz)}
-            title={event.title}
-            location={event.location}
-            status={eventStatus(event, now, tz)}
-            dot={event.tone}
-            nowLabel={copy.events.now}
-            compact={compact}
-            onClick={() => onOpenEvent(event.id)}
-          />
-        ))}
+      <div data-schedule-rows="" {...stylex.props(styles.rows)}>
+        <div>
+          {shown.map((event) => (
+            <EventRow
+              key={event.id}
+              start={timeOf(event.startAt, clock, tz)}
+              end={event.endAt && timeOf(event.endAt, clock, tz)}
+              title={event.title}
+              location={event.location}
+              status={eventStatus(event, now, tz)}
+              dot={event.tone}
+              nowLabel={copy.events.now}
+              compact={compact}
+              onClick={() => onOpenEvent(event.id)}
+            />
+          ))}
+        </div>
+        {hidden.earlier + hidden.later > 0 && (
+          <SeeAll count={events.length} hidden={hidden} onClick={onOpenCalendar} />
+        )}
       </div>
-      {hidden.earlier + hidden.later > 0 && (
-        <SeeAll count={events.length} hidden={hidden} onClick={onOpenCalendar} />
-      )}
     </>
   );
 }
