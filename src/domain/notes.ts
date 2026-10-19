@@ -10,6 +10,8 @@ const TILTS = [-2, 1.5, -1, 2.5] as const;
 
 type TiltIndex = 0 | 1 | 2 | 3;
 
+const DETAILS_TILT_MAX = 1.5;
+
 const JUST_NOW_MS = 5 * 60 * 1000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -18,6 +20,10 @@ const EXPIRY_MS = { "1d": DAY_MS, "1w": 7 * DAY_MS } as const;
 
 export function noteTilt(noteCount: number): number {
   return TILTS[(noteCount % TILTS.length) as TiltIndex];
+}
+
+export function noteDetailsTilt(rotation: number): number {
+  return Math.max(-DETAILS_TILT_MAX, Math.min(DETAILS_TILT_MAX, rotation));
 }
 
 export function noteStamp(createdAt: string, now: Date, clock: Clock, tz: string): NoteStamp {

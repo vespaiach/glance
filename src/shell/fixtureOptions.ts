@@ -84,7 +84,7 @@ function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | 
     case "newevent":
       return { kind: "newevent", day: today, ...time };
     case "note":
-      return { kind: "note", id: fixtureSheetTargets.note };
+      return { kind: "note", id: fixtureSheetTargets.note, ...edit };
     case "newnote":
       return { kind: "newnote", draft: fixtureSheetTargets.noteDraft };
     case "photo":

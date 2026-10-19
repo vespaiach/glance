@@ -71,6 +71,7 @@ test("tech§6 sheet=note and sheet=newnote open the note sheets", () => {
   expect(fixtureSheet({ sheet: "note" }, "2026-10-09")).toEqual({
     kind: "note",
     id: fixtureSheetTargets.note,
+    edit: true,
   });
   expect(fixtureSheet({ sheet: "newnote" }, "2026-10-09")).toEqual({
     kind: "newnote",
@@ -87,7 +88,15 @@ test("§8.9 discard=1 opens the sheet asking Discard changes?", () => {
   expect(fixtureSheet({ sheet: "note", discard: true }, "2026-10-09")).toEqual({
     kind: "note",
     id: fixtureSheetTargets.note,
+    edit: true,
     discard: true,
+  });
+});
+
+test("NOTE-10 sheet=note&details=1 opens Note details", () => {
+  expect(fixtureSheet({ sheet: "note", details: true }, "2026-10-09")).toEqual({
+    kind: "note",
+    id: fixtureSheetTargets.note,
   });
 });
 

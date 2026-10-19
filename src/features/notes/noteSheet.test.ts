@@ -181,3 +181,80 @@ describe("note sheet discard", () => {
     expect(noteSheetReducer(asking, action).confirm).toBeNull();
   });
 });
+
+describe("note details", () => {
+  const draft = draftFromNote(WIFI);
+
+  const details = initialNoteSheet(draft, { details: true });
+
+  const editing = noteSheetReducer(details, { type: "edit" });
+
+  const changed = noteSheetReducer(editing, { type: "text", value: "Back at 6" });
+
+  it("NOTE-01 a note opened straight to the form starts in Edit note", () => {
+    expect(initialNoteSheet(draft)).toMatchObject({ view: "edit", fromDetails: false });
+  });
+
+  it("NOTE-10 details=1 opens Note details with the note as opened", () => {
+    expect(details).toMatchObject({ view: "details", fromDetails: true, opened: draft });
+  });
+
+  it("NOTE-10 Edit swaps the sheet to Edit note", () => {
+    expect(editing).toMatchObject({ view: "edit", fromDetails: true, draft });
+  });
+
+  it("NOTE-10 going back to details drops the changes and the message error", () => {
+    const failed = noteSheetReducer(noteSheetReducer(editing, { type: "text", value: "" }), {
+      type: "save",
+    });
+
+    expect(noteSheetReducer(failed, { type: "back" })).toMatchObject({
+      view: "details",
+      draft,
+      textError: false,
+      confirm: null,
+    });
+  });
+
+  it("NOTE-10 Cancel asks to discard and remembers to return to details", () => {
+    expect(noteSheetReducer(changed, { type: "askDiscard", to: "details" })).toMatchObject({
+      confirm: "discard",
+      discardTo: "details",
+    });
+  });
+
+  it("NOTE-10 the close button asks to discard and closes afterwards", () => {
+    const asking = noteSheetReducer(changed, { type: "askDiscard", to: "details" });
+
+    const kept = noteSheetReducer(asking, { type: "keepEditing" });
+
+    expect(noteSheetReducer(kept, { type: "askDiscard" }).discardTo).toBeNull();
+  });
+
+  it("NOTE-10 Discard from Cancel returns to details", () => {
+    const asking = noteSheetReducer(changed, { type: "askDiscard", to: "details" });
+
+    expect(noteSheetReducer(asking, { type: "back" })).toMatchObject({
+      view: "details",
+      draft,
+      confirm: null,
+      discardTo: null,
+    });
+  });
+
+  it("NOTE-10 Save from details returns to details with the new text", () => {
+    const saved = noteSheetReducer(changed, { type: "saved" });
+
+    expect(saved).toMatchObject({ view: "details", opened: { text: "Back at 6" } });
+    expect(isDirty(saved.draft, saved.opened)).toBe(false);
+  });
+
+  it("NOTE-10 discard=1 with details=1 opens the edit with the prompt that returns to details", () => {
+    expect(initialNoteSheet(draft, { details: true, discard: true })).toMatchObject({
+      view: "edit",
+      fromDetails: true,
+      confirm: "discard",
+      discardTo: "details",
+    });
+  });
+});

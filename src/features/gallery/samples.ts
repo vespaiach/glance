@@ -101,6 +101,8 @@ export const gallery = {
     discard: "Discard changes?",
   },
   noteSheet: {
+    details: "Note details",
+    detailsWaiting: "Note details · waiting",
     edit: "Edit note",
     new: "New note",
     draft: "New note · draft",

@@ -10,7 +10,7 @@ export type TimeFixture = NonNullable<FixtureParams["time"]>;
 export type SheetRequest = (
   | { kind: "event"; id: string; time?: TimeFixture; edit?: true }
   | { kind: "newevent"; day: string; memberIds?: readonly string[]; time?: TimeFixture }
-  | { kind: "note"; id: string }
+  | { kind: "note"; id: string; edit?: true }
   | { kind: "newnote"; draft?: { text: string; tone: NoteTone } }
   | { kind: "photo"; id: string }
 ) & { discard?: true };

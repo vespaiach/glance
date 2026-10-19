@@ -1,10 +1,13 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { Trash2, WifiOff } from "lucide-react";
+import { Pencil, Trash2, WifiOff } from "lucide-react";
 import { useReducer } from "react";
 import { copy } from "@/copy";
-import { shadows } from "@/theme/tokens.stylex";
+import { noteDetailsTilt } from "@/domain/notes";
+import type { NoteTone } from "@/domain/schemas";
+import { season } from "@/theme/seasons.stylex";
+import { motion, radii, shadows } from "@/theme/tokens.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
@@ -20,6 +23,7 @@ import {
   type NoteSwatchOption,
   noteSheetReducer,
 } from "../noteSheet";
+import { NoteDetails } from "./NoteDetails";
 
 type NoteSheetProps = {
   mode: "new" | "edit";
@@ -31,9 +35,13 @@ type NoteSheetProps = {
   onClose: () => void;
   onDelete: () => void;
   onSave: (draft: NoteDraft) => void;
+  time?: string;
+  rotation?: number;
 };
 
 const words = copy.notes.sheet;
+
+const details = copy.notes.details;
 
 const discard = copy.discard;
 
@@ -44,6 +52,20 @@ const styles = stylex.create({
   cancel: {
     boxShadow: shadows.shadow1,
   },
+  morph: {
+    transitionProperty: "transform, border-radius, background-color",
+    transitionDuration: motion.durBase,
+    transitionTimingFunction: motion.easeOut,
+  },
+  sticky: {
+    borderRadius: radii.sm,
+  },
+  tilt: (degrees: number) => ({ transform: `rotate(${degrees}deg)` }),
+  tone1: { backgroundColor: season.block1 },
+  tone2: { backgroundColor: season.block2 },
+  tone3: { backgroundColor: season.block3 },
+  tone4: { backgroundColor: season.block4 },
+  soft: { backgroundColor: season.soft },
 });
 
 type DeleteActionProps = {
@@ -62,24 +84,68 @@ export function NoteSheet({
   onDelete,
   onSave,
   keyboardInset,
+  time = "",
+  rotation = 0,
 }: NoteSheetProps) {
   const [state, dispatch] = useReducer(noteSheetReducer, initial);
 
-  const { draft } = state;
+  const { draft, opened } = state;
 
-  const save = () => (canSave(draft) ? onSave(draft) : dispatch({ type: "save" }));
+  const save = () => {
+    if (!canSave(draft)) return dispatch({ type: "save" });
+
+    onSave(draft);
+
+    if (state.fromDetails) dispatch({ type: "saved" });
+    else onClose();
+  };
 
   const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(state.confirm, isDirty(draft, state.opened), from);
+    const step = closeStep(state.confirm, isDirty(draft, opened), from);
 
     if (step === "close") return onClose();
 
     if (step === "ask") dispatch({ type: "askDiscard" });
   };
 
+  const cancel = () => {
+    if (!state.fromDetails) return requestClose("button")();
+
+    const step = closeStep(state.confirm, isDirty(draft, opened), "button");
+
+    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
+  };
+
+  const discardChanges = () =>
+    state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
+
+  if (state.view === "details")
+    return (
+      <Sheet
+        title={details.title(authorName(opened.author))}
+        eyebrow={copy.notes.board}
+        closeLabel={words.close}
+        onClose={onClose}
+        endActions={
+          <Button icon={Pencil} onClick={() => dispatch({ type: "edit" })}>
+            {details.edit}
+          </Button>
+        }
+        keyboardInset={keyboardInset}
+        xstyle={[
+          styles.morph,
+          styles.sticky,
+          toneStyle(opened.tone),
+          styles.tilt(noteDetailsTilt(rotation)),
+        ]}
+      >
+        <NoteDetails text={opened.text.trim()} time={time} />
+      </Sheet>
+    );
+
   const endActions = (
     <>
-      <Button variant="secondary" onClick={requestClose("button")} xstyle={styles.cancel}>
+      <Button variant="secondary" onClick={cancel} xstyle={styles.cancel}>
         {words.cancel}
       </Button>
       <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
@@ -112,13 +178,14 @@ export function NoteSheet({
             keepLabel={discard.keepEditing}
             discardLabel={discard.discard}
             onKeep={() => dispatch({ type: "keepEditing" })}
-            onDiscard={onClose}
+            onDiscard={discardChanges}
           />
         ) : (
           endActions
         )
       }
       keyboardInset={keyboardInset}
+      xstyle={styles.morph}
     >
       {offline && (
         <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />
@@ -146,6 +213,14 @@ export function NoteSheet({
       />
     </Sheet>
   );
+}
+
+function authorName(author: string): string {
+  return author.trim() === "" ? copy.notes.guestAuthor : author.trim();
+}
+
+function toneStyle(tone: NoteTone) {
+  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }
 
 function primaryLabel(mode: NoteSheetProps["mode"], offline: boolean): string {

@@ -10,16 +10,22 @@ export type NoteDraft = {
   tone: NoteTone;
 };
 
+export type NoteSheetView = "details" | "edit";
+
 export type NoteSheetState = {
   draft: NoteDraft;
   opened: NoteDraft;
   textError: boolean;
   confirm: SheetConfirm;
+  view: NoteSheetView;
+  fromDetails: boolean;
+  discardTo: "details" | null;
 };
 
 export type NoteSheetOptions = {
   opened?: NoteDraft;
   discard?: boolean;
+  details?: boolean;
 };
 
 export type NoteBase = Pick<Note, "id" | "createdAt" | "rotation">;
@@ -29,8 +35,11 @@ export type NoteSheetAction =
   | { type: "tone"; value: NoteTone }
   | { type: "save" }
   | { type: "askDelete" }
-  | { type: "askDiscard" }
-  | { type: "keepEditing" };
+  | { type: "askDiscard"; to?: "details" }
+  | { type: "keepEditing" }
+  | { type: "edit" }
+  | { type: "back" }
+  | { type: "saved" };
 
 export type NoteSwatchOption = { value: NoteTone; label: string };
 
@@ -79,9 +88,17 @@ export function noteSwatches(season: Season): NoteSwatchOption[] {
 
 export function initialNoteSheet(
   draft: NoteDraft,
-  { opened = draft, discard = false }: NoteSheetOptions = {},
+  { opened = draft, discard = false, details = false }: NoteSheetOptions = {},
 ): NoteSheetState {
-  return { draft, opened, textError: false, confirm: discard ? "discard" : null };
+  return {
+    draft,
+    opened,
+    textError: false,
+    confirm: discard ? "discard" : null,
+    view: details && !discard ? "details" : "edit",
+    fromDetails: details,
+    discardTo: details && discard ? "details" : null,
+  };
 }
 
 export function isDirty(draft: NoteDraft, opened: NoteDraft): boolean {
@@ -107,12 +124,30 @@ export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction)
     case "askDelete":
       return { ...state, confirm: "delete" };
     case "askDiscard":
-      return { ...state, confirm: "discard" };
+      return { ...state, confirm: "discard", discardTo: action.to ?? null };
     case "keepEditing":
       return { ...state, confirm: null };
+    case "edit":
+      return { ...state, view: "edit" };
+    case "back":
+      return inDetails(state, state.opened);
+    case "saved":
+      return inDetails(state, state.draft);
   }
 }
 
 function edited(state: NoteSheetState, draft: NoteDraft): NoteSheetState {
   return { ...state, draft, confirm: afterEdit(state.confirm) };
+}
+
+function inDetails(state: NoteSheetState, opened: NoteDraft): NoteSheetState {
+  return {
+    ...state,
+    draft: opened,
+    opened,
+    textError: false,
+    confirm: null,
+    view: "details",
+    discardTo: null,
+  };
 }

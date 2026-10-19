@@ -9,7 +9,7 @@ import {
   putSyncStatus,
   synced,
 } from "@/data/repos/testHarness";
-import type { CalendarEvent, Photo, WeatherLocation } from "@/domain/schemas";
+import type { CalendarEvent, Note, Photo, WeatherLocation } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -46,6 +46,15 @@ const COAST: Photo = {
   checked: true,
   place: "Summer trip",
   createdAt: "2026-10-05T19:05:00.000Z",
+};
+
+const WIFI: Note = {
+  id: "0195f0a0-0000-7000-8000-000000000003",
+  text: "Wi-Fi password is on the fridge!",
+  author: "Dad",
+  createdAt: iso(8, 12),
+  tone: 1,
+  rotation: -2,
 };
 
 const PORTLAND: WeatherLocation = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
@@ -227,6 +236,19 @@ test("TODAY-09 Add note opens New note", async () => {
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
     JSON.stringify({ kind: "newnote" }),
+  );
+});
+
+test("TODAY-09 tapping a note opens Note details for it", async () => {
+  await markSynced(store);
+  await store.db.notes.put(synced(WIFI));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Wi-Fi/ }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "note", id: WIFI.id }),
   );
 });
 
