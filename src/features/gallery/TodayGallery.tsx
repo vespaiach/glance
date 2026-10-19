@@ -4,17 +4,19 @@ import { todayHero } from "@/domain/todayHero";
 import {
   HeroSkeleton,
   HeroSummary,
+  NowWeather,
   PictureOfDay,
   PictureOfDayEmpty,
+  PictureOfDayPanel,
   PictureOfDaySkeleton,
   TodayHero,
   TodayNotes,
   TodaySchedule,
-  TodayWeather,
 } from "@/features/today";
 import { GalleryGroup } from "./GalleryGroup";
 import {
   ALL_DAY_EVENTS,
+  FULL_WEATHER,
   GALLERY_FAMILY,
   GALLERY_TZ,
   gallery,
@@ -51,22 +53,51 @@ const HEROES = [
 const PICTURES = [
   {
     key: "photo",
-    picture: <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} onOpen={ignore} />,
+    picture: (
+      <PictureOfDayPanel onOpenPhotos={ignore}>
+        <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} onOpen={ignore} />
+      </PictureOfDayPanel>
+    ),
   },
   {
     key: "on-this-day",
     picture: (
-      <PictureOfDay photo={TODAY_PHOTO} onThisDay={2025} src={TODAY_PHOTO_SRC} onOpen={ignore} />
+      <PictureOfDayPanel onThisDay={2025} onOpenPhotos={ignore}>
+        <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} onOpen={ignore} />
+      </PictureOfDayPanel>
     ),
   },
-  { key: "empty", picture: <PictureOfDayEmpty onUpload={ignore} /> },
-  { key: "photo-background", picture: null },
+  {
+    key: "empty",
+    picture: (
+      <PictureOfDayPanel onOpenPhotos={ignore}>
+        <PictureOfDayEmpty onUpload={ignore} />
+      </PictureOfDayPanel>
+    ),
+  },
+  {
+    key: "phone-empty",
+    picture: <PictureOfDayPanel onOpenPhotos={ignore}>{null}</PictureOfDayPanel>,
+  },
+  {
+    key: "loading",
+    picture: (
+      <PictureOfDayPanel onOpenPhotos={ignore}>
+        <PictureOfDaySkeleton />
+      </PictureOfDayPanel>
+    ),
+  },
 ];
 
 const styles = stylex.create({
   hero: {
     width: 400,
-    minHeight: 520,
+    minHeight: 640,
+  },
+  picture: {
+    width: 400,
+    height: 360,
+    display: "flex",
   },
   zone: {
     width: 520,
@@ -99,6 +130,7 @@ const notes = {
   onAddNote: ignore,
   onOpenNotes: ignore,
   columns: 2,
+  limit: 2,
   ...failure,
   xstyle: styles.side,
 } as const;
@@ -106,10 +138,19 @@ const notes = {
 const weather = {
   unit: "F",
   clock: "12h",
+  retryIn: 1,
+  onOpenWeather: ignore,
   onSetLocation: ignore,
-  ...failure,
-  xstyle: styles.side,
 } as const;
+
+const WEATHERS = [
+  { key: "rain", state: { kind: "ready", data: [FULL_WEATHER] } },
+  { key: "dry", state: { kind: "ready", data: [TODAY_WEATHER] } },
+  { key: "saved", state: { kind: "ready", data: [TODAY_WEATHER], updatedAt: UPDATED_AT } },
+  { key: "empty", state: { kind: "empty" } },
+  { key: "failed", state: { kind: "failed" } },
+  { key: "loading", state: { kind: "loading" } },
+] as const;
 
 export function TodayGallery({ season }: { season: Season }) {
   return (
@@ -121,34 +162,46 @@ export function TodayGallery({ season }: { season: Season }) {
           season={season}
           time={NOW}
           clock="12h"
+          weather={<NowWeather tz={GALLERY_TZ} {...WEATHERS[0]} {...weather} />}
           xstyle={styles.hero}
         >
-          <HeroSummary tz={GALLERY_TZ} hero={hero} clock="12h" onOpenEvent={ignore} />
+          <HeroSummary
+            tz={GALLERY_TZ}
+            hero={hero}
+            members={GALLERY_FAMILY}
+            clock="12h"
+            onOpenEvent={ignore}
+          />
         </TodayHero>
       ))}
-      {PICTURES.map(({ key, picture }) => (
+      {WEATHERS.slice(1).map(({ key, state }) => (
         <TodayHero
           tz={GALLERY_TZ}
           key={key}
           season={season}
           time={NOW}
-          clock="12h"
-          picture={picture}
+          clock="24h"
+          weather={<NowWeather tz={GALLERY_TZ} state={state} {...weather} />}
           xstyle={styles.hero}
         >
-          <HeroSummary tz={GALLERY_TZ} hero={NOW_HERO} clock="12h" onOpenEvent={ignore} />
+          {key === "loading" ? (
+            <HeroSkeleton />
+          ) : (
+            <HeroSummary
+              tz={GALLERY_TZ}
+              hero={NOW_HERO}
+              members={GALLERY_FAMILY}
+              clock="24h"
+              onOpenEvent={ignore}
+            />
+          )}
         </TodayHero>
       ))}
-      <TodayHero
-        tz={GALLERY_TZ}
-        season={season}
-        time={NOW}
-        clock="24h"
-        picture={<PictureOfDaySkeleton />}
-        xstyle={styles.hero}
-      >
-        <HeroSkeleton />
-      </TodayHero>
+      {PICTURES.map(({ key, picture }) => (
+        <div key={key} {...stylex.props(styles.picture)}>
+          {picture}
+        </div>
+      ))}
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule} />
       <TodaySchedule
         tz={GALLERY_TZ}
@@ -191,21 +244,13 @@ export function TodayGallery({ season }: { season: Season }) {
         state={{ kind: "ready", data: TODAY_EVENTS, updatedAt: UPDATED_AT }}
         {...schedule}
       />
-      <TodayWeather tz={GALLERY_TZ} state={{ kind: "ready", data: [TODAY_WEATHER] }} {...weather} />
-      <TodayWeather tz={GALLERY_TZ} state={{ kind: "empty" }} {...weather} />
-      <TodayWeather tz={GALLERY_TZ} state={{ kind: "loading" }} {...weather} />
-      <TodayWeather tz={GALLERY_TZ} state={{ kind: "failed" }} {...weather} />
-      <TodayWeather
-        tz={GALLERY_TZ}
-        state={{ kind: "ready", data: [TODAY_WEATHER], updatedAt: UPDATED_AT }}
-        {...weather}
-      />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_NOTES }} {...notes} />
       <TodayNotes
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_NOTES }}
         {...notes}
         columns={1}
+        limit={1}
       />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "empty" }} {...notes} />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "loading" }} {...notes} />

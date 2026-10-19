@@ -24,10 +24,9 @@ type TodayNotesProps = {
   onAddNote: () => void;
   onOpenNotes: () => void;
   columns: 1 | 2;
+  limit: 1 | 2;
   xstyle?: stylex.StyleXStyles;
 };
-
-const SHOWN = 2;
 
 const styles = stylex.create({
   root: {
@@ -89,6 +88,7 @@ export function TodayNotes({
   onAddNote,
   onOpenNotes,
   columns,
+  limit,
   xstyle,
 }: TodayNotesProps) {
   const grid = [styles.grid, columns === 1 ? styles.one : styles.two];
@@ -124,7 +124,7 @@ export function TodayNotes({
       >
         {(notes) => (
           <div {...stylex.props(grid)}>
-            {notes.slice(0, SHOWN).map((note) => (
+            {notes.slice(0, limit).map((note) => (
               <StickyNote
                 key={note.id}
                 tone={note.tone}

@@ -1,5 +1,5 @@
 import type { Weather } from "./schemas";
-import { hourlyByHour, rainStart, weatherZone } from "./weather";
+import { hourlyByHour, rainHour, rainStart, weatherZone } from "./weather";
 import { zonedInstant } from "./zone";
 
 const at = (hour: number) => new Date(2026, 9, 9, hour).toISOString();
@@ -15,6 +15,22 @@ const hours = (precips: (number | undefined)[]): Weather["hourly"] =>
 const FORECAST = { location: "Portland, OR", fetchedAt: "2026-10-09T16:30:00.000Z" } as Weather;
 
 const base = { located: true, failed: false, timedOut: false };
+
+describe("rainHour", () => {
+  const icons = (list: Weather["hourly"][number]["icon"][]): Weather["hourly"] =>
+    list.map((icon, index) => ({ time: at(11 + index), icon, temp: 60 }));
+
+  it("TODAY-08 is the first drizzle or rain hour of the hourly forecast", () => {
+    expect(rainHour(icons(["sun", "cloud", "cloud-drizzle", "cloud-rain"]))).toBe(at(13));
+    expect(rainHour(icons(["cloud", "cloud-rain", "cloud-drizzle"]))).toBe(at(12));
+  });
+
+  it("TODAY-08 is undefined when no hour has drizzle or rain, whatever the rain chance", () => {
+    expect(
+      rainHour(hours([90, 90]).map((point) => ({ ...point, icon: "cloud-snow" as const }))),
+    ).toBeUndefined();
+  });
+});
 
 describe("rainStart", () => {
   it("WX-03 is the first of the next 8 hours with a 50% chance of rain or more", () => {

@@ -7,6 +7,8 @@ export type HourlyPoint = Weather["hourly"][number];
 
 const RAIN_CHANCE = 50;
 
+const RAIN_ICONS: ReadonlySet<HourlyPoint["icon"]> = new Set(["cloud-drizzle", "cloud-rain"]);
+
 export type WeatherZoneInput = {
   located: boolean | undefined;
   weather: Weather | null | undefined;
@@ -16,6 +18,10 @@ export type WeatherZoneInput = {
 
 export function rainStart(hourly: Weather["hourly"]): string | undefined {
   return hourly.find((point) => (point.precip ?? 0) >= RAIN_CHANCE)?.time;
+}
+
+export function rainHour(hourly: Weather["hourly"]): string | undefined {
+  return hourly.find((point) => RAIN_ICONS.has(point.icon))?.time;
 }
 
 export function hourlyByHour(
