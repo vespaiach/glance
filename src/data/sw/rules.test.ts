@@ -3,7 +3,6 @@ import path from "node:path";
 import {
   isPhotoFile,
   isRscRequest,
-  isSeasonVideo,
   isWarmPhotos,
   OFFLINE_PAGES,
   pageCacheKey,
@@ -99,23 +98,5 @@ describe("photo files", () => {
     expect(isWarmPhotos({ type: WARM_PHOTOS, ids: [1] })).toBe(false);
     expect(isWarmPhotos({ type: "SKIP_WAITING" })).toBe(false);
     expect(isWarmPhotos(null)).toBe(false);
-  });
-});
-
-describe("isSeasonVideo", () => {
-  it.each(["spring", "summer", "fall", "winter"])(
-    "AMB-09 the %s video is runtime-cached",
-    (season) => {
-      expect(isSeasonVideo(new URL(`${ORIGIN}/videos/${season}.mp4`))).toBe(true);
-    },
-  );
-
-  it.each([
-    "/videos/autumn.mp4",
-    "/videos/fall.webm",
-    "/api/videos/fall.mp4",
-    "/videos/fall.mp4/extra",
-  ])("AMB-09 %s is not a season video", (pathname) => {
-    expect(isSeasonVideo(new URL(`${ORIGIN}${pathname}`))).toBe(false);
   });
 });

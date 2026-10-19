@@ -4,7 +4,7 @@
 |---|---|
 | Status | v2.04 |
 | Date | 2026-10-19 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.63) · [`tech-design.md`](tech-design.md) (v2.18) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.63) · [`tech-design.md`](tech-design.md) (v2.19) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 

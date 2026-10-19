@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.18 |
+| Status | v2.19 |
 | Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.63) · [`design/handoff/`](design/handoff/README.md) (v8) |
 
@@ -219,7 +219,7 @@ A signed-in screen must cold-start offline with every view working.
 - **Static routes.** Every view, `/ambient` and `/signin` is fully static (no `cookies()`/`headers()`); auth gating is on the client; `useSearchParams` sits in `Suspense`. `/` → `/today` is a `redirects()` entry.
 - **Auth offline.** `glance-meta` holds `{ accountId, name, email, signedOut? }`, written after sign-in. Offline, trust it; online, a 401 means signed out. Signing in to a different account first deletes the old account's DB and `photos` cache.
 - **Photos offline.** After each pull, and at start for every saved photo, the worker sends `photosChanged(ids)`; the page forwards them to the SW, which fetches `thumb` and `display` into the `photos` cache one at a time.
-- **Storage.** `navigator.storage.persist()` after sign-in. Manifest: `display: fullscreen`, `start_url /today`, `theme_color #000000`, the handoff's PWA icons (`pwa-icons/`: 192 and 512, maskable 192 and 512, favicons 16/32/48, apple-touch 180). Home-screen install on iPad avoids Safari's 7-day cap.
+- **Storage.** `navigator.storage.persist()` after sign-in. Manifest: `display: fullscreen`, `start_url /today`, `theme_color #000000`, `background_color #c8e6cd` (the icon's mint), the handoff's PWA icons (`pwa-icons/` copied to the `public/` root: 192 and 512, maskable 192 and 512); the root layout links favicons 16/32/48, apple-touch 180 and the `theme-color` meta. Home-screen install on iPad avoids Safari's 7-day cap.
 - **Updates.** A new SW waits. At an idle move with an empty outbox, `IdleProvider` posts `SKIP_WAITING` and loads the target path on `controllerchange`; the SW is checked hourly. **Build check:** entity writes and `/api/sync` answer **426** when `X-Glance-Build` is missing or below `MIN_CLIENT_BUILD`. After a 426 the outbox can't drain, so the update applies at the next idle even with entries pending; they survive the reload and the new build pushes them. Without a waiting SW, an `outdated` screen does a full page load at idle instead. Any change that adds a field to a synced row raises `CLIENT_BUILD` and `MIN_CLIENT_BUILD` (`domain/build.ts`), because Valibot drops unknown keys and an older client would write the row back without it. New settings fields use `v.optional(…, default)`, so older rows parse.
 - **Sign-out.** Stop the host (terminates the worker), call `auth.signout()` (answer ignored), clear `glance-meta`, delete the account DB and the `photos` cache.
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { deviceTimeZone } from "@/domain/zone";
 import { AmbientView } from "./AmbientView";
@@ -77,69 +77,13 @@ test("AMB-03 an all-day event reads All day on its own date in any zone", () => 
   ).toBeInTheDocument();
 });
 
-function seasonVideo(container: HTMLElement): HTMLVideoElement | null {
-  return container.querySelector("video");
-}
-
 function photoBackdrop(container: HTMLElement): Element | null {
   return container.querySelector("[data-backdrop]");
 }
 
-test("AMB-09 the season's video plays muted and looped, hidden from assistive tech", () => {
-  const { container } = render(<AmbientView {...BASE} />);
-
-  const video = seasonVideo(container);
-
-  expect(video).toHaveAttribute("src", "/videos/fall.mp4");
-  expect(video?.muted).toBe(true);
-  expect(video?.loop).toBe(true);
-  expect(video?.autoplay).toBe(true);
-  expect(video).toHaveAttribute("playsinline");
-  expect(video?.closest("[aria-hidden='true']")).not.toBeNull();
-  expect(container.querySelector("[data-video-tint]")).not.toBeNull();
-});
-
-test("AMB-09 the video covers the photo background too", () => {
+test("AMB-06 the background is the photo or the season, with no video", () => {
   const { container } = render(<AmbientView {...BASE} photoSrc="/photo.jpg" />);
 
-  expect(seasonVideo(container)).not.toBeNull();
+  expect(container.querySelector("video")).toBeNull();
   expect(photoBackdrop(container)).not.toBeNull();
-});
-
-test("AMB-09 a missing or failing video shows the AMB-06 background with no label", () => {
-  const { container } = render(<AmbientView {...BASE} photoSrc="/photo.jpg" />);
-
-  const video = seasonVideo(container);
-
-  if (video) fireEvent.error(video);
-
-  expect(seasonVideo(container)).toBeNull();
-  expect(container.querySelector("[data-video-tint]")).toBeNull();
-  expect(photoBackdrop(container)).not.toBeNull();
-  expect(screen.queryByText(/mp4/)).not.toBeInTheDocument();
-});
-
-test("AMB-09 a new season tries its own video after another season's failed", () => {
-  const { container, rerender } = render(<AmbientView {...BASE} />);
-
-  const video = seasonVideo(container);
-
-  if (video) fireEvent.error(video);
-
-  rerender(<AmbientView {...BASE} season="winter" />);
-
-  expect(seasonVideo(container)).toHaveAttribute("src", "/videos/winter.mp4");
-});
-
-test("AMB-09 a video that failed before the page was interactive also falls back", () => {
-  Object.defineProperty(HTMLMediaElement.prototype, "error", {
-    configurable: true,
-    get: () => ({ code: 4 }),
-  });
-
-  const { container } = render(<AmbientView {...BASE} />);
-
-  expect(seasonVideo(container)).toBeNull();
-
-  Reflect.deleteProperty(HTMLMediaElement.prototype, "error");
 });

@@ -25,7 +25,6 @@ import { Clock } from "@/ui/Clock";
 import { Icon } from "@/ui/Icon";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
-import { SeasonVideo } from "@/ui/SeasonVideo";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { seasonIcons } from "@/ui/seasonIcons";
 import { weatherIcons } from "@/ui/weatherIcons";
@@ -180,7 +179,6 @@ export function AmbientView({
       {...stylex.props(ambientType, styles.root, xstyle)}
     >
       <PhotoBackdrop image={photoSrc && photoLayer(dim, photoSrc)} />
-      <SeasonVideo season={season} />
       <div {...stylex.props(styles.top)}>
         <span {...stylex.props(styles.label)}>
           <Icon icon={seasonIcons[season]} size={24} strokeWidth={1.5} />
