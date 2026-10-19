@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.12 |
+| Status | v2.13 |
 | Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`design/handoff/`](design/handoff/README.md) (v7) |
 
@@ -314,8 +314,8 @@ type MailMessage = { to: string; subject: string; text: string; html?: string };
 type Mailer = { send(message: MailMessage): Promise<Result<void, "mail-failed">> };
 ```
 
-- **Contract** (`mailer.ts`): the sender is bound from `MAIL_FROM` when the mailer is built, so messages carry no `from`. Any failure (a non-2xx answer, a network or SMTP error) is `mail-failed`, never a throw. One attempt, no retry. Adapters log the provider and the status, never the message (it holds the sign-in link).
-- **Adapters**: `createResendMailer(config, from, fetch)` (`resend.ts`) → `POST https://api.resend.com/emails`, Bearer key, JSON `{ from, to, subject, text, html }`. `createMailtrapMailer` (`mailtrap.ts`) → `POST https://send.api.mailtrap.io/api/send`, or `https://sandbox.api.mailtrap.io/api/send/{inboxId}` when an inbox is set, Bearer token, JSON with `from: { email, name }` and `to: [{ email }]` (`parseAddress` splits `MAIL_FROM`). `createMailgunMailer` (`mailgun.ts`) → `POST https://api.mailgun.net/v3/{domain}/messages` (`api.eu.mailgun.net` for `eu`), Basic `api:{key}`, form-encoded fields. The three share one `postMail` step (`http.ts`). `createSmtpMailer(transport, from)` (`smtp.ts`) calls `transport.sendMail`; the factory passes `nodemailer.createTransport({ host, port, secure, auth })`.
+- **Contract** (`mailer.ts`): the sender is bound from `MAIL_FROM` when the mailer is built, so messages carry no `from`. Any failure (a non-2xx answer, a network or SMTP error) is `mail-failed`, never a throw. One attempt, no retry. A failure is logged once (`mailFailed`) with the provider and the status or error, never the message or the provider's answer (they hold the sign-in link). `parseAddress` splits `MAIL_FROM` into `{ email, name? }` and is the env check for it.
+- **Adapters**: `createResendMailer(config, from, fetch)` (`resend.ts`) → `POST https://api.resend.com/emails`, Bearer key, JSON `{ from, to, subject, text, html }`. `createMailtrapMailer` (`mailtrap.ts`) → `POST https://send.api.mailtrap.io/api/send`, or `https://sandbox.api.mailtrap.io/api/send/{inboxId}` when an inbox is set, Bearer token, JSON with `from: { email, name }` and `to: [{ email }]` (`parseAddress` splits `MAIL_FROM`). `createMailgunMailer` (`mailgun.ts`) → `POST https://api.mailgun.net/v3/{domain}/messages` (`api.eu.mailgun.net` for `eu`), Basic `api:{key}`, form-encoded fields. The three share one `postMail` step (`http.ts`). `createSmtpMailer(transport, from)` (`smtp.ts`) calls `transport.sendMail({ from, ...message })` on a minimal `SmtpTransport` type, so tests pass a fake; the factory passes `nodemailer.createTransport({ host, port, secure, auth })`.
 - **Factory** (`index.ts`): `createMailer(config, from, fetch = globalThis.fetch)` switches on `config.provider`. `mailer()` builds it once from `env().mail` and `env().MAIL_FROM` and is shared by auth.
 - **Tests**: one contract suite (`contract.ts`: an accepted message → `ok`; a rejected message and an unreachable provider → `mail-failed` without throwing; logs never hold the message text) runs against the HTTP adapters on a fake `fetch` and the SMTP adapter on a fake transport. Each adapter's tests check the URL, auth header and body encoding, plus Mailtrap's sandbox URL and Mailgun's EU host. The factory is checked to reach each provider.
 

@@ -1,37 +1,52 @@
 import "server-only";
 import { copy } from "@/copy";
-import { err, ok, type Result } from "@/domain/result";
+import { err, type Result } from "@/domain/result";
 
-export type MailMessage = { to: string; subject: string; text: string };
+export type MailMessage = { to: string; subject: string; text: string; html?: string };
 
-export type Mailer = { send(message: MailMessage): Promise<Result<void, "mail-failed">> };
+export type MailResult = Result<void, "mail-failed">;
 
-const RESEND_EMAILS_URL = "https://api.resend.com/emails";
+export type Mailer = { send(message: MailMessage): Promise<MailResult> };
 
-export function createMailer(apiKey: string, from: string, fetcher: typeof fetch = fetch): Mailer {
-  return {
-    send: async (message) => {
-      try {
-        const response = await fetcher(RESEND_EMAILS_URL, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ from, ...message }),
-        });
+export type MailAddress = { email: string; name?: string };
 
-        if (!response.ok) {
-          console.error(`Resend answered ${response.status}: ${await response.text()}`);
+export type ResendConfig = { apiKey: string };
 
-          return err("mail-failed");
-        }
+export type MailtrapConfig = { apiToken: string; inboxId?: string };
 
-        return ok(undefined);
-      } catch (error) {
-        console.error(error);
+export type MailgunConfig = { apiKey: string; domain: string; region: "us" | "eu" };
 
-        return err("mail-failed");
-      }
-    },
-  };
+export type SmtpConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth?: { user: string; password: string };
+};
+
+export type MailConfig =
+  | ({ provider: "resend" } & ResendConfig)
+  | ({ provider: "mailtrap" } & MailtrapConfig)
+  | ({ provider: "mailgun" } & MailgunConfig)
+  | ({ provider: "smtp" } & SmtpConfig);
+
+const NAMED_ADDRESS = /^(.*?)\s*<([^\s<>@]+@[^\s<>@]+)>$/;
+
+const BARE_ADDRESS = /^[^\s<>@]+@[^\s<>@]+$/;
+
+export function parseAddress(sender: string): MailAddress | undefined {
+  const trimmed = sender.trim();
+
+  const named = NAMED_ADDRESS.exec(trimmed);
+
+  if (named?.[2]) return named[1] ? { email: named[2], name: named[1] } : { email: named[2] };
+
+  return BARE_ADDRESS.test(trimmed) ? { email: trimmed } : undefined;
+}
+
+export function mailFailed(provider: string, reason: string): MailResult {
+  console.error(`Mail via ${provider} failed: ${reason}`);
+
+  return err("mail-failed");
 }
 
 export function signInMessage(to: string, url: string): MailMessage {

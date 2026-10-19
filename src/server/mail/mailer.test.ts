@@ -1,48 +1,20 @@
-import { createMailer, signInMessage } from "./mailer";
+import { parseAddress, signInMessage } from "./mailer";
 
-const MESSAGE = { to: "maria@example.com", subject: "Hi", text: "Body" };
-
-describe("createMailer", () => {
-  it("D14 posts the message from MAIL_FROM to Resend with the API key", async () => {
-    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ id: "email-1" }));
-    const mailer = createMailer("re_test", "Glance <hello@example.com>", fetcher);
-
-    const result = await mailer.send(MESSAGE);
-
-    expect(result).toEqual({ ok: true, value: undefined });
-    const [url, init] = fetcher.mock.calls[0] ?? [];
-    expect(url).toBe("https://api.resend.com/emails");
-    expect(init?.method).toBe("POST");
-    expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer re_test");
-    expect(new Headers(init?.headers).get("Content-Type")).toBe("application/json");
-    expect(JSON.parse(String(init?.body))).toEqual({
-      from: "Glance <hello@example.com>",
-      ...MESSAGE,
+describe("parseAddress", () => {
+  it("tech§6.2 splits a Name <address> sender", () => {
+    expect(parseAddress("Glance <hello@example.com>")).toEqual({
+      email: "hello@example.com",
+      name: "Glance",
     });
   });
 
-  it("D14 reports a Resend error response without throwing", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetcher = vi.fn<typeof fetch>(async () =>
-      Response.json({ message: "Invalid `from` field" }, { status: 422 }),
-    );
-    const mailer = createMailer("re_test", "Glance <hello@example.com>", fetcher);
-
-    const result = await mailer.send(MESSAGE);
-
-    expect(result).toEqual({ ok: false, error: "mail-failed" });
+  it("tech§6.2 reads a bare address without a name", () => {
+    expect(parseAddress(" hello@example.com ")).toEqual({ email: "hello@example.com" });
   });
 
-  it("D14 reports a network failure without throwing", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const fetcher = vi.fn<typeof fetch>(async () => {
-      throw new TypeError("fetch failed");
-    });
-    const mailer = createMailer("re_test", "Glance <hello@example.com>", fetcher);
-
-    const result = await mailer.send(MESSAGE);
-
-    expect(result).toEqual({ ok: false, error: "mail-failed" });
+  it("tech§6.5 rejects a sender without an address", () => {
+    expect(parseAddress("Glance")).toBeUndefined();
+    expect(parseAddress("Glance <hello>")).toBeUndefined();
   });
 });
 

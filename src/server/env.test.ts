@@ -1,13 +1,16 @@
 import { parseEnv } from "./env";
 
-const BASE = {
+const CORE = {
   DATABASE_URL: "postgres://glance@localhost:5432/glance",
   APP_URL: "https://glance.example.com",
-  RESEND_API_KEY: "re_123",
   MAIL_FROM: "Glance <hello@example.com>",
 };
 
+const BASE = { ...CORE, RESEND_API_KEY: "re_123" };
+
 const VALID = { ...BASE, DATA_DIR: "/data" };
+
+const NO_MAIL = { ...CORE, DATA_DIR: "/data" };
 
 const S3 = {
   ...BASE,
@@ -28,9 +31,10 @@ const R2 = {
 };
 
 describe("parseEnv", () => {
-  it("tech§6.5 reads DATABASE_URL, APP_URL, RESEND_API_KEY, MAIL_FROM and a disk store at DATA_DIR by default", () => {
+  it("tech§6.5 reads DATABASE_URL, APP_URL, MAIL_FROM, Resend mail and a disk store at DATA_DIR by default", () => {
     expect(parseEnv({ ...VALID, OTHER: "x" })).toEqual({
-      ...BASE,
+      ...CORE,
+      mail: { provider: "resend", apiKey: "re_123" },
       storage: { kind: "disk", dataDir: "/data" },
     });
   });
@@ -43,7 +47,13 @@ describe("parseEnv", () => {
 
   it("tech§6.5 rejects a blank DATA_DIR, RESEND_API_KEY or MAIL_FROM", () => {
     expect(() => parseEnv({ ...VALID, DATA_DIR: "", RESEND_API_KEY: " ", MAIL_FROM: " " })).toThrow(
-      "Invalid server config: RESEND_API_KEY, MAIL_FROM, DATA_DIR",
+      "Invalid server config: MAIL_FROM, RESEND_API_KEY, DATA_DIR",
+    );
+  });
+
+  it("tech§6.5 rejects a MAIL_FROM that isn't an address", () => {
+    expect(() => parseEnv({ ...VALID, MAIL_FROM: "Glance" })).toThrow(
+      "Invalid server config: MAIL_FROM",
     );
   });
 
@@ -106,6 +116,93 @@ describe("parseEnv", () => {
   it("tech§6.5 rejects an unknown PHOTO_STORE", () => {
     expect(() => parseEnv({ ...VALID, PHOTO_STORE: "gcs" })).toThrow(
       "Invalid server config: PHOTO_STORE",
+    );
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=mailtrap reads the token and an optional sandbox inbox without RESEND_API_KEY", () => {
+    expect(
+      parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "mailtrap", MAILTRAP_API_TOKEN: "mt" }).mail,
+    ).toEqual({
+      provider: "mailtrap",
+      apiToken: "mt",
+    });
+    expect(
+      parseEnv({
+        ...NO_MAIL,
+        MAIL_PROVIDER: "mailtrap",
+        MAILTRAP_API_TOKEN: "mt",
+        MAILTRAP_INBOX_ID: "4242",
+      }).mail,
+    ).toEqual({ provider: "mailtrap", apiToken: "mt", inboxId: "4242" });
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=mailgun reads the key and domain, in the us region by default", () => {
+    const mailgun = {
+      ...NO_MAIL,
+      MAIL_PROVIDER: "mailgun",
+      MAILGUN_API_KEY: "key",
+      MAILGUN_DOMAIN: "mg.example.com",
+    };
+
+    expect(parseEnv(mailgun).mail).toEqual({
+      provider: "mailgun",
+      apiKey: "key",
+      domain: "mg.example.com",
+      region: "us",
+    });
+    expect(parseEnv({ ...mailgun, MAILGUN_REGION: "eu" }).mail).toMatchObject({ region: "eu" });
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=mailgun names the missing variables and rejects an unknown region", () => {
+    expect(() =>
+      parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "mailgun", MAILGUN_REGION: "asia" }),
+    ).toThrow("Invalid server config: MAILGUN_API_KEY, MAILGUN_DOMAIN, MAILGUN_REGION");
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=smtp reads the host on port 587 with STARTTLS and no auth by default", () => {
+    expect(parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "smtp", SMTP_HOST: "localhost" }).mail).toEqual({
+      provider: "smtp",
+      host: "localhost",
+      port: 587,
+      secure: false,
+    });
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=smtp reads the port, TLS and credentials", () => {
+    expect(
+      parseEnv({
+        ...NO_MAIL,
+        MAIL_PROVIDER: "smtp",
+        SMTP_HOST: "smtp.example.com",
+        SMTP_PORT: "465",
+        SMTP_SECURE: "true",
+        SMTP_USER: "glance",
+        SMTP_PASSWORD: "smtp_secret",
+      }).mail,
+    ).toEqual({
+      provider: "smtp",
+      host: "smtp.example.com",
+      port: 465,
+      secure: true,
+      auth: { user: "glance", password: "smtp_secret" },
+    });
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=smtp needs SMTP_USER and SMTP_PASSWORD together", () => {
+    expect(() =>
+      parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "smtp", SMTP_HOST: "localhost", SMTP_USER: "glance" }),
+    ).toThrow("Invalid server config: SMTP_USER, SMTP_PASSWORD");
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=smtp rejects a port that isn't a number", () => {
+    expect(() =>
+      parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "smtp", SMTP_HOST: "localhost", SMTP_PORT: "smtp" }),
+    ).toThrow("Invalid server config: SMTP_PORT");
+  });
+
+  it("tech§6.5 rejects an unknown MAIL_PROVIDER", () => {
+    expect(() => parseEnv({ ...VALID, MAIL_PROVIDER: "sendgrid" })).toThrow(
+      "Invalid server config: MAIL_PROVIDER",
     );
   });
 });
