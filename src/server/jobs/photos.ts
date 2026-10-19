@@ -1,13 +1,14 @@
 import "server-only";
 import type { ServiceDeps } from "../services/deps";
-import { photoFilesOf, removeFiles } from "../services/photos";
+import { photoKeys } from "../services/photos";
+import type { PhotoStore } from "../storage/store";
 
-type PhotoJobDeps = Pick<ServiceDeps, "db"> & { photosDir: string };
+type PhotoJobDeps = Pick<ServiceDeps, "db"> & { store: PhotoStore };
 
-export async function removeDeletedPhotoFiles({ db, photosDir }: PhotoJobDeps): Promise<void> {
+export async function removeDeletedPhotoFiles({ db, store }: PhotoJobDeps): Promise<void> {
   const rows = await db.all<{ file_path: string }>(
     "SELECT file_path FROM photos WHERE deleted_at IS NOT NULL",
   );
 
-  for (const row of rows) await removeFiles(photoFilesOf(photosDir, row.file_path));
+  for (const row of rows) await store.remove(photoKeys(row.file_path));
 }

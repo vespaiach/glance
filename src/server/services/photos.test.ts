@@ -1,4 +1,4 @@
-import { chmodSync, readdirSync, readFileSync } from "node:fs";
+import { chmodSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import sharp, { type Exif } from "sharp";
@@ -6,6 +6,9 @@ import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import { tempDirPerTest } from "../db/testDir";
+import { bytesOf } from "../storage/contract";
+import { createDiskStore } from "../storage/disk";
+import type { PhotoStore } from "../storage/store";
 import type { PlaceLocator } from "../weather/provider";
 import {
   deletePhoto,
@@ -44,7 +47,7 @@ beforeEach(() => {
 });
 
 function deps(): PhotoDeps {
-  return { ...harness.deps(), photosDir: photosDir(), locator: { placeAt } };
+  return { ...harness.deps(), store: createDiskStore(photosDir()), locator: { placeAt } };
 }
 
 const CANNON_BEACH_GPS: Exif = {
@@ -234,13 +237,13 @@ describe("uploadPhoto", () => {
     const display = await photoFile(deps(), MARIA, photo.id, "display");
     const thumb = await photoFile(deps(), MARIA, photo.id, "thumb");
     if (!orig.ok || !display.ok || !thumb.ok) throw new Error("missing file");
-    expect(readFileSync(orig.value.path)).toEqual(bytes);
-    expect(await sharp(display.value.path).metadata()).toMatchObject({
+    expect(await bytesOf(orig.value)).toEqual(new Uint8Array(bytes));
+    expect(await sharp(await bytesOf(display.value)).metadata()).toMatchObject({
       format: "webp",
       width: 2560,
       height: 1280,
     });
-    expect(await sharp(thumb.value.path).metadata()).toMatchObject({
+    expect(await sharp(await bytesOf(thumb.value)).metadata()).toMatchObject({
       format: "webp",
       width: 640,
       height: 320,
@@ -257,7 +260,10 @@ describe("uploadPhoto", () => {
     const display = await photoFile(deps(), MARIA, photo.id, "display");
 
     if (!display.ok) throw new Error(display.error);
-    expect(await sharp(display.value.path).metadata()).toMatchObject({ width: 20, height: 40 });
+    expect(await sharp(await bytesOf(display.value)).metadata()).toMatchObject({
+      width: 20,
+      height: 40,
+    });
   });
 
   it("PHOTO-04 refuses a file that grows past 20 MB while streaming and keeps nothing", async () => {
@@ -320,6 +326,41 @@ describe("uploadPhoto", () => {
     expect(answer).toEqual({ ok: false, error: "not-a-photo" });
   });
 
+  it("tech§6.3 a failed put removes the objects already stored and keeps no row", async () => {
+    const disk = createDiskStore(photosDir());
+    const store: PhotoStore = {
+      ...disk,
+      put: (key, body, contentType) =>
+        key.endsWith(".thumb")
+          ? Promise.reject(new Error("bucket unavailable"))
+          : disk.put(key, body, contentType),
+    };
+
+    await expect(uploadPhoto({ ...deps(), store }, MARIA, upload(await jpeg()))).rejects.toThrow(
+      "bucket unavailable",
+    );
+
+    expect(storedFiles()).toEqual([]);
+    expect(await harness.globalVersion()).toBe(0);
+  });
+
+  it("D12 stores the three objects under {account}/{id} with their content types", async () => {
+    const put = vi.fn<PhotoStore["put"]>().mockResolvedValue();
+
+    const photo = await uploadPhoto(
+      { ...deps(), store: { ...deps().store, put } },
+      MARIA,
+      upload(await jpeg()),
+    );
+
+    if (!photo.ok) throw new Error(photo.error);
+    expect(put.mock.calls.map(([key, , type]) => [key, type]).sort()).toEqual([
+      [`${MARIA}/${photo.value.id}.display`, "image/webp"],
+      [`${MARIA}/${photo.value.id}.orig`, "image/jpeg"],
+      [`${MARIA}/${photo.value.id}.thumb`, "image/webp"],
+    ]);
+  });
+
   it("SYNC-02 the saved photo reaches other displays through the pull", async () => {
     const photo = await saved(await jpeg());
 
@@ -338,11 +379,15 @@ describe("photoFile", () => {
     const orig = await photoFile(deps(), MARIA, photo.id, "orig");
 
     expect([display, thumb, orig]).toEqual([
-      { ok: true, value: { path: expect.any(String), contentType: "image/webp" } },
-      { ok: true, value: { path: expect.any(String), contentType: "image/webp" } },
-      { ok: true, value: { path: expect.any(String), contentType: "image/jpeg" } },
+      { ok: true, value: expect.objectContaining({ contentType: "image/webp" }) },
+      { ok: true, value: expect.objectContaining({ contentType: "image/webp" }) },
+      { ok: true, value: expect.objectContaining({ contentType: "image/jpeg" }) },
     ]);
-    expect(path.basename(display.ok ? display.value.path : "")).toBe(`${photo.id}.display`);
+    expect(storedFiles().sort()).toEqual([
+      `${photo.id}.display`,
+      `${photo.id}.orig`,
+      `${photo.id}.thumb`,
+    ]);
   });
 
   it("tech§5 answers not-found for another account's photo", async () => {

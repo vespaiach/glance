@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { tempDirPerTest } from "../db/testDir";
 import { uploadPhoto } from "../services/photos";
 import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
+import { createDiskStore } from "../storage/disk";
 import { removeDeletedPhotoFiles } from "./photos";
 
 const harness = serviceHarnessPerTest();
@@ -11,7 +12,7 @@ const harness = serviceHarnessPerTest();
 const photosDir = tempDirPerTest();
 
 function deps() {
-  return { ...harness.deps(), photosDir: photosDir() };
+  return { ...harness.deps(), store: createDiskStore(photosDir()) };
 }
 
 async function stored(accountId: string): Promise<string> {
