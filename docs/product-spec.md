@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.61 |
+| Status | v0.62 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -414,7 +414,7 @@ Used by Calendar (any day, filtered) and Today (today, everyone). Pure layout ru
 | TL-05 | **Colors:** the event's color (§7); past (STATUS-01) → white with a hairline and the title struck through, weight 340; now → 2 px black ring and a NOW pill. Other days are never now. |
 | TL-06 | **24 hours** (Calendar only): 12 AM to 12 AM; night hours (before 5 AM, from 9 PM) without plans weigh half, night hours with plans are elastic as TL-02. Hour labels and hairlines thin out when rows get tight. |
 | TL-07 | **Weather lane** (Calendar only) on the right, 150 px wide (128 mid, 112 narrow; none on phone), aligned to the elastic hours: icon + temperature per hour; hours with rain ≥ 50% filled with the season block-3 color and the % when it fits. Plans overlapping such an hour get a white "{p}% rain" chip. Only with a location and an hourly forecast for that day. |
-| TL-08 | **Free slots:** gaps of 30 min or more between 5 AM and 9 PM with no plan for the selected members show as dashed tiles: "Everyone free · {length}" when everyone is selected, else "Free · {length}"; named "Free {range}. Add event". Tap → New event starting at the slot start rounded up to 15 min, 1 hour long or to the slot's end. |
+| TL-08 | **Free slots:** gaps of 30 min or more between 5 AM and 9 PM with no plan for the selected members show as dashed tiles: "Everyone free · {length}" when everyone is selected, else "Free · {length}"; named "Free {range}. Add event". On today a slot starts at now, and one left shorter than 30 min hides. Tap → New event starting at the slot start rounded up to 15 min, 1 hour long or to the slot's end. |
 | TL-09 | **Now marker** (today only): a 2 px black line across the timeline with a black mono time pill in the gutter, moving every minute. |
 | TL-10 | Tapping a plan opens Event details (EVT-09). Day or filter changes reflow over 280 ms (at once with reduced motion). |
 
