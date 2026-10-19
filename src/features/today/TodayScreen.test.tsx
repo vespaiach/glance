@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo } from "@/data/repos";
@@ -111,7 +111,8 @@ test("TODAY-02 the hero shows the event running now", async () => {
   renderToday();
 
   expect(await screen.findByText("Happening now")).toBeInTheDocument();
-  expect(screen.getByText("Living room · until 11:15")).toBeInTheDocument();
+  expect(screen.getByText("34 min left")).toBeInTheDocument();
+  expect(screen.getByText("Living room · until 11:15 · Everyone")).toBeInTheDocument();
   expect(screen.getByText("Today · 1 event")).toBeInTheDocument();
 });
 
@@ -137,6 +138,27 @@ test("TODAY-04 Add event opens New event on today", async () => {
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
     JSON.stringify({ kind: "newevent", day: "2026-10-09" }),
   );
+});
+
+test("TODAY-04 below 1440 px Add event and Full calendar are icon-only", async () => {
+  await store.db.events.put(synced(CALL));
+  vi.stubGlobal("innerWidth", 1439);
+
+  renderToday();
+
+  expect(await screen.findByRole("button", { name: "Add event" })).toHaveTextContent(/^$/);
+  expect(screen.getByRole("button", { name: "Full calendar" })).toHaveTextContent(/^$/);
+});
+
+test("TODAY-04 at 1440 px Add event and Full calendar show their labels", async () => {
+  await store.db.events.put(synced(CALL));
+  vi.stubGlobal("innerWidth", 1440);
+  vi.stubGlobal("innerHeight", 900);
+
+  renderToday();
+
+  expect(await screen.findByRole("button", { name: "Add event" })).toHaveTextContent("Add event");
+  expect(screen.getByRole("button", { name: "Full calendar" })).toHaveTextContent("Full calendar");
 });
 
 test("TODAY-04 Full calendar goes to the Calendar view", async () => {
@@ -194,7 +216,17 @@ test("TODAY-07 with no photos Upload a photo goes to Photos", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/photos");
 });
 
-test("TODAY-10 a photo background drops the picture of the day", async () => {
+test("TODAY-07 All photos goes to Photos", async () => {
+  await markSynced(store);
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "All photos" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/photos");
+});
+
+test("TODAY-07 TODAY-10 the picture of the day stays on a photo background", async () => {
   await store.db.photos.put(synced(COAST));
   await createSettingsRepo(store).update({
     background: { mode: "photo", photoId: COAST.id, dim: 0.2, rotate: "daily" },
@@ -202,8 +234,9 @@ test("TODAY-10 a photo background drops the picture of the day", async () => {
 
   renderToday();
 
-  expect(await screen.findByText("Full calendar")).toBeInTheDocument();
-  await waitFor(() => expect(screen.queryByText("Picture of the day")).not.toBeInTheDocument());
+  expect(
+    await screen.findByRole("button", { name: "Picture of the day: Cannon Beach" }),
+  ).toBeInTheDocument();
 });
 
 test("TODAY-10 a photo background with no photos keeps the Upload a photo slot", async () => {
@@ -217,12 +250,12 @@ test("TODAY-10 a photo background with no photos keeps the Upload a photo slot",
   expect(await screen.findByRole("button", { name: /Upload a photo/ })).toBeInTheDocument();
 });
 
-test("TODAY-08 with no location the weather zone asks for one", async () => {
+test("TODAY-08 with no location the Now panel asks for one", async () => {
   await markSynced(store);
 
   renderToday();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Set location" }));
+  await userEvent.click(await screen.findByRole("button", { name: /Set weather location/ }));
 
   expect(navigation.push).toHaveBeenCalledWith("/weather");
 });
@@ -324,7 +357,7 @@ test("FAIL-02 saved events after a failed sync show when they were updated", asy
   expect(await screen.findByText("Today · 1 event · Updated 9:32 AM")).toBeInTheDocument();
 });
 
-test("WX-05 a failed weather fetch counts down and Try again refreshes it", async () => {
+test("TODAY-08 a failed weather fetch counts down in the Now panel", async () => {
   await markSynced(store);
   await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
   await putSyncStatus(store, {
@@ -335,11 +368,5 @@ test("WX-05 a failed weather fetch counts down and Try again refreshes it", asyn
   renderToday();
 
   expect(await screen.findByText("Weather unavailable")).toBeInTheDocument();
-  expect(
-    screen.getByText("The forecast service isn’t responding. Trying again in 1 min."),
-  ).toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
-
-  expect(store.refreshWeather).toHaveBeenCalledTimes(1);
+  expect(screen.getByText("Trying again in 1 min.")).toBeInTheDocument();
 });

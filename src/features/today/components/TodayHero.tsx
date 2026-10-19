@@ -1,8 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ReactNode } from "react";
-import { copy } from "@/copy";
 import type { Season } from "@/domain/schemas";
-import { type Clock as ClockSetting, formatMonth } from "@/domain/time";
+import { type Clock as ClockSetting, formatLongDate } from "@/domain/time";
 import { space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Clock } from "@/ui/Clock";
@@ -15,55 +14,53 @@ type TodayHeroProps = {
   time: Date;
   clock: ClockSetting;
   tz: string;
+  weather: ReactNode;
   children: ReactNode;
-  picture?: ReactNode;
   xstyle?: stylex.StyleXStyles;
 };
+
+const nowPanelType = stylex.createTheme(type, {
+  clockSize: "clamp(56px, 27cqi, 200px)",
+});
 
 const styles = stylex.create({
   root: {
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    gap: space.xl,
+    gap: 32,
     minWidth: 0,
+    containerType: "inline-size",
   },
   top: {
     display: "flex",
     flexDirection: "column",
     gap: space.md,
   },
-  label: {
+  date: {
     display: "flex",
     alignItems: "center",
-    gap: space.xs,
+    gap: 8,
     fontFamily: type.fontMono,
     fontSize: type.eyebrowSize,
     letterSpacing: type.eyebrowLs,
+    lineHeight: 1.3,
     textTransform: "uppercase",
-  },
-  bottom: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space.xl,
-    minWidth: 0,
   },
 });
 
-export function TodayHero({ season, time, clock, tz, children, picture, xstyle }: TodayHeroProps) {
+export function TodayHero({ season, time, clock, tz, weather, children, xstyle }: TodayHeroProps) {
   return (
     <ColorBlock tone={1} padding="clamp(24px, 2.6vw, 40px)" xstyle={[styles.root, xstyle]}>
-      <div {...stylex.props(styles.top)}>
-        <span {...stylex.props(styles.label)}>
-          <Icon icon={seasonIcons[season]} size={20} />
-          {copy.today.seasonMonth(copy.season[season], formatMonth(time, tz))}
+      <div {...stylex.props(nowPanelType, styles.top)}>
+        <span {...stylex.props(styles.date)}>
+          <span>{formatLongDate(time, tz)}</span>
+          <Icon icon={seasonIcons[season]} size={18} />
         </span>
-        <Clock time={time} tz={tz} hour12={clock === "12h"} />
+        <Clock time={time} tz={tz} hour12={clock === "12h"} showDate={false} />
       </div>
-      <div {...stylex.props(styles.bottom)}>
-        {children}
-        {picture}
-      </div>
+      {weather}
+      {children}
     </ColorBlock>
   );
 }

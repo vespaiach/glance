@@ -17,11 +17,11 @@ const grandpa = { id: "grandpa", startAt: "2026-10-09T00:00:00.000Z", allDay: tr
 
 describe("todayHero", () => {
   it("TODAY-02 a running event is happening now", () => {
-    expect(todayHero(day, at(10, 41), tz)).toEqual({ kind: "now", event: call });
+    expect(todayHero(day, at(10, 41), tz)).toEqual({ kind: "now", event: call, left: 34 });
   });
 
   it("TODAY-02 with nothing running the next event is up next", () => {
-    expect(todayHero(day, at(9, 45), tz)).toEqual({ kind: "next", event: call });
+    expect(todayHero(day, at(9, 45), tz)).toEqual({ kind: "next", event: call, in: 45 });
   });
 
   it("TODAY-02 once every event ended there is nothing else today", () => {
@@ -37,7 +37,39 @@ describe("todayHero", () => {
   });
 
   it("TODAY-02 of two running events the one that started last is shown", () => {
-    expect(todayHero([garden, call], at(10, 41), tz)).toEqual({ kind: "now", event: call });
+    expect(todayHero([garden, call], at(10, 41), tz)).toEqual({
+      kind: "now",
+      event: call,
+      left: 34,
+    });
+  });
+
+  it("TODAY-02 of two running events that started together the shorter one is shown", () => {
+    const quick = { id: "quick", startAt: iso(10, 30), endAt: iso(10, 50) };
+
+    expect(todayHero([call, quick], at(10, 41), tz)).toEqual({
+      kind: "now",
+      event: quick,
+      left: 9,
+    });
+  });
+
+  it("TODAY-02 of two running events that started together one with an end beats one without", () => {
+    const open = { id: "open", startAt: iso(10, 30) };
+
+    expect(todayHero([call, open], at(10, 41), tz)).toEqual({ kind: "now", event: call, left: 34 });
+  });
+
+  it("TODAY-02 the countdown rounds part of a minute up", () => {
+    const now = new Date(at(10, 41).getTime() + 30_000);
+
+    expect(todayHero(day, now, tz)).toEqual({ kind: "now", event: call, left: 34 });
+  });
+
+  it("TODAY-02 the next event counts down to its start", () => {
+    expect(todayHero(day, at(9, 10), tz)).toEqual({ kind: "now", event: dropOff, left: 20 });
+    expect(todayHero(day, at(11, 15), tz)).toEqual({ kind: "next", event: lunch, in: 45 });
+    expect(todayHero(day, at(8, 0), tz)).toEqual({ kind: "next", event: dropOff, in: 60 });
   });
 
   it.each([
@@ -64,11 +96,19 @@ describe("todayHero in a zone", () => {
   });
 
   it("TODAY-02 an all-day event never takes the hero from a running event", () => {
-    expect(todayHero([grandpa, ...day], at(10, 41), tz)).toEqual({ kind: "now", event: call });
+    expect(todayHero([grandpa, ...day], at(10, 41), tz)).toEqual({
+      kind: "now",
+      event: call,
+      left: 34,
+    });
   });
 
   it("TODAY-02 an all-day event is never up next", () => {
-    expect(todayHero([grandpa, ...day], at(9, 45), tz)).toEqual({ kind: "next", event: call });
+    expect(todayHero([grandpa, ...day], at(9, 45), tz)).toEqual({
+      kind: "next",
+      event: call,
+      in: 45,
+    });
   });
 
   it("TODAY-02 all-day events don't keep the day from ending", () => {

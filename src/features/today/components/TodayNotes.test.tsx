@@ -43,7 +43,11 @@ type Handlers = {
   onOpenNotes: () => void;
 };
 
-function renderNotes(state: ZoneState<BoardNote>, handlers: Partial<Handlers> = {}) {
+function renderNotes(
+  state: ZoneState<BoardNote>,
+  handlers: Partial<Handlers> = {},
+  limit: 1 | 2 = 2,
+) {
   return render(
     <TodayNotes
       tz={tz}
@@ -56,6 +60,7 @@ function renderNotes(state: ZoneState<BoardNote>, handlers: Partial<Handlers> = 
       onAddNote={handlers.onAddNote ?? (() => {})}
       onOpenNotes={handlers.onOpenNotes ?? (() => {})}
       columns={2}
+      limit={limit}
     />,
   );
 }
@@ -69,6 +74,14 @@ test("TODAY-09 the eyebrow counts every note but only the first two show", () =>
   expect(screen.getByText("Package for Mia at the front door.")).toBeInTheDocument();
   expect(screen.getByText("Wi-Fi password is on the fridge!")).toBeInTheDocument();
   expect(screen.queryByText("Welcome home, Grandpa!")).not.toBeInTheDocument();
+});
+
+test("TODAY-09 on short three-column screens only the newest note shows", () => {
+  renderNotes(ready, {}, 1);
+
+  expect(screen.getByText("Notes · 3")).toBeInTheDocument();
+  expect(screen.getByText("Package for Mia at the front door.")).toBeInTheDocument();
+  expect(screen.queryByText("Wi-Fi password is on the fridge!")).not.toBeInTheDocument();
 });
 
 test("NOTE-04 each note shows its author and stamp", () => {
