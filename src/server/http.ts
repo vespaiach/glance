@@ -1,6 +1,4 @@
 import "server-only";
-import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { type NextRequest, NextResponse } from "next/server";
 import * as v from "valibot";
@@ -9,12 +7,8 @@ import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import { IsoDateSchema, WeatherLocationSchema } from "@/domain/schemas";
 import { appUrl, isAllowedOrigin, requireDisplay, type SignedInDisplay } from "./auth";
-import {
-  PHOTO_VARIANTS,
-  type PhotoFile,
-  type PhotoUpload,
-  type PhotoVariant,
-} from "./services/photos";
+import { PHOTO_VARIANTS, type PhotoUpload, type PhotoVariant } from "./services/photos";
+import type { StoredObject } from "./storage/store";
 import type { Coordinates } from "./weather/provider";
 
 const MIN_CLIENT_BUILD = 6;
@@ -163,13 +157,11 @@ export function readVariant(request: NextRequest): Result<PhotoVariant, "invalid
   return variant ? ok(variant) : err("invalid");
 }
 
-export async function fileResponse(file: PhotoFile): Promise<Response> {
-  const { size } = await stat(file.path);
-
-  return new Response(Readable.toWeb(createReadStream(file.path)) as ReadableStream, {
+export function fileResponse(file: StoredObject): Response {
+  return new Response(file.body, {
     headers: {
       "content-type": file.contentType,
-      "content-length": String(size),
+      "content-length": String(file.size),
       "cache-control": "private, max-age=31536000, immutable",
       "x-content-type-options": "nosniff",
     },

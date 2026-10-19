@@ -1,9 +1,8 @@
 import "server-only";
-import path from "node:path";
 import { syncBus } from "../bus";
 import { getDb } from "../db/db";
-import { env } from "../env";
 import type { ServiceDeps } from "../services/deps";
+import { photoStore } from "../storage";
 import { cleanupLinks } from "./links";
 import { expireNotes } from "./notes";
 import { removeDeletedPhotoFiles } from "./photos";
@@ -32,5 +31,5 @@ async function runHourly(): Promise<void> {
 async function runDaily(): Promise<void> {
   await cleanupLinks(deps());
 
-  await removeDeletedPhotoFiles({ ...deps(), photosDir: path.join(env().DATA_DIR, "photos") });
+  await removeDeletedPhotoFiles({ ...deps(), store: photoStore() });
 }

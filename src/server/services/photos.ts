@@ -1,9 +1,4 @@
 import "server-only";
-import { createWriteStream } from "node:fs";
-import { mkdir, rm } from "node:fs/promises";
-import path from "node:path";
-import { Readable, Transform } from "node:stream";
-import { pipeline } from "node:stream/promises";
 import exifReader from "exif-reader";
 import sharp from "sharp";
 import { uuidv7 } from "@/domain/id";
@@ -12,6 +7,7 @@ import { MAX_PHOTO_BYTES, type UploadProblem, uploadProblem } from "@/domain/pho
 import { err, ok, type Result } from "@/domain/result";
 import type { Photo, PhotoSources, Synced } from "@/domain/schemas";
 import type { Db } from "../db/db";
+import { type PhotoStore, photoType, type StoredObject } from "../storage/store";
 import { placeLabel } from "../weather/places";
 import type { Coordinates, PlaceLocator, PlaceName } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
@@ -45,7 +41,7 @@ export const PHOTO_VARIANTS = ["display", "thumb", "orig"] as const;
 
 export type PhotoVariant = (typeof PHOTO_VARIANTS)[number];
 
-export type PhotoDeps = ServiceDeps & { photosDir: string; locator: PlaceLocator };
+export type PhotoDeps = ServiceDeps & { store: PhotoStore; locator: PlaceLocator };
 
 export type PhotoUpload = {
   name: string;
@@ -57,23 +53,11 @@ export type PhotoUpload = {
 
 type FileMetadata = PhotoFacts["metadata"] & { gps?: Coordinates };
 
-export type PhotoFile = { path: string; contentType: string };
+type PhotoObjects = Record<PhotoVariant, { body: Uint8Array<ArrayBuffer>; contentType: string }>;
 
-export type StoredFiles = (variant: PhotoVariant) => string;
+type Decoded = { objects: PhotoObjects; metadata: FileMetadata };
 
 const COPY_MAX_PX = { display: 2560, thumb: 640 } as const;
-
-const PHOTO_TYPES: Partial<Record<string, string>> = {
-  jpeg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  gif: "image/gif",
-  avif: "image/avif",
-  heif: "image/heif",
-  tiff: "image/tiff",
-};
-
-class TooLargeError extends Error {}
 
 type ExifTags = ReturnType<typeof exifReader>;
 
@@ -86,26 +70,19 @@ export async function uploadPhoto(
 
   if (problem) return err(problem);
 
+  const original = await readLimited(upload.body, MAX_PHOTO_BYTES);
+
+  if (!original) return err("too-large");
+
+  const decoded = await decodePhoto(original);
+
+  if (!decoded.ok) return decoded;
+
   const id = uuidv7(deps.now());
 
-  const files = storedFiles(deps.photosDir, accountId, id);
+  const details = await detailsOf(deps, accountId, upload, decoded.value.metadata);
 
-  const stored = await storeOriginal(upload.body, files);
-
-  if (!stored.ok) return stored;
-
-  const metadata = await makeCopies(files);
-
-  if (!metadata.ok) return metadata;
-
-  const details = photoDetails({
-    fileName: upload.name,
-    fileDate: upload.modifiedOn ?? (await uploadDay(deps, accountId)),
-    metadata: metadata.value,
-    ...(await placeOf(deps.locator, metadata.value.gps)),
-  });
-
-  return ok(await insertPhoto(deps, accountId, id, { ...details, fileName: upload.name }));
+  return ok(await savePhoto(deps, accountId, id, decoded.value.objects, details));
 }
 
 export function putPhoto(
@@ -154,17 +131,17 @@ export async function deletePhoto(
 ): Promise<Result<SyncedPhoto, "not-found">> {
   const deleted = await tombstonePhoto(deps, accountId, id);
 
-  if (deleted.ok) await removeFilesLogged(storedFiles(deps.photosDir, accountId, id));
+  if (deleted.ok) await removeObjectsLogged(deps.store, photoPath(accountId, id));
 
   return deleted;
 }
 
 export async function photoFile(
-  { db, photosDir }: PhotoDeps,
+  { db, store }: PhotoDeps,
   accountId: string,
   id: string,
   variant: PhotoVariant,
-): Promise<Result<PhotoFile, "not-found">> {
+): Promise<Result<StoredObject, "not-found">> {
   const row = await db.one<{ file_path: string }>(
     "SELECT file_path FROM photos WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL",
     [id, accountId],
@@ -172,12 +149,7 @@ export async function photoFile(
 
   if (!row) return err("not-found");
 
-  const file = path.join(photosDir, `${row.file_path}.${variant}`);
-
-  return ok({
-    path: file,
-    contentType: variant === "orig" ? await originalType(file) : "image/webp",
-  });
+  return store.get(objectKey(row.file_path, variant));
 }
 
 export function toPhoto(row: PhotoRow): SyncedPhoto {
@@ -194,12 +166,8 @@ export function toPhoto(row: PhotoRow): SyncedPhoto {
   };
 }
 
-export function photoFilesOf(photosDir: string, filePath: string): StoredFiles {
-  return (variant) => path.join(photosDir, `${filePath}.${variant}`);
-}
-
-export async function removeFiles(files: StoredFiles): Promise<void> {
-  await Promise.all(PHOTO_VARIANTS.map((variant) => rm(files(variant), { force: true })));
+export function photoKeys(filePath: string): string[] {
+  return PHOTO_VARIANTS.map((variant) => objectKey(filePath, variant));
 }
 
 function photoRow(db: Db, accountId: string, id: string): Promise<PhotoRow | undefined> {
@@ -250,78 +218,127 @@ function tombstonePhoto(
   });
 }
 
-async function removeFilesLogged(files: StoredFiles): Promise<void> {
+function photoPath(accountId: string, id: string): string {
+  return `${accountId}/${id}`;
+}
+
+function objectKey(filePath: string, variant: PhotoVariant): string {
+  return `${filePath}.${variant}`;
+}
+
+async function removeObjectsLogged(store: PhotoStore, filePath: string): Promise<void> {
   try {
-    await removeFiles(files);
+    await store.remove(photoKeys(filePath));
   } catch (error) {
     console.error(error);
   }
 }
 
-function storedFiles(photosDir: string, accountId: string, id: string): StoredFiles {
-  return (variant) => path.join(photosDir, accountId, `${id}.${variant}`);
+async function readLimited(
+  body: AsyncIterable<Uint8Array>,
+  max: number,
+): Promise<Uint8Array<ArrayBuffer> | undefined> {
+  const chunks: Uint8Array[] = [];
+
+  let size = 0;
+
+  for await (const chunk of body) {
+    size += chunk.length;
+
+    if (size > max) return undefined;
+
+    chunks.push(chunk);
+  }
+
+  return Buffer.concat(chunks, size);
 }
 
-async function storeOriginal(
-  body: AsyncIterable<Uint8Array>,
-  files: StoredFiles,
-): Promise<Result<void, "too-large">> {
-  const original = files("orig");
-
-  await mkdir(path.dirname(original), { recursive: true });
-
+async function decodePhoto(
+  original: Uint8Array<ArrayBuffer>,
+): Promise<Result<Decoded, "not-a-photo">> {
   try {
-    await pipeline(Readable.from(body), byteLimit(MAX_PHOTO_BYTES), createWriteStream(original));
+    return await decoded(original);
+  } catch {
+    return err("not-a-photo");
+  }
+}
 
-    return ok(undefined);
+async function decoded(original: Uint8Array<ArrayBuffer>): Promise<Result<Decoded, "not-a-photo">> {
+  const metadata = await sharp(original).metadata();
+
+  const contentType = photoType(metadata.format);
+
+  if (!contentType) return err("not-a-photo");
+
+  const [display, thumb] = await Promise.all([
+    webpCopy(original, COPY_MAX_PX.display),
+    webpCopy(original, COPY_MAX_PX.thumb),
+  ]);
+
+  return ok({
+    objects: {
+      orig: { body: original, contentType },
+      display: { body: display, contentType: "image/webp" },
+      thumb: { body: thumb, contentType: "image/webp" },
+    },
+    metadata: exifMetadata(metadata.exif),
+  });
+}
+
+async function webpCopy(original: Uint8Array, maxPx: number): Promise<Uint8Array<ArrayBuffer>> {
+  const copy = await sharp(original)
+    .rotate()
+    .resize({ width: maxPx, height: maxPx, fit: "inside", withoutEnlargement: true })
+    .webp()
+    .toBuffer();
+
+  return new Uint8Array(copy);
+}
+
+async function detailsOf(
+  deps: PhotoDeps,
+  accountId: string,
+  upload: PhotoUpload,
+  metadata: FileMetadata,
+): Promise<PhotoDetails & { fileName: string }> {
+  const details = photoDetails({
+    fileName: upload.name,
+    fileDate: upload.modifiedOn ?? (await uploadDay(deps, accountId)),
+    metadata,
+    ...(await placeOf(deps.locator, metadata.gps)),
+  });
+
+  return { ...details, fileName: upload.name };
+}
+
+async function savePhoto(
+  deps: PhotoDeps,
+  accountId: string,
+  id: string,
+  objects: PhotoObjects,
+  details: PhotoDetails & { fileName: string },
+): Promise<SyncedPhoto> {
+  try {
+    await putObjects(deps.store, photoPath(accountId, id), objects);
+
+    return await insertPhoto(deps, accountId, id, details);
   } catch (error) {
-    await rm(original, { force: true });
-
-    if (error instanceof TooLargeError) return err("too-large");
+    await removeObjectsLogged(deps.store, photoPath(accountId, id));
 
     throw error;
   }
 }
 
-function byteLimit(max: number): Transform {
-  let seen = 0;
+async function putObjects(store: PhotoStore, filePath: string, objects: PhotoObjects) {
+  const puts = await Promise.allSettled(
+    PHOTO_VARIANTS.map((variant) =>
+      store.put(objectKey(filePath, variant), objects[variant].body, objects[variant].contentType),
+    ),
+  );
 
-  return new Transform({
-    transform(chunk: Buffer, _encoding, done) {
-      seen += chunk.length;
+  const failed = puts.find((put) => put.status === "rejected");
 
-      done(seen > max ? new TooLargeError() : null, seen > max ? undefined : chunk);
-    },
-  });
-}
-
-async function makeCopies(files: StoredFiles): Promise<Result<FileMetadata, "not-a-photo">> {
-  const copied = await copiesOf(files).catch(() => err("not-a-photo" as const));
-
-  if (!copied.ok) await removeFiles(files);
-
-  return copied;
-}
-
-async function copiesOf(files: StoredFiles): Promise<Result<FileMetadata, "not-a-photo">> {
-  const metadata = await sharp(files("orig")).metadata();
-
-  if (!PHOTO_TYPES[metadata.format]) return err("not-a-photo");
-
-  await Promise.all([
-    webpCopy(files("orig"), files("display"), COPY_MAX_PX.display),
-    webpCopy(files("orig"), files("thumb"), COPY_MAX_PX.thumb),
-  ]);
-
-  return ok(exifMetadata(metadata.exif));
-}
-
-function webpCopy(original: string, target: string, maxPx: number) {
-  return sharp(original)
-    .rotate()
-    .resize({ width: maxPx, height: maxPx, fit: "inside", withoutEnlargement: true })
-    .webp()
-    .toFile(target);
+  if (failed) throw failed.reason;
 }
 
 function exifMetadata(exif: Buffer | undefined): FileMetadata {
@@ -447,7 +464,7 @@ function insertPhoto(
         row.title,
         row.taken_on,
         row.place,
-        path.join(accountId, id),
+        photoPath(accountId, id),
         row.created_at,
         row.version,
         row.title_source,
@@ -469,10 +486,4 @@ async function uploadDay({ db, now }: PhotoDeps, accountId: string): Promise<str
     month: "2-digit",
     day: "2-digit",
   }).format(now());
-}
-
-async function originalType(file: string): Promise<string> {
-  const { format } = await sharp(file).metadata();
-
-  return PHOTO_TYPES[format] ?? "application/octet-stream";
 }

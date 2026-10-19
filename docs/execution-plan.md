@@ -4,7 +4,7 @@
 |---|---|
 | Status | v2.01 |
 | Date | 2026-10-19 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`tech-design.md`](tech-design.md) (v2.10) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`tech-design.md`](tech-design.md) (v2.11) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -28,7 +28,7 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 
 | ID | Status | Task | Depends on | Done when | Covers |
 |---|---|---|---|---|---|
-| R01 | ⬜ | Photo store: `PhotoStore` contract, disk and S3 (`aws4fetch`) adapters, `createPhotoStore` factory with `disk`/`s3`/`r2`, `PHOTO_STORE` config. Upload buffers and runs `sharp` in memory; upload, file, delete and the photo-file job go through the store | — | The contract suite passes on disk and on S3 with a fake `fetch`; the R2 config reaches the R2 endpoint; `DATA_DIR` is required only for `disk`; photo services and jobs no longer import `node:fs` | D12, D17, tech§6.3, tech§6.5 |
+| R01 | ✅ ([#116](https://github.com/vespaiach/glance/pull/116)) | Photo store: `PhotoStore` contract, disk and S3 (`aws4fetch`) adapters, `createPhotoStore` factory with `disk`/`s3`/`r2`, `PHOTO_STORE` config. Upload buffers and runs `sharp` in memory; upload, file, delete and the photo-file job go through the store | — | The contract suite passes on disk and on S3 with a fake `fetch`; the R2 config reaches the R2 endpoint; `DATA_DIR` is required only for `disk`; photo services and jobs no longer import `node:fs` | D12, D17, tech§6.3, tech§6.5 |
 
 ## External dependency
 

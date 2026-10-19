@@ -1,5 +1,4 @@
 import "server-only";
-import path from "node:path";
 import type {
   AccountSettings,
   CalendarEvent,
@@ -9,7 +8,7 @@ import type {
 } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
 import { getDb } from "../db/db";
-import { env } from "../env";
+import { photoStore } from "../storage";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
 import type { Coordinates } from "../weather/provider";
@@ -104,7 +103,7 @@ function weatherDeps(): weather.WeatherDeps {
 function photoDeps(): photos.PhotoDeps {
   return {
     ...deps(),
-    photosDir: path.join(env().DATA_DIR, "photos"),
+    store: photoStore(),
     locator: createCensusGeocoder(fetch),
   };
 }

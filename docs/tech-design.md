@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.10 |
+| Status | v2.11 |
 | Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`design/handoff/`](design/handoff/README.md) (v7) |
 
@@ -307,7 +307,7 @@ Every accepted write is announced on the sync bus. TPK-07 "same day" is a client
 `requireDisplay` resolves the session cookie to `{ displayId, accountId }` and stamps `last_seen_at`. Displays store `kind` and `browser` from the `User-Agent`.
 
 ### 6.3 Photos
-`POST /api/photos` takes one file per request as the raw body (XHR, so progress is real): `Content-Type`, `Content-Length`, URI-encoded `x-file-name`, optional `x-file-modified` (ISO date). The server runs `uploadProblem` on the declared type and size, reads the body into memory stopping at 20 MB (413 `too-large`), decodes it with `sharp` (415 `not-a-photo`), puts the original and the two WebP copies in parallel, each with its content type, reads details (D22), then inserts the row with the next version and answers 201. A failed upload removes its objects and leaves no row. The upload queue is in memory on the client; it isn't kept across reloads.
+`POST /api/photos` takes one file per request as the raw body (XHR, so progress is real): `Content-Type`, `Content-Length`, URI-encoded `x-file-name`, optional `x-file-modified` (ISO date). The server runs `uploadProblem` on the declared type and size, reads the body into memory stopping at 20 MB (413 `too-large`), decodes it and makes the two WebP copies with `sharp` in memory (415 `not-a-photo`), reads details (D22), puts the original and the copies in parallel, each with its content type, then inserts the row with the next version and answers 201. A failed upload removes its objects and leaves no row. The upload queue is in memory on the client; it isn't kept across reloads.
 
 `GET /api/photos/{id}/file?v=display|thumb|orig` (session only, no build check since `<img>` can't send headers) streams the object through the server (so session auth and the SW photo cache stay same-origin) with its stored content type, `Cache-Control: private, max-age=31536000, immutable` and `nosniff`; 404 for a tombstone or a missing object. `DELETE` removes the three objects after commit; a failed remove is retried by the daily job.
 
@@ -322,10 +322,10 @@ type PhotoStore = {
 };
 ```
 
-- **Contract** (`store.ts`): keys are `{file_path}.{variant}`. `remove` of a missing key succeeds. Only `not-found` is a `Result`; disk and network failures throw (500).
-- **Adapters**: `createDiskStore(root)` (`disk.ts`) writes under `{DATA_DIR}/photos` and sniffs the original's type on read. `createS3Store(config, fetch)` (`s3.ts`) signs single-request `PUT`, `GET` and `DELETE` calls with **`aws4fetch`** (SigV4) for AWS S3 and any S3-compatible endpoint; an S3 404 maps to `not-found`.
-- **Factory** (`index.ts`): `createPhotoStore(config)` switches on `config.kind`: `disk` → disk store, `s3` → S3 store, `r2` → S3 store with `endpoint = https://{accountId}.r2.cloudflarestorage.com` and `region = auto`. Built once from `env()` and shared by services and jobs.
-- **Tests**: one contract suite (put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch`; the R2 config is checked to reach the R2 endpoint.
+- **Contract** (`store.ts`): keys are `{file_path}.{variant}`; the original's content type is the one `sharp` decoded. `remove` of a missing key succeeds. Only `not-found` is a `Result`; disk and network failures throw (500).
+- **Adapters**: `createDiskStore(root)` (`disk.ts`) writes under `{DATA_DIR}/photos` and sniffs the original's type on read. `createS3Store(config, fetch)` (`s3.ts`) signs single-request `PUT`, `GET` and `DELETE` calls with **`aws4fetch`** (SigV4) for AWS S3 and any S3-compatible endpoint; an S3 404 maps to `not-found`. AWS buckets are addressed virtual-hosted (`https://{bucket}.s3.{region}.amazonaws.com/{key}`); a custom `endpoint` (S3-compatible hosts, R2) is addressed by path (`{endpoint}/{bucket}/{key}`).
+- **Factory** (`index.ts`): `createPhotoStore(config, fetch = globalThis.fetch)` switches on `config.kind`: `disk` → disk store at `{dataDir}/photos`, `s3` → S3 store, `r2` → S3 store with `endpoint = https://{accountId}.r2.cloudflarestorage.com` and `region = auto`. `photoStore()` builds it once from `env().storage` and is shared by services and jobs.
+- **Tests**: one contract suite (`contract.ts`: put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch` (`fakeS3.ts`, an in-memory bucket); the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
 `bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others. Jobs run across accounts.
