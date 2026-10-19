@@ -15,6 +15,7 @@ import {
 import { GalleryGroup } from "./GalleryGroup";
 import {
   ALL_DAY_EVENTS,
+  GALLERY_FAMILY,
   GALLERY_TZ,
   gallery,
   NOW,
@@ -78,6 +79,7 @@ const styles = stylex.create({
 });
 
 const schedule = {
+  members: GALLERY_FAMILY,
   now: NOW,
   clock: "12h",
   compact: false,

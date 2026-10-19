@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useEvent, useEventsRepo } from "@/data/repos";
+import { useEvent, useEventsRepo, useMembers } from "@/data/repos";
 import { eventDayKey } from "@/domain/allDay";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
@@ -34,6 +34,8 @@ type SheetFrameProps = {
 
 type Fixtures = { time?: TimeFixture; discard?: true };
 
+type NewProps = Fixtures & { day: string; memberIds?: readonly string[] };
+
 type EditProps = Fixtures & { event: CalendarEvent };
 
 export function EventSheetScreen() {
@@ -46,7 +48,13 @@ export function EventSheetScreen() {
 
   if (sheet?.kind === "newevent")
     return (
-      <NewEventSheet key={sheet.day} day={sheet.day} time={sheet.time} discard={sheet.discard} />
+      <NewEventSheet
+        key={sheet.day}
+        day={sheet.day}
+        memberIds={sheet.memberIds}
+        time={sheet.time}
+        discard={sheet.discard}
+      />
     );
 
   return null;
@@ -65,6 +73,8 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
 
   const breakpoint = useBreakpoint();
 
+  const members = useMembers() ?? [];
+
   const onSave = (draft: EventDraft) => {
     close();
     void events.put(eventFromDraft(draft, day, id, tz));
@@ -76,6 +86,7 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
       eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
       initial={initial}
       clock={clock}
+      members={members}
       offline={!online}
       compact={breakpoint === "phone"}
       onClose={close}
@@ -117,7 +128,7 @@ function LoadedEventSheet({ id, ...fixtures }: Fixtures & { id: string }) {
   return event ? <EditEventSheet event={event} {...fixtures} /> : null;
 }
 
-function NewEventSheet({ day, time, discard }: Fixtures & { day: string }) {
+function NewEventSheet({ day, memberIds, time, discard }: NewProps) {
   const now = useNow("minute");
 
   const tz = useTimeZone();
@@ -129,7 +140,7 @@ function NewEventSheet({ day, time, discard }: Fixtures & { day: string }) {
       mode="new"
       day={day}
       id={id}
-      initial={initialEventSheet(newEventDraft(now, tz), time, discard)}
+      initial={initialEventSheet(newEventDraft(now, tz, memberIds), time, discard)}
       onDelete={() => {}}
     />
   );

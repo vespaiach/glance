@@ -3,7 +3,7 @@ import { CalendarDays, CalendarX2, Plus } from "lucide-react";
 import type { Ref } from "react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
-import type { CalendarEvent } from "@/domain/schemas";
+import type { CalendarEvent, Member } from "@/domain/schemas";
 import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -19,6 +19,7 @@ import { Zone } from "@/ui/Zone";
 
 type DayPanelProps = {
   state: ZoneState<CalendarEvent>;
+  members: readonly Member[];
   retryIn: number;
   onRetry: () => void;
   title: string;
@@ -125,6 +126,7 @@ const timeOf = (iso: string, clock: Clock, tz: string) =>
 
 export function DayPanel({
   state,
+  members,
   retryIn,
   onRetry,
   title,
@@ -173,7 +175,9 @@ export function DayPanel({
           <>
             <AllDayTiles
               events={events.filter((event) => event.allDay)}
+              members={members}
               label={copy.events.allDay}
+              everyoneLabel={copy.events.everyone}
               onOpenEvent={onOpenEvent}
             />
             <div>

@@ -51,6 +51,7 @@ function renderPanel(state: ZoneState<CalendarEvent>, options: Options = {}) {
       retryIn={1}
       onRetry={() => {}}
       state={state}
+      members={[]}
       title="Friday, Oct 9"
       calendarEmpty={options.calendarEmpty ?? false}
       now={NOW}
@@ -155,7 +156,9 @@ test("CAL-06 an all-day event shows as a tile above the timed rows", () => {
 
   const buttons = screen.getAllByRole("button").map((button) => button.textContent);
 
-  const tile = buttons.indexOf("All dayNo school · teacher planning dayLincoln Elementary");
+  const tile = buttons.indexOf(
+    "All dayNo school · teacher planning dayEveryone · Lincoln Elementary",
+  );
 
   expect(tile).toBeGreaterThan(-1);
   expect(buttons[tile + 1]).toContain(EVENTS[0]?.title);

@@ -3,7 +3,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { useEventsInMonth, useEventsOnDay, useHasEvents } from "@/data/repos";
+import { useEventsInMonth, useEventsOnDay, useHasEvents, useMembers } from "@/data/repos";
 import { markedDays, monthTitle, readDateParam, stepMonth } from "@/domain/month";
 import { formatDayTitle } from "@/domain/time";
 import { dateKey, parseDateKey, wallTime } from "@/domain/zone";
@@ -59,6 +59,8 @@ export function CalendarScreen() {
 
   const dayEvents = useSyncedZone(hasEvents === undefined ? undefined : events);
 
+  const members = useMembers();
+
   const selectDay = (chosen: number) => {
     setPicked(dayKey(year, month, chosen));
 
@@ -82,6 +84,7 @@ export function CalendarScreen() {
       <DayPanel
         ref={dayList}
         state={dayEvents.state}
+        members={members ?? []}
         retryIn={dayEvents.retryIn}
         onRetry={dayEvents.retry}
         title={formatDayTitle(selected, "UTC")}

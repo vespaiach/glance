@@ -56,6 +56,7 @@ function renderSchedule(
       retryIn={1}
       onRetry={() => {}}
       state={state}
+      members={[]}
       now={NOW}
       clock="12h"
       compact={false}
@@ -171,7 +172,7 @@ test("TODAY-12 an all-day event shows as a tile above the timed rows", () => {
 
   const buttons = screen.getAllByRole("button").map((button) => button.textContent);
 
-  const tile = buttons.indexOf("All dayGrandpa staying overGuest room");
+  const tile = buttons.indexOf("All dayGrandpa staying overEveryone · Guest room");
 
   expect(tile).toBeGreaterThan(-1);
   expect(buttons[tile + 1]).toMatch(/School drop-off/);

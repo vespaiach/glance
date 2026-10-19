@@ -132,6 +132,7 @@ export const copy = {
   events: {
     now: "Now",
     allDay: "All day",
+    everyone: "Everyone",
     sheet: {
       newTitle: "New event",
       editTitle: "Edit event",
@@ -140,6 +141,9 @@ export const copy = {
       titlePlaceholder: "What’s happening",
       where: "Where",
       wherePlaceholder: "Home, school, park…",
+      who: "Who",
+      notes: "Notes",
+      notesPlaceholder: "Anything to remember",
       add: "Add event",
       save: "Save",
       saveOffline: "Save for later",

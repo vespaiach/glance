@@ -4,6 +4,7 @@ import * as stylex from "@stylexjs/stylex";
 import { Trash2, WifiOff } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { copy } from "@/copy";
+import type { Member } from "@/domain/schemas";
 import type { Clock } from "@/domain/time";
 import { colors, shadows } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -25,12 +26,14 @@ import {
   isDirty,
   type TimeFieldName,
 } from "../eventSheet";
+import { WhoPicker } from "./WhoPicker";
 
 type EventSheetProps = {
   mode: "new" | "edit";
   eyebrow: string;
   initial: EventSheetState;
   clock: Clock;
+  members: readonly Member[];
   offline: boolean;
   compact?: boolean;
   keyboardInset?: number;
@@ -113,6 +116,7 @@ export function EventSheet({
   eyebrow,
   initial,
   clock,
+  members,
   offline,
   compact,
   onClose,
@@ -193,14 +197,34 @@ export function EventSheet({
       {!draft.allDay && (
         <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
       )}
+      <WhoPicker
+        label={words.who}
+        everyoneLabel={copy.events.everyone}
+        members={members}
+        who={draft}
+        onEveryone={() => dispatch({ type: "everyone" })}
+        onMember={(id) => dispatch({ type: "member", id, family: familyIds(members) })}
+      />
       <TextInput
         label={words.where}
         placeholder={words.wherePlaceholder}
         value={draft.location}
         onChange={(value) => dispatch({ type: "location", value })}
       />
+      <TextInput
+        label={words.notes}
+        placeholder={words.notesPlaceholder}
+        value={draft.notes}
+        onChange={(value) => dispatch({ type: "notes", value })}
+        multiline
+        rows={3}
+      />
     </Sheet>
   );
+}
+
+function familyIds(members: readonly Member[]): string[] {
+  return members.map((member) => member.id);
 }
 
 function eventLength({ start, end }: EventDraft): number | undefined {
