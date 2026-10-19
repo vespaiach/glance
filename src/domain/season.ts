@@ -5,10 +5,6 @@ export function seasonFor(setting: AccountSettings["season"], now: Date, tz: str
   return setting === "auto" ? seasonOfMonth(wallTime(now, tz).month - 1) : setting;
 }
 
-export function seasonVideoPath(season: Season): string {
-  return `/videos/${season}.mp4`;
-}
-
 function seasonOfMonth(month: number): Season {
   if (month < 2 || month === 11) return "winter";
 

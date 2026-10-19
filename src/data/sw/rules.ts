@@ -1,6 +1,3 @@
-import { SeasonSchema } from "@/domain/schemas";
-import { seasonVideoPath } from "@/domain/season";
-
 export const SW_URL = "/serwist/sw.js";
 
 export const OFFLINE_PAGES = [
@@ -24,14 +21,11 @@ export const CACHES = {
   rsc: "pages-rsc",
   photos: "photos",
   assets: "assets",
-  videos: "videos",
 } as const;
 
 export const NETWORK_TIMEOUT_SECONDS = 3;
 
 export const PHOTO_CACHE_ENTRIES = 300;
-
-export const VIDEO_CACHE_ENTRIES = 4;
 
 export const WARM_PHOTOS = "WARM_PHOTOS";
 
@@ -55,10 +49,6 @@ export function photoFileUrls(ids: string[]): string[] {
 
 export function isPhotoFile(url: URL): boolean {
   return PHOTO_FILE.test(url.pathname);
-}
-
-export function isSeasonVideo(url: URL): boolean {
-  return SeasonSchema.options.some((season) => url.pathname === seasonVideoPath(season));
 }
 
 export function isWarmPhotos(data: unknown): data is WarmPhotosMessage {
