@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.11 |
+| Status | v2.12 |
 | Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`design/handoff/`](design/handoff/README.md) (v7) |
 
@@ -27,7 +27,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D11 | Auth | Magic link (or QR, D23); opaque session token in an httpOnly cookie. Tokens and pending ids are 32 random bytes (base64url); only their sha256 is stored. The waiting screen polls every 2 s. Cookies: `session` (400 days), `pending` (1 day), `link_email` (10 min), all `HttpOnly; SameSite=Lax; Path=/`, `Secure` on https (§6.2). |
 | D12 | Photos | Three objects per photo, keyed `{account}/{id}.{orig|display|thumb}` (`photos.file_path` holds `{account}/{id}`), in a **`PhotoStore`**: local disk, AWS S3 or Cloudflare R2, picked by `PHOTO_STORE` (§6.3, §6.5). **`sharp`** makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies, upright by EXIF; the original is kept byte for byte. Raster formats `sharp` decodes are accepted; SVG is refused. |
 | D13 | Weather and places | **Open-Meteo** forecast + geocoding behind `WeatherProvider`; **US Census Geocoder** behind `PlaceLocator` for reverse lookup. Both via `getJson` (8 s timeout, Valibot parse, any failure → `weather-failed`). Forecast cached per account for 15 min (`weather_cache`). Place search is US only, keeps names matching the query (a ZIP keeps all), requires a valid IANA zone, at most 5. `locatePlace` rounds to 2 decimals and asks the Census place and the Open-Meteo zone in parallel. |
-| D14 | Email | **Resend HTTP API** with plain `fetch` (`RESEND_API_KEY`, `MAIL_FROM`). `createMailer` answers `Result<void, "mail-failed">`. |
+| D14 | Email | A **`Mailer`** (`send` answers `Result<void, "mail-failed">`) with one adapter per provider, picked by `MAIL_PROVIDER`: **Resend**, **Mailtrap** and **Mailgun** over their HTTP APIs with plain `fetch`, and **SMTP** with **`nodemailer`** (dev sends to a local Mailpit). Every provider sends from `MAIL_FROM`. One attempt, no retry or fallback provider (§6.2, §6.5). |
 | D15 | Time | No date library: `Intl.DateTimeFormat` + pure helpers in `domain/time.ts`, `month.ts` and `zone.ts`. "Local" means the **screen's time zone** `tz` (the saved place's zone, else the device's), never the device's: every helper that reads hours or dates takes `tz` last. `zone.ts` converts wall time ↔ instant (`wallTime`, `zonedInstant`, DST-safe: a skipped time moves forward, a repeated one is the earlier instant) and days (`dayNumber`, `dateKey`, `dayStart`, `addDays`). A date with no time (day key, `takenOn`, forecast day, month cell) is a UTC-midnight `Date` formatted in UTC. Formatters take minutes of the local day. `localZoneGuard.test.ts` bans local-zone `Date` getters in `src`; Vitest pins `TZ=Asia/Kolkata`. |
 | D16 | Offline shell | **Serwist** PWA: precache build assets, fonts and public files; cache route HTML on activate and RSC payloads as fetched; NetworkFirst (3 s) for navigations and RSC; CacheFirst for photo files with warming; NetworkOnly for other `/api/*`. New versions activate only when idle (§4.5). |
 | D17 | Runtime | **One Node process** (`next start`) behind HTTPS, with PostgreSQL at `DATABASE_URL` and photos in a persistent `DATA_DIR` (`disk`) or an S3 or R2 bucket. Migrations run at boot. One process is required by the in-process SSE bus. |
@@ -67,7 +67,8 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 │  server/services/*  ──▶  server/db (pg Pool, raw SQL)  ──▶ PostgreSQL     │
 │  server/bus  (in-process EventEmitter → SSE fan-out per account)          │
 │  server/jobs (note expiry, link and photo-file cleanup)                   │
-│  server/weather (Open-Meteo + Census) · server/mail (Resend)              │
+│  server/weather (Open-Meteo + Census)                                     │
+│  server/mail: Mailer → Resend · Mailtrap · Mailgun · SMTP (nodemailer)    │
 │  server/storage: PhotoStore → disk {DATA_DIR}/photos · S3 · R2            │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
@@ -297,7 +298,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 Every accepted write is announced on the sync bus. TPK-07 "same day" is a client rule; the server checks only `endAt > startAt` and a span under 24 h for timed events.
 
 ### 6.2 Auth (SIGNIN-*)
-1. `POST /api/auth/link { email, timeZone }` → 204 + `pending` cookie. Email trimmed and lowercased; older unused email links voided; same answer whether the account exists. Limits: 5 per email and 20 per IP per 10 min (in memory) → 429. Failed send → 502.
+1. `POST /api/auth/link { email, timeZone }` → 204 + `pending` cookie. Email trimmed and lowercased; older unused email links voided; same answer whether the account exists. Limits: 5 per email and 20 per IP per 10 min (in memory) → 429. Failed send (`mail-failed`) → 502.
 2. `GET /api/auth/verify?t=` → 303 to `/signin?link=opened` with a session for the opening device, or `/signin?link=stale` (unknown, used, voided, ≥ 10 min, or a QR ≥ 5 min); a stale email link sets `link_email` for "Send a new link". It creates the account if new (`time_zone` from the link).
 3. `GET /api/auth/status` (2 s poll): a valid session → `signed-in { account, returning, setupDone }`; else the `pending` row → `waiting` · `expired { email }` · `finishing-elsewhere` (account unnamed or setup not done) · `signed-in` with a new session cookie. The waiting screen's display is created on that poll.
 4. `POST /api/auth/name { name }` saves the name (≤ 100 chars). `POST /api/auth/location` saves the SIGNIN-14 place or a skip and sets `accounts.setup_done_at`.
@@ -305,6 +306,18 @@ Every accepted write is announced on the sync bus. TPK-07 "same day" is a client
 6. `POST /api/auth/qr` makes a one-time QR link for this display (voiding its older one; 30/hour); `DELETE /api/auth/qr { url }` voids it. A stale QR never reveals the account email.
 
 `requireDisplay` resolves the session cookie to `{ displayId, accountId }` and stamps `last_seen_at`. Displays store `kind` and `browser` from the `User-Agent`.
+
+**Mailer** (`server/mail/`). Auth takes a `Mailer` in its deps and never sees a provider.
+
+```ts
+type MailMessage = { to: string; subject: string; text: string; html?: string };
+type Mailer = { send(message: MailMessage): Promise<Result<void, "mail-failed">> };
+```
+
+- **Contract** (`mailer.ts`): the sender is bound from `MAIL_FROM` when the mailer is built, so messages carry no `from`. Any failure (a non-2xx answer, a network or SMTP error) is `mail-failed`, never a throw. One attempt, no retry. Adapters log the provider and the status, never the message (it holds the sign-in link).
+- **Adapters**: `createResendMailer(config, from, fetch)` (`resend.ts`) → `POST https://api.resend.com/emails`, Bearer key, JSON `{ from, to, subject, text, html }`. `createMailtrapMailer` (`mailtrap.ts`) → `POST https://send.api.mailtrap.io/api/send`, or `https://sandbox.api.mailtrap.io/api/send/{inboxId}` when an inbox is set, Bearer token, JSON with `from: { email, name }` and `to: [{ email }]` (`parseAddress` splits `MAIL_FROM`). `createMailgunMailer` (`mailgun.ts`) → `POST https://api.mailgun.net/v3/{domain}/messages` (`api.eu.mailgun.net` for `eu`), Basic `api:{key}`, form-encoded fields. The three share one `postMail` step (`http.ts`). `createSmtpMailer(transport, from)` (`smtp.ts`) calls `transport.sendMail`; the factory passes `nodemailer.createTransport({ host, port, secure, auth })`.
+- **Factory** (`index.ts`): `createMailer(config, from, fetch = globalThis.fetch)` switches on `config.provider`. `mailer()` builds it once from `env().mail` and `env().MAIL_FROM` and is shared by auth.
+- **Tests**: one contract suite (`contract.ts`: an accepted message → `ok`; a rejected message and an unreachable provider → `mail-failed` without throwing; logs never hold the message text) runs against the HTTP adapters on a fake `fetch` and the SMTP adapter on a fake transport. Each adapter's tests check the URL, auth header and body encoding, plus Mailtrap's sandbox URL and Mailgun's EU host. The factory is checked to reach each provider.
 
 ### 6.3 Photos
 `POST /api/photos` takes one file per request as the raw body (XHR, so progress is real): `Content-Type`, `Content-Length`, URI-encoded `x-file-name`, optional `x-file-modified` (ISO date). The server runs `uploadProblem` on the declared type and size, reads the body into memory stopping at 20 MB (413 `too-large`), decodes it and makes the two WebP copies with `sharp` in memory (415 `not-a-photo`), reads details (D22), puts the original and the copies in parallel, each with its content type, then inserts the row with the next version and answers 201. A failed upload removes its objects and leaves no row. The upload queue is in memory on the client; it isn't kept across reloads.
@@ -336,7 +349,14 @@ type PhotoStore = {
 `accountTimeZone(db, accountId)` = the saved place's `timeZone`, else `accounts.time_zone`; the upload-day fallback reads it. Backups belong to the PostgreSQL host.
 
 ### 6.5 Config
-`server/env.ts` parses `process.env` at boot: `DATABASE_URL`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`, and the photo store chosen by `PHOTO_STORE` (a Valibot `variant`, read into `env().storage`):
+`server/env.ts` parses `process.env` at boot: `DATABASE_URL`, `APP_URL`, `MAIL_FROM` (`Name <address>` or a bare address, checked as an address), the mail provider chosen by `MAIL_PROVIDER` (read into `env().mail`) and the photo store chosen by `PHOTO_STORE` (read into `env().storage`). Both choices are Valibot `variant`s:
+
+| `MAIL_PROVIDER` | Variables |
+|---|---|
+| `resend` (default) | `RESEND_API_KEY` |
+| `mailtrap` | `MAILTRAP_API_TOKEN`, optional `MAILTRAP_INBOX_ID` (sandbox inbox) |
+| `mailgun` | `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, optional `MAILGUN_REGION` (`us` default, `eu`) |
+| `smtp` | `SMTP_HOST`, optional `SMTP_PORT` (587), `SMTP_SECURE` (`true`: TLS from connect, as on 465; else STARTTLS when offered), `SMTP_USER` and `SMTP_PASSWORD` (both or neither) |
 
 | `PHOTO_STORE` | Variables |
 |---|---|
@@ -344,7 +364,7 @@ type PhotoStore = {
 | `s3` | `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT` (S3-compatible hosts) |
 | `r2` | `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
 
-Bad config names the variables (not their values) and exits. `next build` needs no env. `.env.development` points at a local PostgreSQL and `.data/`; each developer puts `RESEND_API_KEY` in `.env.development.local`.
+Bad config names the variables (not their values) and exits. `next build` needs no env. `.env.development` points at a local PostgreSQL, `.data/` and a local Mailpit (`MAIL_PROVIDER=smtp`, `SMTP_HOST=localhost`, `SMTP_PORT=1025`); sign-in emails are read at `http://localhost:8025`.
 
 **Demo build** (`NEXT_PUBLIC_DEMO=1`, implied by `next dev`): fixture URL params, `/dev/gallery` and the sign-in dev buttons are compiled in; the display uses `glance-fixture` + `FixtureTransport` and skips the `glance-meta` gate. Demo-only routes are `page.demo.tsx`, added to `pageExtensions` only for dev or demo builds.
 
