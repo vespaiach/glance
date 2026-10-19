@@ -1,8 +1,8 @@
 import { zonedInstant } from "@/domain/zone";
-import { FIXTURE_TIME_ZONE } from "./data";
+import { FIXTURE_TIME_ZONE, fixtureMemberId } from "./data";
 
 const CHOICES = {
-  sheet: ["event", "newevent", "note", "newnote", "allday", "past", "photo", "photometa"],
+  sheet: ["event", "newevent", "note", "newnote", "allday", "past", "family", "photo", "photometa"],
   time: ["start", "end", "error", "noend"],
   season: ["spring", "summer", "fall", "winter"],
   net: ["loading", "offline", "wxerror"],
@@ -53,11 +53,14 @@ export type FixtureParams = ChoiceParams & {
   details?: true;
   discard?: true;
   empty?: true;
+  famerr?: true;
+  famname?: string;
   full?: true;
   kb?: true;
   keepPlace?: true;
   now?: Date;
   pending?: number;
+  rm?: string;
   switch?: true;
 };
 
@@ -77,12 +80,18 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
 
   const pending = parseCount(query.get("pending"));
 
+  const rm = fixtureMemberId(query.get("rm") ?? "");
+
+  const famname = query.get("famname");
+
   return {
     ...readChoices(query),
     ...readFlags(query),
     ...(now && { now }),
     ...(keepPlace && { keepPlace }),
     ...(pending !== undefined && { pending }),
+    ...(rm && { rm }),
+    ...(famname && { famname }),
   };
 }
 
@@ -128,6 +137,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("details") === "1" && { details: true }),
     ...(query.get("discard") === "1" && { discard: true }),
     ...(query.get("empty") === "1" && { empty: true }),
+    ...(query.get("famerr") === "1" && { famerr: true }),
     ...(query.get("full") === "1" && { full: true }),
     ...(query.get("kb") === "1" && { kb: true }),
     ...(query.get("switch") === "1" && { switch: true }),

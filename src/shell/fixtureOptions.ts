@@ -87,6 +87,8 @@ function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | 
       return { kind: "note", id: fixtureSheetTargets.note, ...edit };
     case "newnote":
       return { kind: "newnote", draft: fixtureSheetTargets.noteDraft };
+    case "family":
+      return familySheet(params);
     case "photo":
       return { kind: "photo", id: fixtureSheetTargets.photo };
     case "photometa":
@@ -94,4 +96,13 @@ function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | 
     default:
       return null;
   }
+}
+
+function familySheet({ rm, famname, famerr }: FixtureParams): SheetRequest {
+  return {
+    kind: "family",
+    ...(rm && { removing: rm }),
+    ...(famname && { name: famname }),
+    ...(famerr && { error: true as const }),
+  };
 }

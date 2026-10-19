@@ -5,6 +5,7 @@ import { colors, motion, radii } from "@/theme/tokens.stylex";
 
 type PersonDotProps = {
   color: MemberColor | "soft";
+  size?: "md" | "lg";
 };
 
 const styles = stylex.create({
@@ -16,6 +17,10 @@ const styles = stylex.create({
     transitionProperty: "background-color",
     transitionDuration: motion.durSeason,
     transitionTimingFunction: motion.easeInOut,
+  },
+  lg: {
+    width: 20,
+    height: 20,
   },
   soft: { backgroundColor: season.soft },
   lilac: { backgroundColor: colors.blockLilac },
@@ -32,6 +37,11 @@ const styles = stylex.create({
   ice: { backgroundColor: colors.blockIce },
 });
 
-export function PersonDot({ color }: PersonDotProps) {
-  return <span aria-hidden="true" {...stylex.props(styles.dot, styles[color])} />;
+export function PersonDot({ color, size = "md" }: PersonDotProps) {
+  return (
+    <span
+      aria-hidden="true"
+      {...stylex.props(styles.dot, size === "lg" && styles.lg, styles[color])}
+    />
+  );
 }

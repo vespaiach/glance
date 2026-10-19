@@ -5,6 +5,7 @@ import { type } from "@/theme/type.stylex";
 
 type TextInputProps = {
   label?: string;
+  ariaLabel?: string;
   caption?: string;
   type?: "text" | "date";
   max?: string;
@@ -99,6 +100,7 @@ const FIELDS = "input:not([disabled]):not([type=hidden]), textarea:not([disabled
 
 export function TextInput({
   label,
+  ariaLabel,
   caption,
   type: inputType = "text",
   max,
@@ -121,6 +123,7 @@ export function TextInput({
     id,
     value,
     placeholder,
+    "aria-label": ariaLabel,
     "aria-invalid": invalid || undefined,
     "aria-describedby": invalid ? errorId : undefined,
     ...stylex.props(styles.field, styles[size], invalid && styles.invalid),

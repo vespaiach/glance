@@ -26,3 +26,24 @@ test("spec§4.2 ColorSwatchPicker reports the tone of the tapped swatch", async 
 
   expect(onChange).toHaveBeenCalledWith("accent");
 });
+
+test("FAM-04 ColorSwatchPicker offers member colors too", async () => {
+  const onChange = vi.fn();
+  render(
+    <ColorSwatchPicker
+      label="Color"
+      options={[
+        { value: "mint", label: "Mint" },
+        { value: "sun", label: "Sun" },
+      ]}
+      value="mint"
+      onChange={onChange}
+    />,
+  );
+
+  expect(screen.getByRole("button", { name: "Mint" })).toHaveAttribute("aria-pressed", "true");
+
+  await userEvent.click(screen.getByRole("button", { name: "Sun" }));
+
+  expect(onChange).toHaveBeenCalledWith("sun");
+});

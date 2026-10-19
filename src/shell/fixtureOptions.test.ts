@@ -100,6 +100,25 @@ test("NOTE-10 sheet=note&details=1 opens Note details", () => {
   });
 });
 
+test("FAM-01 sheet=family opens the Family sheet", () => {
+  expect(fixtureSheet({ sheet: "family" }, "2026-10-09")).toEqual({ kind: "family" });
+});
+
+test("FAM-03 rm=, famname= and famerr=1 open the Family sheet in that state", () => {
+  expect(
+    fixtureSheet(
+      { sheet: "family", rm: "member-1", famname: "Bao", famerr: true, discard: true },
+      "2026-10-09",
+    ),
+  ).toEqual({
+    kind: "family",
+    removing: "member-1",
+    name: "Bao",
+    error: true,
+    discard: true,
+  });
+});
+
 test("tech§6 no sheet= opens no sheet", () => {
   expect(fixtureSheet({ time: "start" }, "2026-10-09")).toBeNull();
 });
