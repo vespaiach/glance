@@ -1,5 +1,6 @@
 import {
   gutterWeather,
+  outsideDay,
   planCard,
   planRain,
   type TimelineLayout,
@@ -363,6 +364,13 @@ describe("timelineLayout", () => {
     const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
 
     expect(layout.hiddenOutsideSpan).toBe(0);
+  });
+});
+
+describe("outsideDay", () => {
+  it("CAL-06 counts the badge's plans before 5 AM or after 9 PM without a layout", () => {
+    expect(outsideDay(OCT_10_PLANS, tz)).toBe(2);
+    expect(outsideDay(OCT_9_PLANS, tz)).toBe(0);
   });
 });
 

@@ -8,7 +8,7 @@ import {
   putSyncStatus,
   synced,
 } from "@/data/repos/testHarness";
-import type { CalendarEvent } from "@/domain/schemas";
+import type { CalendarEvent, Member } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -29,21 +29,52 @@ const NOW = new Date(2026, 9, 9, 10, 41);
 const at = (month: number, day: number, h: number, m = 0) =>
   new Date(2026, month, day, h, m).toISOString();
 
-function event(n: number, title: string, startAt: string): CalendarEvent {
+const member = (n: number, name: string, color: Member["color"]): Member => ({
+  id: `0192f1a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
+  name,
+  color,
+  createdAt: `2026-10-0${n}T15:00:00.000Z`,
+});
+
+const AN = member(1, "Minh-An", "lilac");
+
+const MOM = member(2, "Mom", "coral");
+
+const DAD = member(3, "Dad", "sky");
+
+const FAMILY = [AN, MOM, DAD];
+
+function event(
+  n: number,
+  title: string,
+  startAt: string,
+  who: Member[] | "everyone" = "everyone",
+  extra: Partial<CalendarEvent> = {},
+): CalendarEvent {
   return {
     id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
     title,
     startAt,
-    everyone: true,
-    memberIds: [],
+    endAt: new Date(new Date(startAt).getTime() + 3_600_000).toISOString(),
+    everyone: who === "everyone",
+    memberIds: who === "everyone" ? [] : who.map((one) => one.id),
+    ...extra,
   };
 }
 
-const CALL = event(1, "Grandma’s video call", at(9, 9, 10, 30));
+const CALL = event(1, "Grandma’s video call", at(9, 9, 13), [MOM]);
 
-const DENTIST = event(2, "Dentist", at(9, 14, 16));
+const SOCCER = event(2, "Soccer", at(9, 9, 16), [AN]);
 
-const NEXT_YEAR = event(3, "New Year brunch", at(12, 1, 11));
+const DINNER = event(3, "Family dinner", at(9, 9, 18));
+
+const DENTIST = event(4, "Dentist", at(9, 7, 16), [DAD]);
+
+const LATE_SHOW = event(5, "Late show", at(9, 9, 22), [DAD]);
+
+const PICNIC_DAY = event(6, "Field trip", "2026-10-09T00:00:00.000Z", [AN], { allDay: true });
+
+const NEXT_YEAR = event(7, "New Year brunch", at(12, 1, 11));
 
 let store: Harness;
 
@@ -91,69 +122,315 @@ function renderCalendar() {
   );
 }
 
-test("CAL-03 opens on the current month, named without the year", async () => {
+async function seed(...events: CalendarEvent[]) {
+  await markSynced(store);
+  await store.db.members.bulkPut(FAMILY.map((one) => synced(one)));
+  await store.db.events.bulkPut(events.map((one) => synced(one)));
+}
+
+const openSheet = () => screen.getByRole("status", { name: "Open sheet" });
+
+const plan = (title: string) => screen.queryByRole("button", { name: new RegExp(`^${title}, `) });
+
+const day = (name: string) => screen.getByRole("button", { name });
+
+const pill = (name: string) =>
+  within(screen.getByRole("group", { name: "Show plans for" })).getByRole("button", { name });
+
+test("CAL-01 the week strip runs Sunday to Saturday with today selected and ringed", async () => {
+  await seed(CALL);
+
   renderCalendar();
 
-  expect(await screen.findByRole("heading", { name: "October" })).toBeInTheDocument();
+  expect(await screen.findByText("Oct 4 – 10")).toBeInTheDocument();
+  expect(screen.getByText("October")).toBeInTheDocument();
+  const week = within(screen.getByRole("group", { name: "Week of October 4" }));
+  expect(week.getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
+    "Sunday, October 4",
+    "Monday, October 5",
+    "Tuesday, October 6",
+    "Wednesday, October 7",
+    "Thursday, October 8",
+    "Friday, October 9",
+    "Saturday, October 10",
+  ]);
+  const today = day("Friday, October 9");
+  expect(today).toHaveAttribute("aria-pressed", "true");
+  expect(today).toHaveAttribute("aria-current", "date");
+  expect(await screen.findByRole("button", { name: /^Grandma’s video call, / })).toBeVisible();
 });
 
-test("CAL-01 today is selected and its events are listed", async () => {
-  await store.db.events.bulkPut([synced(CALL), synced(DENTIST)]);
+test("CAL-01 tapping a day shows its plans and today keeps its ring", async () => {
+  await seed(CALL, DENTIST);
 
   renderCalendar();
 
-  expect(await screen.findByRole("heading", { name: "Friday, Oct 9" })).toBeInTheDocument();
-  expect(await screen.findByText("1 event")).toBeInTheDocument();
-  expect(screen.getByText("Grandma’s video call")).toBeInTheDocument();
-  expect(screen.queryByText("Dentist")).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Friday, October 9" })).toHaveAttribute(
+  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 7" }));
+
+  expect(await screen.findByRole("button", { name: /^Dentist, / })).toBeInTheDocument();
+  expect(plan("Grandma’s video call")).not.toBeInTheDocument();
+  expect(day("Wednesday, October 7")).toHaveAttribute("aria-pressed", "true");
+  const today = day("Friday, October 9");
+  expect(today).toHaveAttribute("aria-pressed", "false");
+  expect(today).toHaveAttribute("aria-current", "date");
+});
+
+test("CAL-02 the next chevron steps a week and selects its Sunday", async () => {
+  await seed(DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Next week" }));
+
+  expect(screen.getByText("Oct 11 – 17")).toBeInTheDocument();
+  expect(day("Sunday, October 11")).toHaveAttribute("aria-pressed", "true");
+  expect(day("Friday, October 16")).not.toHaveAttribute("aria-current");
+});
+
+test("CAL-02 stepping back onto this week selects today", async () => {
+  await seed();
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Previous week" }));
+
+  expect(screen.getByText("Sep 27 – Oct 3")).toBeInTheDocument();
+  expect(day("Sunday, September 27")).toHaveAttribute("aria-pressed", "true");
+
+  await userEvent.click(screen.getByRole("button", { name: "Next week" }));
+
+  expect(day("Friday, October 9")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("CAL-04 ?date= selects that day, in another year too", async () => {
+  search = "date=2027-01-01";
+  await seed(NEXT_YEAR);
+
+  renderCalendar();
+
+  expect(await screen.findByText("January 2027")).toBeInTheDocument();
+  expect(day("Friday, January 1")).toHaveAttribute("aria-pressed", "true");
+  expect(await screen.findByRole("button", { name: /^New Year brunch, / })).toBeInTheDocument();
+});
+
+test("CAL-04 an invalid ?date= selects today", async () => {
+  search = "date=2026-02-30";
+  await seed();
+
+  renderCalendar();
+
+  expect(await screen.findByRole("button", { name: "Friday, October 9" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
 });
 
-test("CAL-04 a free day says so when other days have events", async () => {
-  await markSynced(store);
-  await store.db.events.put(synced(NEXT_YEAR));
+test("CAL-05 everyone shows by default: every plan, no member pressed", async () => {
+  await seed(CALL, SOCCER, DINNER);
 
   renderCalendar();
 
-  expect(await screen.findByText("Nothing scheduled. A free day.")).toBeInTheDocument();
-  expect(screen.getByText("No events")).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: /^Soccer, / })).toBeInTheDocument();
+  expect(plan("Grandma’s video call")).toBeInTheDocument();
+  expect(plan("Family dinner")).toBeInTheDocument();
+  for (const one of FAMILY) expect(pill(one.name)).toHaveAttribute("aria-pressed", "false");
 });
 
-test("CAL-04 with no events at all the day shows the empty calendar tile", async () => {
-  await markSynced(store);
+test("CAL-05 tapping a member shows only their plans and everyone plans", async () => {
+  await seed(CALL, SOCCER, DINNER);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Mom" }));
+
+  expect(pill("Mom")).toHaveAttribute("aria-pressed", "true");
+  expect(plan("Grandma’s video call")).toBeInTheDocument();
+  expect(plan("Family dinner")).toBeInTheDocument();
+  expect(plan("Soccer")).not.toBeInTheDocument();
+
+  await userEvent.click(pill("Minh-An"));
+
+  expect(plan("Soccer")).toBeInTheDocument();
+});
+
+test("CAL-05 removing the last member shows nobody: no plans, tiles or free slots", async () => {
+  await seed(CALL, DINNER, PICNIC_DAY);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Mom" }));
+  await userEvent.click(pill("Mom"));
+
+  expect(pill("Mom")).toHaveAttribute("aria-pressed", "false");
+  expect(plan("Grandma’s video call")).not.toBeInTheDocument();
+  expect(plan("Family dinner")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Field trip/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Free / })).not.toBeInTheDocument();
+});
+
+test("CAL-05 selecting every member returns to everyone", async () => {
+  await seed(CALL);
+
+  renderCalendar();
+
+  for (const one of FAMILY)
+    await userEvent.click(await screen.findByRole("button", { name: one.name }));
+
+  for (const one of FAMILY) expect(pill(one.name)).toHaveAttribute("aria-pressed", "false");
+});
+
+test("CAL-05 Edit opens the Family sheet", async () => {
+  await seed();
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Edit family members" }));
+
+  expect(openSheet()).toHaveTextContent(JSON.stringify({ kind: "family" }));
+});
+
+test("FAM-03 a filter showing only a removed member returns to everyone", async () => {
+  await seed(CALL, SOCCER);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Minh-An" }));
+
+  expect(plan("Grandma’s video call")).not.toBeInTheDocument();
+
+  await store.db.members.delete(AN.id);
+
+  expect(await screen.findByRole("button", { name: /^Grandma’s video call, / })).toBeVisible();
+  expect(pill("Mom")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("CAL-06 24 hours counts the plans outside 5 AM to 9 PM and shows them when on", async () => {
+  await seed(CALL, LATE_SHOW);
+
+  renderCalendar();
+
+  const span = await screen.findByRole("button", { name: "24 hours, 1 more plan" });
+
+  expect(span).toHaveAttribute("aria-pressed", "false");
+  expect(within(span).getByText("1")).toBeInTheDocument();
+
+  await userEvent.click(span);
+
+  const on = screen.getByRole("button", { name: "24 hours" });
+  expect(on).toHaveAttribute("aria-pressed", "true");
+  expect(within(on).queryByText("1")).not.toBeInTheDocument();
+  expect(screen.getAllByText("12 AM")[0]).toBeInTheDocument();
+});
+
+test("CAL-06 the badge hides at 0 and 24 hours stays on across days", async () => {
+  await seed(CALL, DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "24 hours" }));
+  await userEvent.click(day("Wednesday, October 7"));
+
+  expect(screen.getByRole("button", { name: "24 hours" })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("CAL-07 Add event opens New event on the selected day for everyone", async () => {
+  await seed();
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 7" }));
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  expect(openSheet()).toHaveTextContent(JSON.stringify({ kind: "newevent", day: "2026-10-07" }));
+});
+
+test("CAL-07 Add event starts with the filter's members", async () => {
+  await seed();
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Dad" }));
+  await userEvent.click(pill("Minh-An"));
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  expect(openSheet()).toHaveTextContent(
+    JSON.stringify({ kind: "newevent", day: "2026-10-09", memberIds: [AN.id, DAD.id] }),
+  );
+});
+
+test("CAL-08 an empty day shows one free slot for everyone", async () => {
+  await seed(DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sunday, October 4" }));
+
+  expect(await screen.findAllByRole("button", { name: /^Free / })).toHaveLength(1);
+  expect(screen.getByText("Everyone free · 16 h")).toBeInTheDocument();
+});
+
+test("CAL-08 a filtered empty day says Free", async () => {
+  await seed(DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sunday, October 4" }));
+  await screen.findByText("Everyone free · 16 h");
+  await userEvent.click(pill("Mom"));
+
+  expect(await screen.findByText("Free · 16 h")).toBeInTheDocument();
+});
+
+test("CAL-08 with no events at all the empty calendar tile replaces the timeline", async () => {
+  await seed();
 
   renderCalendar();
 
   expect(await screen.findByText("The calendar is empty")).toBeInTheDocument();
+  expect(
+    screen.getByText("Select a day, then add an event. Days with plans get a dot for each person."),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Free / })).not.toBeInTheDocument();
 });
 
-test("CAL-05 Add event opens New event on the selected day", async () => {
-  renderCalendar();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
-
-  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "newevent", day: "2026-10-09" }),
-  );
-});
-
-test("CAL-05 tapping a row opens Edit event", async () => {
-  await store.db.events.put(synced(CALL));
+test("CAL-09 all-day tiles show above the timeline and follow the filter", async () => {
+  await seed(PICNIC_DAY, CALL);
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: /Grandma’s video call/ }));
+  expect(await screen.findByRole("button", { name: /Field trip/ })).toBeInTheDocument();
 
-  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "event", id: CALL.id }),
-  );
+  await userEvent.click(pill("Mom"));
+
+  expect(screen.queryByRole("button", { name: /Field trip/ })).not.toBeInTheDocument();
 });
 
-test("EVT-07 an event added on the Calendar lists on its day and the count updates", async () => {
-  await store.db.events.put(synced(CALL));
+test("TL-10 tapping a plan opens Event details", async () => {
+  await seed(CALL);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Grandma’s video call, / }));
+
+  expect(openSheet()).toHaveTextContent(JSON.stringify({ kind: "event", id: CALL.id }));
+});
+
+test("TL-08 tapping a free slot opens New event at the slot", async () => {
+  await seed(DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sunday, October 4" }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Free / }));
+
+  expect(JSON.parse(openSheet().textContent ?? "")).toMatchObject({
+    kind: "newevent",
+    day: "2026-10-04",
+  });
+});
+
+test("EVT-07 an event added on the Calendar shows on its day", async () => {
+  await seed(CALL);
 
   const Shell = shellWrapper(store, { frozenAt: NOW });
 
@@ -176,103 +453,7 @@ test("EVT-07 an event added on the Calendar lists on its day and the count updat
     within(screen.getByRole("dialog")).getByRole("button", { name: "Add event" }),
   );
 
-  expect(await screen.findByText("Picnic")).toBeInTheDocument();
-  expect(screen.getByText("2 events")).toBeInTheDocument();
-});
-
-test("CAL-01 tapping a day selects it, updates the heading and count, and today keeps its ring", async () => {
-  await store.db.events.bulkPut([synced(CALL), synced(DENTIST)]);
-
-  renderCalendar();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 14" }));
-
-  expect(await screen.findByRole("heading", { name: "Wednesday, Oct 14" })).toBeInTheDocument();
-  expect(await screen.findByText("Dentist")).toBeInTheDocument();
-  expect(screen.queryByText("Grandma’s video call")).not.toBeInTheDocument();
-  expect(screen.getByText("1 event")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Wednesday, October 14" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  const today = screen.getByRole("button", { name: "Friday, October 9" });
-  expect(today).toHaveAttribute("aria-pressed", "false");
-  expect(today).toHaveAttribute("aria-current", "date");
-});
-
-test("CAL-05 Add event creates on the selected day", async () => {
-  renderCalendar();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 14" }));
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
-
-  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "newevent", day: "2026-10-14" }),
-  );
-});
-
-test("CAL-03 the next chevron steps a month, selects the 1st and drops the today ring", async () => {
-  renderCalendar();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Next month" }));
-
-  expect(screen.getByRole("heading", { name: "November" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Sunday, Nov 1" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Sunday, November 1" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(screen.getByRole("button", { name: "Monday, November 9" })).not.toHaveAttribute(
-    "aria-current",
-  );
-});
-
-test("CAL-03 stepping past December rolls over to January of the next year", async () => {
-  await store.db.events.put(synced(NEXT_YEAR));
-
-  renderCalendar();
-
-  for (const _ of [1, 2, 3]) {
-    await userEvent.click(await screen.findByRole("button", { name: "Next month" }));
-  }
-
-  expect(screen.getByRole("heading", { name: "January 2027" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Friday, Jan 1" })).toBeInTheDocument();
-  expect(await screen.findByText("New Year brunch")).toBeInTheDocument();
-});
-
-test("CAL-03 stepping back into the current month selects today and shows its ring", async () => {
-  renderCalendar();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Previous month" }));
-
-  expect(screen.getByRole("heading", { name: "September" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Tuesday, Sep 1" })).toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole("button", { name: "Next month" }));
-
-  const today = screen.getByRole("button", { name: "Friday, October 9" });
-  expect(today).toHaveAttribute("aria-pressed", "true");
-  expect(today).toHaveAttribute("aria-current", "date");
-});
-
-test("CAL-01 ?date= opens the Calendar on that day", async () => {
-  search = "date=2027-01-01";
-  await store.db.events.put(synced(NEXT_YEAR));
-
-  renderCalendar();
-
-  expect(await screen.findByRole("heading", { name: "January 2027" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Friday, Jan 1" })).toBeInTheDocument();
-  expect(await screen.findByText("New Year brunch")).toBeInTheDocument();
-});
-
-test("CAL-01 an invalid ?date= opens on today", async () => {
-  search = "date=2026-02-30";
-
-  renderCalendar();
-
-  expect(await screen.findByRole("heading", { name: "Friday, Oct 9" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: /^Picnic, / })).toBeInTheDocument();
 });
 
 test("FAIL-01 a failed first sync shows Calendar unavailable with a countdown and Try again", async () => {
@@ -293,64 +474,4 @@ test("FAIL-01 a failed first sync shows Calendar unavailable with a countdown an
   await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
   expect(store.nudge).toHaveBeenCalledTimes(1);
-});
-
-function stubLayout(matches: boolean) {
-  vi.stubGlobal("matchMedia", () => ({
-    matches,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-  }));
-  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
-    return DOMRect.fromRect({ y: this.tagName === "SECTION" ? 900 : 0, height: 700 });
-  });
-}
-
-function renderCalendarInMain() {
-  const main = document.body.appendChild(document.createElement("main"));
-  Object.defineProperty(main, "clientHeight", { value: 700 });
-  main.scrollTop = 100;
-  const scrollTo = vi.fn();
-  main.scrollTo = scrollTo;
-
-  const Shell = shellWrapper(store, { frozenAt: NOW });
-
-  render(<CalendarScreen />, {
-    container: main,
-    wrapper: ({ children }) => (
-      <Shell>
-        <SheetHost>{children}</SheetHost>
-      </Shell>
-    ),
-  });
-
-  return scrollTo;
-}
-
-test("CAL-07 on phone tapping a day below the fold scrolls the view to its heading and first event", async () => {
-  stubLayout(false);
-  const scrollTo = renderCalendarInMain();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 14" }));
-
-  expect(scrollTo).toHaveBeenCalledExactlyOnceWith({ top: 100 + 420, behavior: "smooth" });
-});
-
-test("CAL-07 on wide tapping a day leaves the view where it is", async () => {
-  stubLayout(true);
-  const scrollTo = renderCalendarInMain();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 14" }));
-
-  expect(screen.getByRole("heading", { name: "Wednesday, Oct 14" })).toBeInTheDocument();
-  expect(scrollTo).not.toHaveBeenCalled();
-});
-
-test("CAL-07 on phone the month chevrons don't scroll the view", async () => {
-  stubLayout(false);
-  const scrollTo = renderCalendarInMain();
-
-  await userEvent.click(await screen.findByRole("button", { name: "Next month" }));
-
-  expect(scrollTo).not.toHaveBeenCalled();
 });

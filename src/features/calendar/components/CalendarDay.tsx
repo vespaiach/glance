@@ -1,0 +1,256 @@
+import * as stylex from "@stylexjs/stylex";
+import { CalendarDays, CalendarX2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { copy } from "@/copy";
+import type { Breakpoint } from "@/domain/breakpoint";
+import { type MemberFilter, matchesFilter } from "@/domain/members";
+import type { CalendarEvent, Member } from "@/domain/schemas";
+import { type Clock, clockAt } from "@/domain/time";
+import type { ZoneState } from "@/domain/zoneState";
+import { colors, motion, radii, space } from "@/theme/tokens.stylex";
+import { AllDayTiles } from "@/ui/AllDayTile";
+import { DayTimeline, type DayTimelineLabels, type TimelineWeather } from "@/ui/DayTimeline";
+import { Eyebrow } from "@/ui/Eyebrow";
+import { Icon } from "@/ui/Icon";
+import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { SourceFailure } from "@/ui/SourceFailure";
+import { Zone } from "@/ui/Zone";
+
+type CalendarDayProps = {
+  state: ZoneState<CalendarEvent>;
+  toolbar: ReactNode;
+  members: readonly Member[];
+  filter: MemberFilter;
+  calendarEmpty: boolean;
+  day: string;
+  now: Date;
+  tz: string;
+  clock: Clock;
+  breakpoint: Breakpoint;
+  span24: boolean;
+  weather?: TimelineWeather;
+  retryIn: number;
+  onRetry: () => void;
+  onOpenEvent: (id: string) => void;
+  onAddEvent: (slot: { start: Date; end: Date }) => void;
+};
+
+type TimelineProps = Omit<
+  CalendarDayProps,
+  "state" | "toolbar" | "calendarEmpty" | "retryIn" | "onRetry"
+> & {
+  events: readonly CalendarEvent[];
+};
+
+const LABELS: DayTimelineLabels = {
+  ...copy.timeline,
+  now: copy.events.now,
+  everyone: copy.events.everyone,
+  icons: copy.weather.icon,
+};
+
+const SKELETON_ROWS = [0, 1, 2];
+
+const TIMELINE_MIN: Record<Breakpoint, { day: number; full: number }> = {
+  wide: { day: 320, full: 760 },
+  mid: { day: 320, full: 720 },
+  narrow: { day: 320, full: 760 },
+  phone: { day: 720, full: 1000 },
+};
+
+const styles = stylex.create({
+  panel: {
+    flexGrow: 1,
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: space.md,
+    minWidth: 0,
+    boxSizing: "border-box",
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceCanvas,
+    color: colors.textPrimary,
+  },
+  wide: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingInlineStart: 20,
+    paddingInlineEnd: 24,
+  },
+  mid: {
+    paddingBlock: 16,
+    paddingInlineStart: 16,
+    paddingInlineEnd: 20,
+  },
+  narrow: {
+    paddingBlock: 16,
+    paddingInlineStart: 16,
+    paddingInlineEnd: 20,
+  },
+  phone: {
+    paddingBlock: 12,
+    paddingInlineStart: 8,
+    paddingInlineEnd: 12,
+  },
+  timeline: (minHeight: number) => ({
+    minHeight,
+    transitionProperty: "min-height",
+    transitionDuration: motion.durBase,
+    transitionTimingFunction: motion.easeOut,
+  }),
+  emptyTile: {
+    minHeight: 280,
+    backgroundColor: colors.surfaceSoft,
+    borderRadius: radii.lg,
+    padding: space.xl,
+    boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    gap: space.md,
+  },
+  emptyText: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
+  emptyTitle: {
+    fontSize: 28,
+    fontWeight: 340,
+    letterSpacing: "-0.4px",
+    lineHeight: 1.15,
+  },
+  emptyBody: {
+    fontSize: 17,
+    fontWeight: 330,
+    lineHeight: 1.45,
+    maxWidth: 460,
+    textWrap: "pretty",
+  },
+  caption: {
+    paddingInline: space.xs,
+  },
+  skeleton: {
+    display: "flex",
+    flexDirection: "column",
+    gap: space.lg,
+    padding: space.md,
+  },
+});
+
+export function CalendarDay({
+  state,
+  toolbar,
+  calendarEmpty,
+  retryIn,
+  onRetry,
+  ...timeline
+}: CalendarDayProps) {
+  return (
+    <section {...stylex.props(styles.panel, styles[timeline.breakpoint])}>
+      {toolbar}
+      <Zone
+        state={state}
+        loading={<DaySkeleton />}
+        empty={calendarEmpty ? <EmptyCalendar /> : <Timeline events={[]} {...timeline} />}
+        failed={
+          <SourceFailure
+            icon={CalendarX2}
+            title={copy.calendar.unavailable}
+            body={copy.zone.failedBody(retryIn)}
+            retryLabel={copy.zone.retry}
+            onRetry={onRetry}
+          />
+        }
+      >
+        {(events, updatedAt) => (
+          <>
+            <Timeline events={events} {...timeline} />
+            {updatedAt && (
+              <Eyebrow size="caption" xstyle={styles.caption}>
+                {copy.calendar.updated(clockAt(updatedAt, timeline.clock, timeline.tz))}
+              </Eyebrow>
+            )}
+          </>
+        )}
+      </Zone>
+    </section>
+  );
+}
+
+function Timeline({
+  events,
+  members,
+  filter,
+  day,
+  now,
+  tz,
+  clock,
+  breakpoint,
+  span24,
+  weather,
+  onOpenEvent,
+  onAddEvent,
+}: TimelineProps) {
+  const shown = events.filter((event) => matchesFilter(event, filter));
+
+  const minHeight = TIMELINE_MIN[breakpoint][span24 ? "full" : "day"];
+
+  return (
+    <>
+      <AllDayTiles
+        events={shown.filter((event) => event.allDay)}
+        members={members}
+        label={copy.events.allDay}
+        everyoneLabel={copy.events.everyone}
+        onOpenEvent={onOpenEvent}
+      />
+      <DayTimeline
+        plans={shown.filter((event) => !event.allDay)}
+        members={members}
+        day={day}
+        now={now}
+        tz={tz}
+        clock={clock}
+        variant="calendar"
+        breakpoint={breakpoint}
+        span={span24 ? "24h" : "day"}
+        free={freeFor(filter)}
+        weather={weather}
+        labels={LABELS}
+        onOpenEvent={onOpenEvent}
+        onAddEvent={onAddEvent}
+        xstyle={styles.timeline(minHeight)}
+      />
+    </>
+  );
+}
+
+function freeFor(filter: MemberFilter) {
+  if (filter === "everyone") return "everyone";
+
+  return filter.size === 0 ? "none" : "some";
+}
+
+function DaySkeleton() {
+  return (
+    <Skeleton label={copy.calendar.loading} xstyle={styles.skeleton}>
+      {SKELETON_ROWS.map((row) => (
+        <SkeletonBlock key={row} height={44} radius={radii.md} />
+      ))}
+    </Skeleton>
+  );
+}
+
+function EmptyCalendar() {
+  return (
+    <div {...stylex.props(styles.emptyTile)}>
+      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
+      <div {...stylex.props(styles.emptyText)}>
+        <span {...stylex.props(styles.emptyTitle)}>{copy.calendar.emptyTitle}</span>
+        <span {...stylex.props(styles.emptyBody)}>{copy.calendar.emptyBody}</span>
+      </div>
+    </div>
+  );
+}

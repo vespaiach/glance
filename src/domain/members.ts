@@ -87,9 +87,33 @@ export function whoFromFilter(memberIds: readonly string[] | undefined): EventWh
 }
 
 export function matchesFilter(event: EventWho, filter: MemberFilter): boolean {
-  if (filter === "everyone" || event.everyone) return true;
+  if (filter === "everyone") return true;
 
-  return event.memberIds.some((id) => filter.has(id));
+  if (filter.size === 0) return false;
+
+  return event.everyone || event.memberIds.some((id) => filter.has(id));
+}
+
+export function toggleFilter(
+  filter: MemberFilter,
+  memberId: string,
+  family: readonly string[],
+): MemberFilter {
+  const selected = filter === "everyone" ? new Set<string>() : new Set(filter);
+
+  if (selected.has(memberId)) selected.delete(memberId);
+  else selected.add(memberId);
+
+  return family.every((id) => selected.has(id)) ? "everyone" : selected;
+}
+
+export function filterMemberIds(
+  filter: MemberFilter,
+  family: readonly string[],
+): string[] | undefined {
+  if (filter === "everyone" || filter.size === 0) return undefined;
+
+  return family.filter((id) => filter.has(id));
 }
 
 export function liveFilter(filter: MemberFilter, familyIds: readonly string[]): MemberFilter {

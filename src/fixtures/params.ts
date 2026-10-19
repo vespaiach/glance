@@ -50,6 +50,7 @@ export type FixtureParams = ChoiceParams & {
   allday?: true;
   bg?: "photo";
   clock?: "24h";
+  day?: string;
   details?: true;
   discard?: true;
   empty?: true;
@@ -61,7 +62,9 @@ export type FixtureParams = ChoiceParams & {
   now?: Date;
   pending?: number;
   rm?: string;
+  span24?: true;
   switch?: true;
+  who?: string[];
 };
 
 const PLACE_PAGE = "/settings/location";
@@ -70,6 +73,10 @@ const ISO_DATE_TIME =
   /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/;
 
 const HAS_OFFSET = /(Z|[+-]\d{2}:\d{2})$/;
+
+const OCTOBER_DAY = /^([1-9]|[12]\d|3[01])$/;
+
+const NOBODY = "none";
 
 export function parseFixtureParams(search: string | URLSearchParams, pathname = ""): FixtureParams {
   const query = new URLSearchParams(search);
@@ -84,6 +91,10 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
 
   const famname = query.get("famname");
 
+  const day = octoberDay(query.get("day"));
+
+  const who = fixtureWho(query.get("who"));
+
   return {
     ...readChoices(query),
     ...readFlags(query),
@@ -92,6 +103,8 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
     ...(pending !== undefined && { pending }),
     ...(rm && { rm }),
     ...(famname && { famname }),
+    ...(day && { day }),
+    ...(who && { who }),
   };
 }
 
@@ -140,8 +153,23 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("famerr") === "1" && { famerr: true }),
     ...(query.get("full") === "1" && { full: true }),
     ...(query.get("kb") === "1" && { kb: true }),
+    ...(query.get("span") === "24" && { span24: true }),
     ...(query.get("switch") === "1" && { switch: true }),
   };
+}
+
+function octoberDay(value: string | null): string | undefined {
+  if (value === null || !OCTOBER_DAY.test(value)) return undefined;
+
+  return `2026-10-${value.padStart(2, "0")}`;
+}
+
+function fixtureWho(value: string | null): string[] | undefined {
+  if (value === NOBODY) return [];
+
+  const ids = (value ?? "").split(",").flatMap((key) => fixtureMemberId(key) ?? []);
+
+  return ids.length > 0 ? ids : undefined;
 }
 
 function parseCount(value: string | null): number | undefined {

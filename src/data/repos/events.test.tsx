@@ -4,7 +4,7 @@ import { deviceTimeZone } from "@/domain/zone";
 import {
   createEventsRepo,
   useEvent,
-  useEventsInMonth,
+  useEventsInWeek,
   useEventsOnDay,
   useHasEvents,
   useNextEventAfter,
@@ -116,10 +116,10 @@ describe("event hooks", () => {
     );
   });
 
-  it("CAL-02 useEventsInMonth lists the month's events and drops a removed one", async () => {
+  it("CAL-01 useEventsInWeek lists the week's events and drops a removed one", async () => {
     await store.db.events.bulkPut([synced(SOCCER), synced(NEXT_DAY), synced(NEXT_MONTH)]);
 
-    const { result } = renderHook(() => useEventsInMonth(2026, 9, tz), {
+    const { result } = renderHook(() => useEventsInWeek("2026-10-04", tz), {
       wrapper: wrapperFor(store),
     });
 
@@ -237,10 +237,10 @@ describe("event hooks in a zone", () => {
     await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([FRIDAY_NIGHT.id]));
   });
 
-  it("LOC-06 useEventsInMonth reads the month in the given zone", async () => {
+  it("LOC-06 useEventsInWeek reads the week in the given zone", async () => {
     await store.db.events.bulkPut([synced(HALLOWEEN_NIGHT)]);
 
-    const { result } = renderHook(() => useEventsInMonth(2026, 9, LA), {
+    const { result } = renderHook(() => useEventsInWeek("2026-10-25", LA), {
       wrapper: wrapperFor(store),
     });
 
@@ -321,7 +321,7 @@ describe("all-day events in the hooks", () => {
     expect(await idsOnDay("2026-10-16", "America/Los_Angeles")).toEqual([NO_SCHOOL.id]);
   });
 
-  it.each(ZONES)("CAL-02 a month reads the all-day events of its own dates in %s", async (zone) => {
+  it.each(ZONES)("CAL-01 a week reads the all-day events of its own dates in %s", async (zone) => {
     await store.db.events.bulkPut([
       synced(SEPT_LAST),
       synced(FIRST),
@@ -330,12 +330,12 @@ describe("all-day events in the hooks", () => {
       { ...synced(GRANDPA), deletedAt: TEST_NOW.toISOString() },
     ]);
 
-    const { result } = renderHook(() => useEventsInMonth(2026, 9, zone), {
+    const { result } = renderHook(() => useEventsInWeek("2026-09-27", zone), {
       wrapper: wrapperFor(store),
     });
 
     await waitFor(() =>
-      expect(result.current?.map((row) => row.id)).toEqual([FIRST.id, NO_SCHOOL.id]),
+      expect(result.current?.map((row) => row.id)).toEqual([SEPT_LAST.id, FIRST.id]),
     );
   });
 

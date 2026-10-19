@@ -2,36 +2,44 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
-import { useEventsInMonth, useEventsOnDay, useHasEvents, useMembers } from "@/data/repos";
-import { markedDays, monthTitle, readDateParam, stepMonth } from "@/domain/month";
-import { formatDayTitle } from "@/domain/time";
-import { dateKey, parseDateKey, wallTime } from "@/domain/zone";
-import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
+import { useReducer } from "react";
+import { copy } from "@/copy";
+import {
+  useEventsInWeek,
+  useEventsOnDay,
+  useHasEvents,
+  useMembers,
+  useWeather,
+} from "@/data/repos";
+import type { Breakpoint } from "@/domain/breakpoint";
+import { filterMemberIds, liveFilter, matchesFilter } from "@/domain/members";
+import type { AccountSettings, CalendarEvent, Member, Weather } from "@/domain/schemas";
+import { displayTemp } from "@/domain/temperature";
+import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
+import { outsideDay } from "@/domain/timeline";
+import { hourlyByHour } from "@/domain/weather";
+import { readDateParam, weekDays, weekDots, weekHeading } from "@/domain/week";
+import { dateKey, parseDateKey } from "@/domain/zone";
+import { useBreakpoint } from "@/shell/breakpoint";
+import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSheetHost } from "@/shell/SheetHost";
-import { useSyncedZone } from "@/shell/sourceZone";
-import { space } from "@/theme/tokens.stylex";
-import { DayPanel } from "./components/DayPanel";
-import { MonthBlock } from "./components/MonthBlock";
-import { calendarCell, calendarLayout, dayRevealScroll } from "./layout";
+import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
+import type { TimelineWeather } from "@/ui/DayTimeline";
+import { calendarView, initialCalendarView } from "./calendarView";
+import { CalendarDay } from "./components/CalendarDay";
+import { CalendarToolbar } from "./components/CalendarToolbar";
+import { type WeekDay, WeekStrip } from "./components/WeekStrip";
+import { calendarLayout } from "./layout";
 
-const styles = stylex.create({
-  grid: {
-    display: "grid",
-    gap: space.lg,
-    alignItems: "start",
-  },
-});
+const NO_MEMBERS: Member[] = [];
 
 export function CalendarScreen() {
   const sheets = useSheetHost();
 
   const breakpoint = useBreakpoint();
-
-  const width = useViewportWidth();
 
   const settings = useAccountSettings();
 
@@ -41,83 +49,150 @@ export function CalendarScreen() {
 
   const searchParams = useSearchParams();
 
-  const [picked, setPicked] = useState(() => readDateParam(searchParams.get("date")));
+  const fixture = useFixtureParams();
 
-  const dayList = useRef<HTMLElement>(null);
+  const [view, dispatch] = useReducer(
+    calendarView,
+    { date: readDateParam(searchParams.get("date")), fixture },
+    initialCalendarView,
+  );
 
   const today = dateKey(now, tz);
-  const day = picked ?? today;
-  const selected = parseDateKey(day);
-  const { year, month: monthNumber, day: date } = wallTime(selected, "UTC");
-  const month = monthNumber - 1;
+
+  const day = view.day ?? today;
+
+  const week = weekDays(day);
+
+  const members = useMembers() ?? NO_MEMBERS;
+
+  const family = members.map((member) => member.id);
+
+  const filter = liveFilter(view.filter, family);
 
   const events = useEventsOnDay(day, tz);
 
-  const monthEvents = useEventsInMonth(year, month, tz);
+  const weekEvents = useEventsInWeek(week[0] ?? day, tz);
 
   const hasEvents = useHasEvents();
 
   const dayEvents = useSyncedZone(hasEvents === undefined ? undefined : events);
 
-  const members = useMembers();
+  const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
-  const selectDay = (chosen: number) => {
-    setPicked(dayKey(year, month, chosen));
+  const forecast = weather.state.kind === "ready" ? weather.state.data[0] : undefined;
 
-    if (breakpoint === "narrow" || breakpoint === "phone") revealDayList(dayList.current);
-  };
+  const shownTimed = (events ?? []).filter(
+    (event) => !event.allDay && matchesFilter(event, filter),
+  );
 
   return (
-    <div {...stylex.props(styles.grid, calendarLayout(breakpoint))}>
-      <MonthBlock
-        title={monthTitle(year, month, now, tz)}
-        year={year}
-        month={month}
-        today={todayInMonth(today, year, month)}
-        selected={date}
-        marked={markedDays(monthEvents ?? [], tz)}
-        cell={calendarCell(breakpoint, width)}
-        onPreviousMonth={() => setPicked(stepMonth(day, -1, now, tz))}
-        onNextMonth={() => setPicked(stepMonth(day, 1, now, tz))}
-        onSelectDay={selectDay}
+    <div {...stylex.props(calendarLayout(breakpoint, view.span24))}>
+      <WeekStrip
+        heading={weekHeading(day, today)}
+        label={weekLabel(week[0] ?? day)}
+        days={weekPills(week, weekEvents ?? [], members, { tz, breakpoint, forecast, settings })}
+        selected={day}
+        today={today}
+        breakpoint={breakpoint}
+        previousLabel={copy.calendar.previousWeek}
+        nextLabel={copy.calendar.nextWeek}
+        onPrevious={() => dispatch({ type: "step", delta: -1, today })}
+        onNext={() => dispatch({ type: "step", delta: 1, today })}
+        onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
       />
-      <DayPanel
-        ref={dayList}
+      <CalendarDay
         state={dayEvents.state}
-        members={members ?? []}
         retryIn={dayEvents.retryIn}
         onRetry={dayEvents.retry}
-        title={formatDayTitle(selected, "UTC")}
         calendarEmpty={hasEvents === false}
+        members={members}
+        filter={filter}
+        day={day}
         now={now}
-        clock={settings.clock}
         tz={tz}
-        compact={breakpoint === "phone"}
+        clock={settings.clock}
+        breakpoint={breakpoint}
+        span24={view.span24}
+        weather={laneWeather(forecast, day, tz, settings.tempUnit, breakpoint)}
         onOpenEvent={(id) => sheets.open({ kind: "event", id })}
-        onAddEvent={() => sheets.open({ kind: "newevent", day })}
+        onAddEvent={() => sheets.open(newEvent(day, filterMemberIds(filter, family)))}
+        toolbar={
+          <CalendarToolbar
+            members={members}
+            filter={filter}
+            span24={view.span24}
+            outside={outsideDay(shownTimed, tz)}
+            phone={breakpoint === "phone"}
+            onToggleMember={(id) => dispatch({ type: "toggleMember", id, family })}
+            onEditFamily={() => sheets.open({ kind: "family" })}
+            onToggleSpan={() => dispatch({ type: "toggleSpan" })}
+            onAddEvent={() => sheets.open(newEvent(day, filterMemberIds(filter, family)))}
+          />
+        }
       />
     </div>
   );
 }
 
-function todayInMonth(today: string, year: number, month: number): number | undefined {
-  const date = parseDateKey(today);
+type PillContext = {
+  tz: string;
+  breakpoint: Breakpoint;
+  forecast: Weather | undefined;
+  settings: Pick<AccountSettings, "tempUnit">;
+};
 
-  const sameMonth = date.getUTCFullYear() === year && date.getUTCMonth() === month;
-
-  return sameMonth ? date.getUTCDate() : undefined;
+function newEvent(day: string, memberIds: string[] | undefined) {
+  return { kind: "newevent" as const, day, ...(memberIds && { memberIds }) };
 }
 
-function dayKey(year: number, month: number, day: number): string {
-  return dateKey(new Date(Date.UTC(year, month, day)), "UTC");
+function weekLabel(sunday: string): string {
+  const date = parseDateKey(sunday);
+
+  return copy.calendar.week(formatMonth(date, "UTC"), date.getUTCDate());
 }
 
-function revealDayList(list: HTMLElement | null) {
-  const view = list?.closest("main");
-  if (!list || !view) return;
+function weekPills(
+  week: readonly string[],
+  events: readonly CalendarEvent[],
+  members: readonly Member[],
+  { tz, breakpoint, forecast, settings }: PillContext,
+): WeekDay[] {
+  const dots = weekDots(events, members, tz);
 
-  const top = list.getBoundingClientRect().top - view.getBoundingClientRect().top;
-  const scroll = dayRevealScroll(top, view.clientHeight);
+  return week.map((key) => {
+    const date = parseDateKey(key);
 
-  if (scroll > 0) view.scrollTo({ top: view.scrollTop + scroll, behavior: "smooth" });
+    const weekday = formatWeekday(date, "UTC");
+
+    const daily = forecast?.daily.find((point) => point.date === key);
+
+    return {
+      key,
+      weekday: breakpoint === "phone" ? weekday.slice(0, 1) : weekday,
+      date: date.getUTCDate(),
+      name: formatLongDate(date, "UTC"),
+      dots: dots.get(key) ?? [],
+      ...(daily && {
+        forecast: {
+          icon: daily.icon,
+          label: copy.weather.icon[daily.icon],
+          high: `${displayTemp(daily.high, settings.tempUnit)}°`,
+        },
+      }),
+    };
+  });
+}
+
+function laneWeather(
+  forecast: Weather | undefined,
+  day: string,
+  tz: string,
+  unit: AccountSettings["tempUnit"],
+  breakpoint: Breakpoint,
+): TimelineWeather | undefined {
+  if (!forecast || breakpoint === "phone") return undefined;
+
+  return hourlyByHour(forecast.hourly, day, tz).size > 0
+    ? { hourly: forecast.hourly, unit }
+    : undefined;
 }

@@ -1,3 +1,4 @@
 export { CalendarScreen } from "./CalendarScreen";
-export { DayPanel } from "./components/DayPanel";
-export { MonthBlock } from "./components/MonthBlock";
+export { CalendarDay } from "./components/CalendarDay";
+export { CalendarToolbar } from "./components/CalendarToolbar";
+export { WeekStrip } from "./components/WeekStrip";
