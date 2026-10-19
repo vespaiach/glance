@@ -162,7 +162,7 @@ export function TodayGallery({ season }: { season: Season }) {
           season={season}
           time={NOW}
           clock="12h"
-          weather={<NowWeather tz={GALLERY_TZ} {...WEATHERS[0]} {...weather} />}
+          weather={<NowWeather tz={GALLERY_TZ} state={WEATHERS[0].state} {...weather} />}
           xstyle={styles.hero}
         >
           <HeroSummary
