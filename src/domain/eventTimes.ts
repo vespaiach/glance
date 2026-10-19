@@ -29,6 +29,10 @@ export function defaultTimes(now: Date, tz: string): EventTimes {
   return { start, end: defaultEnd(start) };
 }
 
+export function slotTimes(slot: { start: Date; end: Date }, tz: string): EventTimes {
+  return { start: minutesOfDay(slot.start, tz), end: minutesOfDay(slot.end, tz) };
+}
+
 export function endsAfterStart({ start, end }: EventTimes): boolean {
   return end === undefined || end > start;
 }

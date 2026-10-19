@@ -3,13 +3,20 @@
 import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
 import type { FixtureParams } from "@/data/repos";
+import type { EventTimes } from "@/domain/eventTimes";
 import type { NoteTone } from "@/domain/schemas";
 
 export type TimeFixture = NonNullable<FixtureParams["time"]>;
 
 export type SheetRequest = (
   | { kind: "event"; id: string; time?: TimeFixture; edit?: true }
-  | { kind: "newevent"; day: string; memberIds?: readonly string[]; time?: TimeFixture }
+  | {
+      kind: "newevent";
+      day: string;
+      memberIds?: readonly string[];
+      times?: EventTimes;
+      time?: TimeFixture;
+    }
   | { kind: "note"; id: string; edit?: true }
   | { kind: "newnote"; draft?: { text: string; tone: NoteTone } }
   | { kind: "family"; removing?: string; name?: string; error?: true }

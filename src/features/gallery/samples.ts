@@ -1,4 +1,3 @@
-import type { EventStatus } from "@/domain/eventStatus";
 import type {
   CalendarEvent,
   Member,
@@ -233,59 +232,6 @@ export const gallery = {
   },
 };
 
-export type SampleEvent = {
-  start: string;
-  end?: string;
-  title: string;
-  location: string;
-  status: EventStatus;
-  dot: Tone;
-};
-
-export const NOW_EVENT: SampleEvent = {
-  start: "10:30",
-  end: "11:15",
-  title: "Grandma's video call",
-  location: "Living room",
-  status: "now",
-  dot: 1,
-};
-
-export const EVENTS: readonly SampleEvent[] = [
-  {
-    start: "9:00",
-    end: "9:30",
-    title: "School drop-off",
-    location: "Lincoln Elementary",
-    status: "past",
-    dot: "soft",
-  },
-  NOW_EVENT,
-  {
-    start: "12:00",
-    end: "1:00",
-    title: "Lunch with Aunt Rosa",
-    location: "Café Lumen",
-    status: "upcoming",
-    dot: 2,
-  },
-  {
-    start: "2:00",
-    end: "2:20",
-    title: "Dentist — Leo",
-    location: "Dr. Patel",
-    status: "upcoming",
-    dot: "accent",
-  },
-  {
-    start: "3:30",
-    title: "Soccer practice",
-    location: "Laurelhurst Park",
-    status: "upcoming",
-    dot: 3,
-  },
-];
-
 export type SampleNote = {
   text: string;
   author: string;
@@ -366,7 +312,7 @@ export const ZONE_STATES: readonly ZoneState<string>[] = [
   { kind: "loading" },
   { kind: "empty" },
   { kind: "failed" },
-  { kind: "ready", data: [NOW_EVENT.title], updatedAt: "10:12 AM" },
+  { kind: "ready", data: ["Grandma's video call"], updatedAt: "10:12 AM" },
 ];
 
 const todayAt = (hour: number, minute: number) => octoberAt(9, hour, minute).toISOString();

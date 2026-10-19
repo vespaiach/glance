@@ -7,6 +7,7 @@ import {
   nextHalfHour,
   pickerHours,
   pickerMinutes,
+  slotTimes,
   withHour,
   withMeridiem,
   withMinute,
@@ -130,5 +131,13 @@ describe("default times in a zone", () => {
 
   it("TPK-05 default times start at the next half hour in the given zone", () => {
     expect(defaultTimes(morning, LA)).toEqual({ start: 11 * 60, end: 12 * 60 });
+  });
+});
+
+describe("slot times", () => {
+  it("TL-08 a free slot becomes New event minutes in the given zone", () => {
+    const slot = { start: new Date("2026-10-09T18:15:00Z"), end: new Date("2026-10-09T19:00:00Z") };
+
+    expect(slotTimes(slot, "America/Los_Angeles")).toEqual({ start: 11 * 60 + 15, end: 12 * 60 });
   });
 });

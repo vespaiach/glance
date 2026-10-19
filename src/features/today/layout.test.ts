@@ -1,21 +1,4 @@
-import { scheduleRows, todayLayout } from "./layout";
-
-describe("scheduleRows", () => {
-  it.each([
-    [760, 76, 10],
-    [456, 76, 6],
-    [455, 76, 5],
-    [500, 100, 5],
-    [152, 76, 2],
-    [151, 76, 2],
-    [0, 76, 2],
-    [-40, 76, 2],
-    [1200, 76, 10],
-    [1200, 114, 10],
-  ])("TODAY-11 %i px left with %i px rows fits %i rows", (available, rowHeight, rows) => {
-    expect(scheduleRows({ available, rowHeight })).toBe(rows);
-  });
-});
+import { todayLayout } from "./layout";
 
 describe("todayLayout", () => {
   it.each([

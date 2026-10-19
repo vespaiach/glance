@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useEvent, useEventsRepo, useMembers } from "@/data/repos";
 import { eventDayKey } from "@/domain/allDay";
 import { type DetailsStatus, detailsStatus } from "@/domain/eventStatus";
+import type { EventTimes } from "@/domain/eventTimes";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
 import { formatDayTitle } from "@/domain/time";
@@ -36,7 +37,7 @@ type SheetFrameProps = {
 
 type Fixtures = { time?: TimeFixture; discard?: true; edit?: true };
 
-type NewProps = Fixtures & { day: string; memberIds?: readonly string[] };
+type NewProps = Fixtures & { day: string; memberIds?: readonly string[]; times?: EventTimes };
 
 type EditProps = Fixtures & { event: CalendarEvent };
 
@@ -60,6 +61,7 @@ export function EventSheetScreen() {
         key={sheet.day}
         day={sheet.day}
         memberIds={sheet.memberIds}
+        times={sheet.times}
         time={sheet.time}
         discard={sheet.discard}
       />
@@ -146,7 +148,7 @@ function LoadedEventSheet({ id, ...fixtures }: Fixtures & { id: string }) {
   return event ? <EditEventSheet event={event} {...fixtures} /> : null;
 }
 
-function NewEventSheet({ day, memberIds, time, discard }: NewProps) {
+function NewEventSheet({ day, memberIds, times, time, discard }: NewProps) {
   const now = useNow("minute");
 
   const tz = useTimeZone();
@@ -158,7 +160,7 @@ function NewEventSheet({ day, memberIds, time, discard }: NewProps) {
       mode="new"
       day={day}
       id={id}
-      initial={initialEventSheet(newEventDraft(now, tz, memberIds), time, discard)}
+      initial={initialEventSheet(newEventDraft(now, tz, memberIds, times), time, discard)}
       onDelete={() => {}}
     />
   );

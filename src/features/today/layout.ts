@@ -53,12 +53,6 @@ export const todayType = stylex.createTheme(type, {
   buttonSize: "clamp(17px, min(0.8854vw, 1.5741vh), 25.5px)",
 });
 
-type RowsInput = { available: number; rowHeight: number };
-
-const MIN_ROWS = 2;
-
-const MAX_ROWS = 10;
-
 const COLUMNS_MIN_WIDTH = 1024;
 
 const TWO_COLUMN_MAX_WIDTH = 1180;
@@ -87,8 +81,4 @@ export function todayLayout(width: number, height: number): TodayLayout {
     noteColumns: width < WIDE_NOTES_MIN_WIDTH ? 1 : 2,
     noteLimit: height < TWO_NOTES_MIN_HEIGHT ? 1 : 2,
   };
-}
-
-export function scheduleRows({ available, rowHeight }: RowsInput): number {
-  return Math.min(MAX_ROWS, Math.max(MIN_ROWS, Math.floor(available / rowHeight)));
 }

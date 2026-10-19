@@ -9,7 +9,7 @@ import {
   putSyncStatus,
   synced,
 } from "@/data/repos/testHarness";
-import type { CalendarEvent, Note, Photo, WeatherLocation } from "@/domain/schemas";
+import type { CalendarEvent, Note, Photo, Weather, WeatherLocation } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -57,6 +57,35 @@ const WIFI: Note = {
   rotation: -2,
 };
 
+const GRANDPA: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000004",
+  title: "Grandpa staying over",
+  startAt: "2026-10-09T00:00:00.000Z",
+  allDay: true,
+  everyone: true,
+  memberIds: [],
+};
+
+const WEATHER: Weather = {
+  location: "Portland, OR",
+  fetchedAt: iso(10, 0),
+  current: {
+    temp: 56,
+    condition: "cloudy",
+    icon: "cloud",
+    high: 68,
+    low: 51,
+    feelsLike: 54,
+    windMph: 8,
+    windDir: "NW",
+    humidity: 80,
+    uv: 0,
+    sunset: iso(18, 30),
+  },
+  hourly: [{ time: iso(15, 0), icon: "cloud", temp: 63, precip: 10 }],
+  daily: [{ date: "2026-10-09", icon: "cloud", high: 68, low: 51 }],
+};
+
 const PORTLAND: WeatherLocation = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
 
 let store: Harness;
@@ -75,6 +104,7 @@ beforeEach(() => {
 afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 
   await store.close();
 });
@@ -169,10 +199,11 @@ test("TODAY-04 Full calendar goes to the Calendar view", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/calendar");
 });
 
-test("TODAY-11 See all goes to the Calendar on today", async () => {
+test("TODAY-11 every plan from 5 AM to 9 PM shows on the timeline, with no See all", async () => {
   const day = Array.from({ length: 9 }, (_, hour) => ({
     ...CALL,
     id: `0195f0a0-0000-7000-8000-00000000010${hour}`,
+    title: `Plan ${hour}`,
     startAt: iso(9 + hour, 30),
     endAt: iso(9 + hour, 45),
   }));
@@ -181,9 +212,56 @@ test("TODAY-11 See all goes to the Calendar on today", async () => {
 
   renderToday();
 
-  await userEvent.click(await screen.findByRole("button", { name: /See all 9 events/ }));
+  expect(await screen.findAllByRole("button", { name: /^Plan \d, / })).toHaveLength(9);
+  expect(screen.queryByRole("button", { name: /See all/ })).not.toBeInTheDocument();
+});
 
-  expect(navigation.push).toHaveBeenCalledWith("/calendar");
+test("TODAY-03 tapping a plan opens Event details", async () => {
+  await store.db.events.put(synced(CALL));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Grandma’s video call, / }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "event", id: CALL.id }),
+  );
+});
+
+test("TODAY-03 tapping an all-day tile opens Event details", async () => {
+  await store.db.events.bulkPut([synced(CALL), synced(GRANDPA)]);
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Grandpa staying over/ }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "event", id: GRANDPA.id }),
+  );
+});
+
+test("TODAY-03 TL-08 tapping a free slot opens New event at that slot", async () => {
+  await store.db.events.put(synced(CALL));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Free / }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "newevent", day: "2026-10-09", times: { start: 675, end: 735 } }),
+  );
+});
+
+test("TODAY-11 each hour label shows that hour's weather", async () => {
+  await store.db.events.put(synced(CALL));
+  await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
+  await store.db.weather.put({ ...WEATHER, accountId: store.accountId });
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(900);
+
+  renderToday();
+
+  expect(await screen.findByText("63°")).toBeInTheDocument();
 });
 
 test("TODAY-07 tapping the picture of the day opens Photos on that photo", async () => {

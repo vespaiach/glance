@@ -88,10 +88,15 @@ export function eventFromDraft(
   };
 }
 
-export function newEventDraft(now: Date, tz: string, memberIds?: readonly string[]): EventDraft {
+export function newEventDraft(
+  now: Date,
+  tz: string,
+  memberIds?: readonly string[],
+  times: EventTimes = defaultTimes(now, tz),
+): EventDraft {
   return {
     title: "",
-    ...defaultTimes(now, tz),
+    ...times,
     location: "",
     ...draftWho(whoFromFilter(memberIds)),
     notes: "",

@@ -426,6 +426,7 @@ test("TL-08 tapping a free slot opens New event at the slot", async () => {
   expect(JSON.parse(openSheet().textContent ?? "")).toMatchObject({
     kind: "newevent",
     day: "2026-10-04",
+    times: { start: 300, end: 360 },
   });
 });
 
