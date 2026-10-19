@@ -157,7 +157,7 @@ const styles = stylex.create({
     display: "flex",
     gap: 2,
     height: 6,
-    maxWidth: 46,
+    maxWidth: "min(46px, 100%)",
     overflow: "hidden",
   },
   forecast: {

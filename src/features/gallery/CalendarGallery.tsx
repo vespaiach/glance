@@ -166,7 +166,11 @@ const DAYS: readonly { label: string; height: number; props: Partial<DayProps> }
     },
   },
   { label: words.nobody, height: 560, props: { filter: new Set() } },
-  { label: words.emptyDay, height: 560, props: { day: "2026-10-11", state: { kind: "empty" } } },
+  {
+    label: words.emptyDay,
+    height: 560,
+    props: { day: "2026-10-11", state: { kind: "empty" }, weather: undefined },
+  },
   {
     label: words.emptyCalendar,
     height: 480,
