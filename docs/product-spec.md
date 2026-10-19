@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.64 |
+| Status | v0.65 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -314,7 +314,7 @@ For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcomi
 |---|---|---|
 | Clock, event summary start, sunset, Ambient, sync time | `10:41 AM` (mono AM/PM) | `10:41` |
 | Hero "until {end}" | `until 11:15` | `until 11:15` |
-| Plan cards, ranges | `10:30 – 11:15` | `10:30 – 11:15` |
+| Plan cards, ranges | `9:00 – 10:30 AM`, `11:00 AM – 1:00 PM` (one-line cards: `9:00`) | `09:00 – 10:30` |
 | Countdown, lengths | `45 min`, `1 h 20 min` | same |
 | Hourly forecast | `4 PM` | `16:00` |
 
@@ -410,10 +410,10 @@ Used by Calendar (any day, filtered) and Today (today, everyone). Pure layout ru
 | TL-01 | **Span** 5 AM to 9 PM (Calendar can switch to 24 hours, TL-06). It fits its card with no scroll; on phone it is 720 px tall in a scrolling page. Hour labels sit in a left gutter; a label hides when it would sit closer than 24 px to the one above or 22 px to the now marker. |
 | TL-02 | **Elastic hours:** an hour's weight = 1 + 3 × the share of that hour covered by plans of 3 hours or less (longer plans don't stretch hours). On today, hours that have fully passed weigh × 0.35 on Calendar and × 0.3 on Today. Heights are the weights scaled to the card. |
 | TL-03 | **Overlaps:** overlapping plans share the width in columns; longer plans take the leftmost column, and a plan widens into free columns beside it. Every plan is at least 44 px tall (40 on phone). |
-| TL-04 | **Plan cards** (radius 8, a button named "{title}, {range}"): content follows the card's real size: time + title, then a second title line, then "{who} · {location}", then the first line of Notes (`file-text`). Too short for that → one line: start time (hidden under 200 px wide), title, person dots. Under 260 px wide → the start time only. Lines end in "…", never wrap. |
-| TL-05 | **Colors:** the event's color (§7); past (STATUS-01) → white with a hairline and the title struck through, weight 340; now → 2 px black ring and a NOW pill. Other days are never now. |
+| TL-04 | **Plan cards** (radius 8, a button named "{title}, {range}"): content follows the card's real size: time + title, then a second title line, then "{who} · {location}", then the first line of Notes (`file-text`). Too short for that → one line: start time (hidden under 200 px wide), title, person dots. Under 260 px wide → the start time only. A plan that started before 5 AM shows "Until {end}" for its time. Lines end in "…", never wrap. |
+| TL-05 | **Colors:** the event's color (§7); past (STATUS-01) → white with a hairline and the title struck through, weight 340; now → 2 px black ring and a NOW pill (a one-line card keeps only the ring). Other days are never now. |
 | TL-06 | **24 hours** (Calendar only): 12 AM to 12 AM; night hours (before 5 AM, from 9 PM) without plans weigh half, night hours with plans are elastic as TL-02. Hour labels and hairlines thin out when rows get tight. |
-| TL-07 | **Weather lane** (Calendar only) on the right, 150 px wide (128 mid, 112 narrow; none on phone), aligned to the elastic hours: icon + temperature per hour; hours with rain ≥ 50% filled with the season block-3 color and the % when it fits. Plans overlapping such an hour get a white "{p}% rain" chip. Only with a location and an hourly forecast for that day. |
+| TL-07 | **Weather lane** (Calendar only) on the right, 150 px wide (128 mid, 112 narrow; none on phone), aligned to the elastic hours: icon (named by condition) + temperature per hour, and its rain % when it fits; hours with rain ≥ 50% filled with the season block-3 color; hours the forecast doesn't cover stay empty. Plans that aren't past and overlap such an hour get a white "{p}% rain" chip (on the time line, so not on one-line cards). Only with a location and an hourly forecast for that day. |
 | TL-08 | **Free slots:** gaps of 30 min or more between 5 AM and 9 PM with no plan for the selected members show as dashed tiles: "Everyone free · {length}" when everyone is selected, else "Free · {length}"; named "Free {range}. Add event". On today a slot starts at now, and one left shorter than 30 min hides. Tap → New event starting at the slot start rounded up to 15 min, 1 hour long or to the slot's end. |
 | TL-09 | **Now marker** (today only): a 2 px black line across the timeline with a black mono time pill in the gutter, moving every minute. |
 | TL-10 | Tapping a plan opens Event details (EVT-09). Day or filter changes reflow over 280 ms (at once with reduced motion). |

@@ -102,6 +102,15 @@ export const copy = {
       photos: "Photos unavailable",
     },
   },
+  timeline: {
+    rain: (percent: number) => `${percent}% rain`,
+    until: (time: string) => `Until ${time}`,
+    free: (everyone: boolean, length: string) =>
+      `${everyone ? "Everyone free" : "Free"} · ${length}`,
+    freeName: (range: string) => `Free ${range}. Add event`,
+    planName: (title: string, range: string) => `${title}, ${range}`,
+    hourlyWeather: "Hourly weather",
+  },
   calendar: {
     previousMonth: "Previous month",
     nextMonth: "Next month",

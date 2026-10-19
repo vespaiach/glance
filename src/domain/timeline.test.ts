@@ -1,4 +1,11 @@
-import { type TimelineLayout, type TimelineOptions, timelineLayout } from "./timeline";
+import {
+  gutterWeather,
+  planCard,
+  planRain,
+  type TimelineLayout,
+  type TimelineOptions,
+  timelineLayout,
+} from "./timeline";
 import { zonedInstant } from "./zone";
 
 const tz = "America/Los_Angeles";
@@ -356,5 +363,95 @@ describe("timelineLayout", () => {
     const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
 
     expect(layout.hiddenOutsideSpan).toBe(0);
+  });
+});
+
+describe("planCard", () => {
+  const card = { width: 400, titleSize: 22, badge: false, note: true };
+
+  it("TL-04 a tall wide card shows the range, two title lines, who and where, then notes", () => {
+    expect(planCard({ ...card, height: 200 })).toEqual({
+      oneLine: false,
+      time: "range",
+      titleLines: 2,
+      meta: true,
+      note: true,
+    });
+  });
+
+  it("TL-04 a card too short for the time over the title becomes one line", () => {
+    expect(planCard({ ...card, height: 60 })).toMatchObject({ oneLine: true, time: "start" });
+    expect(planCard({ ...card, height: 71 })).toMatchObject({ oneLine: false, titleLines: 1 });
+  });
+
+  it("TL-04 a one-line card under 200 px wide hides the start time", () => {
+    expect(planCard({ ...card, height: 44, width: 199 })).toMatchObject({ time: "none" });
+    expect(planCard({ ...card, height: 44, width: 200 })).toMatchObject({ time: "start" });
+  });
+
+  it("TL-04 a card under 260 px wide shows only the start time", () => {
+    expect(planCard({ ...card, height: 200, width: 259 })).toMatchObject({ time: "start" });
+    expect(planCard({ ...card, height: 200, width: 260 })).toMatchObject({ time: "range" });
+  });
+
+  it("TL-04 who and where need 26 px below the title and notes another 26", () => {
+    expect(planCard({ ...card, height: 97 })).toMatchObject({ meta: true, note: false });
+    expect(planCard({ ...card, height: 96 })).toMatchObject({ meta: false, note: false });
+    expect(planCard({ ...card, height: 150 })).toMatchObject({ titleLines: 2, note: true });
+    expect(planCard({ ...card, height: 149 })).toMatchObject({ meta: true, note: false });
+  });
+
+  it("TL-04 a second title line comes before who and where", () => {
+    expect(planCard({ ...card, height: 102 })).toMatchObject({ titleLines: 2, meta: false });
+  });
+
+  it("TL-04 a plan without notes never shows the notes line", () => {
+    expect(planCard({ ...card, height: 200, note: false })).toMatchObject({ note: false });
+  });
+
+  it("TL-05 a NOW pill or rain chip makes the first line taller", () => {
+    expect(planCard({ ...card, height: 74 })).toMatchObject({ oneLine: false });
+    expect(planCard({ ...card, height: 74, badge: true })).toMatchObject({ oneLine: true });
+  });
+});
+
+describe("planRain", () => {
+  const rain = new Map([
+    [9, 70],
+    [10, 80],
+    [11, 40],
+  ]);
+
+  it("TL-07 a plan overlapping hours of 50% rain or more gets the highest chance", () => {
+    expect(planRain(540, 630, rain)).toBe(80);
+    expect(planRain(420, 600, rain)).toBe(70);
+  });
+
+  it("TL-07 a plan only in hours under 50% gets no chip", () => {
+    expect(planRain(660, 720, rain)).toBe(0);
+    expect(planRain(540, 630, new Map())).toBe(0);
+  });
+
+  it("TL-07 a plan ending on the hour doesn't reach the next hour", () => {
+    expect(planRain(480, 540, rain)).toBe(0);
+  });
+});
+
+describe("gutterWeather", () => {
+  const mark = { label: true, top: 100 };
+
+  it("TODAY-11 shows under a label when its hour is at least 46 px tall", () => {
+    expect(gutterWeather(mark, 46, null)).toBe(true);
+    expect(gutterWeather(mark, 45, null)).toBe(false);
+  });
+
+  it("TODAY-11 hides under a hidden label", () => {
+    expect(gutterWeather({ ...mark, label: false }, 80, null)).toBe(false);
+  });
+
+  it("TODAY-11 hides when the now marker sits in its way", () => {
+    expect(gutterWeather(mark, 80, 120)).toBe(false);
+    expect(gutterWeather(mark, 80, 103)).toBe(true);
+    expect(gutterWeather(mark, 80, 147)).toBe(true);
   });
 });

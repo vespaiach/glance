@@ -1,5 +1,6 @@
 import type { Weather } from "./schemas";
-import { rainStart, weatherZone } from "./weather";
+import { hourlyByHour, rainStart, weatherZone } from "./weather";
+import { zonedInstant } from "./zone";
 
 const at = (hour: number) => new Date(2026, 9, 9, hour).toISOString();
 
@@ -83,5 +84,22 @@ describe("weatherZone", () => {
       kind: "ready",
       data: [FORECAST],
     });
+  });
+});
+
+describe("hourlyByHour", () => {
+  const tz = "America/Los_Angeles";
+
+  const point = (day: number, hour: number) => ({
+    time: zonedInstant(tz, { year: 2026, month: 10, day }, hour * 60).toISOString(),
+    icon: "cloud" as const,
+    temp: 50 + hour,
+  });
+
+  it("TL-07 keys the day's hourly points by their hour in the zone", () => {
+    const byHour = hourlyByHour([point(9, 23), point(10, 0), point(10, 1)], "2026-10-10", tz);
+
+    expect([...byHour.keys()]).toEqual([0, 1]);
+    expect(byHour.get(1)?.temp).toBe(51);
   });
 });

@@ -3,6 +3,7 @@ import {
   clockAt,
   formatClock,
   formatDayTitle,
+  formatDuration,
   formatHour,
   formatLength,
   formatLongDate,
@@ -80,6 +81,15 @@ describe("time", () => {
     [120, "2 hr"],
   ])("TPK-01 length of %i minutes reads %s", (minutes, expected) => {
     expect(formatLength(minutes)).toBe(expected);
+  });
+
+  it.each([
+    [45, "45 min"],
+    [75, "1 h 15 min"],
+    [120, "2 h"],
+    [960, "16 h"],
+  ])("TL-08 a free length of %i minutes reads %s", (minutes, expected) => {
+    expect(formatDuration(minutes)).toBe(expected);
   });
 
   it("TIME-01 minutesOfDay reads the local time of day", () => {
