@@ -10,9 +10,30 @@ const tz = deviceTimeZone();
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 
 const EVENTS: CalendarEvent[] = [
-  { id: "drop-off", title: "School drop-off", startAt: iso(9, 0), endAt: iso(9, 30), tone: "soft" },
-  { id: "call", title: "Grandma’s video call", startAt: iso(10, 30), endAt: iso(11, 15), tone: 1 },
-  { id: "lunch", title: "Lunch with Aunt Rosa", startAt: iso(12, 0), endAt: iso(13, 0), tone: 2 },
+  {
+    id: "drop-off",
+    title: "School drop-off",
+    startAt: iso(9, 0),
+    endAt: iso(9, 30),
+    everyone: true,
+    memberIds: [],
+  },
+  {
+    id: "call",
+    title: "Grandma’s video call",
+    startAt: iso(10, 30),
+    endAt: iso(11, 15),
+    everyone: true,
+    memberIds: [],
+  },
+  {
+    id: "lunch",
+    title: "Lunch with Aunt Rosa",
+    startAt: iso(12, 0),
+    endAt: iso(13, 0),
+    everyone: true,
+    memberIds: [],
+  },
 ];
 
 const NOW = new Date(2026, 9, 9, 10, 41);
@@ -125,7 +146,8 @@ const NO_SCHOOL: CalendarEvent = {
   startAt: "2026-10-09T00:00:00.000Z",
   allDay: true,
   location: "Lincoln Elementary",
-  tone: 4,
+  everyone: true,
+  memberIds: [],
 };
 
 test("CAL-06 an all-day event shows as a tile above the timed rows", () => {

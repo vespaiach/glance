@@ -1,4 +1,6 @@
 import "server-only";
+import { ok } from "@/domain/result";
+import { syncBus } from "../bus";
 import { getDb } from "../db/db";
 import { env } from "../env";
 import { mailer } from "../mail";
@@ -53,8 +55,14 @@ export function signOut(sessionToken: string | undefined): Promise<void> {
   return sessions.signOut(deps().db, sessionToken);
 }
 
-export function saveName(accountId: string, name: string) {
-  return account.saveName(deps().db, accountId, name);
+export async function saveName(accountId: string, name: string) {
+  const saved = await account.saveName(deps(), accountId, name);
+
+  if (saved.ok && saved.value.firstMember) {
+    syncBus().publish(accountId, saved.value.firstMember.version);
+  }
+
+  return saved.ok ? ok(saved.value.account) : saved;
 }
 
 function deps(): AuthDeps {

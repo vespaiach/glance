@@ -111,7 +111,7 @@ export function AllDayTiles({ events, label, onOpenEvent }: AllDayTilesProps) {
           label={label}
           title={event.title}
           location={event.location}
-          dot={event.tone}
+          dot="soft"
           onClick={() => onOpenEvent(event.id)}
         />
       ))}

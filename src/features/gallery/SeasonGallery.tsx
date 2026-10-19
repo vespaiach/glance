@@ -135,7 +135,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <ZoneGroup />
       <TodayGallery season={season} />
       <CalendarGallery />
-      <EventSheetGallery season={season} />
+      <EventSheetGallery />
       <WeatherGallery />
       <NotesGallery season={season} />
       <PhotosGallery />

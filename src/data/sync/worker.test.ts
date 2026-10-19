@@ -374,7 +374,7 @@ describe("stop and restart", () => {
 
     const upgrade = new Dexie(DB_NAME);
 
-    upgrade.version(2).stores({ meta: "key" });
+    upgrade.version(3).stores({ meta: "key" });
 
     await upgrade.open();
 

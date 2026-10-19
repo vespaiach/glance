@@ -1,5 +1,6 @@
-import type { CalendarEvent } from "@/domain/schemas";
+import type { CalendarEvent, Member } from "@/domain/schemas";
 import { deleteEvent, putEvent } from "./events";
+import { deleteMember, putMember } from "./members";
 import { putNote } from "./notes";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
@@ -11,8 +12,20 @@ const EVENT: CalendarEvent = {
   startAt: "2026-10-09T21:00:00.000Z",
   endAt: "2026-10-09T22:00:00.000Z",
   location: "Rec center",
-  tone: 2,
+  everyone: true,
+  memberIds: [],
 };
+
+const member = (n: number, name: string): Member => ({
+  id: `0192f3a0-3333-7000-8000-00000000000${n}`,
+  name,
+  color: "sky",
+  createdAt: "2026-10-01T15:00:00.000Z",
+});
+
+const MOM = member(1, "Mom");
+
+const DAD = member(2, "Dad");
 
 describe("putEvent", () => {
   it("SYNC-01 saves a new event stamped with the server time and the next version", async () => {
@@ -28,11 +41,11 @@ describe("putEvent", () => {
   it("SYNC-01 leaves out optional fields the event doesn't have", async () => {
     const { endAt: _, location: __, ...allDay } = EVENT;
 
-    const saved = await putEvent(harness.deps(), MARIA, { ...allDay, tone: "accent" });
+    const saved = await putEvent(harness.deps(), MARIA, allDay);
 
     expect(saved).toEqual({
       ok: true,
-      value: { ...allDay, tone: "accent", updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
+      value: { ...allDay, updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
     });
   });
 
@@ -92,6 +105,61 @@ describe("putEvent", () => {
       ok: true,
       value: { title: "Swim lesson", version: 2 },
     });
+  });
+});
+
+describe("putEvent members", () => {
+  it("D24 saves a plan for some members with its notes", async () => {
+    await putMember(harness.deps(), MARIA, MOM);
+    await putMember(harness.deps(), MARIA, DAD);
+    const plan = { ...EVENT, everyone: false, memberIds: [DAD.id, MOM.id], notes: "Bring towels" };
+
+    const saved = await putEvent(harness.deps(), MARIA, plan);
+
+    expect(saved).toEqual({
+      ok: true,
+      value: { ...plan, updatedAt: "2026-10-09T14:00:00.000Z", version: 3 },
+    });
+  });
+
+  it("D24 drops member ids that aren't live members of the account", async () => {
+    await putMember(harness.deps(), MARIA, MOM);
+    await putMember(harness.deps(), MARIA, DAD);
+    await deleteMember(harness.deps(), MARIA, DAD.id);
+    const omars = member(3, "Omar");
+    await putMember(harness.deps(), OMAR, omars);
+
+    const saved = await putEvent(harness.deps(), MARIA, {
+      ...EVENT,
+      everyone: false,
+      memberIds: [omars.id, DAD.id, MOM.id, member(4, "Unknown").id],
+    });
+
+    expect(saved.ok && saved.value.memberIds).toEqual([MOM.id]);
+  });
+
+  it("D24 stores a plan left with no members as a tombstone", async () => {
+    await putMember(harness.deps(), MARIA, DAD);
+    await deleteMember(harness.deps(), MARIA, DAD.id);
+
+    const saved = await putEvent(harness.deps(), MARIA, {
+      ...EVENT,
+      everyone: false,
+      memberIds: [DAD.id],
+    });
+
+    expect(saved).toEqual({
+      ok: true,
+      value: {
+        ...EVENT,
+        everyone: false,
+        memberIds: [],
+        updatedAt: "2026-10-09T14:00:00.000Z",
+        deletedAt: "2026-10-09T14:00:00.000Z",
+        version: 3,
+      },
+    });
+    expect(await putEvent(harness.deps(), MARIA, EVENT)).toEqual(saved);
   });
 });
 

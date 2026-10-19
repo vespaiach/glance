@@ -8,7 +8,6 @@ import {
   type EventSheetState,
   eventFromDraft,
   eventSheetReducer,
-  eventSwatches,
   initialEventSheet,
   isDirty,
   newEventDraft,
@@ -16,13 +15,17 @@ import {
 
 const tz = deviceTimeZone();
 
+const MOM = "0195f0a0-0000-7000-8000-000000000501";
+
 const LUNCH: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000003",
   title: "Lunch with Aunt Rosa",
   startAt: new Date(2026, 9, 9, 12, 0).toISOString(),
   endAt: new Date(2026, 9, 9, 13, 0).toISOString(),
   location: "Café Lumen",
-  tone: 2,
+  everyone: false,
+  memberIds: [MOM],
+  notes: "Bring a gift",
 };
 
 const NOW = new Date(2026, 9, 9, 10, 41);
@@ -33,10 +36,19 @@ const NO_SCHOOL: CalendarEvent = {
   startAt: "2026-10-16T00:00:00.000Z",
   allDay: true,
   location: "Lincoln Elementary",
-  tone: 4,
+  everyone: true,
+  memberIds: [],
 };
 
-const DRAFT = { title: "Lunch", start: 720, end: 780, location: "Café", tone: 2 } as const;
+const DRAFT: EventDraft = {
+  title: "Lunch",
+  start: 720,
+  end: 780,
+  location: "Café",
+  everyone: true,
+  memberIds: [],
+  notes: "",
+};
 
 const closed: EventSheetState = initialEventSheet(DRAFT);
 
@@ -47,7 +59,9 @@ describe("event sheet drafts", () => {
       start: 720,
       end: 780,
       location: "Café Lumen",
-      tone: 2,
+      everyone: false,
+      memberIds: [MOM],
+      notes: "Bring a gift",
     });
   });
 
@@ -57,25 +71,16 @@ describe("event sheet drafts", () => {
     expect(draftFromEvent(noEnd, tz, NOW).end).toBeUndefined();
   });
 
-  it("EVT-02 a new event is blank with color 1 and the TPK-05 default times", () => {
+  it("EVT-02 a new event is blank, for everyone, at the TPK-05 default times", () => {
     expect(newEventDraft(new Date(2026, 9, 9, 10, 41), tz)).toEqual({
       title: "",
       start: 660,
       end: 720,
       location: "",
-      tone: 1,
+      everyone: true,
+      memberIds: [],
+      notes: "",
     });
-  });
-
-  it("EVT-02 the swatches are the five season colors plus Alert", () => {
-    expect(eventSwatches("fall")).toEqual([
-      { value: 1, label: "Amber" },
-      { value: 2, label: "Rust" },
-      { value: 3, label: "Sage" },
-      { value: 4, label: "Coral" },
-      { value: "soft", label: "Cream" },
-      { value: "accent", label: "Alert" },
-    ]);
   });
 });
 
@@ -161,7 +166,7 @@ describe("event sheet reducer", () => {
     const error = initialEventSheet(DRAFT, "error");
 
     expect(eventSheetReducer(error, { type: "title", value: "Lunch!" }).endError).toBe(false);
-    expect(eventSheetReducer(error, { type: "tone", value: 3 }).endError).toBe(false);
+    expect(eventSheetReducer(error, { type: "location", value: "Park" }).endError).toBe(false);
   });
 
   it("EVT-03 the title error clears on the next change", () => {
@@ -170,16 +175,15 @@ describe("event sheet reducer", () => {
     expect(eventSheetReducer(missing, { type: "location", value: "Park" }).titleError).toBe(false);
   });
 
-  it("EVT-02 title, where and color edits update the draft", () => {
+  it("EVT-02 title and where edits update the draft", () => {
     const actions = [
       { type: "title", value: "Picnic" },
       { type: "location", value: "Park" },
-      { type: "tone", value: "accent" },
     ] as const;
 
     const next = actions.reduce(eventSheetReducer, closed);
 
-    expect(next.draft).toMatchObject({ title: "Picnic", location: "Park", tone: "accent" });
+    expect(next.draft).toMatchObject({ title: "Picnic", location: "Park" });
   });
 
   it("EVT-06 Delete asks for the inline confirm", () => {
@@ -240,8 +244,20 @@ describe("event from draft", () => {
       startAt: new Date(2026, 9, 12, 12, 0).toISOString(),
       endAt: new Date(2026, 9, 12, 13, 0).toISOString(),
       location: "Café",
-      tone: 2,
+      everyone: true,
+      memberIds: [],
     });
+  });
+
+  it("D24 the saved event keeps the opened event's members and trimmed notes", () => {
+    const draft = { ...draftFromEvent(LUNCH, tz, NOW), notes: "  Bring a gift " };
+
+    expect(eventFromDraft(draft, DAY, ID, tz)).toMatchObject({
+      everyone: false,
+      memberIds: [MOM],
+      notes: "Bring a gift",
+    });
+    expect(eventFromDraft({ ...draft, notes: " " }, DAY, ID, tz)).not.toHaveProperty("notes");
   });
 
   it("EVT-07 the saved event trims the title and Where and drops a blank Where", () => {
@@ -301,7 +317,6 @@ describe("event sheet discard", () => {
     ["end", { end: 790 }],
     ["no end", { end: undefined }],
     ["place", { location: "Park" }],
-    ["color", { tone: "accent" }],
   ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
     expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
   });
@@ -341,7 +356,6 @@ describe("event sheet discard", () => {
   it.each<EventSheetAction>([
     { type: "title", value: "Picnic at noon" },
     { type: "location", value: "Park" },
-    { type: "tone", value: 3 },
     { type: "start", value: 750 },
     { type: "end", value: 800 },
     { type: "noEnd" },
@@ -366,7 +380,9 @@ describe("event sheet all day", () => {
       end: 720,
       allDay: true,
       location: "Lincoln Elementary",
-      tone: 4,
+      everyone: true,
+      memberIds: [],
+      notes: "",
     });
   });
 
@@ -415,7 +431,8 @@ describe("event sheet all day", () => {
       startAt: "2026-10-16T00:00:00.000Z",
       allDay: true,
       location: "Café",
-      tone: 2,
+      everyone: true,
+      memberIds: [],
     });
   });
 });

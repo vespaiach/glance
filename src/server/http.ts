@@ -11,7 +11,7 @@ import { PHOTO_VARIANTS, type PhotoUpload, type PhotoVariant } from "./services/
 import type { StoredObject } from "./storage/store";
 import type { Coordinates } from "./weather/provider";
 
-const MIN_CLIENT_BUILD = 6;
+const MIN_CLIENT_BUILD = 7;
 
 const DAY_S = 24 * 60 * 60;
 

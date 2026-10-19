@@ -20,6 +20,22 @@ export type Tone = v.InferOutput<typeof ToneSchema>;
 export const NoteToneSchema = v.picklist([1, 2, 3, 4, "soft"]);
 export type NoteTone = v.InferOutput<typeof NoteToneSchema>;
 
+export const MemberColorSchema = v.picklist([
+  "lilac",
+  "sky",
+  "coral",
+  "mint",
+  "sun",
+  "pink",
+  "lime",
+  "rust",
+  "glacier",
+  "amber",
+  "sage",
+  "ice",
+]);
+export type MemberColor = v.InferOutput<typeof MemberColorSchema>;
+
 export const SeasonSchema = v.picklist(["spring", "summer", "fall", "winter"]);
 export type Season = v.InferOutput<typeof SeasonSchema>;
 
@@ -38,17 +54,22 @@ const eventEntries = {
   endAt: v.optional(IsoTimestampSchema),
   title: RequiredTextSchema,
   location: v.optional(v.string()),
-  tone: ToneSchema,
   allDay: v.optional(v.literal(true)),
+  everyone: v.boolean(),
+  memberIds: v.array(IdSchema),
+  notes: v.optional(v.string()),
 };
 
 type EventSpan = { startAt: string; endAt?: string; allDay?: true };
+
+type EventWho = { everyone: boolean; memberIds: string[]; deletedAt?: string };
 
 const EventObjectSchema = v.object(eventEntries);
 
 export const CalendarEventSchema = v.pipe(
   EventObjectSchema,
   v.check<v.InferOutput<typeof EventObjectSchema>>(spanIsValid),
+  v.check<v.InferOutput<typeof EventObjectSchema>>(whoIsValid),
 );
 export type CalendarEvent = v.InferOutput<typeof CalendarEventSchema>;
 
@@ -57,7 +78,18 @@ const SyncedEventObjectSchema = v.object({ ...eventEntries, ...serverEntries });
 export const SyncedEventSchema = v.pipe(
   SyncedEventObjectSchema,
   v.check<v.InferOutput<typeof SyncedEventObjectSchema>>(spanIsValid),
+  v.check<v.InferOutput<typeof SyncedEventObjectSchema>>(whoIsValid),
 );
+
+export const MemberSchema = v.object({
+  id: IdSchema,
+  name: RequiredTextSchema,
+  color: MemberColorSchema,
+  createdAt: IsoTimestampSchema,
+});
+export type Member = v.InferOutput<typeof MemberSchema>;
+
+export const SyncedMemberSchema = v.object({ ...MemberSchema.entries, ...serverEntries });
 
 export const NoteSchema = v.object({
   id: IdSchema,
@@ -236,4 +268,10 @@ function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
   const span = Date.parse(endAt) - Date.parse(startAt);
 
   return span > 0 && span < DAY_MS;
+}
+
+function whoIsValid({ everyone, memberIds, deletedAt }: EventWho) {
+  if (everyone) return memberIds.length === 0;
+
+  return memberIds.length > 0 || deletedAt !== undefined;
 }

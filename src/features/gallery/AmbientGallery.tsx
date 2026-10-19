@@ -25,7 +25,8 @@ const CONFERENCE: CalendarEvent = {
   title: "Parent-teacher conference",
   location: "Lincoln Elementary",
   startAt: octoberAt(14, 16).toISOString(),
-  tone: 4,
+  everyone: true,
+  memberIds: [],
 };
 
 const AMBIENT_WEATHER = {

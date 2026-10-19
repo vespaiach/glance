@@ -187,7 +187,7 @@ export function DayPanel({
                     title={event.title}
                     location={event.location}
                     status={eventStatus(event, now, tz)}
-                    dot={event.tone}
+                    dot="soft"
                     nowLabel={copy.events.now}
                     compact={compact}
                     onClick={() => onOpenEvent(event.id)}

@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import type { CalendarEvent, Note } from "@/domain/schemas";
+import type { CalendarEvent, Member, Note } from "@/domain/schemas";
 import { deleteEvent, putEvent } from "./events";
+import { putMember } from "./members";
 import { putNote } from "./notes";
 import { putSettings } from "./settings";
 import { pullChanges } from "./sync";
@@ -14,7 +15,15 @@ const EVENT: CalendarEvent = {
   id: "0192f3a0-1111-7000-8000-000000000001",
   title: "Swim lesson",
   startAt: "2026-10-09T21:00:00.000Z",
-  tone: 2,
+  everyone: true,
+  memberIds: [],
+};
+
+const MEMBER: Member = {
+  id: "0192f3a0-4444-7000-8000-000000000001",
+  name: "Mom",
+  color: "coral",
+  createdAt: "2026-10-01T15:00:00.000Z",
 };
 
 const NOTE: Note = {
@@ -130,14 +139,42 @@ describe("pullChanges", () => {
     });
   });
 
+  it("SYNC-01 returns members and plans for some members", async () => {
+    await putMember(harness.deps(), MARIA, MEMBER);
+    const plan = { ...EVENT, everyone: false, memberIds: [MEMBER.id], notes: "Bring towels" };
+    await putEvent(harness.deps(), MARIA, plan);
+
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
+      cursor: "2",
+      changes: [
+        { entity: "members", row: { ...MEMBER, updatedAt: STAMP, version: 1 } },
+        { entity: "events", row: { ...plan, updatedAt: STAMP, version: 2 } },
+      ],
+    });
+  });
+
+  it("D24 an event saved before members pulls as an everyone event", async () => {
+    await harness
+      .deps()
+      .db.run(
+        "INSERT INTO events (id, account_id, title, start_at, updated_at, version) VALUES ($1, $2, 'Swim lesson', $3, $4, 1)",
+        [EVENT.id, MARIA, EVENT.startAt, STAMP],
+      );
+
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toMatchObject({
+      changes: [{ entity: "events", row: { ...EVENT, updatedAt: STAMP, version: 1 } }],
+    });
+  });
+
   it("tech§5 never returns another account's rows", async () => {
+    await putMember(harness.deps(), OMAR, MEMBER);
     await putEvent(harness.deps(), OMAR, EVENT);
     await putNote(harness.deps(), OMAR, NOTE);
     await putSettings(harness.deps(), OMAR, OMAR, DEFAULT_SETTINGS);
     await insertPhoto(OMAR, 4, "2026-09-28");
 
     expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
-      cursor: "3",
+      cursor: "4",
       changes: [],
     });
   });

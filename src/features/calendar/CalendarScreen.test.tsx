@@ -30,7 +30,13 @@ const at = (month: number, day: number, h: number, m = 0) =>
   new Date(2026, month, day, h, m).toISOString();
 
 function event(n: number, title: string, startAt: string): CalendarEvent {
-  return { id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`, title, startAt, tone: 1 };
+  return {
+    id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
+    title,
+    startAt,
+    everyone: true,
+    memberIds: [],
+  };
 }
 
 const CALL = event(1, "Grandma’s video call", at(9, 9, 10, 30));

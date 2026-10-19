@@ -9,7 +9,8 @@ const EVENT = {
   id: "0195f0a0-0000-7000-8000-000000000101",
   startAt: "2026-10-09T15:00:00.000Z",
   title: "Soccer practice",
-  tone: 1 as const,
+  everyone: true,
+  memberIds: [],
   updatedAt: "2026-10-09T10:00:00.000Z",
   version: 1,
 };
@@ -31,6 +32,7 @@ describe("account database", () => {
 
     expect(db.tables.map((table) => table.name).sort()).toEqual([
       "events",
+      "members",
       "meta",
       "notes",
       "outbox",
@@ -40,6 +42,7 @@ describe("account database", () => {
     ]);
     expect(db.events.schema.idxByName).toHaveProperty("startAt");
     expect(db.notes.schema.idxByName).toHaveProperty("createdAt");
+    expect(db.members.schema.idxByName).toHaveProperty("createdAt");
     expect(db.outbox.schema.primKey.auto).toBe(true);
     db.close();
   });
@@ -72,13 +75,27 @@ describe("account database", () => {
     const db = openGlanceDb(name);
     await db.events.put(EVENT);
     const upgraded = new Dexie(name);
-    upgraded.version(2).stores({ events: "id, startAt, deletedAt, title" });
+    upgraded.version(3).stores({ events: "id, startAt, deletedAt, title" });
 
     await upgraded.open();
 
     expect(db.isOpen()).toBe(false);
     expect(await upgraded.table("events").get(EVENT.id)).toEqual(EVENT);
     upgraded.close();
+  });
+
+  it("tech§4.1 the v2 upgrade makes stored events everyone events without a tone", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = new Dexie(name);
+    old.version(1).stores({ events: "id, startAt, deletedAt" });
+    const { everyone: _, memberIds: __, ...v1Event } = EVENT;
+    await old.table("events").put({ ...v1Event, tone: "accent" });
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.events.get(EVENT.id)).toEqual(EVENT);
+    db.close();
   });
 
   it("tech§4.1 deleting one account's database leaves another account's rows", async () => {

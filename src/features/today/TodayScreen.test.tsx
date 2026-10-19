@@ -34,7 +34,8 @@ const CALL: CalendarEvent = {
   location: "Living room",
   startAt: iso(10, 30),
   endAt: iso(11, 15),
-  tone: 1,
+  everyone: true,
+  memberIds: [],
 };
 
 const COAST: Photo = {

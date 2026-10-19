@@ -59,7 +59,8 @@ test("AMB-03 an all-day event reads All day on its own date in any zone", () => 
     allDay: true as const,
     title: "No school",
     location: "Lincoln Elementary",
-    tone: 4 as const,
+    everyone: true,
+    memberIds: [],
   };
 
   render(

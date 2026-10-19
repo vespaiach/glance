@@ -43,7 +43,8 @@ const SOCCER: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000005",
   title: "Soccer practice",
   startAt: "2026-10-09T22:30:00.000Z",
-  tone: 3,
+  everyone: true,
+  memberIds: [],
 };
 
 let store: Harness;

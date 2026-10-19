@@ -140,7 +140,6 @@ export const copy = {
       titlePlaceholder: "What’s happening",
       where: "Where",
       wherePlaceholder: "Home, school, park…",
-      color: "Color",
       add: "Add event",
       save: "Save",
       saveOffline: "Save for later",
@@ -157,7 +156,6 @@ export const copy = {
       fall: ["Amber", "Rust", "Sage", "Coral", "Cream"],
       winter: ["Ice", "Lilac", "Glacier", "Mint", "Frost"],
     } satisfies Record<Season, readonly [string, string, string, string, string]>,
-    alert: "Alert",
     time: {
       label: "Time",
       setTimes: "Set times",

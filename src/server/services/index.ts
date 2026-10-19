@@ -3,6 +3,7 @@ import type {
   AccountSettings,
   CalendarEvent,
   LocationRequest,
+  Member,
   Note,
   Photo,
 } from "@/domain/schemas";
@@ -15,11 +16,20 @@ import type { Coordinates } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
 import * as displays from "./displays";
 import * as events from "./events";
+import * as members from "./members";
 import * as notes from "./notes";
 import * as photos from "./photos";
 import * as settings from "./settings";
 import * as sync from "./sync";
 import * as weather from "./weather";
+
+export async function putMember(accountId: string, member: Member) {
+  return announce(syncBus(), accountId, await members.putMember(deps(), accountId, member));
+}
+
+export async function deleteMember(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await members.deleteMember(deps(), accountId, id));
+}
 
 export async function putEvent(accountId: string, event: CalendarEvent) {
   return announce(syncBus(), accountId, await events.putEvent(deps(), accountId, event));

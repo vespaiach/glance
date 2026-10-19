@@ -4,7 +4,7 @@
 |---|---|
 | Status | v2.03 |
 | Date | 2026-10-19 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.60) · [`tech-design.md`](tech-design.md) (v2.14) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.61) · [`tech-design.md`](tech-design.md) (v2.15) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -34,7 +34,7 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | A01 | ⬜ | Sidebar hides when idle: `idle` action and a 15 s timer in AppShell, paused by an open sheet, the keyboard or a focused field | D07 | Reducer and AppShell tests: 15 s → Hidden, paused cases, the grip restarts it | SHELL-11, IDLE-01 |
 | A02 | ⬜ | Phone sidebar: 56 px rail, 44 px buttons, 4×56 grip, 248 px drawer over the page with a 60% scrim (scrim tap → Rail); gallery and the Phone drawer board | D07 | Matches the Phone drawer board at 390×844; scrim tap closes; inset 56/0 on phone | SHELL-08, SHELL-10 |
 | A03 | ⬜ | PWA icons from `pwa-icons/` into `public/` with the manifest and `<head>` links; remove `SeasonVideo`, the AMB-09 code and the `videos` cache rule | D07 | Manifest lists the new icons; Ambient renders without the video; build and SW tests pass | §4.5 (tech), AMB-06 |
-| E02 | ⬜ | Event sheet: Who picker (Everyone + members, last one locked, defaults from the Calendar filter), Notes field, color swatches removed; `AllDayTile` with person dot and "{who} · {place}" | E01 | Sheet tests for Who rules, Notes trimming and saving `everyone` vs member ids | EVT-02, EVT-11, TODAY-12 |
+| E02 | ⬜ | Event sheet: Who picker (Everyone + members, last one locked, defaults from the Calendar filter), Notes field; `AllDayTile` with person dot and "{who} · {place}" | E01 | Sheet tests for Who rules, Notes trimming and saving `everyone` vs member ids | EVT-02, EVT-11, TODAY-12 |
 | E03 | ⬜ | Event details sheet: color block, Happening now / Ended pills, Who/Where/Notes rows, Edit swap with Cancel/Save back to details, past events read-only; every event tap opens it | E02 | Reducer and sheet tests for details ↔ edit, discard to details, ended rules; `details=1` fixtures | EVT-07, EVT-09, EVT-10 |
 | E04 | ⬜ | Note details sheet: the sticky-note sheet, Edit swap to Edit note and back; Today and Notes taps open it | D07 | Reducer and sheet tests for details ↔ edit and discard; `sheet=note&details=1` | NOTE-01, NOTE-10, TODAY-09 |
 | E05 | ⬜ | Family sheet: member rows with plan counts, inline remove confirm with its impact line, add member with free colors and validation, discard on a typed name | E01 | Sheet tests for every FAM rule; `sheet=family`, `rm=`, `famname=`, `famerr=1` | FAM-01..06 |

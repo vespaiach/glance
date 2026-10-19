@@ -2,7 +2,14 @@ import type { UploadProblem } from "@/domain/photoUpload";
 import type { Result } from "@/domain/result";
 import type { Account, LocationRequest, Weather, WeatherLocation } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
-import type { OutboxEntry, StoredEvent, StoredNote, StoredPhoto, StoredSettings } from "../db";
+import type {
+  OutboxEntry,
+  StoredEvent,
+  StoredMember,
+  StoredNote,
+  StoredPhoto,
+  StoredSettings,
+} from "../db";
 
 export type TransportError = "network" | "unauthorized" | "invalid" | "outdated" | "server";
 
@@ -13,6 +20,7 @@ export type LocateError = TransportError | "outside";
 export type Coordinates = Pick<WeatherLocation, "lat" | "lon">;
 
 export type Change =
+  | { entity: "members"; row: StoredMember }
   | { entity: "events"; row: StoredEvent }
   | { entity: "notes"; row: StoredNote }
   | { entity: "photos"; row: StoredPhoto }

@@ -1,8 +1,9 @@
 import "server-only";
 import { err, ok, type Result } from "@/domain/result";
-import type { CalendarEvent, Synced, Tone } from "@/domain/schemas";
+import type { CalendarEvent, Synced } from "@/domain/schemas";
 import type { Db } from "../db/db";
 import type { ServiceDeps } from "./deps";
+import { liveMemberIds } from "./members";
 import {
   lockVersions,
   optional,
@@ -10,7 +11,6 @@ import {
   type Stamp,
   serverFields,
   stamp,
-  toneFromColumn,
 } from "./rows";
 
 export type SyncedEvent = Synced<CalendarEvent>;
@@ -22,8 +22,10 @@ export type EventRow = ServerColumns & {
   start_at: string;
   end_at: string | null;
   location: string | null;
-  tone: string;
   all_day: boolean;
+  everyone: boolean;
+  member_ids: string[];
+  notes: string | null;
 };
 
 export function putEvent(
@@ -40,11 +42,15 @@ export function putEvent(
 
     if (existing?.deleted_at) return ok(toEvent(existing));
 
+    const kept = await withLiveMembers(tx, accountId, event);
+
     const stamped = await stamp(tx, now());
 
-    await writeEvent(tx, accountId, event, stamped);
+    const saved = stampedEvent(kept, stamped);
 
-    return ok({ ...event, ...stamped });
+    await writeEvent(tx, accountId, saved);
+
+    return ok(saved);
   });
 }
 
@@ -81,8 +87,10 @@ export function toEvent(row: EventRow): SyncedEvent {
     startAt: row.start_at,
     ...optional("endAt", row.end_at),
     ...optional("location", row.location),
-    tone: toneFromColumn<Tone>(row.tone),
     ...(row.all_day ? { allDay: true } : {}),
+    everyone: row.everyone,
+    memberIds: row.member_ids,
+    ...optional("notes", row.notes),
     ...serverFields(row),
   };
 }
@@ -91,18 +99,36 @@ function eventRow(db: Db, id: string): Promise<EventRow | undefined> {
   return db.one<EventRow>("SELECT * FROM events WHERE id = $1", [id]);
 }
 
-async function writeEvent(
+async function withLiveMembers(
   db: Db,
   accountId: string,
   event: CalendarEvent,
-  { updatedAt, version }: Stamp,
-): Promise<void> {
+): Promise<CalendarEvent> {
+  if (event.everyone) return event;
+
+  const live = await liveMemberIds(db, accountId, event.memberIds);
+
+  return { ...event, memberIds: event.memberIds.filter((id) => live.has(id)) };
+}
+
+function stampedEvent(event: CalendarEvent, stamped: Stamp): SyncedEvent {
+  const leftWithNobody = !event.everyone && event.memberIds.length === 0;
+
+  return leftWithNobody
+    ? { ...event, ...stamped, deletedAt: stamped.updatedAt }
+    : { ...event, ...stamped };
+}
+
+async function writeEvent(db: Db, accountId: string, event: SyncedEvent): Promise<void> {
   await db.run(
-    `INSERT INTO events (id, account_id, title, start_at, end_at, location, tone, all_day, updated_at, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO events (id, account_id, title, start_at, end_at, location, all_day, everyone,
+       member_ids, notes, updated_at, deleted_at, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      ON CONFLICT (id) DO UPDATE SET title = excluded.title, start_at = excluded.start_at,
-       end_at = excluded.end_at, location = excluded.location, tone = excluded.tone,
-       all_day = excluded.all_day, updated_at = excluded.updated_at, version = excluded.version`,
+       end_at = excluded.end_at, location = excluded.location, all_day = excluded.all_day,
+       everyone = excluded.everyone, member_ids = excluded.member_ids, notes = excluded.notes,
+       updated_at = excluded.updated_at, deleted_at = excluded.deleted_at,
+       version = excluded.version`,
     [
       event.id,
       accountId,
@@ -110,10 +136,13 @@ async function writeEvent(
       event.startAt,
       event.endAt ?? null,
       event.location ?? null,
-      String(event.tone),
       event.allDay === true,
-      updatedAt,
-      version,
+      event.everyone,
+      event.memberIds,
+      event.notes ?? null,
+      event.updatedAt,
+      event.deletedAt ?? null,
+      event.version,
     ],
   );
 }

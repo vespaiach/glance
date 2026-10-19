@@ -9,7 +9,6 @@ import { colors, shadows } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
-import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
 import { type CloseFrom, closeStep } from "@/ui/discard";
 import { PillTabs } from "@/ui/PillTabs";
@@ -24,7 +23,6 @@ import {
   type EventSheetState,
   eventSheetReducer,
   isDirty,
-  type SwatchOption,
   type TimeFieldName,
 } from "../eventSheet";
 
@@ -33,7 +31,6 @@ type EventSheetProps = {
   eyebrow: string;
   initial: EventSheetState;
   clock: Clock;
-  swatches: readonly SwatchOption[];
   offline: boolean;
   compact?: boolean;
   keyboardInset?: number;
@@ -116,7 +113,6 @@ export function EventSheet({
   eyebrow,
   initial,
   clock,
-  swatches,
   offline,
   compact,
   onClose,
@@ -202,12 +198,6 @@ export function EventSheet({
         placeholder={words.wherePlaceholder}
         value={draft.location}
         onChange={(value) => dispatch({ type: "location", value })}
-      />
-      <ColorSwatchPicker
-        label={words.color}
-        options={swatches}
-        value={draft.tone}
-        onChange={(value) => dispatch({ type: "tone", value })}
       />
     </Sheet>
   );

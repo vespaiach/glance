@@ -18,7 +18,13 @@ const at = (month: number, day: number, hour: number) =>
   new Date(2026, month, day, hour).toISOString();
 
 function event(n: number, startAt: string, title = `Event ${n}`): CalendarEvent {
-  return { id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`, startAt, title, tone: 1 };
+  return {
+    id: `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
+    startAt,
+    title,
+    everyone: true,
+    memberIds: [],
+  };
 }
 
 const SOCCER = event(1, at(9, 9, 15), "Soccer practice");

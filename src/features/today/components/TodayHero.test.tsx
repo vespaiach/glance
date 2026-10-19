@@ -15,7 +15,8 @@ const call = {
   location: "Living room",
   startAt: iso(10, 30),
   endAt: iso(11, 15),
-  tone: 1 as const,
+  everyone: true,
+  memberIds: [],
 };
 
 const lunch = {
@@ -24,7 +25,8 @@ const lunch = {
   location: "Café Lumen",
   startAt: iso(12, 0),
   endAt: iso(13, 0),
-  tone: 2 as const,
+  everyone: true,
+  memberIds: [],
 };
 
 const ignore = () => {};

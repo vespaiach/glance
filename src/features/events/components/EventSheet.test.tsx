@@ -3,21 +3,22 @@ import userEvent from "@testing-library/user-event";
 import {
   type EventDraft,
   type EventSheetState,
-  eventSwatches,
   initialEventSheet,
   type TimeFixture,
 } from "../eventSheet";
 import { EventSheet } from "./EventSheet";
 
-const DRAFT = {
+const WHO = { everyone: true, memberIds: [], notes: "" };
+
+const DRAFT: EventDraft = {
   title: "Lunch with Aunt Rosa",
   start: 720,
   end: 780,
   location: "Café Lumen",
-  tone: 2,
-} as const;
+  ...WHO,
+};
 
-const BLANK = { title: "", start: 660, end: 720, location: "", tone: 1 } as const;
+const BLANK: EventDraft = { title: "", start: 660, end: 720, location: "", ...WHO };
 
 type Options = {
   mode?: "new" | "edit";
@@ -38,7 +39,6 @@ function renderSheet(options: Options = {}) {
       eyebrow="Friday, Oct 9"
       initial={options.initial ?? initialEventSheet(mode === "new" ? BLANK : DRAFT, options.time)}
       clock="12h"
-      swatches={eventSwatches("fall")}
       offline={options.offline ?? false}
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
@@ -78,29 +78,10 @@ test("EVT-02 typing edits the title", async () => {
   expect(screen.getByLabelText("Title")).toHaveValue("Picnic");
 });
 
-test("EVT-02 a new event has color 1 pressed among the season swatches and Alert", () => {
-  renderSheet({ mode: "new" });
-
-  const colors = screen.getByRole("group", { name: "Color" });
-
-  expect(
-    within(colors)
-      .getAllByRole("button")
-      .map((swatch) => swatch.ariaLabel),
-  ).toEqual(["Amber", "Rust", "Sage", "Coral", "Cream", "Alert"]);
-  expect(within(colors).getByRole("button", { name: "Amber" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-});
-
-test("EVT-02 tapping a swatch selects it", async () => {
+test("EVT-02 events have no color of their own", () => {
   renderSheet();
 
-  await userEvent.click(screen.getByRole("button", { name: "Alert" }));
-
-  expect(screen.getByRole("button", { name: "Alert" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.getByRole("button", { name: "Rust" })).toHaveAttribute("aria-pressed", "false");
+  expect(screen.queryByRole("group", { name: "Color" })).not.toBeInTheDocument();
 });
 
 test("TPK-01 Starts and Ends show the draft times and the length", () => {
@@ -280,12 +261,10 @@ async function tabOrder(count: number) {
   return visited;
 }
 
-test("A11Y-04 Tab moves through Close, the fields in visual order, the swatches, then the actions, and wraps", async () => {
+test("A11Y-04 Tab moves through Close, the fields in visual order, then the actions, and wraps", async () => {
   renderSheet();
 
-  const swatches = within(screen.getByRole("group", { name: "Color" })).getAllByRole("button");
-
-  expect(await tabOrder(17)).toEqual([
+  expect(await tabOrder(11)).toEqual([
     screen.getByRole("button", { name: "Close" }),
     screen.getByLabelText("Title"),
     screen.getByRole("button", { name: "Set times" }),
@@ -293,7 +272,6 @@ test("A11Y-04 Tab moves through Close, the fields in visual order, the swatches,
     screen.getByRole("button", { name: /^Starts/ }),
     screen.getByRole("button", { name: /^Ends/ }),
     screen.getByLabelText("Where"),
-    ...swatches,
     screen.getByRole("button", { name: "Delete" }),
     screen.getByRole("button", { name: "Cancel" }),
     screen.getByRole("button", { name: "Save" }),
@@ -399,7 +377,7 @@ test("§8.9 an edit while it asks brings the normal footer back", async () => {
 
   await changeTitle();
   await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await userEvent.click(screen.getByRole("button", { name: "Coral" }));
+  await userEvent.type(screen.getByLabelText("Where"), "!");
 
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();

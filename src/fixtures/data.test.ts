@@ -3,12 +3,14 @@ import path from "node:path";
 import * as v from "valibot";
 import { eventDayKey } from "@/domain/allDay";
 import { eventStatus } from "@/domain/eventStatus";
+import { type EventWho, whoLabel } from "@/domain/members";
 import { noteExpired, noteStamp } from "@/domain/notes";
 import { pictureOfDay } from "@/domain/pictureOfDay";
 import {
   AccountSchema,
   AccountSettingsSchema,
   CalendarEventSchema,
+  MemberSchema,
   NoteSchema,
   PhotoSchema,
   WeatherSchema,
@@ -23,6 +25,8 @@ import {
   FIXTURE_AMBIENT_NOW,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
+  FIXTURE_FAMILY,
+  FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
   FIXTURE_NOW,
   FIXTURE_PHOTOS,
@@ -40,14 +44,27 @@ const tz = "America/Los_Angeles";
 
 const publicDir = path.join(import.meta.dirname, "..", "..", "public");
 
-const onDay = (day: number) =>
-  FIXTURE_EVENTS.filter((event) => wallTime(new Date(event.startAt), tz).day === day);
+const onDay = (day: number, events = FIXTURE_EVENTS) =>
+  events
+    .filter((event) => wallTime(new Date(event.startAt), tz).day === day)
+    .sort((a, b) => a.startAt.localeCompare(b.startAt));
+
+const clock = (iso: string | undefined) =>
+  iso === undefined ? undefined : formatClock(minutesOfDay(new Date(iso), tz), "12h");
+
+const who = (event: EventWho) => whoLabel(event, FIXTURE_FAMILY, "Everyone");
 
 const titleOf = (id: string | undefined) => FIXTURE_PHOTOS.find((photo) => photo.id === id)?.title;
 
 describe("Appendix A fixtures", () => {
   it("Appendix A every row passes its domain schema", () => {
-    for (const event of FIXTURE_EVENTS) v.parse(CalendarEventSchema, event);
+    for (const event of [
+      ...FIXTURE_EVENTS,
+      ...FIXTURE_MANY_EVENTS,
+      ...Object.values(FIXTURE_ALL_DAY),
+    ])
+      v.parse(CalendarEventSchema, event);
+    for (const member of FIXTURE_FAMILY) v.parse(MemberSchema, member);
     for (const note of FIXTURE_NOTES) v.parse(NoteSchema, note);
     for (const photo of FIXTURE_PHOTOS) v.parse(PhotoSchema, photo);
     v.parse(WeatherSchema, FIXTURE_WEATHER);
@@ -57,7 +74,14 @@ describe("Appendix A fixtures", () => {
   });
 
   it("Appendix A ids are unique", () => {
-    const ids = [...FIXTURE_EVENTS, ...FIXTURE_NOTES, ...FIXTURE_PHOTOS].map((row) => row.id);
+    const ids = [
+      ...FIXTURE_FAMILY,
+      ...FIXTURE_EVENTS,
+      ...FIXTURE_MANY_EVENTS,
+      ...Object.values(FIXTURE_ALL_DAY),
+      ...FIXTURE_NOTES,
+      ...FIXTURE_PHOTOS,
+    ].map((row) => row.id);
 
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -72,25 +96,81 @@ describe("Appendix A fixtures", () => {
     expect(FIXTURE_AMBIENT_NOW).toEqual(new Date("2026-10-10T02:12:00Z"));
   });
 
-  it("STATUS-01 Oct 9 runs one past, one now and three upcoming events at 10:41", () => {
-    const rows = onDay(9).map((event) => [event.title, eventStatus(event, FIXTURE_NOW, tz)]);
+  it("Appendix A the family is nine members in order, each with their block color", () => {
+    expect(FIXTURE_FAMILY.map((member) => [member.name, member.color])).toEqual([
+      ["Minh-An", "lilac"],
+      ["Minh-Hy", "sky"],
+      ["Mom", "coral"],
+      ["Dad", "mint"],
+      ["Thang", "sun"],
+      ["Tin", "pink"],
+      ["Nghe", "lime"],
+      ["An", "rust"],
+      ["Nga", "glacier"],
+    ]);
+    expect(FIXTURE_FAMILY.map((member) => member.createdAt)).toEqual(
+      FIXTURE_FAMILY.map((member) => member.createdAt).sort(),
+    );
+  });
 
-    expect(rows).toEqual([
-      ["School drop-off", "past"],
-      ["Grandma’s video call", "now"],
-      ["Lunch with Aunt Rosa", "upcoming"],
-      ["Dentist — Leo", "upcoming"],
-      ["Soccer practice", "upcoming"],
+  it("Appendix A Oct 9 has 18 timed plans from Morning run at 7:00 AM to Movie night at 7:00–8:30 PM", () => {
+    const day = onDay(9);
+    const [first] = day;
+    const last = day.at(-1);
+
+    expect(day).toHaveLength(18);
+    expect([first?.title, clock(first?.startAt), first && who(first)]).toEqual([
+      "Morning run",
+      "7:00 AM",
+      "Thang",
+    ]);
+    expect([last?.title, clock(last?.startAt), clock(last?.endAt), last && who(last)]).toEqual([
+      "Movie night",
+      "7:00 PM",
+      "8:30 PM",
+      "Everyone",
     ]);
   });
 
-  it("Appendix A October has events on the 2nd, 9th, 14th, 22nd and 28th", () => {
-    const days = FIXTURE_EVENTS.map((event) => wallTime(new Date(event.startAt), tz));
+  it("STATUS-01 at 10:41 on Oct 9 School, Yoga class and Grandma’s video call are running", () => {
+    const running = onDay(9).filter((event) => eventStatus(event, FIXTURE_NOW, tz) === "now");
 
-    expect(days.every((day) => day.year === 2026 && day.month === 10)).toBe(true);
-    expect([...new Set(days.map((day) => day.day))].sort((a, b) => a - b)).toEqual([
-      2, 9, 14, 22, 28,
+    expect(running.map((event) => [event.title, who(event)])).toEqual([
+      ["School", "Minh-An, Minh-Hy"],
+      ["Yoga class", "Nga"],
+      ["Grandma’s video call", "Mom"],
     ]);
+  });
+
+  it("Appendix A Oct 10 starts with Pick up bait at 4:30 AM and ends with Late movie at 10:00 PM", () => {
+    const day = onDay(10);
+
+    expect([day.at(0)?.title, clock(day.at(0)?.startAt)]).toEqual(["Pick up bait", "4:30 AM"]);
+    expect([day.at(-1)?.title, clock(day.at(-1)?.startAt)]).toEqual(["Late movie", "10:00 PM"]);
+  });
+
+  it("Appendix A school weeks have drop-off, School and pickup each day", () => {
+    for (const day of [5, 6, 7, 8, 9, 12, 13, 14, 15]) {
+      expect(onDay(day).map((event) => event.title)).toEqual(
+        expect.arrayContaining(["School drop-off", "School", "School pickup"]),
+      );
+    }
+  });
+
+  it("Appendix A Bring lists become notes", () => {
+    const soccer = onDay(9).find((event) => event.title === "Soccer practice");
+
+    expect(soccer?.notes).toBe("Bring shin guards, water bottle");
+  });
+
+  it("Appendix A events=many adds Family dinner, Bedtime story, Call the plumber and Walk the dog for 22 plans", () => {
+    expect(FIXTURE_MANY_EVENTS.map((event) => event.title)).toEqual([
+      "Family dinner",
+      "Bedtime story",
+      "Call the plumber",
+      "Walk the dog",
+    ]);
+    expect(onDay(9, [...FIXTURE_EVENTS, ...FIXTURE_MANY_EVENTS])).toHaveLength(22);
   });
 
   it("EVT-08 the all-day fixtures are No school on the 16th and Grandpa staying over on the 9th", () => {
@@ -98,37 +178,17 @@ describe("Appendix A fixtures", () => {
       v.parse(CalendarEventSchema, event).title,
       eventDayKey(event, tz),
       event.location,
-      event.tone,
+      who(event),
     ]);
 
     expect(rows).toEqual([
-      ["No school · teacher planning day", "2026-10-16", "Lincoln Elementary", 4],
-      ["Grandpa staying over", "2026-10-09", "Guest room", 2],
+      ["No school · teacher planning day", "2026-10-16", "Lincoln Elementary", "Minh-An, Minh-Hy"],
+      ["Grandpa staying over", "2026-10-09", "Guest room", "Everyone"],
     ]);
   });
 
   it("tech§6 sheet=allday opens No school", () => {
     expect(FIXTURE_SHEET_TARGETS.allDay).toBe(FIXTURE_ALL_DAY.noSchool.id);
-  });
-
-  it("Appendix A event times match the handoff", () => {
-    const times = FIXTURE_EVENTS.map((event) => [
-      formatClock(minutesOfDay(new Date(event.startAt), tz), "12h"),
-      event.endAt && formatClock(minutesOfDay(new Date(event.endAt), tz), "12h"),
-      event.tone,
-    ]);
-
-    expect(times).toEqual([
-      ["9:00 AM", "9:30 AM", "soft"],
-      ["10:30 AM", "11:15 AM", 1],
-      ["12:00 PM", "1:00 PM", 2],
-      ["2:00 PM", "2:20 PM", "accent"],
-      ["3:30 PM", "4:30 PM", 3],
-      ["7:00 PM", "9:00 PM", 2],
-      ["4:00 PM", "4:30 PM", 4],
-      ["4:00 PM", "6:00 PM", 3],
-      ["5:00 PM", "6:30 PM", 1],
-    ]);
   });
 
   it("NOTE-04 notes are stamped 8:12 AM, 9:05 AM, Mon, Tue and Tue with their tilts", () => {
@@ -143,7 +203,7 @@ describe("Appendix A fixtures", () => {
       ["Dad", { kind: "at", text: "8:12 AM" }, 1, -2],
       ["Mom", { kind: "at", text: "9:05 AM" }, 2, 1.5],
       ["Mom", { kind: "at", text: "Mon" }, 3, -1],
-      ["Mia", { kind: "at", text: "Tue" }, 4, 2.5],
+      ["Minh-Hy", { kind: "at", text: "Tue" }, 4, 2.5],
       ["Dad", { kind: "at", text: "Tue" }, "soft", -1.5],
     ]);
   });

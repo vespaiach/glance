@@ -16,6 +16,7 @@ export {
   useNextEventAfter,
   useUpcomingEvent,
 } from "./events";
+export { createMembersRepo, type MembersRepo, useMembers, useMembersRepo } from "./members";
 export {
   createNotesRepo,
   type NotesRepo,
