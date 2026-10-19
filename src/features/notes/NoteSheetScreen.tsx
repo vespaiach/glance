@@ -1,8 +1,7 @@
 "use client";
 
 import { copy } from "@/copy";
-import { useNote, useNotes, useNotesRepo } from "@/data/repos";
-import type { Note } from "@/domain/schemas";
+import { type ShownNote, useNote, useNotes, useNotesRepo } from "@/data/repos";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
@@ -29,8 +28,12 @@ type SheetFrameProps = {
   eyebrow: string;
   initial: NoteSheetState;
   base: () => NoteBase;
+  time?: string;
+  rotation?: number;
   onDelete: () => void;
 };
+
+type LoadedProps = { id: string; discard?: true; edit?: true };
 
 type NewNoteProps = { draft?: Pick<NoteDraft, "text" | "tone">; discard?: true };
 
@@ -38,7 +41,9 @@ export function NoteSheetScreen() {
   const { sheet } = useSheetHost();
 
   if (sheet?.kind === "note")
-    return <LoadedNoteSheet key={sheet.id} id={sheet.id} discard={sheet.discard} />;
+    return (
+      <LoadedNoteSheet key={sheet.id} id={sheet.id} discard={sheet.discard} edit={sheet.edit} />
+    );
 
   if (sheet?.kind === "newnote")
     return <NewNoteSheet draft={sheet.draft} discard={sheet.discard} />;
@@ -46,7 +51,7 @@ export function NoteSheetScreen() {
   return null;
 }
 
-function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps) {
+function SheetFrame({ mode, eyebrow, initial, base, time, rotation, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
 
   const notes = useNotesRepo();
@@ -56,7 +61,6 @@ function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps)
   const { online } = useNetwork();
 
   const onSave = (draft: NoteDraft) => {
-    close();
     void notes.put(noteFromDraft(draft, base()));
   };
 
@@ -70,12 +74,14 @@ function SheetFrame({ mode, eyebrow, initial, base, onDelete }: SheetFrameProps)
       onClose={close}
       onDelete={onDelete}
       onSave={onSave}
+      time={time}
+      rotation={rotation}
       keyboardInset={useKeyboardInset()}
     />
   );
 }
 
-function EditNoteSheet({ note, discard }: { note: Note; discard?: true }) {
+function EditNoteSheet({ note, discard, edit }: { note: ShownNote } & Omit<LoadedProps, "id">) {
   const { close } = useSheetHost();
 
   const notes = useNotesRepo();
@@ -86,6 +92,8 @@ function EditNoteSheet({ note, discard }: { note: Note; discard?: true }) {
 
   const tz = useTimeZone();
 
+  const time = noteStampText(note, now, clock, tz);
+
   const onDelete = () => {
     close();
     void notes.remove(note.id);
@@ -94,18 +102,20 @@ function EditNoteSheet({ note, discard }: { note: Note; discard?: true }) {
   return (
     <SheetFrame
       mode="edit"
-      eyebrow={copy.notes.sheet.eyebrow(note.author, noteStampText(note, now, clock, tz))}
-      initial={initialNoteSheet(draftFromNote(note), { discard })}
+      eyebrow={copy.notes.sheet.eyebrow(note.author, time)}
+      initial={initialNoteSheet(draftFromNote(note), { discard, details: !edit })}
       base={() => note}
+      time={time}
+      rotation={note.rotation}
       onDelete={onDelete}
     />
   );
 }
 
-function LoadedNoteSheet({ id, discard }: { id: string; discard?: true }) {
+function LoadedNoteSheet({ id, discard, edit }: LoadedProps) {
   const note = useNote(id);
 
-  return note ? <EditNoteSheet note={note} discard={discard} /> : null;
+  return note ? <EditNoteSheet note={note} discard={discard} edit={edit} /> : null;
 }
 
 function NewNoteSheet({ draft, discard }: NewNoteProps) {

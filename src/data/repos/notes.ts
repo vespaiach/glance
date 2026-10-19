@@ -33,13 +33,20 @@ export function useNotesRepo(): NotesRepo {
   return useMemo(() => createNotesRepo(store), [store]);
 }
 
-export function useNote(id: string): StoredNote | null | undefined {
+export function useNote(id: string): ShownNote | null | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(async () => {
     const row = await db.notes.get(id);
 
-    return row && isLive(row) ? row : null;
+    if (!row || !isLive(row)) return null;
+
+    const pending = await pendingIds(db, "notes");
+
+    return {
+      ...row,
+      waiting: noteWaitingToPost({ pending: pending.has(id), version: row.version }),
+    };
   }, [db, id]);
 }
 

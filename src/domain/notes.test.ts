@@ -1,4 +1,4 @@
-import { noteExpired, noteStamp, noteTilt, noteWaitingToPost } from "./notes";
+import { noteDetailsTilt, noteExpired, noteStamp, noteTilt, noteWaitingToPost } from "./notes";
 import { deviceTimeZone } from "./zone";
 
 const tz = deviceTimeZone();
@@ -16,6 +16,15 @@ describe("notes", () => {
     [7, 2.5],
   ])("NOTE-04 a new note on a board of %i notes tilts %f°", (count, expected) => {
     expect(noteTilt(count)).toBe(expected);
+  });
+
+  it.each([
+    [-2, -1.5],
+    [2.5, 1.5],
+    [-1, -1],
+    [0, 0],
+  ])("NOTE-10 Note details tilt a note of %f° by %f°", (rotation, expected) => {
+    expect(noteDetailsTilt(rotation)).toBe(expected);
   });
 
   it.each([

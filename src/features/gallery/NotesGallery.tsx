@@ -21,11 +21,14 @@ type Demo = {
   draft?: boolean;
   offline?: boolean;
   discard?: boolean;
+  details?: "posted" | "waiting";
 };
 
 const words = gallery.noteSheet;
 
 const DEMOS: readonly Demo[] = [
+  { label: words.details, mode: "edit", details: "posted" },
+  { label: words.detailsWaiting, mode: "edit", details: "waiting" },
   { label: words.edit, mode: "edit" },
   { label: words.new, mode: "new" },
   { label: words.draft, mode: "new", draft: true },
@@ -134,20 +137,21 @@ function NoteSheetDemo({
     ? newNoteDraft({ text: gallery.input.notesValue, tone: 2 })
     : newNoteDraft();
 
-  const edit = demo.mode === "edit" && WIFI;
+  const edit = demo.mode === "edit" && (demo.details === "waiting" ? WAITING_NOTES[0] : WIFI);
+
+  const time = edit ? noteStampText(edit, NOW, "12h", GALLERY_TZ) : "";
 
   return (
     <NoteSheet
       mode={demo.mode}
-      eyebrow={
-        edit
-          ? copy.notes.sheet.eyebrow(edit.author, noteStampText(edit, NOW, "12h", GALLERY_TZ))
-          : copy.notes.board
-      }
+      eyebrow={edit ? copy.notes.sheet.eyebrow(edit.author, time) : copy.notes.board}
       initial={initialNoteSheet(edit ? draftFromNote(edit) : draft, {
         opened: edit ? draftFromNote(edit) : newNoteDraft(),
         discard: demo.discard,
+        details: demo.details !== undefined,
       })}
+      time={time}
+      rotation={edit ? edit.rotation : 0}
       swatches={noteSwatches(season)}
       offline={demo.offline ?? false}
       onClose={onClose}

@@ -219,6 +219,10 @@ export const copy = {
       "1w": "They’re removed after 1 week.",
       never: "They stay until someone deletes them.",
     },
+    details: {
+      title: (author: string) => `From ${author}`,
+      edit: "Edit",
+    },
     sheet: {
       newTitle: "New note",
       editTitle: "Edit note",

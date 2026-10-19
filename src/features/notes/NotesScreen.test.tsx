@@ -108,7 +108,7 @@ test("NOTE-07 with no notes the board shows the empty state", async () => {
   ).toBeInTheDocument();
 });
 
-test("NOTE-01 tapping a note opens Edit note for it", async () => {
+test("NOTE-01 tapping a note opens Note details for it", async () => {
   await store.db.notes.put(synced(WIFI));
 
   renderNotes();

@@ -92,7 +92,7 @@ const styles = stylex.create({
     marginBottom: "calc(-1 * clamp(24px, 3vw, 40px))",
     paddingTop: space.xxs,
     paddingBottom: "clamp(24px, 3vw, 40px)",
-    backgroundColor: colors.surfaceCanvas,
+    backgroundColor: "inherit",
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "space-between",

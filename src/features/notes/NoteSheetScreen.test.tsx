@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import { createNotesRepo } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus, synced } from "@/data/repos/testHarness";
 import type { AccountSettings, Note } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
@@ -69,10 +70,10 @@ function renderSheet(initial: SheetRequest, overrides: Partial<AccountSettings> 
   );
 }
 
-test("NOTE-01 a note request opens Edit note under its author and time", async () => {
+test("NOTE-01 a note request with edit opens Edit note under its author and time", async () => {
   await store.db.notes.put(synced(WIFI));
 
-  renderSheet({ kind: "note", id: WIFI.id });
+  renderSheet({ kind: "note", id: WIFI.id, edit: true });
 
   expect(await screen.findByRole("dialog", { name: "Edit note" })).toBeInTheDocument();
   expect(screen.getByText("Dad · 8:12 AM")).toBeInTheDocument();
@@ -82,7 +83,7 @@ test("NOTE-01 a note request opens Edit note under its author and time", async (
 test("NOTE-04 the eyebrow time follows the Clock setting", async () => {
   await store.db.notes.put(synced(WIFI));
 
-  renderSheet({ kind: "note", id: WIFI.id }, { clock: "24h" });
+  renderSheet({ kind: "note", id: WIFI.id, edit: true }, { clock: "24h" });
 
   expect(await screen.findByText("Dad · 08:12")).toBeInTheDocument();
 });
@@ -127,7 +128,7 @@ test("NOTE-05 offline the sheet saves for later", async () => {
 test("NOTE-05 Delete note removes the note and closes the sheet", async () => {
   await store.db.notes.put(synced(WIFI));
 
-  renderSheet({ kind: "note", id: WIFI.id });
+  renderSheet({ kind: "note", id: WIFI.id, edit: true });
 
   await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
   await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
@@ -181,7 +182,7 @@ test("NOTE-04 a new note's tilt follows the number of notes on the board", async
 test("NOTE-09 Save keeps the note's id, time and tilt", async () => {
   await store.db.notes.put(synced(WIFI));
 
-  renderSheet({ kind: "note", id: WIFI.id });
+  renderSheet({ kind: "note", id: WIFI.id, edit: true });
 
   await userEvent.clear(await screen.findByLabelText("Your name"));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -203,4 +204,52 @@ test("NOTE-03 a failed Post note keeps the sheet open and writes nothing", async
 
   expect(screen.getByRole("dialog", { name: "New note" })).toBeInTheDocument();
   expect(await store.db.notes.count()).toBe(0);
+});
+
+test("NOTE-10 a note request opens Note details with the note's text and post time", async () => {
+  await store.db.notes.put(synced(WIFI));
+
+  renderSheet({ kind: "note", id: WIFI.id });
+
+  const dialog = await screen.findByRole("dialog", { name: "From Dad" });
+
+  expect(dialog).toHaveTextContent("Notice board");
+  expect(dialog).toHaveTextContent("Wi-Fi password is on the fridge!");
+  expect(dialog).toHaveTextContent("8:12 AM");
+});
+
+test("NOTE-10 a note that never synced shows Waiting to post", async () => {
+  await createNotesRepo(store).put(WIFI);
+
+  renderSheet({ kind: "note", id: WIFI.id });
+
+  expect(await screen.findByText("Waiting to post")).toBeInTheDocument();
+});
+
+test("NOTE-10 Save from details writes the note and stays open on details", async () => {
+  await store.db.notes.put(synced(WIFI));
+
+  renderSheet({ kind: "note", id: WIFI.id });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  await userEvent.clear(screen.getByLabelText("Your name"));
+  await userEvent.type(screen.getByLabelText("Your name"), "Mom");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(await screen.findByRole("dialog", { name: "From Mom" })).toBeInTheDocument();
+  await waitFor(async () =>
+    expect(await store.db.notes.get(WIFI.id)).toMatchObject({ author: "Mom", version: 1 }),
+  );
+});
+
+test("NOTE-10 Delete from an edit opened in details closes the sheet", async () => {
+  await store.db.notes.put(synced(WIFI));
+
+  renderSheet({ kind: "note", id: WIFI.id });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
 });

@@ -155,6 +155,17 @@ describe("useNotes", () => {
     await waitFor(() => expect(result.current).toBeNull());
   });
 
+  it("NOTE-10 useNote marks a note that never synced as waiting to post", async () => {
+    await createNotesRepo(store).put(NEW);
+    await store.db.notes.put(synced(FRESH));
+
+    const { result } = renderHook(() => [useNote(NEW.id), useNote(FRESH.id)], {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current.map((row) => row?.waiting)).toEqual([true, false]));
+  });
+
   it("tech§4.1 hides deleted notes", async () => {
     await store.db.notes.bulkPut([synced(FRESH), { ...synced(NEW), deletedAt: ago(0) }]);
 

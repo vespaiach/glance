@@ -36,6 +36,8 @@ function renderSheet(options: Options = {}) {
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
       onSave={options.onSave ?? (() => {})}
+      time="8:12 AM"
+      rotation={-2}
     />,
   );
 }
@@ -241,4 +243,113 @@ test("§8.9 typing while it asks brings the normal footer back", async () => {
 
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+});
+
+function renderDetails(options: Options = {}) {
+  return renderSheet({
+    initial: initialNoteSheet(draftFromNote(WIFI), { details: true }),
+    ...options,
+  });
+}
+
+test("NOTE-10 a tapped note opens Note details: From its author on the Notice board", () => {
+  renderDetails();
+
+  const dialog = screen.getByRole("dialog", { name: "From Dad" });
+
+  expect(within(dialog).getByText("Notice board")).toBeInTheDocument();
+  expect(within(dialog).getByText("Wi-Fi password is on the fridge!")).toBeInTheDocument();
+  expect(within(dialog).getByText("8:12 AM")).toBeInTheDocument();
+});
+
+test("NOTE-10 a note with a blank author is From Guest", () => {
+  renderDetails({ initial: initialNoteSheet({ ...WIFI, author: " " }, { details: true }) });
+
+  expect(screen.getByRole("dialog", { name: "From Guest" })).toBeInTheDocument();
+});
+
+test("NOTE-10 Note details are read-only with a single Edit, no color picker and no offline banner", () => {
+  renderDetails({ offline: true });
+
+  expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["", "Edit"]);
+  expect(screen.queryByRole("group", { name: "Color" })).not.toBeInTheDocument();
+  expect(screen.queryByText("You’re offline")).not.toBeInTheDocument();
+});
+
+test("NOTE-10 Edit turns the sheet into Edit note, and Cancel with no change returns to details", async () => {
+  const onClose = vi.fn();
+
+  renderDetails({ onClose });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+  expect(screen.getByRole("dialog", { name: "Edit note" })).toBeInTheDocument();
+  expect(screen.getByText("Dad · 8:12 AM")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByRole("dialog", { name: "From Dad" })).toBeInTheDocument();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test("NOTE-10 Cancel after a change asks Discard changes?, and Discard returns to details unchanged", async () => {
+  const onClose = vi.fn();
+
+  renderDetails({ onClose });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+  await userEvent.type(screen.getByLabelText("Message"), " Ask Mom.");
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Discard changes?");
+
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(screen.getByRole("dialog", { name: "From Dad" })).toBeInTheDocument();
+  expect(screen.getByText("Wi-Fi password is on the fridge!")).toBeInTheDocument();
+  expect(onClose).not.toHaveBeenCalled();
+});
+
+test("NOTE-10 the close button after a change asks, and Discard closes the sheet", async () => {
+  const onClose = vi.fn();
+
+  renderDetails({ onClose });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+  await userEvent.type(screen.getByLabelText("Message"), "!");
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+test("NOTE-10 Save from details hands the draft over and returns to details with the new text", async () => {
+  const onSave = vi.fn();
+  const onClose = vi.fn();
+
+  renderDetails({ onSave, onClose });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+  await userEvent.clear(screen.getByLabelText("Message"));
+  await userEvent.type(screen.getByLabelText("Message"), "Back at 6{Enter}Dinner in the oven");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(onSave).toHaveBeenCalledWith({ ...WIFI, text: "Back at 6\nDinner in the oven" });
+  expect(onClose).not.toHaveBeenCalled();
+  expect(screen.getByRole("dialog", { name: "From Dad" })).toBeInTheDocument();
+  expect(
+    screen.getByText((_, element) => element?.textContent === "Back at 6\nDinner in the oven"),
+  ).toBeInTheDocument();
+});
+
+test("NOTE-10 Delete from an edit opened in details deletes", async () => {
+  const onDelete = vi.fn();
+
+  renderDetails({ onDelete });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
+
+  expect(onDelete).toHaveBeenCalledOnce();
 });
