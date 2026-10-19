@@ -9,6 +9,7 @@ import { SIDEBAR_PINNED, SIDEBAR_VIEWS, type SidebarItem } from "./sidebarItems"
 
 type SidebarRailProps = {
   mode: SidebarMode;
+  phone?: boolean;
   active?: View;
   onHide: () => void;
   onNavigate: (path: string) => void;
@@ -34,6 +35,14 @@ const styles = stylex.create({
     transitionProperty: "transform, opacity",
     transitionDuration: `${motion.durBase}, ${motion.durFast}`,
     transitionTimingFunction: `${motion.easeSlide}, ${motion.easeOut}`,
+  },
+  phoneRail: {
+    width: 56,
+    paddingBlock: space.sm,
+  },
+  phoneButton: {
+    width: 44,
+    height: 44,
   },
   hidden: {
     transform: "translateX(-100%)",
@@ -61,7 +70,11 @@ const styles = stylex.create({
   },
 });
 
-export function SidebarRail({ mode, active, onHide, onNavigate }: SidebarRailProps) {
+export function SidebarRail({ mode, phone = false, active, onHide, onNavigate }: SidebarRailProps) {
+  const size = phone ? "md" : "touch";
+
+  const xstyle = phone ? styles.phoneButton : undefined;
+
   const button = (item: SidebarItem) => {
     const current = item.key === active;
 
@@ -70,10 +83,11 @@ export function SidebarRail({ mode, active, onHide, onNavigate }: SidebarRailPro
         key={item.key}
         icon={item.icon}
         label={item.name}
-        size="touch"
+        size={size}
         variant={current ? "solid" : "soft"}
         current={current ? "page" : undefined}
         onClick={() => onNavigate(item.path)}
+        xstyle={xstyle}
       />
     );
   };
@@ -84,6 +98,7 @@ export function SidebarRail({ mode, active, onHide, onNavigate }: SidebarRailPro
       inert={mode !== "rail"}
       {...stylex.props(
         styles.rail,
+        phone && styles.phoneRail,
         mode === "hidden" && styles.hidden,
         mode === "expanded" && styles.faded,
       )}
@@ -94,7 +109,13 @@ export function SidebarRail({ mode, active, onHide, onNavigate }: SidebarRailPro
         {SIDEBAR_PINNED.map(button)}
       </div>
       <div {...stylex.props(styles.footer)}>
-        <IconButton icon={X} label={copy.nav.hideSidebar} size="touch" onClick={onHide} />
+        <IconButton
+          icon={X}
+          label={copy.nav.hideSidebar}
+          size={size}
+          onClick={onHide}
+          xstyle={xstyle}
+        />
       </div>
     </nav>
   );

@@ -82,13 +82,15 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
     initialSidebar(rail, "today"),
   );
 
+  const phone = size === "phone";
+
   const caption = `${gallery.sidebar[mode]} · ${gallery.sidebar[size]}`;
 
   return (
     <div {...stylex.props(styles.demo)}>
       <Eyebrow>{caption}</Eyebrow>
       <div {...stylex.props(styles.stage, styles[size])}>
-        <div {...stylex.props(styles.page, styles.inset(sidebarInset(state.mode)))}>
+        <div {...stylex.props(styles.page, styles.inset(sidebarInset(state.mode, phone)))}>
           <div {...stylex.props(styles.panel)}>
             <Eyebrow>{gallery.groups.today}</Eyebrow>
           </div>
@@ -96,6 +98,7 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
         <SidebarGrip shown={state.mode === "hidden"} onShow={() => dispatch({ type: "show" })} />
         <SidebarRail
           mode={state.mode}
+          phone={phone}
           active="today"
           onHide={() => dispatch({ type: "hide" })}
           onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
@@ -103,12 +106,15 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
         <SidebarHandle
           shown={state.mode !== "hidden"}
           expanded={state.mode === "expanded"}
+          phone={phone}
           onOpen={() => dispatch({ type: "open" })}
         />
         <SidebarDrawer
           open={state.mode === "expanded"}
+          phone={phone}
           active="today"
           onClose={() => dispatch({ type: "close" })}
+          onScrimTap={() => dispatch({ type: "back" })}
           onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
         />
       </div>

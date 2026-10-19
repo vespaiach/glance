@@ -7,6 +7,7 @@ import { press } from "@/ui/press";
 type SidebarHandleProps = {
   shown: boolean;
   expanded: boolean;
+  phone?: boolean;
   onOpen: () => void;
   ref?: Ref<HTMLButtonElement>;
 };
@@ -31,6 +32,10 @@ const styles = stylex.create({
     transitionDuration: `${motion.durFast}, ${motion.durPress}`,
     transitionTimingFunction: motion.easeOut,
   },
+  phoneHandle: {
+    left: 44,
+    width: 40,
+  },
   faded: {
     opacity: 0,
     pointerEvents: "none",
@@ -45,9 +50,13 @@ const styles = stylex.create({
     borderRadius: radii.full,
     backgroundColor: colors.textPrimary,
   },
+  phonePill: {
+    width: 4,
+    height: 56,
+  },
 });
 
-export function SidebarHandle({ shown, expanded, onOpen, ref }: SidebarHandleProps) {
+export function SidebarHandle({ shown, expanded, phone = false, onOpen, ref }: SidebarHandleProps) {
   return (
     <button
       ref={ref}
@@ -57,9 +66,15 @@ export function SidebarHandle({ shown, expanded, onOpen, ref }: SidebarHandlePro
       aria-label={copy.nav.expandMenu}
       aria-expanded={expanded}
       onClick={onOpen}
-      {...stylex.props(styles.handle, press.scale, expanded && styles.faded, !shown && styles.off)}
+      {...stylex.props(
+        styles.handle,
+        phone && styles.phoneHandle,
+        press.scale,
+        expanded && styles.faded,
+        !shown && styles.off,
+      )}
     >
-      <span {...stylex.props(styles.pill)} />
+      <span {...stylex.props(styles.pill, phone && styles.phonePill)} />
     </button>
   );
 }

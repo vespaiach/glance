@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.62 |
+| Status | v0.63 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -142,11 +142,11 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
   - **Hidden:** a 5×72 black pill on the left edge (44×144 touch area), "Show sidebar" → Rail.
   - **Rail:** 80 px white, full height, hairline inner edge, 16 px padding, 8 px gap: the five views as 56 px IconButtons, a flexible gap, Ambient and Settings, then a 56 px ✕ "Hide sidebar" as a fixed footer (the items above scroll on short windows). Page inset 80 px. **Expand handle:** the same pill on the rail's inner edge, vertically centered, 56×96 touch area, "Expand menu" → Expanded. It fades out (180 ms) while the drawer is open and in full-screen Photos.
   - **Expanded:** a 320 px white panel 12 px from the top, bottom and left, radius 24, `shadow-1`, no scrim. Header "Glance" (Geist 540, 24 px). The five views as 64 px pill rows (icon + 20 px label, weight 480; current = black fill), a gap, a hairline, Ambient and Settings, then a fixed "Close" row (named "Close sidebar") → Hidden. The rail fades out (180 ms). The page is pushed 332 px and stays usable: a tap on it doesn't close the drawer. Picking a row, or any view change, returns to Rail.
-  - **Phone (< 600):** rail 56 px (page inset 56) with 44 px IconButtons; grip 4×56; drawer 248 px with 48 px rows, 16 px labels, 20 px icons and a 20 px "Glance" header. The drawer slides **over** the page (no push) with a 60% scrim; a scrim tap → Rail.
+  - **Phone (< 600):** rail 56 px (page inset 56, 12 px padding) with 44 px IconButtons; the Expand handle's pill is 4×56 (40 px wide touch area); drawer 248 px with 48 px rows, 16 px labels, 20 px icons and a 20 px "Glance" header. The drawer slides **over** the page (no push: the page keeps the 56 px inset) with a 60% scrim; a scrim tap → Rail and focuses Expand menu.
   - **Motion:** slides over 280 ms `cubic-bezier(0.2, 0, 0, 1)`; at once with reduced motion.
   - Fixtures: `rail=1` (Rail), `rail=open` (Expanded).
 - **SHELL-09 Keyboard and focus:** the grip and Expand menu carry `aria-expanded`. Escape in Expanded → Rail. Opening the drawer focuses the current view's row. Escape or a row → focus to Expand menu; Close or ✕ → the grip; the grip → Expand menu. A view change that brings the rail back, and a page load, move no focus. Parts not shown are `inert`. No focus trap.
-- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px; phone 0 or 56, the drawer overlays) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
+- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px; phone 0 or 56, the drawer overlays the 56) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
 - **SHELL-11 Hides when idle:** after 15 s with no touch or key press, Rail or Expanded → Hidden (the drawer closes and the rail slides away). The timer doesn't run while a sheet is open, the keyboard is up or a text field is focused. Tapping the grip → Rail and restarts the 15 s. No focus moves.
 
 ### 5.3 Grid templates

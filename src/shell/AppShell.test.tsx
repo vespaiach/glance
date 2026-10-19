@@ -281,6 +281,21 @@ test("SHELL-09 the rail's ✕ moves focus to the grip", async () => {
   expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
 });
 
+test("SHELL-08 on a phone a scrim tap returns the drawer to Rail and focuses Expand menu", async () => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+
+  await renderShell("Today view", { rail: "open" });
+
+  await userEvent.click(drawer().previousElementSibling as HTMLElement);
+
+  expect(sidebarMode()).toBe("rail");
+  expect(expandMenu()).toHaveFocus();
+});
+
 test("SHELL-09 the grip's tap moves focus to Expand menu", async () => {
   await renderShell("Today view");
 
