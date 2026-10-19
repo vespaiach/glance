@@ -1,7 +1,7 @@
 import "server-only";
 import { getDb } from "../db/db";
 import { env } from "../env";
-import { createMailer } from "../mail/mailer";
+import { mailer } from "../mail";
 import * as account from "./account";
 import type { AuthDeps } from "./deps";
 import * as links from "./links";
@@ -61,7 +61,7 @@ function deps(): AuthDeps {
   shared.glanceAuth ??= {
     db: getDb(),
     now: () => new Date(),
-    mailer: createMailer(env().RESEND_API_KEY, env().MAIL_FROM),
+    mailer: mailer(),
     appUrl: env().APP_URL,
     limits: {
       email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
