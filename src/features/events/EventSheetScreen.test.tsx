@@ -1,8 +1,8 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, putSyncStatus, synced } from "@/data/repos/testHarness";
-import type { AccountSettings, CalendarEvent } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Member } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
@@ -243,5 +243,57 @@ test("D21 an all-day event opens and saves on its own date in a zone behind UTC"
       ...NO_SCHOOL,
       title: "No school · teacher planning day!",
     }),
+  );
+});
+
+const MOM: Member = {
+  id: "0195f0a0-0000-7000-8000-000000000501",
+  name: "Mom",
+  color: "coral",
+  createdAt: "2026-10-01T15:00:00.000Z",
+};
+
+const DAD: Member = {
+  id: "0195f0a0-0000-7000-8000-000000000502",
+  name: "Dad",
+  color: "mint",
+  createdAt: "2026-10-02T15:00:00.000Z",
+};
+
+test("EVT-11 a new event request for some members starts with them and saves their ids", async () => {
+  await store.db.members.bulkPut([synced(MOM), synced(DAD)]);
+
+  renderSheet({ kind: "newevent", day: "2026-10-12", memberIds: [DAD.id] });
+
+  const who = await screen.findByRole("group", { name: "Who" });
+
+  await waitFor(() =>
+    expect(within(who).getByRole("button", { name: "Dad" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    ),
+  );
+  expect(within(who).getByRole("button", { name: "Mom" })).toHaveAttribute("aria-pressed", "false");
+
+  await userEvent.type(screen.getByLabelText("Title"), "Haircut");
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.toArray()).toMatchObject([
+      { everyone: false, memberIds: [DAD.id] },
+    ]),
+  );
+});
+
+test("EVT-02 Notes save trimmed", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id });
+
+  await userEvent.type(await screen.findByLabelText("Notes"), "  Bring a gift  ");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect((await store.db.events.get(LUNCH.id))?.notes).toBe("Bring a gift"),
   );
 });

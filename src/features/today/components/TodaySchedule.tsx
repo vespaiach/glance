@@ -3,7 +3,7 @@ import { ArrowRight, CalendarDays, CalendarX2, Plus } from "lucide-react";
 import type { Ref } from "react";
 import { copy } from "@/copy";
 import { eventStatus } from "@/domain/eventStatus";
-import type { CalendarEvent } from "@/domain/schemas";
+import type { CalendarEvent, Member } from "@/domain/schemas";
 import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
 import { todaySchedule } from "@/domain/todaySchedule";
 import type { ZoneState } from "@/domain/zoneState";
@@ -23,6 +23,7 @@ import { tile } from "./tile";
 
 type TodayScheduleProps = {
   state: ZoneState<CalendarEvent>;
+  members: readonly Member[];
   retryIn: number;
   onRetry: () => void;
   now: Date;
@@ -149,11 +150,12 @@ type SeeAllProps = {
 
 type ScheduleRowsProps = Pick<
   TodayScheduleProps,
-  "now" | "clock" | "tz" | "compact" | "rows" | "onOpenEvent" | "onOpenCalendar"
+  "members" | "now" | "clock" | "tz" | "compact" | "rows" | "onOpenEvent" | "onOpenCalendar"
 > & { events: readonly CalendarEvent[] };
 
 export function TodaySchedule({
   state,
+  members,
   retryIn,
   onRetry,
   now,
@@ -200,6 +202,7 @@ export function TodaySchedule({
         {(events) => (
           <ScheduleRows
             events={events}
+            members={members}
             now={now}
             clock={clock}
             tz={tz}
@@ -307,6 +310,7 @@ function SeeAll({ count, hidden, onClick }: SeeAllProps) {
 
 function ScheduleRows({
   events,
+  members,
   now,
   clock,
   tz,
@@ -319,7 +323,13 @@ function ScheduleRows({
 
   return (
     <>
-      <AllDayTiles events={allDay} label={copy.events.allDay} onOpenEvent={onOpenEvent} />
+      <AllDayTiles
+        events={allDay}
+        members={members}
+        label={copy.events.allDay}
+        everyoneLabel={copy.events.everyone}
+        onOpenEvent={onOpenEvent}
+      />
       <div data-schedule-rows="" {...stylex.props(styles.rows)}>
         <div>
           {shown.map((event) => (

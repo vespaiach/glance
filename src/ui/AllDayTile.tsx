@@ -1,15 +1,17 @@
 import * as stylex from "@stylexjs/stylex";
-import type { CalendarEvent, Tone } from "@/domain/schemas";
-import { season } from "@/theme/seasons.stylex";
+import { eventColor, whoLabel } from "@/domain/members";
+import type { CalendarEvent, Member, MemberColor } from "@/domain/schemas";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { PersonDot } from "./PersonDot";
 import { press } from "./press";
 
 type AllDayTileProps = {
   label: string;
   title: string;
+  who: string;
   location?: string;
-  dot: Tone;
+  dot: MemberColor | "soft";
   onClick: () => void;
 };
 
@@ -47,21 +49,6 @@ const styles = stylex.create({
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
-  dot: {
-    flexShrink: 0,
-    width: 12,
-    height: 12,
-    borderRadius: radii.full,
-    transitionProperty: "background-color",
-    transitionDuration: motion.durSeason,
-    transitionTimingFunction: motion.easeInOut,
-  },
-  tone1: { backgroundColor: season.block1 },
-  tone2: { backgroundColor: season.block2 },
-  tone3: { backgroundColor: season.block3 },
-  tone4: { backgroundColor: season.block4 },
-  soft: { backgroundColor: season.soft },
-  accent: { backgroundColor: season.accent },
   text: {
     display: "flex",
     flexDirection: "column",
@@ -75,7 +62,7 @@ const styles = stylex.create({
     lineHeight: 1.25,
     textWrap: "pretty",
   },
-  location: {
+  detail: {
     fontSize: type.bodySmSize,
     fontWeight: type.bodySmWeight,
   },
@@ -83,24 +70,32 @@ const styles = stylex.create({
 
 type AllDayTilesProps = {
   events: readonly CalendarEvent[];
+  members: readonly Member[];
   label: string;
+  everyoneLabel: string;
   onOpenEvent: (id: string) => void;
 };
 
-export function AllDayTile({ label, title, location, dot, onClick }: AllDayTileProps) {
+export function AllDayTile({ label, title, who, location, dot, onClick }: AllDayTileProps) {
   return (
     <button type="button" onClick={onClick} {...stylex.props(styles.tile, press.scale)}>
       <span {...stylex.props(styles.label)}>{label}</span>
-      <span aria-hidden="true" {...stylex.props(styles.dot, dotStyle(dot))} />
+      <PersonDot color={dot} />
       <span {...stylex.props(styles.text)}>
         <span {...stylex.props(styles.title)}>{title}</span>
-        {location && <span {...stylex.props(styles.location)}>{location}</span>}
+        <span {...stylex.props(styles.detail)}>{location ? `${who} · ${location}` : who}</span>
       </span>
     </button>
   );
 }
 
-export function AllDayTiles({ events, label, onOpenEvent }: AllDayTilesProps) {
+export function AllDayTiles({
+  events,
+  members,
+  label,
+  everyoneLabel,
+  onOpenEvent,
+}: AllDayTilesProps) {
   if (events.length === 0) return null;
 
   return (
@@ -110,15 +105,12 @@ export function AllDayTiles({ events, label, onOpenEvent }: AllDayTilesProps) {
           key={event.id}
           label={label}
           title={event.title}
+          who={whoLabel(event, members, everyoneLabel)}
           location={event.location}
-          dot="soft"
+          dot={eventColor(event, members)}
           onClick={() => onOpenEvent(event.id)}
         />
       ))}
     </div>
   );
-}
-
-function dotStyle(dot: Tone) {
-  return typeof dot === "number" ? styles[`tone${dot}`] : styles[dot];
 }

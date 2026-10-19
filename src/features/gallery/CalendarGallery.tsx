@@ -5,6 +5,7 @@ import { DayPanel, MonthBlock } from "@/features/calendar";
 import { GalleryGroup } from "./GalleryGroup";
 import {
   ALL_DAY_EVENTS,
+  GALLERY_FAMILY,
   GALLERY_TZ,
   gallery,
   MARKED_DAYS,
@@ -24,6 +25,7 @@ const styles = stylex.create({
 const UPDATED_AT = octoberAt(9, 9, 32).toISOString();
 
 const panel = {
+  members: GALLERY_FAMILY,
   title: formatDayTitle(NOW, GALLERY_TZ),
   calendarEmpty: false,
   now: NOW,
@@ -70,7 +72,7 @@ export function CalendarGallery() {
       <DayPanel tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...panel} compact />
       <DayPanel
         tz={GALLERY_TZ}
-        state={{ kind: "ready", data: [ALL_DAY_EVENTS.noSchool] }}
+        state={{ kind: "ready", data: [ALL_DAY_EVENTS.noSchool, ALL_DAY_EVENTS.conference] }}
         {...panel}
         title={formatDayTitle(new Date(ALL_DAY_EVENTS.noSchool.startAt), "UTC")}
       />

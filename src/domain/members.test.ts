@@ -3,6 +3,8 @@ import {
   matchesFilter,
   nextFreeColor,
   removalImpact,
+  toggleWho,
+  whoFromFilter,
   whoLabel,
   withoutMember,
 } from "./members";
@@ -116,5 +118,52 @@ describe("matchesFilter", () => {
   it("CAL-05 everyone plans always show, and nothing else when nobody is selected", () => {
     expect(matchesFilter(everyone, new Set())).toBe(true);
     expect(matchesFilter(forMembers(AN), new Set())).toBe(false);
+  });
+});
+
+describe("toggleWho", () => {
+  const family = FAMILY.map((one) => one.id);
+
+  it("EVT-11 tapping a member while everyone is on keeps every other member", () => {
+    expect(toggleWho(everyone, HY.id, family)).toEqual(forMembers(AN, MOM));
+  });
+
+  it("EVT-11 tapping an unselected member adds them in family order", () => {
+    expect(toggleWho(forMembers(MOM), AN.id, family)).toEqual(forMembers(AN, MOM));
+  });
+
+  it("EVT-11 tapping a selected member takes them off", () => {
+    expect(toggleWho(forMembers(AN, MOM), AN.id, family)).toEqual(forMembers(MOM));
+  });
+
+  it("EVT-11 selecting every member one by one means everyone", () => {
+    expect(toggleWho(forMembers(AN, MOM), HY.id, family)).toEqual(everyone);
+  });
+
+  it("EVT-11 the last selected member can't be turned off", () => {
+    expect(toggleWho(forMembers(MOM), MOM.id, family)).toEqual(forMembers(MOM));
+  });
+
+  it("EVT-11 the only member of a family stays on for an everyone plan", () => {
+    expect(toggleWho(everyone, AN.id, [AN.id])).toEqual(everyone);
+  });
+
+  it("D24 ids of members that are gone drop out on the next tap", () => {
+    const gone = "0192f1a0-0000-7000-8000-000000000099";
+
+    expect(toggleWho({ everyone: false, memberIds: [gone, MOM.id] }, AN.id, family)).toEqual(
+      forMembers(AN, MOM),
+    );
+  });
+});
+
+describe("whoFromFilter", () => {
+  it("EVT-11 a new event starts with the Calendar filter's members", () => {
+    expect(whoFromFilter([MOM.id, AN.id])).toEqual({ everyone: false, memberIds: [MOM.id, AN.id] });
+  });
+
+  it("EVT-11 a new event starts as everyone with no filter or an empty one", () => {
+    expect(whoFromFilter(undefined)).toEqual(everyone);
+    expect(whoFromFilter([])).toEqual(everyone);
   });
 });

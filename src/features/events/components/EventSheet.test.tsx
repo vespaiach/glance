@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { Member } from "@/domain/schemas";
 import {
   type EventDraft,
   type EventSheetState,
@@ -9,6 +10,19 @@ import {
 import { EventSheet } from "./EventSheet";
 
 const WHO = { everyone: true, memberIds: [], notes: "" };
+
+const member = (n: number, name: string, color: Member["color"]): Member => ({
+  id: `0195f0a0-0000-7000-8000-00000000050${n}`,
+  name,
+  color,
+  createdAt: `2026-10-0${n}T15:00:00.000Z`,
+});
+
+const MOM = member(1, "Mom", "coral");
+
+const DAD = member(2, "Dad", "mint");
+
+const FAMILY = [MOM, DAD];
 
 const DRAFT: EventDraft = {
   title: "Lunch with Aunt Rosa",
@@ -25,6 +39,7 @@ type Options = {
   time?: TimeFixture;
   offline?: boolean;
   initial?: EventSheetState;
+  members?: Member[];
   onClose?: () => void;
   onDelete?: () => void;
   onSave?: (draft: EventDraft) => void;
@@ -39,6 +54,7 @@ function renderSheet(options: Options = {}) {
       eyebrow="Friday, Oct 9"
       initial={options.initial ?? initialEventSheet(mode === "new" ? BLANK : DRAFT, options.time)}
       clock="12h"
+      members={options.members ?? FAMILY}
       offline={options.offline ?? false}
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
@@ -264,14 +280,18 @@ async function tabOrder(count: number) {
 test("A11Y-04 Tab moves through Close, the fields in visual order, then the actions, and wraps", async () => {
   renderSheet();
 
-  expect(await tabOrder(11)).toEqual([
+  expect(await tabOrder(15)).toEqual([
     screen.getByRole("button", { name: "Close" }),
     screen.getByLabelText("Title"),
     screen.getByRole("button", { name: "Set times" }),
     screen.getByRole("button", { name: "All day" }),
     screen.getByRole("button", { name: /^Starts/ }),
     screen.getByRole("button", { name: /^Ends/ }),
+    screen.getByRole("button", { name: "Everyone" }),
+    screen.getByRole("button", { name: "Mom" }),
+    screen.getByRole("button", { name: "Dad" }),
     screen.getByLabelText("Where"),
+    screen.getByLabelText("Notes"),
     screen.getByRole("button", { name: "Delete" }),
     screen.getByRole("button", { name: "Cancel" }),
     screen.getByRole("button", { name: "Save" }),
@@ -449,4 +469,96 @@ test("TPK-07 an all-day event saves even with the draft times out of order", asy
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   expect(onSave).toHaveBeenCalledWith({ ...DRAFT, end: 690, allDay: true });
+});
+
+function whoPill(name: string) {
+  return within(screen.getByRole("group", { name: "Who" })).getByRole("button", { name });
+}
+
+function pressed() {
+  return ["Everyone", ...FAMILY.map((one) => one.name)].filter(
+    (name) => whoPill(name).getAttribute("aria-pressed") === "true",
+  );
+}
+
+test("EVT-11 Who offers Everyone and each member, all selected for an everyone plan", () => {
+  renderSheet();
+
+  expect(pressed()).toEqual(["Everyone", "Mom", "Dad"]);
+});
+
+test("EVT-11 a plan for some members selects only them", () => {
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, memberIds: [DAD.id] }) });
+
+  expect(pressed()).toEqual(["Dad"]);
+});
+
+test("EVT-11 tapping a member while everyone is on keeps the others", async () => {
+  renderSheet();
+
+  await userEvent.click(whoPill("Mom"));
+
+  expect(pressed()).toEqual(["Dad"]);
+});
+
+test("EVT-11 tapping Everyone when it is selected does nothing", async () => {
+  renderSheet();
+
+  await userEvent.click(whoPill("Everyone"));
+
+  expect(pressed()).toEqual(["Everyone", "Mom", "Dad"]);
+});
+
+test("EVT-11 the last selected member can't be turned off", async () => {
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, memberIds: [DAD.id] }) });
+
+  await userEvent.click(whoPill("Dad"));
+
+  expect(pressed()).toEqual(["Dad"]);
+});
+
+test("EVT-11 selecting every member one by one means everyone", async () => {
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, memberIds: [DAD.id] }) });
+
+  await userEvent.click(whoPill("Mom"));
+
+  expect(pressed()).toEqual(["Everyone", "Mom", "Dad"]);
+});
+
+test("EVT-11 Save sends member ids for some members and everyone for all", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ onSave });
+
+  await userEvent.click(whoPill("Mom"));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await userEvent.click(whoPill("Everyone"));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(onSave).toHaveBeenNthCalledWith(1, { ...DRAFT, everyone: false, memberIds: [DAD.id] });
+  expect(onSave).toHaveBeenNthCalledWith(2, DRAFT);
+});
+
+test("EVT-02 Notes is a 3-row field that edits the draft", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ onSave });
+
+  const notes = screen.getByLabelText("Notes");
+
+  await userEvent.type(notes, "Bring a gift");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(notes).toHaveAttribute("rows", "3");
+  expect(notes).toHaveAttribute("placeholder", "Anything to remember");
+  expect(onSave).toHaveBeenCalledWith({ ...DRAFT, notes: "Bring a gift" });
+});
+
+test("§8.9 a Who change asks Discard changes? on Cancel", async () => {
+  renderSheet();
+
+  await userEvent.click(whoPill("Mom"));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByText("Discard changes?")).toBeInTheDocument();
 });

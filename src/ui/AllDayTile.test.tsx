@@ -1,26 +1,66 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AllDayTile } from "./AllDayTile";
+import type { CalendarEvent, Member } from "@/domain/schemas";
+import { AllDayTile, AllDayTiles } from "./AllDayTile";
 
 const noSchool = {
   label: "All day",
   title: "No school · teacher planning day",
+  who: "Minh-An, Minh-Hy",
   location: "Lincoln Elementary",
-  dot: 4,
+  dot: "soft",
 } as const;
 
-test("TODAY-12 AllDayTile shows All day, the title and the place", () => {
+const MOM: Member = {
+  id: "0195f0a0-0000-7000-8000-000000000501",
+  name: "Mom",
+  color: "coral",
+  createdAt: "2026-10-01T15:00:00.000Z",
+};
+
+const allDay = (n: number, who: Pick<CalendarEvent, "everyone" | "memberIds">): CalendarEvent => ({
+  id: `0195f0a0-0000-7000-8000-00000000001${n}`,
+  title: `Plan ${n}`,
+  startAt: "2026-10-09T00:00:00.000Z",
+  allDay: true,
+  location: "Home",
+  ...who,
+});
+
+test("TODAY-12 AllDayTile shows All day, the title and {who} · {place}", () => {
   render(<AllDayTile {...noSchool} onClick={() => {}} />);
 
   expect(screen.getByRole("button")).toHaveTextContent(
-    "All dayNo school · teacher planning dayLincoln Elementary",
+    "All dayNo school · teacher planning dayMinh-An, Minh-Hy · Lincoln Elementary",
   );
 });
 
-test("TODAY-12 AllDayTile with no place shows only the title", () => {
+test("TODAY-12 AllDayTile with no place shows only who", () => {
   render(<AllDayTile {...noSchool} location={undefined} onClick={() => {}} />);
 
-  expect(screen.getByRole("button")).toHaveTextContent("All dayNo school · teacher planning day");
+  expect(screen.getByRole("button")).toHaveTextContent(
+    "All dayNo school · teacher planning dayMinh-An, Minh-Hy",
+  );
+});
+
+test("TODAY-12 AllDayTiles read who from the family, or Everyone", () => {
+  render(
+    <AllDayTiles
+      events={[
+        allDay(1, { everyone: false, memberIds: [MOM.id] }),
+        allDay(2, { everyone: true, memberIds: [] }),
+      ]}
+      members={[MOM]}
+      label="All day"
+      everyoneLabel="Everyone"
+      onOpenEvent={() => {}}
+    />,
+  );
+
+  const [mom, everyone] = screen.getAllByRole("button");
+
+  expect(mom).toHaveTextContent("Mom · Home");
+  expect(everyone).toHaveTextContent("Everyone · Home");
 });
 
 test("TODAY-12 tapping an AllDayTile opens it", async () => {

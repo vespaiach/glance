@@ -6,6 +6,8 @@ export type MemberFilter = "everyone" | ReadonlySet<string>;
 
 export type RemovalImpact<T> = { solo: T[]; shared: T[] };
 
+export const EVERYONE: EventWho = { everyone: true, memberIds: [] };
+
 export function whoLabel(event: EventWho, members: readonly Member[], everyoneLabel: string) {
   if (event.everyone) return everyoneLabel;
 
@@ -45,6 +47,22 @@ export function nextFreeColor(members: readonly Member[]): MemberColor {
   const [first] = MemberColorSchema.options;
 
   return MemberColorSchema.options.find((color) => !used.has(color)) ?? first;
+}
+
+export function toggleWho(who: EventWho, memberId: string, family: readonly string[]): EventWho {
+  const selected = family.filter(
+    (id) => (who.everyone || who.memberIds.includes(id)) !== (id === memberId),
+  );
+
+  if (selected.length === 0) return who;
+
+  return selected.length === family.length ? EVERYONE : { everyone: false, memberIds: selected };
+}
+
+export function whoFromFilter(memberIds: readonly string[] | undefined): EventWho {
+  if (memberIds === undefined || memberIds.length === 0) return EVERYONE;
+
+  return { everyone: false, memberIds };
 }
 
 export function matchesFilter(event: EventWho, filter: MemberFilter): boolean {

@@ -6,6 +6,7 @@ import {
   endsAfterStart,
   moveStart,
 } from "@/domain/eventTimes";
+import { EVERYONE, type EventWho, toggleWho, whoFromFilter } from "@/domain/members";
 import type { CalendarEvent } from "@/domain/schemas";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
@@ -34,7 +35,9 @@ export type EventSheetState = {
 };
 
 export type EventSheetAction =
-  | { type: "title" | "location"; value: string }
+  | { type: "title" | "location" | "notes"; value: string }
+  | { type: "member"; id: string; family: readonly string[] }
+  | { type: "everyone" }
   | { type: "start" | "end"; value: number }
   | { type: "allDay"; value: boolean }
   | { type: "toggle"; field: TimeFieldName }
@@ -77,13 +80,12 @@ export function eventFromDraft(
   };
 }
 
-export function newEventDraft(now: Date, tz: string): EventDraft {
+export function newEventDraft(now: Date, tz: string, memberIds?: readonly string[]): EventDraft {
   return {
     title: "",
     ...defaultTimes(now, tz),
     location: "",
-    everyone: true,
-    memberIds: [],
+    ...draftWho(whoFromFilter(memberIds)),
     notes: "",
   };
 }
@@ -111,6 +113,8 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
   return (
     draft.title.trim() !== opened.title.trim() ||
     draft.location.trim() !== opened.location.trim() ||
+    draft.notes.trim() !== opened.notes.trim() ||
+    !sameWho(draft, opened) ||
     draft.start !== opened.start ||
     draft.end !== opened.end ||
     draft.allDay !== opened.allDay
@@ -132,7 +136,12 @@ export function eventSheetReducer(
   switch (action.type) {
     case "title":
     case "location":
+    case "notes":
       return edited(state, { ...draft, [action.type]: action.value });
+    case "member":
+      return withWho(state, toggleWho(draft, action.id, action.family));
+    case "everyone":
+      return withWho(state, EVERYONE);
     case "start":
       return edited(state, { ...draft, ...moveStart(draft, action.value) });
     case "end":
@@ -171,6 +180,25 @@ function eventSpan(draft: EventDraft, dayKey: string, tz: string) {
     draft.end === undefined ? {} : { endAt: atMinute(dayKey, draft.end, tz).toISOString() };
 
   return { startAt: atMinute(dayKey, draft.start, tz).toISOString(), ...end };
+}
+
+function withWho(state: EventSheetState, who: EventWho): EventSheetState {
+  if (sameWho(who, state.draft)) return state;
+
+  return edited(state, { ...state.draft, ...draftWho(who) });
+}
+
+function draftWho({ everyone, memberIds }: EventWho) {
+  return { everyone, memberIds: [...memberIds] };
+}
+
+function sameWho(draft: EventWho, opened: EventWho): boolean {
+  if (draft.everyone || opened.everyone) return draft.everyone === opened.everyone;
+
+  return (
+    draft.memberIds.length === opened.memberIds.length &&
+    draft.memberIds.every((id) => opened.memberIds.includes(id))
+  );
 }
 
 function withAllDay({ allDay: _, ...draft }: EventDraft, allDay: boolean): EventDraft {

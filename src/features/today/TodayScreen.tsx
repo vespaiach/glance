@@ -6,6 +6,7 @@ import { type ReactNode, useRef } from "react";
 import {
   type ShownNote,
   useEventsOnDay,
+  useMembers,
   useNotes,
   usePhotoSrc,
   usePhotos,
@@ -87,6 +88,8 @@ export function TodayScreen() {
 
   const events = useSyncedZone(useEventsOnDay(day, tz));
 
+  const members = useMembers();
+
   const notes = useSyncedZone<ShownNote>(useNotes(now));
 
   const photos = useSyncedZone(usePhotos());
@@ -133,6 +136,7 @@ export function TodayScreen() {
       </HeroClock>
       <TodaySchedule
         state={events.state}
+        members={members ?? []}
         retryIn={events.retryIn}
         onRetry={events.retry}
         now={now}

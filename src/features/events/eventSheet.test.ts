@@ -17,6 +17,8 @@ const tz = deviceTimeZone();
 
 const MOM = "0195f0a0-0000-7000-8000-000000000501";
 
+const DAD = "0195f0a0-0000-7000-8000-000000000502";
+
 const LUNCH: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000003",
   title: "Lunch with Aunt Rosa",
@@ -81,6 +83,10 @@ describe("event sheet drafts", () => {
       memberIds: [],
       notes: "",
     });
+  });
+
+  it("EVT-11 a new event starts with the Calendar filter's members", () => {
+    expect(newEventDraft(NOW, tz, [MOM])).toMatchObject({ everyone: false, memberIds: [MOM] });
   });
 });
 
@@ -175,15 +181,49 @@ describe("event sheet reducer", () => {
     expect(eventSheetReducer(missing, { type: "location", value: "Park" }).titleError).toBe(false);
   });
 
-  it("EVT-02 title and where edits update the draft", () => {
+  it("EVT-02 title, where and notes edits update the draft", () => {
     const actions = [
       { type: "title", value: "Picnic" },
       { type: "location", value: "Park" },
+      { type: "notes", value: "Bring a blanket" },
     ] as const;
 
     const next = actions.reduce(eventSheetReducer, closed);
 
-    expect(next.draft).toMatchObject({ title: "Picnic", location: "Park" });
+    expect(next.draft).toMatchObject({
+      title: "Picnic",
+      location: "Park",
+      notes: "Bring a blanket",
+    });
+  });
+
+  it("EVT-11 a member tap follows the Who rules", () => {
+    const next = eventSheetReducer(closed, { type: "member", id: MOM, family: [DAD, MOM] });
+
+    expect(next.draft).toMatchObject({ everyone: false, memberIds: [DAD] });
+  });
+
+  it("EVT-11 Everyone selects the whole family", () => {
+    const forMom = initialEventSheet({ ...DRAFT, everyone: false, memberIds: [MOM] });
+
+    expect(eventSheetReducer(forMom, { type: "everyone" }).draft).toMatchObject({
+      everyone: true,
+      memberIds: [],
+    });
+  });
+
+  it("EVT-11 Everyone when everyone is selected leaves the sheet as it is", () => {
+    const failed = eventSheetReducer(initialEventSheet({ ...DRAFT, title: "" }), { type: "save" });
+
+    expect(eventSheetReducer(failed, { type: "everyone" })).toBe(failed);
+  });
+
+  it("EVT-11 a Who change clears the errors", () => {
+    const failed = eventSheetReducer(initialEventSheet({ ...DRAFT, title: "" }), { type: "save" });
+
+    const next = eventSheetReducer(failed, { type: "member", id: MOM, family: [DAD, MOM] });
+
+    expect(next.titleError).toBe(false);
   });
 
   it("EVT-06 Delete asks for the inline confirm", () => {
@@ -317,8 +357,16 @@ describe("event sheet discard", () => {
     ["end", { end: 790 }],
     ["no end", { end: undefined }],
     ["place", { location: "Park" }],
+    ["notes", { notes: "Bring a gift" }],
+    ["who", { everyone: false, memberIds: [MOM] }],
   ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
     expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
+  });
+
+  it("§8.9 spaces around the notes and the order of members don't make the draft dirty", () => {
+    const opened = { ...DRAFT, everyone: false, memberIds: [MOM, DAD], notes: "Gift" };
+
+    expect(isDirty({ ...opened, memberIds: [DAD, MOM], notes: " Gift " }, opened)).toBe(false);
   });
 
   it("§8.9 the time fixtures are part of the opened draft", () => {

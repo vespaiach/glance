@@ -1,6 +1,7 @@
 import type { EventStatus } from "@/domain/eventStatus";
 import type {
   CalendarEvent,
+  Member,
   Note,
   NoteTone,
   Photo,
@@ -120,6 +121,8 @@ export const gallery = {
     discardEdit: "Discard changes? · edit",
     allDay: "All day",
     allDayPhone: "All day · phone",
+    members: "Two members with notes",
+    membersPhone: "Two members · phone",
   },
   button: "Add event",
   danger: "Delete",
@@ -327,6 +330,26 @@ const sampleId = (n: number) => `0195f0a0-0000-7000-8000-${String(n).padStart(12
 
 const EVERYONE = { everyone: true, memberIds: [] };
 
+const FAMILY_ROWS: readonly (readonly [string, Member["color"]])[] = [
+  ["Minh-An", "lilac"],
+  ["Minh-Hy", "sky"],
+  ["Mom", "coral"],
+  ["Dad", "mint"],
+  ["Thang", "sun"],
+];
+
+export const GALLERY_FAMILY: readonly Member[] = FAMILY_ROWS.map(([name, color], index) => ({
+  id: sampleId(501 + index),
+  name,
+  color,
+  createdAt: `2026-10-01T15:0${index}:00.000Z`,
+}));
+
+const forMembers = (...indexes: number[]) => ({
+  everyone: false,
+  memberIds: indexes.map((index) => sampleId(501 + index)),
+});
+
 export const TODAY_EVENTS: readonly CalendarEvent[] = [
   {
     id: sampleId(1),
@@ -369,7 +392,15 @@ export const ALL_DAY_EVENTS = {
     location: "Lincoln Elementary",
     startAt: "2026-10-16T00:00:00.000Z",
     allDay: true,
-    ...EVERYONE,
+    ...forMembers(0, 1),
+  },
+  conference: {
+    id: sampleId(6),
+    title: "Mom at the design conference",
+    location: "Convention Center",
+    startAt: "2026-10-16T00:00:00.000Z",
+    allDay: true,
+    ...forMembers(2),
   },
 } as const satisfies Record<string, CalendarEvent>;
 

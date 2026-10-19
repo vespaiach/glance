@@ -3,7 +3,7 @@ import { type Clock, formatDayTitle } from "@/domain/time";
 import { EventSheet, initialEventSheet, newEventDraft } from "@/features/events";
 import { Button } from "@/ui/Button";
 import { GalleryGroup } from "./GalleryGroup";
-import { GALLERY_TZ, gallery, NOW } from "./samples";
+import { GALLERY_FAMILY, GALLERY_TZ, gallery, NOW } from "./samples";
 
 type Demo = {
   label: string;
@@ -14,6 +14,7 @@ type Demo = {
   compact?: boolean;
   discard?: boolean;
   allDay?: true;
+  members?: true;
 };
 
 const words = gallery.eventSheet;
@@ -32,6 +33,8 @@ const DEMOS: readonly Demo[] = [
   { label: words.discardEdit, mode: "edit", discard: true, compact: true },
   { label: words.allDay, mode: "edit", allDay: true },
   { label: words.allDayPhone, mode: "edit", allDay: true, compact: true },
+  { label: words.members, mode: "edit", members: true },
+  { label: words.membersPhone, mode: "edit", members: true, compact: true },
 ];
 
 const LUNCH = {
@@ -44,6 +47,12 @@ const LUNCH = {
   notes: "",
 };
 
+const FOR_TWO = {
+  everyone: false,
+  memberIds: GALLERY_FAMILY.slice(1, 3).map((member) => member.id),
+  notes: "Bring the birthday card",
+};
+
 export function EventSheetGallery() {
   const [open, setOpen] = useState<Demo | null>(null);
 
@@ -52,6 +61,8 @@ export function EventSheetGallery() {
   const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ) : LUNCH;
 
   const allDay = open?.allDay && { allDay: open.allDay };
+
+  const members = open?.members && FOR_TWO;
 
   return (
     <GalleryGroup title={gallery.groups.eventSheet}>
@@ -65,8 +76,9 @@ export function EventSheetGallery() {
           key={open.label}
           mode={open.mode}
           eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
-          initial={initialEventSheet({ ...draft, ...allDay }, open.time, open.discard)}
+          initial={initialEventSheet({ ...draft, ...allDay, ...members }, open.time, open.discard)}
           clock={open.clock ?? "12h"}
+          members={GALLERY_FAMILY}
           offline={open.offline ?? false}
           compact={open.compact}
           onClose={close}
