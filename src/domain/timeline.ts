@@ -44,6 +44,22 @@ export type TimelineLayout<T> = {
   hiddenOutsideSpan: number;
 };
 
+export type PlanCardInput = {
+  width: number;
+  height: number;
+  titleSize: number;
+  badge: boolean;
+  note: boolean;
+};
+
+export type PlanCard = {
+  oneLine: boolean;
+  time: "range" | "start" | "none";
+  titleLines: 1 | 2;
+  meta: boolean;
+  note: boolean;
+};
+
 type TimelinePlan = Pick<CalendarEvent, "startAt" | "endAt">;
 
 type Interval<T> = { plan: T; start: number; end: number };
@@ -78,6 +94,28 @@ const LINE_GAP = 12;
 
 const OVERLAP_SLACK = 0.5;
 
+const CARD_GAP = 4;
+
+const CARD_PADDING = 16;
+
+const TIME_LINE = 18;
+
+const BADGE_LINE = 24;
+
+const CARD_LINE_GAP = 4;
+
+const DETAIL_LINE = 26;
+
+const RANGE_WIDTH = 260;
+
+const ONE_LINE_TIME_WIDTH = 200;
+
+const RAIN_CHIP = 50;
+
+const GUTTER_WEATHER = 46;
+
+const GUTTER_NOW_CLEARANCE = 4;
+
 export function timelineLayout<T extends TimelinePlan>(
   plans: readonly T[],
   { day, now, tz }: TimelineContext,
@@ -104,6 +142,66 @@ export function timelineLayout<T extends TimelinePlan>(
     now: nowMarker,
     hiddenOutsideSpan: intervals.filter((item) => item.start < first || item.end > last).length,
   };
+}
+
+export function planCard({ width, height, titleSize, badge, note }: PlanCardInput): PlanCard {
+  const room = height - CARD_GAP;
+
+  const titleLine = Math.ceil(titleSize * 1.2);
+
+  const firstLines =
+    CARD_PADDING + (badge ? BADGE_LINE : TIME_LINE) + CARD_LINE_GAP + titleLine + 2;
+
+  if (room < firstLines) {
+    return {
+      oneLine: true,
+      time: width >= ONE_LINE_TIME_WIDTH ? "start" : "none",
+      titleLines: 1,
+      meta: false,
+      note: false,
+    };
+  }
+
+  const titleLines = room >= firstLines + titleLine + CARD_LINE_GAP ? 2 : 1;
+
+  const rest = room - firstLines - (titleLines - 1) * titleLine;
+
+  const meta = rest >= DETAIL_LINE;
+
+  return {
+    oneLine: false,
+    time: width >= RANGE_WIDTH ? "range" : "start",
+    titleLines,
+    meta,
+    note: meta && note && rest >= 2 * DETAIL_LINE,
+  };
+}
+
+export function planRain(
+  start: number,
+  end: number,
+  rainByHour: ReadonlyMap<number, number>,
+): number {
+  let chance = 0;
+  for (let hour = Math.floor(start / 60); hour * 60 < end; hour++) {
+    chance = Math.max(chance, rainByHour.get(hour) ?? 0);
+  }
+
+  return chance >= RAIN_CHIP ? chance : 0;
+}
+
+export function gutterWeather(
+  mark: Pick<HourMark, "label" | "top">,
+  rowHeight: number,
+  nowTop: number | null,
+): boolean {
+  if (!mark.label || rowHeight < GUTTER_WEATHER) return false;
+
+  return (
+    nowTop === null ||
+    nowTop < mark.top + GUTTER_NOW_CLEARANCE ||
+    nowTop > mark.top + GUTTER_WEATHER
+  );
 }
 
 function intervalOf<T extends TimelinePlan>(plan: T, tz: string): Interval<T> {

@@ -67,6 +67,7 @@ import {
   ZONE_STATES,
 } from "./samples";
 import { TimeEntryDemo } from "./TimeEntryDemo";
+import { TimelineGallery } from "./TimelineGallery";
 import { TodayGallery } from "./TodayGallery";
 import { WeatherGallery } from "./WeatherGallery";
 
@@ -136,6 +137,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <ZoneGroup />
       <TodayGallery season={season} />
       <CalendarGallery />
+      <TimelineGallery />
       <EventSheetGallery />
       <FamilyGallery />
       <WeatherGallery />
