@@ -68,7 +68,9 @@ function Clock({
       letterSpacing: size === 'xl' ? 'var(--type-clock-ls)' : 'var(--type-display-xl-ls)',
       fontVariantNumeric: 'tabular-nums'
     }
-  }, h, ":", m), hour12 && /*#__PURE__*/React.createElement("span", {
+  }, h, /*#__PURE__*/React.createElement("span", {
+    style: { animation: 'kskBlink 2s steps(1, end) infinite' }
+  }, ":"), m), hour12 && /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: 'var(--font-mono)',
       fontSize: size === 'xl' ? 28 : 18,
@@ -1470,7 +1472,7 @@ function KioskApp() {
     onClose: () => setSettings(false)
   })));
 }
-ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(KioskApp, null));
+if (document.getElementById('root') && document.getElementById('root').dataset.kioskDemo !== undefined) ReactDOM.createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(KioskApp, null));
 })(); } catch (e) { __ds_ns.__errors.push({ path: "ui_kits/kiosk/KioskApp.jsx", error: String((e && e.message) || e) }); }
 
 // ui_kits/kiosk/NotesScreen.jsx
