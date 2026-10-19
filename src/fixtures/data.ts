@@ -252,6 +252,7 @@ export const FIXTURE_MANY_EVENTS: CalendarEvent[] = [
 export const FIXTURE_SHEET_TARGETS = {
   event: fixtureId(1, 3),
   allDay: FIXTURE_ALL_DAY.noSchool.id,
+  past: fixtureId(1, 1),
   note: fixtureId(2, 1),
   photo: fixtureId(3, 8),
   photoMeta: fixtureId(3, 7),

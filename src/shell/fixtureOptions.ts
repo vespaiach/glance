@@ -72,11 +72,15 @@ function startsOffline(params: FixtureParams): boolean {
 function fixtureSheetKind(params: FixtureParams, today: string): SheetRequest | null {
   const time = params.time && { time: params.time };
 
+  const edit = !params.details && { edit: true as const };
+
   switch (params.sheet) {
     case "event":
-      return { kind: "event", id: fixtureSheetTargets.event, ...time };
+      return { kind: "event", id: fixtureSheetTargets.event, ...time, ...edit };
     case "allday":
-      return { kind: "event", id: fixtureSheetTargets.allDay };
+      return { kind: "event", id: fixtureSheetTargets.allDay, ...edit };
+    case "past":
+      return { kind: "event", id: fixtureSheetTargets.past, ...edit };
     case "newevent":
       return { kind: "newevent", day: today, ...time };
     case "note":

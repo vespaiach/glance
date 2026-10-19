@@ -83,10 +83,10 @@ function renderSheet(
   );
 }
 
-test("EVT-01 an event request opens Edit event filled from the event", async () => {
+test("EVT-01 an edit request opens Edit event filled from the event", async () => {
   await store.db.events.put(synced(LUNCH));
 
-  renderSheet({ kind: "event", id: LUNCH.id });
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   expect(await screen.findByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
   expect(screen.getByText("Friday, Oct 9")).toBeInTheDocument();
@@ -112,7 +112,7 @@ test("TPK-02 the time fixture is the sheet's first state", async () => {
 test("TPK-09 the Clock setting drives the time fields", async () => {
   await store.db.events.put(synced(LUNCH));
 
-  renderSheet({ kind: "event", id: LUNCH.id }, { clock: "24h" });
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true }, { clock: "24h" });
 
   expect(await screen.findByRole("button", { name: "Starts, 12:00. Change" })).toBeInTheDocument();
 });
@@ -128,7 +128,7 @@ test("EVT-05 offline the sheet saves for later", async () => {
 test("EVT-06 Delete event removes the event and closes the sheet", async () => {
   await store.db.events.put(synced(LUNCH));
 
-  renderSheet({ kind: "event", id: LUNCH.id });
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
   await userEvent.click(screen.getByRole("button", { name: "Delete event" }));
@@ -153,7 +153,7 @@ test("§8.9 a request with discard opens on Discard changes?", async () => {
 
 test("§8.9 Cancel on a changed event asks, and Discard closes the sheet without saving", async () => {
   await store.db.events.put(synced(LUNCH));
-  renderSheet({ kind: "event", id: LUNCH.id });
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await userEvent.type(await screen.findByLabelText("Title"), "!");
   await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -193,7 +193,7 @@ test("EVT-07 Add event queues the new event on the request's day and closes the 
 test("EVT-07 Save keeps the event's id and day", async () => {
   await store.db.events.put(synced(LUNCH));
 
-  renderSheet({ kind: "event", id: LUNCH.id });
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await userEvent.type(await screen.findByLabelText("Title"), "!");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -230,7 +230,7 @@ const NO_SCHOOL: CalendarEvent = {
 test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
   await store.db.events.put(synced(NO_SCHOOL));
 
-  renderSheet({ kind: "event", id: NO_SCHOOL.id }, {}, "America/Los_Angeles");
+  renderSheet({ kind: "event", id: NO_SCHOOL.id, edit: true }, {}, "America/Los_Angeles");
 
   expect(await screen.findByText("Friday, Oct 16")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "All day" })).toHaveAttribute("aria-pressed", "true");
@@ -288,7 +288,7 @@ test("EVT-11 a new event request for some members starts with them and saves the
 test("EVT-02 Notes save trimmed", async () => {
   await store.db.events.put(synced(LUNCH));
 
-  renderSheet({ kind: "event", id: LUNCH.id });
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await userEvent.type(await screen.findByLabelText("Notes"), "  Bring a gift  ");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -296,4 +296,65 @@ test("EVT-02 Notes save trimmed", async () => {
   await waitFor(async () =>
     expect((await store.db.events.get(LUNCH.id))?.notes).toBe("Bring a gift"),
   );
+});
+
+describe("Event details", () => {
+  const CALL: CalendarEvent = {
+    ...LUNCH,
+    id: "0195f0a0-0000-7000-8000-000000000002",
+    title: "Grandma’s video call",
+    startAt: new Date(2026, 9, 9, 10, 30).toISOString(),
+    endAt: new Date(2026, 9, 9, 11, 15).toISOString(),
+  };
+
+  const DROP_OFF: CalendarEvent = {
+    ...LUNCH,
+    id: "0195f0a0-0000-7000-8000-000000000001",
+    title: "School drop-off",
+    startAt: new Date(2026, 9, 9, 7, 45).toISOString(),
+    endAt: new Date(2026, 9, 9, 8, 15).toISOString(),
+  };
+
+  test("EVT-09 tapping an event opens Event details with Edit", async () => {
+    await store.db.events.put(synced(LUNCH));
+
+    renderSheet({ kind: "event", id: LUNCH.id });
+
+    expect(await screen.findByRole("dialog", { name: "Lunch with Aunt Rosa" })).toBeInTheDocument();
+    expect(screen.getByText("Friday, Oct 9")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.queryByText("Happening now")).not.toBeInTheDocument();
+  });
+
+  test("EVT-09 a running event today shows Happening now", async () => {
+    await store.db.events.put(synced(CALL));
+
+    renderSheet({ kind: "event", id: CALL.id });
+
+    expect(await screen.findByText("Happening now")).toBeInTheDocument();
+  });
+
+  test("EVT-09 an ended event opens read-only details even on an edit request", async () => {
+    await store.db.events.put(synced(DROP_OFF));
+
+    renderSheet({ kind: "event", id: DROP_OFF.id, edit: true });
+
+    expect(await screen.findByRole("dialog", { name: "School drop-off" })).toBeInTheDocument();
+    expect(screen.getByText("Ended")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+  });
+
+  test("EVT-07 Save from details writes the event and returns to its details", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    await userEvent.type(screen.getByLabelText("Title"), "!");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(screen.getByRole("dialog", { name: "Lunch with Aunt Rosa!" })).toBeInTheDocument();
+    await waitFor(async () =>
+      expect((await store.db.events.get(LUNCH.id))?.title).toBe("Lunch with Aunt Rosa!"),
+    );
+  });
 });

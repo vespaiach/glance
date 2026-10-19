@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useEvent, useEventsRepo, useMembers } from "@/data/repos";
 import { eventDayKey } from "@/domain/allDay";
+import { type DetailsStatus, detailsStatus } from "@/domain/eventStatus";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
 import { formatDayTitle } from "@/domain/time";
@@ -29,10 +30,11 @@ type SheetFrameProps = {
   day: string;
   id: string;
   initial: EventSheetState;
+  status?: DetailsStatus;
   onDelete: () => void;
 };
 
-type Fixtures = { time?: TimeFixture; discard?: true };
+type Fixtures = { time?: TimeFixture; discard?: true; edit?: true };
 
 type NewProps = Fixtures & { day: string; memberIds?: readonly string[] };
 
@@ -43,7 +45,13 @@ export function EventSheetScreen() {
 
   if (sheet?.kind === "event")
     return (
-      <LoadedEventSheet key={sheet.id} id={sheet.id} time={sheet.time} discard={sheet.discard} />
+      <LoadedEventSheet
+        key={sheet.id}
+        id={sheet.id}
+        time={sheet.time}
+        discard={sheet.discard}
+        edit={sheet.edit}
+      />
     );
 
   if (sheet?.kind === "newevent")
@@ -60,7 +68,7 @@ export function EventSheetScreen() {
   return null;
 }
 
-function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
+function SheetFrame({ mode, day, id, initial, status, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
 
   const events = useEventsRepo();
@@ -76,7 +84,6 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
   const members = useMembers() ?? [];
 
   const onSave = (draft: EventDraft) => {
-    close();
     void events.put(eventFromDraft(draft, day, id, tz));
   };
 
@@ -88,6 +95,7 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
       clock={clock}
       members={members}
       offline={!online}
+      status={status}
       compact={breakpoint === "phone"}
       onClose={close}
       onDelete={onDelete}
@@ -97,7 +105,7 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
   );
 }
 
-function EditEventSheet({ event, time, discard }: EditProps) {
+function EditEventSheet({ event, time, discard, edit }: EditProps) {
   const { close } = useSheetHost();
 
   const events = useEventsRepo();
@@ -105,6 +113,10 @@ function EditEventSheet({ event, time, discard }: EditProps) {
   const tz = useTimeZone();
 
   const now = useNow("minute");
+
+  const status = detailsStatus(event, now, tz);
+
+  const ended = status === "ended";
 
   const onDelete = () => {
     close();
@@ -116,7 +128,13 @@ function EditEventSheet({ event, time, discard }: EditProps) {
       mode="edit"
       day={eventDayKey(event, tz)}
       id={event.id}
-      initial={initialEventSheet(draftFromEvent(event, tz, now), time, discard)}
+      initial={initialEventSheet(
+        draftFromEvent(event, tz, now),
+        time,
+        discard && !ended,
+        !edit || ended,
+      )}
+      status={status}
       onDelete={onDelete}
     />
   );

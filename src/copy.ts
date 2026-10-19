@@ -154,6 +154,13 @@ export const copy = {
       offlineTitle: "You’re offline",
       offlineBody: "Changes save on this screen and sync when the connection is back.",
     },
+    details: {
+      edit: "Edit",
+      wholeDay: "Whole day",
+      happeningNow: "Happening now",
+      ended: "Ended",
+      endedBody: "This event has ended and can’t be changed.",
+    },
     swatches: {
       spring: ["Lime", "Pink", "Mint", "Lilac", "Cream"],
       summer: ["Sun", "Coral", "Sky", "Lime", "Cream"],

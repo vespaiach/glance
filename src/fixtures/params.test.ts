@@ -85,6 +85,10 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("allday=1")).toEqual({ allday: true });
   });
 
+  it("EVT-09 reads sheet=past and details=1", () => {
+    expect(parseFixtureParams("sheet=past&details=1")).toEqual({ sheet: "past", details: true });
+  });
+
   it("§8.9 reads discard=1", () => {
     expect(parseFixtureParams("sheet=newnote&discard=1")).toEqual({
       sheet: "newnote",

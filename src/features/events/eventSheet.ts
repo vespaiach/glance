@@ -25,6 +25,8 @@ export type EventDraft = EventTimes & {
 
 export type TimeFieldName = "start" | "end";
 
+export type EventSheetView = "details" | "edit";
+
 export type EventSheetState = {
   draft: EventDraft;
   opened: EventDraft;
@@ -32,6 +34,9 @@ export type EventSheetState = {
   titleError: boolean;
   endError: boolean;
   confirm: SheetConfirm;
+  view: EventSheetView;
+  fromDetails: boolean;
+  discardTo: "details" | null;
 };
 
 export type EventSheetAction =
@@ -45,8 +50,11 @@ export type EventSheetAction =
   | { type: "done" }
   | { type: "save" }
   | { type: "askDelete" }
-  | { type: "askDiscard" }
-  | { type: "keepEditing" };
+  | { type: "askDiscard"; to?: "details" }
+  | { type: "keepEditing" }
+  | { type: "edit" }
+  | { type: "back" }
+  | { type: "saved" };
 
 export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): EventDraft {
   return {
@@ -94,6 +102,7 @@ export function initialEventSheet(
   draft: EventDraft,
   time?: TimeFixture,
   discard = false,
+  details = false,
 ): EventSheetState {
   const opened = fixtureDraft(draft, time);
 
@@ -102,10 +111,13 @@ export function initialEventSheet(
   return {
     draft: opened,
     opened,
-    picker: discard ? null : picker,
+    picker: discard || details ? null : picker,
     titleError: false,
     endError: time === "error",
     confirm: discard ? "discard" : null,
+    view: details && !discard ? "details" : "edit",
+    fromDetails: details,
+    discardTo: details && discard ? "details" : null,
   };
 }
 
@@ -159,10 +171,30 @@ export function eventSheetReducer(
     case "askDelete":
       return { ...state, confirm: "delete" };
     case "askDiscard":
-      return { ...state, confirm: "discard", picker: null };
+      return { ...state, confirm: "discard", picker: null, discardTo: action.to ?? null };
     case "keepEditing":
       return { ...state, confirm: null };
+    case "edit":
+      return { ...state, view: "edit" };
+    case "back":
+      return inDetails(state, state.opened);
+    case "saved":
+      return inDetails(state, draft);
   }
+}
+
+function inDetails(state: EventSheetState, opened: EventDraft): EventSheetState {
+  return {
+    ...state,
+    draft: opened,
+    opened,
+    picker: null,
+    titleError: false,
+    endError: false,
+    confirm: null,
+    view: "details",
+    discardTo: null,
+  };
 }
 
 function eventTimes(event: CalendarEvent, tz: string, now: Date): EventTimes & { allDay?: true } {

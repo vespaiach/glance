@@ -1,4 +1,4 @@
-import { eventStatus } from "./eventStatus";
+import { detailsStatus, eventStatus } from "./eventStatus";
 import { deviceTimeZone } from "./zone";
 
 const tz = deviceTimeZone();
@@ -50,4 +50,26 @@ describe("eventStatus of an all-day event", () => {
       expect(eventStatus(event, new Date("2026-10-09T12:00:00Z"), zone)).toBe("allDay");
     },
   );
+});
+
+describe("detailsStatus", () => {
+  it.each([
+    ["ended today", { startAt: iso(9, 9, 0), endAt: iso(9, 9, 30) }, "ended"],
+    ["running", { startAt: iso(9, 10, 30), endAt: iso(9, 11, 15) }, "now"],
+    ["later today", { startAt: iso(9, 12, 0), endAt: iso(9, 13, 0) }, null],
+    ["with no end started today", { startAt: iso(9, 9, 0) }, "now"],
+    ["with no end on an earlier day", { startAt: iso(8, 9, 0) }, "ended"],
+    ["on an earlier day", { startAt: iso(2, 19, 0), endAt: iso(2, 21, 0) }, "ended"],
+    ["on a later day", { startAt: iso(14, 16, 0), endAt: iso(14, 16, 30) }, null],
+  ] as const)("EVT-09 an event %s shows %s", (_, event, expected) => {
+    expect(detailsStatus(event, now, tz)).toBe(expected);
+  });
+
+  it.each([
+    ["today", "2026-10-09T00:00:00.000Z", null],
+    ["on an earlier day", "2026-10-08T00:00:00.000Z", "ended"],
+    ["on a later day", "2026-10-16T00:00:00.000Z", null],
+  ] as const)("EVT-09 an all-day event %s shows %s", (_, startAt, expected) => {
+    expect(detailsStatus({ startAt, allDay: true }, now, tz)).toBe(expected);
+  });
 });

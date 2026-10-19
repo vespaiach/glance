@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.20 |
+| Status | v2.21 |
 | Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.63) · [`design/handoff/`](design/handoff/README.md) (v8) |
 
@@ -175,7 +175,7 @@ Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered
 | `TimeZoneProvider` | `useTimeZone()` = the saved place's zone, else the device's (LOC-06) |
 | `SeasonProvider` | Active season as a StyleX theme on a `display: contents` wrapper; re-checks at midnight |
 | `NetworkProvider` | `online` (`navigator.onLine` and `meta.status.online`), `showOfflinePill` after 30 s, `savedAt` |
-| `SheetHost` | One open sheet `{ kind, … }`; closes on route change. `newevent` carries the day and the Calendar filter's `memberIds` (absent or empty = everyone, EVT-11) |
+| `SheetHost` | One open sheet `{ kind, … }`; closes on route change. `event` opens Event details (EVT-09); its `edit` flag opens Edit event directly and is only set by the `sheet=event\|allday\|past` fixtures without `details=1` (an ended event still opens details). `newevent` carries the day and the Calendar filter's `memberIds` (absent or empty = everyone, EVT-11) |
 | `IdleProvider` | Touch timer → `/today`, or `/ambient` during ambient hours; enters and leaves Ambient on the schedule; paused while a text field is focused; applies a waiting update when idle (§4.5) |
 
 Nesting: Now → Repo → Settings → TimeZone → Season → Network → SheetHost → FixtureParams → Idle. `DisplayProviders` wraps the views and `/ambient`, so moving to Ambient keeps the clock, DB and sync host. `/signin` uses `SignedOutProviders` (no account DB).
@@ -193,7 +193,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 ### 4.4 Screens and components
 - **Container / presentational.** `features/*/XScreen.tsx` reads hooks, `useNow()` and `useTimeZone()` and passes plain props. `ui` components are pure (props + optional `xstyle`), get words as props (they can't import `copy`), and render `<button>` only when given `onClick`.
 - **Rules are pure** in `domain` (`eventStatus`, `todayHero`, `timeline`, `members`, `pictureOfDay`, `inAmbient`, `zoneState`, …) and unit-tested. Components hold no business rules.
-- **Multi-state flows** are a discriminated union + reducer, with the fixture param as initial state: event and note sheets (`details | editing | discard`, where Cancel and Save from an edit opened in details return to `details`; Discard changes? via `ui/discard.ts`), the Family sheet (`list | confirm-remove{id}` with the add draft and its error), the Calendar view (selected day, filter `everyone | Set<id>`, `span24`, date picker open; tab-only), photo sheet, weather setup (`editing | searching | choosing | locating | confirm-zone`, shared by Weather, Settings › Location and the sign-in location step through `useWeatherSetup`), sign-in, upload tiles, slideshow (`playing | paused | pinned`), full-screen photo, QR tile, sidebar.
+- **Multi-state flows** are a discriminated union + reducer, with the fixture param as initial state: event and note sheets (`details | editing | discard`, where Cancel and Save from an edit opened in details return to `details`; Discard changes? via `ui/discard.ts`; the event sheet keeps `view`, `fromDetails` and `discardTo`, and Event details read the reducer's `opened` draft so a Save shows the new values at once, with the pill from `domain/eventStatus.detailsStatus` (`now | ended | null`) and the time from `domain/time.rangeParts`), the Family sheet (`list | confirm-remove{id}` with the add draft and its error), the Calendar view (selected day, filter `everyone | Set<id>`, `span24`, date picker open; tab-only), photo sheet, weather setup (`editing | searching | choosing | locating | confirm-zone`, shared by Weather, Settings › Location and the sign-in location step through `useWeatherSetup`), sign-in, upload tiles, slideshow (`playing | paused | pinned`), full-screen photo, QR tile, sidebar.
 - **Layouts.** Each feature's `layout.ts` maps the breakpoint (`useBreakpoint()`, spec §5.1) to a StyleX grid. Today uses `todayLayout(width, height)` → `stacked` (< 1024 px) · `portrait` · `twoColumn` (1024–1180 px landscape) · `threeColumn`, plus `noteColumns` and `noteLimit` (TODAY-09, TODAY-13); `threeColumn` fits the window with no scroll and scales type by `min(width ÷ 1920, height ÷ 1080)` clamped to 1–1.5, and the Now panel sizes the Clock, temperature and title with container units.
 - **Day timeline** (D25): `ui/DayTimeline` renders `timelineLayout(…)` for Calendar and Today; the reflow animates `top` and `height` over 280 ms.
 - **Picture of the day** is its own panel (`PictureOfDay`). `pictureOfDay(rows, dayKey, tz, seed)` replays a seeded cycle day by day over all photo rows (tombstones included), with "On this day" first, so the pick is stable for every display. Tap → `/photos?photo={id}`, which opens the slideshow pinned and paused on it.

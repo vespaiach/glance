@@ -11,6 +11,7 @@ import {
   formatRange,
   formatWeekday,
   minutesOfDay,
+  rangeParts,
   timeParts,
 } from "./time";
 import { deviceTimeZone, parseDateKey } from "./zone";
@@ -49,6 +50,15 @@ describe("time", () => {
     [at(15, 30), undefined, "12h", "3:30"],
   ] as const)("TIME-01 row range %i–%s in %s is %s", (start, end, clock, expected) => {
     expect(formatRange(start, end, clock)).toBe(expected);
+  });
+
+  it.each([
+    [at(12, 0), at(13, 0), "12h", { time: "12:00 – 1:00", meridiem: "PM" }],
+    [at(11, 30), at(12, 15), "12h", { time: "11:30 AM – 12:15", meridiem: "PM" }],
+    [at(15, 30), undefined, "12h", { time: "3:30", meridiem: "PM" }],
+    [at(12, 0), at(13, 0), "24h", { time: "12:00 – 13:00" }],
+  ] as const)("EVT-09 details time %i–%s in %s reads %o", (start, end, clock, expected) => {
+    expect(rangeParts(start, end, clock)).toEqual(expected);
   });
 
   it.each([

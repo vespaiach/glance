@@ -99,6 +99,9 @@ describe("event sheet fixtures", () => {
       endError: false,
       confirm: null,
       opened: DRAFT,
+      view: "edit",
+      fromDetails: false,
+      discardTo: null,
     });
   });
 
@@ -481,6 +484,90 @@ describe("event sheet all day", () => {
       location: "Café",
       everyone: true,
       memberIds: [],
+    });
+  });
+});
+
+describe("event details", () => {
+  const details = initialEventSheet(DRAFT, undefined, false, true);
+
+  const editing = eventSheetReducer(details, { type: "edit" });
+
+  const changed = eventSheetReducer(editing, { type: "title", value: "Picnic" });
+
+  it("EVT-09 details=1 opens Event details with the draft as opened", () => {
+    expect(details).toMatchObject({ view: "details", fromDetails: true, draft: DRAFT });
+  });
+
+  it("EVT-09 details=1 ignores a time picker fixture", () => {
+    expect(initialEventSheet(DRAFT, "start", false, true).picker).toBeNull();
+  });
+
+  it("EVT-10 Edit swaps the sheet to Edit event", () => {
+    expect(editing).toMatchObject({ view: "edit", fromDetails: true, draft: DRAFT });
+  });
+
+  it("EVT-10 going back to details drops the changes", () => {
+    const open = eventSheetReducer(changed, { type: "toggle", field: "start" });
+
+    expect(eventSheetReducer(open, { type: "back" })).toMatchObject({
+      view: "details",
+      draft: DRAFT,
+      picker: null,
+      confirm: null,
+    });
+  });
+
+  it("EVT-10 going back clears the field errors", () => {
+    const failed = eventSheetReducer(eventSheetReducer(editing, { type: "title", value: "" }), {
+      type: "save",
+    });
+
+    expect(eventSheetReducer(failed, { type: "back" })).toMatchObject({
+      titleError: false,
+      endError: false,
+    });
+  });
+
+  it("EVT-10 Cancel asks to discard and remembers to return to details", () => {
+    expect(eventSheetReducer(changed, { type: "askDiscard", to: "details" })).toMatchObject({
+      confirm: "discard",
+      discardTo: "details",
+    });
+  });
+
+  it("EVT-10 the close button asks to discard and closes afterwards", () => {
+    const asking = eventSheetReducer(changed, { type: "askDiscard", to: "details" });
+
+    const kept = eventSheetReducer(asking, { type: "keepEditing" });
+
+    expect(eventSheetReducer(kept, { type: "askDiscard" }).discardTo).toBeNull();
+  });
+
+  it("EVT-10 Discard from Cancel returns to details", () => {
+    const asking = eventSheetReducer(changed, { type: "askDiscard", to: "details" });
+
+    expect(eventSheetReducer(asking, { type: "back" })).toMatchObject({
+      view: "details",
+      draft: DRAFT,
+      confirm: null,
+      discardTo: null,
+    });
+  });
+
+  it("EVT-07 Save from details returns to details with the new values", () => {
+    const saved = eventSheetReducer(changed, { type: "saved" });
+
+    expect(saved).toMatchObject({ view: "details", opened: { title: "Picnic" } });
+    expect(isDirty(saved.draft, saved.opened)).toBe(false);
+  });
+
+  it("EVT-10 discard=1 with details=1 opens the edit with the prompt that returns to details", () => {
+    expect(initialEventSheet(DRAFT, undefined, true, true)).toMatchObject({
+      view: "edit",
+      fromDetails: true,
+      confirm: "discard",
+      discardTo: "details",
     });
   });
 });

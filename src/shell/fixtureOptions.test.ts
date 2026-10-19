@@ -33,6 +33,7 @@ test("tech§6 sheet=event opens the fixture event with its time state", () => {
     kind: "event",
     id: fixtureSheetTargets.event,
     time: "error",
+    edit: true,
   });
 });
 
@@ -40,6 +41,22 @@ test("EVT-08 sheet=allday opens the all-day fixture event", () => {
   expect(fixtureSheet({ sheet: "allday" }, "2026-10-09")).toEqual({
     kind: "event",
     id: fixtureSheetTargets.allDay,
+    edit: true,
+  });
+});
+
+test("EVT-09 details=1 opens Event details on the event, all-day and past fixtures", () => {
+  expect(fixtureSheet({ sheet: "event", details: true }, "2026-10-09")).toEqual({
+    kind: "event",
+    id: fixtureSheetTargets.event,
+  });
+  expect(fixtureSheet({ sheet: "allday", details: true }, "2026-10-09")).toEqual({
+    kind: "event",
+    id: fixtureSheetTargets.allDay,
+  });
+  expect(fixtureSheet({ sheet: "past", details: true }, "2026-10-09")).toEqual({
+    kind: "event",
+    id: fixtureSheetTargets.past,
   });
 });
 
