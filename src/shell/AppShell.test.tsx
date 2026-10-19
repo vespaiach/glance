@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo, type FixtureParams } from "@/data/repos";
@@ -8,7 +8,7 @@ import { FixtureParamsProvider } from "./fixtureOptions";
 import { IdleProvider } from "./providers/idle";
 import { NetworkProvider } from "./providers/network";
 import { shellWrapper } from "./providers/testShell";
-import { SheetHost } from "./SheetHost";
+import { SheetHost, type SheetRequest } from "./SheetHost";
 
 const navigation = vi.hoisted(() => ({
   pathname: "/today",
@@ -44,13 +44,17 @@ afterEach(async () => {
   await store.close();
 });
 
-async function renderShell(children: ReactNode, params: FixtureParams = {}) {
+async function renderShell(
+  children: ReactNode,
+  params: FixtureParams = {},
+  sheet: SheetRequest | null = null,
+) {
   const Shell = shellWrapper(store);
 
   const wrapper = ({ children: shell }: { children: ReactNode }) => (
     <Shell>
       <FixtureParamsProvider params={params}>
-        <SheetHost>
+        <SheetHost initial={sheet}>
           <IdleProvider>
             <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
           </IdleProvider>
@@ -338,14 +342,128 @@ async function idleBackToToday(params: FixtureParams, hidden = false) {
   changeView(rerender, "/today");
 }
 
-test("IDLE-01 the idle return to Today closes the drawer to Rail", async () => {
+test("IDLE-01 the idle return to Today leaves an open drawer Hidden", async () => {
   await idleBackToToday({ rail: "open" });
 
-  expect(sidebarMode()).toBe("rail");
+  expect(sidebarMode()).toBe("hidden");
 });
 
 test("IDLE-01 the idle return to Today keeps a Hidden sidebar hidden", async () => {
   await idleBackToToday({}, true);
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+async function renderIdleShell(params: FixtureParams = {}, sheet: SheetRequest | null = null) {
+  vi.useFakeTimers({ now: new Date("2026-10-09T10:41:00"), shouldAdvanceTime: true });
+
+  navigation.pathname = "/calendar";
+
+  await renderShell("/calendar view", params, sheet);
+
+  await act(() => vi.advanceTimersByTimeAsync(200));
+}
+
+const seconds = (n: number) => act(() => vi.advanceTimersByTime(n * 1000));
+
+test("SHELL-11 after 15 s without a touch the rail hides", async () => {
+  await renderIdleShell();
+
+  seconds(14);
+
+  expect(sidebarMode()).toBe("rail");
+
+  seconds(1);
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+test("SHELL-11 after 15 s without a touch the open drawer closes to Hidden", async () => {
+  await renderIdleShell({ rail: "open" });
+
+  seconds(15);
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+test("SHELL-11 a touch or a key press restarts the 15 s", async () => {
+  await renderIdleShell();
+
+  seconds(10);
+  fireEvent.pointerDown(screen.getByRole("main"));
+  seconds(10);
+  fireEvent.keyDown(document.body, { key: "a" });
+  seconds(14);
+
+  expect(sidebarMode()).toBe("rail");
+
+  seconds(1);
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+test("SHELL-11 hiding when idle moves no focus", async () => {
+  await renderIdleShell();
+
+  seconds(15);
+
+  expect(document.activeElement).toBe(document.body);
+});
+
+test("SHELL-11 the rail stays while a sheet is open", async () => {
+  await renderIdleShell({}, { kind: "note", id: "n1" });
+
+  seconds(30);
+
+  expect(sidebarMode()).toBe("rail");
+});
+
+test("SHELL-11 the rail stays while the keyboard is up", async () => {
+  await renderIdleShell({ kb: true });
+
+  seconds(30);
+
+  expect(sidebarMode()).toBe("rail");
+});
+
+test("SHELL-11 the rail stays while a text field is focused and leaving it restarts the 15 s", async () => {
+  vi.useFakeTimers({ now: new Date("2026-10-09T10:41:00"), shouldAdvanceTime: true });
+
+  navigation.pathname = "/calendar";
+
+  await renderShell(<input aria-label="Search" />);
+
+  await act(() => vi.advanceTimersByTimeAsync(200));
+
+  act(() => screen.getByRole("textbox", { name: "Search" }).focus());
+  seconds(30);
+
+  expect(sidebarMode()).toBe("rail");
+
+  act(() => screen.getByRole("textbox", { name: "Search" }).blur());
+  seconds(14);
+
+  expect(sidebarMode()).toBe("rail");
+
+  seconds(1);
+
+  expect(sidebarMode()).toBe("hidden");
+});
+
+test("SHELL-11 tapping the grip shows the Rail and restarts the 15 s", async () => {
+  await renderIdleShell();
+
+  seconds(15);
+  seconds(40);
+  act(() => grip()?.click());
+
+  expect(sidebarMode()).toBe("rail");
+
+  seconds(14);
+
+  expect(sidebarMode()).toBe("rail");
+
+  seconds(1);
 
   expect(sidebarMode()).toBe("hidden");
 });

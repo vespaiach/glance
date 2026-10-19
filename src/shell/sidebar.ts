@@ -11,7 +11,10 @@ export type SidebarAction =
   | { type: "close" }
   | { type: "hide" }
   | { type: "back" }
+  | { type: "idle" }
   | { type: "viewChanged"; view: View | undefined };
+
+export const SIDEBAR_IDLE_SECONDS = 15;
 
 const INSET: Record<SidebarMode, number> = { hidden: 0, rail: 80, expanded: 332 };
 
@@ -24,6 +27,7 @@ const TRANSITIONS: Record<
   close: { expanded: "hidden" },
   hide: { rail: "hidden" },
   back: { expanded: "rail" },
+  idle: { rail: "hidden", expanded: "hidden" },
 };
 
 export function sidebarReducer(state: SidebarState, action: SidebarAction): SidebarState {

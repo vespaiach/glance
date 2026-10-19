@@ -1,8 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
-import { useRef } from "react";
+import type { Ref } from "react";
 import { copy } from "@/copy";
 import { colors, radii } from "@/theme/tokens.stylex";
-import { useFocusWhenShown } from "./focusWhenShown";
 
 const styles = stylex.create({
   grip: {
@@ -33,14 +32,16 @@ const styles = stylex.create({
   },
 });
 
-export function SidebarGrip({ shown, onShow }: { shown: boolean; onShow: () => void }) {
-  const grip = useRef<HTMLButtonElement>(null);
+type SidebarGripProps = {
+  shown: boolean;
+  onShow: () => void;
+  ref?: Ref<HTMLButtonElement>;
+};
 
-  useFocusWhenShown(shown, grip);
-
+export function SidebarGrip({ shown, onShow, ref }: SidebarGripProps) {
   return (
     <button
-      ref={grip}
+      ref={ref}
       type="button"
       hidden={!shown}
       aria-label={copy.nav.showSidebar}

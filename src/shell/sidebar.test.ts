@@ -50,6 +50,22 @@ test.each([
 );
 
 test.each([
+  ["rail", "hidden"],
+  ["expanded", "hidden"],
+] as const satisfies readonly (readonly [SidebarMode, SidebarMode])[])(
+  "SHELL-11 idle turns %s into %s",
+  (from, to) => {
+    expect(sidebarReducer({ mode: from }, { type: "idle" })).toEqual({ mode: to });
+  },
+);
+
+test("SHELL-11 idle leaves a hidden sidebar as it is", () => {
+  const state = { mode: "hidden" } as const;
+
+  expect(sidebarReducer(state, { type: "idle" })).toBe(state);
+});
+
+test.each([
   [undefined, "today", "hidden"],
   [undefined, "calendar", "rail"],
   [undefined, "settings", "rail"],
