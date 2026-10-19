@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { flushSync } from "react-dom";
+import { idleDue } from "@/domain/idle";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { useFieldInView } from "@/ui/fieldInView";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
@@ -19,15 +20,25 @@ import { photoLayer } from "@/ui/photoLayer";
 import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
 import { useFixtureParams } from "./fixtureOptions";
-import { useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
+import { isTextField, useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
 import { OfflineNotice } from "./OfflineNotice";
+import { useNowStore } from "./providers/now";
 import { VIEWS, type View, viewForPath, viewPath } from "./routes";
+import { useSheetHost } from "./SheetHost";
 import { SidebarDrawer } from "./SidebarDrawer";
 import { SidebarGrip } from "./SidebarGrip";
 import { SidebarHandle } from "./SidebarHandle";
 import { SidebarRail } from "./SidebarRail";
-import { initialSidebar, type SidebarAction, sidebarInset, sidebarReducer } from "./sidebar";
+import {
+  initialSidebar,
+  SIDEBAR_IDLE_SECONDS,
+  type SidebarAction,
+  sidebarInset,
+  sidebarReducer,
+} from "./sidebar";
 import { usePageTransition } from "./usePageTransition";
+
+const ACTIVITY_EVENTS = ["pointerdown", "keydown", "focusout"] as const;
 
 const styles = stylex.create({
   root: {
@@ -74,17 +85,23 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const rail = useFixtureParams().rail;
 
+  const sheetOpen = useSheetHost().sheet !== null;
+
   const [sidebar, dispatch] = useReducer(sidebarReducer, rail, (fixture) =>
     initialSidebar(fixture, view),
   );
 
   const handle = useRef<HTMLButtonElement>(null);
 
+  const grip = useRef<HTMLButtonElement>(null);
+
   const inset = sidebarInset(sidebar.mode);
 
   useRailOnViewChange(pathname, view, dispatch);
 
   useEscapeToRail(sidebar.mode === "expanded", dispatch, handle);
+
+  useHideWhenIdle(sidebar.mode !== "hidden" && !sheetOpen && keyboardInset === 0, dispatch);
 
   usePrefetchViews();
 
@@ -105,13 +122,14 @@ export function AppShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       <SidebarGrip
+        ref={grip}
         shown={sidebar.mode === "hidden"}
-        onShow={() => returnToRail(dispatch, handle, { type: "show" })}
+        onShow={() => dispatchThenFocus(dispatch, handle, { type: "show" })}
       />
       <SidebarRail
         mode={sidebar.mode}
         active={view}
-        onHide={() => dispatch({ type: "hide" })}
+        onHide={() => dispatchThenFocus(dispatch, grip, { type: "hide" })}
         onNavigate={(path) => router.push(path)}
       />
       <SidebarHandle
@@ -123,9 +141,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarDrawer
         open={sidebar.mode === "expanded"}
         active={view}
-        onClose={() => dispatch({ type: "close" })}
+        onClose={() => dispatchThenFocus(dispatch, grip, { type: "close" })}
         onNavigate={(path) => {
-          returnToRail(dispatch, handle, { type: "back" });
+          dispatchThenFocus(dispatch, handle, { type: "back" });
           router.push(path);
         }}
       />
@@ -164,7 +182,7 @@ function useEscapeToRail(
     if (!expanded) return;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") returnToRail(dispatch, handle, { type: "back" });
+      if (event.key === "Escape") dispatchThenFocus(dispatch, handle, { type: "back" });
     };
 
     document.addEventListener("keydown", onKey);
@@ -173,12 +191,51 @@ function useEscapeToRail(
   }, [expanded, dispatch, handle]);
 }
 
-function returnToRail(
+function useHideWhenIdle(running: boolean, dispatch: Dispatch<SidebarAction>) {
+  const store = useNowStore();
+
+  useEffect(() => {
+    if (!running) return;
+
+    let lastActivity = store.get();
+
+    const touched = () => {
+      lastActivity = store.get();
+    };
+
+    const onTick = () => {
+      const now = store.get();
+
+      if (isTextField(document.activeElement)) lastActivity = now;
+
+      if (idleDue(lastActivity, now, SIDEBAR_IDLE_SECONDS)) dispatch({ type: "idle" });
+    };
+
+    const stopWatching = watchActivity(touched);
+
+    const unsubscribe = store.subscribe(onTick);
+
+    return () => {
+      stopWatching();
+      unsubscribe();
+    };
+  }, [running, store, dispatch]);
+}
+
+function watchActivity(touched: () => void): () => void {
+  for (const type of ACTIVITY_EVENTS) document.addEventListener(type, touched, true);
+
+  return () => {
+    for (const type of ACTIVITY_EVENTS) document.removeEventListener(type, touched, true);
+  };
+}
+
+function dispatchThenFocus(
   dispatch: Dispatch<SidebarAction>,
-  handle: RefObject<HTMLButtonElement | null>,
+  target: RefObject<HTMLButtonElement | null>,
   action: SidebarAction,
 ) {
   flushSync(() => dispatch(action));
 
-  handle.current?.focus();
+  target.current?.focus();
 }

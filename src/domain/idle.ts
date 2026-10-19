@@ -1,4 +1,4 @@
-import type { AccountSettings, Ambient, AmbientSet } from "./schemas";
+import type { Ambient, AmbientSet } from "./schemas";
 import { type Clock, formatClock } from "./time";
 import { wallTime } from "./zone";
 
@@ -79,11 +79,7 @@ export function ambientSummary(ambient: Ambient, clock: Clock): AmbientSummary {
   return { mode: "split", all, wknd: rangeOf(ambient.wknd, clock) };
 }
 
-export function idleDue(
-  lastActivity: Date,
-  now: Date,
-  idleTimeout: AccountSettings["idleTimeout"],
-): boolean {
+export function idleDue(lastActivity: Date, now: Date, idleTimeout: number | null): boolean {
   if (idleTimeout === null) return false;
 
   return now.getTime() - lastActivity.getTime() >= idleTimeout * 1000;

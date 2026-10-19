@@ -27,13 +27,11 @@ test("SHELL-08 the grip is hidden while the rail or the drawer shows", () => {
   expect(screen.queryByRole("button", { name: "Show sidebar" })).not.toBeInTheDocument();
 });
 
-test("SHELL-09 the grip takes focus when it comes back, not when it first shows", () => {
+test("SHELL-11 the grip takes no focus when it comes back", () => {
   const { rerender } = render(<SidebarGrip shown onShow={vi.fn()} />);
-
-  expect(document.body).toHaveFocus();
 
   rerender(<SidebarGrip shown={false} onShow={vi.fn()} />);
   rerender(<SidebarGrip shown onShow={vi.fn()} />);
 
-  expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
+  expect(document.body).toHaveFocus();
 });

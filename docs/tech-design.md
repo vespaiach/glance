@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.16 |
+| Status | v2.17 |
 | Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.62) · [`design/handoff/`](design/handoff/README.md) (v8) |
 
@@ -182,7 +182,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 
 **Boot** (`useDisplayBoot`): demo opens and reseeds `glance-fixture` with an inline host and `FixtureTransport`. Otherwise it reads `glance-meta`: no entry or `signedOut` → `/signin`; else open `glance-{accountId}`, clear a halt left by the last session (`restarted` status event) and start the worker host.
 
-**AppShell** owns the sidebar reducer (`shell/sidebar.ts`): `hidden | rail | expanded`, with `show` (grip), `open` (expand handle), `hide` (rail ✕), `close` (drawer Close, phone scrim), `back` (Escape, drawer row), `idle` (any → hidden) and `viewChanged` (expanded → rail; hidden → rail except on Today). Initial state: rail on every view but Today; `rail=1|open` override. The root pads by `sidebarInset(mode, phone)` (phone: 56 for rail, 0 for expanded, which overlays with a scrim). **Hide when idle** (SHELL-11): a 15 s timer from the last `pointerdown` or `keydown`, reset by `show`, sends `idle`; it doesn't run while `SheetHost` has a sheet, the keyboard inset is non-zero or a text field is focused (the same signals `IdleProvider` uses). Focus moves only after user actions (SHELL-09). The shell also paints the photo background (`useBackgroundPhoto` → `ui/PhotoBackdrop`, cross-fading layers), places the offline pill (`OfflineNotice`), pads by the keyboard inset, and prefetches the six views.
+**AppShell** owns the sidebar reducer (`shell/sidebar.ts`): `hidden | rail | expanded`, with `show` (grip), `open` (expand handle), `hide` (rail ✕), `close` (drawer Close, phone scrim), `back` (Escape, drawer row), `idle` (any → hidden) and `viewChanged` (expanded → rail; hidden → rail except on Today). Initial state: rail on every view but Today; `rail=1|open` override. The root pads by `sidebarInset(mode, phone)` (phone: 56 for rail, 0 for expanded, which overlays with a scrim). **Hide when idle** (SHELL-11): `useHideWhenIdle` checks `idleDue(lastActivity, now, 15)` on each Now-store tick and sends `idle`. The last activity is the latest `pointerdown`, `keydown` or `focusout`, and every tick with a focused text field; the timer starts afresh whenever the sidebar leaves Hidden (`show`) or a pause ends. It doesn't run while `SheetHost` has a sheet or the keyboard inset is non-zero. A frozen fixture clock never fires it. Focus moves only after user actions (SHELL-09): the handlers dispatch, then focus the grip (`hide`, `close`) or the Expand menu (`show`, `back`); no component focuses itself when it appears, so `idle` moves no focus. The shell also paints the photo background (`useBackgroundPhoto` → `ui/PhotoBackdrop`, cross-fading layers), places the offline pill (`OfflineNotice`), pads by the keyboard inset, and prefetches the six views.
 
 **Background rotation.** `domain/background.ts` `shownBackground(background, photos, now, tz)` derives the photo: in Slideshow, `photoId` is the rotation anchor and `rotationStep` counts hours, days or Sunday weeks in `tz`, so every display shows the same photo with no timer. `changeBackground` re-anchors so the photo on screen stays. Photo mode with no or an unknown photo falls back to the oldest upload.
 
