@@ -1,0 +1,360 @@
+import { type TimelineLayout, type TimelineOptions, timelineLayout } from "./timeline";
+import { zonedInstant } from "./zone";
+
+const tz = "America/Los_Angeles";
+
+const OCT_9 = "2026-10-09";
+
+const OCT_10 = "2026-10-10";
+
+const october = (day: number, minutes: number) =>
+  zonedInstant(tz, { year: 2026, month: 10, day }, minutes);
+
+const NOW = october(9, 10 * 60 + 41);
+
+const plan = (id: string, day: number, start: number, end?: number) => ({
+  id,
+  startAt: october(day, start).toISOString(),
+  ...(end === undefined ? {} : { endAt: october(day, end).toISOString() }),
+});
+
+const OCT_9_PLANS = [
+  plan("drop-off", 9, 465, 495),
+  plan("video-call", 9, 630, 675),
+  plan("lunch", 9, 720, 780),
+  plan("dentist", 9, 840, 870),
+  plan("soccer-practice", 9, 930, 990),
+  plan("school", 9, 495, 900),
+  plan("pickup", 9, 900, 915),
+  plan("car-service", 9, 810, 870),
+  plan("piano", 9, 1020, 1065),
+  plan("movie-night", 9, 1140, 1230),
+  plan("morning-run", 9, 420, 465),
+  plan("physical-therapy", 9, 570, 630),
+  plan("yoga", 9, 600, 660),
+  plan("volunteer", 9, 660, 780),
+  plan("haircut", 9, 780, 825),
+  plan("chess", 9, 960, 1020),
+  plan("soccer-pickup", 9, 990, 1005),
+  plan("groceries", 9, 1080, 1125),
+];
+
+const OCT_10_PLANS = [
+  plan("fishing", 10, 420, 660),
+  plan("soccer-game", 10, 540, 630),
+  plan("market", 10, 660, 720),
+  plan("bait", 10, 270, 315),
+  plan("late-movie", 10, 1320, 1410),
+  plan("party", 10, 840, 960),
+];
+
+const CALENDAR: TimelineOptions = {
+  span: "day",
+  height: 640,
+  passedFactor: 0.35,
+  minPlanHeight: 44,
+};
+
+const onOct9 = { day: OCT_9, now: NOW, tz };
+
+const onOct10 = { day: OCT_10, now: NOW, tz };
+
+type Plan = ReturnType<typeof plan>;
+
+type Layout = TimelineLayout<Plan>;
+
+const weightOf = (layout: Layout, hour: number) =>
+  layout.rows.find((row) => row.hour === hour)?.weight;
+
+const placed = (layout: Layout, id: string) => {
+  const found = layout.plans.find((item) => item.plan.id === id);
+
+  if (!found) throw new Error(`${id} is not on the timeline`);
+
+  return found;
+};
+
+const slots = (layout: Layout) => layout.freeSlots.map((slot) => [slot.start, slot.end]);
+
+describe("timelineLayout", () => {
+  it("TL-01 runs 5 AM to 9 PM in 16 rows that fill the height", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(layout.rows.map((row) => row.hour)).toEqual([
+      5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    ]);
+    expect(layout.rows[0]?.top).toBe(0);
+    expect(layout.rows.reduce((sum, row) => sum + row.height, 0)).toBeCloseTo(640);
+    expect(layout.marks.map((mark) => mark.hour)).toEqual([
+      5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+    ]);
+    expect(layout.marks.at(-1)?.top).toBeCloseTo(640);
+  });
+
+  it("TL-02 an empty hour weighs 1 and an hour filled by short plans weighs 4", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(weightOf(layout, 18)).toBe(1);
+    expect(weightOf(layout, 9)).toBe(4);
+  });
+
+  it("TL-02 a partly covered hour weighs 1 + 3 × its covered share", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(weightOf(layout, 10)).toBe(2.5);
+  });
+
+  it("TL-02 plans longer than 3 hours don't stretch hours", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(weightOf(layout, 7)).toBe(1);
+    expect(weightOf(layout, 8)).toBe(1);
+  });
+
+  it("TL-02 overlapping short plans count their covered time once", () => {
+    const layout = timelineLayout(OCT_9_PLANS, { ...onOct9, now: october(8, 600) }, CALENDAR);
+
+    expect(weightOf(layout, 10)).toBe(4);
+  });
+
+  it("TL-02 hours that fully passed today shrink by the passed factor", () => {
+    const calendar = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+    const today = timelineLayout(OCT_9_PLANS, onOct9, { ...CALENDAR, passedFactor: 0.3 });
+
+    expect(weightOf(calendar, 7)).toBeCloseTo(1.4);
+    expect(weightOf(calendar, 5)).toBeCloseTo(0.35);
+    expect(weightOf(today, 7)).toBeCloseTo(1.2);
+    expect(weightOf(calendar, 10)).toBe(4);
+  });
+
+  it("TL-02 other days never shrink", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(weightOf(layout, 5)).toBe(1.75);
+  });
+
+  it("TL-02 heights are the weights scaled to the height", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+    const total = layout.rows.reduce((sum, row) => sum + row.weight, 0);
+
+    for (const row of layout.rows) expect(row.height).toBeCloseTo((row.weight / total) * 640);
+    expect(layout.rows[1]?.top).toBeCloseTo(layout.rows[0]?.height ?? 0);
+  });
+
+  it("TL-06 24 hours runs 12 AM to 12 AM", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
+
+    expect(layout.rows).toHaveLength(24);
+    expect(layout.marks.map((mark) => mark.hour)).toEqual([...Array(25).keys()]);
+  });
+
+  it("TL-06 night hours without plans weigh half", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
+
+    expect(weightOf(layout, 2)).toBe(0.5);
+    expect(weightOf(layout, 21)).toBe(0.5);
+  });
+
+  it("TL-06 night hours with plans are elastic", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
+
+    expect(weightOf(layout, 4)).toBe(2.5);
+    expect(weightOf(layout, 22)).toBe(4);
+    expect(weightOf(layout, 23)).toBe(2.5);
+  });
+
+  it("TL-06 night hours covered only by a long plan weigh 1", () => {
+    const layout = timelineLayout([plan("drive", 10, 60, 300)], onOct10, {
+      ...CALENDAR,
+      span: "24h",
+    });
+
+    expect(weightOf(layout, 2)).toBe(1);
+    expect(weightOf(layout, 0)).toBe(0.5);
+  });
+
+  it("TL-01 a label hides when it sits closer than 24 px to the label above", () => {
+    const layout = timelineLayout([], onOct10, { ...CALENDAR, height: 320 });
+
+    expect(layout.marks.slice(0, 5).map((mark) => mark.label)).toEqual([
+      true,
+      false,
+      true,
+      false,
+      true,
+    ]);
+  });
+
+  it("TL-01 a label hides when it sits closer than 22 px to the now marker", () => {
+    const layout = timelineLayout([], onOct9, { ...CALENDAR, passedFactor: 1 });
+    const label = (hour: number) => layout.marks.find((mark) => mark.hour === hour)?.label;
+
+    expect(label(10)).toBe(true);
+    expect(label(11)).toBe(false);
+    expect(label(12)).toBe(true);
+  });
+
+  it("TL-06 hairlines thin out when rows get tight", () => {
+    const layout = timelineLayout([], onOct10, { ...CALENDAR, height: 160 });
+
+    expect(layout.marks.slice(0, 4).map((mark) => [mark.label, mark.line])).toEqual([
+      [true, true],
+      [false, false],
+      [false, true],
+      [true, true],
+    ]);
+  });
+
+  it("TL-09 marks now on today at its place on the timeline", () => {
+    const layout = timelineLayout([], onOct9, { ...CALENDAR, passedFactor: 1 });
+
+    expect(layout.now?.minutes).toBe(641);
+    expect(layout.now?.top).toBeCloseTo((341 / 60) * 40);
+  });
+
+  it("TL-09 other days and times outside the span have no now marker", () => {
+    const early = { ...onOct9, now: october(9, 4 * 60) };
+
+    expect(timelineLayout([], onOct10, CALENDAR).now).toBeNull();
+    expect(timelineLayout([], early, CALENDAR).now).toBeNull();
+    expect(timelineLayout([], early, { ...CALENDAR, span: "24h" }).now?.minutes).toBe(240);
+  });
+
+  it("TL-03 places a plan at its elastic start and end", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+    const market = placed(layout, "market");
+    const row11 = layout.rows.find((row) => row.hour === 11);
+
+    expect(market.top).toBeCloseTo(row11?.top ?? -1);
+    expect(market.height).toBeCloseTo(row11?.height ?? -1);
+  });
+
+  it("TL-03 every plan is at least the minimum height", () => {
+    const calendar = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+    const phone = timelineLayout(OCT_9_PLANS, onOct9, { ...CALENDAR, minPlanHeight: 40 });
+
+    expect(placed(calendar, "pickup").height).toBe(44);
+    expect(placed(phone, "pickup").height).toBe(40);
+  });
+
+  it("TL-03 overlapping plans share the width in columns", () => {
+    const plans = [plan("a", 10, 540, 600), plan("b", 10, 540, 570), plan("c", 10, 570, 600)];
+    const layout = timelineLayout(plans, onOct10, CALENDAR);
+
+    expect(plans.map(({ id }) => placed(layout, id).column)).toEqual([0, 1, 1]);
+    expect(plans.map(({ id }) => placed(layout, id).columns)).toEqual([2, 2, 2]);
+  });
+
+  it("TL-03 a plan widens into free columns beside it", () => {
+    const plans = [
+      plan("a", 10, 540, 600),
+      plan("b", 10, 540, 570),
+      plan("c", 10, 540, 570),
+      plan("d", 10, 570, 600),
+    ];
+    const layout = timelineLayout(plans, onOct10, CALENDAR);
+
+    expect(placed(layout, "d")).toMatchObject({ column: 1, columns: 3, columnSpan: 2 });
+    expect(placed(layout, "b")).toMatchObject({ column: 1, columns: 3, columnSpan: 1 });
+  });
+
+  it("TL-03 longer plans take the leftmost column", () => {
+    const layout = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+
+    expect(placed(layout, "school").column).toBe(0);
+    expect(placed(layout, "yoga").column).toBeGreaterThan(0);
+    expect(placed(layout, "video-call").column).toBeGreaterThan(0);
+  });
+
+  it("TL-03 plans that don't overlap use the full width", () => {
+    const layout = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+
+    expect(placed(layout, "movie-night")).toMatchObject({ column: 0, columns: 1, columnSpan: 1 });
+  });
+
+  it("TL-01 leaves out plans outside the span and clips one that starts before it", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(layout.plans.map((item) => item.plan.id)).not.toContain("late-movie");
+    expect(placed(layout, "bait")).toMatchObject({ top: 0, startsBefore: true, start: 270 });
+    expect(placed(layout, "market").startsBefore).toBe(false);
+  });
+
+  it("STATUS-01 a plan with no end takes 30 minutes on the timeline", () => {
+    const layout = timelineLayout([plan("open", 10, 600)], onOct10, CALENDAR);
+
+    expect(placed(layout, "open")).toMatchObject({ start: 600, end: 630 });
+  });
+
+  it("TL-08 free slots are the gaps of 30 min or more between 5 AM and 9 PM", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+
+    expect(slots(layout)).toEqual([
+      [315, 420],
+      [720, 840],
+      [960, 1260],
+    ]);
+  });
+
+  it("TL-08 free slots stay within 5 AM to 9 PM on 24 hours", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
+
+    expect(slots(layout)).toEqual([
+      [315, 420],
+      [720, 840],
+      [960, 1260],
+    ]);
+  });
+
+  it("TL-08 on today free slots start at now", () => {
+    const today = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+    const dayBefore = timelineLayout(OCT_9_PLANS, { ...onOct9, now: october(8, 600) }, CALENDAR);
+
+    expect(slots(today)).toEqual([[1230, 1260]]);
+    expect(slots(dayBefore)).toEqual([
+      [300, 420],
+      [1230, 1260],
+    ]);
+  });
+
+  it("TL-08 a slot cut short by now under 30 min is dropped", () => {
+    const now = { ...onOct10, now: october(10, 1240) };
+
+    expect(slots(timelineLayout(OCT_10_PLANS, now, CALENDAR))).toEqual([]);
+  });
+
+  it("TL-08 an empty day is one free slot", () => {
+    expect(slots(timelineLayout([], onOct10, CALENDAR))).toEqual([[300, 1260]]);
+  });
+
+  it("TL-08 a free slot sits at its elastic place", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+    const [, midday] = layout.freeSlots;
+    const row12 = layout.rows.find((row) => row.hour === 12);
+    const row14 = layout.rows.find((row) => row.hour === 14);
+
+    expect(midday?.top).toBeCloseTo(row12?.top ?? -1);
+    expect(midday?.height).toBeCloseTo((row14?.top ?? 0) - (row12?.top ?? 0));
+  });
+
+  it("TL-08 a new event starts at the slot rounded up to 15 min, 1 hour or to its end", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+    const today = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+    const fromNow = timelineLayout([], onOct9, CALENDAR);
+
+    expect(layout.freeSlots[0]?.newEvent).toEqual({ start: 315, end: 375 });
+    expect(today.freeSlots[0]?.newEvent).toEqual({ start: 1230, end: 1260 });
+    expect(fromNow.freeSlots[0]?.newEvent).toEqual({ start: 645, end: 705 });
+  });
+
+  it("CAL-06 counts plans that start before 5 AM or end after 9 PM", () => {
+    expect(timelineLayout(OCT_10_PLANS, onOct10, CALENDAR).hiddenOutsideSpan).toBe(2);
+    expect(timelineLayout(OCT_9_PLANS, onOct9, CALENDAR).hiddenOutsideSpan).toBe(0);
+  });
+
+  it("CAL-06 nothing is outside the span on 24 hours", () => {
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
+
+    expect(layout.hiddenOutsideSpan).toBe(0);
+  });
+});
