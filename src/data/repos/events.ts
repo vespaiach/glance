@@ -44,12 +44,17 @@ export function useEventsOnDay(dayKey: string, tz: string): StoredEvent[] | unde
 }
 
 export function useEventsInWeek(sunday: string, tz: string): StoredEvent[] | undefined {
+  return useEventsBetween(sunday, addDays(sunday, WEEK), tz);
+}
+
+export function useEventsBetween(
+  first: string,
+  end: string,
+  tz: string,
+): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 
-  return useLiveQuery(
-    () => eventsOnDays(db, [sunday, addDays(sunday, WEEK)], tz),
-    [db, sunday, tz],
-  );
+  return useLiveQuery(() => eventsOnDays(db, [first, end], tz), [db, first, end, tz]);
 }
 
 export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | null | undefined {

@@ -7,9 +7,15 @@ export type WeekHeading = { range: string; month: string };
 
 export type Dot = Pick<Member, "id" | "color">;
 
+export type PickerMonth = { key: string; label: string; days: string[] };
+
 type DottedEvent = Pick<CalendarEvent, "startAt" | "allDay"> & EventWho;
 
 const WEEK = 7;
+
+const MONTHS_BEFORE = 2;
+
+const MONTHS_AFTER = 3;
 
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -69,10 +75,32 @@ export function weekDots(
   return new Map([...days].map(([key, plans]) => [key, dotsFor(plans, members)]));
 }
 
+export function pickerMonths(today: string): PickerMonth[] {
+  const current = parseDateKey(today);
+
+  return Array.from({ length: MONTHS_BEFORE + MONTHS_AFTER + 1 }, (_, index) =>
+    pickerMonth(current.getUTCFullYear(), current.getUTCMonth() + index - MONTHS_BEFORE),
+  );
+}
+
 export function readDateParam(value: string | null): string | undefined {
   if (value === null || !DATE_KEY.test(value)) return undefined;
 
   return dateKey(parseDateKey(value), "UTC") === value ? value : undefined;
+}
+
+function pickerMonth(year: number, month: number): PickerMonth {
+  const first = new Date(Date.UTC(year, month, 1));
+
+  const length = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+  const start = dateKey(first, "UTC");
+
+  return {
+    key: start.slice(0, 7),
+    label: monthYear.format(first),
+    days: Array.from({ length }, (_, offset) => addDays(start, offset)),
+  };
 }
 
 function monthDay(date: Date): string {

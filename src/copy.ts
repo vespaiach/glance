@@ -130,6 +130,10 @@ export const copy = {
     updated: (time: string) => `Updated ${time}`,
     loading: "Loading events",
     unavailable: "Calendar unavailable",
+    pickDate: "Pick a date",
+    pickDateFor: (day: string) => `${day}. Pick a date`,
+    today: "Today",
+    close: "Close",
   },
   discard: {
     title: "Discard changes?",

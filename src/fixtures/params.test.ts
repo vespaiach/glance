@@ -103,6 +103,10 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("who=none")).toEqual({ who: [] });
   });
 
+  it("CAL-03 reads dp=open", () => {
+    expect(parseFixtureParams("dp=open")).toEqual({ dp: "open" });
+  });
+
   it("CAL-06 reads span=24", () => {
     expect(parseFixtureParams("span=24")).toEqual({ span24: true });
   });

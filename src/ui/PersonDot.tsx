@@ -5,7 +5,7 @@ import { colors, motion, radii } from "@/theme/tokens.stylex";
 
 type PersonDotProps = {
   color: MemberColor | "soft";
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "xs" | "xsm" | "sm" | "md" | "lg";
   hollow?: boolean;
 };
 
@@ -22,6 +22,10 @@ const styles = stylex.create({
   xs: {
     width: 6,
     height: 6,
+  },
+  xsm: {
+    width: 8,
+    height: 8,
   },
   sm: {
     width: 10,

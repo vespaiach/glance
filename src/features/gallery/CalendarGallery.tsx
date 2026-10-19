@@ -1,13 +1,21 @@
 import * as stylex from "@stylexjs/stylex";
-import type { ComponentProps } from "react";
+import { type ComponentProps, useState } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { WeatherIcon } from "@/domain/schemas";
-import { formatLongDate, formatWeekday } from "@/domain/time";
-import { type Dot, weekDays, weekHeading } from "@/domain/week";
+import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
+import { type Dot, pickerMonths, weekDays, weekHeading } from "@/domain/week";
 import { parseDateKey } from "@/domain/zone";
-import { CalendarDay, CalendarToolbar, WeekStrip } from "@/features/calendar";
+import {
+  CalendarDay,
+  CalendarToolbar,
+  DateControl,
+  DatePicker,
+  type PickerMonthView,
+  WeekStrip,
+} from "@/features/calendar";
 import { colors, space } from "@/theme/tokens.stylex";
+import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { GalleryGroup } from "./GalleryGroup";
 import { GALLERY_TZ, gallery, NOW, octoberAt } from "./samples";
@@ -68,7 +76,7 @@ const DOTS: readonly Dot[][] = [
 
 const ignore = () => {};
 
-const week = (phone: boolean) =>
+const week = () =>
   weekDays(TODAY).map((key, index) => {
     const date = parseDateKey(key);
 
@@ -78,7 +86,7 @@ const week = (phone: boolean) =>
 
     return {
       key,
-      weekday: phone ? weekday.slice(0, 1) : weekday,
+      weekday,
       date: date.getUTCDate(),
       name: formatLongDate(date, "UTC"),
       dots: DOTS[index] ?? [],
@@ -98,12 +106,32 @@ const strip = {
   onSelect: ignore,
 } as const;
 
-const STRIPS: readonly [Breakpoint, number][] = [
+const STRIPS: readonly [Exclude<Breakpoint, "phone">, number][] = [
   ["wide", 1600],
   ["mid", 1080],
   ["narrow", 760],
-  ["phone", 360],
 ];
+
+const WEEK_KEYS = weekDays(TODAY);
+
+const PICKER_MONTHS: PickerMonthView[] = pickerMonths(TODAY).map((month) => ({
+  ...month,
+  days: month.days.map((key) => {
+    const date = parseDateKey(key);
+
+    const index = WEEK_KEYS.indexOf(key);
+
+    return {
+      key,
+      weekday: formatWeekday(date, "UTC"),
+      date: date.getUTCDate(),
+      name: formatLongDate(date, "UTC"),
+      dots: DOTS[index] ?? [],
+    };
+  }),
+}));
+
+const TODAY_DATE = parseDateKey(TODAY);
 
 const toolbar = {
   members: TIMELINE_FAMILY,
@@ -189,14 +217,43 @@ const DAYS: readonly { label: string; height: number; props: Partial<DayProps> }
 ];
 
 export function CalendarGallery() {
+  const [picked, setPicked] = useState<string | null>(null);
+
   return (
     <GalleryGroup title={gallery.groups.calendarView}>
       {STRIPS.map(([breakpoint, width]) => (
         <div key={breakpoint} {...stylex.props(styles.frame(width), styles.backdrop)}>
           <Eyebrow>{breakpoint}</Eyebrow>
-          <WeekStrip {...strip} days={week(breakpoint === "phone")} breakpoint={breakpoint} />
+          <WeekStrip {...strip} days={week()} breakpoint={breakpoint} />
         </div>
       ))}
+      <div {...stylex.props(styles.frame(358), styles.backdrop)}>
+        <Eyebrow>{words.dateControl}</Eyebrow>
+        <DateControl
+          year={String(TODAY_DATE.getUTCFullYear())}
+          month={formatMonth(TODAY_DATE, "UTC")}
+          weekday={formatWeekday(TODAY_DATE, "UTC")}
+          date={TODAY_DATE.getUTCDate()}
+          name={formatLongDate(TODAY_DATE, "UTC")}
+          onOpen={() => setPicked(TODAY)}
+        />
+      </div>
+      <Button variant="secondary" onClick={() => setPicked(TODAY)}>
+        {words.pickerToday}
+      </Button>
+      <Button variant="secondary" onClick={() => setPicked("2026-10-14")}>
+        {words.pickerOther}
+      </Button>
+      {picked && (
+        <DatePicker
+          months={PICKER_MONTHS}
+          selected={picked}
+          today={TODAY}
+          onSelect={() => setPicked(null)}
+          onToday={() => setPicked(null)}
+          onClose={() => setPicked(null)}
+        />
+      )}
       {DAYS.map((demo) => (
         <div key={demo.label} {...stylex.props(styles.frame(1100), styles.backdrop)}>
           <Eyebrow>{demo.label}</Eyebrow>

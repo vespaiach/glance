@@ -1,15 +1,9 @@
 import * as stylex from "@stylexjs/stylex";
 import { X } from "lucide-react";
-import {
-  type KeyboardEvent,
-  type ReactNode,
-  type RefObject,
-  useEffect,
-  useId,
-  useRef,
-} from "react";
+import { type ReactNode, useId, useRef } from "react";
 import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { dialogKeyDown, useFocusOnOpen } from "./dialogFocus";
 import { Eyebrow } from "./Eyebrow";
 import { useFieldInView } from "./fieldInView";
 import { IconButton } from "./IconButton";
@@ -26,9 +20,6 @@ type SheetProps = {
   keyboardInset?: number;
   xstyle?: stylex.StyleXStyles;
 };
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const styles = stylex.create({
   overlay: {
@@ -124,19 +115,6 @@ export function Sheet({
 
   useFieldInView(dialog, keyboardInset);
 
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape") return onClose();
-
-    if (event.key !== "Tab") return;
-
-    const target = wrapTarget(event);
-
-    if (!target) return;
-
-    event.preventDefault();
-    target.focus();
-  };
-
   return (
     <div {...stylex.props(styles.overlay, styles.aboveKeyboard(keyboardInset))}>
       <button
@@ -152,7 +130,7 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        onKeyDown={onKeyDown}
+        onKeyDown={dialogKeyDown(onClose)}
         {...stylex.props(styles.card, xstyle)}
       >
         <div {...stylex.props(styles.header)}>
@@ -174,30 +152,4 @@ export function Sheet({
       </div>
     </div>
   );
-}
-
-function useFocusOnOpen(dialog: RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const opener = document.activeElement;
-
-    dialog.current?.focus();
-
-    return () => {
-      if (opener instanceof HTMLElement) opener.focus();
-    };
-  }, [dialog]);
-}
-
-function wrapTarget(event: KeyboardEvent<HTMLDivElement>) {
-  const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)];
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-
-  if (event.shiftKey) {
-    const atStart =
-      document.activeElement === first || document.activeElement === event.currentTarget;
-    return atStart ? last : undefined;
-  }
-
-  return document.activeElement === last ? first : undefined;
 }

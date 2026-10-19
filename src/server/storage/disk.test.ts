@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { tempDirPerTest } from "../db/testDir";
 import { photoStoreContract } from "./contract";
@@ -22,5 +22,16 @@ describe("createDiskStore", () => {
       ok: true,
       value: { size: 3, contentType: "application/octet-stream" },
     });
+  });
+
+  it("tech§6.3 remove settles every key before it reports a failure", async () => {
+    const store = createDiskStore(root());
+    const keys = Array.from({ length: 20 }, (_, index) => `maria/photo-${index}.thumb`);
+    await Promise.all(keys.map((key) => store.put(key, new Uint8Array([1]), "image/webp")));
+    writeFileSync(path.join(root(), "blocked"), "");
+
+    await expect(store.remove(["blocked/photo.orig", ...keys])).rejects.toThrow();
+
+    expect(keys.filter((key) => existsSync(path.join(root(), key)))).toEqual([]);
   });
 });

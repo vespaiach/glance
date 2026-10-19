@@ -40,6 +40,7 @@ const CHOICES = {
   events: ["many"],
   chrome: ["0"],
   qr: ["open", "failed"],
+  dp: ["open"],
 } as const;
 
 type Choices = typeof CHOICES;

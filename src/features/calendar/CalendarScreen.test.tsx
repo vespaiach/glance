@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import {
@@ -474,4 +474,84 @@ test("FAIL-01 a failed first sync shows Calendar unavailable with a countdown an
   await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
   expect(store.nudge).toHaveBeenCalledTimes(1);
+});
+
+function onPhone() {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
+const picker = () => screen.queryByRole("dialog", { name: "Pick a date" });
+
+test("CAL-02 on a phone the date control replaces the week strip and opens the picker", async () => {
+  onPhone();
+  await seed(CALL);
+
+  renderCalendar();
+
+  const control = await screen.findByRole("button", { name: "Friday, October 9. Pick a date" });
+  expect(screen.queryByRole("group", { name: "Week of October 4" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Next week" })).not.toBeInTheDocument();
+  expect(picker()).not.toBeInTheDocument();
+
+  await userEvent.click(control);
+
+  expect(picker()).toBeInTheDocument();
+  expect(within(picker() as HTMLElement).getByText("August 2026")).toBeInTheDocument();
+  expect(within(picker() as HTMLElement).getByText("January 2027")).toBeInTheDocument();
+});
+
+test("CAL-03 picking a day selects it, closes the picker and shows its plans", async () => {
+  onPhone();
+  await seed(CALL, DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Pick a date$/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Wednesday, October 7" }));
+
+  expect(picker()).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Wednesday, October 7. Pick a date" }),
+  ).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: /^Dentist, / })).toBeInTheDocument();
+});
+
+test("CAL-03 picker days carry a dot per member with a plan", async () => {
+  onPhone();
+  await seed(CALL, SOCCER, DENTIST);
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Pick a date$/ }));
+
+  const today = within(picker() as HTMLElement).getByRole("button", { name: "Friday, October 9" });
+  await waitFor(() => expect(today.querySelectorAll("[aria-hidden='true']")).toHaveLength(2));
+});
+
+test("CAL-03 Today selects today and closes; Close keeps the day", async () => {
+  onPhone();
+  search = "date=2026-11-20";
+  await seed();
+
+  renderCalendar();
+
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Friday, November 20. Pick a date" }),
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(picker()).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Friday, November 20\./ })).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: /Pick a date$/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Today" }));
+
+  expect(picker()).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "Friday, October 9. Pick a date" }),
+  ).toBeInTheDocument();
 });

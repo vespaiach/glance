@@ -20,7 +20,13 @@ export function createDiskStore(root: string): PhotoStore {
     },
     get: (key) => storedFile(fileOf(key)),
     async remove(keys) {
-      await Promise.all(keys.map((key) => rm(fileOf(key), { force: true })));
+      const removals = await Promise.allSettled(
+        keys.map((key) => rm(fileOf(key), { force: true })),
+      );
+
+      const failed = removals.find((removal) => removal.status === "rejected");
+
+      if (failed) throw failed.reason;
     },
   };
 }

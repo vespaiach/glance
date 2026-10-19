@@ -1,5 +1,13 @@
 import type { Member } from "./schemas";
-import { type Dot, readDateParam, stepWeek, weekDays, weekDots, weekHeading } from "./week";
+import {
+  type Dot,
+  pickerMonths,
+  readDateParam,
+  stepWeek,
+  weekDays,
+  weekDots,
+  weekHeading,
+} from "./week";
 
 const LA = "America/Los_Angeles";
 
@@ -134,4 +142,30 @@ describe("readDateParam", () => {
       expect(readDateParam(value)).toBeUndefined();
     },
   );
+});
+
+describe("pickerMonths", () => {
+  it("CAL-03 runs from 2 months before to 3 months after today's month", () => {
+    const months = pickerMonths("2026-10-09");
+
+    expect(months.map((month) => month.label)).toEqual([
+      "August 2026",
+      "September 2026",
+      "October 2026",
+      "November 2026",
+      "December 2026",
+      "January 2027",
+    ]);
+    expect(months[0]?.days[0]).toBe("2026-08-01");
+    expect(months[1]?.days).toHaveLength(30);
+    expect(months[5]?.days.at(-1)).toBe("2027-01-31");
+  });
+
+  it("CAL-03 crosses back into last year", () => {
+    const months = pickerMonths("2027-01-20");
+
+    expect(months[0]?.label).toBe("November 2026");
+    expect(months[0]?.key).toBe("2026-11");
+    expect(months[3]?.days).toHaveLength(28);
+  });
 });

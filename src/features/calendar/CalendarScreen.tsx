@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useReducer } from "react";
 import { copy } from "@/copy";
 import {
+  useEventsBetween,
   useEventsInWeek,
   useEventsOnDay,
   useHasEvents,
@@ -18,8 +19,16 @@ import { displayTemp } from "@/domain/temperature";
 import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
 import { outsideDay } from "@/domain/timeline";
 import { hourlyByHour } from "@/domain/weather";
-import { readDateParam, weekDays, weekDots, weekHeading } from "@/domain/week";
-import { dateKey, parseDateKey } from "@/domain/zone";
+import {
+  type Dot,
+  type PickerMonth,
+  pickerMonths,
+  readDateParam,
+  weekDays,
+  weekDots,
+  weekHeading,
+} from "@/domain/week";
+import { addDays, dateKey, parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
@@ -31,6 +40,8 @@ import type { TimelineWeather } from "@/ui/DayTimeline";
 import { calendarView, initialCalendarView } from "./calendarView";
 import { CalendarDay } from "./components/CalendarDay";
 import { CalendarToolbar } from "./components/CalendarToolbar";
+import { DateControl } from "./components/DateControl";
+import { DatePicker, type PickerMonthView } from "./components/DatePicker";
 import { type WeekDay, WeekStrip } from "./components/WeekStrip";
 import { calendarLayout } from "./layout";
 
@@ -87,19 +98,23 @@ export function CalendarScreen() {
 
   return (
     <div {...stylex.props(calendarLayout(breakpoint, view.span24))}>
-      <WeekStrip
-        heading={weekHeading(day, today)}
-        label={weekLabel(week[0] ?? day)}
-        days={weekPills(week, weekEvents ?? [], members, { tz, breakpoint, forecast, settings })}
-        selected={day}
-        today={today}
-        breakpoint={breakpoint}
-        previousLabel={copy.calendar.previousWeek}
-        nextLabel={copy.calendar.nextWeek}
-        onPrevious={() => dispatch({ type: "step", delta: -1, today })}
-        onNext={() => dispatch({ type: "step", delta: 1, today })}
-        onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
-      />
+      {breakpoint === "phone" ? (
+        <DateControl {...dateControl(day)} onOpen={() => dispatch({ type: "openPicker" })} />
+      ) : (
+        <WeekStrip
+          heading={weekHeading(day, today)}
+          label={weekLabel(week[0] ?? day)}
+          days={weekPills(week, weekEvents ?? [], members, { tz, forecast, settings })}
+          selected={day}
+          today={today}
+          breakpoint={breakpoint}
+          previousLabel={copy.calendar.previousWeek}
+          nextLabel={copy.calendar.nextWeek}
+          onPrevious={() => dispatch({ type: "step", delta: -1, today })}
+          onNext={() => dispatch({ type: "step", delta: 1, today })}
+          onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
+        />
+      )}
       <CalendarDay
         state={dayEvents.state}
         retryIn={dayEvents.retryIn}
@@ -130,13 +145,59 @@ export function CalendarScreen() {
           />
         }
       />
+      {breakpoint === "phone" && view.picker && (
+        <PhoneDatePicker
+          members={members}
+          selected={day}
+          today={today}
+          tz={tz}
+          onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
+          onClose={() => dispatch({ type: "closePicker" })}
+        />
+      )}
     </div>
+  );
+}
+
+type PhoneDatePickerProps = {
+  members: readonly Member[];
+  selected: string;
+  today: string;
+  tz: string;
+  onSelect: (day: string) => void;
+  onClose: () => void;
+};
+
+function PhoneDatePicker({
+  members,
+  selected,
+  today,
+  tz,
+  onSelect,
+  onClose,
+}: PhoneDatePickerProps) {
+  const months = pickerMonths(today);
+
+  const first = months[0]?.days[0] ?? today;
+
+  const last = months.at(-1)?.days.at(-1) ?? today;
+
+  const events = useEventsBetween(first, addDays(last, 1), tz);
+
+  return (
+    <DatePicker
+      months={pickerViews(months, weekDots(events ?? [], members, tz))}
+      selected={selected}
+      today={today}
+      onSelect={onSelect}
+      onToday={() => onSelect(today)}
+      onClose={onClose}
+    />
   );
 }
 
 type PillContext = {
   tz: string;
-  breakpoint: Breakpoint;
   forecast: Weather | undefined;
   settings: Pick<AccountSettings, "tempUnit">;
 };
@@ -151,11 +212,43 @@ function weekLabel(sunday: string): string {
   return copy.calendar.week(formatMonth(date, "UTC"), date.getUTCDate());
 }
 
+function dateControl(day: string) {
+  const date = parseDateKey(day);
+
+  return {
+    year: String(date.getUTCFullYear()),
+    month: formatMonth(date, "UTC"),
+    weekday: formatWeekday(date, "UTC"),
+    date: date.getUTCDate(),
+    name: formatLongDate(date, "UTC"),
+  };
+}
+
+function pickerViews(
+  months: readonly PickerMonth[],
+  dots: ReadonlyMap<string, Dot[]>,
+): PickerMonthView[] {
+  return months.map((month) => ({
+    ...month,
+    days: month.days.map((key) => {
+      const date = parseDateKey(key);
+
+      return {
+        key,
+        weekday: formatWeekday(date, "UTC"),
+        date: date.getUTCDate(),
+        name: formatLongDate(date, "UTC"),
+        dots: dots.get(key) ?? [],
+      };
+    }),
+  }));
+}
+
 function weekPills(
   week: readonly string[],
   events: readonly CalendarEvent[],
   members: readonly Member[],
-  { tz, breakpoint, forecast, settings }: PillContext,
+  { tz, forecast, settings }: PillContext,
 ): WeekDay[] {
   const dots = weekDots(events, members, tz);
 
@@ -168,7 +261,7 @@ function weekPills(
 
     return {
       key,
-      weekday: breakpoint === "phone" ? weekday.slice(0, 1) : weekday,
+      weekday,
       date: date.getUTCDate(),
       name: formatLongDate(date, "UTC"),
       dots: dots.get(key) ?? [],
