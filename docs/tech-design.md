@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.13 |
+| Status | v2.14 |
 | Date | 2026-10-19 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`design/handoff/`](design/handoff/README.md) (v7) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.60) · [`design/handoff/`](design/handoff/README.md) (v8) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -37,6 +37,8 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D21 | All-day events | `allDay: true`, `startAt` = the date's **UTC midnight**, no `endAt`, so the date never moves with the zone or DST. Repos read a day as timed events in `[dayStart(key, tz), dayStart(key+1, tz))` plus all-day events at that UTC midnight. `eventDayKey(event, tz)` is the one place that reads an event's date. Server: `events.all_day` with `CHECK (NOT all_day OR end_at IS NULL)`. |
 | D22 | Photo details | Read on upload, **on the server**: title (`ImageDescription`/`XPTitle`), date (`DateTimeOriginal`/`DateTimeDigitized`), GPS → `placeAt` → "City, ST". Fallbacks from pure `domain/photoName.ts` (`nameFromFile`, `dateFromFile`), then `x-file-modified`, then the upload day. Rows store `sources` and `checked`. Photos are editable (`PUT` title, date, place, sources, checked) and deletable (tombstone; files removed after commit). |
 | D23 | Screens and QR | `GET /api/displays` lists the account's displays (`kind`, `browser`, `lastSeenAt`, `current`); a transport read, not synced. Kind and browser come from the `User-Agent` (`domain/screens.ts` `deviceOf`); the name is built from them, not stored. QR sign-in reuses `magic_links` (kind `qr`, account + display ids, 5 min expiry) and the verify route; the code is drawn on the client with `uqr`. |
+| D24 | Family members | **`members` is a synced entity** like notes (`PUT/DELETE /api/members/{id}`, pulled by `/api/sync`). Events store **`everyone boolean`** plus **`member_ids uuid[]`** (empty when `everyone`), not a join table, so an event stays one row on the wire and in the outbox; a member added later joins every `everyone` event with no rewrite. Member colors are a closed set of 12 names mapped to the design system's `--block-*` colors in `theme`, never season roles. **Removing a member** is one client repo transaction (FAM-03): the member's tombstone, a delete for each event only theirs and a put for each shared event without them, each with its outbox entry, so it works offline. The server keeps `member_ids` honest: an event `PUT` drops ids that aren't live members of the account (so another account's ids never stick), and an event left with none and not `everyone` is stored as a tombstone. The first member is created with the name (`POST /api/auth/name`). Migration `007_members.sql` creates `members`, adds `everyone`, `member_ids` and `notes` to `events`, marks every event `everyone`, drops `tone`, and gives each named account one member (its name, `lilac`). The event shape change raises `CLIENT_BUILD` and `MIN_CLIENT_BUILD` (§4.5). Pure rules (`domain/members.ts`): `whoLabel`, `eventColor`, `removalImpact`, `nextFreeColor`, `matchesFilter`. |
+| D25 | Day timeline | **Pure layout in `domain/timeline.ts`**, a function of (plans, day, span, now, tz, available height, options) with no DOM: hour weights (TL-02, TL-06), pixel tops scaled to the height, overlap columns with widening (TL-03), the 44/40 px minimum, label thinning (TL-01), free slots (TL-08) and the now marker. `DayTimeline` measures its card with a `ResizeObserver` and passes the height; the card's content tier (TL-04) is picked from its measured size. Calendar and Today pass different options (`passedFactor` 0.35 / 0.3, weather lane or gutter weather, filter). |
 
 ---
 
@@ -136,8 +138,9 @@ db-migrations/NNN_*.sql
 
 ### 4.1 Local store (Dexie)
 ```ts
-db.version(1).stores({
-  events:   'id, startAt, deletedAt',
+db.version(2).stores({
+  events:   'id, startAt, deletedAt',   // + everyone, memberIds, notes; tone dropped by the v2 upgrade
+  members:  'id, createdAt, deletedAt',
   notes:    'id, createdAt, deletedAt',
   photos:   'id, createdAt',
   settings: 'accountId',
@@ -146,6 +149,7 @@ db.version(1).stores({
   meta:     'key',                        // cursor, status
 });
 ```
+- The v2 upgrade rewrites stored events to `everyone: true, memberIds: []` without `tone`; the server migration does the same, so both sides agree before the first pull.
 - **One database per account** (`glance-{accountId}`), deleted on sign-out. Demo builds use `glance-fixture`, reseeded on each load.
 - Rows keep the server's soft delete (`deletedAt`); hooks filter it out.
 - Pending ("Waiting to post") is derived from the outbox, never stored.
@@ -155,7 +159,7 @@ db.version(1).stores({
 ### 4.2 Repository pattern
 Each repo has a small interface and one Dexie implementation (`createXRepo(store)` + a `useXRepo()` hook). A write is **one Dexie transaction** — the row plus an outbox entry — then `nudge()` once it commits. A put keeps the stored server fields (a new row gets version 0); a remove sets `deletedAt` locally and queues a delete. Settings are one row keyed by `accountId`, merged over defaults. Photo uploads skip the outbox (§6.3); photo edits and deletes use it.
 
-Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day or month in `tz`, `useEvent`, `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePictureOfDay`, `useSettings`, `useWeather`, `useSyncStatus`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, CAL-02).
+Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day or week in `tz`, `useEvent`, `useMembers` (oldest first), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePictureOfDay`, `useSettings`, `useWeather`, `useSyncStatus`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `MembersRepo.remove(id, events)` writes the member tombstone and its event changes in one transaction (D24).
 
 `RepoProvider` takes a `RepoStore` (`db`, `accountId`, `account`, `now`, `nudge`, `refreshWeather`, `photoSrc`, `upload`, `places`, `locate`, `displays`, `issueQr`/`voidQr`, `signOut`, `markSignedOut`). The shell builds it; tests inject one.
 
@@ -178,7 +182,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 
 **Boot** (`useDisplayBoot`): demo opens and reseeds `glance-fixture` with an inline host and `FixtureTransport`. Otherwise it reads `glance-meta`: no entry or `signedOut` → `/signin`; else open `glance-{accountId}`, clear a halt left by the last session (`restarted` status event) and start the worker host.
 
-**AppShell** owns the sidebar reducer (`shell/sidebar.ts`): `hidden | rail | expanded`, with `show` (grip), `open` (expand handle), `hide` (rail ✕), `close` (drawer Close), `back` (Escape, drawer row) and `viewChanged` (expanded → rail; hidden → rail except on Today). Initial state: rail on every view but Today; `rail=1|open` override. The root pads by `sidebarInset(mode)`. Focus moves only after user actions (SHELL-09). The shell also paints the photo background (`useBackgroundPhoto` → `ui/PhotoBackdrop`, cross-fading layers), places the offline pill (`OfflineNotice`), pads by the keyboard inset, and prefetches the six views.
+**AppShell** owns the sidebar reducer (`shell/sidebar.ts`): `hidden | rail | expanded`, with `show` (grip), `open` (expand handle), `hide` (rail ✕), `close` (drawer Close, phone scrim), `back` (Escape, drawer row), `idle` (any → hidden) and `viewChanged` (expanded → rail; hidden → rail except on Today). Initial state: rail on every view but Today; `rail=1|open` override. The root pads by `sidebarInset(mode, phone)` (phone: 56 for rail, 0 for expanded, which overlays with a scrim). **Hide when idle** (SHELL-11): a 15 s timer from the last `pointerdown` or `keydown`, reset by `show`, sends `idle`; it doesn't run while `SheetHost` has a sheet, the keyboard inset is non-zero or a text field is focused (the same signals `IdleProvider` uses). Focus moves only after user actions (SHELL-09). The shell also paints the photo background (`useBackgroundPhoto` → `ui/PhotoBackdrop`, cross-fading layers), places the offline pill (`OfflineNotice`), pads by the keyboard inset, and prefetches the six views.
 
 **Background rotation.** `domain/background.ts` `shownBackground(background, photos, now, tz)` derives the photo: in Slideshow, `photoId` is the rotation anchor and `rotationStep` counts hours, days or Sunday weeks in `tz`, so every display shows the same photo with no timer. `changeBackground` re-anchors so the photo on screen stays. Photo mode with no or an unknown photo falls back to the oldest upload.
 
@@ -188,11 +192,11 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 
 ### 4.4 Screens and components
 - **Container / presentational.** `features/*/XScreen.tsx` reads hooks, `useNow()` and `useTimeZone()` and passes plain props. `ui` components are pure (props + optional `xstyle`), get words as props (they can't import `copy`), and render `<button>` only when given `onClick`.
-- **Rules are pure** in `domain` (`eventStatus`, `todayHero`, `todaySchedule`, `pictureOfDay`, `inAmbient`, `zoneState`, …) and unit-tested. Components hold no business rules.
-- **Multi-state flows** are a discriminated union + reducer, with the fixture param as initial state: event and note sheets (with Discard changes? via `ui/discard.ts`), photo sheet, weather setup (`editing | searching | choosing | locating | confirm-zone`, shared by Weather, Settings › Location and the sign-in location step through `useWeatherSetup`), sign-in, upload tiles, slideshow (`playing | paused | pinned`), full-screen photo, QR tile, sidebar.
-- **Layouts.** Each feature's `layout.ts` maps the breakpoint (`useBreakpoint()`, spec §5.1) to a StyleX grid. Today uses `todayLayout(width, height)` → `stacked` (< 768 px) · `portrait` · `landscape`; unstacked grids fit the window with no scroll and scale type with `clamp(…vw, …vh)`, and the Clock and temperature with container units.
-- **Today schedule rows** are measured: `useScheduleRows` measures the card (`ResizeObserver`) and `scheduleRows({ available, rowHeight })` gives 2..10 rows (6 when stacked); `todaySchedule` picks which events stay and the rest go behind "See all".
-- **Picture of the day** is a slot in the hero. `pictureOfDay(rows, dayKey, tz, seed)` replays a seeded cycle day by day over all photo rows (tombstones included), with "On this day" first, so the pick is stable for every display. Tap → `/photos?photo={id}`, which opens the slideshow pinned and paused on it.
+- **Rules are pure** in `domain` (`eventStatus`, `todayHero`, `timeline`, `members`, `pictureOfDay`, `inAmbient`, `zoneState`, …) and unit-tested. Components hold no business rules.
+- **Multi-state flows** are a discriminated union + reducer, with the fixture param as initial state: event and note sheets (`details | editing | discard`, where Cancel and Save from an edit opened in details return to `details`; Discard changes? via `ui/discard.ts`), the Family sheet (`list | confirm-remove{id}` with the add draft and its error), the Calendar view (selected day, filter `everyone | Set<id>`, `span24`, date picker open; tab-only), photo sheet, weather setup (`editing | searching | choosing | locating | confirm-zone`, shared by Weather, Settings › Location and the sign-in location step through `useWeatherSetup`), sign-in, upload tiles, slideshow (`playing | paused | pinned`), full-screen photo, QR tile, sidebar.
+- **Layouts.** Each feature's `layout.ts` maps the breakpoint (`useBreakpoint()`, spec §5.1) to a StyleX grid. Today uses `todayLayout(width, height)` → `stacked` (< 1024 px) · `portrait` · `twoColumn` (1024–1180 px landscape) · `threeColumn`, plus `noteColumns` and `noteLimit` (TODAY-09, TODAY-13); `threeColumn` fits the window with no scroll and scales type by `min(width ÷ 1920, height ÷ 1080)` clamped to 1–1.5, and the Now panel sizes the Clock, temperature and title with container units.
+- **Day timeline** (D25): `ui/DayTimeline` renders `timelineLayout(…)` for Calendar and Today; the reflow animates `top` and `height` over 280 ms.
+- **Picture of the day** is its own panel (`PictureOfDay`). `pictureOfDay(rows, dayKey, tz, seed)` replays a seeded cycle day by day over all photo rows (tombstones included), with "On this day" first, so the pick is stable for every display. Tap → `/photos?photo={id}`, which opens the slideshow pinned and paused on it.
 - **Slideshow** index is derived from `{ from, since }` and `now` (8 s per slide), never a timer.
 - **Uploads** run one XHR per file through `PhotosRepo.upload`; tiles live in memory, pause offline and resume or restart on reconnect.
 - **Keyboard** (KB-*): `useKeyboardInset()` reads `visualViewport`; sheets and pages pad by it and `useFieldInView` scrolls the focused field into view. Return in a single-line input moves to the next field or submits.
@@ -215,17 +219,16 @@ A signed-in screen must cold-start offline with every view working.
 - **Static routes.** Every view, `/ambient` and `/signin` is fully static (no `cookies()`/`headers()`); auth gating is on the client; `useSearchParams` sits in `Suspense`. `/` → `/today` is a `redirects()` entry.
 - **Auth offline.** `glance-meta` holds `{ accountId, name, email, signedOut? }`, written after sign-in. Offline, trust it; online, a 401 means signed out. Signing in to a different account first deletes the old account's DB and `photos` cache.
 - **Photos offline.** After each pull, and at start for every saved photo, the worker sends `photosChanged(ids)`; the page forwards them to the SW, which fetches `thumb` and `display` into the `photos` cache one at a time.
-- **Storage.** `navigator.storage.persist()` after sign-in. Manifest: `display: fullscreen`, `start_url /today`. Home-screen install on iPad avoids Safari's 7-day cap.
+- **Storage.** `navigator.storage.persist()` after sign-in. Manifest: `display: fullscreen`, `start_url /today`, `theme_color #000000`, the handoff's PWA icons (`pwa-icons/`: 192 and 512, maskable 192 and 512, favicons 16/32/48, apple-touch 180). Home-screen install on iPad avoids Safari's 7-day cap.
 - **Updates.** A new SW waits. At an idle move with an empty outbox, `IdleProvider` posts `SKIP_WAITING` and loads the target path on `controllerchange`; the SW is checked hourly. **Build check:** entity writes and `/api/sync` answer **426** when `X-Glance-Build` is missing or below `MIN_CLIENT_BUILD`. After a 426 the outbox can't drain, so the update applies at the next idle even with entries pending; they survive the reload and the new build pushes them. Without a waiting SW, an `outdated` screen does a full page load at idle instead. Any change that adds a field to a synced row raises `CLIENT_BUILD` and `MIN_CLIENT_BUILD` (`domain/build.ts`), because Valibot drops unknown keys and an older client would write the row back without it. New settings fields use `v.optional(…, default)`, so older rows parse.
 - **Sign-out.** Stop the host (terminates the worker), call `auth.signout()` (answer ignored), clear `glance-meta`, delete the account DB and the `photos` cache.
 
 | Request | Strategy |
 |---|---|
-| `/_next/static/*`, fonts, icons, manifest, `public/**` (not videos) | Precache; other `/_next/static/*` CacheFirst `assets` |
+| `/_next/static/*`, fonts, icons, manifest, `public/**` | Precache; other `/_next/static/*` CacheFirst `assets` |
 | Route HTML | Cached on SW activate (`OFFLINE_PAGES`) + NetworkFirst 3 s → cache → `/today` |
 | RSC (`RSC: 1`) | NetworkFirst 3 s, cached by path + segment header, `_rsc` ignored |
 | `/api/photos/{id}/file` | CacheFirst `photos` + warming, 300 entries |
-| `/videos/{season}.mp4` | CacheFirst `videos`, whole file (Range dropped), ranges served from cache |
 | Other `/api/*` | NetworkOnly |
 
 Not used: Background Sync (no Safari/Firefox support, duplicates the outbox), caching API JSON, periodic sync.
@@ -267,7 +270,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 - **426** → keep the outbox, stop syncing, update at the next idle (§4.5).
 - **Network / 5xx** → keep the entry and retry with backoff and on reconnect.
 
-**Pull.** Every write bumps a global `sync_state.version` in the same transaction and copies it to the row. `GET /api/sync?since={cursor}` returns `{ cursor, changes: [{ entity, row }] }` for the account's events, notes, photos and settings with `version > since`, tombstones included. The client applies them in one transaction, skipping rows with a pending outbox entry.
+**Pull.** Every write bumps a global `sync_state.version` in the same transaction and copies it to the row. `GET /api/sync?since={cursor}` returns `{ cursor, changes: [{ entity, row }] }` for the account's members, events, notes, photos and settings with `version > since`, tombstones included. The client applies them in one transaction, skipping rows with a pending outbox entry.
 
 **Versions commit in order.** Each write transaction takes the `sync_state` row lock first (`stamp()` when it always writes, else `lockVersions()` then `stamp()`), so version *n* commits before *n + 1* is handed out. A no-op write bumps nothing. `pullChanges` runs in one `REPEATABLE READ` transaction. So a cursor never skips a version.
 
@@ -286,7 +289,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 
 | Route | Notes |
 |---|---|
-| `PUT/DELETE /api/{events,notes,photos}/{id}`, `PUT /api/settings/{accountId}` | Body is the domain schema (server fields stripped, body id = path id). Answers the stored `Synced<T>`. `DELETE` sets `deleted_at` and keeps the content. Another account's id → 404. Photos are only created by upload, so `PUT` doesn't insert and changes only title, date, place, sources and `checked` |
+| `PUT/DELETE /api/{members,events,notes,photos}/{id}`, `PUT /api/settings/{accountId}` | Body is the domain schema (server fields stripped, body id = path id). Answers the stored `Synced<T>`. `DELETE` sets `deleted_at` and keeps the content. Another account's id → 404. Photos are only created by upload, so `PUT` doesn't insert and changes only title, date, place, sources and `checked` |
 | `GET /api/sync`, `GET /api/sync/stream` | §5 |
 | `POST /api/photos`, `GET /api/photos/{id}/file?v=` | §6.3 |
 | `GET /api/weather` | The account's forecast; 409 `no-location`, 502 `weather-failed` |
@@ -295,13 +298,13 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 | `GET /api/displays` | The account's displays, this one first, then by `last_seen_at` |
 | `/api/auth/*` | §6.2 |
 
-Every accepted write is announced on the sync bus. TPK-07 "same day" is a client rule; the server checks only `endAt > startAt` and a span under 24 h for timed events.
+Every accepted write is announced on the sync bus. A member `PUT` with a name already used by a live member of the account (ignoring case) → 409. Event member ids are filtered as D24. TPK-07 "same day" is a client rule; the server checks only `endAt > startAt` and a span under 24 h for timed events.
 
 ### 6.2 Auth (SIGNIN-*)
 1. `POST /api/auth/link { email, timeZone }` → 204 + `pending` cookie. Email trimmed and lowercased; older unused email links voided; same answer whether the account exists. Limits: 5 per email and 20 per IP per 10 min (in memory) → 429. Failed send (`mail-failed`) → 502.
 2. `GET /api/auth/verify?t=` → 303 to `/signin?link=opened` with a session for the opening device, or `/signin?link=stale` (unknown, used, voided, ≥ 10 min, or a QR ≥ 5 min); a stale email link sets `link_email` for "Send a new link". It creates the account if new (`time_zone` from the link).
 3. `GET /api/auth/status` (2 s poll): a valid session → `signed-in { account, returning, setupDone }`; else the `pending` row → `waiting` · `expired { email }` · `finishing-elsewhere` (account unnamed or setup not done) · `signed-in` with a new session cookie. The waiting screen's display is created on that poll.
-4. `POST /api/auth/name { name }` saves the name (≤ 100 chars). `POST /api/auth/location` saves the SIGNIN-14 place or a skip and sets `accounts.setup_done_at`.
+4. `POST /api/auth/name { name }` saves the name (≤ 100 chars) and, when the account has no member yet, creates the first member with that name and the first color in the same transaction. `POST /api/auth/location` saves the SIGNIN-14 place or a skip and sets `accounts.setup_done_at`.
 5. `POST /api/auth/signout` deletes this display's session and display row.
 6. `POST /api/auth/qr` makes a one-time QR link for this display (voiding its older one; 30/hour); `DELETE /api/auth/qr { url }` voids it. A stale QR never reveals the account email.
 

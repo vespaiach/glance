@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v0.59 |
-| Date | 2026-10-18 |
+| Status | v0.60 |
+| Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
 
@@ -25,17 +25,16 @@ Requirement IDs (`TODAY-03`, `NOTE-05` …) are cited in tasks, PRs and tests. A
 3. The screen stays useful offline, when a source fails, and during quiet hours (Ambient).
 
 ### 1.2 Out of scope
-Calendar sync (Google/Outlook) · recurring and multi-day events · note moderation, character limit, board overflow · photo albums · photo upload on phones · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming or remotely signing out screens · roles and permissions · per-person colors or filters · changing the account name or email, deleting the account · session expiry, kiosk lock.
+Calendar sync (Google/Outlook) · recurring and multi-day events · renaming or recoloring family members · note moderation, character limit, board overflow · photo albums · photo upload on phones · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming or remotely signing out screens · roles and permissions · changing the account name or email, deleting the account · session expiry, kiosk lock.
 
 ### 1.3 Open questions
 - Burn-in protection and screen dimming (Ambient).
-- The four season video files (AMB-09): source, license, size budget. Until then Ambient shows its AMB-06 background.
 
 ---
 
 ## 2. Sources and overrides
 
-The **prototype** wins on layout, copy, states and component use. Then, in order: the behavior notes, the handoff README, the design-system readme. Only the prototype's defaults are built: the left sidebar with the Rail handle, and Today's Columns layout (`lay=a`). The boards don't draw the sidebar, so it is checked against the prototype; everything else is checked against the boards at the 6 sizes.
+The **prototype** wins on layout, copy, states and component use. Then, in order: the behavior notes, the handoff README, the design-system readme. Only the prototype's defaults are built: the left sidebar with the Rail handle, Today's Now panel layout (`lay=n`) and Calendar's day timeline (option 1c). The boards don't draw the sidebar, so it is checked against the prototype; everything else is checked against the boards at the 6 sizes.
 
 Where Glance departs from the design system:
 
@@ -47,7 +46,8 @@ Where Glance departs from the design system:
 | Brand | "Glance", plain Geist 540, no logo |
 | Type | Smaller fluid `clamp()` sizes (§4.3). Mono captions 14 px minimum (16 on Ambient). All text black or white, never grey |
 | Spacing | 8 px scale only: 4, 8, 12, 16, 24, 32 |
-| 12-hour times | Event rows omit AM/PM; hero, forecast, sunset and Ambient include it |
+| 12-hour times | Plan cards omit AM/PM; Now panel, forecast, sunset and Ambient include it |
+| People | Family members with fixed colors (§7) tag events; the season palette never colors a person |
 
 ---
 
@@ -65,7 +65,7 @@ Next.js (App Router) as a single-page app, TypeScript strict, Biome, StyleX, Val
 ## 4. Design system
 
 ### 4.1 Tokens and seasons
-The handoff tokens are ported verbatim as StyleX vars. Season roles: **block-1 = hero/now, block-2 = notes, block-3 = weather, block-4 = highlight**, soft = warm neutral, deep = Ambient, accent = alerts (at most one accent action per screen). A season change cross-fades 600 ms.
+The handoff tokens are ported verbatim as StyleX vars. Season roles: **block-1 = Now panel, block-2 = notes, block-3 = weather, block-4 = highlight**, soft = warm neutral, deep = Ambient, accent = alerts (at most one accent action per screen). A season change cross-fades 600 ms.
 
 | Season | 1 | 2 | 3 | 4 | soft | deep | accent | Icon |
 |---|---|---|---|---|---|---|---|---|
@@ -80,8 +80,9 @@ Typed components in `src/ui`, styled with StyleX only, each with an optional `xs
 | Component | Notes |
 |---|---|
 | `Clock` | Tabular numerals, date line "Friday, October 9". The colon blinks every 0.6 s, and stays on with reduced motion. Takes the time from the screen; no timer of its own |
-| `EventRow` | Past = struck through with a hairline dot. Now = season fill and NOW pill. `compact` = phone columns (§5.4). A button with `onClick` |
-| `MonthGrid` | Selected = black (`aria-pressed`), today = ring (`aria-current="date"`), marked = dot. Day buttons named by the full date |
+| `DayTimeline` | The elastic day timeline (§8.3.2): hour gutter, plan cards, free slots, now marker, and a weather lane (Calendar) or gutter weather (Today) |
+| `WeekStrip`, `DateControl`, `DatePicker` | CAL-01, CAL-02, CAL-03. Day buttons named by the full date; selected = black (`aria-pressed`), today = ring (`aria-current="date"`) |
+| `MemberPill`, `PersonDots` | A member's 12 px color dot + name as a toggle pill (person filter, Who picker); a row of 6–8 px dots per member |
 | `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (`--danger`, white text, every season: delete and discard confirms) |
 | `IconButton` | `md` 40, `touch` 56, `lg` 72 px; `active` = black; `current="page"` |
 | `PillTabs` | Segmented control, a group of `aria-pressed` buttons. `lg` (56 px) wraps onto more rows |
@@ -92,7 +93,7 @@ Typed components in `src/ui`, styled with StyleX only, each with an optional `xs
 | `TimeField`, `TimePicker` | §8.3.1 |
 | `Skeleton`, `EmptyState`, `SourceFailure`, `Zone` | §9.3–9.4. `Zone` renders loading / empty / ready / failed in its own error boundary |
 | `Sheet` | §8.9 |
-| `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring |
+| `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring. Notes use the 5 season tones, members the 12 member colors |
 | `OfflinePill`, `SettingsRow`, `AllDayTile` | OFF-01, §8.7, TODAY-12 |
 
 **DS-01:** `/dev/gallery` (dev and demo builds only) shows every component in all 4 seasons and every state the boards show.
@@ -108,7 +109,7 @@ Typed components in `src/ui`, styled with StyleX only, each with an optional `xs
 --type-button-size: 17px; --type-eyebrow-size: 14px; --type-caption-size: 14px;
 --kiosk-gutter: clamp(20px, 2.6vw, 40px);
 ```
-Ambient: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls: -8px; --type-eyebrow-size: clamp(14px, 1.4vw, 20px)`. Today at 768 px and up scales further (TODAY-13).
+Ambient: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls: -8px; --type-eyebrow-size: clamp(14px, 1.4vw, 20px)`. Today above 1180 px scales further (TODAY-13).
 
 ### 4.4 Motion and feedback
 - Touch first: no hover states. Press scales to 0.97 over 120 ms ease-out. Fills never darken. No bounces, no blur.
@@ -141,17 +142,19 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
   - **Hidden:** a 5×72 black pill on the left edge (44×144 touch area), "Show sidebar" → Rail.
   - **Rail:** 80 px white, full height, hairline inner edge, 16 px padding, 8 px gap: the five views as 56 px IconButtons, a flexible gap, Ambient and Settings, then a 56 px ✕ "Hide sidebar" as a fixed footer (the items above scroll on short windows). Page inset 80 px. **Expand handle:** the same pill on the rail's inner edge, vertically centered, 56×96 touch area, "Expand menu" → Expanded. It fades out (180 ms) while the drawer is open and in full-screen Photos.
   - **Expanded:** a 320 px white panel 12 px from the top, bottom and left, radius 24, `shadow-1`, no scrim. Header "Glance" (Geist 540, 24 px). The five views as 64 px pill rows (icon + 20 px label, weight 480; current = black fill), a gap, a hairline, Ambient and Settings, then a fixed "Close" row (named "Close sidebar") → Hidden. The rail fades out (180 ms). The page is pushed 332 px and stays usable: a tap on it doesn't close the drawer. Picking a row, or any view change, returns to Rail.
+  - **Phone (< 600):** rail 56 px (page inset 56) with 44 px IconButtons; grip 4×56; drawer 248 px with 48 px rows, 16 px labels, 20 px icons and a 20 px "Glance" header. The drawer slides **over** the page (no push) with a 60% scrim; a scrim tap → Rail.
   - **Motion:** slides over 280 ms `cubic-bezier(0.2, 0, 0, 1)`; at once with reduced motion.
   - Fixtures: `rail=1` (Rail), `rail=open` (Expanded).
 - **SHELL-09 Keyboard and focus:** the grip and Expand menu carry `aria-expanded`. Escape in Expanded → Rail. Opening the drawer focuses the current view's row. Escape or a row → focus to Expand menu; Close or ✕ → the grip; the grip → Expand menu. A view change that brings the rail back, and a page load, move no focus. Parts not shown are `inert`. No focus trap.
-- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
+- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px; phone 0 or 56, the drawer overlays) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
+- **SHELL-11 Hides when idle:** after 15 s with no touch or key press, Rail or Expanded → Hidden (the drawer closes and the rail slides away). The timer doesn't run while a sheet is open, the keyboard is up or a text field is focused. Tapping the grip → Rail and restarts the 15 s. No focus moves.
 
 ### 5.3 Grid templates
 
 | View | wide | mid | narrow |
 |---|---|---|---|
 | Today | TODAY-13 | | |
-| Calendar | `auto 1fr`, cell 60 | `auto 1fr`, cell 54 | 1 col, cell 84 |
+| Calendar | week strip, then `1fr` (CAL-04) | same | same, no week label or weather |
 | Weather | `minmax(380px,.85fr) 1.4fr` | `minmax(340px,.8fr) 1.2fr` | 1 col |
 | Photos | `1.6fr minmax(300px,1fr)`, photo min-h 320, thumbs 2 col | same | 1 col, photo 440, thumbs 3 col |
 | Settings | `1.4fr minmax(320px,1fr)` | same | 1 col |
@@ -159,11 +162,11 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 | Sign in | `1fr 1fr` | same | 1 col |
 
 ### 5.4 Phone (< 600)
-- Starts from `narrow`. Hourly `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways. Month cell `max(36, floor((vw − 108) / 7))`.
+- Starts from `narrow`. Hourly `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways.
+- Calendar: the date control replaces the week strip (CAL-02); one-letter weekdays; the timeline is 720 px tall with no weather lane or rain chips, and the page scrolls.
 - Photos: featured 260 px, thumbs 2 col. Background thumbs 2 col.
 - **No photo upload:** every upload entry point is hidden (PHOTO-03/05, BG-02, Today's "Upload a photo").
-- Same sidebar as other sizes; the drawer leaves about 58 px of page visible.
-- EventRow columns `56px 10px 1fr auto`, gap 12, padding `12px 8px` (other sizes `84px 14px 1fr auto`, padding `14px 16px`).
+- Smaller sidebar, drawer over the page (SHELL-08).
 
 ---
 
@@ -184,8 +187,8 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 | Area | Params |
 |---|---|
 | Shell, data | `clock=24`, `season=…`, `bg=photo`, `empty=1`, `net=loading\|offline\|wxerror`, `kb=1`, `rail=1\|open` |
-| Sheets | `sheet=event\|newevent\|note\|newnote\|allday\|photo\|photometa`, `time=start\|end\|error\|noend`, `discard=1` |
-| Today, Calendar | `events=many`, `allday=1` |
+| Sheets | `sheet=event\|newevent\|note\|newnote\|allday\|past\|family\|photo\|photometa`, `details=1`, `time=start\|end\|error\|noend`, `discard=1`, `rm={member}`, `famname={name}`, `famerr=1` |
+| Today, Calendar | `events=many`, `allday=1`, `day={d}` (day of October 2026), `who={member,…}`, `span=24`, `dp=open` |
 | Photos, Background | `upload=one\|progress\|error\|offline\|done`, `full=1`, `chrome=0` |
 | Weather setup | `wx=searching\|unknown\|choose\|locating\|no-position\|denied\|outside\|lookup\|tz\|savefail` |
 | Settings | `amb=same\|split\|off`, `pick=all.s\|all.e\|wknd.s\|wknd.e`, `qr=open\|failed` |
@@ -196,9 +199,19 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 ## 7. Domain model
 
 ```ts
-type Tone = 1 | 2 | 3 | 4 | 'soft' | 'accent';      // 'accent' = Alert, events only
+type Tone = 1 | 2 | 3 | 4 | 'soft';                  // notes
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 type Synced<T> = T & { updatedAt: string; version: number; deletedAt?: string };  // stamped by the server
+
+type MemberColor = 'lilac' | 'sky' | 'coral' | 'mint' | 'sun' | 'pink' | 'lime' | 'rust'
+                 | 'glacier' | 'amber' | 'sage' | 'ice';  // the design system's block colors; never change with the season
+
+interface Member {
+  id: string;
+  name: string;      // required, unique in the family ignoring case
+  color: MemberColor;
+  createdAt: string; // members are listed oldest first
+}
 
 interface CalendarEvent {
   id: string;
@@ -207,7 +220,9 @@ interface CalendarEvent {
   allDay?: true;    // fills its date: startAt = the date's UTC midnight, no endAt (EVT-08)
   title: string;    // required
   location?: string;
-  tone: Tone;       // default 1
+  everyone: boolean;   // true = for the whole family, including members added later
+  memberIds: string[]; // when not everyone: at least one member
+  notes?: string;      // free text, trimmed
 }
 
 interface Note {
@@ -215,7 +230,7 @@ interface Note {
   text: string;     // required, multiline
   author: string;   // blank → "Guest"
   createdAt: string;
-  tone: Exclude<Tone, 'accent'>;
+  tone: Tone;
   rotation: number; // degrees, cycles −2, 1.5, −1, 2.5
 }
 
@@ -265,7 +280,9 @@ interface Display { id: string; accountId: string; kind: 'monitor' | 'tablet' | 
 
 **Defaults:** season Auto, 12-hour, °F, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM).
 
-**Account model:** one family = one account = one email, no members. Sign-up and sign-in are the same magic-link flow. Events, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
+**Account model:** one family = one account = one email. Sign-up and sign-in are the same magic-link flow. Events, members, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
+
+**Family members** are names with a color that tag events; they never sign in. A family always has at least one. A new account gets one member named after the account (SIGNIN-06), with the first color. An event's people are **everyone** (the flag; a member added later joins it) or a set of members; "who" reads "Everyone" or the names in member order, joined by ", ". An event's color: one member → that member's color; more than one or everyone → the season soft color with person dots (no dots for everyone).
 
 ### 7.0 Database
 PostgreSQL, from `db-migrations/`:
@@ -276,7 +293,8 @@ PostgreSQL, from `db-migrations/`:
 | `displays` | `id`, `account_id`, `last_seen_at`, `kind` (`monitor` default), `browser` |
 | `sessions` | `token_hash`, `display_id`, `created_at` |
 | `magic_links` | `token_hash`, `kind` (`email \| qr`), `email`, `time_zone`, `pending_id` (email links), `account_id` + `display_id` (QR links), `expires_at`, `used_at` |
-| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `tone`, `updated_at`, `deleted_at`, `version` |
+| `members` | `id`, `account_id`, `name`, `color`, `created_at`, `updated_at`, `deleted_at`, `version` |
+| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `member_ids uuid[]` (empty when `everyone`), `notes`, `updated_at`, `deleted_at`, `version` |
 | `notes` | `id`, `account_id`, `text`, `author`, `tone`, `rotation`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `photos` | `id`, `account_id`, `title`, `taken_on date`, `place`, `title_source`, `date_source`, `place_source`, `checked`, `file_path`, `file_name`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `settings` | `account_id`, `json jsonb` (AccountSettings), `updated_at`, `version` |
@@ -294,9 +312,10 @@ For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcomi
 ### 7.2 Time formatting (TIME-01)
 | Context | 12-hour | 24-hour |
 |---|---|---|
-| Clock, hero start, sunset, Ambient, sync time | `10:41 AM` (mono AM/PM) | `10:41` |
+| Clock, event summary start, sunset, Ambient, sync time | `10:41 AM` (mono AM/PM) | `10:41` |
 | Hero "until {end}" | `until 11:15` | `until 11:15` |
-| Event rows, ranges | `10:30 – 11:15` | `10:30 – 11:15` |
+| Plan cards, ranges | `10:30 – 11:15` | `10:30 – 11:15` |
+| Countdown, lengths | `45 min`, `1 h 20 min` | same |
 | Hourly forecast | `4 PM` | `16:00` |
 
 ---
@@ -324,44 +343,49 @@ Layout: left = block-1 hero ("Glance" wordmark, "{Season} · {Month}", live Cloc
 | SIGNIN-15 | **QR sign-in** (Settings › Account, under the screen list): secondary "Sign in another device" (`qr-code`) → a block-1 tile with the code on white, "Scan to sign in", "Open the camera on the other device and point it at the code. It signs in with {email}.", mono "Code expires in {m:ss}" from 5:00, ghost "Done". The code is a one-time link for this account that signs the opener in (SIGNIN-09 "Welcome back"). At 0:00 a new code replaces it. A code works once, for 5 minutes, and a new one voids the old. While a code is made the box is empty at 5:00; a failure reads "Couldn’t make a code. Try again." with "Try again" (`rotate-cw`) before "Done". Done or leaving Settings voids the code. Offline the buttons are disabled. A used or expired code opens the email form, never showing the account email. Anyone who can see the screen may scan it. |
 
 ### 8.2 Today — `TODAY`
-Zones: hero (block-1), schedule (white panel), weather (block-3), notes (white panel).
+Zones: Now panel (block-1), schedule (white panel), notes (white panel), Picture of the day (white panel).
 
 | ID | Requirement |
 |---|---|
-| TODAY-01 | Hero: season eyebrow, Clock, the event summary, then the picture of the day. |
-| TODAY-02 | Hero (timed events only): running → "Happening now", title, "{location} · until {end}"; running with no end → "{location} · started {start}"; next → "Up next", title, "{location} · {start}"; all ended → "Nothing else today" / "Today's events have ended."; none → "Nothing scheduled" / "Events show here while they happen." |
-| TODAY-03 | Tapping the hero event or any row opens Edit event. |
-| TODAY-04 | Eyebrow "Today · {n} events" / "Today · 1 event" / "Today · No events" (all-day events count). Ghost "Add event" (+, only when the day has events) and "Full calendar". Below 1200 px both are 56 px icon-only IconButtons (`plus`, `calendar-days`) named by their labels. |
-| TODAY-05 | Rows move past → now → upcoming live; the hero swaps at each start and end. |
+| TODAY-01 | **Now panel:** the date, then the season icon (18 px: `flower-2`, `sun`, `leaf`, `snowflake`), the Clock; the weather now; then the event summary. No season label and no separate weather card. Clock `clamp(56px, 27cqi, 200px)`, temperature `clamp(48px, 17cqi, 128px)`, event title `clamp(28px, 8cqi, 48px)` of the panel's width. |
+| TODAY-02 | Event summary (timed events only), a button: running → eyebrow "Happening now" + black pill "{n} left", title, "{location} · until {end} · {who}"; running with no end → "{location} · started {start} · {who}"; next → "Up next" + "In {n}", title, "{location} · {start}"; all ended → "Nothing else today" / "Today's events have ended."; none → "Nothing scheduled" / "Events show here while they happen." Durations as §7.2 ("45 min", "1 h 20 min"). With several running, the one that started last (ties: the shorter one). |
+| TODAY-03 | Tapping the event summary, a plan or an all-day tile opens Event details (EVT-09). Tapping a free slot opens New event at that slot (TL-08). |
+| TODAY-04 | Schedule eyebrow "Today · {n} events" / "Today · 1 event" / "Today · No events" (all-day events count). Ghost "Add event" (+, only when the day has events) and "Full calendar". Below 1440 px both are 56 px icon-only IconButtons (`plus`, `calendar-days`) named by their labels. |
+| TODAY-05 | Plans move past → now → upcoming live; the event summary swaps at each start and end, and its countdown updates every minute. |
 | TODAY-06 | Empty: soft tile, calendar icon, "No events yet" / "Add the first one. It shows here and on the calendar." + "Add event". |
-| TODAY-07 | **Picture of the day** at the bottom of the hero, 32 px below the event: a button, max width 420 px, with a square thumb (`clamp(56px, min(14vh, 40% of the slot), 120px)`, radius 8), 20 px gap, mono "Picture of the day" (or "On this day · {year}") over the title (18 px, 480), each one line; named "Picture of the day: {title}". Tap → Photos on that photo, paused (PHOTO-01). No photos → "Picture of the day" / "Upload a photo" beside an outlined square with `image-plus`; tap → Photos. **Selection:** one photo per day, the same on every screen, changing at local midnight. First a photo taken on today's month and day in an earlier year (oldest year first); else the next photo in a shuffled cycle where every photo shows once before any repeats, new photos joining the end. "On this day" days don't use a cycle turn. Only finished uploads count, and an upload never changes the day's photo unless there was none. Deleting today's photo moves to the next one at once. |
-| TODAY-08 | Weather: `WeatherNow`. No location → "Weather needs a location" / "Set the city once. The forecast and the clock follow it." + "Set location" → Weather setup. |
-| TODAY-09 | Notes eyebrow "Notes · {n}", ghost "All notes". Shows the two newest. Tap → Edit note. Empty → "No notes yet" + "Add note". |
-| TODAY-10 | On a photo background the picture of the day is hidden (the "Upload a photo" slot still shows). |
-| TODAY-11 | **More events than fit:** a full-width soft "See all {n} events" with a mono count ("1 earlier · 3 later", only the parts that apply) → Calendar on today. Ended events hide first, then the latest upcoming; now and next always stay. At 768 px and up the rows that fit are measured from the card (2–10, re-measured on resize; the button takes one); below, 6. |
-| TODAY-12 | **All-day events:** soft tiles (min height 56, radius 8) above the timed rows: mono "ALL DAY", dot, title, place. Tap → Edit event. |
-| TODAY-13 | **Layout. 768 px and up: no page scroll**; the cards clip. Landscape (width ≥ height): columns `0.95fr 1.35fr 1fr`, areas `"hero sched wx" "hero sched notes"`, rows `auto 1fr`. Portrait: columns `1fr 1fr`, areas `"hero wx" "sched sched" "notes notes"`, rows `auto 1fr auto`. Notes in one column in landscape below 1600 px, else two. Clock `clamp(56px, 27% of the hero, 200px)`, temperature `clamp(56px, 24% of the weather card, 160px)`. Body type grows past 1920×1080 by min(width ÷ 1920, height ÷ 1080), up to 1.5×. **Below 768 px:** one scrolling column: hero, weather, schedule, notes. |
+| TODAY-07 | **Picture of the day** panel: eyebrow "Picture of the day" (or "On this day · {year}"), ghost "All photos" → Photos, the photo filling the panel (radius 8; a button named "Picture of the day: {title}") and its title below. Tap → Photos on that photo, paused (PHOTO-01). No photos → "Upload a photo" with `image-plus` → Photos (hidden on phone, §5.4). It stays on a photo background. **Selection:** one photo per day, the same on every screen, changing at local midnight. First a photo taken on today's month and day in an earlier year (oldest year first); else the next photo in a shuffled cycle where every photo shows once before any repeats, new photos joining the end. "On this day" days don't use a cycle turn. Only finished uploads count, and an upload never changes the day's photo unless there was none. Deleting today's photo moves to the next one at once. |
+| TODAY-08 | **Weather now** in the Now panel, a button → Weather: "{city} · Now", condition icon + temperature, "{condition} · High {h}° · Low {l}°", and `umbrella` "Rain from {time}" at the first drizzle or rain hour of the hourly forecast. No location → `cloud-sun` "Set weather location" / "The forecast and the clock follow it." → Weather setup. Failure → `cloud-off` "Weather unavailable" / "Trying again in {n} min." |
+| TODAY-09 | Notes eyebrow "Notes · {n}", ghost "All notes". Shows the two newest; one on three-column screens under 880 px tall. Tap → Note details (NOTE-10). Empty → "No notes yet" + "Add note". |
+| TODAY-10 | On a photo background every zone sits on its white panel. |
+| TODAY-11 | **Schedule** = the day timeline (§8.3.2) for today, always for everyone, with no person filter and no weather lane: passed hours shrink × 0.3, and each hour label shows that hour's weather under it (16 px icon + temperature, 15 px / 480) when the hour is at least 46 px tall and clear of the now marker. Gutter 80 px on wide, 76 on mid and narrow, 52 on phone. It fills the card (min 200 px; 560 px in the one-column layout). Every plan from 5 AM to 9 PM stays on it; there is no "See all" row. |
+| TODAY-12 | **All-day events:** soft tiles (min height 56, radius 8) above the timeline, in event order: mono "ALL DAY", person dot (soft for shared), title, "{who} · {location}". They never show in the event summary and never strike through. |
+| TODAY-13 | **Layout** (Now panel, `lay=n`). **Landscape above 1180 px: no page scroll**; columns `0.95fr 1.5fr 1fr`, areas `"hero sched notes" "hero sched potd"`, rows `1fr 1fr`; notes in one column below 1600 px, else two. **1024–1180 px landscape:** columns `0.9fr 1.3fr`, areas `"hero sched" "notes potd"`, first row `max(660px, 100vh − 160px)`, the second row reached by scrolling, notes in two columns, Picture of the day min 240 px. **Portrait at 1024 px and up:** columns `1fr 1fr`, areas `"hero notes" "hero potd" "sched sched"`, rows `auto auto 1fr`, notes in one column. **Below 1024 px:** one scrolling column: Now panel, schedule, notes, Picture of the day (min 240 px); notes in two columns, one below 600 px. Body type grows by min(width ÷ 1920, height ÷ 1080), between 1× and 1.5×. |
 
 ### 8.3 Calendar & events — `CAL`, `EVT`
-Left: soft block with the month (year added outside the current year), prev/next IconButtons (56), `MonthGrid`. Right: white panel with count, "{Weekday}, {Mon} {d}", "Add event", rows, caption "Select an event to edit or delete it".
+Top: the week strip card (CAL-01; the date control on phone). Below: one white panel with the person filter row (CAL-05), all-day tiles and the day timeline (§8.3.2).
 
 | ID | Requirement |
 |---|---|
-| CAL-01 | Tapping a day selects it (black); heading and count update; today keeps its ring. |
-| CAL-02 | Days with events (all-day included) get a dot, updated live. |
-| CAL-03 | Chevrons step a month, rolling the year. The selection becomes the 1st, or today in the current month. |
-| CAL-04 | Count "{n} event(s)" / "No events". Empty day: "Nothing scheduled. A free day." No events at all: tile "The calendar is empty" / "Select a day, then add an event. Days with events get a dot." |
-| CAL-05 | "Add event" creates on the selected day; a row opens Edit event. |
-| CAL-06 | All-day tiles above the timed rows, as TODAY-12. |
-| CAL-07 | On narrow and phone, tapping a day whose list is below the fold scrolls just enough to show the heading and the first event. |
+| CAL-01 | **Week strip** (600 px and up): eyebrow "{Mon d – d}" and the month name (wide and mid only), prev/next IconButtons (56), then 7 day pills Sunday to Saturday: weekday, date, one 6 px dot per member with a plan that day (always everyone, capped at 46 px wide), and the day's forecast icon + high when the cell is at least 124 px wide (measured) and the day has a forecast. Selected = black; today keeps a 2 px ring. Narrow drops the eyebrow, month name and weather. |
+| CAL-02 | Chevrons step a week; landing on this week selects today, any other week its Sunday. **Phone date control** (< 600, replaces the week strip): one full-width white card button: mono year over the month name (28 px) on the left, the selected date as a black pill (weekday + date) with `chevron-down` on the right; tap → date picker. Phone weekdays are one letter. |
+| CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per member with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered. A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
+| CAL-04 | The timeline fills the panel with no scroll; with 24 hours on its minimum height is 760 px (720 mid, 1000 phone) and the page scrolls. Changing the day or the filter reflows the timeline over 280 ms. `/calendar?date=` selects that day. |
+| CAL-05 | **Person filter:** a row of soft pills (48 px, 44 on phone, 8 px apart), one per member: 12 px color dot + name (16 px / 480). It scrolls sideways; "Edit" (`pencil`, same pill) stays pinned after it → Family sheet. All members selected = everyone (the default): every dot filled, no black pill. Tap a member while everyone shows → only that member (black pill); tap others to add them; tap a selected one to remove it. Selecting every member → everyone. Removing the last → nobody: every dot a hollow ring and the day shows no plans, tiles or free slots. While filtered, hidden members show a hollow ring in their color. A plan shows when any selected member is on it (everyone plans always). Filters the timeline, all-day tiles and free slots. Belongs to this tab; `who=` sets it. |
+| CAL-06 | **24 hours:** a soft toggle pill (`clock` + "24 hours") left of "Add event". Off: 5 AM to 9 PM, with a black mono badge counting the day's plans that start before 5 AM or end after 9 PM (hidden at 0). On: black, no badge, 12 AM to 12 AM (TL-06). Stays on across days for this tab. |
+| CAL-07 | **Add event:** soft pill (`plus`, 48 px, 44 on phone) at the end of the filter row → New event on the selected day for the selected members (everyone when all are selected). |
+| CAL-08 | Empty day: the timeline shows one free slot, "Everyone free · 16 h" (or "Free · 16 h"). No events at all: the tile (`calendar-days`) "The calendar is empty" / "Select a day, then add an event. Days with plans get a dot for each person." replaces the timeline. |
+| CAL-09 | All-day tiles above the timeline, as TODAY-12, filtered by CAL-05. |
 | EVT-01 | Sheet "New event" / "Edit event", eyebrow "{Weekday}, {Mon} {d}". |
-| EVT-02 | Fields: Title* ("What's happening"), "Time" PillTabs "Set times · All day" (lg), Starts and Ends (§8.3.1), Where ("Home, school, park…"), Color: 5 season swatches + **Alert**. Default color 1. |
+| EVT-02 | Fields: Title* ("What's happening"), "Time" PillTabs "Set times · All day" (lg), Starts and Ends (§8.3.1), **Who**, Where ("Home, school, park…"), **Notes** (3 rows, "Anything to remember", saved trimmed). Events have no color of their own. |
 | EVT-03 | Empty title → "Add a title", cleared on the next change. |
 | EVT-04 | Time entry and validation: §8.3.1. |
 | EVT-05 | Primary "Add event" / "Save" / "Save for later" (offline). Secondary "Cancel". |
 | EVT-06 | Delete (edit only): ghost "Delete" → `danger` "Delete event" inline confirm. |
-| EVT-07 | Save closes the sheet; lists, dots and Today update at once. |
+| EVT-07 | Save closes the sheet, or returns to Event details when editing from there; the timeline, week dots and Today update at once. |
 | EVT-08 | **All day** hides Starts, Ends and any picker; the event fills its date. "Set times" restores the draft's times, or the TPK-05 defaults. No TPK-07 check. Ambient reads "All day". |
+| EVT-09 | **Event details** (read-only; every tap on an existing event opens it, new events skip it): eyebrow = the day, title = the event title, ✕. A color block (the event's color, radius 24) with a mono label (the length "1 hr", "No end time" or "Whole day") over the time in large light numerals with mono AM/PM, or "All day"; on today a black "Happening now" pill while running. Rows with an icon, a mono label and hairline dividers, hidden when empty: **Who** (dot + name pills, or "Everyone"), **Where**, **Notes** (line breaks kept). Footer: primary "Edit" (`pencil`). An ended event (ended today, or any earlier day) shows a hairline "Ended" pill, no Edit, and the footer line "This event has ended and can't be changed." No offline banner. |
+| EVT-10 | **Edit from details:** "Edit" swaps the same sheet to Edit event. Cancel returns to details (after "Discard changes?" when changed; Discard returns to details). The ✕ and the scrim close the sheet (same check). Delete closes it. |
+| EVT-11 | **Who:** pills for "Everyone" and each member (color dot + name, 48 px), selected = black, any number. "Everyone" selects all (stored as everyone); tapping it when selected does nothing. Selecting every member one by one also means everyone. The last selected member can't be turned off. New events start with the Calendar filter's members, or everyone. |
 
 #### 8.3.1 Time entry — `TPK`
 
@@ -374,9 +398,36 @@ Left: soft block with the month (year added outside the current year), prev/next
 | TPK-05 | **Defaults:** start at the next full half hour (10:41 → 11:00, 11:00 → 11:30), capped at 11:30 PM; end = start + 1 h, capped at 11:55 PM. |
 | TPK-06 | Moving Starts moves Ends by the same amount (capped at 11:55 PM). An empty or invalid Ends stays put. |
 | TPK-07 | Ends must be later than Starts on the same day; equal fails. Checked on Save with the title; Save stays enabled. A failure closes the picker and shows "Ends before it starts"; any change clears it. |
-| TPK-08 | **No end:** the field reads "No end time" (330); the row shows only the start; the hero reads "{where} · started {time}". Tapping Ends fills Starts + 1 h. |
-| TPK-09 | The Clock setting drives fields, picker and rows. Offline is the same, with "Save for later". |
+| TPK-08 | **No end:** the field reads "No end time" (330); the plan card shows only the start and ends at the end of its day for layout; the event summary reads "{where} · started {time}". Tapping Ends fills Starts + 1 h. |
+| TPK-09 | The Clock setting drives fields, picker and plan cards. Offline is the same, with "Save for later". |
 | TPK-10 | Cells use `aria-pressed`. Hours say "3 PM" or "15 hundred"; minutes "{n} minutes". |
+
+#### 8.3.2 Day timeline — `TL`
+Used by Calendar (any day, filtered) and Today (today, everyone). Pure layout rules live in `src/domain` (tech design).
+
+| ID | Requirement |
+|---|---|
+| TL-01 | **Span** 5 AM to 9 PM (Calendar can switch to 24 hours, TL-06). It fits its card with no scroll; on phone it is 720 px tall in a scrolling page. Hour labels sit in a left gutter; a label hides when it would sit closer than 24 px to the one above or 22 px to the now marker. |
+| TL-02 | **Elastic hours:** an hour's weight = 1 + 3 × the share of that hour covered by plans of 3 hours or less (longer plans don't stretch hours). On today, hours that have fully passed weigh × 0.35 on Calendar and × 0.3 on Today. Heights are the weights scaled to the card. |
+| TL-03 | **Overlaps:** overlapping plans share the width in columns; longer plans take the leftmost column, and a plan widens into free columns beside it. Every plan is at least 44 px tall (40 on phone). |
+| TL-04 | **Plan cards** (radius 8, a button named "{title}, {range}"): content follows the card's real size: time + title, then a second title line, then "{who} · {location}", then the first line of Notes (`file-text`). Too short for that → one line: start time (hidden under 200 px wide), title, person dots. Under 260 px wide → the start time only. Lines end in "…", never wrap. |
+| TL-05 | **Colors:** the event's color (§7); past (STATUS-01) → white with a hairline and the title struck through, weight 340; now → 2 px black ring and a NOW pill. Other days are never now. |
+| TL-06 | **24 hours** (Calendar only): 12 AM to 12 AM; night hours (before 5 AM, from 9 PM) without plans weigh half, night hours with plans are elastic as TL-02. Hour labels and hairlines thin out when rows get tight. |
+| TL-07 | **Weather lane** (Calendar only) on the right, 150 px wide (128 mid, 112 narrow; none on phone), aligned to the elastic hours: icon + temperature per hour; hours with rain ≥ 50% filled with the season block-3 color and the % when it fits. Plans overlapping such an hour get a white "{p}% rain" chip. Only with a location and an hourly forecast for that day. |
+| TL-08 | **Free slots:** gaps of 30 min or more between 5 AM and 9 PM with no plan for the selected members show as dashed tiles: "Everyone free · {length}" when everyone is selected, else "Free · {length}"; named "Free {range}. Add event". Tap → New event starting at the slot start rounded up to 15 min, 1 hour long or to the slot's end. |
+| TL-09 | **Now marker** (today only): a 2 px black line across the timeline with a black mono time pill in the gutter, moving every minute. |
+| TL-10 | Tapping a plan opens Event details (EVT-09). Day or filter changes reflow over 280 ms (at once with reduced motion). |
+
+#### 8.3.3 Family — `FAM`
+
+| ID | Requirement |
+|---|---|
+| FAM-01 | **Family sheet** (Calendar → Edit; max 560 px, radius 32): eyebrow "{n} members", title "Family", ✕, footer primary "Done". Changes save at once; Done only closes. |
+| FAM-02 | One row per member with hairline dividers: 20 px color dot, name (20 px / 480), mono "{n} plans" / "1 plan" / "No plans", ghost "Remove" (`user-minus`). The last member has no Remove. |
+| FAM-03 | **Remove** → an inline soft confirm under the row: "Remove {name}?", what happens ("Their {n} plans are deleted. They're taken off {m} plans shared with others."; only the parts that apply), "Cancel" and `danger` "Remove". Plans only for that member are deleted; shared plans lose them; everyone plans are unchanged. A filter showing only them returns to everyone. |
+| FAM-04 | **Add member:** a soft tile under the list: Name field + primary "Add" (48 px), then 44 px color swatches offering only colors no member uses (all 12 once every color is taken), the first preselected. Empty → "Add a name"; a name already in the family, ignoring case → "Already in the family"; cleared on the next keystroke. |
+| FAM-05 | A new member goes last in the filter, Who pickers and week dots, and joins every everyone plan. A filter showing everyone still does. |
+| FAM-06 | Closing with a typed name not added asks "Discard changes?" ("{name} won't be added."). Offline: add and remove work and sync later (SYNC-02). |
 
 ### 8.4 Weather — `WX`
 
@@ -397,8 +448,8 @@ White panel: count, "Notice board", "Add note". Grid `auto-fill minmax(220px,1fr
 
 | ID | Requirement |
 |---|---|
-| NOTE-01 | "Add note" → New note (eyebrow "Notice board"); a note → Edit note (eyebrow "{author} · {time}"). |
-| NOTE-02 | Message* (3 rows, "Leave a note for the family"), Your name ("Optional"), 5 swatches (no Alert). |
+| NOTE-01 | "Add note" → New note (eyebrow "Notice board"); a note → Note details (NOTE-10); its Edit → Edit note (eyebrow "{author} · {time}"). |
+| NOTE-02 | Message* (3 rows, "Leave a note for the family"), Your name ("Optional"), 5 swatches. |
 | NOTE-03 | Empty message → "Write a message". Blank name → "Guest". |
 | NOTE-04 | Newest first everywhere. Tilt cycles −2°, 1.5°, −1°, 2.5°. Stamp: "Just now" for 5 min, then the time the same day, the short weekday within 6 days, then "{Mon} {d}". |
 | NOTE-05 | Primary "Post note" / "Save" / "Save for later". Delete → `danger` "Delete note". |
@@ -406,6 +457,7 @@ White panel: count, "Notice board", "Add note". Grid `auto-fill minmax(220px,1fr
 | NOTE-07 | Empty: "No notes yet" / "Leave a note for the family. Notes show on Today. {They're removed after X. \| They stay until someone deletes them.}" |
 | NOTE-08 | Notes past the expiry (24 h or 7 days since created) are deleted by the server and hidden by every screen, offline too. |
 | NOTE-09 | Anyone can edit or delete any note. The board scrolls. |
+| NOTE-10 | **Note details** (read-only): eyebrow "Notice board", title "From {author}" ("Guest" when blank), ✕. The sheet is the sticky note: filled with the note's tone (footer too), radius 6, tilted by the note's rotation clamped to ±1.5°, modal shadow. The full text in 26–36 px light type with line breaks kept, nothing clipped; the mono post time at the bottom ("8:12 AM", "Waiting to post"). Footer: primary "Edit" (`pencil`), which turns it into the flat white Edit note sheet (280 ms). Cancel returns to details (after "Discard changes?" when changed); Save returns to details with the new text; ✕ and the scrim close; Delete closes. No color picker and no offline banner in details. |
 
 ### 8.6 Photos — `PHOTO`
 Left: soft block with the featured image (radius 8), name, "{date} · {place}", and pencil / prev / play-pause / next / full screen IconButtons. Right: white panel "Family photos · {n}", ghost "Upload", 4:3 thumb grid (selected ring `0 0 0 3px white, 0 0 0 5px black`), each with name and mono date centered below.
@@ -463,13 +515,12 @@ One full-screen button, text on deep.
 | AMB-06 | Background: season deep, or the photo background dimmed at least 0.55. |
 | AMB-07 | Signed out during Ambient: it stays, with "Signed out · tap to sign in" in the top row; the next tap or the end of hours opens the signed-out form. |
 | AMB-08 | The sidebar's Ambient item and SET-10 "Preview" open Ambient at once, outside the schedule too. |
-| AMB-09 | A muted looping season video (`videos/{season}.mp4`) under a 70% deep tint covers the background; a missing file shows AMB-06. Hidden from assistive tech. |
 
 ### 8.9 Sheets — `SHEET`
 - Modal over a 60% scrim (also over the sidebar). Card radius 32, max width 560, padding `clamp(24px,3vw,40px)`, shadow-3, 56 px close button.
 - An unchanged sheet closes at once on scrim, Cancel, ✕ or Escape.
 - **Discard changes?** When the draft changed, those replace the footer with "Discard changes?", a line ("This event won’t be added." · "Your edits to this event won’t be saved." · "This note won’t be posted." · "Your edits to this photo won’t be saved."), secondary "Keep editing" (focused) and `danger` "Discard". While shown, the scrim is ignored and ✕ or Escape discards. An edit or "Keep editing" brings the footer back. The idle timeout discards without asking.
-- Sticky action row: Delete left, Cancel + primary right.
+- Sticky action row: Delete left, Cancel + primary right. Details sheets (EVT-09, NOTE-10) have a single primary "Edit".
 - Offline banner "You're offline": event "Changes save on this screen and sync when the connection is back."; note "The note saves on this screen and posts when the connection is back."
 - Focus is trapped; opening focuses the sheet itself (no keyboard pops up), closing returns focus to the opener.
 
@@ -483,7 +534,7 @@ One full-screen button, text on deep.
 - "Local" always means the screen's time zone (LOC-06).
 
 ### 9.2 Idle — `IDLE`
-- IDLE-01: after no touch for the chosen time, any view returns to Today; sheets are discarded and full-screen Photos closes; Expanded returns to Rail. A tap, key press or scroll counts as a touch.
+- IDLE-01: after no touch for the chosen time, any view returns to Today; sheets are discarded and full-screen Photos closes; the sidebar is Hidden (SHELL-11). A tap, key press or scroll counts as a touch.
 - IDLE-02: paused while a text field is focused; leaving it restarts the wait.
 - IDLE-03: during ambient hours, idle returns to Ambient.
 
@@ -493,7 +544,7 @@ One full-screen button, text on deep.
 - LOAD-03: over 10 s (from screen open; weather from its fetch) → that zone's failure. Before the first sync the weather loads rather than asking for a location.
 
 ### 9.4 Failure (online) — `FAIL`
-- FAIL-01: only the failing zone changes: icon, "{Source} unavailable", "The Glance server isn’t responding. Trying again in {n} min." (weather: WX-05), "Try again". On a calendar failure the hero shows only the clock and the picture hides. Ambient's failed zones stay blank.
+- FAIL-01: only the failing zone changes: icon, "{Source} unavailable", "The Glance server isn’t responding. Trying again in {n} min." (weather: WX-05), "Try again". On a calendar failure the Now panel shows the clock and weather only. Ambient's failed zones stay blank.
 - FAIL-02: with saved data, keep showing it and add "Updated {time}".
 - FAIL-03: retry after 1, 2 and 5 min, then every 5 min.
 
@@ -514,7 +565,7 @@ One full-screen button, text on deep.
 - `kb=1` fakes the keyboard height (36% of the window, 260–380 px) and focuses the first field; the drawn keyboard isn't built.
 
 ### 9.7 Sync — `SYNC`
-- SYNC-01: events, notes, photos and settings are saved to the account and sync to every screen.
+- SYNC-01: events, members, notes, photos and settings are saved to the account and sync to every screen. The Calendar filter, 24 hours and the selected day belong to the tab.
 - SYNC-02: writes go to IndexedDB with an outbox entry; the engine pushes them in order and pulls changes since its cursor; an SSE ping triggers a pull, else polling every 30 s. A pull never overwrites a row with a pending write (tech design §5).
 - SYNC-03: last write to reach the server wins; offline edits replay in order. **Delete wins** over a concurrent edit. Settings are one record: the later change replaces the whole set.
 
@@ -523,7 +574,7 @@ One full-screen button, text on deep.
 | ID | Requirement |
 |---|---|
 | A11Y-01 | Every control has a name. Meaningful icons without text are named images (hourly and 7-day icons by condition); decorative icons are hidden. |
-| A11Y-02 | Choices use `aria-pressed`: swatches, PillTabs, MonthGrid days, picker cells, thumbs, active IconButtons. |
+| A11Y-02 | Choices use `aria-pressed`: swatches, PillTabs, week and date picker days, member pills (filter and Who), 24 hours, picker cells, thumbs, active IconButtons. |
 | A11Y-03 | Sheets are `role="dialog"` + `aria-modal`, named by their title. Targets ≥ 44 px (rail 56, drawer rows 64, grip 44×144, handle 56×96; sheet close and upload buttons 56). |
 | A11Y-04 | Sheet focus follows the visual order: ✕ → fields → swatches → actions, wrapping. |
 | A11Y-05 | Hierarchy by weight, never opacity. WCAG AA 4.5:1 everywhere: black on season blocks, soft surfaces and panels; white on deep and Winter's accent; **black on the Spring, Summer and Fall accents**; white over the Ambient photo at dim ≥ 0.55. |
@@ -553,13 +604,15 @@ All user-facing strings live in `src/copy.ts`. Strings are exact as written in �
 ## Appendix A — Fixture data
 Frozen at **Fri Oct 9 2026, 10:41 AM Pacific** (Ambient 7:12 PM). Fixture times are Pacific wall times, and a `now=` without offset is read in that zone. Account maria@example.com, name "Maria"; any other email is new. Location "Portland, OR · Pacific time".
 
-**Events (Oct 2026):** 9th — School drop-off 9:00–9:30 AM Lincoln Elementary (soft) · Grandma's video call 10:30–11:15 AM Living room (1, now) · Lunch with Aunt Rosa 12:00–1:00 PM Café Lumen (2) · Dentist — Leo 2:00–2:20 PM Dr. Patel (accent) · Soccer practice 3:30–4:30 PM Laurelhurst Park (3). 2nd — Movie night 7:00–9:00 PM Living room (2). 14th — Parent-teacher conference 4:00–4:30 PM Lincoln Elementary (4). 16th — No school · teacher planning day, Lincoln Elementary (4, all day). 22nd — Leo's birthday party 4:00–6:00 PM Home (3). 28th — Pumpkin carving 5:00–6:30 PM Back porch (1). `allday=1` adds 9th — Grandpa staying over, Guest room (2, all day). `events=many` adds on the 9th Grocery pickup 5:00–5:30 PM Fred Meyer (4) · Family dinner 6:00–7:00 PM Home (1) · Piano practice — Mia 7:30–8:00 PM Living room (2) · Bedtime story 8:30–9:00 PM Kids’ room (soft).
+**Family:** Minh-An (lilac), Minh-Hy (sky), Mom (coral), Dad (mint), Thang (sun), Tin (pink), Nghe (lime), An (rust), Nga (glacier), in that order.
 
-**Notes:** "Wi-Fi password is on the fridge!" Dad 8:12 AM (1, −2°) · "Package for Mia at the front door." Mom 9:05 AM (2, 1.5°) · "Window cleaner comes Wednesday — please leave blinds up." Mom Mon (3, −1°) · "Welcome home, Grandpa!" Mia Tue (4, 2.5°) · "Bike lock code changes Friday. Ask Dad." Dad Tue (soft, −1.5°). Keyboard-frame draft: "Has anyone seen my blue umbr".
+**Events (Oct 2026):** ported from the prototype's `Component.init()` list; plans listing all nine members are stored as everyone, and "Bring …" lists become Notes. The 9th has 18 timed plans from Morning run 7:00 AM (Thang) to Movie night 7:00–8:30 PM (everyone), with School 8:15 AM–3:00 PM (Minh-An, Minh-Hy), Yoga class 10:00–11:00 AM (Nga) and Grandma's video call 10:30–11:15 AM (Mom) running at 10:41; the event summary shows the video call. The 10th adds Pick up bait 4:30 AM and Late movie 10:00 PM (24 hours). The 16th has the all-day "No school · teacher planning day". School weeks (5th–8th, 12th–15th) have drop-off, School and pickup. `allday=1` adds Grandpa staying over (everyone, all day) on the 9th. `events=many` adds Family dinner, Bedtime story, Call the plumber and Walk the dog on the 9th (22 plans).
+
+**Notes:** "Wi-Fi password is on the fridge!" Dad 8:12 AM (1, −2°) · "Package for Minh-Hy at the front door." Mom 9:05 AM (2, 1.5°) · "Window cleaner comes Wednesday — please leave blinds up." Mom Mon (3, −1°) · "Welcome home, Grandpa!" Minh-Hy Tue (4, 2.5°) · "Bike lock code changes Friday. Ask Dad." Dad Tue (soft, −1.5°). Keyboard-frame draft: "Has anyone seen my blue umbr".
 
 **Weather (°F):** now 64 Partly cloudy, H 68 / L 51, feels 62, wind 8 mph NW, humidity 62%, UV 3, sunset 6:42 PM. Hourly 11 AM–6 PM: 64, 66, 67, 68, 65, 61, 58, 56. Daily: Today 68/51 20% · Sat 59/48 80% · Sun 61/47 30% · Mon 66/49 · Tue 69/50 · Wed 65/50 10% · Thu 58/46 70%. Ambient: 56° Light rain.
 
-**Places:** "Portland" → Portland, OR (Pacific) / Portland, ME (Eastern); "Springfield" → IL, MO (Central) / MA (Eastern). Any 5-digit ZIP or query with a comma is one place in the fixture zone; anything else is unknown ("Pordland"). Use my location finds Portland, OR after 2.6 s. `wx=tz` moves Portland, OR → Portland, ME (3 hours ahead; "Lunch with Aunt Rosa at 12:00 PM will show at 3:00 PM.").
+**Places:** "Portland" → Portland, OR (Pacific) / Portland, ME (Eastern); "Springfield" → IL, MO (Central) / MA (Eastern). Any 5-digit ZIP or query with a comma is one place in the fixture zone; anything else is unknown ("Pordland"). Use my location finds Portland, OR after 2.6 s. `wx=tz` moves Portland, OR → Portland, ME (3 hours ahead; "Volunteer shift at 11:00 AM will show at 2:00 PM.").
 
 **Photos:** Apple picking (Sep 27, Sauvie Island) · Pumpkin patch (Oct 4, Family outing) · Cannon Beach (Sep 6, Summer trip — default background and picture of the day) · First day of school (Sep 2, Lincoln Elementary) · Bike ride (Aug 30, Waterfront) · Forest Park trail (Aug 22, Weekend hike). Uploaded the evening of Oct 4 in the order Forest Park trail, Bike ride, First day of school, Pumpkin patch, Apple picking, Cannon Beach, so the first cycle lands Cannon Beach on Oct 9. All checked. Bundled images, so the app works offline. `upload=done` adds two unchecked uploads from Oct 9: `halloween-costumes-2025-10-31.jpg` → Halloween costumes, Oct 31 2025, no place (`sheet=photo`); `IMG_4410.JPG` → Cannon Beach, Aug 16 2026, Cannon Beach, OR (`sheet=photometa`). `upload=error`: "IMG_3307" too large, "Recipe card" not a photo, "Halloween costumes" network failure.
 
