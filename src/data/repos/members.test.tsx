@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { CalendarEvent, Member } from "@/domain/schemas";
-import { createMembersRepo, useMembers } from "./members";
+import { createMembersRepo, useMemberPlans, useMembers } from "./members";
 import { type Harness, openHarness, synced, TEST_NOW, wrapperFor } from "./testHarness";
 
 const id = (group: number, n: number) =>
@@ -120,5 +120,24 @@ describe("useMembers", () => {
     const { result } = renderHook(() => useMembers(), { wrapper: wrapperFor(store) });
 
     await waitFor(() => expect(result.current?.map((row) => row.name)).toEqual(["Minh-An", "Dad"]));
+  });
+});
+
+describe("useMemberPlans", () => {
+  it("FAM-02 lists every live plan", async () => {
+    await store.db.events.bulkPut([
+      synced(SOLO),
+      synced(SHARED),
+      synced(ALL),
+      { ...synced(OTHER), deletedAt: "2026-10-05T09:00:00.000Z" },
+    ]);
+
+    const { result } = renderHook(() => useMemberPlans(), { wrapper: wrapperFor(store) });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.id).sort()).toEqual(
+        [SOLO.id, SHARED.id, ALL.id].sort(),
+      ),
+    );
   });
 });

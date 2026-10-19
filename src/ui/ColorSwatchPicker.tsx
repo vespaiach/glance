@@ -1,13 +1,15 @@
 import * as stylex from "@stylexjs/stylex";
 import { useId } from "react";
-import type { Tone } from "@/domain/schemas";
+import type { MemberColor, Tone } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { press } from "./press";
 
-type SwatchOption<T extends Tone> = { value: T; label: string };
+type Swatch = Tone | MemberColor;
 
-type ColorSwatchPickerProps<T extends Tone> = {
+type SwatchOption<T extends Swatch> = { value: T; label: string };
+
+type ColorSwatchPickerProps<T extends Swatch> = {
   label: string;
   options: readonly SwatchOption<T>[];
   value: T;
@@ -57,9 +59,21 @@ const styles = stylex.create({
   tone4: { backgroundColor: season.block4 },
   soft: { backgroundColor: season.soft },
   accent: { backgroundColor: season.accent },
+  lilac: { backgroundColor: colors.blockLilac },
+  sky: { backgroundColor: colors.blockSky },
+  coral: { backgroundColor: colors.blockCoral },
+  mint: { backgroundColor: colors.blockMint },
+  sun: { backgroundColor: colors.blockSun },
+  pink: { backgroundColor: colors.blockPink },
+  lime: { backgroundColor: colors.blockLime },
+  rust: { backgroundColor: colors.blockRust },
+  glacier: { backgroundColor: colors.blockGlacier },
+  amber: { backgroundColor: colors.blockAmber },
+  sage: { backgroundColor: colors.blockSage },
+  ice: { backgroundColor: colors.blockIce },
 });
 
-export function ColorSwatchPicker<T extends Tone>({
+export function ColorSwatchPicker<T extends Swatch>({
   label,
   options,
   value,
@@ -98,6 +112,6 @@ export function ColorSwatchPicker<T extends Tone>({
   );
 }
 
-function toneStyle(tone: Tone) {
+function toneStyle(tone: Swatch) {
   return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

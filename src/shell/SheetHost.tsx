@@ -12,6 +12,7 @@ export type SheetRequest = (
   | { kind: "newevent"; day: string; memberIds?: readonly string[]; time?: TimeFixture }
   | { kind: "note"; id: string; edit?: true }
   | { kind: "newnote"; draft?: { text: string; tone: NoteTone } }
+  | { kind: "family"; removing?: string; name?: string; error?: true }
   | { kind: "photo"; id: string }
 ) & { discard?: true };
 

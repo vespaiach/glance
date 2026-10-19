@@ -6,6 +6,8 @@ export type MemberFilter = "everyone" | ReadonlySet<string>;
 
 export type RemovalImpact<T> = { solo: T[]; shared: T[] };
 
+export type MemberNameError = "empty" | "taken";
+
 export const EVERYONE: EventWho = { everyone: true, memberIds: [] };
 
 export function whoLabel(event: EventWho, members: readonly Member[], everyoneLabel: string) {
@@ -49,6 +51,25 @@ export function nextFreeColor(members: readonly Member[]): MemberColor {
   return MemberColorSchema.options.find((color) => !used.has(color)) ?? first;
 }
 
+export function freeColors(members: readonly Member[]): MemberColor[] {
+  const used = new Set(members.map((member) => member.color));
+
+  const free = MemberColorSchema.options.filter((color) => !used.has(color));
+
+  return free.length > 0 ? free : [...MemberColorSchema.options];
+}
+
+export function memberNameError(
+  name: string,
+  members: readonly Pick<Member, "name">[],
+): MemberNameError | null {
+  const wanted = name.trim().toLowerCase();
+
+  if (wanted === "") return "empty";
+
+  return members.some((member) => member.name.trim().toLowerCase() === wanted) ? "taken" : null;
+}
+
 export function toggleWho(who: EventWho, memberId: string, family: readonly string[]): EventWho {
   const selected = family.filter(
     (id) => (who.everyone || who.memberIds.includes(id)) !== (id === memberId),
@@ -69,4 +90,14 @@ export function matchesFilter(event: EventWho, filter: MemberFilter): boolean {
   if (filter === "everyone" || event.everyone) return true;
 
   return event.memberIds.some((id) => filter.has(id));
+}
+
+export function liveFilter(filter: MemberFilter, familyIds: readonly string[]): MemberFilter {
+  if (filter === "everyone") return filter;
+
+  const live = [...filter].filter((id) => familyIds.includes(id));
+
+  if (live.length === filter.size) return filter;
+
+  return live.length === 0 ? "everyone" : new Set(live);
 }

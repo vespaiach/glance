@@ -2,7 +2,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import { removalImpact, withoutMember } from "@/domain/members";
 import type { CalendarEvent, Member } from "@/domain/schemas";
-import type { StoredMember } from "../db";
+import type { StoredEvent, StoredMember } from "../db";
 import { isLive, type NewEntry, putQueued, putRow, queued, removeRow } from "./outbox";
 import { type RepoStore, useRepoStore } from "./store";
 
@@ -28,6 +28,12 @@ export function useMembers(): StoredMember[] | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(() => db.members.orderBy("createdAt").filter(isLive).toArray(), [db]);
+}
+
+export function useMemberPlans(): StoredEvent[] | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(() => db.events.filter(isLive).toArray(), [db]);
 }
 
 async function removeMember(store: RepoStore, id: string): Promise<(NewEntry | undefined)[]> {

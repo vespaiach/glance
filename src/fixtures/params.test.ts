@@ -1,3 +1,4 @@
+import { FIXTURE_FAMILY } from "./data";
 import { parseFixtureParams } from "./params";
 
 describe("parseFixtureParams", () => {
@@ -29,7 +30,7 @@ describe("parseFixtureParams", () => {
   });
 
   it.each([
-    ["sheet", ["event", "newevent", "note", "newnote", "allday", "photo", "photometa"]],
+    ["sheet", ["event", "newevent", "note", "newnote", "allday", "family", "photo", "photometa"]],
     ["time", ["start", "end", "error", "noend"]],
     ["season", ["spring", "summer", "fall", "winter"]],
     ["net", ["loading", "offline", "wxerror"]],
@@ -87,6 +88,23 @@ describe("parseFixtureParams", () => {
 
   it("EVT-09 reads sheet=past and details=1", () => {
     expect(parseFixtureParams("sheet=past&details=1")).toEqual({ sheet: "past", details: true });
+  });
+
+  it("FAM-03 reads rm= as the fixture member's id", () => {
+    expect(parseFixtureParams("sheet=family&rm=an")).toEqual({
+      sheet: "family",
+      rm: FIXTURE_FAMILY[0]?.id,
+    });
+    expect(parseFixtureParams("rm=nga")).toEqual({ rm: FIXTURE_FAMILY[8]?.id });
+  });
+
+  it("FAM-03 ignores an unknown rm=", () => {
+    expect(parseFixtureParams("rm=bao")).toEqual({});
+  });
+
+  it("FAM-04 reads famname= and famerr=1", () => {
+    expect(parseFixtureParams("famname=Bao&famerr=1")).toEqual({ famname: "Bao", famerr: true });
+    expect(parseFixtureParams("famname=&famerr=0")).toEqual({});
   });
 
   it("§8.9 reads discard=1", () => {

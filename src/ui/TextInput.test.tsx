@@ -142,3 +142,9 @@ describe("Return", () => {
     expect(name).not.toHaveFocus();
   });
 });
+
+test("A11Y a TextInput without a visible label is named by ariaLabel", () => {
+  render(<TextInput ariaLabel="Name" placeholder="Name" value="" onChange={() => {}} />);
+
+  expect(screen.getByRole("textbox", { name: "Name" })).toHaveAttribute("aria-label", "Name");
+});

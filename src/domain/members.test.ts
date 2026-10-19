@@ -1,6 +1,9 @@
 import {
   eventColor,
+  freeColors,
+  liveFilter,
   matchesFilter,
+  memberNameError,
   nextFreeColor,
   removalImpact,
   toggleWho,
@@ -165,5 +168,60 @@ describe("whoFromFilter", () => {
   it("EVT-11 a new event starts as everyone with no filter or an empty one", () => {
     expect(whoFromFilter(undefined)).toEqual(everyone);
     expect(whoFromFilter([])).toEqual(everyone);
+  });
+});
+
+describe("freeColors", () => {
+  it("FAM-04 offers only colors no member uses, in set order", () => {
+    expect(freeColors([AN, MOM])).toEqual(
+      MemberColorSchema.options.filter((color) => color !== "lilac" && color !== "coral"),
+    );
+  });
+
+  it("FAM-04 offers all 12 colors once every color is taken", () => {
+    const full = MemberColorSchema.options.map((color, index) => member(index + 1, color, color));
+
+    expect(freeColors(full)).toEqual(MemberColorSchema.options);
+  });
+});
+
+describe("memberNameError", () => {
+  it("FAM-04 an empty or blank name is empty", () => {
+    expect(memberNameError("", FAMILY)).toBe("empty");
+    expect(memberNameError("   ", FAMILY)).toBe("empty");
+  });
+
+  it("FAM-04 a name already in the family, ignoring case and spaces, is taken", () => {
+    expect(memberNameError(" mom ", FAMILY)).toBe("taken");
+    expect(memberNameError("MINH-AN", FAMILY)).toBe("taken");
+  });
+
+  it("FAM-04 a new name has no error", () => {
+    expect(memberNameError("Bao", FAMILY)).toBeNull();
+  });
+});
+
+describe("liveFilter", () => {
+  const ids = FAMILY.map((one) => one.id);
+
+  it("FAM-03 a filter showing only a removed member returns to everyone", () => {
+    expect(liveFilter(new Set(["gone"]), ids)).toBe("everyone");
+  });
+
+  it("FAM-03 a removed member drops out of a wider filter", () => {
+    expect(liveFilter(new Set([AN.id, "gone"]), ids)).toEqual(new Set([AN.id]));
+  });
+
+  it("FAM-05 everyone and nobody stay as they are", () => {
+    const nobody = new Set<string>();
+
+    expect(liveFilter("everyone", ids)).toBe("everyone");
+    expect(liveFilter(nobody, ids)).toBe(nobody);
+  });
+
+  it("FAM-03 a filter with only live members is unchanged", () => {
+    const filter = new Set([HY.id]);
+
+    expect(liveFilter(filter, ids)).toBe(filter);
   });
 });

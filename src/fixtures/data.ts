@@ -487,3 +487,7 @@ export function fixturePhotoImage(photoId: string): string | undefined {
 
   return slug && imagePath(slug);
 }
+
+export function fixtureMemberId(key: string): string | undefined {
+  return FAMILY.some(([known]) => known === key) ? memberId(key as FamilyKey) : undefined;
+}

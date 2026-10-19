@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.63 |
+| Status | v0.64 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -423,8 +423,8 @@ Used by Calendar (any day, filtered) and Today (today, everyone). Pure layout ru
 | ID | Requirement |
 |---|---|
 | FAM-01 | **Family sheet** (Calendar → Edit; max 560 px, radius 32): eyebrow "{n} members", title "Family", ✕, footer primary "Done". Changes save at once; Done only closes. |
-| FAM-02 | One row per member with hairline dividers: 20 px color dot, name (20 px / 480), mono "{n} plans" / "1 plan" / "No plans", ghost "Remove" (`user-minus`). The last member has no Remove. |
-| FAM-03 | **Remove** → an inline soft confirm under the row: "Remove {name}?", what happens ("Their {n} plans are deleted. They're taken off {m} plans shared with others."; only the parts that apply), "Cancel" and `danger` "Remove". Plans only for that member are deleted; shared plans lose them; everyone plans are unchanged. A filter showing only them returns to everyone. |
+| FAM-02 | One row per member with hairline dividers: 20 px color dot, name (20 px / 480), mono "{n} plans" / "1 plan" / "No plans" (every plan they're on, everyone plans included), ghost "Remove" (`user-minus`). The last member has no Remove. |
+| FAM-03 | **Remove** → an inline soft confirm under the row: "Remove {name}?", what happens ("Their {n} plans are deleted. They're taken off {m} plans shared with others.", where {m} counts everyone plans too; only the parts that apply; "They have no plans." when neither does), "Cancel" and `danger` "Remove". Plans only for that member are deleted; shared plans lose them; everyone plans are unchanged. A filter showing only them returns to everyone. |
 | FAM-04 | **Add member:** a soft tile under the list: Name field + primary "Add" (48 px), then 44 px color swatches offering only colors no member uses (all 12 once every color is taken), the first preselected. Empty → "Add a name"; a name already in the family, ignoring case → "Already in the family"; cleared on the next keystroke. |
 | FAM-05 | A new member goes last in the filter, Who pickers and week dots, and joins every everyone plan. A filter showing everyone still does. |
 | FAM-06 | Closing with a typed name not added asks "Discard changes?" ("{name} won't be added."). Offline: add and remove work and sync later (SYNC-02). |
