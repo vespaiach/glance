@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.66 |
+| Status | v0.67 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -163,7 +163,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 
 ### 5.4 Phone (< 600)
 - Starts from `narrow`. Hourly `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways.
-- Calendar: the date control replaces the week strip (CAL-02); one-letter weekdays; the timeline is 720 px tall with no weather lane or rain chips, and the page scrolls.
+- Calendar: the date control replaces the week strip (CAL-02); the timeline is 720 px tall with no weather lane or rain chips, and the page scrolls.
 - Photos: featured 260 px, thumbs 2 col. Background thumbs 2 col.
 - **No photo upload:** every upload entry point is hidden (PHOTO-03/05, BG-02, Today's "Upload a photo").
 - Smaller sidebar, drawer over the page (SHELL-08).
@@ -367,8 +367,8 @@ Top: the week strip card (CAL-01; the date control on phone). Below: one white p
 | ID | Requirement |
 |---|---|
 | CAL-01 | **Week strip** (600 px and up): eyebrow "{Mon d – d}" ("{Mon d} – {Mon d}" across months) and the month name of its Saturday, with the year outside the current year (wide and mid only), prev/next IconButtons (56), then 7 day pills Sunday to Saturday: weekday, date, one 6 px dot per member with a plan that day (always everyone, capped at 46 px wide), and the day's forecast icon + high when the cell is at least 124 px wide (measured) and the day has a forecast. Selected = black; today keeps a 2 px ring. Narrow drops the eyebrow, month name and weather. |
-| CAL-02 | Chevrons step a week; landing on this week selects today, any other week its Sunday. **Phone date control** (< 600, replaces the week strip): one full-width white card button: mono year over the month name (28 px) on the left, the selected date as a black pill (weekday + date) with `chevron-down` on the right; tap → date picker. Phone weekdays are one letter. |
-| CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per member with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered. A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
+| CAL-02 | Chevrons step a week; landing on this week selects today, any other week its Sunday. **Phone date control** (< 600, replaces the week strip): one full-width white card button: mono year over the month name (28 px) on the left, the selected date as a black pill (weekday + date) with `chevron-down` on the right; tap → date picker. |
+| CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per member with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered (today when the selected day is outside the list). A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
 | CAL-04 | The timeline fills the panel with no scroll; with 24 hours on its minimum height is 760 px (720 mid, 1000 phone) and the page scrolls. Changing the day or the filter reflows the timeline over 280 ms. `/calendar?date=` selects that day. |
 | CAL-05 | **Person filter:** a row of soft pills (48 px, 44 on phone, 8 px apart), one per member: 12 px color dot + name (16 px / 480). It scrolls sideways; "Edit" (`pencil`, same pill) stays pinned after it → Family sheet. All members selected = everyone (the default): every dot filled, no black pill. Tap a member while everyone shows → only that member (black pill); tap others to add them; tap a selected one to remove it. Selecting every member → everyone. Removing the last → nobody: every dot a hollow ring and the day shows no plans, tiles or free slots. While filtered, hidden members show a hollow ring in their color. A plan shows when any selected member is on it (everyone plans always). Filters the timeline, all-day tiles and free slots. Belongs to this tab; `who=` sets it. |
 | CAL-06 | **24 hours:** a soft toggle pill (`clock` + "24 hours") left of "Add event". Off: 5 AM to 9 PM, with a black mono badge counting the day's plans that start before 5 AM or end after 9 PM (hidden at 0). On: black, no badge, 12 AM to 12 AM (TL-06). Stays on across days for this tab. |

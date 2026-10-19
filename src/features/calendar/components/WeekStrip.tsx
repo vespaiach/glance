@@ -24,13 +24,15 @@ export type WeekDay = {
   forecast?: { icon: WeatherIcon; label: string; high: string };
 };
 
+type StripBreakpoint = Exclude<Breakpoint, "phone">;
+
 type WeekStripProps = {
   heading: WeekHeading;
   label: string;
   days: readonly WeekDay[];
   selected: string;
   today: string;
-  breakpoint: Breakpoint;
+  breakpoint: StripBreakpoint;
   previousLabel: string;
   nextLabel: string;
   onPrevious: () => void;
@@ -56,10 +58,6 @@ const styles = stylex.create({
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
   },
-  rootPhone: {
-    gap: 4,
-    paddingInline: 8,
-  },
   heading: {
     flexShrink: 0,
     width: 136,
@@ -81,10 +79,6 @@ const styles = stylex.create({
     letterSpacing: "-0.4px",
     lineHeight: 1.1,
   },
-  chevronPhone: {
-    width: 44,
-    height: 44,
-  },
   days: {
     margin: 0,
     padding: 0,
@@ -94,9 +88,6 @@ const styles = stylex.create({
     gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
     gap: 6,
     minWidth: 0,
-  },
-  daysPhone: {
-    gap: 2,
   },
   day: (height: number) => ({
     height,
@@ -118,9 +109,6 @@ const styles = stylex.create({
     transitionDuration: `${motion.durPress}, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
   }),
-  dayPhone: {
-    paddingInline: 4,
-  },
   selected: {
     backgroundColor: colors.actionPrimary,
     color: colors.onActionPrimary,
@@ -135,9 +123,6 @@ const styles = stylex.create({
     gap: 3,
     minWidth: 0,
   },
-  dayTextPhone: {
-    alignItems: "center",
-  },
   weekday: {
     fontFamily: type.fontMono,
     fontSize: 13,
@@ -149,9 +134,6 @@ const styles = stylex.create({
     fontWeight: 480,
     letterSpacing: "-0.5px",
     lineHeight: 1,
-  },
-  datePhone: {
-    fontSize: 20,
   },
   dots: {
     display: "flex",
@@ -170,7 +152,7 @@ const styles = stylex.create({
   },
 });
 
-const DAY_HEIGHT: Record<Breakpoint, number> = { wide: 80, mid: 72, narrow: 72, phone: 60 };
+const DAY_HEIGHT: Record<StripBreakpoint, number> = { wide: 80, mid: 72, narrow: 72 };
 
 export function WeekStrip({
   heading,
@@ -189,34 +171,20 @@ export function WeekStrip({
 
   const width = useBoxSize(grid)?.width ?? 0;
 
-  const phone = breakpoint === "phone";
-
   const roomy = breakpoint === "wide" || breakpoint === "mid";
 
   const weather = roomy && width / DAYS >= WEATHER_CELL;
 
-  const chevron = phone ? styles.chevronPhone : undefined;
-
   return (
-    <div {...stylex.props(styles.root, phone && styles.rootPhone)}>
+    <div {...stylex.props(styles.root)}>
       {roomy && (
         <div {...stylex.props(styles.heading)}>
           <span {...stylex.props(styles.range)}>{heading.range}</span>
           <span {...stylex.props(styles.month)}>{heading.month}</span>
         </div>
       )}
-      <IconButton
-        icon={ChevronLeft}
-        label={previousLabel}
-        size="touch"
-        onClick={onPrevious}
-        xstyle={chevron}
-      />
-      <fieldset
-        ref={grid}
-        aria-label={label}
-        {...stylex.props(styles.days, phone && styles.daysPhone)}
-      >
+      <IconButton icon={ChevronLeft} label={previousLabel} size="touch" onClick={onPrevious} />
+      <fieldset ref={grid} aria-label={label} {...stylex.props(styles.days)}>
         {days.map((day) => (
           <DayPill
             key={day.key}
@@ -224,19 +192,12 @@ export function WeekStrip({
             selected={day.key === selected}
             today={day.key === today}
             height={DAY_HEIGHT[breakpoint]}
-            phone={phone}
             weather={weather}
             onClick={() => onSelect(day.key)}
           />
         ))}
       </fieldset>
-      <IconButton
-        icon={ChevronRight}
-        label={nextLabel}
-        size="touch"
-        onClick={onNext}
-        xstyle={chevron}
-      />
+      <IconButton icon={ChevronRight} label={nextLabel} size="touch" onClick={onNext} />
     </div>
   );
 }
@@ -246,12 +207,11 @@ type DayPillProps = {
   selected: boolean;
   today: boolean;
   height: number;
-  phone: boolean;
   weather: boolean;
   onClick: () => void;
 };
 
-function DayPill({ day, selected, today, height, phone, weather, onClick }: DayPillProps) {
+function DayPill({ day, selected, today, height, weather, onClick }: DayPillProps) {
   return (
     <button
       type="button"
@@ -261,15 +221,14 @@ function DayPill({ day, selected, today, height, phone, weather, onClick }: DayP
       onClick={onClick}
       {...stylex.props(
         styles.day(height),
-        phone && styles.dayPhone,
         selected && styles.selected,
         today && !selected && styles.today,
         press.scale,
       )}
     >
-      <span {...stylex.props(styles.dayText, phone && styles.dayTextPhone)}>
+      <span {...stylex.props(styles.dayText)}>
         <span {...stylex.props(styles.weekday)}>{day.weekday}</span>
-        <span {...stylex.props(styles.date, phone && styles.datePhone)}>{day.date}</span>
+        <span {...stylex.props(styles.date)}>{day.date}</span>
         <span {...stylex.props(styles.dots)}>
           {day.dots.map((dot) => (
             <PersonDot key={dot.id} color={dot.color} size="xs" />

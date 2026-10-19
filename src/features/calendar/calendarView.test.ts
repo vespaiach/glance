@@ -8,7 +8,7 @@ const START = initialCalendarView({});
 
 describe("initialCalendarView", () => {
   it("CAL-05 opens on today for everyone with 24 hours off", () => {
-    expect(START).toEqual({ day: undefined, filter: "everyone", span24: false });
+    expect(START).toEqual({ day: undefined, filter: "everyone", span24: false, picker: false });
   });
 
   it("CAL-04 ?date= selects that day, ahead of the day= fixture", () => {
@@ -29,6 +29,29 @@ describe("initialCalendarView", () => {
 });
 
 describe("calendarView", () => {
+  it("CAL-03 dp=open starts with the date picker open", () => {
+    expect(initialCalendarView({ fixture: { dp: "open" } }).picker).toBe(true);
+  });
+
+  it("CAL-03 picking a day selects it and closes the picker", () => {
+    const open = calendarView(START, { type: "openPicker" });
+
+    expect(open.picker).toBe(true);
+
+    const picked = calendarView(open, { type: "select", day: "2026-11-02" });
+
+    expect(picked).toMatchObject({ day: "2026-11-02", picker: false });
+  });
+
+  it("CAL-03 closing the picker keeps the selected day", () => {
+    const open = calendarView({ ...START, day: "2026-10-14" }, { type: "openPicker" });
+
+    expect(calendarView(open, { type: "closePicker" })).toMatchObject({
+      day: "2026-10-14",
+      picker: false,
+    });
+  });
+
   it("CAL-01 selecting a day selects it", () => {
     expect(calendarView(START, { type: "select", day: "2026-10-14" }).day).toBe("2026-10-14");
   });

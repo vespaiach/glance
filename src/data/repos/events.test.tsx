@@ -4,6 +4,7 @@ import { deviceTimeZone } from "@/domain/zone";
 import {
   createEventsRepo,
   useEvent,
+  useEventsBetween,
   useEventsInWeek,
   useEventsOnDay,
   useHasEvents,
@@ -130,6 +131,18 @@ describe("event hooks", () => {
     await act(() => createEventsRepo(store).remove(NEXT_DAY.id));
 
     await waitFor(() => expect(result.current?.map((row) => row.id)).toEqual([SOCCER.id]));
+  });
+
+  it("CAL-03 useEventsBetween lists events from the first day up to the end day", async () => {
+    await store.db.events.bulkPut([synced(SOCCER), synced(NEXT_DAY), synced(NEXT_MONTH)]);
+
+    const { result } = renderHook(() => useEventsBetween("2026-10-10", "2026-11-02", tz), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.id)).toEqual([NEXT_DAY.id, NEXT_MONTH.id]),
+    );
   });
 
   it("EVT-01 useEvent reads one live event and null once it is removed", async () => {

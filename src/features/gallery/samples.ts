@@ -122,6 +122,9 @@ export const gallery = {
     failed: "Failed",
     saved: "Saved data",
     phone: "Phone",
+    dateControl: "Phone date control",
+    pickerToday: "Date picker · today",
+    pickerOther: "Date picker · Oct 14",
   },
   familySheet: {
     list: "Family",
