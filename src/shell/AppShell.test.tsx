@@ -10,15 +10,17 @@ import { NetworkProvider } from "./providers/network";
 import { shellWrapper } from "./providers/testShell";
 import { SheetHost, type SheetRequest } from "./SheetHost";
 
-const navigation = vi.hoisted(() => ({
-  pathname: "/today",
-  push: vi.fn<(path: string) => void>(),
-  prefetch: vi.fn<(path: string) => void>(),
-}));
+const navigation = vi.hoisted(() => {
+  const push = vi.fn<(path: string) => void>();
+
+  const prefetch = vi.fn<(path: string) => void>();
+
+  return { pathname: "/today", push, prefetch, router: { push, prefetch } };
+});
 
 vi.mock("next/navigation", () => ({
   usePathname: () => navigation.pathname,
-  useRouter: () => ({ push: navigation.push, prefetch: navigation.prefetch }),
+  useRouter: () => navigation.router,
 }));
 
 let store: Harness;
