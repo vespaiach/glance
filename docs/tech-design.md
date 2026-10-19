@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v2.09 |
-| Date | 2026-10-18 |
+| Status | v2.10 |
+| Date | 2026-10-19 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.59) · [`design/handoff/`](design/handoff/README.md) (v7) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
@@ -25,12 +25,12 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D9 | Sync | Outbox push + versioned pull. SSE only says "something changed"; 30 s polling is the fallback (§5). |
 | D10 | Conflicts | Last write **to reach the server** wins. The server stamps `updated_at` and `version`. |
 | D11 | Auth | Magic link (or QR, D23); opaque session token in an httpOnly cookie. Tokens and pending ids are 32 random bytes (base64url); only their sha256 is stored. The waiting screen polls every 2 s. Cookies: `session` (400 days), `pending` (1 day), `link_email` (10 min), all `HttpOnly; SameSite=Lax; Path=/`, `Secure` on https (§6.2). |
-| D12 | Photos | Files under `{DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}`. **`sharp`** makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies, upright by EXIF; the original is kept byte for byte. Raster formats `sharp` decodes are accepted; SVG is refused. |
+| D12 | Photos | Three objects per photo, keyed `{account}/{id}.{orig|display|thumb}` (`photos.file_path` holds `{account}/{id}`), in a **`PhotoStore`**: local disk, AWS S3 or Cloudflare R2, picked by `PHOTO_STORE` (§6.3, §6.5). **`sharp`** makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies, upright by EXIF; the original is kept byte for byte. Raster formats `sharp` decodes are accepted; SVG is refused. |
 | D13 | Weather and places | **Open-Meteo** forecast + geocoding behind `WeatherProvider`; **US Census Geocoder** behind `PlaceLocator` for reverse lookup. Both via `getJson` (8 s timeout, Valibot parse, any failure → `weather-failed`). Forecast cached per account for 15 min (`weather_cache`). Place search is US only, keeps names matching the query (a ZIP keeps all), requires a valid IANA zone, at most 5. `locatePlace` rounds to 2 decimals and asks the Census place and the Open-Meteo zone in parallel. |
 | D14 | Email | **Resend HTTP API** with plain `fetch` (`RESEND_API_KEY`, `MAIL_FROM`). `createMailer` answers `Result<void, "mail-failed">`. |
 | D15 | Time | No date library: `Intl.DateTimeFormat` + pure helpers in `domain/time.ts`, `month.ts` and `zone.ts`. "Local" means the **screen's time zone** `tz` (the saved place's zone, else the device's), never the device's: every helper that reads hours or dates takes `tz` last. `zone.ts` converts wall time ↔ instant (`wallTime`, `zonedInstant`, DST-safe: a skipped time moves forward, a repeated one is the earlier instant) and days (`dayNumber`, `dateKey`, `dayStart`, `addDays`). A date with no time (day key, `takenOn`, forecast day, month cell) is a UTC-midnight `Date` formatted in UTC. Formatters take minutes of the local day. `localZoneGuard.test.ts` bans local-zone `Date` getters in `src`; Vitest pins `TZ=Asia/Kolkata`. |
 | D16 | Offline shell | **Serwist** PWA: precache build assets, fonts and public files; cache route HTML on activate and RSC payloads as fetched; NetworkFirst (3 s) for navigations and RSC; CacheFirst for photo files with warming; NetworkOnly for other `/api/*`. New versions activate only when idle (§4.5). |
-| D17 | Runtime | **One Node process** (`next start`) behind HTTPS, with a persistent `DATA_DIR` for photos and PostgreSQL at `DATABASE_URL`. Migrations run at boot. One process is required by the in-process SSE bus. |
+| D17 | Runtime | **One Node process** (`next start`) behind HTTPS, with PostgreSQL at `DATABASE_URL` and photos in a persistent `DATA_DIR` (`disk`) or an S3 or R2 bucket. Migrations run at boot. One process is required by the in-process SSE bus. |
 | D18 | Tooling | npm with exact pins, Node 24 (`.nvmrc`). Vitest + Testing Library + `fake-indexeddb`; Vitest compiles StyleX through `@rolldown/plugin-babel`. **No e2e tests** (§7). `comlink` for worker messaging, `dexie-react-hooks` for `useLiveQuery`. |
 | D19 | Sync host | Sync runs in a **dedicated Web Worker** per tab. The page keeps reads and repo writes; the worker does push, pull/apply, SSE, polling, retries and weather (§4.6). |
 | D20 | Location | The browser position (`devicePosition`: low accuracy, 10 s timeout, `maximumAge` 10 min) goes to the server, which turns it into a place with its zone (D13). Offered only with `geolocation`, a secure context and permission not `denied`. Failures: `denied`, `no-position`, `outside` (404), `lookup` (5 s limit, 5xx, network). The browser never calls a geocoder. |
@@ -68,7 +68,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 │  server/bus  (in-process EventEmitter → SSE fan-out per account)          │
 │  server/jobs (note expiry, link and photo-file cleanup)                   │
 │  server/weather (Open-Meteo + Census) · server/mail (Resend)              │
-│  {DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}                    │
+│  server/storage: PhotoStore → disk {DATA_DIR}/photos · S3 · R2            │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -112,7 +112,7 @@ src/
   features/<view>/                # XScreen.tsx (container), components/, reducers, layout.ts
   features/gallery/               # /dev/gallery
   fixtures/   # dev/demo data and URL params
-  server/     # 'server-only': db/, auth/, services/, weather/, mail/, jobs/, http.ts, env.ts, bus.ts, sse.ts, boot.ts
+  server/     # 'server-only': db/, auth/, services/, weather/, mail/, storage/, jobs/, http.ts, env.ts, bus.ts, sse.ts, boot.ts
 instrumentation.ts                # register() → bootServer() on the nodejs runtime
 db-migrations/NNN_*.sql
 ```
@@ -307,20 +307,44 @@ Every accepted write is announced on the sync bus. TPK-07 "same day" is a client
 `requireDisplay` resolves the session cookie to `{ displayId, accountId }` and stamps `last_seen_at`. Displays store `kind` and `browser` from the `User-Agent`.
 
 ### 6.3 Photos
-`POST /api/photos` takes one file per request as the raw body (XHR, so progress is real): `Content-Type`, `Content-Length`, URI-encoded `x-file-name`, optional `x-file-modified` (ISO date). The server runs `uploadProblem` on the declared type and size, streams to `{id}.orig` stopping at 20 MB (413 `too-large`), decodes with `sharp` (415 `not-a-photo`), reads details (D22), then inserts the row with the next version and answers 201. A failed upload leaves no files or row. The upload queue is in memory on the client; it isn't kept across reloads.
+`POST /api/photos` takes one file per request as the raw body (XHR, so progress is real): `Content-Type`, `Content-Length`, URI-encoded `x-file-name`, optional `x-file-modified` (ISO date). The server runs `uploadProblem` on the declared type and size, reads the body into memory stopping at 20 MB (413 `too-large`), decodes it with `sharp` (415 `not-a-photo`), puts the original and the two WebP copies in parallel, each with its content type, reads details (D22), then inserts the row with the next version and answers 201. A failed upload removes its objects and leaves no row. The upload queue is in memory on the client; it isn't kept across reloads.
 
-`GET /api/photos/{id}/file?v=display|thumb|orig` (session only, no build check since `<img>` can't send headers) streams the file with `Cache-Control: private, max-age=31536000, immutable` and `nosniff`; 404 for a tombstone. `DELETE` removes the three files after commit; a failed unlink is retried by the daily job.
+`GET /api/photos/{id}/file?v=display|thumb|orig` (session only, no build check since `<img>` can't send headers) streams the object through the server (so session auth and the SW photo cache stay same-origin) with its stored content type, `Cache-Control: private, max-age=31536000, immutable` and `nosniff`; 404 for a tombstone or a missing object. `DELETE` removes the three objects after commit; a failed remove is retried by the daily job.
+
+**Photo store** (`server/storage/`). Services and jobs take a `PhotoStore` in their deps and never see paths or buckets.
+
+```ts
+type StoredObject = { body: ReadableStream<Uint8Array>; size: number; contentType: string };
+type PhotoStore = {
+  put(key: string, body: Uint8Array, contentType: string): Promise<void>;
+  get(key: string): Promise<Result<StoredObject, "not-found">>;
+  remove(keys: string[]): Promise<void>;
+};
+```
+
+- **Contract** (`store.ts`): keys are `{file_path}.{variant}`. `remove` of a missing key succeeds. Only `not-found` is a `Result`; disk and network failures throw (500).
+- **Adapters**: `createDiskStore(root)` (`disk.ts`) writes under `{DATA_DIR}/photos` and sniffs the original's type on read. `createS3Store(config, fetch)` (`s3.ts`) signs single-request `PUT`, `GET` and `DELETE` calls with **`aws4fetch`** (SigV4) for AWS S3 and any S3-compatible endpoint; an S3 404 maps to `not-found`.
+- **Factory** (`index.ts`): `createPhotoStore(config)` switches on `config.kind`: `disk` → disk store, `s3` → S3 store, `r2` → S3 store with `endpoint = https://{accountId}.r2.cloudflarestorage.com` and `region = auto`. Built once from `env()` and shared by services and jobs.
+- **Tests**: one contract suite (put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch`; the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
 `bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others. Jobs run across accounts.
 - **Note expiry** (hourly): tombstones notes past the account's `noteExpiry` using the screens' `noteExpired` rule, then publishes each account's version on the bus.
 - **Link cleanup** (daily): deletes `magic_links` expired more than 24 h ago.
-- **Deleted photo files** (daily): removes files of tombstoned photos.
+- **Deleted photo files** (daily): removes the stored objects of tombstoned photos.
 
 `accountTimeZone(db, accountId)` = the saved place's `timeZone`, else `accounts.time_zone`; the upload-day fallback reads it. Backups belong to the PostgreSQL host.
 
 ### 6.5 Config
-`server/env.ts` parses `process.env` at boot: `DATABASE_URL`, `DATA_DIR`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`. Bad config names the variables (not their values) and exits. `next build` needs no env. `.env.development` points at a local PostgreSQL and `.data/`; each developer puts `RESEND_API_KEY` in `.env.development.local`.
+`server/env.ts` parses `process.env` at boot: `DATABASE_URL`, `APP_URL`, `RESEND_API_KEY`, `MAIL_FROM`, and the photo store chosen by `PHOTO_STORE` (a Valibot `variant`, read into `env().storage`):
+
+| `PHOTO_STORE` | Variables |
+|---|---|
+| `disk` (default) | `DATA_DIR` |
+| `s3` | `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, optional `S3_ENDPOINT` (S3-compatible hosts) |
+| `r2` | `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
+
+Bad config names the variables (not their values) and exits. `next build` needs no env. `.env.development` points at a local PostgreSQL and `.data/`; each developer puts `RESEND_API_KEY` in `.env.development.local`.
 
 **Demo build** (`NEXT_PUBLIC_DEMO=1`, implied by `next dev`): fixture URL params, `/dev/gallery` and the sign-in dev buttons are compiled in; the display uses `glance-fixture` + `FixtureTransport` and skips the `glance-meta` gate. Demo-only routes are `page.demo.tsx`, added to `pageExtensions` only for dev or demo builds.
 
