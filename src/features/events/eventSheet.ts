@@ -1,4 +1,3 @@
-import { copy } from "@/copy";
 import { allDayStart } from "@/domain/allDay";
 import {
   defaultEnd,
@@ -7,7 +6,7 @@ import {
   endsAfterStart,
   moveStart,
 } from "@/domain/eventTimes";
-import type { CalendarEvent, Season, Tone } from "@/domain/schemas";
+import type { CalendarEvent } from "@/domain/schemas";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
 import { afterEdit, type SheetConfirm } from "@/ui/discard";
@@ -17,7 +16,9 @@ export type { TimeFixture };
 export type EventDraft = EventTimes & {
   title: string;
   location: string;
-  tone: Tone;
+  everyone: boolean;
+  memberIds: string[];
+  notes: string;
   allDay?: true;
 };
 
@@ -34,7 +35,6 @@ export type EventSheetState = {
 
 export type EventSheetAction =
   | { type: "title" | "location"; value: string }
-  | { type: "tone"; value: Tone }
   | { type: "start" | "end"; value: number }
   | { type: "allDay"; value: boolean }
   | { type: "toggle"; field: TimeFieldName }
@@ -45,14 +45,14 @@ export type EventSheetAction =
   | { type: "askDiscard" }
   | { type: "keepEditing" };
 
-export type SwatchOption = { value: Tone; label: string };
-
 export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): EventDraft {
   return {
     title: event.title,
     ...eventTimes(event, tz, now),
     location: event.location ?? "",
-    tone: event.tone,
+    everyone: event.everyone,
+    memberIds: event.memberIds,
+    notes: event.notes ?? "",
   };
 }
 
@@ -64,30 +64,28 @@ export function eventFromDraft(
 ): CalendarEvent {
   const location = draft.location.trim();
 
+  const notes = draft.notes.trim();
+
   return {
     id,
     title: draft.title.trim(),
     ...eventSpan(draft, dayKey, tz),
     ...(location === "" ? {} : { location }),
-    tone: draft.tone,
+    everyone: draft.everyone,
+    memberIds: draft.memberIds,
+    ...(notes === "" ? {} : { notes }),
   };
 }
 
 export function newEventDraft(now: Date, tz: string): EventDraft {
-  return { title: "", ...defaultTimes(now, tz), location: "", tone: 1 };
-}
-
-export function eventSwatches(season: Season): SwatchOption[] {
-  const [one, two, three, four, soft] = copy.events.swatches[season];
-
-  return [
-    { value: 1, label: one },
-    { value: 2, label: two },
-    { value: 3, label: three },
-    { value: 4, label: four },
-    { value: "soft", label: soft },
-    { value: "accent", label: copy.events.alert },
-  ];
+  return {
+    title: "",
+    ...defaultTimes(now, tz),
+    location: "",
+    everyone: true,
+    memberIds: [],
+    notes: "",
+  };
 }
 
 export function initialEventSheet(
@@ -115,7 +113,6 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
     draft.location.trim() !== opened.location.trim() ||
     draft.start !== opened.start ||
     draft.end !== opened.end ||
-    draft.tone !== opened.tone ||
     draft.allDay !== opened.allDay
   );
 }
@@ -136,8 +133,6 @@ export function eventSheetReducer(
     case "title":
     case "location":
       return edited(state, { ...draft, [action.type]: action.value });
-    case "tone":
-      return edited(state, { ...draft, tone: action.value });
     case "start":
       return edited(state, { ...draft, ...moveStart(draft, action.value) });
     case "end":

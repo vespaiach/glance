@@ -8,6 +8,7 @@ import {
   FIXTURE_ACCOUNT,
   FIXTURE_ALL_DAY,
   FIXTURE_AMBIENT_WEATHER,
+  FIXTURE_FAMILY,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
@@ -240,6 +241,8 @@ function hasUploadedPhotos(params: FixtureParams): boolean {
 
 async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {
   const accountId = FIXTURE_ACCOUNT.id;
+
+  await db.members.bulkPut(FIXTURE_FAMILY.map(seeded));
 
   if (seed.withRows) {
     await db.events.bulkPut(fixtureEvents(params).map(seeded));

@@ -1,7 +1,6 @@
 import { useState } from "react";
-import type { Season } from "@/domain/schemas";
 import { type Clock, formatDayTitle } from "@/domain/time";
-import { EventSheet, eventSwatches, initialEventSheet, newEventDraft } from "@/features/events";
+import { EventSheet, initialEventSheet, newEventDraft } from "@/features/events";
 import { Button } from "@/ui/Button";
 import { GalleryGroup } from "./GalleryGroup";
 import { GALLERY_TZ, gallery, NOW } from "./samples";
@@ -40,10 +39,12 @@ const LUNCH = {
   start: 720,
   end: 780,
   location: "Café Lumen",
-  tone: 2,
-} as const;
+  everyone: true,
+  memberIds: [],
+  notes: "",
+};
 
-export function EventSheetGallery({ season }: { season: Season }) {
+export function EventSheetGallery() {
   const [open, setOpen] = useState<Demo | null>(null);
 
   const close = () => setOpen(null);
@@ -66,7 +67,6 @@ export function EventSheetGallery({ season }: { season: Season }) {
           eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
           initial={initialEventSheet({ ...draft, ...allDay }, open.time, open.discard)}
           clock={open.clock ?? "12h"}
-          swatches={eventSwatches(season)}
           offline={open.offline ?? false}
           compact={open.compact}
           onClose={close}

@@ -343,7 +343,7 @@ function savedPhotoIds(db: GlanceDb): Promise<string[]> {
 }
 
 function applyPull(db: GlanceDb, response: PullResponse): Promise<void> {
-  const tables = [db.events, db.notes, db.photos, db.settings, db.outbox, db.meta];
+  const tables = [db.members, db.events, db.notes, db.photos, db.settings, db.outbox, db.meta];
 
   return db.transaction("rw", tables, async () => {
     for (const change of response.changes) await applyChange(db, change);

@@ -4,6 +4,8 @@ import type {
   Account,
   AccountSettings,
   CalendarEvent,
+  Member,
+  MemberColor,
   Note,
   Photo,
   Weather,
@@ -44,79 +46,134 @@ const MINUTE_MS = 60 * 1000;
 const before = (now: Date, minutes: number) =>
   new Date(now.getTime() - minutes * MINUTE_MS).toISOString();
 
+const FAMILY = [
+  ["an", "Minh-An", "lilac"],
+  ["hy", "Minh-Hy", "sky"],
+  ["mom", "Mom", "coral"],
+  ["dad", "Dad", "mint"],
+  ["thang", "Thang", "sun"],
+  ["tin", "Tin", "pink"],
+  ["nghe", "Nghe", "lime"],
+  ["an2", "An", "rust"],
+  ["nga", "Nga", "glacier"],
+] as const satisfies readonly (readonly [string, string, MemberColor])[];
+
+type FamilyKey = (typeof FAMILY)[number][0];
+
+type Who = readonly FamilyKey[] | "everyone";
+
+export const FIXTURE_FAMILY: Member[] = FAMILY.map(([, name, color], index) => ({
+  id: fixtureId(5, index + 1),
+  name,
+  color,
+  createdAt: at(1, 9, index),
+}));
+
+const memberId = (key: FamilyKey) => fixtureId(5, FAMILY.findIndex(([k]) => k === key) + 1);
+
+const whoOf = (who: Who) =>
+  who === "everyone"
+    ? { everyone: true, memberIds: [] }
+    : { everyone: false, memberIds: who.map(memberId) };
+
+const bringNotes = (bring: readonly string[]) =>
+  bring.length === 0
+    ? {}
+    : {
+        notes: `Bring ${bring.map((item) => item.charAt(0).toLowerCase() + item.slice(1)).join(", ")}`,
+      };
+
+const plan = (
+  n: number,
+  [day, start, end]: readonly [number, number, number],
+  [title, location]: readonly [string, string],
+  who: Who,
+  bring: readonly string[] = [],
+): CalendarEvent => ({
+  id: fixtureId(1, n),
+  startAt: at(day, 0, start),
+  endAt: at(day, 0, end),
+  title,
+  location,
+  ...whoOf(who),
+  ...bringNotes(bring),
+});
+
+const SCHOOL = "Lincoln Elementary";
+
+const schoolDay = (day: number, index: number): CalendarEvent[] => {
+  const parent = day % 2 ? "dad" : "mom";
+
+  const n = 40 + index * 3;
+
+  return [
+    plan(n, [day, 465, 495], ["School drop-off", SCHOOL], [parent, "an", "hy"]),
+    plan(n + 1, [day, 495, 900], ["School", SCHOOL], ["an", "hy"]),
+    plan(n + 2, [day, 900, 915], ["School pickup", SCHOOL], [parent, "an", "hy"]),
+  ];
+};
+
 export const FIXTURE_EVENTS: CalendarEvent[] = [
-  {
-    id: fixtureId(1, 1),
-    startAt: at(9, 9),
-    endAt: at(9, 9, 30),
-    title: "School drop-off",
-    location: "Lincoln Elementary",
-    tone: "soft",
-  },
-  {
-    id: fixtureId(1, 2),
-    startAt: at(9, 10, 30),
-    endAt: at(9, 11, 15),
-    title: "Grandma’s video call",
-    location: "Living room",
-    tone: 1,
-  },
-  {
-    id: fixtureId(1, 3),
-    startAt: at(9, 12),
-    endAt: at(9, 13),
-    title: "Lunch with Aunt Rosa",
-    location: "Café Lumen",
-    tone: 2,
-  },
-  {
-    id: fixtureId(1, 4),
-    startAt: at(9, 14),
-    endAt: at(9, 14, 20),
-    title: "Dentist — Leo",
-    location: "Dr. Patel",
-    tone: "accent",
-  },
-  {
-    id: fixtureId(1, 5),
-    startAt: at(9, 15, 30),
-    endAt: at(9, 16, 30),
-    title: "Soccer practice",
-    location: "Laurelhurst Park",
-    tone: 3,
-  },
-  {
-    id: fixtureId(1, 6),
-    startAt: at(2, 19),
-    endAt: at(2, 21),
-    title: "Movie night",
-    location: "Living room",
-    tone: 2,
-  },
-  {
-    id: fixtureId(1, 7),
-    startAt: at(14, 16),
-    endAt: at(14, 16, 30),
-    title: "Parent-teacher conference",
-    location: "Lincoln Elementary",
-    tone: 4,
-  },
-  {
-    id: fixtureId(1, 8),
-    startAt: at(22, 16),
-    endAt: at(22, 18),
-    title: "Leo’s birthday party",
-    location: "Home",
-    tone: 3,
-  },
-  {
-    id: fixtureId(1, 9),
-    startAt: at(28, 17),
-    endAt: at(28, 18, 30),
-    title: "Pumpkin carving",
-    location: "Back porch",
-    tone: 1,
-  },
+  plan(1, [9, 465, 495], ["School drop-off", SCHOOL], ["dad", "an", "hy"], ["Library books"]),
+  plan(2, [9, 630, 675], ["Grandma’s video call", "Living room"], ["mom"]),
+  plan(3, [9, 720, 780], ["Lunch with Aunt Rosa", "Café Lumen"], ["mom"]),
+  plan(4, [9, 840, 870], ["Dentist", "Dr. Patel"], ["mom", "an"], ["Insurance card"]),
+  plan(
+    5,
+    [9, 930, 990],
+    ["Soccer practice", "Laurelhurst Park"],
+    ["hy", "dad"],
+    ["Shin guards", "Water bottle"],
+  ),
+  plan(6, [9, 495, 900], ["School", SCHOOL], ["an", "hy"]),
+  plan(7, [9, 900, 915], ["School pickup", SCHOOL], ["dad", "an", "hy"]),
+  plan(8, [9, 810, 870], ["Car service", "Westside Auto"], ["dad"], ["Spare key"]),
+  plan(9, [9, 1020, 1065], ["Piano lesson", "Ms. Tran’s studio"], ["an", "mom"], ["Recital book"]),
+  plan(10, [9, 1140, 1230], ["Movie night", "Living room"], "everyone"),
+  plan(11, [9, 420, 465], ["Morning run", "Laurelhurst Park"], ["thang"]),
+  plan(12, [9, 570, 630], ["Physical therapy", "Eastside Clinic"], ["tin"], ["Exercise band"]),
+  plan(13, [9, 600, 660], ["Yoga class", "Studio 7"], ["nga"], ["Yoga mat"]),
+  plan(14, [9, 660, 780], ["Volunteer shift", "Food bank"], ["nghe"], ["Name badge"]),
+  plan(15, [9, 780, 825], ["Haircut", "Salon Lumi"], ["an2"]),
+  plan(16, [9, 960, 1020], ["Chess club", "Belmont Library"], ["tin"]),
+  plan(17, [9, 990, 1005], ["Soccer pickup", "Laurelhurst Park"], ["nga", "hy"]),
+  plan(18, [9, 1080, 1125], ["Pick up groceries", "Fred Meyer"], ["thang"], ["Shopping list"]),
+  plan(20, [2, 1140, 1260], ["Movie night", "Living room"], "everyone"),
+  plan(21, [4, 600, 720], ["Brunch at Grandma’s", "Grandma’s house"], "everyone"),
+  plan(22, [5, 930, 990], ["Soccer practice", "Laurelhurst Park"], ["hy", "dad"], ["Shin guards"]),
+  plan(23, [6, 1020, 1065], ["Piano lesson", "Ms. Tran’s studio"], ["an", "mom"], ["Recital book"]),
+  plan(24, [6, 1110, 1200], ["Choir practice", "Community center"], ["nghe"]),
+  plan(25, [7, 1140, 1230], ["Book club", "Powell’s Books"], ["mom", "nga"]),
+  plan(26, [8, 600, 660], ["Doctor’s appointment", "Eastside Clinic"], ["an2"], ["Insurance card"]),
+  plan(27, [8, 1050, 1110], ["Swim lesson", "Dishman pool"], ["hy", "dad"], ["Goggles", "Towel"]),
+  plan(
+    28,
+    [10, 420, 660],
+    ["Fishing trip", "Sauvie Island"],
+    ["thang", "tin"],
+    ["Fishing license"],
+  ),
+  plan(
+    29,
+    [10, 540, 630],
+    ["Soccer game", "Laurelhurst Park"],
+    ["hy", "dad", "mom", "an", "nga"],
+    ["Orange slices"],
+  ),
+  plan(30, [10, 660, 720], ["Farmers market", "Shemanski Park"], ["dad"]),
+  plan(36, [10, 270, 315], ["Pick up bait", "Fish & Tackle"], ["thang"]),
+  plan(37, [10, 1320, 1410], ["Late movie", "Hollywood Theatre"], ["an", "hy"]),
+  plan(
+    31,
+    [10, 840, 960],
+    ["Sophie’s birthday party", "Bounce Town"],
+    ["an", "mom"],
+    ["Gift for Sophie"],
+  ),
+  plan(32, [14, 960, 990], ["Parent-teacher conference", SCHOOL], ["mom", "dad"]),
+  plan(34, [22, 960, 1080], ["Minh-An’s birthday party", "Home"], "everyone"),
+  plan(35, [28, 1020, 1110], ["Pumpkin carving", "Back porch"], "everyone"),
+  ...[5, 6, 7, 8, 12, 13, 14, 15].flatMap(schoolDay),
 ];
 
 export const FIXTURE_NOTES: Note[] = [
@@ -130,7 +187,7 @@ export const FIXTURE_NOTES: Note[] = [
   },
   {
     id: fixtureId(2, 2),
-    text: "Package for Mia at the front door.",
+    text: "Package for Minh-Hy at the front door.",
     author: "Mom",
     createdAt: at(9, 9, 5),
     tone: 2,
@@ -147,7 +204,7 @@ export const FIXTURE_NOTES: Note[] = [
   {
     id: fixtureId(2, 4),
     text: "Welcome home, Grandpa!",
-    author: "Mia",
+    author: "Minh-Hy",
     createdAt: at(6, 16, 45),
     tone: 4,
     rotation: 2.5,
@@ -166,58 +223,30 @@ export const FIXTURE_NEW_NOTE_DRAFT = "Has anyone seen my blue umbr";
 
 export const FIXTURE_ALL_DAY = {
   noSchool: {
-    id: fixtureId(1, 10),
+    id: fixtureId(1, 33),
     startAt: allDayStart("2026-10-16"),
     allDay: true,
     title: "No school · teacher planning day",
-    location: "Lincoln Elementary",
-    tone: 4,
+    location: SCHOOL,
+    ...whoOf(["an", "hy"]),
   },
   grandpa: {
-    id: fixtureId(1, 11),
+    id: fixtureId(1, 19),
     startAt: allDayStart("2026-10-09"),
     allDay: true,
     title: "Grandpa staying over",
     location: "Guest room",
-    tone: 2,
+    ...whoOf("everyone"),
   },
 } as const satisfies Record<string, CalendarEvent>;
 
 export const FIXTURE_SEEDED_EVENTS: CalendarEvent[] = [...FIXTURE_EVENTS, FIXTURE_ALL_DAY.noSchool];
 
 export const FIXTURE_MANY_EVENTS: CalendarEvent[] = [
-  {
-    id: fixtureId(1, 12),
-    startAt: at(9, 17),
-    endAt: at(9, 17, 30),
-    title: "Grocery pickup",
-    location: "Fred Meyer",
-    tone: 4,
-  },
-  {
-    id: fixtureId(1, 13),
-    startAt: at(9, 18),
-    endAt: at(9, 19),
-    title: "Family dinner",
-    location: "Home",
-    tone: 1,
-  },
-  {
-    id: fixtureId(1, 14),
-    startAt: at(9, 19, 30),
-    endAt: at(9, 20),
-    title: "Piano practice — Mia",
-    location: "Living room",
-    tone: 2,
-  },
-  {
-    id: fixtureId(1, 15),
-    startAt: at(9, 20, 30),
-    endAt: at(9, 21),
-    title: "Bedtime story",
-    location: "Kids’ room",
-    tone: "soft",
-  },
+  plan(81, [9, 1110, 1140], ["Family dinner", "Home"], "everyone"),
+  plan(82, [9, 1230, 1260], ["Bedtime story", "Kids’ room"], ["mom", "an", "hy"]),
+  plan(83, [9, 720, 750], ["Call the plumber", "Phone"], ["dad"]),
+  plan(84, [9, 1035, 1065], ["Walk the dog", "Neighborhood"], ["nghe", "an2"]),
 ];
 
 export const FIXTURE_SHEET_TARGETS = {

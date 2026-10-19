@@ -80,23 +80,49 @@ describe("signOut", () => {
   });
 });
 
+function memberNames() {
+  return harness.deps().db.all("SELECT account_id, name FROM members ORDER BY created_at");
+}
+
 describe("saveName", () => {
   it("SIGNIN-06 saves the trimmed name and returns the account", async () => {
     const { accountId } = await signIn("maria@example.com");
 
-    const result = await saveName(harness.deps().db, accountId, "  Maria Lopez ");
+    const result = await saveName(harness.deps(), accountId, "  Maria Lopez ");
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       ok: true,
-      value: { id: accountId, email: "maria@example.com", name: "Maria Lopez" },
+      value: { account: { id: accountId, email: "maria@example.com", name: "Maria Lopez" } },
     });
+  });
+
+  it("§7 a new family's first member gets the name and the first color", async () => {
+    const { accountId } = await signIn("maria@example.com");
+
+    const result = await saveName(harness.deps(), accountId, "  Maria Lopez ");
+
+    expect(result.ok && result.value.firstMember).toMatchObject({
+      name: "Maria Lopez",
+      color: "lilac",
+    });
+    expect(await memberNames()).toEqual([{ account_id: accountId, name: "Maria Lopez" }]);
+  });
+
+  it("§7 saving the name again adds no member", async () => {
+    const { accountId } = await signIn("maria@example.com");
+    await saveName(harness.deps(), accountId, "Maria");
+
+    const result = await saveName(harness.deps(), accountId, "Maria Lopez");
+
+    expect(result.ok && result.value.firstMember).toBeUndefined();
+    expect(await memberNames()).toEqual([{ account_id: accountId, name: "Maria" }]);
   });
 
   it("SIGNIN-06 never writes another account's name", async () => {
     const maria = await signIn("maria@example.com");
     await signIn("sam@example.com");
 
-    await saveName(harness.deps().db, maria.accountId, "Maria");
+    await saveName(harness.deps(), maria.accountId, "Maria");
 
     expect(await accountNames()).toEqual([
       { email: "maria@example.com", name: "Maria" },
@@ -105,11 +131,11 @@ describe("saveName", () => {
   });
 
   it("SIGNIN-06 reports an account that doesn't exist", async () => {
-    expect(
-      await saveName(harness.deps().db, "01890000-0000-7000-8000-000000000000", "Maria"),
-    ).toEqual({
-      ok: false,
-      error: "not-found",
-    });
+    expect(await saveName(harness.deps(), "01890000-0000-7000-8000-000000000000", "Maria")).toEqual(
+      {
+        ok: false,
+        error: "not-found",
+      },
+    );
   });
 });

@@ -3,11 +3,13 @@ import type { AccountSettings } from "@/domain/schemas";
 import type { Db } from "../db/db";
 import type { ServiceDeps } from "./deps";
 import { type EventRow, type SyncedEvent, toEvent } from "./events";
+import { type MemberRow, type SyncedMember, toMember } from "./members";
 import { type NoteRow, type SyncedNote, toNote } from "./notes";
 import { type PhotoRow, type SyncedPhoto, toPhoto } from "./photos";
 import type { SyncedSettings } from "./settings";
 
 export type SyncChange =
+  | { entity: "members"; row: SyncedMember }
   | { entity: "events"; row: SyncedEvent }
   | { entity: "notes"; row: SyncedNote }
   | { entity: "photos"; row: SyncedPhoto }
@@ -32,6 +34,8 @@ export function pullChanges(
 
     const after = since ?? 0;
 
+    const members = await changedRows<MemberRow>(tx, "members", accountId, after);
+
     const events = await changedRows<EventRow>(tx, "events", accountId, after);
 
     const notes = await changedRows<NoteRow>(tx, "notes", accountId, after);
@@ -41,6 +45,7 @@ export function pullChanges(
     const settings = await changedRows<SettingsRow>(tx, "settings", accountId, after);
 
     const changes = [
+      ...members.map((row): SyncChange => ({ entity: "members", row: toMember(row) })),
       ...events.map((row): SyncChange => ({ entity: "events", row: toEvent(row) })),
       ...notes.map((row): SyncChange => ({ entity: "notes", row: toNote(row) })),
       ...photos.map((row): SyncChange => ({ entity: "photos", row: toPhoto(row) })),

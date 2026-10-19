@@ -325,6 +325,8 @@ const todayAt = (hour: number, minute: number) => octoberAt(9, hour, minute).toI
 
 const sampleId = (n: number) => `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`;
 
+const EVERYONE = { everyone: true, memberIds: [] };
+
 export const TODAY_EVENTS: readonly CalendarEvent[] = [
   {
     id: sampleId(1),
@@ -332,7 +334,7 @@ export const TODAY_EVENTS: readonly CalendarEvent[] = [
     location: "Lincoln Elementary",
     startAt: todayAt(9, 0),
     endAt: todayAt(9, 30),
-    tone: "soft",
+    ...EVERYONE,
   },
   {
     id: sampleId(2),
@@ -340,7 +342,7 @@ export const TODAY_EVENTS: readonly CalendarEvent[] = [
     location: "Living room",
     startAt: todayAt(10, 30),
     endAt: todayAt(11, 15),
-    tone: 1,
+    ...EVERYONE,
   },
   {
     id: sampleId(3),
@@ -348,7 +350,7 @@ export const TODAY_EVENTS: readonly CalendarEvent[] = [
     location: "Café Lumen",
     startAt: todayAt(12, 0),
     endAt: todayAt(13, 0),
-    tone: 2,
+    ...EVERYONE,
   },
 ];
 
@@ -359,7 +361,7 @@ export const ALL_DAY_EVENTS = {
     location: "Guest room",
     startAt: "2026-10-09T00:00:00.000Z",
     allDay: true,
-    tone: 2,
+    ...EVERYONE,
   },
   noSchool: {
     id: sampleId(5),
@@ -367,7 +369,7 @@ export const ALL_DAY_EVENTS = {
     location: "Lincoln Elementary",
     startAt: "2026-10-16T00:00:00.000Z",
     allDay: true,
-    tone: 4,
+    ...EVERYONE,
   },
 } as const satisfies Record<string, CalendarEvent>;
 
@@ -376,24 +378,24 @@ export const TODAY_WITH_ALL_DAY: readonly CalendarEvent[] = [
   ...TODAY_EVENTS,
 ];
 
-const LATER_TODAY: readonly [string, string, number, number, CalendarEvent["tone"]][] = [
-  ["Dentist — Leo", "Dr. Patel", 14, 0, "accent"],
-  ["Soccer practice", "Laurelhurst Park", 15, 30, 3],
-  ["Grocery pickup", "Fred Meyer", 17, 0, 4],
-  ["Family dinner", "Home", 18, 0, 1],
-  ["Piano practice — Mia", "Living room", 19, 30, 2],
-  ["Bedtime story", "Kids’ room", 20, 30, "soft"],
+const LATER_TODAY: readonly [string, string, number, number][] = [
+  ["Dentist — Leo", "Dr. Patel", 14, 0],
+  ["Soccer practice", "Laurelhurst Park", 15, 30],
+  ["Grocery pickup", "Fred Meyer", 17, 0],
+  ["Family dinner", "Home", 18, 0],
+  ["Piano practice — Mia", "Living room", 19, 30],
+  ["Bedtime story", "Kids’ room", 20, 30],
 ];
 
 export const TODAY_MANY: readonly CalendarEvent[] = [
   ...TODAY_EVENTS,
-  ...LATER_TODAY.map(([title, location, hour, minute, tone], index) => ({
+  ...LATER_TODAY.map(([title, location, hour, minute], index) => ({
     id: sampleId(31 + index),
     title,
     location,
     startAt: todayAt(hour, minute),
     endAt: todayAt(hour, minute + 30),
-    tone,
+    ...EVERYONE,
   })),
 ];
 

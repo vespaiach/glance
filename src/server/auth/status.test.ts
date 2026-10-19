@@ -70,7 +70,7 @@ describe("authStatus on the waiting screen", () => {
   it("SIGNIN-07 keeps waiting after the name until the location step ends", async () => {
     const { token, pendingId } = await waitingScreen();
     const opener = await openElsewhere(token);
-    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await saveName(harness.deps(), opener.accountId, "Maria");
 
     expect(await authStatus(harness.deps(), { pendingId })).toEqual({
       status: { state: "finishing-elsewhere" },
@@ -80,7 +80,7 @@ describe("authStatus on the waiting screen", () => {
   it("SIGNIN-09 signs in with its own session once the name is saved", async () => {
     const { token, pendingId } = await waitingScreen();
     const opener = await openElsewhere(token);
-    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await saveName(harness.deps(), opener.accountId, "Maria");
     await finishSetup(harness.deps(), opener.accountId);
     harness.advance(4000);
 
@@ -100,7 +100,7 @@ describe("authStatus on the waiting screen", () => {
   it("D23 the display the waiting screen claims records that screen's device", async () => {
     const { token, pendingId } = await waitingScreen();
     const opener = await openElsewhere(token);
-    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await saveName(harness.deps(), opener.accountId, "Maria");
     await finishSetup(harness.deps(), opener.accountId);
 
     const answer = await authStatus(harness.deps(), { pendingId, userAgent: PHONE_UA });
@@ -118,7 +118,7 @@ describe("authStatus on the waiting screen", () => {
   it("SIGNIN-09 says returning when the account already existed", async () => {
     const first = await waitingScreen();
     const opener = await openElsewhere(first.token);
-    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await saveName(harness.deps(), opener.accountId, "Maria");
     await finishSetup(harness.deps(), opener.accountId);
     harness.advance(60_000);
     const { token, pendingId } = await waitingScreen();
@@ -132,7 +132,7 @@ describe("authStatus on the waiting screen", () => {
   it("tech§6.2 the pending id signs in only once", async () => {
     const { token, pendingId } = await waitingScreen();
     const opener = await openElsewhere(token);
-    await saveName(harness.deps().db, opener.accountId, "Maria");
+    await saveName(harness.deps(), opener.accountId, "Maria");
     await finishSetup(harness.deps(), opener.accountId);
     await authStatus(harness.deps(), { pendingId });
 
@@ -163,7 +163,7 @@ describe("authStatus with a session", () => {
 
   it("SIGNIN-09 the opener of a known account is returning", async () => {
     const first = await openElsewhere((await waitingScreen()).token);
-    await saveName(harness.deps().db, first.accountId, "Maria");
+    await saveName(harness.deps(), first.accountId, "Maria");
     await finishSetup(harness.deps(), first.accountId);
     harness.advance(60_000);
 
@@ -181,7 +181,7 @@ describe("authStatus with a session", () => {
 
   it("SIGNIN-14 a named account whose location step never ended is not set up", async () => {
     const first = await openElsewhere((await waitingScreen()).token);
-    await saveName(harness.deps().db, first.accountId, "Maria");
+    await saveName(harness.deps(), first.accountId, "Maria");
     harness.advance(60_000);
 
     const opener = await openElsewhere((await waitingScreen()).token);

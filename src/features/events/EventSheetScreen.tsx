@@ -11,7 +11,6 @@ import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
-import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
@@ -21,7 +20,6 @@ import {
   type EventDraft,
   type EventSheetState,
   eventFromDraft,
-  eventSwatches,
   initialEventSheet,
   newEventDraft,
 } from "./eventSheet";
@@ -63,8 +61,6 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
 
   const tz = useTimeZone();
 
-  const season = useSeason();
-
   const { online } = useNetwork();
 
   const breakpoint = useBreakpoint();
@@ -80,7 +76,6 @@ function SheetFrame({ mode, day, id, initial, onDelete }: SheetFrameProps) {
       eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
       initial={initial}
       clock={clock}
-      swatches={eventSwatches(season)}
       offline={!online}
       compact={breakpoint === "phone"}
       onClose={close}

@@ -64,7 +64,8 @@ const TODAY_EVENT: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000002",
   startAt: at(9, 20),
   title: "Movie night",
-  tone: 2,
+  everyone: true,
+  memberIds: [],
 };
 
 const CONFERENCE: CalendarEvent = {
@@ -72,14 +73,16 @@ const CONFERENCE: CalendarEvent = {
   startAt: at(14, 16),
   title: "Parent-teacher conference",
   location: "Lincoln Elementary",
-  tone: 4,
+  everyone: true,
+  memberIds: [],
 };
 
 const TOMORROW_EVENT: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000001",
   startAt: at(10, 9),
   title: "Farmers market",
-  tone: 1,
+  everyone: true,
+  memberIds: [],
 };
 
 let store: Harness;

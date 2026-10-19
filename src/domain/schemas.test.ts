@@ -4,12 +4,15 @@ import {
   AccountSettingsSchema,
   CalendarEventSchema,
   LinkRequestSchema,
+  MemberColorSchema,
+  MemberSchema,
   NameRequestSchema,
   NoteSchema,
   PhotoSchema,
   QrVoidRequestSchema,
   type Synced,
   SyncedEventSchema,
+  SyncedMemberSchema,
   WeatherSchema,
 } from "./schemas";
 
@@ -21,7 +24,17 @@ const event = {
   endAt: "2026-10-09T18:15:00.000Z",
   title: "Grandma's video call",
   location: "Living room",
-  tone: 1,
+  everyone: true,
+  memberIds: [],
+};
+
+const memberId = "0192f1a0-7c2e-7a3b-9c4d-1e2f3a4b5c6e";
+
+const member = {
+  id: memberId,
+  name: "Minh-An",
+  color: "lilac",
+  createdAt: "2026-10-01T15:00:00.000Z",
 };
 
 const note = {
@@ -102,8 +115,28 @@ describe("CalendarEventSchema", () => {
     );
   });
 
-  it("D6 rejects an unknown tone", () => {
-    expect(accepts(CalendarEventSchema, { ...event, tone: 5 })).toBe(false);
+  it("D24 accepts an event for some members with its notes", () => {
+    const some = { ...event, everyone: false, memberIds: [memberId], notes: "Bring snacks" };
+
+    expect(v.parse(CalendarEventSchema, some)).toEqual(some);
+  });
+
+  it("D24 rejects an event for everyone that also names members", () => {
+    expect(accepts(CalendarEventSchema, { ...event, memberIds: [memberId] })).toBe(false);
+  });
+
+  it("D24 rejects an event for nobody", () => {
+    expect(accepts(CalendarEventSchema, { ...event, everyone: false })).toBe(false);
+  });
+
+  it("D24 rejects a member id that isn't a UUID", () => {
+    expect(accepts(CalendarEventSchema, { ...event, everyone: false, memberIds: ["dad"] })).toBe(
+      false,
+    );
+  });
+
+  it("D24 drops the old tone field", () => {
+    expect(v.parse(CalendarEventSchema, { ...event, tone: 1 })).toEqual(event);
   });
 
   const { endAt: _, ...timed } = event;
@@ -147,6 +180,19 @@ describe("SyncedEventSchema", () => {
     expect(accepts(SyncedEventSchema, row)).toBe(false);
   });
 
+  it("D24 accepts a tombstone left with no members", () => {
+    const row = {
+      ...event,
+      everyone: false,
+      updatedAt: "2026-10-09T17:00:00.000Z",
+      version: 7,
+      deletedAt: "2026-10-09T17:00:00.000Z",
+    };
+
+    expect(accepts(SyncedEventSchema, row)).toBe(true);
+    expect(accepts(SyncedEventSchema, { ...row, deletedAt: undefined })).toBe(false);
+  });
+
   it("D10 rejects a row without a version", () => {
     expect(accepts(SyncedEventSchema, { ...event, updatedAt: "2026-10-09T17:00:00.000Z" })).toBe(
       false,
@@ -157,6 +203,40 @@ describe("SyncedEventSchema", () => {
     expectTypeOf<Synced<{ id: string }>>().toEqualTypeOf<
       { id: string } & { updatedAt: string; version: number; deletedAt?: string }
     >();
+  });
+});
+
+describe("MemberSchema", () => {
+  it("§7 accepts a member with a name, a block color and a created time", () => {
+    expect(v.parse(MemberSchema, member)).toEqual(member);
+  });
+
+  it("FAM-04 rejects a blank name", () => {
+    expect(accepts(MemberSchema, { ...member, name: "  " })).toBe(false);
+  });
+
+  it("§7 accepts each of the 12 block colors and nothing else", () => {
+    expect(MemberColorSchema.options).toEqual([
+      "lilac",
+      "sky",
+      "coral",
+      "mint",
+      "sun",
+      "pink",
+      "lime",
+      "rust",
+      "glacier",
+      "amber",
+      "sage",
+      "ice",
+    ]);
+    expect(accepts(MemberSchema, { ...member, color: "navy" })).toBe(false);
+  });
+
+  it("D10 a synced member adds the server fields", () => {
+    const row = { ...member, updatedAt: "2026-10-09T17:00:00.000Z", version: 3 };
+
+    expect(v.parse(SyncedMemberSchema, row)).toEqual(row);
   });
 });
 

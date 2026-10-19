@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type {
   AccountSettings,
   CalendarEvent,
+  Member,
   Note,
   Photo,
   Synced,
@@ -9,6 +10,8 @@ import type {
 } from "@/domain/schemas";
 
 export type StoredEvent = Synced<CalendarEvent>;
+
+export type StoredMember = Synced<Member>;
 
 export type StoredNote = Synced<Note>;
 
@@ -18,7 +21,7 @@ export type StoredSettings = Synced<AccountSettings> & { accountId: string };
 
 export type StoredWeather = Weather & { accountId: string };
 
-export type SyncedEntity = "events" | "notes" | "photos" | "settings";
+export type SyncedEntity = "members" | "events" | "notes" | "photos" | "settings";
 
 export type OutboxEntry = {
   seq: number;
@@ -33,6 +36,7 @@ export type MetaEntry = { key: string; value: unknown };
 
 export type GlanceDb = Dexie & {
   events: EntityTable<StoredEvent, "id">;
+  members: EntityTable<StoredMember, "id">;
   notes: EntityTable<StoredNote, "id">;
   photos: EntityTable<StoredPhoto, "id">;
   settings: EntityTable<StoredSettings, "accountId">;
@@ -61,6 +65,19 @@ export function openGlanceDb(name: string): GlanceDb {
     outbox: "++seq, entity, entityId",
     meta: "key",
   });
+
+  db.version(2)
+    .stores({ members: "id, createdAt, deletedAt" })
+    .upgrade((tx) =>
+      tx
+        .table("events")
+        .toCollection()
+        .modify((event: Record<string, unknown>) => {
+          delete event.tone;
+          event.everyone = true;
+          event.memberIds = [];
+        }),
+    );
 
   return db;
 }

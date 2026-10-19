@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.60 |
+| Status | v0.61 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -294,7 +294,7 @@ PostgreSQL, from `db-migrations/`:
 | `sessions` | `token_hash`, `display_id`, `created_at` |
 | `magic_links` | `token_hash`, `kind` (`email \| qr`), `email`, `time_zone`, `pending_id` (email links), `account_id` + `display_id` (QR links), `expires_at`, `used_at` |
 | `members` | `id`, `account_id`, `name`, `color`, `created_at`, `updated_at`, `deleted_at`, `version` |
-| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `member_ids uuid[]` (empty when `everyone`), `notes`, `updated_at`, `deleted_at`, `version` |
+| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `member_ids text[]` (empty when `everyone`), `notes`, `updated_at`, `deleted_at`, `version` |
 | `notes` | `id`, `account_id`, `text`, `author`, `tone`, `rotation`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `photos` | `id`, `account_id`, `title`, `taken_on date`, `place`, `title_source`, `date_source`, `place_source`, `checked`, `file_path`, `file_name`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `settings` | `account_id`, `json jsonb` (AccountSettings), `updated_at`, `version` |

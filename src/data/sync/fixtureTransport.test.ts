@@ -8,6 +8,7 @@ import {
   FIXTURE_AMBIENT_NOW,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
+  FIXTURE_FAMILY,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
@@ -99,7 +100,23 @@ describe("seedFixtureDb", () => {
     expect(await db.events.get(FIXTURE_ALL_DAY.grandpa.id)).toMatchObject(FIXTURE_ALL_DAY.grandpa);
   });
 
-  it("TODAY-11 events=many adds four evening events, so Oct 9 has 9", async () => {
+  it("§7 seeds the Appendix A family, also with empty=1", async () => {
+    await seedFixtureDb(db, {});
+
+    expect(await db.members.orderBy("createdAt").toArray()).toEqual(
+      FIXTURE_FAMILY.map((member) => ({
+        ...member,
+        updatedAt: FIXTURE_NOW.toISOString(),
+        version: 1,
+      })),
+    );
+
+    await seedFixtureDb(db, { empty: true });
+
+    expect(await db.members.count()).toBe(FIXTURE_FAMILY.length);
+  });
+
+  it("TODAY-11 events=many adds four plans, so Oct 9 has 22", async () => {
     await seedFixtureDb(db, { events: "many" });
 
     const day = (await db.events.toArray()).filter(
@@ -108,12 +125,12 @@ describe("seedFixtureDb", () => {
     );
 
     expect(FIXTURE_MANY_EVENTS.map((event) => event.title)).toEqual([
-      "Grocery pickup",
       "Family dinner",
-      "Piano practice — Mia",
       "Bedtime story",
+      "Call the plumber",
+      "Walk the dog",
     ]);
-    expect(day).toHaveLength(9);
+    expect(day).toHaveLength(22);
   });
 
   it("tech§4.1 reseeding replaces rows and pending writes from an earlier load", async () => {

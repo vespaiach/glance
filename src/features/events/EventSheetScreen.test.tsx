@@ -20,7 +20,8 @@ const LUNCH: CalendarEvent = {
   startAt: new Date(2026, 9, 9, 12, 0).toISOString(),
   endAt: new Date(2026, 9, 9, 13, 0).toISOString(),
   location: "Café Lumen",
-  tone: 2,
+  everyone: true,
+  memberIds: [],
 };
 
 let store: Harness;
@@ -183,7 +184,8 @@ test("EVT-07 Add event queues the new event on the request's day and closes the 
     title: "Picnic",
     startAt: new Date(2026, 9, 12, 11, 0).toISOString(),
     endAt: new Date(2026, 9, 12, 12, 0).toISOString(),
-    tone: 1,
+    everyone: true,
+    memberIds: [],
   });
   expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
 });
@@ -193,14 +195,14 @@ test("EVT-07 Save keeps the event's id and day", async () => {
 
   renderSheet({ kind: "event", id: LUNCH.id });
 
-  await userEvent.click(await screen.findByRole("button", { name: "Alert" }));
+  await userEvent.type(await screen.findByLabelText("Title"), "!");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   await waitFor(async () =>
     expect(await store.db.events.get(LUNCH.id)).toMatchObject({
       ...LUNCH,
-      tone: "accent",
+      title: "Lunch with Aunt Rosa!",
       version: 1,
     }),
   );
@@ -221,7 +223,8 @@ const NO_SCHOOL: CalendarEvent = {
   startAt: "2026-10-16T00:00:00.000Z",
   allDay: true,
   location: "Lincoln Elementary",
-  tone: 4,
+  everyone: true,
+  memberIds: [],
 };
 
 test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {

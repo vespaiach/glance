@@ -38,6 +38,7 @@ describe("001_init", () => {
       "displays",
       "events",
       "magic_links",
+      "members",
       "notes",
       "photos",
       "schema_migrations",
@@ -329,5 +330,106 @@ describe("006_qr_links", () => {
     await db().run("DELETE FROM displays WHERE id = 'd1'");
 
     expect(await db().all("SELECT token_hash FROM magic_links")).toEqual([]);
+  });
+});
+
+async function insertMember(id: string, name: string, color = "lilac"): Promise<void> {
+  await db().run(
+    "INSERT INTO members (id, account_id, name, color, created_at, updated_at, version) VALUES ($1, 'a1', $2, $3, $4, $4, 1)",
+    [id, name, color, NOW],
+  );
+}
+
+describe("007_members", () => {
+  it("D24 an event is for everyone with no members, no notes and no tone", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    expect(await db().one("SELECT * FROM events")).toMatchObject({
+      everyone: true,
+      member_ids: [],
+      notes: null,
+    });
+    expect(await db().one("SELECT * FROM events")).not.toHaveProperty("tone");
+  });
+
+  it("D24 stores an event's member ids as an array", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    await db().run("UPDATE events SET everyone = false, member_ids = $1", [["m1", "m2"]]);
+
+    expect(await db().one("SELECT member_ids FROM events")).toEqual({ member_ids: ["m1", "m2"] });
+  });
+
+  it("D24 rejects an everyone event that also names members", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    await expect(db().run("UPDATE events SET member_ids = $1", [["m1"]])).rejects.toThrow(
+      /check constraint/,
+    );
+  });
+
+  it("§7 rejects a member color outside the 12 block colors", async () => {
+    await insertAccount("a1");
+
+    await expect(insertMember("m1", "Mom", "navy")).rejects.toThrow(/check constraint/);
+  });
+
+  it("FAM-04 rejects a second live member with the same name in another case", async () => {
+    await insertAccount("a1");
+    await insertMember("m1", "Mom");
+
+    await expect(insertMember("m2", "MOM")).rejects.toThrow(/unique constraint/);
+
+    await db().run("UPDATE members SET deleted_at = $1", [NOW]);
+
+    await expect(insertMember("m2", "MOM")).resolves.toBeUndefined();
+  });
+
+  it("D24 gives each named account one lilac member and turns old events into everyone events", async () => {
+    const client = await openPglite();
+    const old = pgliteDb(client);
+    const migrations = readMigrations(MIGRATIONS_DIR);
+    await migrate(
+      old,
+      migrations.filter((migration) => migration.version < 7),
+    );
+    await old.run(
+      `INSERT INTO accounts (id, email, name, time_zone, created_at) VALUES
+         ('a1', 'a1@example.com', 'Maria', 'America/New_York', $1),
+         ('a2', 'a2@example.com', NULL, 'America/New_York', $1)`,
+      [NOW],
+    );
+    await old.run("UPDATE sync_state SET version = 4");
+    await old.run(
+      "INSERT INTO events (id, account_id, title, start_at, tone, updated_at, version) VALUES ('e1', 'a1', 'Swim', $1, 'accent', $1, 4)",
+      [NOW],
+    );
+
+    await migrate(old, migrations);
+
+    const members = await old.all<Record<string, unknown>>(
+      "SELECT id, account_id, name, color, created_at, deleted_at, version FROM members",
+    );
+    expect(members).toEqual([
+      {
+        id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
+        account_id: "a1",
+        name: "Maria",
+        color: "lilac",
+        created_at: NOW,
+        deleted_at: null,
+        version: 5,
+      },
+    ]);
+    expect(await old.one("SELECT version FROM sync_state")).toEqual({ version: 5 });
+    expect(await old.one("SELECT everyone, member_ids, version FROM events")).toEqual({
+      everyone: true,
+      member_ids: [],
+      version: 4,
+    });
+    await client.close();
   });
 });
