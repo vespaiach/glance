@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.65 |
+| Status | v0.66 |
 | Date | 2026-10-19 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -188,7 +188,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 |---|---|
 | Shell, data | `clock=24`, `season=…`, `bg=photo`, `empty=1`, `net=loading\|offline\|wxerror`, `kb=1`, `rail=1\|open` |
 | Sheets | `sheet=event\|newevent\|note\|newnote\|allday\|past\|family\|photo\|photometa`, `details=1`, `time=start\|end\|error\|noend`, `discard=1`, `rm={member}`, `famname={name}`, `famerr=1` |
-| Today, Calendar | `events=many`, `allday=1`, `day={d}` (day of October 2026), `who={member,…}`, `span=24`, `dp=open` |
+| Today, Calendar | `events=many`, `allday=1`, `day={d}` (day of October 2026), `who={member,…\|none}`, `span=24`, `dp=open` |
 | Photos, Background | `upload=one\|progress\|error\|offline\|done`, `full=1`, `chrome=0` |
 | Weather setup | `wx=searching\|unknown\|choose\|locating\|no-position\|denied\|outside\|lookup\|tz\|savefail` |
 | Settings | `amb=same\|split\|off`, `pick=all.s\|all.e\|wknd.s\|wknd.e`, `qr=open\|failed` |
@@ -366,7 +366,7 @@ Top: the week strip card (CAL-01; the date control on phone). Below: one white p
 
 | ID | Requirement |
 |---|---|
-| CAL-01 | **Week strip** (600 px and up): eyebrow "{Mon d – d}" and the month name (wide and mid only), prev/next IconButtons (56), then 7 day pills Sunday to Saturday: weekday, date, one 6 px dot per member with a plan that day (always everyone, capped at 46 px wide), and the day's forecast icon + high when the cell is at least 124 px wide (measured) and the day has a forecast. Selected = black; today keeps a 2 px ring. Narrow drops the eyebrow, month name and weather. |
+| CAL-01 | **Week strip** (600 px and up): eyebrow "{Mon d – d}" ("{Mon d} – {Mon d}" across months) and the month name of its Saturday, with the year outside the current year (wide and mid only), prev/next IconButtons (56), then 7 day pills Sunday to Saturday: weekday, date, one 6 px dot per member with a plan that day (always everyone, capped at 46 px wide), and the day's forecast icon + high when the cell is at least 124 px wide (measured) and the day has a forecast. Selected = black; today keeps a 2 px ring. Narrow drops the eyebrow, month name and weather. |
 | CAL-02 | Chevrons step a week; landing on this week selects today, any other week its Sunday. **Phone date control** (< 600, replaces the week strip): one full-width white card button: mono year over the month name (28 px) on the left, the selected date as a black pill (weekday + date) with `chevron-down` on the right; tap → date picker. Phone weekdays are one letter. |
 | CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per member with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered. A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
 | CAL-04 | The timeline fills the panel with no scroll; with 24 hours on its minimum height is 760 px (720 mid, 1000 phone) and the page scrolls. Changing the day or the filter reflows the timeline over 280 ms. `/calendar?date=` selects that day. |

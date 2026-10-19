@@ -9,7 +9,7 @@ export {
   createEventsRepo,
   type EventsRepo,
   useEvent,
-  useEventsInMonth,
+  useEventsInWeek,
   useEventsOnDay,
   useEventsRepo,
   useHasEvents,

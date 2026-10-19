@@ -144,6 +144,12 @@ export function timelineLayout<T extends TimelinePlan>(
   };
 }
 
+export function outsideDay(plans: readonly TimelinePlan[], tz: string): number {
+  return plans
+    .map((plan) => intervalOf(plan, tz))
+    .filter((item) => item.start < DAY_START || item.end > DAY_END).length;
+}
+
 export function planCard({ width, height, titleSize, badge, note }: PlanCardInput): PlanCard {
   const room = height - CARD_GAP;
 

@@ -1,11 +1,13 @@
 import {
   eventColor,
+  filterMemberIds,
   freeColors,
   liveFilter,
   matchesFilter,
   memberNameError,
   nextFreeColor,
   removalImpact,
+  toggleFilter,
   toggleWho,
   whoFromFilter,
   whoLabel,
@@ -118,9 +120,58 @@ describe("matchesFilter", () => {
     expect(matchesFilter(forMembers(AN), new Set([MOM.id]))).toBe(false);
   });
 
-  it("CAL-05 everyone plans always show, and nothing else when nobody is selected", () => {
-    expect(matchesFilter(everyone, new Set())).toBe(true);
+  it("CAL-05 everyone plans show for any selected member", () => {
+    expect(matchesFilter(everyone, new Set([MOM.id]))).toBe(true);
+  });
+
+  it("CAL-05 nobody selected shows no plans, everyone plans included", () => {
+    expect(matchesFilter(everyone, new Set())).toBe(false);
     expect(matchesFilter(forMembers(AN), new Set())).toBe(false);
+  });
+});
+
+describe("toggleFilter", () => {
+  const family = FAMILY.map((one) => one.id);
+
+  it("CAL-05 tapping a member while everyone shows selects only that member", () => {
+    expect(toggleFilter("everyone", HY.id, family)).toEqual(new Set([HY.id]));
+  });
+
+  it("CAL-05 tapping others adds them", () => {
+    expect(toggleFilter(new Set([HY.id]), MOM.id, family)).toEqual(new Set([HY.id, MOM.id]));
+  });
+
+  it("CAL-05 tapping a selected member removes them", () => {
+    expect(toggleFilter(new Set([HY.id, MOM.id]), HY.id, family)).toEqual(new Set([MOM.id]));
+  });
+
+  it("CAL-05 removing the last member leaves nobody", () => {
+    expect(toggleFilter(new Set([HY.id]), HY.id, family)).toEqual(new Set());
+  });
+
+  it("CAL-05 tapping a member while nobody shows selects only that member", () => {
+    expect(toggleFilter(new Set(), AN.id, family)).toEqual(new Set([AN.id]));
+  });
+
+  it("CAL-05 selecting every member returns to everyone", () => {
+    expect(toggleFilter(new Set([AN.id, HY.id]), MOM.id, family)).toBe("everyone");
+  });
+
+  it("CAL-05 the only member of a family selected alone is everyone", () => {
+    expect(toggleFilter(new Set(), AN.id, [AN.id])).toBe("everyone");
+  });
+});
+
+describe("filterMemberIds", () => {
+  const family = FAMILY.map((one) => one.id);
+
+  it("CAL-07 a filter gives a new event its members in family order", () => {
+    expect(filterMemberIds(new Set([MOM.id, AN.id]), family)).toEqual([AN.id, MOM.id]);
+  });
+
+  it("CAL-07 everyone and nobody give a new event no members, so it is for everyone", () => {
+    expect(filterMemberIds("everyone", family)).toBeUndefined();
+    expect(filterMemberIds(new Set(), family)).toBeUndefined();
   });
 });
 

@@ -51,8 +51,6 @@ export const SCREEN_SAMPLES: readonly SignedInScreen[] = [
   },
 ];
 
-export const NOW_DAY = { year: 2026, month: 9, day: 9 } as const;
-
 export const gallery = {
   title: "Gallery",
   groups: {
@@ -112,6 +110,18 @@ export const gallery = {
     phone: "Calendar · phone",
     schedule: "Today · gutter weather",
     schedulePhone: "Today · phone",
+  },
+  calendarView: {
+    today: "Today · everyone",
+    filtered: "Mom and Dad · all day",
+    allHours: "Oct 10 · 24 hours",
+    nobody: "Nobody selected",
+    emptyDay: "Empty day",
+    emptyCalendar: "Empty calendar",
+    loading: "Loading",
+    failed: "Failed",
+    saved: "Saved data",
+    phone: "Phone",
   },
   familySheet: {
     list: "Family",
@@ -272,8 +282,6 @@ export const EVENTS: readonly SampleEvent[] = [
     dot: 3,
   },
 ];
-
-export const MARKED_DAYS: readonly number[] = [2, 9, 14, 22, 28];
 
 export type SampleNote = {
   text: string;

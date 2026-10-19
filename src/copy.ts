@@ -112,20 +112,22 @@ export const copy = {
     hourlyWeather: "Hourly weather",
   },
   calendar: {
-    previousMonth: "Previous month",
-    nextMonth: "Next month",
-    count: (count: number) => {
-      if (count === 0) return "No events";
+    previousWeek: "Previous week",
+    nextWeek: "Next week",
+    week: (month: string, day: number) => `Week of ${month} ${day}`,
+    showPlansFor: "Show plans for",
+    edit: "Edit",
+    editFamily: "Edit family members",
+    spanLabel: "24 hours",
+    span: (outside: number) => {
+      if (outside === 0) return "24 hours";
 
-      return count === 1 ? "1 event" : `${count} events`;
+      return `24 hours, ${outside} more ${outside === 1 ? "plan" : "plans"}`;
     },
-    loadingCount: "Loading",
-    failedCount: "Calendar",
     addEvent: "Add event",
-    freeDay: "Nothing scheduled. A free day.",
     emptyTitle: "The calendar is empty",
-    emptyBody: "Select a day, then add an event. Days with events get a dot.",
-    caption: "Select an event to edit or delete it",
+    emptyBody: "Select a day, then add an event. Days with plans get a dot for each person.",
+    updated: (time: string) => `Updated ${time}`,
     loading: "Loading events",
     unavailable: "Calendar unavailable",
   },

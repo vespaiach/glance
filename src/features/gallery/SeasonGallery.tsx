@@ -30,7 +30,6 @@ import { Eyebrow } from "@/ui/Eyebrow";
 import { ForecastDay } from "@/ui/ForecastDay";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
-import { MonthGrid } from "@/ui/MonthGrid";
 import { OfflinePill } from "@/ui/OfflinePill";
 import { PillTabs } from "@/ui/PillTabs";
 import { SettingsRow } from "@/ui/SettingsRow";
@@ -57,10 +56,8 @@ import {
   FORECAST,
   GALLERY_TZ,
   gallery,
-  MARKED_DAYS,
   NOTES,
   NOW,
-  NOW_DAY,
   NOW_EVENT,
   SWATCHES,
   WEATHER,
@@ -278,8 +275,6 @@ function SurfacesGroup() {
 }
 
 function CalendarGroup() {
-  const [selected, setSelected] = useState<number>(NOW_DAY.day);
-
   return (
     <GalleryGroup title={gallery.groups.calendar}>
       <Clock tz={GALLERY_TZ} time={NOW} />
@@ -295,22 +290,6 @@ function CalendarGroup() {
           <EventRow key={event.title} {...event} nowLabel={copy.events.now} compact />
         ))}
       </div>
-      <MonthGrid
-        year={NOW_DAY.year}
-        month={NOW_DAY.month}
-        selected={selected}
-        today={NOW_DAY.day}
-        marked={MARKED_DAYS}
-        onSelect={setSelected}
-      />
-      <MonthGrid
-        year={NOW_DAY.year}
-        month={NOW_DAY.month}
-        today={NOW_DAY.day}
-        marked={MARKED_DAYS}
-        showTitle={false}
-        cell={40}
-      />
     </GalleryGroup>
   );
 }

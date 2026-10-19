@@ -1,0 +1,59 @@
+import { calendarView, initialCalendarView } from "./calendarView";
+
+const TODAY = "2026-10-09";
+
+const FAMILY = ["an", "hy", "mom"];
+
+const START = initialCalendarView({});
+
+describe("initialCalendarView", () => {
+  it("CAL-05 opens on today for everyone with 24 hours off", () => {
+    expect(START).toEqual({ day: undefined, filter: "everyone", span24: false });
+  });
+
+  it("CAL-04 ?date= selects that day, ahead of the day= fixture", () => {
+    expect(initialCalendarView({ date: "2026-10-14", fixture: { day: "2026-10-10" } }).day).toBe(
+      "2026-10-14",
+    );
+    expect(initialCalendarView({ fixture: { day: "2026-10-10" } }).day).toBe("2026-10-10");
+  });
+
+  it("CAL-05 who= sets the filter, and who=none is nobody", () => {
+    expect(initialCalendarView({ fixture: { who: ["mom"] } }).filter).toEqual(new Set(["mom"]));
+    expect(initialCalendarView({ fixture: { who: [] } }).filter).toEqual(new Set());
+  });
+
+  it("CAL-06 span=24 turns 24 hours on", () => {
+    expect(initialCalendarView({ fixture: { span24: true } }).span24).toBe(true);
+  });
+});
+
+describe("calendarView", () => {
+  it("CAL-01 selecting a day selects it", () => {
+    expect(calendarView(START, { type: "select", day: "2026-10-14" }).day).toBe("2026-10-14");
+  });
+
+  it("CAL-02 stepping from today selects the next week's Sunday", () => {
+    expect(calendarView(START, { type: "step", delta: 1, today: TODAY }).day).toBe("2026-10-11");
+  });
+
+  it("CAL-05 a tap toggles the filter against the live family", () => {
+    const mom = calendarView(START, { type: "toggleMember", id: "mom", family: FAMILY });
+
+    expect(mom.filter).toEqual(new Set(["mom"]));
+
+    const gone = { ...START, filter: new Set(["gone"]) };
+
+    expect(calendarView(gone, { type: "toggleMember", id: "an", family: FAMILY }).filter).toEqual(
+      new Set(["an"]),
+    );
+  });
+
+  it("CAL-06 24 hours stays on across days", () => {
+    const on = calendarView(START, { type: "toggleSpan" });
+
+    expect(on.span24).toBe(true);
+    expect(calendarView(on, { type: "select", day: "2026-10-14" }).span24).toBe(true);
+    expect(calendarView(on, { type: "toggleSpan" }).span24).toBe(false);
+  });
+});

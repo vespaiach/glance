@@ -5,7 +5,8 @@ import { colors, motion, radii } from "@/theme/tokens.stylex";
 
 type PersonDotProps = {
   color: MemberColor | "soft";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
+  hollow?: boolean;
 };
 
 const styles = stylex.create({
@@ -17,6 +18,10 @@ const styles = stylex.create({
     transitionProperty: "background-color",
     transitionDuration: motion.durSeason,
     transitionTimingFunction: motion.easeInOut,
+  },
+  xs: {
+    width: 6,
+    height: 6,
   },
   sm: {
     width: 10,
@@ -39,13 +44,40 @@ const styles = stylex.create({
   amber: { backgroundColor: colors.blockAmber },
   sage: { backgroundColor: colors.blockSage },
   ice: { backgroundColor: colors.blockIce },
+  hollow: {
+    backgroundColor: "transparent",
+    borderWidth: 3,
+    borderStyle: "solid",
+    boxSizing: "border-box",
+  },
 });
 
-export function PersonDot({ color, size = "md" }: PersonDotProps) {
+const rings = stylex.create({
+  soft: { borderColor: season.soft },
+  lilac: { borderColor: colors.blockLilac },
+  sky: { borderColor: colors.blockSky },
+  coral: { borderColor: colors.blockCoral },
+  mint: { borderColor: colors.blockMint },
+  sun: { borderColor: colors.blockSun },
+  pink: { borderColor: colors.blockPink },
+  lime: { borderColor: colors.blockLime },
+  rust: { borderColor: colors.blockRust },
+  glacier: { borderColor: colors.blockGlacier },
+  amber: { borderColor: colors.blockAmber },
+  sage: { borderColor: colors.blockSage },
+  ice: { borderColor: colors.blockIce },
+});
+
+export function PersonDot({ color, size = "md", hollow = false }: PersonDotProps) {
   return (
     <span
       aria-hidden="true"
-      {...stylex.props(styles.dot, size !== "md" && styles[size], styles[color])}
+      {...stylex.props(
+        styles.dot,
+        size !== "md" && styles[size],
+        styles[color],
+        hollow && [styles.hollow, rings[color]],
+      )}
     />
   );
 }

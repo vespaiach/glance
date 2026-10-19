@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { CloudRain, FileText } from "lucide-react";
-import { type RefObject, useLayoutEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { type EventStatus, eventStatus } from "@/domain/eventStatus";
 import { eventColor, whoLabel } from "@/domain/members";
@@ -42,6 +42,7 @@ import { type } from "@/theme/type.stylex";
 import { Icon } from "./Icon";
 import { PersonDot } from "./PersonDot";
 import { press } from "./press";
+import { type BoxSize, useBoxSize } from "./useBoxSize";
 import { weatherIcons } from "./weatherIcons";
 
 export type DayTimelineLabels = {
@@ -81,8 +82,6 @@ type DayTimelineProps = {
   xstyle?: stylex.StyleXStyles;
 };
 
-type Size = { width: number; height: number };
-
 type Dimensions = { gutter: number; lane: number; titleSize: number };
 
 type Fill = MemberColor | "soft" | "past";
@@ -95,7 +94,7 @@ type Shared = {
   labels: DayTimelineLabels;
 };
 
-const FALLBACK_SIZE: Size = { width: 640, height: 640 };
+const FALLBACK_SIZE: BoxSize = { width: 640, height: 640 };
 
 const INSET = 12;
 
@@ -855,37 +854,6 @@ function WeatherLane({
       })}
     </ul>
   );
-}
-
-function useBoxSize(ref: RefObject<HTMLElement | null>): Size | null {
-  const [size, setSize] = useState<Size | null>(null);
-
-  useLayoutEffect(() => {
-    const box = ref.current;
-
-    if (box === null) return;
-
-    const measure = () => setSize((previous) => measured(box, previous));
-
-    measure();
-
-    const observer = new ResizeObserver(measure);
-
-    observer.observe(box);
-
-    return () => observer.disconnect();
-  }, [ref]);
-
-  return size;
-}
-
-function measured(box: HTMLElement, previous: Size | null): Size | null {
-  const width = box.clientWidth;
-  const height = box.clientHeight;
-
-  if (width === 0 || height === 0) return previous;
-
-  return previous?.width === width && previous.height === height ? previous : { width, height };
 }
 
 function rainByHour(hours: ReadonlyMap<number, HourlyPoint>): Map<number, number> {

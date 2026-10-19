@@ -66,6 +66,11 @@ describe("parseFixtureParams", () => {
     "switch=yes",
     "discard=yes",
     "allday=yes",
+    "day=32",
+    "day=0",
+    "day=ten",
+    "who=bao",
+    "span=12",
   ])("§6 ignores the unknown value %s", (query) => {
     expect(parseFixtureParams(query)).toEqual({});
   });
@@ -84,6 +89,22 @@ describe("parseFixtureParams", () => {
 
   it("TODAY-12 reads allday=1", () => {
     expect(parseFixtureParams("allday=1")).toEqual({ allday: true });
+  });
+
+  it("CAL-04 reads day= as that day of October 2026", () => {
+    expect(parseFixtureParams("day=10")).toEqual({ day: "2026-10-10" });
+    expect(parseFixtureParams("day=1")).toEqual({ day: "2026-10-01" });
+  });
+
+  it("CAL-05 reads who= as the fixture members' ids and who=none as nobody", () => {
+    expect(parseFixtureParams("who=mom,an,bao")).toEqual({
+      who: [FIXTURE_FAMILY[2]?.id, FIXTURE_FAMILY[0]?.id],
+    });
+    expect(parseFixtureParams("who=none")).toEqual({ who: [] });
+  });
+
+  it("CAL-06 reads span=24", () => {
+    expect(parseFixtureParams("span=24")).toEqual({ span24: true });
   });
 
   it("EVT-09 reads sheet=past and details=1", () => {

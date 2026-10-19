@@ -7,6 +7,8 @@ import type { GlanceDb, StoredEvent } from "../db";
 import { isLive, putQueued, removeQueued } from "./outbox";
 import { type RepoStore, useRepoStore } from "./store";
 
+const WEEK = 7;
+
 export interface EventsRepo {
   put(event: CalendarEvent): Promise<void>;
   remove(id: string): Promise<void>;
@@ -41,16 +43,12 @@ export function useEventsOnDay(dayKey: string, tz: string): StoredEvent[] | unde
   return useLiveQuery(() => eventsOnDays(db, [dayKey, addDays(dayKey, 1)], tz), [db, dayKey, tz]);
 }
 
-export function useEventsInMonth(
-  year: number,
-  month: number,
-  tz: string,
-): StoredEvent[] | undefined {
+export function useEventsInWeek(sunday: string, tz: string): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(
-    () => eventsOnDays(db, [firstOfMonth(year, month), firstOfMonth(year, month + 1)], tz),
-    [db, year, month, tz],
+    () => eventsOnDays(db, [sunday, addDays(sunday, WEEK)], tz),
+    [db, sunday, tz],
   );
 }
 
@@ -126,8 +124,4 @@ function earlierDay(
   if (!allDay || !timed) return allDay ?? timed ?? null;
 
   return eventDayKey(timed, tz) < eventDayKey(allDay, tz) ? timed : allDay;
-}
-
-function firstOfMonth(year: number, month: number): string {
-  return new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
 }
