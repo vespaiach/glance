@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CalendarEvent } from "@/domain/schemas";
 import { deviceTimeZone } from "@/domain/zone";
@@ -41,13 +41,13 @@ const NOW = new Date(2026, 9, 9, 10, 41);
 type Handlers = {
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
+  onAddSlot: (slot: { start: Date; end: Date }) => void;
   onOpenCalendar: () => void;
 };
 
 function renderSchedule(
   state: ZoneState<CalendarEvent>,
   handlers: Partial<Handlers> = {},
-  rows = 8,
   iconActions = false,
 ) {
   return render(
@@ -57,13 +57,14 @@ function renderSchedule(
       onRetry={() => {}}
       state={state}
       members={[]}
+      day="2026-10-09"
       now={NOW}
       clock="12h"
-      compact={false}
+      breakpoint="wide"
       iconActions={iconActions}
-      rows={rows}
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
       onAddEvent={handlers.onAddEvent ?? (() => {})}
+      onAddSlot={handlers.onAddSlot ?? (() => {})}
       onOpenCalendar={handlers.onOpenCalendar ?? (() => {})}
     />,
   );
@@ -103,34 +104,35 @@ test("TODAY-04 Full calendar opens the calendar", async () => {
   expect(onOpenCalendar).toHaveBeenCalledTimes(1);
 });
 
-test("TODAY-05 rows show past, now and upcoming from the current time", () => {
+test("TODAY-11 the schedule is the day timeline with a card per plan", () => {
   renderSchedule(ready);
 
-  const past = screen.getByRole("button", { name: /School drop-off/ });
-  const running = screen.getByRole("button", { name: /Grandma’s video call/ });
-  const later = screen.getByRole("button", { name: /Lunch with Aunt Rosa/ });
-
-  expect(within(past).getByText("School drop-off").tagName).toBe("S");
-  expect(within(running).getByText("Now")).toBeInTheDocument();
-  expect(within(later).queryByText("Now")).not.toBeInTheDocument();
-  expect(within(later).getByText("Lunch with Aunt Rosa").tagName).toBe("SPAN");
+  expect(screen.getByRole("button", { name: /^School drop-off, / })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Grandma’s video call, / })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Lunch with Aunt Rosa, / })).toBeInTheDocument();
 });
 
-test("TIME-01 rows show times without AM/PM", () => {
-  renderSchedule(ready);
-
-  expect(screen.getByText("12:00")).toBeInTheDocument();
-  expect(screen.getByText("– 1:00")).toBeInTheDocument();
-});
-
-test("TODAY-03 tapping a row opens that event", async () => {
+test("TODAY-03 tapping a plan opens that event", async () => {
   const onOpenEvent = vi.fn<(id: string) => void>();
 
   renderSchedule(ready, { onOpenEvent });
 
-  await userEvent.click(screen.getByRole("button", { name: /Lunch with Aunt Rosa/ }));
+  await userEvent.click(screen.getByRole("button", { name: /^Lunch with Aunt Rosa, / }));
 
   expect(onOpenEvent).toHaveBeenCalledWith("lunch");
+});
+
+test("TODAY-03 tapping a free slot adds an event at that slot", async () => {
+  const onAddSlot = vi.fn<(slot: { start: Date; end: Date }) => void>();
+
+  renderSchedule(ready, { onAddSlot });
+
+  await userEvent.click(screen.getAllByRole("button", { name: /^Free / })[0] as HTMLElement);
+
+  expect(onAddSlot).toHaveBeenCalledWith({
+    start: new Date(2026, 9, 9, 11, 15),
+    end: new Date(2026, 9, 9, 12, 0),
+  });
 });
 
 test("TODAY-06 an empty day shows the empty tile with its own Add event", async () => {
@@ -167,7 +169,7 @@ const GRANDPA: CalendarEvent = {
 
 const withAllDay = { kind: "ready", data: [GRANDPA, ...EVENTS] } as const;
 
-test("TODAY-12 an all-day event shows as a tile above the timed rows", () => {
+test("TODAY-12 an all-day event shows as a tile above the timeline", () => {
   renderSchedule(withAllDay);
 
   const buttons = screen.getAllByRole("button").map((button) => button.textContent);
@@ -175,7 +177,7 @@ test("TODAY-12 an all-day event shows as a tile above the timed rows", () => {
   const tile = buttons.indexOf("All dayGrandpa staying overEveryone · Guest room");
 
   expect(tile).toBeGreaterThan(-1);
-  expect(buttons[tile + 1]).toMatch(/School drop-off/);
+  expect(buttons.slice(0, tile).join()).not.toMatch(/School drop-off/);
 });
 
 test("TODAY-04 all-day events count in the eyebrow", () => {
@@ -194,60 +196,9 @@ test("TODAY-12 tapping an all-day tile opens that event", async () => {
   expect(onOpenEvent).toHaveBeenCalledWith("grandpa");
 });
 
-const at = (id: string, h: number, m: number): CalendarEvent => ({
-  id,
-  title: id,
-  startAt: iso(h, m),
-  endAt: iso(h, m + 20),
-  everyone: true,
-  memberIds: [],
-});
+test("TODAY-11 the schedule has no See all row", () => {
+  renderSchedule(ready);
 
-const MANY: CalendarEvent[] = [
-  ...EVENTS,
-  at("Dentist", 14, 0),
-  at("Soccer", 15, 30),
-  at("Grocery pickup", 17, 0),
-  at("Family dinner", 18, 0),
-  at("Piano practice", 19, 30),
-  at("Bedtime story", 20, 30),
-];
-
-const many = { kind: "ready", data: MANY } as const;
-
-test("TODAY-11 more events than fit end with See all and the hidden counts", () => {
-  renderSchedule(many, {}, 4);
-
-  expect(screen.queryByText("School drop-off")).not.toBeInTheDocument();
-  expect(screen.queryByText("Soccer")).not.toBeInTheDocument();
-  expect(screen.getByText("Dentist")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: /See all 9 events/ })).toHaveTextContent(
-    "1 earlier · 5 later",
-  );
-});
-
-test("TODAY-11 the hidden count names only the parts that apply", () => {
-  renderSchedule({ kind: "ready", data: MANY.slice(1) }, {}, 4);
-
-  expect(screen.getByRole("button", { name: /See all 8 events/ })).toHaveTextContent(
-    /^See all 8 events5 later$/,
-  );
-});
-
-test("TODAY-11 See all opens the calendar", async () => {
-  const onOpenCalendar = vi.fn<() => void>();
-
-  renderSchedule(many, { onOpenCalendar }, 4);
-
-  await userEvent.click(screen.getByRole("button", { name: /See all 9 events/ }));
-
-  expect(onOpenCalendar).toHaveBeenCalledTimes(1);
-});
-
-test("TODAY-11 rows that all fit show no See all", () => {
-  renderSchedule(many, {}, 9);
-
-  expect(screen.getByText("School drop-off")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /See all/ })).not.toBeInTheDocument();
 });
 
@@ -256,7 +207,7 @@ test("TODAY-04 below wide, Add event and Full calendar are icon-only and keep th
 
   const onOpenCalendar = vi.fn<() => void>();
 
-  renderSchedule(ready, { onAddEvent, onOpenCalendar }, 8, true);
+  renderSchedule(ready, { onAddEvent, onOpenCalendar }, true);
 
   const add = screen.getByRole("button", { name: "Add event" });
 
@@ -272,7 +223,7 @@ test("TODAY-04 below wide, Add event and Full calendar are icon-only and keep th
 });
 
 test("TODAY-04 icon-only, an empty day still has no Add event in the header", () => {
-  renderSchedule({ kind: "empty" }, {}, 8, true);
+  renderSchedule({ kind: "empty" }, {}, true);
 
   expect(screen.getAllByRole("button", { name: "Add event" })).toHaveLength(1);
 });

@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
-import { type ReactNode, useRef } from "react";
+import type { ReactNode } from "react";
 import {
   type ShownNote,
   useEventsOnDay,
@@ -13,8 +13,10 @@ import {
   usePictureOfDay,
   useWeather,
 } from "@/data/repos";
-import type { AccountSettings, CalendarEvent, Member, Photo } from "@/domain/schemas";
+import { slotTimes } from "@/domain/eventTimes";
+import type { AccountSettings, CalendarEvent, Member, Photo, Weather } from "@/domain/schemas";
 import { todayHero } from "@/domain/todayHero";
+import { hourlyByHour } from "@/domain/weather";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { useBreakpoint, useViewportHeight, useViewportWidth } from "@/shell/breakpoint";
@@ -26,6 +28,7 @@ import { type View, viewPath } from "@/shell/routes";
 import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import { space } from "@/theme/tokens.stylex";
+import type { TimelineWeather } from "@/ui/DayTimeline";
 import { Zone } from "@/ui/Zone";
 import { HeroSkeleton, HeroSummary } from "./components/HeroSummary";
 import { NowWeather } from "./components/NowWeather";
@@ -46,7 +49,6 @@ import {
   todayPotdHeights,
   todayType,
 } from "./layout";
-import { useScheduleRows } from "./useScheduleRows";
 
 const TEXT_ACTIONS_MIN_WIDTH = 1440;
 
@@ -111,10 +113,6 @@ export function TodayScreen() {
 
   const photos = useSyncedZone(usePhotos());
 
-  const scheduleRef = useRef<HTMLElement>(null);
-
-  const rows = useScheduleRows(scheduleRef, !columns);
-
   const weather = useWeatherZone(useWeather(), settings.weatherLocation !== undefined);
 
   const go = (view: View) => router.push(viewPath(view));
@@ -151,17 +149,19 @@ export function TodayScreen() {
         members={members}
         retryIn={events.retryIn}
         onRetry={events.retry}
+        day={day}
         now={now}
         clock={settings.clock}
         tz={tz}
-        compact={breakpoint === "phone"}
+        breakpoint={breakpoint}
+        oneColumn={!columns}
         iconActions={width < TEXT_ACTIONS_MIN_WIDTH}
-        rows={rows}
+        weather={gutterWeather(weather.state, day, tz, settings.tempUnit)}
         onOpenEvent={openEvent}
         onAddEvent={() => sheets.open({ kind: "newevent", day })}
+        onAddSlot={(slot) => sheets.open({ kind: "newevent", day, times: slotTimes(slot, tz) })}
         onOpenCalendar={() => go("calendar")}
         xstyle={[todayAreas.sched, columns && todayAreas.clipped]}
-        ref={scheduleRef}
       />
       <TodayNotes
         state={notes.state}
@@ -264,4 +264,17 @@ function Hero({ state, members, clock, now, tz, onOpenEvent }: HeroProps) {
       onOpenEvent={onOpenEvent}
     />
   );
+}
+
+function gutterWeather(
+  state: ZoneState<Weather>,
+  day: string,
+  tz: string,
+  unit: AccountSettings["tempUnit"],
+): TimelineWeather | undefined {
+  const forecast = state.kind === "ready" ? state.data[0] : undefined;
+
+  if (!forecast || hourlyByHour(forecast.hourly, day, tz).size === 0) return undefined;
+
+  return { hourly: forecast.hourly, unit };
 }

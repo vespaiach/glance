@@ -103,6 +103,15 @@ test("TPK-05 a new event request opens New event on its day at the next half hou
   expect(screen.getByRole("button", { name: "Ends, 12:00 PM. Change" })).toBeInTheDocument();
 });
 
+test("TL-08 a new event request from a free slot opens at the slot's times", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-09", times: { start: 675, end: 735 } });
+
+  expect(
+    await screen.findByRole("button", { name: "Starts, 11:15 AM. Change" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Ends, 12:15 PM. Change" })).toBeInTheDocument();
+});
+
 test("TPK-02 the time fixture is the sheet's first state", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-09", time: "end" });
 

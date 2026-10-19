@@ -13,6 +13,7 @@ import {
   useWeather,
 } from "@/data/repos";
 import type { Breakpoint } from "@/domain/breakpoint";
+import { slotTimes } from "@/domain/eventTimes";
 import { filterMemberIds, liveFilter, matchesFilter } from "@/domain/members";
 import type { AccountSettings, CalendarEvent, Member, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
@@ -130,7 +131,12 @@ export function CalendarScreen() {
         span24={view.span24}
         weather={laneWeather(forecast, day, tz, settings.tempUnit, breakpoint)}
         onOpenEvent={(id) => sheets.open({ kind: "event", id })}
-        onAddEvent={() => sheets.open(newEvent(day, filterMemberIds(filter, family)))}
+        onAddEvent={(slot) =>
+          sheets.open({
+            ...newEvent(day, filterMemberIds(filter, family)),
+            times: slotTimes(slot, tz),
+          })
+        }
         toolbar={
           <CalendarToolbar
             members={members}

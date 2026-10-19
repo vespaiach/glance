@@ -25,7 +25,6 @@ import { Clock } from "@/ui/Clock";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
 import { EmptyState } from "@/ui/EmptyState";
-import { EventRow } from "@/ui/EventRow";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { ForecastDay } from "@/ui/ForecastDay";
 import { Icon } from "@/ui/Icon";
@@ -52,13 +51,11 @@ import { SettingsGallery } from "./SettingsGallery";
 import { SidebarGallery } from "./SidebarGallery";
 import { SignInGallery } from "./SignInGallery";
 import {
-  EVENTS,
   FORECAST,
   GALLERY_TZ,
   gallery,
   NOTES,
   NOW,
-  NOW_EVENT,
   SWATCHES,
   WEATHER,
   ZONE_STATES,
@@ -84,10 +81,6 @@ const styles = stylex.create({
     fontWeight: type.displayLgWeight,
     lineHeight: type.displayLgLh,
     letterSpacing: type.displayLgLs,
-  },
-  list: {
-    width: "100%",
-    maxWidth: 720,
   },
   wide: {
     width: "100%",
@@ -280,16 +273,6 @@ function CalendarGroup() {
       <Clock tz={GALLERY_TZ} time={NOW} />
       <Clock tz={GALLERY_TZ} time={NOW} size="lg" hour12={false} />
       <Clock tz={GALLERY_TZ} time={NOW} size="lg" showDate={false} align="center" />
-      <div {...stylex.props(styles.list)}>
-        {EVENTS.map((event) => (
-          <EventRow key={event.title} {...event} nowLabel={copy.events.now} onClick={ignore} />
-        ))}
-      </div>
-      <div {...stylex.props(styles.list)}>
-        {EVENTS.map((event) => (
-          <EventRow key={event.title} {...event} nowLabel={copy.events.now} compact />
-        ))}
-      </div>
     </GalleryGroup>
   );
 }
@@ -487,7 +470,7 @@ function ZoneGroup() {
               <>
                 <Eyebrow size="caption">{`${gallery.zone.ready} · ${updatedAt}`}</Eyebrow>
                 {data.map((title) => (
-                  <EventRow key={title} {...NOW_EVENT} title={title} nowLabel={copy.events.now} />
+                  <span key={title}>{title}</span>
                 ))}
               </>
             )}

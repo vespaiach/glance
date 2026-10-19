@@ -1,42 +1,49 @@
 import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, CalendarDays, CalendarX2, Plus } from "lucide-react";
-import type { Ref } from "react";
 import { copy } from "@/copy";
-import { eventStatus } from "@/domain/eventStatus";
+import type { Breakpoint } from "@/domain/breakpoint";
 import type { CalendarEvent, Member } from "@/domain/schemas";
-import { type Clock, clockAt, minutesOfDay, timeParts } from "@/domain/time";
-import { todaySchedule } from "@/domain/todaySchedule";
+import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
-import { colors, motion, radii, space } from "@/theme/tokens.stylex";
-import { type } from "@/theme/type.stylex";
+import { colors, radii, space } from "@/theme/tokens.stylex";
 import { AllDayTiles } from "@/ui/AllDayTile";
 import { Button } from "@/ui/Button";
-import { EventRow } from "@/ui/EventRow";
+import { DayTimeline, type DayTimelineLabels, type TimelineWeather } from "@/ui/DayTimeline";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
-import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 import { tile } from "./tile";
+
+type Slot = { start: Date; end: Date };
 
 type TodayScheduleProps = {
   state: ZoneState<CalendarEvent>;
   members: readonly Member[];
   retryIn: number;
   onRetry: () => void;
+  day: string;
   now: Date;
   clock: Clock;
   tz: string;
-  compact: boolean;
+  breakpoint: Breakpoint;
+  oneColumn?: boolean;
   iconActions: boolean;
-  rows: number;
+  weather?: TimelineWeather;
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
+  onAddSlot: (slot: Slot) => void;
   onOpenCalendar: () => void;
   xstyle?: stylex.StyleXStyles;
-  ref?: Ref<HTMLElement>;
+};
+
+const LABELS: DayTimelineLabels = {
+  ...copy.timeline,
+  now: copy.events.now,
+  everyone: copy.events.everyone,
+  icons: copy.weather.icon,
 };
 
 const SKELETON_ROWS = [0, 1, 2, 3, 4];
@@ -68,12 +75,6 @@ const styles = stylex.create({
     display: "flex",
     gap: space.xxs,
   },
-  rows: {
-    flexShrink: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: space.xs,
-  },
   skeleton: {
     display: "flex",
     flexDirection: "column",
@@ -85,44 +86,11 @@ const styles = stylex.create({
     paddingBlock: space.md,
     paddingInline: space.xs,
   },
-  seeAll: {
-    borderWidth: 0,
-    font: "inherit",
-    cursor: "pointer",
-    textAlign: "start",
-    flexShrink: 0,
-    minHeight: 56,
-    width: "100%",
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: space.sm,
-    paddingBlock: space.sm,
-    paddingInline: space.md,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceSoft,
-    color: colors.textPrimary,
-    transitionProperty: "transform",
-    transitionDuration: motion.durPress,
-    transitionTimingFunction: motion.easeOut,
+  timeline: {
+    minHeight: 200,
   },
-  seeAllLabel: {
-    fontSize: 17,
-    fontWeight: 480,
-  },
-  seeAllMeta: {
-    flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    gap: space.sm,
-  },
-  seeAllCount: {
-    fontFamily: type.fontMono,
-    fontSize: type.captionSize,
-    letterSpacing: "0.6px",
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
+  oneColumn: {
+    minHeight: 560,
   },
   empty: {
     flexGrow: 1,
@@ -133,47 +101,42 @@ const styles = stylex.create({
   },
 });
 
-const timeOf = (iso: string, clock: Clock, tz: string) =>
-  timeParts(minutesOfDay(new Date(iso), tz), clock).time;
-
 type ActionsProps = {
   canAdd: boolean;
   onAddEvent: () => void;
   onOpenCalendar: () => void;
 };
 
-type SeeAllProps = {
-  count: number;
-  hidden: { earlier: number; later: number };
-  onClick: () => void;
-};
-
-type ScheduleRowsProps = Pick<
+type ScheduleProps = Pick<
   TodayScheduleProps,
-  "members" | "now" | "clock" | "tz" | "compact" | "rows" | "onOpenEvent" | "onOpenCalendar"
+  | "members"
+  | "day"
+  | "now"
+  | "clock"
+  | "tz"
+  | "breakpoint"
+  | "oneColumn"
+  | "weather"
+  | "onOpenEvent"
+  | "onAddSlot"
 > & { events: readonly CalendarEvent[] };
 
 export function TodaySchedule({
   state,
-  members,
   retryIn,
   onRetry,
-  now,
-  clock,
-  tz,
-  compact,
   iconActions,
-  rows,
-  onOpenEvent,
   onAddEvent,
   onOpenCalendar,
   xstyle,
-  ref,
+  ...schedule
 }: TodayScheduleProps) {
   const Actions = iconActions ? IconActions : TextActions;
 
+  const { clock, tz } = schedule;
+
   return (
-    <section ref={ref} {...stylex.props(styles.root, xstyle)}>
+    <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <Eyebrow>{eyebrowFor(state, clock, tz)}</Eyebrow>
         <div {...stylex.props(styles.actions)}>
@@ -199,19 +162,7 @@ export function TodaySchedule({
           />
         }
       >
-        {(events) => (
-          <ScheduleRows
-            events={events}
-            members={members}
-            now={now}
-            clock={clock}
-            tz={tz}
-            compact={compact}
-            rows={rows}
-            onOpenEvent={onOpenEvent}
-            onOpenCalendar={onOpenCalendar}
-          />
-        )}
+        {(events) => <Schedule events={events} {...schedule} />}
       </Zone>
     </section>
   );
@@ -294,63 +245,44 @@ function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
   );
 }
 
-function SeeAll({ count, hidden, onClick }: SeeAllProps) {
-  return (
-    <button type="button" onClick={onClick} {...stylex.props(styles.seeAll, press.scale)}>
-      <span {...stylex.props(styles.seeAllLabel)}>{copy.today.schedule.seeAll(count)}</span>
-      <span {...stylex.props(styles.seeAllMeta)}>
-        <span {...stylex.props(styles.seeAllCount)}>
-          {copy.today.schedule.hidden(hidden.earlier, hidden.later)}
-        </span>
-        <Icon icon={ArrowRight} size={20} />
-      </span>
-    </button>
-  );
-}
-
-function ScheduleRows({
+function Schedule({
   events,
   members,
+  day,
   now,
   clock,
   tz,
-  compact,
-  rows,
+  breakpoint,
+  oneColumn = false,
+  weather,
   onOpenEvent,
-  onOpenCalendar,
-}: ScheduleRowsProps) {
-  const { allDay, rows: shown, hidden } = todaySchedule(events, now, tz, rows);
-
+  onAddSlot,
+}: ScheduleProps) {
   return (
     <>
       <AllDayTiles
-        events={allDay}
+        events={events.filter((event) => event.allDay)}
         members={members}
         label={copy.events.allDay}
         everyoneLabel={copy.events.everyone}
         onOpenEvent={onOpenEvent}
       />
-      <div data-schedule-rows="" {...stylex.props(styles.rows)}>
-        <div>
-          {shown.map((event) => (
-            <EventRow
-              key={event.id}
-              start={timeOf(event.startAt, clock, tz)}
-              end={event.endAt && timeOf(event.endAt, clock, tz)}
-              title={event.title}
-              location={event.location}
-              status={eventStatus(event, now, tz)}
-              dot="soft"
-              nowLabel={copy.events.now}
-              compact={compact}
-              onClick={() => onOpenEvent(event.id)}
-            />
-          ))}
-        </div>
-        {hidden.earlier + hidden.later > 0 && (
-          <SeeAll count={events.length} hidden={hidden} onClick={onOpenCalendar} />
-        )}
-      </div>
+      <DayTimeline
+        plans={events.filter((event) => !event.allDay)}
+        members={members}
+        day={day}
+        now={now}
+        tz={tz}
+        clock={clock}
+        variant="today"
+        breakpoint={breakpoint}
+        free="everyone"
+        weather={weather}
+        labels={LABELS}
+        onOpenEvent={onOpenEvent}
+        onAddEvent={onAddSlot}
+        xstyle={[styles.timeline, oneColumn && styles.oneColumn]}
+      />
     </>
   );
 }

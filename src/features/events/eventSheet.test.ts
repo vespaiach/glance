@@ -85,6 +85,13 @@ describe("event sheet drafts", () => {
     });
   });
 
+  it("TL-08 a new event from a free slot starts and ends at the slot", () => {
+    expect(newEventDraft(NOW, tz, undefined, { start: 675, end: 735 })).toMatchObject({
+      start: 675,
+      end: 735,
+    });
+  });
+
   it("EVT-11 a new event starts with the Calendar filter's members", () => {
     expect(newEventDraft(NOW, tz, [MOM])).toMatchObject({ everyone: false, memberIds: [MOM] });
   });

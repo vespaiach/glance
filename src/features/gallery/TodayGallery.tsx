@@ -30,6 +30,7 @@ import {
   TODAY_WEATHER,
   TODAY_WITH_ALL_DAY,
 } from "./samples";
+import { hourlyOn } from "./timelineSamples";
 
 const ignore = () => {};
 
@@ -100,9 +101,14 @@ const styles = stylex.create({
     display: "flex",
   },
   zone: {
-    width: 520,
+    width: 560,
+    height: 760,
     display: "flex",
     flexDirection: "column",
+  },
+  phone: {
+    width: 358,
+    height: "auto",
   },
   side: {
     width: 400,
@@ -111,13 +117,15 @@ const styles = stylex.create({
 
 const schedule = {
   members: GALLERY_FAMILY,
+  day: "2026-10-09",
   now: NOW,
   clock: "12h",
-  compact: false,
+  breakpoint: "wide",
   iconActions: false,
-  rows: 8,
+  weather: { hourly: hourlyOn(9), unit: "F" },
   onOpenEvent: ignore,
   onAddEvent: ignore,
+  onAddSlot: ignore,
   onOpenCalendar: ignore,
   ...failure,
   xstyle: styles.zone,
@@ -207,37 +215,25 @@ export function TodayGallery({ season }: { season: Season }) {
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
+        iconActions
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa, ...TODAY_MANY] }}
+        {...schedule}
+        iconActions
       />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
-        compact
+        breakpoint="phone"
+        oneColumn
         iconActions
-      />
-      <TodaySchedule
-        tz={GALLERY_TZ}
-        state={{ kind: "ready", data: TODAY_MANY }}
-        {...schedule}
-        rows={5}
-        iconActions
-      />
-      <TodaySchedule
-        tz={GALLERY_TZ}
-        state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa, ...TODAY_MANY.slice(1)] }}
-        {...schedule}
-        rows={6}
-        compact
+        xstyle={[styles.zone, styles.phone]}
       />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule} />
-      <TodaySchedule
-        tz={GALLERY_TZ}
-        state={{ kind: "ready", data: TODAY_EVENTS }}
-        {...schedule}
-        compact
-        iconActions
-      />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "failed" }} {...schedule} />
       <TodaySchedule
         tz={GALLERY_TZ}
