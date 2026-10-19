@@ -37,13 +37,15 @@ const SOLO = plan(1, [MOM]);
 
 const SHARED = plan(2, [AN, MOM]);
 
+const ALL: CalendarEvent = { ...plan(3, []), everyone: true };
+
 let store: Harness;
 
 beforeEach(async () => {
   store = openHarness("glance-family-sheet-test");
 
   await store.db.members.bulkPut([synced(AN), synced(MOM)]);
-  await store.db.events.bulkPut([synced(SOLO), synced(SHARED)]);
+  await store.db.events.bulkPut([synced(SOLO), synced(SHARED), synced(ALL)]);
 });
 
 afterEach(async () => {
@@ -89,17 +91,17 @@ test("FAM-02 a family request lists the members with their plan counts", async (
 
   expect(await screen.findByRole("dialog", { name: "Family" })).toBeInTheDocument();
   expect(screen.getByText("2 members")).toBeInTheDocument();
-  await waitFor(() => expect(rowNames()).toEqual(["Minh-An1 planRemove", "Mom2 plansRemove"]));
+  await waitFor(() => expect(rowNames()).toEqual(["Minh-An2 plansRemove", "Mom3 plansRemove"]));
 });
 
-test("FAM-05 Add saves the member last with a free color and it shows at the end", async () => {
+test("FAM-05 Add saves the member last with a free color, on every everyone plan", async () => {
   renderSheet({ kind: "family" });
 
   await userEvent.type(await screen.findByRole("textbox", { name: "Name" }), "Bao");
   await userEvent.click(screen.getByRole("button", { name: "Add" }));
 
   await waitFor(() => expect(screen.getByText("3 members")).toBeInTheDocument());
-  expect(rowNames().at(-1)).toBe("BaoNo plansRemove");
+  expect(rowNames().at(-1)).toBe("Bao1 planRemove");
   expect((await store.db.members.toArray()).at(-1)).toMatchObject({
     name: "Bao",
     color: "coral",
@@ -120,6 +122,7 @@ test("FAM-03 Remove deletes the member's solo plans and strips the shared ones",
   await waitFor(() => expect(screen.getByText("1 member")).toBeInTheDocument());
   expect(await store.db.events.get(SOLO.id)).toHaveProperty("deletedAt");
   expect(await store.db.events.get(SHARED.id)).toMatchObject({ memberIds: [AN.id] });
+  expect(await store.db.events.get(ALL.id)).toEqual(synced(ALL));
   expect(screen.queryByRole("button", { name: /^Remove/ })).not.toBeInTheDocument();
 });
 

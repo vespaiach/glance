@@ -122,13 +122,13 @@ describe("isDirty", () => {
 });
 
 describe("familyRows", () => {
-  it("FAM-02 counts each member's solo and shared plans; everyone plans are not theirs", () => {
+  it("FAM-02 counts each member's solo plans and the plans they share, everyone plans included", () => {
     const events = [plan(MOM), plan(MOM), plan(AN, MOM), EVERYONE, plan(AN, DAD)];
 
     expect(familyRows([AN, MOM, DAD], events)).toEqual([
-      { member: AN, solo: 0, shared: 2 },
-      { member: MOM, solo: 2, shared: 1 },
-      { member: DAD, solo: 0, shared: 1 },
+      { member: AN, solo: 0, shared: 3 },
+      { member: MOM, solo: 2, shared: 2 },
+      { member: DAD, solo: 0, shared: 2 },
     ]);
   });
 });

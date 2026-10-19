@@ -83,10 +83,12 @@ export function isDirty(state: FamilySheetState): boolean {
 }
 
 export function familyRows(members: readonly Member[], events: readonly EventWho[]): FamilyRow[] {
+  const everyone = events.filter((event) => event.everyone).length;
+
   return members.map((member) => {
     const { solo, shared } = removalImpact(member.id, events);
 
-    return { member, solo: solo.length, shared: shared.length };
+    return { member, solo: solo.length, shared: shared.length + everyone };
   });
 }
 

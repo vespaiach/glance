@@ -124,7 +124,7 @@ describe("useMembers", () => {
 });
 
 describe("useMemberPlans", () => {
-  it("FAM-02 lists live plans that name members, without everyone plans", async () => {
+  it("FAM-02 lists every live plan", async () => {
     await store.db.events.bulkPut([
       synced(SOLO),
       synced(SHARED),
@@ -135,7 +135,9 @@ describe("useMemberPlans", () => {
     const { result } = renderHook(() => useMemberPlans(), { wrapper: wrapperFor(store) });
 
     await waitFor(() =>
-      expect(result.current?.map((row) => row.id).sort()).toEqual([SOLO.id, SHARED.id].sort()),
+      expect(result.current?.map((row) => row.id).sort()).toEqual(
+        [SOLO.id, SHARED.id, ALL.id].sort(),
+      ),
     );
   });
 });

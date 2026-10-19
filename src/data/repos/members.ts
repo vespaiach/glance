@@ -33,10 +33,7 @@ export function useMembers(): StoredMember[] | undefined {
 export function useMemberPlans(): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 
-  return useLiveQuery(
-    () => db.events.filter((event) => isLive(event) && !event.everyone).toArray(),
-    [db],
-  );
+  return useLiveQuery(() => db.events.filter(isLive).toArray(), [db]);
 }
 
 async function removeMember(store: RepoStore, id: string): Promise<(NewEntry | undefined)[]> {
