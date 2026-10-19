@@ -95,7 +95,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const grip = useRef<HTMLButtonElement>(null);
 
-  const inset = sidebarInset(sidebar.mode);
+  const phone = breakpoint === "phone";
+
+  const inset = sidebarInset(sidebar.mode, phone);
 
   useRailOnViewChange(pathname, view, dispatch);
 
@@ -128,6 +130,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       />
       <SidebarRail
         mode={sidebar.mode}
+        phone={phone}
         active={view}
         onHide={() => dispatchThenFocus(dispatch, grip, { type: "hide" })}
         onNavigate={(path) => router.push(path)}
@@ -136,12 +139,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         ref={handle}
         shown={sidebar.mode !== "hidden"}
         expanded={sidebar.mode === "expanded"}
+        phone={phone}
         onOpen={() => dispatch({ type: "open" })}
       />
       <SidebarDrawer
         open={sidebar.mode === "expanded"}
+        phone={phone}
         active={view}
         onClose={() => dispatchThenFocus(dispatch, grip, { type: "close" })}
+        onScrimTap={() => dispatchThenFocus(dispatch, handle, { type: "back" })}
         onNavigate={(path) => {
           dispatchThenFocus(dispatch, handle, { type: "back" });
           router.push(path);

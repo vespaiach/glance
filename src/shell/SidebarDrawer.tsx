@@ -11,8 +11,10 @@ import { SIDEBAR_PINNED, SIDEBAR_VIEWS, type SidebarItem } from "./sidebarItems"
 
 type SidebarDrawerProps = {
   open: boolean;
+  phone?: boolean;
   active?: View;
   onClose: () => void;
+  onScrimTap?: () => void;
   onNavigate: (path: string) => void;
 };
 
@@ -22,6 +24,14 @@ const styles = stylex.create({
     inset: 0,
     zIndex: 4,
     pointerEvents: "none",
+  },
+  scrim: {
+    position: "absolute",
+    inset: 0,
+    borderWidth: 0,
+    padding: 0,
+    backgroundColor: colors.scrim,
+    pointerEvents: "auto",
   },
   drawer: {
     position: "absolute",
@@ -44,6 +54,12 @@ const styles = stylex.create({
     transitionProperty: "transform",
     transitionDuration: motion.durBase,
     transitionTimingFunction: motion.easeSlide,
+  },
+  phoneDrawer: {
+    width: 248,
+    paddingTop: space.md,
+    paddingInline: space.sm,
+    paddingBottom: space.sm,
   },
   closed: {
     transform: "translateX(calc(-100% - 24px))",
@@ -90,6 +106,18 @@ const styles = stylex.create({
     transitionDuration: `${motion.durPress}, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
   },
+  phoneRow: {
+    height: 48,
+    gap: space.sm,
+    paddingInline: space.md,
+    fontSize: 16,
+  },
+  phoneTitle: {
+    paddingBottom: space.xs,
+    paddingLeft: space.md,
+    fontSize: 20,
+    lineHeight: "48px",
+  },
   current: {
     backgroundColor: colors.actionPrimary,
     color: colors.onActionPrimary,
@@ -106,10 +134,22 @@ const styles = stylex.create({
     marginBottom: space.xs,
     backgroundColor: colors.borderHairline,
   },
+  phoneDivider: {
+    marginInline: space.md,
+  },
 });
 
-export function SidebarDrawer({ open, active, onClose, onNavigate }: SidebarDrawerProps) {
+export function SidebarDrawer({
+  open,
+  phone = false,
+  active,
+  onClose,
+  onScrimTap,
+  onNavigate,
+}: SidebarDrawerProps) {
   const currentRow = useRef<HTMLButtonElement>(null);
+
+  const iconSize = phone ? 20 : 24;
 
   useFocusWhenShown(open, currentRow);
 
@@ -124,9 +164,14 @@ export function SidebarDrawer({ open, active, onClose, onNavigate }: SidebarDraw
         aria-label={item.name === item.label ? undefined : item.name}
         aria-current={current ? "page" : undefined}
         onClick={() => onNavigate(item.path)}
-        {...stylex.props(styles.row, current && styles.current, press.scale)}
+        {...stylex.props(
+          styles.row,
+          phone && styles.phoneRow,
+          current && styles.current,
+          press.scale,
+        )}
       >
-        <Icon icon={item.icon} size={24} />
+        <Icon icon={item.icon} size={iconSize} />
         <span>{item.label}</span>
       </button>
     );
@@ -134,25 +179,37 @@ export function SidebarDrawer({ open, active, onClose, onNavigate }: SidebarDraw
 
   return (
     <div {...stylex.props(styles.layer)}>
+      {phone && open && (
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden="true"
+          onClick={onScrimTap}
+          {...stylex.props(styles.scrim)}
+        />
+      )}
       <nav
         aria-label={copy.nav.main}
         inert={!open}
-        {...stylex.props(styles.drawer, !open && styles.closed)}
+        {...stylex.props(styles.drawer, phone && styles.phoneDrawer, !open && styles.closed)}
       >
         <div {...stylex.props(styles.list)}>
-          <span {...stylex.props(styles.title)}>{copy.appName}</span>
+          <span {...stylex.props(styles.title, phone && styles.phoneTitle)}>{copy.appName}</span>
           {SIDEBAR_VIEWS.map(row)}
           <span aria-hidden="true" {...stylex.props(styles.gap)} />
-          <span aria-hidden="true" {...stylex.props(styles.divider)} />
+          <span
+            aria-hidden="true"
+            {...stylex.props(styles.divider, phone && styles.phoneDivider)}
+          />
           {SIDEBAR_PINNED.map(row)}
         </div>
         <button
           type="button"
           aria-label={copy.nav.closeSidebar}
           onClick={onClose}
-          {...stylex.props(styles.row, press.scale)}
+          {...stylex.props(styles.row, phone && styles.phoneRow, press.scale)}
         >
-          <Icon icon={X} size={24} />
+          <Icon icon={X} size={iconSize} />
           <span>{copy.nav.close}</span>
         </button>
       </nav>

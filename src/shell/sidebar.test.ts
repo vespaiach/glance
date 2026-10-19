@@ -81,5 +81,13 @@ test.each([
   ["rail", 80],
   ["expanded", 332],
 ] as const)("SHELL-10 a %s sidebar insets the page by %i px", (mode, inset) => {
-  expect(sidebarInset(mode)).toBe(inset);
+  expect(sidebarInset(mode, false)).toBe(inset);
+});
+
+test.each([
+  ["hidden", 0],
+  ["rail", 56],
+  ["expanded", 56],
+] as const)("SHELL-10 on a phone a %s sidebar insets the page by %i px", (mode, inset) => {
+  expect(sidebarInset(mode, true)).toBe(inset);
 });

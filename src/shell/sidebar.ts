@@ -18,6 +18,8 @@ export const SIDEBAR_IDLE_SECONDS = 15;
 
 const INSET: Record<SidebarMode, number> = { hidden: 0, rail: 80, expanded: 332 };
 
+const PHONE_INSET: Record<SidebarMode, number> = { hidden: 0, rail: 56, expanded: 56 };
+
 const TRANSITIONS: Record<
   Exclude<SidebarAction["type"], "viewChanged">,
   Partial<Record<SidebarMode, SidebarMode>>
@@ -53,8 +55,8 @@ export function initialSidebar(
   }
 }
 
-export function sidebarInset(mode: SidebarMode): number {
-  return INSET[mode];
+export function sidebarInset(mode: SidebarMode, phone: boolean): number {
+  return (phone ? PHONE_INSET : INSET)[mode];
 }
 
 function afterViewChange(mode: SidebarMode, view: View | undefined): SidebarMode {

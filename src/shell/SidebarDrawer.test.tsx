@@ -87,3 +87,40 @@ test.each([
 
   expect(onNavigate).toHaveBeenCalledWith(path);
 });
+
+function scrim(): Element | null {
+  return screen.getByRole("navigation", { name: "Main" }).previousElementSibling;
+}
+
+test("SHELL-08 on a phone tapping the scrim asks to go back to the rail", async () => {
+  const onScrimTap = vi.fn();
+
+  render(
+    <SidebarDrawer
+      open
+      phone
+      active="today"
+      onClose={vi.fn()}
+      onScrimTap={onScrimTap}
+      onNavigate={vi.fn()}
+    />,
+  );
+
+  await userEvent.click(scrim() as HTMLElement);
+
+  expect(onScrimTap).toHaveBeenCalledOnce();
+});
+
+test("SHELL-08 the drawer has no scrim off the phone or while closed", () => {
+  const { rerender } = render(
+    <SidebarDrawer open active="today" onClose={vi.fn()} onNavigate={vi.fn()} />,
+  );
+
+  expect(scrim()).toBeNull();
+
+  rerender(
+    <SidebarDrawer open={false} phone active="today" onClose={vi.fn()} onNavigate={vi.fn()} />,
+  );
+
+  expect(scrim()).toBeNull();
+});
