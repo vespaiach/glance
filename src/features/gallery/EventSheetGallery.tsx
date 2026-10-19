@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { DetailsStatus } from "@/domain/eventStatus";
 import { type Clock, formatDayTitle } from "@/domain/time";
 import { EventSheet, initialEventSheet, newEventDraft } from "@/features/events";
 import { Button } from "@/ui/Button";
@@ -15,6 +16,9 @@ type Demo = {
   discard?: boolean;
   allDay?: true;
   members?: true;
+  one?: true;
+  details?: true;
+  status?: DetailsStatus;
 };
 
 const words = gallery.eventSheet;
@@ -35,6 +39,13 @@ const DEMOS: readonly Demo[] = [
   { label: words.allDayPhone, mode: "edit", allDay: true, compact: true },
   { label: words.members, mode: "edit", members: true },
   { label: words.membersPhone, mode: "edit", members: true, compact: true },
+  { label: words.details, mode: "edit", details: true, members: true },
+  { label: words.detailsOne, mode: "edit", details: true, one: true },
+  { label: words.detailsNow, mode: "edit", details: true, status: "now" },
+  { label: words.detailsEnded, mode: "edit", details: true, members: true, status: "ended" },
+  { label: words.detailsAllDay, mode: "edit", details: true, allDay: true },
+  { label: words.detailsPhone, mode: "edit", details: true, members: true, compact: true },
+  { label: words.detailsDiscard, mode: "edit", details: true, discard: true },
 ];
 
 const LUNCH = {
@@ -53,6 +64,11 @@ const FOR_TWO = {
   notes: "Bring the birthday card",
 };
 
+const FOR_ONE = {
+  everyone: false,
+  memberIds: GALLERY_FAMILY.slice(0, 1).map((member) => member.id),
+};
+
 export function EventSheetGallery() {
   const [open, setOpen] = useState<Demo | null>(null);
 
@@ -62,7 +78,7 @@ export function EventSheetGallery() {
 
   const allDay = open?.allDay && { allDay: open.allDay };
 
-  const members = open?.members && FOR_TWO;
+  const members = (open?.members && FOR_TWO) || (open?.one && FOR_ONE);
 
   return (
     <GalleryGroup title={gallery.groups.eventSheet}>
@@ -76,14 +92,20 @@ export function EventSheetGallery() {
           key={open.label}
           mode={open.mode}
           eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
-          initial={initialEventSheet({ ...draft, ...allDay, ...members }, open.time, open.discard)}
+          initial={initialEventSheet(
+            { ...draft, ...allDay, ...members },
+            open.time,
+            open.discard,
+            open.details,
+          )}
           clock={open.clock ?? "12h"}
           members={GALLERY_FAMILY}
           offline={open.offline ?? false}
+          status={open.status}
           compact={open.compact}
           onClose={close}
           onDelete={close}
-          onSave={close}
+          onSave={() => {}}
         />
       )}
     </GalleryGroup>

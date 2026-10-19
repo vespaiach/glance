@@ -59,6 +59,18 @@ export function formatRange(start: number, end: number | undefined, clock: Clock
   return `${startText} – ${timeParts(end, clock).time}`;
 }
 
+export function rangeParts(start: number, end: number | undefined, clock: Clock): TimeParts {
+  const from = timeParts(start, clock);
+
+  if (end === undefined) return from;
+
+  const to = timeParts(end, clock);
+
+  const startText = from.meridiem === to.meridiem ? from.time : `${from.time} ${from.meridiem}`;
+
+  return { ...to, time: `${startText} – ${to.time}` };
+}
+
 export function formatHour(minutes: number, clock: Clock): string {
   const { time, meridiem } = timeParts(minutes, clock);
 

@@ -1,9 +1,10 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { Trash2, WifiOff } from "lucide-react";
+import { Pencil, Trash2, WifiOff } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { copy } from "@/copy";
+import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Member } from "@/domain/schemas";
 import type { Clock } from "@/domain/time";
 import { colors, shadows } from "@/theme/tokens.stylex";
@@ -26,6 +27,7 @@ import {
   isDirty,
   type TimeFieldName,
 } from "../eventSheet";
+import { EventDetails } from "./EventDetails";
 import { WhoPicker } from "./WhoPicker";
 
 type EventSheetProps = {
@@ -35,6 +37,7 @@ type EventSheetProps = {
   clock: Clock;
   members: readonly Member[];
   offline: boolean;
+  status?: DetailsStatus;
   compact?: boolean;
   keyboardInset?: number;
   onClose: () => void;
@@ -47,6 +50,8 @@ const words = copy.events.sheet;
 const discard = copy.discard;
 
 const time = copy.events.time;
+
+const details = copy.events.details;
 
 const styles = stylex.create({
   mode: {
@@ -80,6 +85,14 @@ const styles = stylex.create({
   cancel: {
     boxShadow: shadows.shadow1,
   },
+  ended: {
+    minHeight: 44,
+    display: "flex",
+    alignItems: "center",
+    fontSize: type.bodySize,
+    fontWeight: type.bodyLgWeight,
+    lineHeight: 1.4,
+  },
 });
 
 const ACTIONS_ROOM = 96;
@@ -105,6 +118,17 @@ type TimeModeProps = {
   dispatch: (action: EventSheetAction) => void;
 };
 
+type DetailsSheetProps = {
+  eyebrow: string;
+  draft: EventDraft;
+  members: readonly Member[];
+  clock: Clock;
+  status: DetailsStatus;
+  keyboardInset?: number;
+  onClose: () => void;
+  onEdit: () => void;
+};
+
 type DeleteActionProps = {
   confirming: boolean;
   onAsk: () => void;
@@ -118,6 +142,7 @@ export function EventSheet({
   clock,
   members,
   offline,
+  status = null,
   compact,
   onClose,
   onDelete,
@@ -128,7 +153,14 @@ export function EventSheet({
 
   const { draft } = state;
 
-  const save = () => (canSave(draft) ? onSave(draft) : dispatch({ type: "save" }));
+  const save = () => {
+    if (!canSave(draft)) return dispatch({ type: "save" });
+
+    onSave(draft);
+
+    if (state.fromDetails) dispatch({ type: "saved" });
+    else onClose();
+  };
 
   const requestClose = (from: CloseFrom) => () => {
     const step = closeStep(state.confirm, isDirty(draft, state.opened), from);
@@ -138,9 +170,34 @@ export function EventSheet({
     if (step === "ask") dispatch({ type: "askDiscard" });
   };
 
+  const cancel = () => {
+    if (!state.fromDetails) return requestClose("button")();
+
+    const step = closeStep(state.confirm, isDirty(draft, state.opened), "button");
+
+    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
+  };
+
+  const discardChanges = () =>
+    state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
+
+  if (state.view === "details")
+    return (
+      <DetailsSheet
+        eyebrow={eyebrow}
+        draft={state.opened}
+        members={members}
+        clock={clock}
+        status={status}
+        keyboardInset={keyboardInset}
+        onClose={onClose}
+        onEdit={() => dispatch({ type: "edit" })}
+      />
+    );
+
   const endActions = (
     <>
-      <Button variant="secondary" onClick={requestClose("button")} xstyle={styles.cancel}>
+      <Button variant="secondary" onClick={cancel} xstyle={styles.cancel}>
         {words.cancel}
       </Button>
       <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
@@ -175,7 +232,7 @@ export function EventSheet({
             keepLabel={discard.keepEditing}
             discardLabel={discard.discard}
             onKeep={() => dispatch({ type: "keepEditing" })}
-            onDiscard={onClose}
+            onDiscard={discardChanges}
           />
         ) : (
           endActions
@@ -219,6 +276,39 @@ export function EventSheet({
         multiline
         rows={3}
       />
+    </Sheet>
+  );
+}
+
+function DetailsSheet({
+  eyebrow,
+  draft,
+  members,
+  clock,
+  status,
+  keyboardInset,
+  onClose,
+  onEdit,
+}: DetailsSheetProps) {
+  const ended = status === "ended";
+
+  return (
+    <Sheet
+      title={draft.title}
+      eyebrow={eyebrow}
+      closeLabel={words.close}
+      onClose={onClose}
+      startActions={ended && <span {...stylex.props(styles.ended)}>{details.endedBody}</span>}
+      endActions={
+        !ended && (
+          <Button icon={Pencil} onClick={onEdit}>
+            {details.edit}
+          </Button>
+        )
+      }
+      keyboardInset={keyboardInset}
+    >
+      <EventDetails draft={draft} members={members} clock={clock} status={status} />
     </Sheet>
   );
 }

@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Member } from "@/domain/schemas";
 import {
   type EventDraft,
@@ -40,6 +41,7 @@ type Options = {
   offline?: boolean;
   initial?: EventSheetState;
   members?: Member[];
+  status?: DetailsStatus;
   onClose?: () => void;
   onDelete?: () => void;
   onSave?: (draft: EventDraft) => void;
@@ -56,6 +58,7 @@ function renderSheet(options: Options = {}) {
       clock="12h"
       members={options.members ?? FAMILY}
       offline={options.offline ?? false}
+      status={options.status ?? null}
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
       onSave={options.onSave ?? (() => {})}
@@ -561,4 +564,189 @@ test("§8.9 a Who change asks Discard changes? on Cancel", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
   expect(screen.getByText("Discard changes?")).toBeInTheDocument();
+});
+
+describe("Event details", () => {
+  const LUNCH: EventDraft = {
+    ...DRAFT,
+    everyone: false,
+    memberIds: [MOM.id, DAD.id],
+    notes: "Bring a gift\nAnd the card",
+  };
+
+  const details = (draft: EventDraft = LUNCH) => initialEventSheet(draft, undefined, false, true);
+
+  test("EVT-09 details are titled with the event under the day eyebrow", () => {
+    renderSheet({ initial: details() });
+
+    const dialog = screen.getByRole("dialog", { name: "Lunch with Aunt Rosa" });
+
+    expect(within(dialog).getByText("Friday, Oct 9")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Title")).not.toBeInTheDocument();
+  });
+
+  test("EVT-09 the color block shows the length over the time with mono AM/PM", () => {
+    renderSheet({ initial: details() });
+
+    expect(screen.getByText("1 hr")).toBeInTheDocument();
+    expect(screen.getByText("12:00 – 1:00")).toBeInTheDocument();
+    expect(screen.getByText("PM")).toBeInTheDocument();
+  });
+
+  test("EVT-09 an event with no end reads No end time", () => {
+    const { end: _, ...noEnd } = LUNCH;
+
+    renderSheet({ initial: details(noEnd) });
+
+    expect(screen.getByText("No end time")).toBeInTheDocument();
+    expect(screen.getByText("12:00")).toBeInTheDocument();
+  });
+
+  test("EVT-09 an all-day event reads Whole day and All day", () => {
+    renderSheet({ initial: details({ ...LUNCH, allDay: true }) });
+
+    expect(screen.getByText("Whole day")).toBeInTheDocument();
+    expect(screen.getByText("All day")).toBeInTheDocument();
+  });
+
+  test("EVT-09 Who lists the members by name, Where and Notes keep their text", () => {
+    renderSheet({ initial: details() });
+
+    const who = screen.getByRole("list", { name: "Who" });
+
+    expect(
+      within(who)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Mom", "Dad"]);
+    expect(screen.getByText("Café Lumen")).toBeInTheDocument();
+    expect(screen.getByText("Bring a gift And the card")).toHaveTextContent(
+      "Bring a gift\nAnd the card",
+      { normalizeWhitespace: false },
+    );
+  });
+
+  test("EVT-09 an everyone event reads Everyone", () => {
+    renderSheet({ initial: details(DRAFT) });
+
+    const who = screen.getByRole("list", { name: "Who" });
+
+    expect(within(who).getByRole("listitem")).toHaveTextContent("Everyone");
+  });
+
+  test("EVT-09 empty Where and Notes rows are hidden", () => {
+    renderSheet({ initial: details({ ...DRAFT, location: " ", notes: "" }) });
+
+    expect(screen.queryByText("Where")).not.toBeInTheDocument();
+    expect(screen.queryByText("Notes")).not.toBeInTheDocument();
+  });
+
+  test("EVT-09 a running event shows Happening now and Edit", () => {
+    renderSheet({ initial: details(), status: "now" });
+
+    expect(screen.getByText("Happening now")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+  });
+
+  test("EVT-09 an ended event shows Ended, no Edit and says it can't be changed", () => {
+    renderSheet({ initial: details(), status: "ended" });
+
+    expect(screen.getByText("Ended")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.getByText("This event has ended and can’t be changed.")).toBeInTheDocument();
+  });
+
+  test("EVT-09 details have no offline banner", () => {
+    renderSheet({ initial: details(), offline: true });
+
+    expect(screen.queryByText("You’re offline")).not.toBeInTheDocument();
+  });
+
+  test("EVT-09 ✕ closes the details", async () => {
+    const onClose = vi.fn();
+    renderSheet({ initial: details(), onClose });
+
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("EVT-10 Edit swaps the same sheet to Edit event", async () => {
+    renderSheet({ initial: details() });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    expect(screen.getByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Title")).toHaveValue("Lunch with Aunt Rosa");
+  });
+
+  test("EVT-10 Cancel with no change returns to details", async () => {
+    const onClose = vi.fn();
+    renderSheet({ initial: details(), onClose });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByRole("dialog", { name: "Lunch with Aunt Rosa" })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test("EVT-10 Cancel after a change asks, and Discard returns to details unchanged", async () => {
+    const onClose = vi.fn();
+    renderSheet({ initial: details(), onClose });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    await userEvent.type(screen.getByLabelText("Title"), "!");
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+    expect(screen.getByRole("dialog", { name: "Lunch with Aunt Rosa" })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test("EVT-10 ✕ after a change asks, and Discard closes the sheet", async () => {
+    const onClose = vi.fn();
+    renderSheet({ initial: details(), onClose });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    await userEvent.type(screen.getByLabelText("Title"), "!");
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("EVT-07 Save from details saves and returns to details with the new values", async () => {
+    const onClose = vi.fn();
+    const onSave = vi.fn();
+    renderSheet({ initial: details(), onClose, onSave });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    await userEvent.type(screen.getByLabelText("Title"), "!");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSave).toHaveBeenCalledWith({ ...LUNCH, title: "Lunch with Aunt Rosa!" });
+    expect(screen.getByRole("dialog", { name: "Lunch with Aunt Rosa!" })).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test("EVT-07 Save on an edit opened directly closes the sheet", async () => {
+    const onClose = vi.fn();
+    renderSheet({ onClose });
+
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("EVT-10 Delete from an edit opened in details closes the sheet", async () => {
+    const onDelete = vi.fn();
+    renderSheet({ initial: details(), onDelete });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete event" }));
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
 });

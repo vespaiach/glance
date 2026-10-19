@@ -1,9 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentPropsWithoutRef } from "react";
+import type { MemberColor } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 
-export type BlockTone = 1 | 2 | 3 | 4 | "soft" | "deep" | "canvas" | "ink";
+export type BlockTone = 1 | 2 | 3 | 4 | "soft" | "deep" | "canvas" | "ink" | MemberColor;
 
 type ColorBlockProps = Omit<ComponentPropsWithoutRef<"section">, "style" | "className"> & {
   tone?: BlockTone;
@@ -30,6 +31,18 @@ const styles = stylex.create({
   deep: { backgroundColor: season.deep, color: season.onDeep },
   canvas: { backgroundColor: colors.surfaceCanvas },
   ink: { backgroundColor: colors.surfaceInverse, color: colors.textInverse },
+  lilac: { backgroundColor: colors.blockLilac },
+  sky: { backgroundColor: colors.blockSky },
+  coral: { backgroundColor: colors.blockCoral },
+  mint: { backgroundColor: colors.blockMint },
+  sun: { backgroundColor: colors.blockSun },
+  pink: { backgroundColor: colors.blockPink },
+  lime: { backgroundColor: colors.blockLime },
+  rust: { backgroundColor: colors.blockRust },
+  glacier: { backgroundColor: colors.blockGlacier },
+  amber: { backgroundColor: colors.blockAmber },
+  sage: { backgroundColor: colors.blockSage },
+  ice: { backgroundColor: colors.blockIce },
   padding: (padding: string) => ({ padding }),
   radius: (radius: string) => ({ borderRadius: radius }),
 });
