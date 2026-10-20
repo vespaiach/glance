@@ -17,6 +17,7 @@ import {
   GUESSED_PHOTOS,
   gallery,
   galleryPhotoSrc,
+  PORTRAIT_PHOTO,
   UPLOAD_SAMPLES,
 } from "./samples";
 
@@ -37,6 +38,12 @@ const DEMOS: readonly Demo[] = [
   {
     key: "guessed",
     state: { kind: "ready", data: [...GUESSED_PHOTOS, ...GALLERY_PHOTOS] },
+    selected: 0,
+  },
+  { key: "background", backgroundId: GALLERY_PHOTOS[1]?.id },
+  {
+    key: "portrait",
+    state: { kind: "ready", data: [PORTRAIT_PHOTO, ...GALLERY_PHOTOS] },
     selected: 0,
   },
   { key: "one", uploads: UPLOAD_SAMPLES.one },
@@ -75,6 +82,7 @@ const base: ViewProps = {
   online: true,
   canUpload: true,
   breakpoint: "wide",
+  backgroundId: undefined,
   photoSrc: galleryPhotoSrc,
   onSelect: ignore,
   onEdit: ignore,
@@ -84,6 +92,8 @@ const base: ViewProps = {
   onUpload: ignore,
   onRetry: ignore,
   onRemove: ignore,
+  onSetBackground: ignore,
+  onOpenBackground: ignore,
 };
 
 type SheetDemo = { label: string; photo: Photo; initial: PhotoSheetState; offline?: boolean };

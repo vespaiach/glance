@@ -527,6 +527,15 @@ export const GUESSED_PHOTOS: readonly Photo[] = [
   },
 ];
 
+export const PORTRAIT_PHOTO: Photo = {
+  id: "swing",
+  title: "Mia on the swing",
+  takenOn: "2026-07-12",
+  place: "Laurelhurst Park",
+  createdAt: todayAt(9, 2),
+  ...CHECKED_FROM_PHOTO,
+};
+
 export const galleryPhotoSrc = (photoId: string) => `/fixtures/photos/${photoId}.svg`;
 
 const preview = (slug: string) => `/fixtures/photos/${slug}.svg`;

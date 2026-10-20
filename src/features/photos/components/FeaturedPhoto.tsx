@@ -1,9 +1,22 @@
+"use client";
+
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft, ChevronRight, Image, Maximize, Pause, Pencil, Play } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Image,
+  Maximize,
+  Pause,
+  Pencil,
+  Play,
+} from "lucide-react";
+import { useCallback, useState } from "react";
 import { copy } from "@/copy";
 import type { Photo } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
@@ -14,10 +27,13 @@ type FeaturedPhotoProps = {
   src: string;
   thisYear: number;
   playing: boolean;
+  isBackground: boolean;
   onEdit: () => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
   onFullScreen: () => void;
+  onSetBackground: () => void;
+  onOpenBackground: () => void;
   frame: stylex.StyleXStyles;
 };
 
@@ -25,12 +41,22 @@ const styles = stylex.create({
   image: {
     flexGrow: 1,
     flexShrink: 1,
-    flexBasis: "0%",
+    flexBasis: 0,
     width: "100%",
     objectFit: "cover",
+    backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.md,
     display: "block",
     cursor: "zoom-in",
+  },
+  portrait: {
+    objectFit: "contain",
+  },
+  background: {
+    display: "flex",
+    alignItems: "center",
+    height: 56,
+    marginLeft: -16,
   },
   footer: {
     display: "flex",
@@ -93,13 +119,26 @@ export function FeaturedPhoto({
   src,
   thisYear,
   playing,
+  isBackground,
   onEdit,
   onStep,
   onTogglePlay,
   onFullScreen,
+  onSetBackground,
+  onOpenBackground,
   frame,
 }: FeaturedPhotoProps) {
   const hint = photoHint(photo);
+
+  const [portraitSrc, setPortraitSrc] = useState<string>();
+
+  const measure = useCallback(
+    (image: HTMLImageElement | null) => {
+      if (image?.complete && image.naturalWidth > 0)
+        setPortraitSrc(isPortrait(image) ? src : undefined);
+    },
+    [src],
+  );
 
   return (
     <>
@@ -109,13 +148,26 @@ export function FeaturedPhoto({
         src={src}
         alt={photo.title}
         onClick={onFullScreen}
-        {...stylex.props(styles.image, frame)}
+        ref={measure}
+        onLoad={(event) => measure(event.currentTarget)}
+        {...stylex.props(styles.image, portraitSrc === src && styles.portrait, frame)}
       />
       <div {...stylex.props(styles.footer)}>
         <div {...stylex.props(styles.text)}>
           <Eyebrow>{photoMeta(photo, thisYear)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{photo.title}</h2>
           {hint && <span {...stylex.props(styles.hint)}>{hint}</span>}
+          <div {...stylex.props(styles.background)}>
+            {isBackground ? (
+              <Button variant="ghost" icon={Check} onClick={onOpenBackground}>
+                {copy.photos.backgroundNow}
+              </Button>
+            ) : (
+              <Button variant="ghost" icon={Image} onClick={onSetBackground}>
+                {copy.photos.setBackground}
+              </Button>
+            )}
+          </div>
         </div>
         <div {...stylex.props(styles.controls)}>
           <IconButton
@@ -166,4 +218,8 @@ export function FeaturedWaiting({ frame }: { frame: stylex.StyleXStyles }) {
       <span {...stylex.props(styles.waitingText)}>{copy.photos.waitingForUploads}</span>
     </div>
   );
+}
+
+function isPortrait(image: HTMLImageElement): boolean {
+  return image.naturalHeight > image.naturalWidth;
 }

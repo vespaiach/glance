@@ -9,6 +9,7 @@ import {
   putSyncStatus,
   synced,
 } from "@/data/repos/testHarness";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
@@ -21,7 +22,10 @@ import { PhotosScreen } from "./PhotosScreen";
 
 let search = "";
 
+const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
+
 vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: navigation.push }),
   usePathname: () => "/photos",
   useSearchParams: () => new URLSearchParams(search),
 }));
@@ -49,6 +53,7 @@ let store: Harness;
 beforeEach(() => {
   store = openHarness("glance-photos-screen-test");
   search = "";
+  navigation.push.mockReset();
 
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
@@ -608,4 +613,47 @@ test("PHOTO-14 full=1 opens nothing until a photo has finished uploading", async
     await screen.findByText("Your photos show here once they finish uploading."),
   ).toBeInTheDocument();
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("PHOTO-15 Set as background makes the featured photo the Photo background, keeps the dim and pauses on it", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+  await store.db.settings.put(
+    synced({
+      ...DEFAULT_SETTINGS,
+      accountId: store.accountId,
+      background: { ...DEFAULT_SETTINGS.background, mode: "slideshow", dim: 0.4 },
+    }),
+  );
+
+  renderPhotos();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Set as background" }));
+
+  expect(
+    await screen.findByRole("button", { name: "Background now · Change" }),
+  ).toBeInTheDocument();
+  expect((await store.db.settings.get(store.accountId))?.background).toMatchObject({
+    mode: "photo",
+    photoId: COAST.id,
+    dim: 0.4,
+  });
+  expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
+  expect(featuredTitle()).toBe("Cannon Beach");
+});
+
+test("PHOTO-15 Background now · Change opens the Background page", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+  await store.db.settings.put(
+    synced({
+      ...DEFAULT_SETTINGS,
+      accountId: store.accountId,
+      background: { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST.id },
+    }),
+  );
+
+  renderPhotos();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Background now · Change" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/settings/background");
 });
