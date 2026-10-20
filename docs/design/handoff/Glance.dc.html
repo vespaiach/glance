@@ -46,7 +46,7 @@
 <sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="A link can’t be sent right now. Sending turns back on when the screen reconnects." tone="soft" hint-size="100%,80px"></x-import></sc-if>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="{{ si.sendIcon }}" disabled="{{ si.sendOff }}" on-click="{{ sendLink }}" hint-size="200px,44px">{{ si.sendLabel }}</x-import>
-
+<sc-if value="{{ si.demo }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="user-round" disabled="{{ si.sending }}" on-click="{{ guestSignIn }}" hint-size="220px,44px">Sign-in as guests</x-import></sc-if>
 </div>
 <sc-if value="{{ si.sending }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Sending a link to <strong style="font-weight:540">{{ emailShown }}</strong></span></div></sc-if>
 <div style="display:flex;align-items:center;gap:12px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="lock" size="18" hint-size="18px,18px"></x-import><span style="font-size:15px;font-weight:330;line-height:1.45">Only your family can see its calendar, notes and photos.</span></div>
@@ -59,8 +59,8 @@
 </div>
 <div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Link expires in 10 minutes</span></div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" on-click="{{ openedLink }}" hint-size="200px,44px">I opened the link</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import>
+<sc-if value="{{ backReady }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import></sc-if>
+<sc-if value="{{ backWaiting }}" hint-placeholder-val="{{ true }}"><span role="timer" aria-live="off" style="display:flex;align-items:center;min-height:44px;padding:0 12px;font-family:var(--font-mono);font-size:14px;font-weight:400;text-transform:uppercase;letter-spacing:0.02em;font-variant-numeric:tabular-nums">Use a different email in {{ backWaitLabel }}</span></sc-if>
 </div>
 </sc-if>
 <sc-if value="{{ si.name }}" hint-placeholder-val="{{ false }}">
@@ -211,7 +211,7 @@
 </div>
 <sc-if value="{{ nh.wx }}" hint-placeholder-val="{{ true }}">
 <button type="button" onClick="{{ go.weather }}" aria-label="Weather now" style="border:0;background:transparent;padding:0;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:12px;min-width:0;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ wx.locNow }}</x-import>
+<span style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ wx.locNow }}</x-import><span style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="16" stroke-width="2" hint-size="16px,16px"></x-import></span></span>
 <span style="display:flex;align-items:center;gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="{{ nh.icon }}" stroke-width="1.25" hint-size="64px,64px"></x-import><span style="font-size:var(--nh-temp);font-weight:300;line-height:1;letter-spacing:-0.04em;font-variant-numeric:tabular-nums">{{ nh.temp }}</span></span>
 <span style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:330;line-height:1.3">{{ nh.cond }}</span><sc-if value="{{ nh.hasRain }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:8px;font-size:18px;font-weight:480;line-height:1.3"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="umbrella" size="20" hint-size="20px,20px"></x-import>{{ nh.rain }}</span></sc-if></span>
 </button>
@@ -224,7 +224,7 @@
 </sc-if>
 <sc-if value="{{ nowEvent.has }}" hint-placeholder-val="{{ true }}">
 <button type="button" onClick="{{ nowEvent.open }}" style="flex:{{ nh.nf }};border:0;background:transparent;padding:0;text-align:left;font-family:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:12px;min-width:0;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
-<span style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">{{ nowEvent.eyebrow }}</x-import><span style="background:var(--action-primary);color:var(--on-action-primary);border-radius:9999px;padding:4px 12px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap">{{ nh.cd }}</span></span>
+<span style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">{{ nowEvent.eyebrow }}</x-import><span style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="16" stroke-width="2" hint-size="16px,16px"></x-import></span></span><span style="background:var(--action-primary);color:var(--on-action-primary);border-radius:9999px;padding:4px 12px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap">{{ nh.cd }}</span></span>
 <span style="font-size:var(--nh-title);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">{{ nowEvent.title }}</span>
 <span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ nowEvent.meta }}</span>
 </button>
@@ -545,12 +545,16 @@
 <div style="min-height:{{ L.minH }};display:grid;grid-template-columns:{{ L.cols }};gap:24px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="soft" padding="24px" dc-props="{{ colGap24 }}" hint-size="100%,560px">
 <sc-if value="{{ hasFeatured }}" hint-placeholder-val="{{ true }}">
-<img src="{{ featured.src }}" alt="{{ featured.title }}" onClick="{{ fs.enter }}" style="flex:1;width:100%;min-height:{{ L.photoH }};object-fit:cover;border-radius:8px;display:block;cursor:zoom-in">
+<img src="{{ featured.src }}" alt="{{ featured.title }}" onClick="{{ fs.enter }}" style="flex:1;width:100%;min-height:{{ L.photoH }};height:0;object-fit:{{ featured.fit }};background:var(--surface-canvas);border-radius:8px;display:block;cursor:zoom-in">
 <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
 <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ featured.meta }}</x-import>
 <div style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">{{ featured.title }}</div>
 <sc-if value="{{ featured.hasHint }}" hint-placeholder-val="{{ false }}"><span style="font-size:16px;font-weight:330;line-height:1.4;text-wrap:pretty;max-width:440px">{{ featured.hint }}</span></sc-if>
+<div style="display:flex;align-items:center;height:56px;margin-left:-16px">
+<sc-if value="{{ featured.canBg }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="image" on-click="{{ featured.setBg }}" hint-size="200px,44px">Set as background</x-import></sc-if>
+<sc-if value="{{ featured.isBg }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="check" on-click="{{ go.background }}" hint-size="200px,44px">Background now · Change</x-import></sc-if>
+</div>
 </div>
 <div style="display:flex;gap:8px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="pencil" variant="canvas" size="touch" label="Edit photo details" on-click="{{ featured.edit }}" hint-size="56px,56px"></x-import>
@@ -565,7 +569,7 @@
 <div style="flex:1;width:100%;min-height:{{ L.photoH }};border-radius:8px;background:var(--surface-canvas);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;box-sizing:border-box;text-align:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image" size="40" stroke-width="1.5" hint-size="40px,40px"></x-import><span style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty;max-width:360px">Your photos show here once they finish uploading.</span></div>
 </sc-if>
 </x-import>
-<div style="display:flex;flex-direction:column;gap:12px;min-width:0;background:var(--surface-canvas);border-radius:24px;padding:8px 16px 16px;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0;height:{{ L.thumbH }};min-height:{{ L.thumbMinH }};background:var(--surface-canvas);border-radius:24px;padding:8px 16px 16px;box-sizing:border-box">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-left:4px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ photoCountLabel }}</x-import>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="upload" disabled="{{ off }}" on-click="{{ pickFiles }}" hint-size="120px,44px">Upload</x-import>
@@ -573,7 +577,8 @@
 <sc-if value="{{ up.show }}" hint-placeholder-val="{{ false }}">
 <div role="status" style="display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 20px 10px 16px;box-sizing:border-box;border-radius:{{ up.r }};background:{{ up.bg }};color:{{ up.fg }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ up.icon }}" size="20" hint-size="20px,20px"></x-import><span style="flex:1;min-width:0;font-size:16px;font-weight:{{ up.w }};line-height:1.4;text-wrap:pretty">{{ up.text }}</span><sc-if value="{{ up.hasMeta }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap">{{ up.meta }}</span></sc-if></div>
 </sc-if>
-<div style="display:grid;grid-template-columns:{{ L.thumbCols }};gap:16px">
+<div style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin:0 -8px;padding:4px 8px 8px">
+<div style="display:grid;grid-template-columns:{{ L.thumbCols }};align-content:start;gap:16px">
 <sc-for list="{{ pending }}" as="u" hint-placeholder-count="0">
 <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
 <div style="position:relative;width:100%;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--surface-soft)">
@@ -600,6 +605,7 @@
 </div>
 </button>
 </sc-for>
+</div>
 </div>
 </div>
 </div>
@@ -690,9 +696,9 @@
 
 <sc-if value="{{ is.quiet }}" hint-placeholder-val="{{ false }}">
 <div style="display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-items:start">
+<div style="grid-column:1 / -1;display:flex;margin-bottom:-8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" dc-props="{{ sx.ml16 }}" hint-size="120px,44px">Settings</x-import></div>
 <div style="background:var(--surface-canvas);border-radius:24px;padding:clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;gap:32px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:8px">
-<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" dc-props="{{ sx.ml16 }}" hint-size="120px,44px">Settings</x-import></div>
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1">Ambient screen</div>
 <span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty;max-width:640px">During these hours the screen dims to the clock, weather and next event. A touch wakes it.</span>
 </div>
@@ -764,9 +770,9 @@
 
 <sc-if value="{{ is.location }}" hint-placeholder-val="{{ false }}">
 <div style="display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-items:start">
+<div style="grid-column:1 / -1;display:flex;margin-bottom:-8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" dc-props="{{ sx.ml16 }}" hint-size="120px,44px">Settings</x-import></div>
 <div style="background:var(--surface-canvas);border-radius:24px;padding:clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;gap:24px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:8px">
-<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" dc-props="{{ sx.ml16 }}" hint-size="120px,44px">Settings</x-import></div>
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1">Location</div>
 </div>
 <div style="background:var(--surface-soft);border-radius:8px;padding:20px;display:flex;align-items:center;gap:16px">
@@ -828,9 +834,9 @@
 
 <sc-if value="{{ is.background }}" hint-placeholder-val="{{ false }}">
 <div style="display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-items:start">
+<div style="grid-column:1 / -1;display:flex;margin-bottom:-8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" dc-props="{{ sx.ml16 }}" hint-size="120px,44px">Settings</x-import></div>
 <div style="background:var(--surface-canvas);border-radius:24px;padding:clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;gap:24px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:8px">
-<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ go.settings }}" dc-props="{{ sx.ml16 }}" hint-size="120px,44px">Settings</x-import></div>
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1">Background</div>
 </div>
 <div style="max-width:100%;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.bgModes }}" value="{{ bgMode }}" on-change="{{ set.bgMode }}" dc-props="{{ pillWrap }}" hint-size="494px,64px"></x-import></div>
@@ -1317,7 +1323,7 @@ class Component extends DCLogic {
       net, kb: q.get('kb') === '1', vh: window.innerHeight,
       amb: { mode: { split: 'Weekends differ', off: 'Off' }[q.get('amb')] || 'Every night', all: { s: 1080, e: 450 }, wknd: { s: 1260, e: 540 }, ...(q.get('amb') === 'same' ? { all: { s: 1080, e: 1080 } } : {}) }, ambPick: q.get('pick') || null,
       view: view0, vw: window.innerWidth, geo, geoOff: false, wxPending: '',
-      signinStep: SIS[siq] || 'form', linkSide: q.get('on') === 'link', acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
+      demo: q.get('demo') === '1' || /^demo\./.test(location.hostname), signinStep: SIS[siq] || 'form', linkSide: q.get('on') === 'link', acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
       email: sw ? 'sam.lee@example.com' : siq && siq !== 'form' ? 'maria@example.com' : '', emailErr: siq === 'sendfail' ? 'Couldn’t send. Try again.' : '', ended, pendingN: ended ? Math.max(0, parseInt(q.get('pending'), 10) || 0) : 0, endedEmail: 'maria@example.com', wxStep: '', wxMatches: [], wxQ: '',
       people: Component.PEOPLE.map((p) => [...p]), events, notes, span24: q.get('span') === '24', dpOpen: q.get('dp') === 'open', selDay: parseInt(q.get('day'), 10) || 9, who: q.get('who') === 'none' ? [] : q.get('who') ? q.get('who').split(',').filter((k) => Component.PEOPLE.some((p) => p[0] === k)) : Component.PEOPLE.map((p) => p[0]), tl: {}, sheet, photoIdx: 0, full: q.get('full') === '1', fsChrome: q.get('chrome') !== '0', empty, wxLoc: empty || siq === 'location' || siq === 'name' || (wxq && view0 !== 'location') ? '' : 'Portland, OR', wxDraft: '', wxErr: '', hasPhotos: !empty,
       bgMode: q.get('bg') === 'photo' ? 'Photo' : 'Season color', bgId: 'coast', dim: 'Light', rotate: 'Daily',
@@ -1340,7 +1346,7 @@ class Component extends DCLogic {
     if (!loc) return '';
     const t = loc.trim();
     if (/^\d{5}$/.test(t)) return ['Eastern', 'Eastern', 'Eastern', 'Eastern', 'Eastern', 'Central', 'Central', 'Central', 'Mountain', 'Pacific'][+t[0]];
-    return Component.ST[(t.split(',')[1] || '').trim().toUpperCase()] || 'Pacific';
+    return Component.ST[(t.split(',')[1] || '').trim().split(/\s+/)[0].toUpperCase()] || 'Pacific';
   }
   static FAILS = {
     denied: ['map-pin-off', 'Location is off for this screen. Type a city or ZIP instead.'],
@@ -1420,6 +1426,7 @@ class Component extends DCLogic {
   componentDidMount() {
     this._lastView = this.state.view; this._lastSheet = this.state.sheet;
     setTimeout(() => this.syncTl(), 0);
+    { const q = new URLSearchParams(location.search); this._backHold = q.get('hold') === '1'; if (this.state.signinStep === 'sent') this.startBackWait(q.has('backin') ? +q.get('backin') : 10); }
     this.onResize = () => this.setState({ vw: window.innerWidth, vh: window.innerHeight });
     window.addEventListener('resize', this.onResize);
     this.onKey = (e) => {
@@ -1479,9 +1486,19 @@ class Component extends DCLogic {
   }
   pageIn(from, to) {
     const root = document.querySelector('[data-season]'); if (!root) return;
-    const el = root.querySelector('main') || root.querySelector('button[aria-label="Wake screen"]');
+    const wk = root.querySelector('button[aria-label="Wake screen"]'), el = to === 'ambient' ? wk : root.querySelector('main') || wk;
     if (!el || !el.animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (el.scrollTop) el.scrollTop = 0;
+    if (this.ambOut) { this.ambOut.cancel(); this.ambOut = null; }
+    if (to === 'ambient') {
+      el.animate([{ filter: 'brightness(0.3)' }, { filter: 'none' }], { duration: 700, easing: 'ease-out' });
+      [...el.children].forEach((k, n) => k.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 600, delay: 200 + n * 120, easing: 'cubic-bezier(0.2, 0, 0, 1)', fill: 'backwards' }));
+      return;
+    }
+    if (from === 'ambient') {
+      root.animate([{ filter: 'brightness(0.25)', transform: 'scale(0.985)' }, { filter: 'none', transform: 'none' }], { duration: 520, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+      return;
+    }
     const ord = ['today', 'calendar', 'weather', 'notes', 'photos', 'settings'];
     const i = ord.indexOf(from), j = ord.indexOf(to);
     const calm = from === 'ambient' || to === 'ambient' || from === 'signin' || to === 'signin';
@@ -1492,7 +1509,14 @@ class Component extends DCLogic {
       { opacity: 1, transform: 'none' }
     ], { duration: calm ? 600 : 280, easing: calm ? 'ease-in-out' : 'cubic-bezier(0.2, 0, 0, 1)' });
   }
-  componentDidUpdate() {
+  startBackWait(n) {
+    clearInterval(this.backTimer);
+    this.setState({ backWait: n });
+    if (n > 0 && !this._backHold) this.backTimer = setInterval(() => this.setState((s) => { const v = Math.max(0, (s.backWait || 0) - 1); if (!v) clearInterval(this.backTimer); return { backWait: v }; }), 1000);
+  }
+  componentDidUpdate(pp, ps) {
+    if (ps && ps.signinStep !== 'sent' && this.state.signinStep === 'sent') this.startBackWait(10);
+    if (ps && ps.signinStep === 'sent' && this.state.signinStep !== 'sent') clearInterval(this.backTimer);
     this.syncTl();
     if (this.schedEl) setTimeout(() => this.measureSched(), 0);
     const v = this.state.view, pv = this._lastView;
@@ -1502,7 +1526,7 @@ class Component extends DCLogic {
     this._lastSheet = b;
     if (b && b.kind === 'event' && ((b.pick && (!a || a.pick !== b.pick)) || (b.endErr && (!a || !a.endErr)))) this.queueReveal();
   }
-  componentWillUnmount() { clearInterval(this.drawerTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
+  componentWillUnmount() { clearInterval(this.drawerTimer); clearInterval(this.backTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
   later(ms, fn) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
   sendLink() {
     const S = this.state; if (S.net === 'offline' || S.signinStep === 'sending') return;
@@ -1545,7 +1569,25 @@ class Component extends DCLogic {
     this.setState({ ...clear, wxLoc: loc });
   }
   shiftMonth(d) { this.setState((s) => { const ym = s.calYM + d; return { calYM: ym, selDay: ym === 2026 * 12 + 9 ? 9 : 1 }; }); }
-  go(view) { this.wxTok = (this.wxTok || 0) + 1; this.setState({ view, ambPick: null, sheet: null, wxStep: '', wxDraft: '', wxErr: '', wxMatches: [], wxPending: '' }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
+  go(view) {
+    const from = this.state.view, root = document.querySelector('[data-season]');
+    const amb = view !== from && (view === 'ambient' || from === 'ambient');
+    if (amb && root && root.animate && !this._ambTx && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this._ambTx = true;
+      const done = () => { this._ambTx = false; this.commitGo(view); };
+      if (view === 'ambient') {
+        this.ambOut = root.animate([{ filter: 'brightness(1)', transform: 'none' }, { filter: 'brightness(0.25)', transform: 'scale(0.985)' }], { duration: 420, easing: 'ease-in', fill: 'forwards' });
+        setTimeout(done, 420);
+      } else {
+        const w = root.querySelector('button[aria-label="Wake screen"]'), kids = w ? [...w.children] : [];
+        kids.forEach((k, n) => k.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-12px)' }], { duration: 240, delay: n * 40, easing: 'ease-in', fill: 'forwards' }));
+        setTimeout(done, 240 + Math.max(0, kids.length - 1) * 40);
+      }
+      return;
+    }
+    this.commitGo(view);
+  }
+  commitGo(view) { this.wxTok = (this.wxTok || 0) + 1; this.setState({ view, ambPick: null, sheet: null, wxStep: '', wxDraft: '', wxErr: '', wxMatches: [], wxPending: '' }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
   openEvent(ev, over) { const S = this.state, mine = S.who.length && S.who.length < S.people.length ? { who: [...S.who] } : {}; const draft = ev ? { ...ev, who: ev.who || [], notes: ev.notes || '' } : { ...Component.newDraft(S.selDay, S.calYM, S.people.map((p) => p[0])), ...mine, ...(over || {}) }; this.setState({ sheet: { kind: 'event', id: ev ? ev.id : null, mode: ev ? 'view' : 'edit', draft, orig: { ...draft }, confirm: false, err: '' } }); }
   dpListRef = (el) => { if (!el) return; requestAnimationFrame(() => { const r = el.querySelector('[aria-current="date"]'); if (r) el.scrollTop = r.offsetTop - (el.clientHeight - r.offsetHeight) / 2; }); };
   wkRef = (el) => { if (el === this._wkEl) return; if (this._wkRO) this._wkRO.disconnect(); this._wkEl = el; if (!el || typeof ResizeObserver === 'undefined') return; this._wkRO = new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width); if (Math.abs(w - (this.state.wkW || 0)) > 4) this.setState({ wkW: w }); }); this._wkRO.observe(el); };
@@ -1688,7 +1730,7 @@ class Component extends DCLogic {
     L.hourCols = 'repeat(8,64px)';
     if (view === 'today') Object.assign(L, { cols: 'minmax(0,1fr)', areas: '"hero" "wx" "sched" "notes"' });
     if (view === 'calendar') Object.assign(L, { freeFlex: '0 1 auto', freeWs: 'normal', wkLbl: false, wkWx: false, calH: 'auto', calMin: '100%', tlMin: '720px', dayH: '60px', dayFs: '20px', dayGap: '2px', dayAlign: 'center', chipH: '44px', cardPad: '12px 12px 12px 8px', wkPad: '8px', wkGap: '4px', calGap: '12px' });
-    if (view === 'photos') Object.assign(L, { photoH: '260px', thumbCols: 'repeat(2,minmax(0,1fr))' });
+    if (view === 'photos') Object.assign(L, { photoH: '260px', thumbCols: 'repeat(2,minmax(0,1fr))', thumbH: 'auto', thumbMinH: '0' });
     if (view === 'background') L.thumbCols = 'repeat(2,minmax(0,1fr))';
     return L;
   }
@@ -1702,7 +1744,7 @@ class Component extends DCLogic {
         : { cols: 'minmax(0,1fr) minmax(0,1fr)', areas: '"hero wx" "sched sched" "notes notes"', rows: 'auto', minH: '0' };
       case 'calendar': return { freeFlex: 'none', freeWs: 'nowrap', calH: '100%', calMin: '0', calGap: W ? '24px' : '16px', wkPad: '16px', wkGap: '12px', wkLbl: true, wkWx: true, dayH: W ? '80px' : '72px', dayFs: '28px', dayGap: '6px', dayAlign: 'flex-start', chipH: '48px', cardPad: W ? '20px 24px 20px 20px' : '16px 20px 16px 16px', tlMin: '320px' };
       case 'weather': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : W ? 'minmax(380px,0.85fr) minmax(0,1.4fr)' : 'minmax(340px,0.8fr) minmax(0,1.2fr)', minH: bp === 'narrow' ? '0' : '100%' };
-      case 'photos': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.6fr) minmax(300px,1fr)', minH: bp === 'narrow' ? '0' : '100%', photoH: bp === 'narrow' ? '440px' : '320px', thumbCols: bp === 'narrow' ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))' };
+      case 'photos': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.6fr) minmax(300px,1fr)', minH: bp === 'narrow' ? '0' : '100%', photoH: bp === 'narrow' ? '440px' : '320px', thumbCols: bp === 'narrow' ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', thumbH: bp === 'narrow' ? 'auto' : '0', thumbMinH: bp === 'narrow' ? '0' : '100%' };
       case 'location':
       case 'quiet':
       case 'settings': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.4fr) minmax(320px,1fr)' };
@@ -1872,9 +1914,9 @@ class Component extends DCLogic {
       { day: 'Tue', icon: 'sun', high: 69, low: 50 }, { day: 'Wed', icon: 'cloud-sun', high: 65, low: 50, precip: 10 }, { day: 'Thu', icon: 'cloud-lightning', high: 58, low: 46, precip: 70 },
     ].map((f) => ({ ...f, high: T(f.high), low: T(f.low), style: { minWidth: 0, padding: '16px 4px' } }));
 
-    const PH = [['orchard', 'Apple picking', '2026-09-27', 'Sauvie Island'], ['pumpkins', 'Pumpkin patch', '2026-10-04', 'Family outing'], ['coast', 'Cannon Beach', '2026-09-06', 'Summer trip'], ['school', 'First day of school', '2026-09-02', 'Lincoln Elementary'], ['bikes', 'Bike ride', '2026-08-30', 'Waterfront'], ['forest', 'Forest Park trail', '2026-08-22', 'Weekend hike']];
+    const PH = [['orchard', 'Apple picking', '2026-09-27', 'Sauvie Island'], ['pumpkins', 'Pumpkin patch', '2026-10-04', 'Family outing'], ['coast', 'Cannon Beach', '2026-09-06', 'Summer trip'], ['school', 'First day of school', '2026-09-02', 'Lincoln Elementary'], ['porch', 'Ready for second grade', '2026-09-02', 'Front porch', 1], ['bikes', 'Bike ride', '2026-08-30', 'Waterfront'], ['forest', 'Forest Park trail', '2026-08-22', 'Weekend hike'], ['garden', 'Tomato harvest', '2026-08-15', 'Backyard'], ['lake', 'Lake day', '2026-08-09', 'Trillium Lake'], ['swing', 'Mia on the swing', '2026-08-02', 'Laurelhurst Park', 1], ['bday', 'Leo turns 8', '2026-07-28', 'Home'], ['falls', 'Multnomah Falls', '2026-07-12', 'Columbia Gorge', 1], ['fourth', 'Fourth of July', '2026-07-04', 'Waterfront'], ['camp', 'Camping trip', '2026-06-20', 'Mount Hood'], ['grad', 'Kindergarten graduation', '2026-06-12', 'Lincoln Elementary'], ['market', 'Farmers market', '2026-05-30', 'PSU'], ['tulips', 'Tulip fest', '2026-04-18', 'Woodburn'], ['snow', 'Snow day', '2026-02-07', 'Laurelhurst Park'], ['zoo', 'Zoo lights', '2025-12-20', 'Oregon Zoo'], ['tree', 'Picking the tree', '2025-12-06', 'Hood River', 1]];
     const ALL = S.uploads.filter((u) => !u.st || u.st === 'done').map((u) => ({ id: u.id, title: u.title, iso: u.iso, place: u.place, file: u.file, srcs: u.srcs || {}, src: () => u.url }))
-      .concat((S.hasPhotos ? PH : []).map(([id, title, iso, place]) => ({ id, title, iso, place, srcs: { title: 'meta', date: 'meta', place: 'meta' }, src: (p, w, hh) => `https://picsum.photos/seed/kiosk-${p}${id}/${w}/${hh}` })))
+      .concat((S.hasPhotos ? PH : []).map(([id, title, iso, place, tall]) => ({ id, title, iso, place, tall: !!tall, srcs: { title: 'meta', date: 'meta', place: 'meta' }, src: (p, w, hh) => tall && p !== 'bg-' ? `https://picsum.photos/seed/kiosk-${p}${id}/${Math.round(Math.min(w, hh) * 0.75)}/${Math.max(w, hh)}` : `https://picsum.photos/seed/kiosk-${p}${id}/${w}/${hh}` })))
       .filter((p) => !S.phGone.includes(p.id)).map((p) => ({ ...p, ...(S.phEdits[p.id] || {}) })).map((p) => ({ ...p, date: Component.fmtD(p.iso), meta: [Component.fmtD(p.iso), p.place].filter(Boolean).join(' · ') }));
     const GN = { file: 'the file name', raw: 'the file name', fname: 'the file name', mtime: 'the file date', place: 'where it was taken' };
     const hintOf = (p) => {
@@ -2022,7 +2064,7 @@ class Component extends DCLogic {
     ];
     const st = S.signinStep, first = S.userName.trim().split(/\s+/)[0] || 'Maria';
     const si = { form: st === 'form' || st === 'sending', sending: st === 'sending', notSending: st !== 'sending', sent: st === 'sent', name: st === 'name', location: st === 'location', phone: st === 'phone', expired: st === 'expired' && !S.linkSide, expiredLink: st === 'expired' && S.linkSide, done: st === 'done',
-      ended: S.ended, notEnded: !S.ended, showDemo: st !== 'sending' && !S.ended, prevEmail: S.endedEmail,
+      ended: S.ended, notEnded: !S.ended, demo: S.demo && !S.ended, showDemo: st !== 'sending' && !S.ended, prevEmail: S.endedEmail,
       endBody: 'Sign in again to keep the calendar, notes and photos up to date.' + (S.pendingN ? ` Changes waiting on this screen: ${S.pendingN}.` + (S.email.trim().toLowerCase() === S.endedEmail ? ' They’ll be sent after you sign in.' : '') : ''),
       switchWarn: S.ended && S.pendingN > 0 && !!S.email.trim() && S.email.trim().toLowerCase() !== S.endedEmail,
       sendOff: off || st === 'sending', sendLabel: st === 'sending' ? 'Sending…' : 'Send sign-in link', sendIcon: st === 'sending' ? undefined : 'arrow-right', welcome: (S.acctNew ? 'Welcome, ' : 'Welcome back, ') + first };
@@ -2085,6 +2127,7 @@ class Component extends DCLogic {
       setNameDraft: (v) => this.setState({ nameDraft: v, nameErr: '' }),
       submitName: () => { const n = S.nameDraft.trim(); if (!n) return this.setState({ nameErr: 'Add your name' }); this.setState({ userName: n, acctNew: true, signinStep: 'location', wxLoc: '', wxDraft: '', wxErr: '', wxStep: '', wxMatches: [] }); },
       openedLink: () => { if (S.email.trim().toLowerCase() === 'maria@example.com') { this.setState({ acctNew: false, userName: 'Maria' }); this.finishSignIn(); } else this.setState({ signinStep: 'name', nameDraft: '', nameErr: '' }); },
+      guestSignIn: () => { this.setState({ userName: 'Trinh', email: 'guests@takeaglance.app', emailErr: '', wxLoc: 'Carmel, IN 46032', acctNew: false }); this.finishSignIn(); },
       phoneDone: () => { this.setState({ acctNew: true }); this.finishSignIn(); },
       resend: () => this.sendLink(),
       ld, off, online: !off, wxFail, retry: () => this.setState({ net: 'online' }),
@@ -2101,6 +2144,7 @@ class Component extends DCLogic {
       setEmail: (v) => { if (this.state.signinStep !== 'sending') this.setState({ email: v, emailErr: '' }); },
       sendLink: () => this.sendLink(),
       backToForm: () => this.setState({ signinStep: 'form', linkSide: false }),
+      backReady: !(S.backWait > 0), backWaiting: S.backWait > 0, backWaitLabel: '0:' + String(S.backWait || 0).padStart(2, '0'),
       demoSignIn: () => { this.setState({ signinStep: 'form' }); this.go('today'); },
       signOut: () => { this.setState({ signinStep: 'form', email: '' }); this.go('signin'); },
       wake: () => this.go(S.ended ? 'signin' : 'today'),
@@ -2149,7 +2193,7 @@ class Component extends DCLogic {
       noteKeepCaption: S.noteKeep === 'Never' ? 'Notes stay until deleted' : `Notes are removed after ${S.noteKeep.toLowerCase()}`,
       wx: { loc: off ? `${S.wxLoc} · Updated ${savedAt}` : S.wxLoc, locNow: S.wxLoc + ' · Now', temp: T(64), high: T(68), low: T(51), feelsLike: T(62), details, ambientTemp: T(56) + '°', lowF: T(51) + '°' },
       hourly, forecast,
-      featured: { src: fp.src('', 1600, 1000), title: fp.title, meta: fp.meta, hint: hintOf(fp), hasHint: !!hintOf(fp), edit: () => fp.id && this.setState({ sheet: Component.photoSheet(fp), playing: false }) },
+      featured: { fit: fp.tall ? 'contain' : 'cover', isBg: S.bgMode === 'Photo' && fp.id === S.bgId, canBg: !!fp.id && !(S.bgMode === 'Photo' && fp.id === S.bgId), setBg: () => fp.id && this.setState({ bgId: fp.id, bgMode: 'Photo', playing: false }), src: fp.src('', 1600, 1000), title: fp.title, meta: fp.meta, hint: hintOf(fp), hasHint: !!hintOf(fp), edit: () => fp.id && this.setState({ sheet: Component.photoSheet(fp), playing: false }) },
       photos: ALL.map((p, i) => ({ title: p.title, date: p.date, src: p.src('', 600, 450), ring: i === pi ? ring : 'none', pick: () => this.setState({ photoIdx: i }) })),
       fs: { open: !!S.full && view === 'photos' && ALL.length > 0, chrome: S.fsChrome !== false, src: fp.src('', 2400, 1500), count: `${pi + 1} of ${ALL.length}`,
         enter: () => fp.id && this.setState({ full: true, fsChrome: true }), exit: () => this.setState({ full: false, fsChrome: true }),

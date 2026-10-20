@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Your Glance sign-in link</title>
+<!--
+  Glance email shell. Placeholders: {{email}}, {{sign_in_url}}.
+  Season: swap #dceeb1 (hero, block-1) and #f4ecd6 (page, soft) with the season pair.
+  Spring #dceeb1/#f4ecd6 · Summer #f6e3a1/#f4ecd6 · Fall #f0c987/#f4ecd6 · Winter #d5e4f1/#e9edf3
+  Future emails: keep HEADER, FOOTER and the page/container tables; replace HERO and DETAIL.
+-->
+<!--[if mso]><style>table,td,a,p,span{font-family:Arial,Helvetica,sans-serif !important;}</style><![endif]-->
+<style>
+@media (max-width:620px){
+  .px{padding-left:16px !important;padding-right:16px !important;}
+  .hero{padding:32px 24px !important;}
+  .card{padding:24px !important;}
+  .h1{font-size:30px !important;line-height:34px !important;}
+}
+@media (prefers-color-scheme:dark){
+  .page{background-color:#1f1d3d !important;}
+  .ink-on-page{color:#ffffff !important;}
+}
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#f4ecd6;">
+<span style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f4ecd6;">Tap to sign in. The link works once, for 10 minutes.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</span>
+<table role="presentation" class="page" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4ecd6" style="background-color:#f4ecd6;">
+<tr><td align="center" class="px" style="padding:40px 24px 48px 24px;">
+<!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;">
+
+<!-- HEADER -->
+<tr><td class="ink-on-page" style="padding:0 8px 24px 8px;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:26px;font-weight:bold;letter-spacing:-0.3px;color:#000000;mso-line-height-rule:exactly;">Glance</td></tr>
+
+<!-- HERO -->
+<tr><td class="hero" bgcolor="#dceeb1" style="background-color:#dceeb1;border-radius:24px;padding:48px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding:0 0 16px 0;font-family:'Courier New',Courier,monospace;font-size:13px;line-height:16px;letter-spacing:1px;text-transform:uppercase;color:#000000;mso-line-height-rule:exactly;">Sign-in link</td></tr>
+<tr><td class="h1" style="padding:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:40px;line-height:44px;font-weight:normal;letter-spacing:-1px;color:#000000;mso-line-height-rule:exactly;">Sign in to Glance</td></tr>
+<tr><td style="padding:0 0 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:25px;color:#000000;mso-line-height-rule:exactly;">Tap the button and the screen that asked for this link signs in by itself. New here? The same link sets up your family’s Glance.</td></tr>
+<tr><td align="left">
+<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{sign_in_url}}" style="height:56px;v-text-anchor:middle;width:200px;" arcsize="50%" stroke="f" fillcolor="#111111"><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:17px;font-weight:bold;">Sign in</center></v:roundrect><![endif]-->
+<!--[if !mso]><!-->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td bgcolor="#111111" style="background-color:#111111;border-radius:50px;">
+<a href="{{sign_in_url}}" target="_blank" style="display:block;padding:18px 44px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:20px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:50px;mso-line-height-rule:exactly;">Sign in</a>
+</td></tr></table>
+<!--<![endif]-->
+</td></tr>
+<tr><td style="padding:20px 0 0 0;font-family:'Courier New',Courier,monospace;font-size:13px;line-height:18px;letter-spacing:0.5px;text-transform:uppercase;color:#000000;mso-line-height-rule:exactly;">Works once, for 10 minutes</td></tr>
+</table>
+</td></tr>
+
+<tr><td height="16" style="height:16px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+<!-- DETAIL -->
+<tr><td class="card" bgcolor="#fffffe" style="background-color:#fffffe;border:1px solid #e6e6e6;border-radius:24px;padding:32px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#000000;mso-line-height-rule:exactly;">Button not working? Copy this link into your browser:</td></tr>
+<tr><td style="padding:0 0 24px 0;font-family:'Courier New',Courier,monospace;font-size:13px;line-height:19px;color:#000000;word-break:break-all;mso-line-height-rule:exactly;"><a href="{{sign_in_url}}" target="_blank" style="color:#000000;text-decoration:underline;">{{sign_in_url}}</a></td></tr>
+<tr><td style="border-top:1px solid #f1f1f1;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
+<tr><td style="padding:24px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#000000;mso-line-height-rule:exactly;"><strong>Didn’t ask for this?</strong> You can ignore this email. No one can sign in unless this link is opened.</td></tr>
+</table>
+</td></tr>
+
+<!-- FOOTER -->
+<tr><td class="ink-on-page" style="padding:24px 8px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#000000;mso-line-height-rule:exactly;">Sent to <a href="mailto:{{email}}" class="ink-on-page" style="color:#000000;text-decoration:none;">{{email}}</a> because it was entered on a Glance screen.<br>Glance · Calendar, weather, notes and photos for your family.</td></tr>
+
+</table>
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr>
+</table>
+</body>
+</html>

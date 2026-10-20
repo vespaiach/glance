@@ -15,7 +15,7 @@
 <section style="padding:40px 56px 24px;display:flex;flex-direction:column;gap:16px;max-width:1400px">
 <div style="display:flex;flex-wrap:wrap;gap:8px"><span style="font:600 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:#1a1a1a;color:#fff">Sign in and account</span><a href="Glance%20Frames%20-%20Today.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Today</a><a href="Glance%20Frames%20-%20Calendar.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Calendar and events</a><a href="Glance%20Frames%20-%20Weather.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Weather</a><a href="Glance%20Frames%20-%20Notes.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Notes</a><a href="Glance%20Frames%20-%20Photos.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Photos</a><a href="Glance%20Frames%20-%20Settings.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Settings and background</a><a href="Glance%20Frames%20-%20Ambient.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Ambient · quiet hours</a><a href="Glance%20Frames%20-%20First%20use.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">First use · empty</a><a href="Glance%20Frames%20-%20System%20states.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Loading · offline · keyboard</a><a href="Glance%20Frames%20-%20Phone%20drawer.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Phone drawer</a></div>
 <div style="display:flex;align-items:baseline;gap:12px"><span style="font:600 22px/1.2 var(--font-sans);color:#1a1a1a">Glance · Sign in and account</span></div>
-<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Live app (<a href="Glance.dc.html">Glance</a>) at 50%, six sizes. Breakpoints: wide ≥ 1200, mid 1000–1199, narrow 600–999, phone below 600. Android tablets at 1280×800 match the laptop frame. Location step states (locating, matches, location off) match <a href="Glance%20Frames%20-%20Weather.dc.html">Weather</a> D, I–M. The account card and Sign out are on <a href="Glance%20Frames%20-%20Settings.dc.html">Settings</a> A.</p>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Live app (<a href="Glance.dc.html">Glance</a>) at 50%, three sizes. Landscape screens from 1000 px up (1920×1080, 1440×900, 1280×800) look the same as iPad landscape; narrow 600–999; phone below 600. Location step states (locating, matches, location off) match <a href="Glance%20Frames%20-%20Weather.dc.html">Weather</a> D, I–M. The account card and Sign out are on <a href="Glance%20Frames%20-%20Settings.dc.html">Settings</a> A. Signed out with a note sheet open, or during quiet hours, nothing changes on screen until the sheet closes or the wake tap: see <a href="Glance%20Frames%20-%20Notes.dc.html">Notes</a> and <a href="Glance%20Frames%20-%20Ambient.dc.html">Ambient</a>.</p>
 </section>
 <sc-for list="{{ screens }}" as="s" hint-placeholder-count="3">
 <section id="{{ s.id }}" style="padding:24px 56px 40px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
@@ -36,12 +36,14 @@
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   renderVals() {
-    const sizes = [['Large display · 1920×1080', 1920, 1080], ['Desktop · 1440×900', 1440, 900], ['Laptop · Android tablet · 1280×800', 1280, 800], ['iPad landscape · 1180×820', 1180, 820], ['iPad portrait · 820×1180', 820, 1180], ['Phone · 390×844', 390, 844]];
+    const sizes = [['Landscape · iPad 1180×820', 1180, 820], ['Narrow · iPad portrait · 820×1180', 820, 1180], ['Phone · 390×844', 390, 844]];
     const screens = [
       ['A', 'Email form · new or returning', 'signin=form'],
+      ['X', 'Demo site · Sign-in as guests (demo.takeaglance.app)', 'signin=form&demo=1'],
       ['B', 'Sending link', 'signin=sending'],
       ['C', 'Offline · link can’t be sent', 'signin=offline'],
-      ['D', 'Check your email · same for new and known emails', 'signin=sent'],
+      ['D', 'Check your email · same for new and known emails · Use a different email appears after a 10 s countdown', 'signin=sent&backin=8&hold=1'],
+      ['L', 'Check your email · countdown done', 'signin=sent&backin=0'],
       ['E', 'First sign-in · What’s your name? (device that opened the link) · then Where is this screen? (M)', 'signin=name'],
       ['F', 'First sign-in · name with keyboard', 'signin=name&kb=1'],
       ['G', 'Waiting screen · finish on your phone', 'signin=phone'],
@@ -55,8 +57,6 @@ class Component extends DCLogic {
       ['S', 'Signed out by the server · nothing waiting (SIGNIN-01)', 'signin=ended'],
       ['T', 'Signed out by the server · 3 changes waiting to sync', 'signin=ended&pending=3'],
       ['U', 'Signed out by the server · different email entered while changes wait', 'signin=ended&pending=3&switch=1'],
-      ['V', 'Signed out while a note sheet is open · nothing changes until Post or Cancel, then the form shows', 'signin=ended&pending=3&sheet=newnote'],
-      ['W', 'Signed out during quiet hours · Ambient stays, wake tap opens the form', 'view=ambient&signin=ended&pending=3'],
       ['Y', 'Couldn’t send · request failed while online', 'signin=sendfail'],
     ];
     return {
