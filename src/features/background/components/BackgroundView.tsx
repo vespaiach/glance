@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft, Image } from "lucide-react";
+import { Image } from "lucide-react";
 import { copy } from "@/copy";
 import type { PhotoVariant } from "@/data/repos";
 import { pickPhoto, shownBackground } from "@/domain/background";
@@ -9,7 +9,7 @@ import type { ZoneState } from "@/domain/zoneState";
 import type { UploadTile } from "@/features/photos";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
-import { Button } from "@/ui/Button";
+import { BackLink } from "@/ui/BackLink";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { PillTabs } from "@/ui/PillTabs";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
@@ -66,12 +66,6 @@ const styles = stylex.create({
     padding: "clamp(20px, 2.6vw, 40px)",
     boxSizing: "border-box",
   },
-  header: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space.xs,
-    alignItems: "flex-start",
-  },
   title: {
     margin: 0,
     fontSize: type.displayXlSize,
@@ -112,8 +106,9 @@ export function BackgroundView({
 
   return (
     <div {...stylex.props(styles.grid, layout.grid)}>
+      <BackLink label={copy.background.back} onBack={onBack} />
       <div {...stylex.props(styles.panel)}>
-        <Header onBack={onBack} />
+        <h2 {...stylex.props(styles.title)}>{copy.background.title}</h2>
         <div {...stylex.props(styles.modes)}>
           <PillTabs
             label={copy.background.title}
@@ -174,17 +169,6 @@ function Photos({ photos, background, now, tz, onChange, ...rest }: PhotosProps)
         shown={shownBackground(background, photos, now, tz)}
         onPick={(photoId) => onChange(pickPhoto(background.mode, photoId))}
       />
-    </div>
-  );
-}
-
-function Header({ onBack }: { onBack: () => void }) {
-  return (
-    <div {...stylex.props(styles.header)}>
-      <Button variant="ghost" icon={ChevronLeft} onClick={onBack}>
-        {copy.background.back}
-      </Button>
-      <h2 {...stylex.props(styles.title)}>{copy.background.title}</h2>
     </div>
   );
 }

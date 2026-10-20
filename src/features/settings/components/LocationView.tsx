@@ -1,12 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import {
-  ChevronLeft,
-  Clock as ClockIcon,
-  CloudSun,
-  type LucideIcon,
-  MapPin,
-  MapPinOff,
-} from "lucide-react";
+import { Clock as ClockIcon, CloudSun, type LucideIcon, MapPin, MapPinOff } from "lucide-react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { WeatherLocation } from "@/domain/schemas";
@@ -15,7 +8,7 @@ import { timeZoneName } from "@/domain/zoneName";
 import { PlaceForm, type WeatherSetupFlow } from "@/features/weather";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
-import { Button } from "@/ui/Button";
+import { BackLink } from "@/ui/BackLink";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
@@ -48,12 +41,6 @@ const styles = stylex.create({
     borderRadius: radii.lg,
     padding: "clamp(20px, 2.6vw, 40px)",
     boxSizing: "border-box",
-  },
-  header: {
-    display: "flex",
-    flexDirection: "column",
-    gap: space.xs,
-    alignItems: "flex-start",
   },
   title: {
     margin: 0,
@@ -157,8 +144,9 @@ export function LocationView({
 
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
+      <BackLink label={copy.location.back} onBack={onBack} />
       <div {...stylex.props(styles.panel)}>
-        <Header onBack={onBack} />
+        <h2 {...stylex.props(styles.title)}>{copy.location.title}</h2>
         <Current location={location} now={now} clock={clock} />
         {state.step === "confirm-zone" && location?.timeZone ? (
           <ZoneConfirm
@@ -175,17 +163,6 @@ export function LocationView({
         )}
       </div>
       <WhatItSets zone={location?.timeZone} />
-    </div>
-  );
-}
-
-function Header({ onBack }: { onBack: () => void }) {
-  return (
-    <div {...stylex.props(styles.header)}>
-      <Button variant="ghost" icon={ChevronLeft} onClick={onBack}>
-        {copy.location.back}
-      </Button>
-      <h2 {...stylex.props(styles.title)}>{copy.location.title}</h2>
     </div>
   );
 }

@@ -9,12 +9,12 @@ import type { ZoneState } from "@/domain/zoneState";
 import { conditionText } from "@/features/weather";
 import { radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
-import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { weatherIcons } from "@/ui/weatherIcons";
 import { Zone } from "@/ui/Zone";
+import { CueEyebrow } from "./CueEyebrow";
 
 type NowWeatherProps = {
   state: ZoneState<Weather>;
@@ -178,7 +178,7 @@ function Reading({ weather, updatedAt, unit, clock, tz, onOpen }: ReadingProps) 
       onClick={onOpen}
       {...stylex.props(styles.button, styles.reading, press.scale)}
     >
-      <Eyebrow>{placeLabel(weather, updatedAt, clock, tz)}</Eyebrow>
+      <CueEyebrow>{placeLabel(weather, updatedAt, clock, tz)}</CueEyebrow>
       <span {...stylex.props(styles.now)}>
         <Icon icon={weatherIcons[weather.current.icon]} size={64} strokeWidth={1.25} />
         <span {...stylex.props(styles.temp)}>{`${temp(weather.current.temp)}°`}</span>
