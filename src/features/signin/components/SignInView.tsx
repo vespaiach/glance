@@ -14,7 +14,7 @@ import {
   UserRound,
   WifiOff,
 } from "lucide-react";
-import { type FormEvent, useRef } from "react";
+import { type FormEvent, type Ref, useRef } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
@@ -50,12 +50,13 @@ type SignInViewProps = {
   onAction: (action: SignInAction) => void;
   onFinishedOnPhone: () => void;
   keyboardInset?: number;
+  rootRef?: Ref<HTMLDivElement>;
   xstyle?: stylex.StyleXStyles;
 };
 
 type StepProps = Omit<
   SignInViewProps,
-  "season" | "time" | "clock" | "tz" | "breakpoint" | "keyboardInset" | "xstyle"
+  "season" | "time" | "clock" | "tz" | "breakpoint" | "keyboardInset" | "rootRef" | "xstyle"
 >;
 
 const styles = stylex.create({
@@ -133,6 +134,7 @@ export function SignInView({
   tz,
   breakpoint,
   keyboardInset = 0,
+  rootRef,
   xstyle,
   ...step
 }: SignInViewProps) {
@@ -143,7 +145,7 @@ export function SignInView({
   useFieldInView(main, keyboardInset);
 
   return (
-    <div {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
+    <div ref={rootRef} {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
       <main ref={main} {...stylex.props(styles.main, signInLayout(breakpoint))}>
         <SignInHero
           season={season}

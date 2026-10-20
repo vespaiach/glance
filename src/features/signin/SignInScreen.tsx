@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import {
   fixtureSignIn,
   fixtureWeatherSearch,
@@ -19,6 +19,7 @@ import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
+import { useAmbientRoot } from "@/shell/useAmbientNavigate";
 import { SignInView } from "./components/SignInView";
 import { initialSignIn, openedLinkFrom } from "./signIn";
 import { useSignIn } from "./useSignIn";
@@ -47,6 +48,10 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
 
   useFixtureFieldFocus();
 
+  const root = useRef<HTMLDivElement>(null);
+
+  useAmbientRoot(root, usePathname());
+
   return (
     <SignInView
       state={flow.state}
@@ -63,6 +68,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       guest={flow.guest}
       onAction={flow.act}
       onFinishedOnPhone={flow.finishedOnPhone}
+      rootRef={root}
     />
   );
 }

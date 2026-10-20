@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 import {
   type AppServiceWorker,
@@ -12,6 +12,7 @@ import {
 import { idleDue, inAmbient } from "@/domain/idle";
 import { isTextField } from "../keyboard";
 import { useSheetHost } from "../SheetHost";
+import { useAmbientNavigate } from "../useAmbientNavigate";
 import { type NowStore, useNowStore } from "./now";
 import { useAccountSettings } from "./settings";
 import { useTimeZone } from "./timeZone";
@@ -52,7 +53,7 @@ export function IdleProvider({
 
   const { close } = useSheetHost();
 
-  const router = useRouter();
+  const navigate = useAmbientNavigate();
 
   const pathname = usePathname();
 
@@ -66,7 +67,7 @@ export function IdleProvider({
     pathname,
     close,
     signedOut,
-    navigate: router.push,
+    navigate,
     outdated,
     outboxEmpty,
     reload,

@@ -42,18 +42,13 @@ test("tech§4.4 leaving a sub-page for a view rises 16px, not sideways", () => {
   });
 });
 
-test("tech§4.4 entering Ambient only fades in, over 600ms", () => {
-  expect(pageMotion("/today", "/ambient")).toEqual({
-    keyframes: [{ opacity: 0 }, { opacity: 1 }],
-    options: { duration: 600, easing: "ease-in-out" },
-  });
+test("AMB-10 entering Ambient plays no page fade", () => {
+  expect(pageMotion("/today", "/ambient")).toBeUndefined();
 });
 
-test("tech§4.4 leaving Ambient only fades in, over 600ms", () => {
-  expect(pageMotion("/ambient", "/today")).toEqual({
-    keyframes: [{ opacity: 0 }, { opacity: 1 }],
-    options: { duration: 600, easing: "ease-in-out" },
-  });
+test("AMB-10 leaving Ambient plays no page fade", () => {
+  expect(pageMotion("/ambient", "/today")).toBeUndefined();
+  expect(pageMotion("/ambient", "/signin")).toBeUndefined();
 });
 
 test("tech§4.4 sign-in only fades in, both going in and out", () => {
