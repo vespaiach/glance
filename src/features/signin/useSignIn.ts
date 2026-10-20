@@ -13,6 +13,7 @@ type Options = {
   initialSetup: () => WeatherSetupState;
   auth: SignInAuth;
   fixture: FixtureAccount;
+  now: () => Date;
   onSignedIn: () => void;
 };
 
@@ -20,7 +21,6 @@ export type SignInFlow = {
   state: SignInState;
   setup: WeatherSetupFlow;
   act(action: SignInAction): void;
-  openedLink(): void;
   finishedOnPhone(): void;
 };
 
@@ -28,13 +28,12 @@ const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, 
 
 const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-const sameEmail = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-
 export function useSignIn({
   initial,
   initialSetup,
   auth,
   fixture,
+  now,
   onSignedIn,
 }: Options): SignInFlow {
   const [state, dispatch] = useReducer(signInReducer, initial);
@@ -97,7 +96,7 @@ export function useSignIn({
   const sendLink = async (email: string) => {
     const answer = await auth.link({ email, timeZone: timeZone() });
 
-    dispatch({ type: answer.ok ? "link-sent" : "link-failed" });
+    dispatch(answer.ok ? { type: "link-sent", at: now() } : { type: "link-failed" });
   };
 
   const saveName = async (draft: string) => {
@@ -122,19 +121,11 @@ export function useSignIn({
     if (next.step === "location" && next.skipping) skip(next.account);
   };
 
-  const openedLink = () => {
-    if (state.step !== "sent") return;
-
-    if (sameEmail(state.email, fixture.email)) return signedIn(fixture, true);
-
-    dispatch({ type: "opened-link" });
-  };
-
   const finishedOnPhone = () => {
     if (state.step === "phone") signedIn(fixture, false);
   };
 
-  return { state, setup, act, openedLink, finishedOnPhone };
+  return { state, setup, act, finishedOnPhone };
 }
 
 function isWaiting(state: SignInState): boolean {

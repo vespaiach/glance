@@ -14,7 +14,7 @@ import { DEMO_BUILD } from "@/shell/demo";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useFixtureFieldFocus, useKeyboardInset } from "@/shell/keyboard";
 import { useBrowserOnline } from "@/shell/providers/network";
-import { useNow } from "@/shell/providers/now";
+import { useNow, useNowStore } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
@@ -32,11 +32,14 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
 
   const signedOut = useSignedOutAccount();
 
+  const clock = useNowStore();
+
   const flow = useSignIn({
-    initial: initialSignIn(params, fixtureSignIn, link, signedOut),
+    initial: initialSignIn(params, fixtureSignIn, clock.get(), link, signedOut),
     initialSetup: () => initialWeatherSetup(params.wx, fixtureWeatherSearch),
     auth: useSignInAuth(),
     fixture: fixtureSignIn,
+    now: clock.get,
     onSignedIn: () => router.replace(viewPath("today")),
   });
 
@@ -50,7 +53,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       signedOut={signedOut}
       setup={flow.setup}
       season={useSeason()}
-      time={useNow("minute")}
+      time={useNow(flow.state.step === "sent" ? "second" : "minute")}
       clock={useAccountSettings().clock}
       tz={useTimeZone()}
       breakpoint={useBreakpoint()}
@@ -58,7 +61,6 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       online={online}
       demo={demo}
       onAction={flow.act}
-      onOpenedLink={flow.openedLink}
       onFinishedOnPhone={flow.finishedOnPhone}
     />
   );

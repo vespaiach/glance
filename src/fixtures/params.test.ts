@@ -87,6 +87,22 @@ describe("parseFixtureParams", () => {
     });
   });
 
+  it("SIGNIN-04 reads backin= and hold=1", () => {
+    expect(parseFixtureParams("signin=sent&backin=8&hold=1")).toEqual({
+      signin: "sent",
+      backin: 8,
+      hold: true,
+    });
+    expect(parseFixtureParams("backin=0")).toEqual({ backin: 0 });
+  });
+
+  it.each(["backin=11", "backin=-1", "backin=soon", "hold=yes"])(
+    "SIGNIN-04 ignores %s",
+    (query) => {
+      expect(parseFixtureParams(query)).toEqual({});
+    },
+  );
+
   it("TODAY-12 reads allday=1", () => {
     expect(parseFixtureParams("allday=1")).toEqual({ allday: true });
   });

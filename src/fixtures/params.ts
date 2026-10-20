@@ -49,6 +49,7 @@ type ChoiceParams = { [K in keyof Choices]?: Choices[K][number] };
 
 export type FixtureParams = ChoiceParams & {
   allday?: true;
+  backin?: number;
   bg?: "photo";
   clock?: "24h";
   day?: string;
@@ -58,6 +59,7 @@ export type FixtureParams = ChoiceParams & {
   famerr?: true;
   famname?: string;
   full?: true;
+  hold?: true;
   kb?: true;
   keepPlace?: true;
   now?: Date;
@@ -79,6 +81,8 @@ const OCTOBER_DAY = /^([1-9]|[12]\d|3[01])$/;
 
 const NOBODY = "none";
 
+const BACKIN_MAX = 10;
+
 export function parseFixtureParams(search: string | URLSearchParams, pathname = ""): FixtureParams {
   const query = new URLSearchParams(search);
 
@@ -96,6 +100,8 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
 
   const who = fixtureWho(query.get("who"));
 
+  const backin = parseBackin(query.get("backin"));
+
   return {
     ...readChoices(query),
     ...readFlags(query),
@@ -106,6 +112,7 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
     ...(famname && { famname }),
     ...(day && { day }),
     ...(who && { who }),
+    ...(backin !== undefined && { backin }),
   };
 }
 
@@ -153,6 +160,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("empty") === "1" && { empty: true }),
     ...(query.get("famerr") === "1" && { famerr: true }),
     ...(query.get("full") === "1" && { full: true }),
+    ...(query.get("hold") === "1" && { hold: true }),
     ...(query.get("kb") === "1" && { kb: true }),
     ...(query.get("span") === "24" && { span24: true }),
     ...(query.get("switch") === "1" && { switch: true }),
@@ -171,6 +179,12 @@ function fixtureWho(value: string | null): string[] | undefined {
   const ids = (value ?? "").split(",").flatMap((key) => fixtureMemberId(key) ?? []);
 
   return ids.length > 0 ? ids : undefined;
+}
+
+function parseBackin(value: string | null): number | undefined {
+  const seconds = parseCount(value);
+
+  return seconds !== undefined && seconds <= BACKIN_MAX ? seconds : undefined;
 }
 
 function parseCount(value: string | null): number | undefined {

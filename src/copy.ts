@@ -749,9 +749,10 @@ export const copy = {
       before: "We sent a link to ",
       after: ". Open it and this screen signs in by itself.",
       expires: "Link expires in 10 minutes",
-      opened: "I opened the link",
     },
     differentEmail: "Use a different email",
+    differentEmailIn: (seconds: number) =>
+      `Use a different email in 0:${String(seconds).padStart(2, "0")}`,
     name: {
       eyebrow: "New family account",
       title: "What’s your name?",

@@ -1,4 +1,10 @@
-import { initialSignIn, openedLinkFrom, type SignInState, signInReducer } from "./signIn";
+import {
+  initialSignIn,
+  openedLinkFrom,
+  type SignInAction,
+  type SignInState,
+  signInReducer,
+} from "./signIn";
 
 const ACCOUNT = {
   id: "0195f0a0-0000-7000-8000-00000000000a",
@@ -10,7 +16,11 @@ const form = (email: string): SignInState => ({ step: "form", email });
 
 const sending: SignInState = { step: "sending", email: "maria@example.com" };
 
-const sent: SignInState = { step: "sent", email: "maria@example.com" };
+const NOW = new Date("2026-10-09T17:41:00Z");
+
+const LATER = new Date("2026-10-09T17:45:00Z");
+
+const sent: SignInState = { step: "sent", email: "maria@example.com", sentAt: NOW };
 
 const phone: SignInState = { step: "phone", email: "maria@example.com" };
 
@@ -18,51 +28,51 @@ const locating: SignInState = { step: "location", account: ACCOUNT, returning: f
 
 describe("sign-in reducer", () => {
   it("SIGNIN-01 starts on the empty email form", () => {
-    expect(initialSignIn({}, ACCOUNT)).toEqual(form(""));
-    expect(initialSignIn({ signin: "form" }, ACCOUNT)).toEqual(form(""));
+    expect(initialSignIn({}, ACCOUNT, NOW)).toEqual(form(""));
+    expect(initialSignIn({ signin: "form" }, ACCOUNT, NOW)).toEqual(form(""));
   });
 
   it.each([
     ["sending", { step: "sending", email: "maria@example.com" }],
     ["offline", { step: "form", email: "maria@example.com" }],
-    ["sent", { step: "sent", email: "maria@example.com" }],
+    ["sent", { step: "sent", email: "maria@example.com", sentAt: NOW }],
     ["name", { step: "name", email: "maria@example.com", draft: "" }],
     ["phone", { step: "phone", email: "maria@example.com" }],
     ["expired", { step: "expired", email: "maria@example.com", onLink: false }],
     ["location", { step: "location", account: ACCOUNT, returning: false }],
     ["done", { step: "done", name: "Maria", returning: false }],
   ] as const)("tech§4.2 signin=%s opens its state with the fixture account", (signin, state) => {
-    expect(initialSignIn({ signin }, ACCOUNT)).toEqual(state);
+    expect(initialSignIn({ signin }, ACCOUNT, NOW)).toEqual(state);
   });
 
   it("SIGNIN-12 signin=expired&on=link opens the device that opened the link", () => {
-    expect(initialSignIn({ signin: "expired", on: "link" }, ACCOUNT)).toMatchObject({
+    expect(initialSignIn({ signin: "expired", on: "link" }, ACCOUNT, NOW)).toMatchObject({
       onLink: true,
     });
   });
 
   it("SIGNIN-09 signin=done&acct=returning opens Welcome back", () => {
-    expect(initialSignIn({ signin: "done", acct: "returning" }, ACCOUNT)).toMatchObject({
+    expect(initialSignIn({ signin: "done", acct: "returning" }, ACCOUNT, NOW)).toMatchObject({
       returning: true,
     });
   });
 
   it("SIGNIN-13 a screen signed out by the server opens the form with its last email", () => {
-    expect(initialSignIn({}, ACCOUNT, undefined, { email: "maria@example.com" })).toEqual(
+    expect(initialSignIn({}, ACCOUNT, NOW, undefined, { email: "maria@example.com" })).toEqual(
       form("maria@example.com"),
     );
   });
 
   it("SIGNIN-13 switch=1 opens the signed-out form with another email entered", () => {
     expect(
-      initialSignIn({ signin: "ended", switch: true }, ACCOUNT, undefined, {
+      initialSignIn({ signin: "ended", switch: true }, ACCOUNT, NOW, undefined, {
         email: "maria@example.com",
       }),
     ).toEqual(form("sam.lee@example.com"));
   });
 
   it("SIGNIN-13 an opened link still checks the link on a signed-out screen", () => {
-    expect(initialSignIn({}, ACCOUNT, "opened", { email: "maria@example.com" })).toEqual({
+    expect(initialSignIn({}, ACCOUNT, NOW, "opened", { email: "maria@example.com" })).toEqual({
       step: "opening",
     });
   });
@@ -100,7 +110,7 @@ describe("sign-in reducer", () => {
   });
 
   it.each([
-    { step: "sent", email: "maria@example.com" },
+    { step: "sent", email: "maria@example.com", sentAt: NOW },
     { step: "phone", email: "maria@example.com" },
     { step: "expired", email: "maria@example.com", onLink: false },
   ] as const)(
@@ -149,9 +159,37 @@ describe("sign-in reducer", () => {
     });
   });
 
-  it("SIGNIN-04 the server accepting the link opens Check your email", () => {
-    expect(signInReducer(sending, { type: "link-sent" })).toEqual(sent);
+  it("SIGNIN-04 the server accepting the link opens Check your email from that moment", () => {
+    expect(signInReducer(sending, { type: "link-sent", at: NOW })).toEqual(sent);
   });
+
+  it("SIGNIN-04 a new send restarts the countdown", () => {
+    const resent = [
+      { type: "back" },
+      { type: "send" },
+      { type: "link-sent", at: LATER },
+    ] as const satisfies SignInAction[];
+
+    expect(resent.reduce(signInReducer, sent)).toEqual({ ...sent, sentAt: LATER });
+  });
+
+  it("SIGNIN-08 Send a new link from the expired screen restarts the countdown", () => {
+    const expired: SignInState = { step: "expired", email: "maria@example.com", onLink: false };
+
+    const resent = [{ type: "send" }, { type: "link-sent", at: LATER }] as const;
+
+    expect(resent.reduce(signInReducer, expired)).toEqual({ ...sent, sentAt: LATER });
+  });
+
+  it.each([
+    [8, new Date("2026-10-09T17:40:58Z")],
+    [0, new Date("2026-10-09T17:40:50Z")],
+  ])(
+    "SIGNIN-04 signin=sent&backin=%i starts the countdown with that many seconds left",
+    (backin, sentAt) => {
+      expect(initialSignIn({ signin: "sent", backin }, ACCOUNT, NOW)).toEqual({ ...sent, sentAt });
+    },
+  );
 
   it("SIGNIN-03 a failed send returns to the form with the email kept", () => {
     expect(signInReducer(sending, { type: "link-failed" })).toEqual({
@@ -162,7 +200,7 @@ describe("sign-in reducer", () => {
   });
 
   it("SIGNIN-03 signin=sendfail opens the form with the fixture email and Couldn’t send", () => {
-    expect(initialSignIn({ signin: "sendfail" }, ACCOUNT)).toEqual({
+    expect(initialSignIn({ signin: "sendfail" }, ACCOUNT, NOW)).toEqual({
       step: "form",
       email: "maria@example.com",
       error: "failed",
@@ -186,7 +224,7 @@ describe("sign-in reducer", () => {
   it("SIGNIN-03 link answers are ignored outside Sending", () => {
     const typing = form("ana@example.com");
 
-    expect(signInReducer(typing, { type: "link-sent" })).toBe(typing);
+    expect(signInReducer(typing, { type: "link-sent", at: NOW })).toBe(typing);
     expect(signInReducer(typing, { type: "link-failed" })).toBe(typing);
   });
 
@@ -227,14 +265,6 @@ describe("sign-in reducer", () => {
     const typing = form("maria@example.com");
 
     expect(signInReducer(typing, { type: "status", status: { state: "expired" } })).toBe(typing);
-  });
-
-  it("SIGNIN-06 the link opened on this screen for a new email asks for a name", () => {
-    expect(signInReducer(sent, { type: "opened-link" })).toEqual({
-      step: "name",
-      email: "maria@example.com",
-      draft: "",
-    });
   });
 
   it("SIGNIN-06 Continue with a name starts saving it", () => {
@@ -340,8 +370,8 @@ describe("sign-in reducer", () => {
   });
 
   it("SIGNIN-09 the device that opened a link starts by checking it", () => {
-    expect(initialSignIn({ signin: "sent" }, ACCOUNT, "opened")).toEqual({ step: "opening" });
-    expect(initialSignIn({}, ACCOUNT, "stale")).toEqual({ step: "opening" });
+    expect(initialSignIn({ signin: "sent" }, ACCOUNT, NOW, "opened")).toEqual({ step: "opening" });
+    expect(initialSignIn({}, ACCOUNT, NOW, "stale")).toEqual({ step: "opening" });
   });
 
   it("SIGNIN-09 a link opened for a named account welcomes it", () => {

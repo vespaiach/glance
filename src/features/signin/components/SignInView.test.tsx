@@ -15,6 +15,8 @@ const EMAIL = "maria@example.com";
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
+const secondsLater = (seconds: number) => new Date(NOW.getTime() + seconds * 1_000);
+
 const ignore = () => {};
 
 const SETUP: WeatherSetupFlow = {
@@ -32,7 +34,6 @@ const SETUP: WeatherSetupFlow = {
 function renderView(state: SignInState, props: Partial<Props> = {}) {
   const handlers = {
     onAction: vi.fn(),
-    onOpenedLink: vi.fn(),
     onFinishedOnPhone: vi.fn(),
   };
 
@@ -114,7 +115,7 @@ test("SIGNIN-03 sending disables the button and shows the sending tile", () => {
 });
 
 test("SIGNIN-04 Check your email names the address and the 10-minute expiry", () => {
-  renderView({ step: "sent", email: EMAIL });
+  renderView({ step: "sent", email: EMAIL, sentAt: NOW });
 
   expect(screen.getByRole("heading", { name: "Check your email" })).toBeInTheDocument();
   expect(
@@ -128,18 +129,27 @@ test("SIGNIN-04 Check your email names the address and the 10-minute expiry", ()
   expect(screen.queryByText(LOCK)).not.toBeInTheDocument();
 });
 
-test("SIGNIN-04 Use a different email goes back and I opened the link is a dev action", async () => {
-  const { onAction, onOpenedLink } = renderView({ step: "sent", email: EMAIL });
+test("SIGNIN-04 for 10 s after the send a mono timer stands in for Use a different email", () => {
+  renderView({ step: "sent", email: EMAIL, sentAt: NOW }, { time: secondsLater(2) });
 
-  await userEvent.click(screen.getByRole("button", { name: "Use a different email" }));
-  await userEvent.click(screen.getByRole("button", { name: "I opened the link" }));
-
-  expect(onAction).toHaveBeenCalledWith({ type: "back" });
-  expect(onOpenedLink).toHaveBeenCalled();
+  expect(screen.getByRole("timer")).toHaveTextContent("Use a different email in 0:08");
+  expect(screen.queryByRole("button", { name: "Use a different email" })).not.toBeInTheDocument();
 });
 
-test("SIGNIN-04 I opened the link is hidden outside demo builds", () => {
-  renderView({ step: "sent", email: EMAIL }, { demo: false });
+test("SIGNIN-04 once the timer reaches 0 Use a different email goes back", async () => {
+  const { onAction } = renderView(
+    { step: "sent", email: EMAIL, sentAt: NOW },
+    { time: secondsLater(10) },
+  );
+
+  await userEvent.click(screen.getByRole("button", { name: "Use a different email" }));
+
+  expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  expect(onAction).toHaveBeenCalledWith({ type: "back" });
+});
+
+test("SIGNIN-04 Check your email has no I opened the link button", () => {
+  renderView({ step: "sent", email: EMAIL, sentAt: NOW }, { time: secondsLater(10) });
 
   expect(screen.queryByRole("button", { name: "I opened the link" })).not.toBeInTheDocument();
 });

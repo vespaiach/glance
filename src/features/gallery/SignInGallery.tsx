@@ -44,7 +44,8 @@ const DEMOS: readonly Demo[] = [
   { key: "sending", state: { step: "sending", email: EMAIL } },
   { key: "sendfail", state: { step: "form", email: EMAIL, error: "failed" } },
   { key: "offline", state: { step: "form", email: EMAIL }, online: false },
-  { key: "sent", state: { step: "sent", email: EMAIL } },
+  { key: "sent", state: { step: "sent", email: EMAIL, sentAt: secondsBefore(2) } },
+  { key: "sent-ready", state: { step: "sent", email: EMAIL, sentAt: secondsBefore(10) } },
   { key: "name", state: { step: "name", email: EMAIL, draft: "" } },
   { key: "name-empty", state: { step: "name", email: EMAIL, draft: "", error: "empty" } },
   { key: "location", state: LOCATION },
@@ -120,7 +121,10 @@ function signInBase(season: Season): SignInProps {
     online: true,
     demo: true,
     onAction: ignore,
-    onOpenedLink: ignore,
     onFinishedOnPhone: ignore,
   };
+}
+
+function secondsBefore(seconds: number): Date {
+  return new Date(NOW.getTime() - seconds * 1_000);
 }

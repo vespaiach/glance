@@ -136,6 +136,7 @@ test("SIGNIN-13 Use a different email from Check your email keeps the signed-out
   renderScreen({}, fakeAuth(), { email: MARIA.email, pending: 0 });
 
   await user().click(screen.getByRole("button", { name: "Send sign-in link" }));
+  await advance(10_000);
 
   await user().click(await screen.findByRole("button", { name: "Use a different email" }));
 
@@ -217,7 +218,7 @@ test("SIGNIN-04 the waiting screen polls the sign-in status every 2 s", async ()
 });
 
 test("SIGNIN-04 Use a different email stops polling", async () => {
-  const auth = renderScreen({ signin: "sent" });
+  const auth = renderScreen({ signin: "sent", backin: 0 });
 
   await user().click(screen.getByRole("button", { name: "Use a different email" }));
   await advance(4_000);
@@ -519,25 +520,6 @@ test("SIGNIN-06 a failed name save keeps the name step and says so", async () =>
   expect(screen.getByLabelText("Your name")).toHaveValue("Ana");
 });
 
-test("SIGNIN-04 [Mock] I opened the link with the fixture email welcomes Maria back", async () => {
-  const auth = renderScreen({ signin: "sent" });
-
-  await user().click(screen.getByRole("button", { name: "I opened the link" }));
-
-  expect(await screen.findByRole("heading", { name: "Welcome back, Maria" })).toBeInTheDocument();
-  expect(auth.remember).toHaveBeenCalledWith(MARIA);
-});
-
-test("SIGNIN-06 [Mock] I opened the link with a new email asks for a name", async () => {
-  renderScreen();
-
-  await sendLink("ana@example.com");
-  await user().click(await screen.findByRole("button", { name: "I opened the link" }));
-
-  expect(screen.getByRole("heading", { name: "What’s your name?" })).toBeInTheDocument();
-  expect(screen.getByText("ana@example.com")).toBeInTheDocument();
-});
-
 test("SIGNIN-07 [Mock] I finished on my phone welcomes the new account", async () => {
   const auth = renderScreen({ signin: "phone" });
 
@@ -545,6 +527,29 @@ test("SIGNIN-07 [Mock] I finished on my phone welcomes the new account", async (
 
   expect(await screen.findByRole("heading", { name: "Welcome, Maria" })).toBeInTheDocument();
   expect(auth.remember).toHaveBeenCalledWith(MARIA);
+});
+
+test("SIGNIN-04 Use a different email appears 10 s after the link is sent", async () => {
+  renderScreen();
+
+  await sendLink("maria@example.com");
+
+  expect(await screen.findByRole("timer")).toHaveTextContent("Use a different email in 0:10");
+
+  await advance(3_000);
+
+  expect(screen.getByRole("timer")).toHaveTextContent("Use a different email in 0:07");
+
+  await advance(7_000);
+
+  expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Use a different email" })).toBeInTheDocument();
+});
+
+test("SIGNIN-04 signin=sent&backin=8 holds at 0:08 on a frozen clock", () => {
+  renderScreen({ signin: "sent", backin: 8 });
+
+  expect(screen.getByRole("timer")).toHaveTextContent("Use a different email in 0:08");
 });
 
 test("SIGNIN-04 signin=sent opens Check your email for the fixture account", () => {
