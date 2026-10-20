@@ -24,6 +24,7 @@ const navigation = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/signin",
   useRouter: () => ({ push: navigation.push, replace: navigation.replace }),
 }));
 

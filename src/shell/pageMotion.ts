@@ -1,3 +1,4 @@
+import { isAmbientHop } from "./ambientTransition";
 import { VIEWS, viewPath } from "./routes";
 
 export type PageMotion = {
@@ -17,7 +18,7 @@ const SLIDE_EASING = "cubic-bezier(0.2, 0, 0, 1)";
 
 const CALM_EASING = "ease-in-out";
 
-const CALM_PATHS: readonly string[] = ["/ambient", "/signin"];
+const CALM_PATHS: readonly string[] = ["/signin"];
 
 function isCalm(path: string): boolean {
   return CALM_PATHS.includes(path);
@@ -46,7 +47,7 @@ function enter(offset: string | undefined, duration: number, easing: string): Pa
 }
 
 export function pageMotion(from: string | undefined, to: string): PageMotion | undefined {
-  if (from === undefined || from === to) return undefined;
+  if (from === undefined || from === to || isAmbientHop(from, to)) return undefined;
 
   if (isCalm(from) || isCalm(to)) return enter(undefined, CALM_MS, CALM_EASING);
 

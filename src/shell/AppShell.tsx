@@ -36,6 +36,7 @@ import {
   sidebarInset,
   sidebarReducer,
 } from "./sidebar";
+import { useAmbientNavigate, useAmbientRoot } from "./useAmbientNavigate";
 import { usePageTransition } from "./usePageTransition";
 
 const ACTIVITY_EVENTS = ["pointerdown", "keydown", "focusout"] as const;
@@ -71,9 +72,11 @@ const styles = stylex.create({
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  const router = useRouter();
+  const navigate = useAmbientNavigate();
 
   const breakpoint = useBreakpoint();
+
+  const shell = useRef<HTMLDivElement>(null);
 
   const main = usePageTransition<HTMLElement>(pathname);
 
@@ -99,6 +102,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const inset = sidebarInset(sidebar.mode, phone);
 
+  useAmbientRoot(shell, pathname);
+
   useRailOnViewChange(pathname, view, dispatch);
 
   useEscapeToRail(sidebar.mode === "expanded", dispatch, handle);
@@ -113,6 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
+      ref={shell}
       {...stylex.props(
         styles.root,
         styles.aboveKeyboard(keyboardInset),
@@ -133,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         phone={phone}
         active={view}
         onHide={() => dispatchThenFocus(dispatch, grip, { type: "hide" })}
-        onNavigate={(path) => router.push(path)}
+        onNavigate={navigate}
       />
       <SidebarHandle
         ref={handle}
@@ -150,7 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         onScrimTap={() => dispatchThenFocus(dispatch, handle, { type: "back" })}
         onNavigate={(path) => {
           dispatchThenFocus(dispatch, handle, { type: "back" });
-          router.push(path);
+          navigate(path);
         }}
       />
       <OfflineNotice breakpoint={breakpoint} inset={inset} onWeather={view === "weather"} />

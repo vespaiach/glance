@@ -13,6 +13,7 @@ const navigation = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => "/settings/ambient",
   useRouter: () => ({ push: navigation.push }),
 }));
 
