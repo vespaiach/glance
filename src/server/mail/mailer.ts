@@ -1,6 +1,8 @@
 import "server-only";
 import { copy } from "@/copy";
 import { err, type Result } from "@/domain/result";
+import type { Season } from "@/domain/schemas";
+import { signInHtml } from "./signInHtml";
 
 export type MailMessage = { to: string; subject: string; text: string; html?: string };
 
@@ -49,6 +51,24 @@ export function mailFailed(provider: string, reason: string): MailResult {
   return err("mail-failed");
 }
 
-export function signInMessage(to: string, url: string): MailMessage {
-  return { to, subject: copy.signIn.email.subject, text: copy.signIn.email.body(url) };
+export function signInMessage(to: string, url: string, season: Season): MailMessage {
+  return {
+    to,
+    subject: copy.signIn.email.subject,
+    text: signInText(to, url),
+    html: signInHtml(to, url, season),
+  };
+}
+
+function signInText(to: string, url: string): string {
+  const t = copy.signIn.email;
+
+  return [
+    t.title,
+    t.body,
+    `${t.button}: ${url}`,
+    t.expires,
+    `${t.ignoreTitle} ${t.ignoreBody}`,
+    `${t.sentToBefore}${to}${t.sentToAfter}\n${t.tagline}`,
+  ].join("\n\n");
 }

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { requestLink, verifyLink } from "./links";
 import { requireDisplay } from "./sessions";
 import { APP_URL, authHarnessPerTest, linkToken } from "./testAuth";
@@ -109,6 +110,48 @@ describe("requestLink", () => {
     expect(result).toEqual({ ok: false, error: "mail-failed" });
   });
 });
+
+describe("requestLink season", () => {
+  it("SIGNIN-12 the email takes the account's fixed season", async () => {
+    const { token } = await sendLink();
+    await verifyLink(harness.deps(), { token });
+    await saveSeason("winter");
+
+    await sendLink();
+
+    expect(harness.sent.at(-1)?.html).toContain('class="hero" bgcolor="#d5e4f1"');
+  });
+
+  it("SIGNIN-12 with an auto season the email takes the send date's season in the link's time zone", async () => {
+    const { token } = await sendLink();
+    await verifyLink(harness.deps(), { token });
+    await saveSeason("auto");
+    harness.advance(
+      Date.parse("2026-12-01T03:00:00.000Z") - Date.parse("2026-10-09T14:00:00.000Z"),
+    );
+
+    await sendLink();
+    await sendLink({ ...REQUEST, timeZone: "UTC" });
+
+    expect(harness.sent.at(-2)?.html).toContain('class="hero" bgcolor="#f0c987"');
+    expect(harness.sent.at(-1)?.html).toContain('class="hero" bgcolor="#d5e4f1"');
+  });
+
+  it("SIGNIN-12 a new email takes the send date's season", async () => {
+    await sendLink();
+
+    expect(harness.sent.at(-1)?.html).toContain('class="hero" bgcolor="#f0c987"');
+  });
+});
+
+async function saveSeason(season: string): Promise<void> {
+  await harness
+    .deps()
+    .db.run(
+      "INSERT INTO settings (account_id, json, updated_at, version) SELECT id, $1, $2, 1 FROM accounts",
+      [JSON.stringify({ ...DEFAULT_SETTINGS, season }), "2026-10-09T14:00:00.000Z"],
+    );
+}
 
 describe("verifyLink", () => {
   it("SIGNIN-12 an unknown email's link creates the account with the link's time zone and no name", async () => {
