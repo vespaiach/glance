@@ -304,6 +304,37 @@ describe("HttpTransport", () => {
     expect(calls[0]?.url).toBe("/api/auth/status");
   });
 
+  it("SIGNIN-16 auth.guestAvailable is on for a 204 and off for a 404 or no answer", async () => {
+    const { calls, fetch } = fakeFetch(
+      new Response(null, { status: 204 }),
+      json({ error: "not-found" }, 404),
+      new TypeError("offline"),
+    );
+    const auth = transport(fetch).auth;
+
+    expect(await auth.guestAvailable()).toBe(true);
+    expect(await auth.guestAvailable()).toBe(false);
+    expect(await auth.guestAvailable()).toBe(false);
+    expect(calls[0]?.url).toBe("/api/auth/guest");
+    expect(calls[0]?.init.method).toBeUndefined();
+  });
+
+  it("SIGNIN-16 auth.guest posts and answers the signed-in status", async () => {
+    const status = {
+      state: "signed-in",
+      account: { id: "a1", name: "Trinh", email: "guests@takeaglance.app" },
+      returning: true,
+      setupDone: true,
+    };
+    const { calls, fetch } = fakeFetch(json(status));
+
+    const answer = await transport(fetch).auth.guest();
+
+    expect(answer).toEqual({ ok: true, value: status });
+    expect(calls[0]?.url).toBe("/api/auth/guest");
+    expect(calls[0]?.init.method).toBe("POST");
+  });
+
   it("SIGNIN-06 auth.name posts the name and answers the account", async () => {
     const account = { id: "a1", name: "Maria", email: "m@x.com" };
     const { calls, fetch } = fakeFetch(json(account));

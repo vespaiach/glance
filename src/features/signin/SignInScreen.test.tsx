@@ -31,9 +31,13 @@ const NOW = new Date(2026, 9, 9, 10, 41);
 
 const MARIA: Account = fixtureSignIn;
 
+const TRINH: Account = { id: "a-guest", email: "guests@takeaglance.app", name: "Trinh" };
+
 type FakeAuth = {
   link: Mock<SignInAuth["link"]>;
   status: Mock<SignInAuth["status"]>;
+  guestAvailable: Mock<SignInAuth["guestAvailable"]>;
+  guest: Mock<SignInAuth["guest"]>;
   name: Mock<SignInAuth["name"]>;
   location: Mock<SignInAuth["location"]>;
   searchPlaces: Mock<SignInAuth["searchPlaces"]>;
@@ -53,6 +57,10 @@ function fakeAuth(): FakeAuth {
   return {
     link: vi.fn<SignInAuth["link"]>(async () => ok(undefined)),
     status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "waiting" })),
+    guestAvailable: vi.fn<SignInAuth["guestAvailable"]>(async () => false),
+    guest: vi.fn<SignInAuth["guest"]>(async () =>
+      ok({ state: "signed-in", account: TRINH, returning: true, setupDone: true }),
+    ),
     name: vi.fn<SignInAuth["name"]>(async (name) => ok({ ...MARIA, name })),
     location: vi.fn<SignInAuth["location"]>(async () => ok(undefined)),
     searchPlaces: vi.fn<SignInAuth["searchPlaces"]>(async () => ok([PORTLAND])),
@@ -591,4 +599,50 @@ test("SIGNIN-03 signin=sendfail clears on the next keystroke and Send retries", 
     expect.objectContaining({ email: "maria@example.com" }),
   );
   expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
+});
+
+const GUEST_BUTTON = { name: "Sign-in as guests" };
+
+test("SIGNIN-16 the form asks once whether guest sign-in is on and hides the button when off", async () => {
+  const auth = renderScreen();
+
+  await advance(0);
+
+  expect(auth.guestAvailable).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-16 Sign-in as guests welcomes the guest account back and opens Today", async () => {
+  const auth = fakeAuth();
+
+  auth.guestAvailable.mockResolvedValue(true);
+
+  renderScreen({}, auth);
+
+  await user().click(await screen.findByRole("button", GUEST_BUTTON));
+
+  expect(await screen.findByRole("heading", { name: "Welcome back, Trinh" })).toBeInTheDocument();
+  expect(auth.guest).toHaveBeenCalledOnce();
+  expect(auth.remember).toHaveBeenCalledExactlyOnceWith(TRINH);
+
+  await advance(2_200);
+
+  expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
+});
+
+test("SIGNIN-16 a failed guest sign-in shows Couldn’t sign in and can be tried again", async () => {
+  const auth = fakeAuth();
+
+  auth.guestAvailable.mockResolvedValue(true);
+  auth.guest.mockResolvedValueOnce(err("server"));
+
+  renderScreen({}, auth);
+
+  await user().click(await screen.findByRole("button", GUEST_BUTTON));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t sign in. Try again.");
+
+  await user().click(screen.getByRole("button", GUEST_BUTTON));
+
+  expect(await screen.findByRole("heading", { name: "Welcome back, Trinh" })).toBeInTheDocument();
 });

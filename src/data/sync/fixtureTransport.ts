@@ -9,6 +9,7 @@ import {
   FIXTURE_ALL_DAY,
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_FAMILY,
+  FIXTURE_GUEST_ACCOUNT,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
@@ -91,6 +92,13 @@ export function createFixtureAuth(params: FixtureParams): Transport["auth"] {
         return ok(undefined);
       }),
     status: () => online(async () => ok(authStatus(params))),
+    guestAvailable: async () => params.demo === true,
+    guest: () =>
+      online(async () => {
+        await wait(SIGN_IN_DELAY_MS);
+
+        return ok(guestStatus());
+      }),
     name: (name) => online(async () => ok({ ...FIXTURE_ACCOUNT, name: name.trim() })),
     location: () => online(async () => ok(undefined)),
     signout: () => online(async () => ok(undefined)),
@@ -289,6 +297,10 @@ function authStatus(params: FixtureParams): AuthStatus {
     returning: params.acct === "returning",
     setupDone: true,
   };
+}
+
+function guestStatus(): AuthStatus {
+  return { state: "signed-in", account: FIXTURE_GUEST_ACCOUNT, returning: true, setupDone: true };
 }
 
 function unlistedPlace(query: string): WeatherLocation[] {

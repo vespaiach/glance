@@ -348,3 +348,53 @@ test("SIGNIN-13 the notice stays while the link is sending", () => {
   expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
 });
+
+const GUEST_BUTTON = { name: "Sign-in as guests" };
+
+test("SIGNIN-16 Sign-in as guests sits next to Send sign-in link when guest sign-in is on", async () => {
+  const { onAction } = renderView({ step: "form", email: "" }, { guest: true });
+
+  await userEvent.click(screen.getByRole("button", GUEST_BUTTON));
+
+  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
+  expect(onAction).toHaveBeenCalledWith({ type: "guest" });
+});
+
+test("SIGNIN-16 Sign-in as guests is hidden when guest sign-in is off", () => {
+  renderView({ step: "form", email: "" }, { guest: false });
+
+  expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-16 Sign-in as guests is hidden on the signed-out form", () => {
+  renderView({ step: "form", email: EMAIL }, { guest: true, signedOut: SIGNED_OUT });
+
+  expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-16 Sign-in as guests is disabled while a link is sending", () => {
+  renderView({ step: "sending", email: EMAIL }, { guest: true });
+
+  expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
+});
+
+test("SIGNIN-16 Sign-in as guests is disabled offline", () => {
+  renderView({ step: "form", email: "" }, { guest: true, online: false });
+
+  expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
+});
+
+test("SIGNIN-16 both buttons are disabled while guest sign-in is on its way", () => {
+  renderView({ step: "guest", email: "" }, { guest: true });
+
+  expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeDisabled();
+});
+
+test("SIGNIN-16 a failed guest sign-in shows Couldn’t sign in under the buttons, not on the field", () => {
+  renderView({ step: "form", email: "", error: "guest" }, { guest: true });
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t sign in. Try again.");
+  expect(screen.getByLabelText("Email")).not.toHaveAccessibleDescription();
+  expect(screen.getByRole("button", GUEST_BUTTON)).toBeEnabled();
+});

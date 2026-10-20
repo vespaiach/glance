@@ -728,6 +728,8 @@ export const copy = {
       sendingTo: "Sending a link to ",
       invalid: "Enter a valid email address",
       failed: "Couldn’t send. Try again.",
+      guest: "Sign-in as guests",
+      guestFailed: "Couldn’t sign in. Try again.",
       offlineTitle: "You’re offline",
       offlineBody:
         "A link can’t be sent right now. Sending turns back on when the screen reconnects.",

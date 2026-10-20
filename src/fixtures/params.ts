@@ -53,6 +53,7 @@ export type FixtureParams = ChoiceParams & {
   bg?: "photo";
   clock?: "24h";
   day?: string;
+  demo?: true;
   details?: true;
   discard?: true;
   empty?: true;
@@ -155,6 +156,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("allday") === "1" && { allday: true }),
     ...(query.get("bg") === "photo" && { bg: "photo" }),
     ...(query.get("clock") === "24" && { clock: "24h" }),
+    ...(query.get("demo") === "1" && { demo: true }),
     ...(query.get("details") === "1" && { details: true }),
     ...(query.get("discard") === "1" && { discard: true }),
     ...(query.get("empty") === "1" && { empty: true }),

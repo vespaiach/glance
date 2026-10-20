@@ -228,6 +228,54 @@ describe("sign-in reducer", () => {
     expect(signInReducer(typing, { type: "link-failed" })).toBe(typing);
   });
 
+  it("SIGNIN-16 Sign-in as guests starts signing in with the typed email kept", () => {
+    expect(signInReducer(form("ana@"), { type: "guest" })).toEqual({
+      step: "guest",
+      email: "ana@",
+    });
+  });
+
+  it("SIGNIN-16 Sign-in as guests does nothing while a link is sending", () => {
+    expect(signInReducer(sending, { type: "guest" })).toBe(sending);
+  });
+
+  it("SIGNIN-16 the email and Send are held while guest sign-in is on its way", () => {
+    const guest: SignInState = { step: "guest", email: "ana@" };
+
+    expect(signInReducer(guest, { type: "email", email: "ana@x" })).toBe(guest);
+    expect(signInReducer(guest, { type: "send" })).toBe(guest);
+    expect(signInReducer(guest, { type: "guest" })).toBe(guest);
+  });
+
+  it("SIGNIN-16 a guest sign-in welcomes the guest account back", () => {
+    const status = {
+      state: "signed-in",
+      account: { ...ACCOUNT, name: "Trinh" },
+      returning: true,
+      setupDone: true,
+    } as const;
+
+    expect(signInReducer({ step: "guest", email: "" }, { type: "status", status })).toEqual({
+      step: "done",
+      name: "Trinh",
+      returning: true,
+    });
+  });
+
+  it("SIGNIN-16 a failed guest sign-in returns to the form with Couldn’t sign in", () => {
+    expect(signInReducer({ step: "guest", email: "ana@" }, { type: "guest-failed" })).toEqual({
+      step: "form",
+      email: "ana@",
+      error: "guest",
+    });
+  });
+
+  it("SIGNIN-16 guest answers are ignored outside a guest sign-in", () => {
+    const typing = form("ana@example.com");
+
+    expect(signInReducer(typing, { type: "guest-failed" })).toBe(typing);
+  });
+
   it("SIGNIN-04 a waiting answer keeps Check your email", () => {
     expect(signInReducer(sent, { type: "status", status: { state: "waiting" } })).toBe(sent);
   });

@@ -11,6 +11,7 @@ import {
   RotateCw,
   Smartphone,
   Undo2,
+  UserRound,
   WifiOff,
 } from "lucide-react";
 import { type FormEvent, useRef } from "react";
@@ -45,6 +46,7 @@ type SignInViewProps = {
   breakpoint: Breakpoint;
   online: boolean;
   demo: boolean;
+  guest?: boolean;
   onAction: (action: SignInAction) => void;
   onFinishedOnPhone: () => void;
   keyboardInset?: number;
@@ -115,6 +117,13 @@ const styles = stylex.create({
     letterSpacing: "0.02em",
     fontVariantNumeric: "tabular-nums",
   },
+  failure: {
+    fontFamily: type.fontMono,
+    fontSize: type.captionSize,
+    letterSpacing: type.captionLs,
+    textTransform: "uppercase",
+    color: colors.danger,
+  },
 });
 
 export function SignInView({
@@ -184,12 +193,14 @@ function EndedBanner({ signedOut, switching }: { signedOut: SignedOut; switching
   );
 }
 
-function FormStep({ state, signedOut, online, onAction }: StepProps) {
+function FormStep({ state, signedOut, online, guest, onAction }: StepProps) {
   const sending = state.step === "sending";
 
-  const email = state.step === "form" || sending ? state.email : "";
+  const busy = sending || state.step === "guest";
 
-  const error = state.step === "form" && state.error ? copy.signIn.form[state.error] : undefined;
+  const email = state.step === "form" || busy ? state.email : "";
+
+  const error = state.step === "form" ? fieldError(state.error) : undefined;
 
   const switching =
     signedOut !== undefined && isSwitchingEmail(signedOut.email, email, signedOut.pending);
@@ -197,7 +208,7 @@ function FormStep({ state, signedOut, online, onAction }: StepProps) {
   const submit = (event: FormEvent) => {
     event.preventDefault();
 
-    if (online && !sending) onAction({ type: "send" });
+    if (online && !busy) onAction({ type: "send" });
   };
 
   return (
@@ -244,11 +255,26 @@ function FormStep({ state, signedOut, online, onAction }: StepProps) {
           <Button
             type="submit"
             iconRight={sending ? undefined : ArrowRight}
-            disabled={!online || sending}
+            disabled={!online || busy}
           >
             {sending ? copy.signIn.form.sending : copy.signIn.form.send}
           </Button>
+          {guest && !signedOut && (
+            <Button
+              variant="secondary"
+              icon={UserRound}
+              disabled={!online || busy}
+              onClick={() => onAction({ type: "guest" })}
+            >
+              {copy.signIn.form.guest}
+            </Button>
+          )}
         </Actions>
+        {state.step === "form" && state.error === "guest" && (
+          <span role="alert" {...stylex.props(styles.failure)}>
+            {copy.signIn.form.guestFailed}
+          </span>
+        )}
       </form>
       {sending && (
         <StatusTile icon={Mail} pulsing>
@@ -258,6 +284,10 @@ function FormStep({ state, signedOut, online, onAction }: StepProps) {
       <LockFooter />
     </>
   );
+}
+
+function fieldError(error: "invalid" | "failed" | "guest" | undefined): string | undefined {
+  return error === "invalid" || error === "failed" ? copy.signIn.form[error] : undefined;
 }
 
 function BackButton({ onAction }: Pick<StepProps, "onAction">) {
@@ -433,6 +463,7 @@ function SignInStep({ time, ...props }: StepProps & { time: Date }) {
       return null;
     case "form":
     case "sending":
+    case "guest":
       return <FormStep {...props} />;
     case "sent":
       return (

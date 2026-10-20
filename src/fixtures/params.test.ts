@@ -87,6 +87,11 @@ describe("parseFixtureParams", () => {
     });
   });
 
+  it("SIGNIN-16 reads demo=1", () => {
+    expect(parseFixtureParams("signin=form&demo=1")).toEqual({ signin: "form", demo: true });
+    expect(parseFixtureParams("demo=yes")).toEqual({});
+  });
+
   it("SIGNIN-04 reads backin= and hold=1", () => {
     expect(parseFixtureParams("signin=sent&backin=8&hold=1")).toEqual({
       signin: "sent",

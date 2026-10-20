@@ -52,6 +52,8 @@ export interface Transport {
   auth: {
     link(request: LinkRequest): Answer<void>;
     status(): Answer<AuthStatus>;
+    guestAvailable(): Promise<boolean>;
+    guest(): Answer<AuthStatus>;
     name(name: string): Answer<Account>;
     location(request: LocationRequest): Answer<void>;
     signout(): Answer<void>;

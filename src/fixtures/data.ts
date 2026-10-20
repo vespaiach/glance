@@ -37,6 +37,12 @@ export const FIXTURE_ACCOUNT: Account = {
   name: "Maria",
 };
 
+export const FIXTURE_GUEST_ACCOUNT: Account = {
+  id: fixtureId(4, 2),
+  email: "guests@takeaglance.app",
+  name: "Trinh",
+};
+
 export const FIXTURE_OTHER_EMAIL = "sam.lee@example.com";
 
 export const FIXTURE_QR_URL = "https://glance.example.com/api/auth/verify?t=fixture-qr-code";
