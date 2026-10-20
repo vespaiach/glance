@@ -4,13 +4,12 @@
 //
 //   node scripts/glance-next.mjs
 //
-// Reads only origin/main (after a git fetch) and the open PRs, so any worktree gives the same answer.
-// On main a row is ⬜ or ✅. Work in progress is an open PR on a feat/<ID>-* branch.
+// Reads only origin/main and the origin/feat/* branches (after a git fetch), so any worktree gives the same answer.
+// On main a row is ⬜ or ✅. Work in progress is a pushed feat/<ID>-* branch; tasks merge to main without a PR.
 // Rows of a table with no "Depends on" column (External dependency) are deps only, never tasks.
 //
-//   {"action":"start","id","title","phase"}          first ⬜ row with no open PR whose deps are all ✅
-//   {"action":"resume","id","branch","pr","url"}     a task PR is open and still a draft
-//   {"action":"merge","id","pr","url"}               a task PR is open and marked ready
+//   {"action":"start","id","title","phase"}          first ⬜ row with no task branch whose deps are all ✅
+//   {"action":"resume","id","title","branch"}        a ⬜ row has a feat/<ID>-* branch on origin
 //   {"action":"blocked","waiting":[{"id","deps"}]}   ⬜ rows remain but none has its deps ✅
 //   {"action":"done"}                                every row is ✅
 //   {"action":"error","why"}                         the plan doesn't match these rules (exit 1)
@@ -84,7 +83,7 @@ function expandDeps(row, rows) {
   return [...deps];
 }
 
-run("git", "fetch", "--quiet", "origin");
+run("git", "fetch", "--quiet", "--prune", "origin");
 
 let plan;
 try {
@@ -103,19 +102,21 @@ for (const row of rows) {
     finish({ action: "error", why: `${row.id} depends on unknown ${unknown.join(", ")}` }, 1);
 }
 
-const prs = JSON.parse(
-  run("gh", "pr", "list", "--state", "open", "--json", "number,headRefName,isDraft,url"),
-);
-const prOf = (id) => prs.find((pr) => pr.headRefName.startsWith(`feat/${id}-`));
+const branches = run(
+  "git",
+  "for-each-ref",
+  "--format=%(refname:lstrip=3)",
+  "refs/remotes/origin/feat/",
+)
+  .split("\n")
+  .filter(Boolean);
+const branchOf = (id) => branches.find((name) => name.startsWith(`feat/${id}-`));
 
 const tasks = rows.filter((row) => !row.external);
 
 for (const row of tasks.filter((r) => !r.done)) {
-  const pr = prOf(row.id);
-  if (!pr) continue;
-  if (pr.isDraft)
-    finish({ action: "resume", id: row.id, branch: pr.headRefName, pr: pr.number, url: pr.url });
-  finish({ action: "merge", id: row.id, pr: pr.number, url: pr.url });
+  const branch = branchOf(row.id);
+  if (branch) finish({ action: "resume", id: row.id, title: row.title, branch });
 }
 
 const todo = tasks.filter((row) => !row.done);

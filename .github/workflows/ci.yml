@@ -1,9 +1,8 @@
 name: CI
 
+# Temporarily off: /glance-next runs these checks locally before merging. Restore push/pull_request to turn it back on.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   ci:
