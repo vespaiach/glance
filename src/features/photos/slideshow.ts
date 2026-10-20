@@ -18,6 +18,7 @@ export type SlideshowAction = { at: Date; ids: readonly string[] } & (
   | { type: "step"; delta: number }
   | { type: "toggle" }
   | { type: "pause" }
+  | { type: "pin"; photoId: string }
 );
 
 export function newestFirst(photos: readonly Photo[]): Photo[] {
@@ -77,6 +78,9 @@ export function slideIndex(show: SettledSlideshow, now: Date): number {
 }
 
 export function slideshow(current: Slideshow, action: SlideshowAction): SettledSlideshow {
+  if (action.type === "pin")
+    return settleSlideshow(openSlideshow(action.at, action.photoId), action.ids);
+
   const show = settleSlideshow(current, action.ids);
 
   const shown = slideIndex(show, action.at);

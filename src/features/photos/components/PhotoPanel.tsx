@@ -22,6 +22,7 @@ type PhotoPanelProps = {
   online: boolean;
   canUpload: boolean;
   columns: stylex.StyleXStyles;
+  frame: stylex.StyleXStyles;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   onSelect: (index: number) => void;
   onUpload: () => void;
@@ -50,8 +51,21 @@ const styles = stylex.create({
     minHeight: 44,
     paddingLeft: space.xxs,
   },
+  scroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: "auto",
+    minHeight: 0,
+    overflowY: "auto",
+    overscrollBehavior: "contain",
+    marginInline: -8,
+    paddingTop: 4,
+    paddingInline: 8,
+    paddingBottom: 8,
+  },
   grid: {
     display: "grid",
+    alignContent: "start",
     gap: space.md,
     margin: 0,
     padding: 0,
@@ -131,6 +145,7 @@ export function PhotoPanel({
   online,
   canUpload,
   columns,
+  frame,
   photoSrc,
   onSelect,
   onUpload,
@@ -141,7 +156,7 @@ export function PhotoPanel({
   const row = showsRow(summary, canUpload);
 
   return (
-    <div {...stylex.props(styles.root)}>
+    <div {...stylex.props(styles.root, frame)}>
       <div {...stylex.props(styles.header)}>
         <Eyebrow>
           {updated === undefined
@@ -155,24 +170,26 @@ export function PhotoPanel({
         )}
       </div>
       {row && <UploadRow summary={row} />}
-      <ul aria-label={copy.photos.list} {...stylex.props(styles.grid, columns)}>
-        {uploads.map((tile) => (
-          <li key={tile.id} {...stylex.props(styles.item)}>
-            <PendingUpload tile={tile} onRetry={onRetry} onRemove={onRemove} />
-          </li>
-        ))}
-        {photos.map((photo, index) => (
-          <li key={photo.id} {...stylex.props(styles.item)}>
-            <Thumb
-              photo={photo}
-              thisYear={thisYear}
-              src={photoSrc(photo.id, "thumb")}
-              selected={index === selected}
-              onSelect={() => onSelect(index)}
-            />
-          </li>
-        ))}
-      </ul>
+      <div {...stylex.props(styles.scroll)}>
+        <ul aria-label={copy.photos.list} {...stylex.props(styles.grid, columns)}>
+          {uploads.map((tile) => (
+            <li key={tile.id} {...stylex.props(styles.item)}>
+              <PendingUpload tile={tile} onRetry={onRetry} onRemove={onRemove} />
+            </li>
+          ))}
+          {photos.map((photo, index) => (
+            <li key={photo.id} {...stylex.props(styles.item)}>
+              <Thumb
+                photo={photo}
+                thisYear={thisYear}
+                src={photoSrc(photo.id, "thumb")}
+                selected={index === selected}
+                onSelect={() => onSelect(index)}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

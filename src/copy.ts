@@ -318,6 +318,8 @@ export const copy = {
     emptyBody:
       "Upload family photos to show them here, as the picture of the day and as a background.",
     waitingForUploads: "Your photos show here once they finish uploading.",
+    setBackground: "Set as background",
+    backgroundNow: "Background now · Change",
     previous: "Previous photo",
     next: "Next photo",
     pause: "Pause slideshow",

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import type { Photo } from "@/domain/schemas";
@@ -70,6 +70,7 @@ function renderView(overrides: Partial<Props> = {}) {
     online: true,
     canUpload: true,
     breakpoint: "wide",
+    backgroundId: undefined,
     photoSrc: (id, variant) => `/photos/${id}/${variant}`,
     onSelect: vi.fn<(index: number) => void>(),
     onEdit: vi.fn<(photoId: string) => void>(),
@@ -79,6 +80,8 @@ function renderView(overrides: Partial<Props> = {}) {
     onUpload: vi.fn<() => void>(),
     onRetry: vi.fn<(id: string) => void>(),
     onRemove: vi.fn<(id: string) => void>(),
+    onSetBackground: vi.fn<(photoId: string) => void>(),
+    onOpenBackground: vi.fn<() => void>(),
     ...overrides,
   };
 
@@ -275,3 +278,45 @@ test("PHOTO-06 the thumb grid lists uploads before the finished photos", () => {
 
   expect(within(grid).getAllByRole("listitem")[0]).toHaveTextContent("IMG_2041");
 });
+
+test("PHOTO-15 a featured photo that isn't the background offers Set as background", async () => {
+  const props = renderView({ selected: 1, backgroundId: APPLES.id });
+
+  await userEvent.click(screen.getByRole("button", { name: "Set as background" }));
+
+  expect(props.onSetBackground).toHaveBeenCalledWith(PUMPKINS.id);
+  expect(screen.queryByRole("button", { name: "Background now · Change" })).toBeNull();
+});
+
+test("PHOTO-15 the featured photo that is the background reads Background now · Change and opens Background", async () => {
+  const props = renderView({ selected: 1, backgroundId: PUMPKINS.id });
+
+  await userEvent.click(screen.getByRole("button", { name: "Background now · Change" }));
+
+  expect(props.onOpenBackground).toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: "Set as background" })).toBeNull();
+});
+
+test("PHOTO-16 a portrait featured photo is contained once it loads, a landscape one stays cropped", () => {
+  renderView({ selected: 1 });
+
+  const image = screen.getByRole("img", { name: "Pumpkin patch" });
+
+  expect(image).not.toHaveClass("FeaturedPhoto__styles.portrait");
+
+  loadImage(image, 1000, 1400);
+
+  expect(image).toHaveClass("FeaturedPhoto__styles.portrait");
+
+  loadImage(image, 1600, 1000);
+
+  expect(image).not.toHaveClass("FeaturedPhoto__styles.portrait");
+});
+
+function loadImage(image: HTMLElement, width: number, height: number) {
+  Object.defineProperty(image, "naturalWidth", { value: width, configurable: true });
+  Object.defineProperty(image, "naturalHeight", { value: height, configurable: true });
+  Object.defineProperty(image, "complete", { value: true, configurable: true });
+
+  fireEvent.load(image);
+}

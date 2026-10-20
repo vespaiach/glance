@@ -15,6 +15,13 @@ const featured = stylex.create({
   phone: { minHeight: 260 },
 });
 
+const panels = stylex.create({
+  wide: { height: 0, minHeight: "100%" },
+  mid: { height: 0, minHeight: "100%" },
+  narrow: {},
+  phone: {},
+});
+
 const thumbs = stylex.create({
   two: { gridTemplateColumns: "repeat(2, minmax(0, 1fr))" },
   three: { gridTemplateColumns: "repeat(3, minmax(0, 1fr))" },
@@ -24,6 +31,7 @@ export function photosLayout(breakpoint: Breakpoint) {
   return {
     grid: grids[breakpoint],
     featured: featured[breakpoint],
+    panel: panels[breakpoint],
     thumbs: thumbs[breakpoint === "narrow" ? "three" : "two"],
   };
 }

@@ -226,3 +226,16 @@ test("PHOTO-01 a chevron on the pinned photo steps from it and stays paused", ()
 
   expect(stepped).toEqual({ kind: "paused", index: 2 });
 });
+
+test("PHOTO-15 pinning pauses the slideshow on that photo", () => {
+  const at = new Date(2026, 9, 9, 10, 41);
+
+  const show = slideshow(startSlideshow(at), {
+    type: "pin",
+    photoId: "Cannon Beach",
+    at,
+    ids: ["Forest Park trail", "Apple picking", "Cannon Beach"],
+  });
+
+  expect(show).toEqual({ kind: "paused", index: 2 });
+});

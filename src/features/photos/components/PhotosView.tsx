@@ -30,6 +30,7 @@ type PhotosViewProps = {
   online: boolean;
   canUpload: boolean;
   breakpoint: Breakpoint;
+  backgroundId: string | undefined;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   onSelect: (index: number) => void;
   onEdit: (photoId: string) => void;
@@ -39,6 +40,8 @@ type PhotosViewProps = {
   onUpload: () => void;
   onRetry: (id: string) => void;
   onRemove: (id: string) => void;
+  onSetBackground: (photoId: string) => void;
+  onOpenBackground: () => void;
 };
 
 type GalleryProps = Omit<PhotosViewProps, "state" | "retryIn" | "onRetrySync"> & {
@@ -139,10 +142,13 @@ function PhotoGallery({
             src={photoSrc(featured.id, "display")}
             thisYear={rest.thisYear}
             playing={rest.playing}
+            isBackground={featured.id === rest.backgroundId}
             onEdit={() => rest.onEdit(featured.id)}
             onStep={rest.onStep}
             onTogglePlay={rest.onTogglePlay}
             onFullScreen={rest.onFullScreen}
+            onSetBackground={() => rest.onSetBackground(featured.id)}
+            onOpenBackground={rest.onOpenBackground}
             frame={layout.featured}
           />
         ) : (
@@ -161,6 +167,7 @@ function PhotoGallery({
         online={rest.online}
         canUpload={rest.canUpload}
         columns={layout.thumbs}
+        frame={layout.panel}
         photoSrc={photoSrc}
         onSelect={rest.onSelect}
         onUpload={rest.onUpload}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useReducer } from "react";
-import { fixtureUploads, usePhotoSrc, usePhotos } from "@/data/repos";
-import type { Photo } from "@/domain/schemas";
+import { fixtureUploads, usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
+import { changeBackground } from "@/domain/background";
+import type { AccountSettings, Photo } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
@@ -28,7 +29,11 @@ import { initialUploads } from "./uploads";
 import { usePhotoPicker } from "./usePhotoPicker";
 import { useUploads } from "./useUploads";
 
+const BACKGROUND_PATH = "/settings/background";
+
 export function PhotosScreen() {
+  const router = useRouter();
+
   const breakpoint = useBreakpoint();
 
   const photoParam = useSearchParams().get("photo");
@@ -39,9 +44,13 @@ export function PhotosScreen() {
 
   const photoSrc = usePhotoSrc();
 
-  const { clock: clockFormat } = useAccountSettings();
+  const { clock: clockFormat, background } = useAccountSettings();
 
-  const zone = useSyncedZone(shownPhotos(usePhotos()));
+  const repo = useSettingsRepo();
+
+  const photos = usePhotos();
+
+  const zone = useSyncedZone(shownPhotos(photos));
 
   const state = zone.state;
 
@@ -85,6 +94,20 @@ export function PhotosScreen() {
     sheets.open({ kind: "photo", id });
   };
 
+  const setBackground = (photoId: string) => {
+    repo.update({
+      background: changeBackground(
+        background,
+        photos ?? [],
+        { mode: "photo", photoId },
+        clock.get(),
+        tz,
+      ),
+    });
+
+    dispatch({ type: "pin", photoId, at: clock.get(), ids });
+  };
+
   return (
     <>
       {picker.input}
@@ -101,6 +124,7 @@ export function PhotosScreen() {
         online={online}
         canUpload={breakpoint !== "phone"}
         breakpoint={breakpoint}
+        backgroundId={photoBackground(background)}
         photoSrc={photoSrc}
         onSelect={(index) => dispatch({ type: "select", index, at: clock.get(), ids })}
         onEdit={editPhoto}
@@ -110,6 +134,8 @@ export function PhotosScreen() {
         onUpload={picker.open}
         onRetry={uploads.retry}
         onRemove={uploads.remove}
+        onSetBackground={setBackground}
+        onOpenBackground={() => router.push(BACKGROUND_PATH)}
       />
       {full.kind === "open" && featured && (
         <FullScreenPhoto
@@ -132,4 +158,8 @@ export function PhotosScreen() {
 
 function shownPhotos(photos: readonly Photo[] | undefined): readonly Photo[] | undefined {
   return photos && newestFirst(photos);
+}
+
+function photoBackground(background: AccountSettings["background"]): string | undefined {
+  return background.mode === "photo" ? background.photoId : undefined;
 }
