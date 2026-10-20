@@ -36,9 +36,11 @@ export function useFixtureParams(): FixtureParams {
   return useContext(FixtureParamsContext);
 }
 
-export function shellOptions(params: FixtureParams): ShellOptions {
+export function shellOptions(params: FixtureParams, openedAt: Date): ShellOptions {
+  const frozenAt = params.now ?? (params.hold ? openedAt : undefined);
+
   return {
-    ...(params.now && { frozenAt: params.now }),
+    ...(frozenAt && { frozenAt }),
     overrides: {
       ...(params.clock && { clock: params.clock }),
       ...(params.season && { season: params.season }),
@@ -59,7 +61,7 @@ export function useShellSetup(demo: boolean): ShellSetup | undefined {
   useEffect(() => {
     const params = fixtureParamsFor(demo, window.location.search, window.location.pathname);
 
-    setSetup({ params, options: shellOptions(params) });
+    setSetup({ params, options: shellOptions(params, new Date()) });
   }, [demo]);
 
   return setup;

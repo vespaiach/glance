@@ -17,10 +17,11 @@ import { type FormEvent, useRef } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
-import { firstName, isSwitchingEmail } from "@/domain/signIn";
+import { differentEmailIn, firstName, isSwitchingEmail } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
 import { PlaceForm, type WeatherSetupFlow } from "@/features/weather";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
+import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { useFieldInView } from "@/ui/fieldInView";
@@ -45,7 +46,6 @@ type SignInViewProps = {
   online: boolean;
   demo: boolean;
   onAction: (action: SignInAction) => void;
-  onOpenedLink: () => void;
   onFinishedOnPhone: () => void;
   keyboardInset?: number;
   xstyle?: stylex.StyleXStyles;
@@ -103,6 +103,18 @@ const styles = stylex.create({
     paddingTop: space.lg,
     boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
   },
+  backTimer: {
+    display: "flex",
+    alignItems: "center",
+    minHeight: 44,
+    paddingInline: 12,
+    fontFamily: type.fontMono,
+    fontSize: 14,
+    fontWeight: 400,
+    textTransform: "uppercase",
+    letterSpacing: "0.02em",
+    fontVariantNumeric: "tabular-nums",
+  },
 });
 
 export function SignInView({
@@ -132,7 +144,7 @@ export function SignInView({
           xstyle={tall && styles.heroTall}
         />
         <div {...stylex.props(styles.panel)}>
-          <SignInStep {...step} />
+          <SignInStep {...step} time={time} />
         </div>
       </main>
     </div>
@@ -264,7 +276,15 @@ function ResendButton({ onAction }: Pick<StepProps, "onAction">) {
   );
 }
 
-function SentStep({ email, demo, onAction, onOpenedLink }: StepProps & { email: string }) {
+function BackTimer({ seconds }: { seconds: number }) {
+  return (
+    <span role="timer" aria-live="off" {...stylex.props(styles.backTimer)}>
+      {copy.signIn.differentEmailIn(seconds)}
+    </span>
+  );
+}
+
+function SentStep({ email, backIn, onAction }: StepProps & { email: string; backIn: number }) {
   const { sent } = copy.signIn;
 
   return (
@@ -274,8 +294,7 @@ function SentStep({ email, demo, onAction, onOpenedLink }: StepProps & { email: 
       </Heading>
       <StatusTile icon={Mail}>{sent.expires}</StatusTile>
       <Actions>
-        {demo && <Button onClick={onOpenedLink}>{sent.opened}</Button>}
-        <BackButton onAction={onAction} />
+        {backIn > 0 ? <BackTimer seconds={backIn} /> : <BackButton onAction={onAction} />}
       </Actions>
     </>
   );
@@ -406,7 +425,7 @@ function DoneStep({ state }: { state: Extract<SignInState, { step: "done" }> }) 
   );
 }
 
-function SignInStep(props: StepProps) {
+function SignInStep({ time, ...props }: StepProps & { time: Date }) {
   const { state } = props;
 
   switch (state.step) {
@@ -416,7 +435,9 @@ function SignInStep(props: StepProps) {
     case "sending":
       return <FormStep {...props} />;
     case "sent":
-      return <SentStep {...props} email={state.email} />;
+      return (
+        <SentStep {...props} email={state.email} backIn={differentEmailIn(state.sentAt, time)} />
+      );
     case "name":
       return <NameStep {...props} state={state} />;
     case "location":

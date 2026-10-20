@@ -1,12 +1,12 @@
 import { type AuthStatus, type FixtureParams, fixtureOtherEmail } from "@/data/repos";
 import type { Account } from "@/domain/schemas";
-import { isValidEmail } from "@/domain/signIn";
+import { DIFFERENT_EMAIL_WAIT_S, isValidEmail } from "@/domain/signIn";
 
 export type SignInState =
   | { step: "opening" }
   | { step: "form"; email: string; error?: "invalid" | "failed" }
   | { step: "sending"; email: string }
-  | { step: "sent"; email: string }
+  | { step: "sent"; email: string; sentAt: Date }
   | { step: "name"; email: string; draft: string; error?: "empty" | "failed"; saving?: true }
   | { step: "location"; account: Account; returning: boolean; skipping?: true }
   | { step: "phone"; email: string }
@@ -19,18 +19,17 @@ export type SignInAction =
   | { type: "back" }
   | { type: "name"; draft: string }
   | { type: "submit-name" }
-  | { type: "link-sent" }
+  | { type: "link-sent"; at: Date }
   | { type: "link-failed" }
   | { type: "status"; status: AuthStatus }
   | { type: "status-failed" }
-  | { type: "opened-link" }
   | { type: "named"; account: Account }
   | { type: "name-failed" }
   | { type: "skip" }
   | { type: "skip-failed" }
   | { type: "setup-done" };
 
-export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct" | "switch">;
+export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct" | "switch" | "backin">;
 
 export type FixtureAccount = Account & { name: string };
 
@@ -51,15 +50,13 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
     case "submit-name":
       return submitName(state);
     case "link-sent":
-      return linkAnswered(state, true);
+      return linkSent(state, action.at);
     case "link-failed":
-      return linkAnswered(state, false);
+      return linkFailed(state);
     case "status":
       return statusAnswered(state, action.status);
     case "status-failed":
       return state.step === "opening" ? EMPTY_FORM : state;
-    case "opened-link":
-      return state.step === "sent" ? { step: "name", email: state.email, draft: "" } : state;
     case "named":
       return named(state, action.account);
     case "name-failed":
@@ -82,6 +79,7 @@ export function openedLinkFrom(search: string): OpenedLink | undefined {
 export function initialSignIn(
   fixture: SignInFixture,
   account: FixtureAccount,
+  now: Date,
   link?: OpenedLink,
   signedOut?: { email: string },
 ): SignInState {
@@ -94,9 +92,10 @@ export function initialSignIn(
 
   switch (fixture.signin) {
     case "sending":
-    case "sent":
     case "phone":
       return { step: fixture.signin, email };
+    case "sent":
+      return { step: "sent", email, sentAt: fixtureSentAt(now, fixture.backin) };
     case "offline":
       return { step: "form", email };
     case "sendfail":
@@ -138,12 +137,20 @@ function submitName(state: SignInState): SignInState {
   return { step: "name", email: state.email, draft: state.draft, saving: true };
 }
 
-function linkAnswered(state: SignInState, sent: boolean): SignInState {
+function linkSent(state: SignInState, at: Date): SignInState {
   if (state.step !== "sending") return state;
 
-  if (sent) return { step: "sent", email: state.email };
+  return { step: "sent", email: state.email, sentAt: at };
+}
+
+function linkFailed(state: SignInState): SignInState {
+  if (state.step !== "sending") return state;
 
   return { step: "form", email: state.email, error: "failed" };
+}
+
+function fixtureSentAt(now: Date, backin = DIFFERENT_EMAIL_WAIT_S): Date {
+  return new Date(now.getTime() - (DIFFERENT_EMAIL_WAIT_S - backin) * 1_000);
 }
 
 function signedIn(account: Account, returning: boolean, setupDone: boolean): SignInState {

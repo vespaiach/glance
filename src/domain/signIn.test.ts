@@ -1,6 +1,23 @@
-import { firstName, isSwitchingEmail, isValidEmail } from "./signIn";
+import { differentEmailIn, firstName, isSwitchingEmail, isValidEmail } from "./signIn";
+
+const SENT_AT = new Date("2026-10-09T17:41:00Z");
+
+const after = (ms: number) => new Date(SENT_AT.getTime() + ms);
 
 describe("sign-in rules", () => {
+  it.each([
+    [0, 10],
+    [500, 10],
+    [1_000, 9],
+    [2_400, 8],
+    [9_999, 1],
+    [10_000, 0],
+    [60_000, 0],
+    [-3_000, 10],
+  ])("SIGNIN-04 %i ms after the send, Use a different email is %i s away", (ms, seconds) => {
+    expect(differentEmailIn(SENT_AT, after(ms))).toBe(seconds);
+  });
+
   it.each(["maria@example.com", "a.b+c@mail.example.org", "  maria@example.com  "])(
     "SIGNIN-02 accepts %j as name@domain.tld",
     (email) => {

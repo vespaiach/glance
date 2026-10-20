@@ -4,28 +4,38 @@ import { fixtureSheet, shellOptions } from "./fixtureOptions";
 const NOW = new Date("2026-10-09T10:41:00");
 
 test("TIME-03 now= freezes the shell clock", () => {
-  expect(shellOptions({ now: NOW }).frozenAt).toBe(NOW);
+  expect(shellOptions({ now: NOW }, NOW).frozenAt).toBe(NOW);
+});
+
+test("SIGNIN-04 hold=1 freezes the shell clock at the moment it opens", () => {
+  expect(shellOptions({ hold: true }, NOW).frozenAt).toBe(NOW);
+});
+
+test("TIME-03 now= wins over hold=1", () => {
+  const opened = new Date("2026-10-20T08:00:00");
+
+  expect(shellOptions({ now: NOW, hold: true }, opened).frozenAt).toBe(NOW);
 });
 
 test("SET-02 clock= and season= override the saved settings", () => {
-  expect(shellOptions({ clock: "24h", season: "winter" }).overrides).toEqual({
+  expect(shellOptions({ clock: "24h", season: "winter" }, NOW).overrides).toEqual({
     clock: "24h",
     season: "winter",
   });
 });
 
 test("OFF-01 net=offline shows the offline pill at once", () => {
-  expect(shellOptions({ net: "offline" }).pillDelayMs).toBe(0);
-  expect(shellOptions({ net: "loading" }).pillDelayMs).toBeUndefined();
+  expect(shellOptions({ net: "offline" }, NOW).pillDelayMs).toBe(0);
+  expect(shellOptions({ net: "loading" }, NOW).pillDelayMs).toBeUndefined();
 });
 
 test("PHOTO-09 upload=offline shows the offline pill at once, as the frames do", () => {
-  expect(shellOptions({ upload: "offline" }).pillDelayMs).toBe(0);
-  expect(shellOptions({ upload: "error" }).pillDelayMs).toBeUndefined();
+  expect(shellOptions({ upload: "offline" }, NOW).pillDelayMs).toBe(0);
+  expect(shellOptions({ upload: "error" }, NOW).pillDelayMs).toBeUndefined();
 });
 
 test("tech§4.3 no fixture params leave every provider on its defaults", () => {
-  expect(shellOptions({})).toEqual({ overrides: {} });
+  expect(shellOptions({}, NOW)).toEqual({ overrides: {} });
 });
 
 test("tech§6 sheet=event opens the fixture event with its time state", () => {
