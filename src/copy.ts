@@ -794,8 +794,19 @@ export const copy = {
     resend: "Send a new link",
     email: {
       subject: "Your Glance sign-in link",
-      body: (url: string) =>
-        `Open this link to sign in to Glance:\n\n${url}\n\nIt works once, for 10 minutes. New here? The same link sets up your family’s Glance.\n\nIf you didn’t ask for it, you can ignore this email.`,
+      preheader: "Tap to sign in. The link works once, for 10 minutes.",
+      header: "Glance",
+      eyebrow: "Sign-in link",
+      title: "Sign in to Glance",
+      body: "Tap the button and the screen that asked for this link signs in by itself. New here? The same link sets up your family’s Glance.",
+      button: "Sign in",
+      expires: "Works once, for 10 minutes",
+      fallback: "Button not working? Copy this link into your browser:",
+      ignoreTitle: "Didn’t ask for this?",
+      ignoreBody: "You can ignore this email. No one can sign in unless this link is opened.",
+      sentToBefore: "Sent to ",
+      sentToAfter: " because it was entered on a Glance screen.",
+      tagline: "Glance · Calendar, weather, notes and photos for your family.",
     },
     done: {
       eyebrow: "Signed in",

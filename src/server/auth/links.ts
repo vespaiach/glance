@@ -1,6 +1,8 @@
 import "server-only";
 import { uuidv7 } from "@/domain/id";
 import { err, ok, type Result } from "@/domain/result";
+import type { AccountSettings, Season } from "@/domain/schemas";
+import { seasonFor } from "@/domain/season";
 import type { Db } from "../db/db";
 import { signInMessage } from "../mail/mailer";
 import { type AccountRow, accountByEmail, accountById } from "./account";
@@ -43,7 +45,11 @@ export async function requestLink(
 
   await storeLink(deps, { address, token, pendingId, timeZone });
 
-  const sent = await deps.mailer.send(signInMessage(address, verifyUrl(deps.appUrl, token)));
+  const season = await emailSeason(deps, address, timeZone);
+
+  const sent = await deps.mailer.send(
+    signInMessage(address, verifyUrl(deps.appUrl, token), season),
+  );
 
   return sent.ok ? ok({ pendingId }) : sent;
 }
@@ -130,6 +136,19 @@ async function storeLink(
       [hashToken(link.token), link.address, link.pendingId, link.timeZone, expiresAt],
     );
   });
+}
+
+async function emailSeason(
+  { db, now }: AuthDeps,
+  address: string,
+  timeZone: string,
+): Promise<Season> {
+  const row = await db.one<{ season: AccountSettings["season"] | null }>(
+    "SELECT s.json ->> 'season' AS season FROM accounts a JOIN settings s ON s.account_id = a.id WHERE a.email = $1",
+    [address],
+  );
+
+  return seasonFor(row?.season ?? "auto", now(), timeZone);
 }
 
 function linkByToken(db: Db, token: string): Promise<LinkRow | undefined> {
