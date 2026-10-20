@@ -9,6 +9,7 @@ import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { CueEyebrow } from "./CueEyebrow";
 
 type HeroSummaryProps = {
   hero: TodayHero<CalendarEvent>;
@@ -95,7 +96,7 @@ export function HeroSummary({ hero, members, clock, tz, onOpenEvent }: HeroSumma
       {...stylex.props(styles.root, styles.button, press.scale)}
     >
       <span {...stylex.props(styles.eyebrow)}>
-        <Eyebrow>{hero.kind === "now" ? copy.today.hero.now : copy.today.hero.next}</Eyebrow>
+        <CueEyebrow>{hero.kind === "now" ? copy.today.hero.now : copy.today.hero.next}</CueEyebrow>
         {countdown && <span {...stylex.props(styles.pill)}>{countdown}</span>}
       </span>
       <span {...stylex.props(styles.title)}>{hero.event.title}</span>

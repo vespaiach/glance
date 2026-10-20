@@ -1,7 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
@@ -11,6 +11,7 @@ import { type Clock, formatClock, formatHour } from "@/domain/time";
 import { season } from "@/theme/seasons.stylex";
 import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { BackLink } from "@/ui/BackLink";
 import { Button } from "@/ui/Button";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
@@ -220,8 +221,9 @@ export function AmbientScheduleView({
 
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
+      <BackLink label={text.back} onBack={onBack} />
       <div {...stylex.props(styles.panel)}>
-        <Header onBack={onBack} />
+        <Header />
         <div {...stylex.props(styles.group)}>
           <Eyebrow>{text.schedule}</Eyebrow>
           <div {...stylex.props(styles.tabs)}>
@@ -282,12 +284,9 @@ function barTicks(clock: Clock): [string, string][] {
   ];
 }
 
-function Header({ onBack }: { onBack: () => void }) {
+function Header() {
   return (
     <div {...stylex.props(styles.header)}>
-      <Button variant="ghost" icon={ChevronLeft} onClick={onBack}>
-        {text.back}
-      </Button>
       <h2 {...stylex.props(styles.title)}>{text.title}</h2>
       <span {...stylex.props(styles.intro)}>{text.intro}</span>
     </div>
