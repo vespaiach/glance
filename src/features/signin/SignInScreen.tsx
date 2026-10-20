@@ -60,6 +60,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       keyboardInset={useKeyboardInset()}
       online={online}
       demo={demo}
+      guest={flow.guest}
       onAction={flow.act}
       onFinishedOnPhone={flow.finishedOnPhone}
     />

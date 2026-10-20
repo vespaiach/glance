@@ -6,6 +6,7 @@ import { env } from "../env";
 import { mailer } from "../mail";
 import * as account from "./account";
 import type { AuthDeps } from "./deps";
+import * as guest from "./guest";
 import * as links from "./links";
 import * as qr from "./qr";
 import { createRateLimiter } from "./rateLimit";
@@ -43,6 +44,14 @@ export function voidQrLink(display: SignedInDisplay, url: string): Promise<void>
   return qr.voidQrLink(deps().db, display, url);
 }
 
+export function guestAvailable(): Promise<boolean> {
+  return guest.guestAvailable(deps());
+}
+
+export function signInAsGuest(input: guest.GuestInput) {
+  return guest.signInAsGuest(deps(), input);
+}
+
 export function authStatus(input: status.StatusInput) {
   return status.authStatus(deps(), input);
 }
@@ -71,10 +80,12 @@ function deps(): AuthDeps {
     now: () => new Date(),
     mailer: mailer(),
     appUrl: env().APP_URL,
+    guestEmail: env().GUEST_EMAIL,
     limits: {
       email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
       ip: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
       qr: createRateLimiter({ limit: 30, windowMs: ONE_HOUR }),
+      guest: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
     },
   };
 

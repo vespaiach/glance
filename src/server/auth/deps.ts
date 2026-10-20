@@ -8,7 +8,8 @@ export type AuthDeps = {
   now: () => Date;
   mailer: Mailer;
   appUrl: string;
-  limits: { email: RateLimiter; ip: RateLimiter; qr: RateLimiter };
+  guestEmail?: string;
+  limits: { email: RateLimiter; ip: RateLimiter; qr: RateLimiter; guest: RateLimiter };
 };
 
 export type Clocked = Pick<AuthDeps, "db" | "now">;

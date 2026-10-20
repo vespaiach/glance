@@ -75,6 +75,18 @@ describe("parseEnv", () => {
     );
   });
 
+  it("tech§6.5 reads an optional GUEST_EMAIL, trimmed and lowercased", () => {
+    expect(parseEnv({ ...VALID, GUEST_EMAIL: " Guests@TakeAGlance.app " }).GUEST_EMAIL).toBe(
+      "guests@takeaglance.app",
+    );
+  });
+
+  it("tech§6.5 rejects a GUEST_EMAIL that isn't an address", () => {
+    expect(() => parseEnv({ ...VALID, GUEST_EMAIL: "guests" })).toThrow(
+      "Invalid server config: GUEST_EMAIL",
+    );
+  });
+
   it("tech§6.5 PHOTO_STORE=s3 reads the S3 bucket without DATA_DIR", () => {
     expect(parseEnv(S3).storage).toEqual({
       kind: "s3",

@@ -9,6 +9,7 @@ import {
   FIXTURE_AMBIENT_WEATHER,
   FIXTURE_EVENTS,
   FIXTURE_FAMILY,
+  FIXTURE_GUEST_ACCOUNT,
   FIXTURE_LOCATED_PLACE,
   FIXTURE_MANY_EVENTS,
   FIXTURE_NOTES,
@@ -669,6 +670,38 @@ describe("FixtureTransport auth", () => {
     expect(await transport({ signin: "done", acct: "returning" }).auth.status()).toEqual({
       ok: true,
       value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: true, setupDone: true },
+    });
+  });
+
+  it("SIGNIN-16 guest sign-in is on only with demo=1", async () => {
+    expect(await transport({ demo: true }).auth.guestAvailable()).toBe(true);
+    expect(await transport().auth.guestAvailable()).toBe(false);
+  });
+
+  it("SIGNIN-16 signs in as the returning guest account after 1.4 s", async () => {
+    useTimers();
+    const pending = transport({ demo: true }).auth.guest();
+
+    const early = settleWithin(pending, 1_399);
+    await vi.advanceTimersByTimeAsync(1_399);
+    expect(await early).toBe(NEVER);
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toEqual({
+      ok: true,
+      value: {
+        state: "signed-in",
+        account: FIXTURE_GUEST_ACCOUNT,
+        returning: true,
+        setupDone: true,
+      },
+    });
+  });
+
+  it("SIGNIN-16 signin=offline can't sign in as guests", async () => {
+    expect(await transport({ signin: "offline", demo: true }).auth.guest()).toEqual({
+      ok: false,
+      error: "network",
     });
   });
 

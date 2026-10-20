@@ -4,8 +4,9 @@ import { DIFFERENT_EMAIL_WAIT_S, isValidEmail } from "@/domain/signIn";
 
 export type SignInState =
   | { step: "opening" }
-  | { step: "form"; email: string; error?: "invalid" | "failed" }
+  | { step: "form"; email: string; error?: "invalid" | "failed" | "guest" }
   | { step: "sending"; email: string }
+  | { step: "guest"; email: string }
   | { step: "sent"; email: string; sentAt: Date }
   | { step: "name"; email: string; draft: string; error?: "empty" | "failed"; saving?: true }
   | { step: "location"; account: Account; returning: boolean; skipping?: true }
@@ -16,6 +17,8 @@ export type SignInState =
 export type SignInAction =
   | { type: "email"; email: string }
   | { type: "send" }
+  | { type: "guest" }
+  | { type: "guest-failed" }
   | { type: "back" }
   | { type: "name"; draft: string }
   | { type: "submit-name" }
@@ -43,6 +46,10 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
       return state.step === "form" ? { step: "form", email: action.email } : state;
     case "send":
       return send(state);
+    case "guest":
+      return state.step === "form" ? { step: "guest", email: state.email } : state;
+    case "guest-failed":
+      return state.step === "guest" ? { step: "form", email: state.email, error: "guest" } : state;
     case "back":
       return back(state);
     case "name":
@@ -172,8 +179,16 @@ function linkChecked(status: AuthStatus): SignInState {
   }
 }
 
+function guestChecked(email: string, status: AuthStatus): SignInState {
+  if (status.state !== "signed-in") return { step: "form", email, error: "guest" };
+
+  return signedIn(status.account, status.returning, status.setupDone);
+}
+
 function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
   if (state.step === "opening") return linkChecked(status);
+
+  if (state.step === "guest") return guestChecked(state.email, status);
 
   if (state.step !== "sent" && state.step !== "phone") return state;
 

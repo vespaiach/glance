@@ -48,6 +48,8 @@ export function createHttpTransport({
     auth: {
       link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
       status: () => send<AuthStatus>("/api/auth/status"),
+      guestAvailable: async () => (await send<void>("/api/auth/guest")).ok,
+      guest: () => send<AuthStatus>("/api/auth/guest", { method: "POST" }),
       name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
       location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
       signout: () => send<void>("/api/auth/signout", { method: "POST" }),
