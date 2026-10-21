@@ -96,7 +96,7 @@ test("SET-01 the header reads the signed-in account's name and email", async () 
 test("SET-02 choosing a season saves it to the account settings", async () => {
   renderSettings();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Winter" }));
+  await userEvent.click(await screen.findByRole("radio", { name: "Winter" }));
 
   await waitFor(async () =>
     expect((await store.db.settings.get(store.accountId))?.season).toBe("winter"),

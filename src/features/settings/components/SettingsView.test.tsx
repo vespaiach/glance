@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
@@ -81,14 +81,28 @@ function renderView(overrides: Partial<Props> = {}) {
   return props;
 }
 
-function pills(name: string) {
-  return within(screen.getByRole("group", { name }));
+function radios(name: string) {
+  return within(screen.getByRole("radiogroup", { name }));
 }
 
-function selectedPill(name: string) {
-  return pills(name)
-    .getAllByRole("button")
-    .find((pill) => pill.ariaPressed === "true")?.textContent;
+function checkedRadio(name: string) {
+  return radios(name)
+    .getAllByRole("radio")
+    .find((radio) => radio.ariaChecked === "true")?.textContent;
+}
+
+function idleSlider() {
+  return screen.getByRole("slider", { name: "Minutes before going back to Today" });
+}
+
+function notesSlider() {
+  return screen.getByRole("slider", { name: "Days before notes are removed" });
+}
+
+function rowsText() {
+  return screen.getAllByText(
+    /^(Location|Season|Background|Clock|Temperature|Hide sidebar when idle)$/,
+  );
 }
 
 test("SET-01 the header names the signed-in person and email", () => {
@@ -104,21 +118,31 @@ test("SET-01 the header names the signed-in person and email", () => {
 test("SET-02 Auto follows the month and names the season now", () => {
   renderView();
 
-  expect(selectedPill("Season")).toBe("Auto");
+  expect(checkedRadio("Season")).toBe("Auto");
   expect(screen.getByText("Follows the month · now Fall")).toBeInTheDocument();
 });
 
 test("SET-02 a fixed season reads Fixed to that season", () => {
   renderView({ settings: { ...DEFAULT_SETTINGS, season: "winter" }, season: "winter" });
 
-  expect(selectedPill("Season")).toBe("Winter");
+  expect(checkedRadio("Season")).toBe("Winter");
   expect(screen.getByText("Fixed to Winter")).toBeInTheDocument();
+});
+
+test("SET-02 the season radios list Auto and the four seasons in order", () => {
+  renderView();
+
+  expect(
+    radios("Season")
+      .getAllByRole("radio")
+      .map((radio) => radio.textContent),
+  ).toEqual(["Auto", "Spring", "Summer", "Fall", "Winter"]);
 });
 
 test("SET-02 choosing a season saves it", async () => {
   const props = renderView();
 
-  await userEvent.click(pills("Season").getByRole("button", { name: "Spring" }));
+  await userEvent.click(radios("Season").getByRole("radio", { name: "Spring" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ season: "spring" });
 });
@@ -141,33 +165,51 @@ test("SET-03 the Background row opens the Background page", async () => {
   expect(props.onOpenBackground).toHaveBeenCalled();
 });
 
-test("SET-04 the clock tabs save 12-hour or 24-hour", async () => {
+test("SET-04 the clock radios save 12-hour or 24-hour", async () => {
   const props = renderView();
 
-  expect(selectedPill("Clock")).toBe("12-hour");
+  expect(checkedRadio("Clock")).toBe("12-hour");
   expect(screen.getByText("Used for every time on the screen")).toBeInTheDocument();
 
-  await userEvent.click(pills("Clock").getByRole("button", { name: "24-hour" }));
+  await userEvent.click(radios("Clock").getByRole("radio", { name: "24-hour" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ clock: "24h" });
 });
 
-test("SET-05 the temperature tabs save Fahrenheit or Celsius", async () => {
+test("SET-05 the temperature radios save Fahrenheit or Celsius", async () => {
   const props = renderView();
 
-  expect(selectedPill("Temperature")).toBe("Fahrenheit");
+  expect(checkedRadio("Temperature")).toBe("Fahrenheit");
   expect(screen.getByText("Weather is shown without a unit letter")).toBeInTheDocument();
 
-  await userEvent.click(pills("Temperature").getByRole("button", { name: "Celsius" }));
+  await userEvent.click(radios("Temperature").getByRole("radio", { name: "Celsius" }));
 
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
 
-test("SET-05 the Settings panel has no Hide bar when idle row, so Temperature is last", () => {
+test("SET-05 Hide sidebar when idle is the last row, after Temperature", () => {
   renderView();
 
-  expect(screen.queryByText("Hide bar when idle")).not.toBeInTheDocument();
-  expect(pills("Temperature").getAllByRole("button").at(-1)).toHaveTextContent("Celsius");
+  expect(rowsText().map((row) => row.textContent)).toEqual([
+    "Location",
+    "Season",
+    "Background",
+    "Clock",
+    "Temperature",
+    "Hide sidebar when idle",
+  ]);
+});
+
+test("SET-05 the Hide sidebar when idle switch shows and saves the setting", async () => {
+  const props = renderView({ settings: { ...DEFAULT_SETTINGS, hideSidebarWhenIdle: true } });
+
+  const toggle = screen.getByRole("switch", { name: "Hide sidebar when idle" });
+
+  expect(toggle).toHaveAttribute("aria-checked", "true");
+
+  await userEvent.click(toggle);
+
+  expect(props.onChange).toHaveBeenCalledWith({ hideSidebarWhenIdle: false });
 });
 
 test("SET-06 the Ambient tile shows the hours in the clock format and opens the Ambient screen page", async () => {
@@ -227,32 +269,89 @@ test("SET-06 Off reads Off", () => {
   expect(ambientTileText()).toBe("Off");
 });
 
-test("SET-07 Back to Today after saves the minutes, Never as off with the minutes kept", async () => {
+test("SET-07 Back to Today after shows the minutes on the slider with the switch on", () => {
+  renderView();
+
+  expect(screen.getByRole("switch", { name: "Back to Today after" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  expect(idleSlider()).toHaveValue("3");
+  expect(idleSlider()).toBeEnabled();
+  expect(screen.getByText("3 min")).toBeInTheDocument();
+  expect(screen.getByText("without a touch")).toBeInTheDocument();
+  expect(screen.getByText("1 min")).toBeInTheDocument();
+  expect(screen.getByText("15 min")).toBeInTheDocument();
+});
+
+test("SET-07 moving the Back to Today slider saves the minutes", () => {
   const props = renderView();
 
-  expect(selectedPill("Back to Today after")).toBe("3 min");
+  fireEvent.change(idleSlider(), { target: { value: "9" } });
 
-  await userEvent.click(pills("Back to Today after").getByRole("button", { name: "1 min" }));
-  await userEvent.click(pills("Back to Today after").getByRole("button", { name: "Never" }));
+  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: { on: true, minutes: 9 } });
+});
 
-  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: { on: true, minutes: 1 } });
+test("SET-07 turning Back to Today off keeps the minutes", async () => {
+  const props = renderView();
+
+  await userEvent.click(screen.getByRole("switch", { name: "Back to Today after" }));
+
   expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: { on: false, minutes: 3 } });
 });
 
-test("SET-07 Remove notes after saves the days, Never as off with the days kept", async () => {
+test("SET-07 Back to Today off disables the slider and reads Off with the kept minutes", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, idleTimeout: { on: false, minutes: 12 } } });
+
+  expect(idleSlider()).toBeDisabled();
+  expect(idleSlider()).toHaveValue("12");
+  expect(screen.getByText("12 min")).toBeInTheDocument();
+  expect(screen.getByText("Off · stays on the current view")).toBeInTheDocument();
+});
+
+test("SET-07 turning Back to Today on brings the kept minutes back", async () => {
   const props = renderView({
-    settings: { ...DEFAULT_SETTINGS, noteExpiry: { on: false, days: 7 } },
+    settings: { ...DEFAULT_SETTINGS, idleTimeout: { on: false, minutes: 12 } },
   });
 
-  expect(selectedPill("Remove notes after")).toBe("Never");
+  await userEvent.click(screen.getByRole("switch", { name: "Back to Today after" }));
 
-  await userEvent.click(pills("Remove notes after").getByRole("button", { name: "1 day" }));
+  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: { on: true, minutes: 12 } });
+});
 
-  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: { on: true, days: 1 } });
+test("SET-07 Remove notes after shows the days on the slider with the switch on", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, noteExpiry: { on: true, days: 1 } } });
 
-  await userEvent.click(pills("Remove notes after").getByRole("button", { name: "Never" }));
+  expect(screen.getByRole("switch", { name: "Remove notes after" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  expect(notesSlider()).toHaveValue("1");
+  expect(notesSlider()).toHaveAttribute("aria-valuetext", "1 day");
+  expect(screen.getByText("after posting")).toBeInTheDocument();
+  expect(screen.getByText("30 days")).toBeInTheDocument();
+});
 
-  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: { on: false, days: 7 } });
+test("SET-07 moving the Remove notes slider saves the days", () => {
+  const props = renderView();
+
+  fireEvent.change(notesSlider(), { target: { value: "30" } });
+
+  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: { on: true, days: 30 } });
+});
+
+test("SET-07 Remove notes off disables the slider, keeps the days and turns back on with them", async () => {
+  const props = renderView({
+    settings: { ...DEFAULT_SETTINGS, noteExpiry: { on: false, days: 14 } },
+  });
+
+  expect(notesSlider()).toBeDisabled();
+  expect(screen.getByText("14 days")).toBeInTheDocument();
+  expect(screen.getByText("Off · notes stay until deleted")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("switch", { name: "Remove notes after" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: { on: true, days: 14 } });
 });
 
 test("SET-08 the account card shows the initial, name and email and signs out", async () => {

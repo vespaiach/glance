@@ -2,24 +2,20 @@ import * as stylex from "@stylexjs/stylex";
 import { ChevronRight } from "lucide-react";
 import { copy } from "@/copy";
 import { ambientSummary } from "@/domain/idle";
-import type { AccountSettings } from "@/domain/schemas";
+import { type AccountSettings, IDLE_MINUTES, NOTE_DAYS } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
-import { PillTabs } from "@/ui/PillTabs";
 import { press } from "@/ui/press";
+import { SwitchSliderTile } from "./SwitchSliderTile";
 
 type ScreenOptionsProps = {
   settings: AccountSettings;
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenAmbient: () => void;
 };
-
-type IdleOption = (typeof copy.settings.idle.options)[number]["value"];
-
-type ExpiryOption = (typeof copy.settings.noteExpiry.options)[number]["value"];
 
 const styles = stylex.create({
   block: {
@@ -77,44 +73,22 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
         <Eyebrow>{text.schedule}</Eyebrow>
         <AmbientTile settings={settings} onOpenAmbient={onOpenAmbient} />
       </div>
-      <div {...stylex.props(styles.group)}>
-        <Eyebrow>{text.idle.title}</Eyebrow>
-        <PillTabs
-          label={text.idle.title}
-          options={text.idle.options}
-          value={pillValue(settings.idleTimeout.on, settings.idleTimeout.minutes) as IdleOption}
-          onChange={(value) =>
-            onChange({ idleTimeout: idleTimeoutFor(value, settings.idleTimeout.minutes) })
-          }
-          size="lg"
-        />
-      </div>
-      <div {...stylex.props(styles.group)}>
-        <Eyebrow>{text.noteExpiry.title}</Eyebrow>
-        <PillTabs<ExpiryOption>
-          label={text.noteExpiry.title}
-          options={text.noteExpiry.options}
-          value={pillValue(settings.noteExpiry.on, settings.noteExpiry.days) as ExpiryOption}
-          onChange={(value) =>
-            onChange({ noteExpiry: noteExpiryFor(value, settings.noteExpiry.days) })
-          }
-          size="lg"
-        />
-      </div>
+      <SwitchSliderTile
+        text={text.idle}
+        range={IDLE_MINUTES}
+        on={settings.idleTimeout.on}
+        value={settings.idleTimeout.minutes}
+        onChange={(on, minutes) => onChange({ idleTimeout: { on, minutes } })}
+      />
+      <SwitchSliderTile
+        text={text.noteExpiry}
+        range={NOTE_DAYS}
+        on={settings.noteExpiry.on}
+        value={settings.noteExpiry.days}
+        onChange={(on, days) => onChange({ noteExpiry: { on, days } })}
+      />
     </ColorBlock>
   );
-}
-
-function pillValue(on: boolean, value: number): string {
-  return on ? String(value) : "never";
-}
-
-function idleTimeoutFor(option: IdleOption, kept: number): AccountSettings["idleTimeout"] {
-  return option === "never" ? { on: false, minutes: kept } : { on: true, minutes: Number(option) };
-}
-
-function noteExpiryFor(option: ExpiryOption, kept: number): AccountSettings["noteExpiry"] {
-  return option === "never" ? { on: false, days: kept } : { on: true, days: Number(option) };
 }
 
 function AmbientTile({ settings, onOpenAmbient }: Omit<ScreenOptionsProps, "onChange">) {

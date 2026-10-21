@@ -199,6 +199,15 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
       background: COAST && { mode: "slideshow", photo: COAST, rotate: "daily" },
     },
     { key: "photo", background: COAST && { mode: "photo", photo: COAST } },
+    {
+      key: "timers-off",
+      settings: {
+        ...DEFAULT_SETTINGS,
+        idleTimeout: { on: false, minutes: 12 },
+        noteExpiry: { on: false, days: 14 },
+        hideSidebarWhenIdle: false,
+      },
+    },
     { key: "this-screen-only", screens: SCREEN_SAMPLES.slice(0, 1) },
     { key: "qr-open", qr: QR_OPEN },
     { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 300 } },
