@@ -72,3 +72,23 @@ test("TPK-09 TimeField in 24-hour shows the padded hour and no AM/PM", () => {
   expect(screen.queryByText("AM")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Starts, 09:05. Change" })).toBeInTheDocument();
 });
+
+test("EVT-08 an off TimeField is disabled, still shows its time and says why", async () => {
+  const onToggle = vi.fn();
+  render(
+    <TimeField
+      {...base}
+      label="Starts"
+      value={9 * 60}
+      off="off for all-day events"
+      onToggle={onToggle}
+    />,
+  );
+
+  const field = screen.getByRole("button", { name: "Starts, off for all-day events" });
+  await userEvent.click(field);
+
+  expect(field).toBeDisabled();
+  expect(screen.getByText("9:00")).toBeInTheDocument();
+  expect(onToggle).not.toHaveBeenCalled();
+});

@@ -1,8 +1,9 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus, synced } from "@/data/repos/testHarness";
-import type { AccountSettings, CalendarEvent, Tag } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Tag, Weather } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
@@ -242,7 +243,7 @@ test("D21 an all-day event opens and saves on its own date in a zone behind UTC"
   renderSheet({ kind: "event", id: NO_SCHOOL.id, edit: true }, {}, "America/Los_Angeles");
 
   expect(await screen.findByText("Friday, Oct 16")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "All day" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("switch", { name: "All day" })).toHaveAttribute("aria-checked", "true");
 
   await userEvent.type(screen.getByLabelText("Title"), "!");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -416,4 +417,31 @@ describe("Event details", () => {
       expect((await store.db.events.get(LUNCH.id))?.title).toBe("Lunch with Aunt Rosa!"),
     );
   });
+});
+
+const FORECAST = {
+  location: "Portland, OR",
+  fetchedAt: new Date(2026, 9, 9, 10, 0).toISOString(),
+  daily: [{ date: "2026-10-09", icon: "cloud-sun", high: 68, low: 51 }],
+} as Weather;
+
+const PORTLAND = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
+
+test("EVT-01 a located screen shows the day's forecast after the eyebrow in the °F/°C setting", async () => {
+  await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
+  await store.db.weather.put({ ...FORECAST, accountId: store.accountId });
+
+  renderSheet({ kind: "newevent", day: "2026-10-09" }, { tempUnit: "C" });
+
+  expect(await screen.findByRole("img", { name: "Partly cloudy" })).toBeInTheDocument();
+  expect(screen.getByText("20°")).toBeInTheDocument();
+});
+
+test("EVT-01 with no location the sheet shows no forecast", async () => {
+  await store.db.weather.put({ ...FORECAST, accountId: store.accountId });
+
+  renderSheet({ kind: "newevent", day: "2026-10-09" });
+
+  expect(await screen.findByRole("dialog", { name: "New event" })).toBeInTheDocument();
+  expect(screen.queryByRole("img", { name: "Partly cloudy" })).not.toBeInTheDocument();
 });

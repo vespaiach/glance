@@ -1,11 +1,15 @@
 import type { Weather } from "./schemas";
 import { minutesOfDay } from "./time";
-import { dateKey } from "./zone";
+import { addDays, dateKey } from "./zone";
 import type { ZoneState } from "./zoneState";
 
 export type HourlyPoint = Weather["hourly"][number];
 
+export type DailyPoint = Weather["daily"][number];
+
 const RAIN_CHANCE = 50;
+
+const FORECAST_DAYS = 6;
 
 const RAIN_ICONS: ReadonlySet<HourlyPoint["icon"]> = new Set(["cloud-drizzle", "cloud-rain"]);
 
@@ -32,6 +36,19 @@ export function hourlyByHour(
   const points = hourly.filter((point) => dateKey(new Date(point.time), tz) === day);
 
   return new Map(points.map((point) => [hourOf(point, tz), point]));
+}
+
+export function dayForecast(
+  daily: readonly DailyPoint[],
+  day: string,
+  now: Date,
+  tz: string,
+): DailyPoint | undefined {
+  const today = dateKey(now, tz);
+
+  if (day < today || day > addDays(today, FORECAST_DAYS)) return undefined;
+
+  return daily.find((point) => point.date === day);
 }
 
 export function weatherZone({

@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useEvent, useEventsRepo, useTags, useTagsRepo } from "@/data/repos";
+import { copy } from "@/copy";
+import { useEvent, useEventsRepo, useTags, useTagsRepo, useWeather } from "@/data/repos";
 import { eventDayKey } from "@/domain/allDay";
 import { type DetailsStatus, detailsStatus } from "@/domain/eventStatus";
 import type { EventTimes } from "@/domain/eventTimes";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent, Tag, TagColor } from "@/domain/schemas";
 import { EVERYONE, type EventWho, whoIds } from "@/domain/tags";
+import { displayTemp } from "@/domain/temperature";
 import { formatDayTitle } from "@/domain/time";
+import { dayForecast } from "@/domain/weather";
 import { parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
@@ -17,7 +20,7 @@ import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
-import { EventSheet } from "./components/EventSheet";
+import { EventSheet, type SheetForecast } from "./components/EventSheet";
 import {
   draftFromEvent,
   type EventDraft,
@@ -118,6 +121,7 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
     <EventSheet
       mode={mode}
       eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
+      forecast={useDayForecast(day)}
       initial={initial}
       clock={clock}
       tags={tags}
@@ -196,6 +200,26 @@ function NewEventSheet({ day, who = EVERYONE, times, tags, time, discard }: NewP
       onDelete={() => {}}
     />
   );
+}
+
+function useDayForecast(day: string): SheetForecast | undefined {
+  const weather = useWeather();
+
+  const { weatherLocation, tempUnit } = useAccountSettings();
+
+  const now = useNow("minute");
+
+  const tz = useTimeZone();
+
+  const point = weather && weatherLocation ? dayForecast(weather.daily, day, now, tz) : undefined;
+
+  if (!point) return undefined;
+
+  return {
+    icon: point.icon,
+    label: copy.weather.icon[point.icon],
+    high: `${displayTemp(point.high, tempUnit)}°`,
+  };
 }
 
 function tagIds(tags: readonly Tag[]): string[] {

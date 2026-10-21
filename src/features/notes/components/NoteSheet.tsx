@@ -102,6 +102,7 @@ export function NoteSheet({
           </Button>
         }
         keyboardInset={keyboardInset}
+        uniform
         xstyle={[
           styles.morph,
           styles.sticky,

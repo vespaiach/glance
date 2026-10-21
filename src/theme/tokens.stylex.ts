@@ -77,6 +77,8 @@ export const shadows = stylex.defineVars({
   shadow1: `inset 0 0 0 1px ${hairline}`,
   shadow2: "0 4px 16px rgba(0,0,0,.06)",
   shadow3: "0 24px 64px rgba(0,0,0,.18)",
+  sheetHeader: "0 2px 8px rgba(0,0,0,.04)",
+  sheetFooter: "0 -2px 8px rgba(0,0,0,.04)",
 });
 
 export const sizes = stylex.defineVars({

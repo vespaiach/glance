@@ -22,6 +22,7 @@ type TimeFieldProps = {
   labels: TimeFieldLabels;
   onToggle: () => void;
   compact?: boolean;
+  off?: string;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -82,6 +83,13 @@ const styles = stylex.create({
   invalid: {
     borderColor: colors.danger,
   },
+  disabled: {
+    backgroundColor: "transparent",
+    cursor: "default",
+  },
+  struck: {
+    textDecorationLine: "line-through",
+  },
   invalidOpen: {
     boxShadow: `0 0 0 2px ${colors.danger}`,
   },
@@ -129,6 +137,7 @@ export function TimeField({
   labels,
   onToggle,
   compact,
+  off,
   xstyle,
 }: TimeFieldProps) {
   const errorId = useId();
@@ -137,7 +146,11 @@ export function TimeField({
 
   const reading = value === undefined ? { time: labels.noEnd } : timeParts(value, clock);
 
-  const ariaLabel = `${label}, ${spokenTime(value, clock, labels.noEnd)}. ${labels.change}`;
+  const disabled = off !== undefined;
+
+  const ariaLabel = disabled
+    ? `${label}, ${off}`
+    : `${label}, ${spokenTime(value, clock, labels.noEnd)}. ${labels.change}`;
 
   return (
     <div {...stylex.props(styles.root, xstyle)}>
@@ -152,16 +165,18 @@ export function TimeField({
         aria-expanded={open}
         aria-label={ariaLabel}
         aria-describedby={invalid ? errorId : undefined}
+        disabled={disabled}
         onClick={onToggle}
         {...stylex.props(
           styles.button,
           open && styles.open,
           invalid && styles.invalid,
           invalid && open && styles.invalidOpen,
+          disabled && styles.disabled,
           press.scale,
         )}
       >
-        <span {...stylex.props(styles.reading)}>
+        <span {...stylex.props(styles.reading, disabled && styles.struck)}>
           <span
             {...stylex.props(
               styles.time,

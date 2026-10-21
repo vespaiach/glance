@@ -146,11 +146,26 @@ test("KB-02 with the keyboard up, the sheet scrolls inside to the focused field"
     </Sheet>,
   );
 
-  const dialog = screen.getByRole("dialog", { name: "New note" });
-  dialog.getBoundingClientRect = () => ({ top: 40 }) as DOMRect;
+  const body = sheetBody();
+  body.getBoundingClientRect = () => ({ top: 140 }) as DOMRect;
   screen.getByText("Message").getBoundingClientRect = () => ({ top: 300 }) as DOMRect;
 
   screen.getByRole("textbox", { name: "Message" }).focus();
 
-  expect(dialog.scrollTop).toBe(300 - 40 - 24);
+  expect(body.scrollTop).toBe(300 - 140 - 24);
 });
+
+test("§8.9 the header and the actions sit outside the scrolling body", () => {
+  renderSheet();
+
+  const body = sheetBody();
+
+  expect(body).toContainElement(screen.getByRole("textbox", { name: "Title" }));
+  expect(body).not.toContainElement(screen.getByRole("heading", { name: "Soccer practice" }));
+  expect(body).not.toContainElement(screen.getByRole("button", { name: "Close" }));
+  expect(body).not.toContainElement(screen.getByRole("button", { name: "Save" }));
+});
+
+function sheetBody() {
+  return screen.getByRole("dialog").querySelector("[data-sheet-body]") as HTMLElement;
+}

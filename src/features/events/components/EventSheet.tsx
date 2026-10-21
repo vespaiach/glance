@@ -2,23 +2,25 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { Pencil, Trash2, WifiOff } from "lucide-react";
-import { useEffect, useReducer, useRef } from "react";
+import { type ReactNode, useEffect, useReducer, useRef } from "react";
 import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
-import type { Tag, TagColor } from "@/domain/schemas";
+import type { Tag, TagColor, WeatherIcon } from "@/domain/schemas";
 import { nextFreeColor } from "@/domain/tags";
 import type { Clock } from "@/domain/time";
-import { colors, shadows } from "@/theme/tokens.stylex";
+import { shadows } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
 import { type CloseFrom, closeStep } from "@/ui/discard";
-import { PillTabs } from "@/ui/PillTabs";
+import { Icon } from "@/ui/Icon";
 import { Sheet } from "@/ui/Sheet";
+import { Switch } from "@/ui/Switch";
 import { TextInput } from "@/ui/TextInput";
 import { TimeField } from "@/ui/TimeField";
 import { TimePicker } from "@/ui/TimePicker";
+import { weatherIcons } from "@/ui/weatherIcons";
 import {
   canSave,
   type EventDraft,
@@ -32,9 +34,12 @@ import {
 import { EventDetails } from "./EventDetails";
 import { WhoField } from "./WhoField";
 
+export type SheetForecast = { icon: WeatherIcon; label: string; high: string };
+
 type EventSheetProps = {
   mode: "new" | "edit";
   eyebrow: string;
+  forecast?: SheetForecast;
   initial: EventSheetState;
   clock: Clock;
   tags: readonly Tag[];
@@ -57,20 +62,13 @@ const time = copy.events.time;
 const details = copy.events.details;
 
 const styles = stylex.create({
-  mode: {
+  forecast: {
     display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
-  },
-  modeLabel: {
-    fontSize: type.bodyLgSize,
-    fontWeight: type.bodyLgWeight,
-    letterSpacing: type.bodyLgLs,
-  },
-  modeTabs: {
-    backgroundColor: colors.surfaceSoft,
+    gap: 6,
+    fontSize: type.captionSize,
+    letterSpacing: type.captionLs,
+    whiteSpace: "nowrap",
   },
   times: {
     display: "flex",
@@ -98,8 +96,6 @@ const styles = stylex.create({
   },
 });
 
-const ACTIONS_ROOM = 96;
-
 const REVEAL_GAP = 16;
 
 type TimesProps = {
@@ -109,20 +105,8 @@ type TimesProps = {
   dispatch: (action: EventSheetAction) => void;
 };
 
-type TimeMode = "times" | "allDay";
-
-const TIME_MODES = [
-  { value: "times", label: time.setTimes },
-  { value: "allDay", label: copy.events.allDay },
-] as const;
-
-type TimeModeProps = {
-  allDay: boolean;
-  dispatch: (action: EventSheetAction) => void;
-};
-
 type DetailsSheetProps = {
-  eyebrow: string;
+  eyebrow: ReactNode;
   draft: EventDraft;
   tags: readonly Tag[];
   clock: Clock;
@@ -141,6 +125,7 @@ type DeleteActionProps = {
 export function EventSheet({
   mode,
   eyebrow,
+  forecast,
   initial,
   clock,
   tags,
@@ -155,10 +140,12 @@ export function EventSheet({
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
 
+  const heading = <DayEyebrow day={eyebrow} forecast={forecast} />;
+
   if (state.step === "details")
     return (
       <DetailsSheet
-        eyebrow={eyebrow}
+        eyebrow={heading}
         draft={state.opened}
         tags={tags}
         clock={clock}
@@ -231,7 +218,7 @@ export function EventSheet({
   return (
     <Sheet
       title={mode === "new" ? words.newTitle : words.editTitle}
-      eyebrow={eyebrow}
+      eyebrow={heading}
       closeLabel={words.close}
       onClose={requestClose("button")}
       onScrimTap={requestClose("scrim")}
@@ -262,10 +249,7 @@ export function EventSheet({
         onChange={(value) => dispatch({ type: "title", value })}
         error={state.titleError ? words.addTitle : undefined}
       />
-      <TimeModeRow allDay={draft.allDay === true} dispatch={dispatch} />
-      {!draft.allDay && (
-        <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
-      )}
+      <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
       <WhoField
         tags={tags}
         tagIds={draft.tagIds}
@@ -328,7 +312,23 @@ function DetailsSheet({
   );
 }
 
-function eventLength({ start, end }: EventDraft): number | undefined {
+function DayEyebrow({ day, forecast }: { day: string; forecast?: SheetForecast }) {
+  return (
+    <>
+      {day}
+      {forecast && (
+        <span {...stylex.props(styles.forecast)}>
+          <Icon icon={weatherIcons[forecast.icon]} size={16} label={forecast.label} />
+          {forecast.high}
+        </span>
+      )}
+    </>
+  );
+}
+
+function eventLength({ start, end, allDay }: EventDraft): number | undefined {
+  if (allDay) return undefined;
+
   return end !== undefined && end > start ? end - start : undefined;
 }
 
@@ -336,16 +336,16 @@ function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
   const times = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const dialog = times.current?.closest("[role=dialog]");
+    const body = times.current?.closest("[data-sheet-body]");
 
-    if ((picker === null && !endError) || !times.current || !dialog) return;
+    if ((picker === null && !endError) || !times.current || !body) return;
 
-    const box = dialog.getBoundingClientRect();
+    const box = body.getBoundingClientRect();
     const row = times.current.getBoundingClientRect();
 
-    if (row.bottom <= box.bottom - ACTIONS_ROOM && row.top >= box.top) return;
+    if (row.bottom <= box.bottom && row.top >= box.top) return;
 
-    dialog.scrollTop += row.top - box.top - REVEAL_GAP;
+    body.scrollTop += row.top - box.top - REVEAL_GAP;
   }, [picker, endError]);
 
   return times;
@@ -358,6 +358,8 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
 
   const toggle = (field: TimeFieldName) => () => dispatch({ type: "toggle", field });
 
+  const off = draft.allDay ? time.offAllDay : undefined;
+
   return (
     <div ref={times} {...stylex.props(styles.times)}>
       <div {...stylex.props(styles.fields)}>
@@ -369,6 +371,7 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
           labels={time}
           onToggle={toggle("start")}
           compact={compact}
+          off={off}
         />
         <TimeField
           label={time.ends}
@@ -380,8 +383,14 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
           labels={time}
           onToggle={toggle("end")}
           compact={compact}
+          off={off}
         />
       </div>
+      <Switch
+        label={copy.events.allDay}
+        checked={draft.allDay === true}
+        onChange={(value) => dispatch({ type: "allDay", value })}
+      />
       {picker === "start" && (
         <TimePicker
           label={time.starts}
@@ -411,26 +420,6 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
           compact={compact}
         />
       )}
-    </div>
-  );
-}
-
-function TimeModeRow({ allDay, dispatch }: TimeModeProps) {
-  const onChange = (mode: TimeMode) => dispatch({ type: "allDay", value: mode === "allDay" });
-
-  return (
-    <div {...stylex.props(styles.mode)}>
-      <span aria-hidden="true" {...stylex.props(styles.modeLabel)}>
-        {time.label}
-      </span>
-      <PillTabs
-        label={time.label}
-        options={TIME_MODES}
-        value={allDay ? "allDay" : "times"}
-        onChange={onChange}
-        size="lg"
-        xstyle={styles.modeTabs}
-      />
     </div>
   );
 }

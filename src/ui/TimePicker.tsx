@@ -67,7 +67,7 @@ const styles = stylex.create({
     gap: 16,
     padding: 16,
     borderRadius: radii.lg,
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
   },
   compactRoot: {

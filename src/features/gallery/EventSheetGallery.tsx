@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
 import { type Clock, formatDayTitle } from "@/domain/time";
@@ -7,6 +8,7 @@ import {
   type EventSheetState,
   initialEventSheet,
   newEventDraft,
+  type SheetForecast,
 } from "@/features/events";
 import { Button } from "@/ui/Button";
 import { GalleryGroup } from "./GalleryGroup";
@@ -27,6 +29,7 @@ type Demo = {
   status?: DetailsStatus;
   nobody?: true;
   typed?: string;
+  noForecast?: true;
 };
 
 const words = gallery.eventSheet;
@@ -58,7 +61,14 @@ const DEMOS: readonly Demo[] = [
   { label: words.suggestions, mode: "edit", one: true, typed: "mi" },
   { label: words.newMember, mode: "edit", tags: true, typed: "Grandma" },
   { label: words.newMemberPhone, mode: "edit", tags: true, typed: "Grandma", compact: true },
+  { label: words.noForecast, mode: "edit", noForecast: true },
 ];
+
+const FORECAST: SheetForecast = {
+  icon: "cloud-sun",
+  label: copy.weather.icon["cloud-sun"],
+  high: "68°",
+};
 
 const FAMILY_IDS = GALLERY_FAMILY.map((tag) => tag.id);
 
@@ -119,6 +129,7 @@ export function EventSheetGallery() {
           key={open.label}
           mode={open.mode}
           eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
+          forecast={open.noForecast ? undefined : FORECAST}
           initial={typedWho(initial, open.typed)}
           clock={open.clock ?? "12h"}
           tags={[...GALLERY_FAMILY, ...added]}
