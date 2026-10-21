@@ -5,7 +5,7 @@ function ticker() {
 
   const tick = createJobTick({
     hourly: () => ran.push("hourly"),
-    daily: () => ran.push("daily"),
+    daily: [() => ran.push("daily")],
   });
 
   return { ran, tick };
@@ -37,7 +37,7 @@ describe("createJobTick", () => {
       hourly: () => {
         throw new Error("disk full");
       },
-      daily: () => ran.push("daily"),
+      daily: [() => ran.push("daily")],
     });
 
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -55,9 +55,11 @@ describe("createJobTick", () => {
 
     const tick = createJobTick({
       hourly: () => Promise.reject(new Error("connection refused")),
-      daily: async () => {
-        ran.push("daily");
-      },
+      daily: [
+        async () => {
+          ran.push("daily");
+        },
+      ],
     });
 
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -65,6 +67,24 @@ describe("createJobTick", () => {
     await tick(new Date("2026-10-09T14:00:00.000Z"));
 
     expect(ran).toEqual(["daily"]);
+    expect(logged).toHaveBeenCalledTimes(1);
+
+    logged.mockRestore();
+  });
+
+  it("tech§6.4 runs every daily job when an earlier daily job throws", async () => {
+    const ran: string[] = [];
+
+    const tick = createJobTick({
+      hourly: () => ran.push("hourly"),
+      daily: [() => Promise.reject(new Error("links table locked")), () => ran.push("photos")],
+    });
+
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await tick(new Date("2026-10-09T14:00:00.000Z"));
+
+    expect(ran).toEqual(["hourly", "photos"]);
     expect(logged).toHaveBeenCalledTimes(1);
 
     logged.mockRestore();

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.69 |
+| Status | v0.70 |
 | Date | 2026-10-20 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -45,7 +45,7 @@ Where Glance departs from the design system:
 | Backgrounds | Season color, Photo or Slideshow, with dim. Text zones sit on white panels |
 | Brand | "Glance", plain Geist 540, no logo |
 | Type | Smaller fluid `clamp()` sizes (§4.3). Mono captions 14 px minimum (16 on Ambient). All text black or white, never grey |
-| Spacing | 8 px scale only: 4, 8, 12, 16, 24, 32 |
+| Spacing | 8 px scale only: 4, 8, 12, 16, 24, 32, 48, 96 |
 | 12-hour times | Plan cards omit AM/PM; Now panel, forecast, sunset and Ambient include it |
 | People | Family members with fixed colors (§7) tag events; the season palette never colors a person |
 
@@ -56,7 +56,7 @@ Where Glance departs from the design system:
 Next.js (App Router) as a single-page app, TypeScript strict, Biome, StyleX, Valibot, PostgreSQL, a local-first IndexedDB store with a sync engine. Details in [tech design](tech-design.md) §1.
 
 - After the first load, view changes never reload the page, and the shell's timers (clock, idle, slideshow, sync) keep running. Every view is a real route, so deep links work.
-- One Node server with a persistent disk for photos; PostgreSQL runs outside it.
+- One Node server; photos on its persistent disk or in an S3 or R2 bucket; PostgreSQL runs outside it.
 - The app is an **installable PWA** that cold-starts offline (OFF-06). It needs HTTPS. On iPad kiosks, install it to the home screen so saved data isn't evicted.
 - Icons: Lucide 0.460.0, stroke 1.75 (1.25–1.5 at ≥ 48 px). Fonts: Geist and Geist Mono variable 100–900, self-hosted.
 
@@ -75,14 +75,14 @@ The handoff tokens are ported verbatim as StyleX vars. Season roles: **block-1 =
 | Winter | Ice | Lilac | Glacier | Mint | Frost | Midnight | Cobalt | `snowflake` |
 
 ### 4.2 Components
-Typed components in `src/ui`, styled with StyleX only, each with an optional `xstyle`. Words come in as props.
+Typed components in `src/ui` (the calendar controls in `features/calendar/components`), styled with StyleX only; most take an optional `xstyle`. Words come in as props.
 
 | Component | Notes |
 |---|---|
 | `Clock` | Tabular numerals, date line "Friday, October 9". The colon blinks every 0.6 s, and stays on with reduced motion. Takes the time from the screen; no timer of its own |
 | `DayTimeline` | The elastic day timeline (§8.3.2): hour gutter, plan cards, free slots, now marker, and a weather lane (Calendar) or gutter weather (Today) |
-| `WeekStrip`, `DateControl`, `DatePicker` | CAL-01, CAL-02, CAL-03. Day buttons named by the full date; selected = black (`aria-pressed`), today = ring (`aria-current="date"`) |
-| `MemberPill`, `PersonDots` | A member's 12 px color dot + name as a toggle pill (person filter, Who picker); a row of 6–8 px dots per member |
+| `WeekStrip`, `DateControl`, `DatePicker` (calendar feature) | CAL-01, CAL-02, CAL-03. Day buttons named by the full date; selected = black (`aria-pressed`), today = ring (`aria-current="date"`) |
+| `PersonDot` | A member's color dot (6–12 px). The person filter and the Who picker build their toggle pills (dot + name) and plan cards their dot rows from it |
 | `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (`--danger`, white text, every season: delete and discard confirms) |
 | `IconButton` | `md` 40, `touch` 56, `lg` 72 px; `active` = black; `current="page"` |
 | `PillTabs` | Segmented control, a group of `aria-pressed` buttons. `lg` (56 px) wraps onto more rows |
@@ -95,6 +95,7 @@ Typed components in `src/ui`, styled with StyleX only, each with an optional `xs
 | `Sheet` | §8.9 |
 | `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring. Notes use the 5 season tones, members the 12 member colors |
 | `OfflinePill`, `SettingsRow`, `AllDayTile` | OFF-01, §8.7, TODAY-12 |
+| `BackLink`, `DiscardPrompt`, `PhotoBackdrop`, `QrCode` | §8.7 "‹ Settings" link, "Discard changes?" (§8.9), photo background (BG-*), SIGNIN-15 QR |
 
 **DS-01:** `/dev/gallery` (dev and demo builds only) shows every component in all 4 seasons and every state the boards show.
 
@@ -181,6 +182,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 | `/photos` | Photos (`?photo={id}`, PHOTO-01) |
 | `/settings` · `/settings/background` · `/settings/location` · `/settings/ambient` | Settings · Background · Location (SET-09) · Ambient screen (SET-10) |
 | `/ambient` | Ambient |
+| `/dev/gallery` | Component gallery (DS-01; dev and demo builds only) |
 
 **Fixture params** (dev and demo builds only) open any frame directly. They are frozen snapshots: the reducer's or seed's initial state, and timers run only after a tap. `now=ISO` freezes the clock (default Fri Oct 9 2026 10:41 AM Pacific).
 
@@ -199,7 +201,8 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 ## 7. Domain model
 
 ```ts
-type Tone = 1 | 2 | 3 | 4 | 'soft';                  // notes
+type Tone = 1 | 2 | 3 | 4 | 'soft' | 'accent';       // season swatch tones
+type NoteTone = 1 | 2 | 3 | 4 | 'soft';              // notes
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 type Synced<T> = T & { updatedAt: string; version: number; deletedAt?: string };  // stamped by the server
 
@@ -230,13 +233,13 @@ interface Note {
   text: string;     // required, multiline
   author: string;   // blank → "Guest"
   createdAt: string;
-  tone: Tone;
+  tone: NoteTone;
   rotation: number; // degrees, cycles −2, 1.5, −1, 2.5
 }
 
 interface Photo {
   id: string;
-  title: string;    // required
+  title: string;    // may be empty after an edit
   takenOn?: string; // ISO date; absent = "No date"
   place?: string;   // "City, ST" or free text
   createdAt: string;
@@ -275,7 +278,7 @@ interface AccountSettings {            // per account: every screen of the famil
 }
 
 interface Account { id: string; email: string; name: string | null } // name null until SIGNIN-06
-interface Display { id: string; accountId: string; kind: 'monitor' | 'tablet' | 'smartphone'; browser?: string; lastSeenAt?: string }
+interface Display { id: string; accountId: string } // kind, browser and lastSeenAt are server columns, read through the screens list (SET-12)
 ```
 
 **Defaults:** season Auto, 12-hour, °F, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM).
@@ -304,7 +307,7 @@ PostgreSQL, from `db-migrations/`:
 - IDs are UUIDv7 made on the client, so offline creates keep their id.
 - Timestamps are `timestamptz` and ISO-8601 UTC strings everywhere else; `taken_on` is `YYYY-MM-DD`.
 - The server stamps `updated_at` and `version`; every write bumps `sync_state.version` in the same transaction. Deletes are soft (`deleted_at`) so other screens receive them.
-- Photo files live at `{DATA_DIR}/photos/{account}/{id}.{orig|display|thumb}`, served through an authenticated route. Deleting a photo deletes its files.
+- Photo files are stored as `{account}/{id}.{orig|display|thumb}` under `{DATA_DIR}/photos` or in an S3 or R2 bucket, served through an authenticated route. Deleting a photo deletes its files.
 
 ### 7.1 Event status (STATUS-01)
 For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcoming`. No end → `now` from its start to the end of its day. Recomputed every minute. Past days → `past`, future days → `upcoming`. **All-day events have no status:** never the hero, never now or next, never struck through.
@@ -315,7 +318,8 @@ For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcomi
 | Clock, event summary start, sunset, Ambient, sync time | `10:41 AM` (mono AM/PM) | `10:41` |
 | Hero "until {end}" | `until 11:15` | `until 11:15` |
 | Plan cards, ranges | `9:00 – 10:30 AM`, `11:00 AM – 1:00 PM` (one-line cards: `9:00`) | `09:00 – 10:30` |
-| Countdown, lengths | `45 min`, `1 h 20 min` | same |
+| Countdowns, free slots | `45 min`, `1 h 20 min` | same |
+| Event lengths (TPK-01, EVT-09) | `45 min`, `1 hr 30 min`, `1 hr` | same |
 | Hourly forecast | `4 PM` | `16:00` |
 
 ---
@@ -331,17 +335,17 @@ Layout: left = block-1 hero ("Glance" wordmark, "{Season} · {Month}", live Cloc
 | SIGNIN-02 | Invalid email → "Enter a valid email address", cleared on the next keystroke. |
 | SIGNIN-03 | **Sending:** "Sending…" disabled, email locked, soft tile "Sending a link to {email}" with a pulsing mail icon → Check your email. A failed send returns to the form with the email kept and "Couldn’t send. Try again." under the field (clears on the next keystroke). |
 | SIGNIN-04 | **Check your email** (the same for new and known emails): "Check your email" · "We sent a link to **{email}**. Open it and this screen signs in by itself." Tile "Link expires in 10 minutes", ghost "Use a different email" (email kept). For 10 s after each send the ghost is replaced by a mono timer "Use a different email in 0:10" … "0:01" (min height 44); a new send restarts it. Polls every 2 s. |
-| SIGNIN-06 | **"What's your name?"** on the device that opened the link, only for a new account: eyebrow "New family account", body "This is the first sign-in for {email}. Your name shows in Settings." Field "Your name" ("First name is fine"), primary "Continue" → SIGNIN-14. Empty → "Add your name". Continue is disabled while saving; a failed save shows "Couldn’t save. Try again." Another tab of the same browser counts as that device. |
+| SIGNIN-06 | **"What's your name?"** on the device that opened the link, only for a new account: eyebrow "New family account", body "This is the first sign-in for {email}. Your name shows in Settings." Field "Your name" ("First name is fine"), primary "Continue" → SIGNIN-14. Empty → "Add your name". The server accepts at most 100 characters. Continue is disabled while saving; a failed save shows "Couldn’t save. Try again." Another tab of the same browser counts as that device. |
 | SIGNIN-07 | **Finish on your phone:** when the link opened elsewhere for a new account, the waiting screen shows "Finish on your phone" · "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself." with a "Waiting for your phone" tile. It signs in once the name is saved and the location step has ended. "I finished on my phone" is dev only. |
 | SIGNIN-08 | **Expired, waiting screen** (10 min): "This link has expired" · "Sign-in links work for 10 minutes. Send a new one to {email}." + "Send a new link", "Use a different email". |
 | SIGNIN-09 | **Signed in:** check icon, "Signed in", "Welcome, {first name}" (new) or "Welcome back, {first name}", "Opening Today…"; Today opens after 2.2 s. The device that opened the link checks it first: setup done → this step; no name → SIGNIN-06; location step unfinished → SIGNIN-14; stale → SIGNIN-12; server unreachable → the empty form. |
 | SIGNIN-10 | **Offline form:** banner "You're offline" · "A link can't be sent right now. Sending turns back on when the screen reconnects." Send disabled, email still editable. Offline while waiting: keep waiting and poll on reconnect. |
 | SIGNIN-11 | Settings › Sign out signs out **this screen only**, with no confirm, back to the empty form. Changes not yet synced on this screen are discarded. |
-| SIGNIN-12 | **Links:** one link signs up or in. Each works once, for 10 minutes; a new link voids older ones. A stale link on the opening device: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". A stale link on a still-signed-in screen just signs it in; with no known email it opens the empty form. **Email** (HTML with a plain-text part; source `emails/sign-in-link.html`, the same for new and known emails): subject "Your Glance sign-in link", preheader "Tap to sign in. The link works once, for 10 minutes." Header "Glance"; a hero in the season's block-1 color on its soft page color (the account's fixed season, else the send date's) with mono eyebrow "Sign-in link", title "Sign in to Glance", "Tap the button and the screen that asked for this link signs in by itself. New here? The same link sets up your family’s Glance.", a black pill "Sign in" and mono "Works once, for 10 minutes"; a white card "Button not working? Copy this link into your browser:" with the raw link, then "Didn’t ask for this? You can ignore this email. No one can sign in unless this link is opened."; footer "Sent to {email} because it was entered on a Glance screen. Glance · Calendar, weather, notes and photos for your family." The text part carries the same words and the link. |
+| SIGNIN-12 | **Links:** one link signs up or in. Each works once, for 10 minutes; a new link voids older ones. A stale link on the opening device: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". A stale link on a still-signed-in screen just signs it in; with no known email it opens the empty form. **Email** (HTML with a plain-text part; source `docs/design/handoff/emails/sign-in-link.html`, the same for new and known emails): subject "Your Glance sign-in link", preheader "Tap to sign in. The link works once, for 10 minutes." Header "Glance"; a hero in the season's block-1 color on its soft page color (the account's fixed season, else the send date's) with mono eyebrow "Sign-in link", title "Sign in to Glance", "Tap the button and the screen that asked for this link signs in by itself. New here? The same link sets up your family’s Glance.", a black pill "Sign in" and mono "Works once, for 10 minutes"; a white card "Button not working? Copy this link into your browser:" with the raw link, then "Didn’t ask for this? You can ignore this email. No one can sign in unless this link is opened."; footer "Sent to {email} because it was entered on a Glance screen. Glance · Calendar, weather, notes and photos for your family." The text part carries the same words and the link. |
 | SIGNIN-13 | **Signed out by the server** (an online 401; never while offline; no reason shown). **Form:** the SIGNIN-01 form with a banner "This screen was signed out" · "Sign in again to keep the calendar, notes and photos up to date.", title "Sign in again", body "Check your family’s email below. We’ll send a link that signs this screen back in.", the last email prefilled. **Waiting changes:** the banner adds "Changes waiting on this screen: {n}. They’ll be sent after you sign in." **Different email:** with changes waiting, a tile under the field reads "Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in." with ghost "Use {previous email}", and the banner drops its second sentence. **Timing:** never interrupts an edit; the form shows once the sheet closes or no field is focused, or at the idle timeout (to Ambient during ambient hours, AMB-07). **Clears** only when a sign-in finishes: the same email syncs the waiting changes, another email removes them. |
 | SIGNIN-14 | **"Where is this screen?"** while the first setup isn't finished: after SIGNIN-06, or on the next sign-in of an account whose step never ended. Eyebrow "New family account", body "The weather and the clock’s time zone follow this place. You can change it later in Settings." The setup card (WX-04) with primary "Continue", "Use my location", and below a hairline ghost "Skip for now". A found place is saved → Signed in (no zone confirm). Skip → Signed in, cancelling any search or locating. Either ends the first setup. A failed save or skip shows "Couldn’t save. Try again." with the place kept; Continue saves it again, editing the field drops it. |
 | SIGNIN-15 | **QR sign-in** (Settings › Account, under the screen list): secondary "Sign in another device" (`qr-code`) → a block-1 tile with the code on white, "Scan to sign in", "Open the camera on the other device and point it at the code. It signs in with {email}.", mono "Code expires in {m:ss}" from 5:00, ghost "Done". The code is a one-time link for this account that signs the opener in (SIGNIN-09 "Welcome back"). At 0:00 a new code replaces it. A code works once, for 5 minutes, and a new one voids the old. While a code is made the box is empty at 5:00; a failure reads "Couldn’t make a code. Try again." with "Try again" (`rotate-cw`) before "Done". Done or leaving Settings voids the code. Offline the buttons are disabled. A used or expired code opens the email form, never showing the account email. Anyone who can see the screen may scan it. |
-| SIGNIN-16 | **Guest sign-in** (demo site only): a secondary "Sign-in as guests" (`user-round`) next to "Send sign-in link" signs this screen in at once to the shared guest account (Trinh, guests@takeaglance.app, Carmel, IN 46032, Eastern time) as a returning account → SIGNIN-09 "Welcome back, Trinh". Disabled while a link is sending and offline; hidden on the signed-out form (SIGNIN-13). A failure shows "Couldn’t sign in. Try again." under the buttons. Everyone who uses it shares that family's data. |
+| SIGNIN-16 | **Guest sign-in** (demo site only): a secondary "Sign-in as guests" (`user-round`) next to "Send sign-in link" signs this screen in at once to the shared guest account named by the server's `GUEST_EMAIL` (on the demo site: Trinh, guests@takeaglance.app, Carmel, IN 46032, Eastern time) as a returning account → SIGNIN-09 "Welcome back, {first name}". With no such account the button stays hidden. Disabled while a link is sending and offline; hidden on the signed-out form (SIGNIN-13). A failure shows "Couldn’t sign in. Try again." under the buttons. Everyone who uses it shares that family's data. |
 
 ### 8.2 Today — `TODAY`
 Zones: Now panel (block-1), schedule (white panel), notes (white panel), Picture of the day (white panel).
@@ -434,7 +438,7 @@ Used by Calendar (any day, filtered) and Today (today, everyone). Pure layout ru
 
 | ID | Requirement |
 |---|---|
-| WX-01 | Read-only. Left: `WeatherNow` "{city}, {state code} · Now" with Wind ("8 mph NW"), Humidity, UV index, Sunset. Right: Banner, "Next 8 hours" (time, icon, temp°), "7-day forecast" (today highlighted, rain % from 10%). |
+| WX-01 | Read-only. Left: `WeatherNow` "{city}, {state code} · Now" with "H {h}° · L {l}° · Feels like {f}°" under the condition, then Wind ("8 mph NW"), Humidity, UV index, Sunset. Right: Banner, "Next 8 hours" (time, icon, temp°), "7-day forecast" (today highlighted, rain % from 10%). |
 | WX-02 | Values follow the unit setting, no unit letter. With °C wind is km/h. |
 | WX-03 | Rain banner (cloud-rain) "Rain moving in after {time}" / "Grab an umbrella if you're heading out." when any of the next 8 hours is ≥ 50%, at the first such hour. Offline and the forecast over an hour old: "Forecast from {time}" / "Updates when the screen is back online. Conditions may have changed." |
 | WX-04 | **Setup card** (no location): block-3, eyebrow "Weather · setup", "Where is this screen?", "The forecast and the clock’s time zone follow this place. You can change it later in Settings.", field "City or ZIP code" ("Portland, OR"), primary "Show weather" and secondary "Use my location" (LOC-01). Empty → "Enter a city or ZIP code". The same card is used by SET-09 (primary "Search") and SIGNIN-14 ("Continue"). |
@@ -595,13 +599,13 @@ One US place per account sets the weather and the screen's time zone for every s
 | LOC-05 | Every saved place carries its IANA zone; search results without a valid zone are left out. |
 | LOC-06 | **Screen time zone:** every time and date on screen uses the location's zone, else the device's, even if the device clock is set elsewhere. A skipped DST time moves forward by the gap; a repeated one is the first. |
 | LOC-07 | Server rules that need a local day (a photo's upload-day date) use the location's zone, else `accounts.time_zone`. |
-| LOC-08 | **Zone names:** "{Name} time": Eastern, Central, Mountain, Arizona, Pacific, Alaska, Hawaii, Atlantic, Chamorro, Samoa. No abbreviations, offsets or IDs. Shown only in the Settings summary, the Location page, LOC-09 and WX-09 rows. |
+| LOC-08 | **Zone names:** "{Name} time": Eastern, Central, Mountain, Arizona, Pacific, Alaska, Hawaii, Atlantic, Chamorro, Samoa. No abbreviations, offsets or IDs. Other zones (a device zone outside the list) use the browser's long generic name, "Central European time". Shown only in the Settings summary, the Location page, LOC-09 and WX-09 rows. |
 | LOC-09 | **Zone change confirm** (Settings › Location only, when a zoned place exists and the new zone name differs): highlight block "Time zone change", "Switch to {new} time?", "{place} is in {new} time. The clock moves {n} hours {ahead\|back}, and event times change to match on every screen." ("1 hour"), tiles "Now · {old} time {clock}" and "After · {new} time {clock}", and "{title} at {time} will show at {new time}." for the next timed event (none → no line). Same time today but not all year: "The time is the same right now, but it can differ later in the year." Primary "Switch to {new} time" saves and returns; secondary "Keep {old} time" returns to the card. |
 
 ---
 
 ## 10. Copy
-All user-facing strings live in `src/copy.ts`. Strings are exact as written in §8–9. Use short words, "screen" not "display", nothing that assumes an office; name time zones the family way (LOC-08).
+All user-facing strings live in `src/copy.ts`, except time formats (TIME-01) and zone names (LOC-08), which `domain` formatters build. Strings are exact as written in §8–9, with apostrophes always typographic (’) in `copy.ts`. Use short words, "screen" not "display", nothing that assumes an office; name time zones the family way (LOC-08).
 
 ---
 
