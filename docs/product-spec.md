@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.72 |
+| Status | v0.73 |
 | Date | 2026-10-21 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -141,7 +141,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 - **SHELL-03:** no sidebar on Sign in and Ambient; the page takes the full width.
 - **SHELL-04:** changing view closes any open sheet and scrolls `main` to the top.
 - **SHELL-05:** on a photo background every zone with text sits on a white panel (radius 24). Color blocks and the sidebar stay solid.
-- **SHELL-08 Sidebar states:** Hidden → Rail → Expanded → Hidden, plus Rail → Hidden with the rail's ✕. A load on Today starts Hidden, on any other view Rail. Opening any view but Today brings the Rail back; going to Today leaves it as it is. On phone there is no Rail: Hidden ⇄ Expanded only. The state belongs to this tab and isn't saved.
+- **SHELL-08 Sidebar states:** Hidden → Rail → Expanded → Hidden, plus Rail → Hidden with the rail's ✕. A load on Today starts Hidden, on any other view Rail. Opening any view but Today brings the Rail back; going to Today leaves it as it is. On phone there is no Rail: Hidden ⇄ Expanded only, and any view change returns to Hidden. The state belongs to this tab and isn't saved.
   - **Hidden:** a 5×72 black pill on the left edge (44×144 touch area), "Show sidebar" → Rail.
   - **Rail:** 80 px white, full height, hairline inner edge, 16 px padding, 8 px gap: the five views as 56 px IconButtons, a flexible gap, Ambient and Settings, then a 56 px ✕ "Hide sidebar" as a fixed footer (the items above scroll on short windows). Page inset 80 px. **Expand handle:** the same pill on the rail's inner edge, vertically centered, 56×96 touch area, "Expand menu" → Expanded. It fades out (180 ms) while the drawer is open and in full-screen Photos.
   - **Expanded:** a 320 px white panel 12 px from the top, bottom and left, radius 24, `shadow-1`, no scrim. Header "Glance" (Geist 540, 24 px). The five views as 64 px pill rows (icon + 20 px label, weight 480; current = black fill), a gap, a hairline, Ambient and Settings, then a fixed "Close" row (named "Close sidebar") → Hidden. The rail fades out (180 ms). The page is pushed 332 px and stays usable: a tap on it doesn't close the drawer. Picking a row, or any view change, returns to Rail.
@@ -149,7 +149,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
   - **Motion:** slides over 280 ms `cubic-bezier(0.2, 0, 0, 1)`; at once with reduced motion.
   - Fixtures: `rail=1` (Rail), `rail=open` (Expanded).
 - **SHELL-09 Keyboard and focus:** the grip and Expand menu carry `aria-expanded`. Escape in Expanded → Rail. Opening the drawer focuses the current view's row. Escape or a row → focus to Expand menu; Close or ✕ → the grip; the grip → Expand menu. A view change that brings the rail back, and a page load, move no focus. Parts not shown are `inert`. No focus trap.
-- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px; phone 0 or 56, the drawer overlays the 56) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
+- **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px; phone always 0, the drawer overlays the page) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
 - **SHELL-11 Hides when idle** (when `hideSidebarWhenIdle` is on, SET-05): after 20 s with no touch or key press, Rail or Expanded → Hidden (the drawer closes and the rail slides away). The timer doesn't run while a sheet is open, the keyboard is up or a text field is focused. Tapping the grip → Rail and restarts the 20 s. No focus moves. Off: the sidebar stays as it is.
 
 ### 5.3 Grid templates

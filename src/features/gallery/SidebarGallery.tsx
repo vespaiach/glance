@@ -11,7 +11,10 @@ import { gallery } from "./samples";
 
 type Size = "wide" | "phone";
 
-const MODES: readonly SidebarMode[] = ["hidden", "rail", "expanded"];
+const MODES: Record<Size, readonly SidebarMode[]> = {
+  wide: ["hidden", "rail", "expanded"],
+  phone: ["hidden", "expanded"],
+};
 
 const SIZES: readonly Size[] = ["wide", "phone"];
 
@@ -68,7 +71,7 @@ export function SidebarGallery() {
     <>
       {SIZES.map((size) => (
         <div key={size} {...stylex.props(styles.row)}>
-          {MODES.map((mode) => (
+          {MODES[size].map((mode) => (
             <SidebarDemo key={mode} mode={mode} size={size} />
           ))}
         </div>
@@ -79,7 +82,7 @@ export function SidebarGallery() {
 
 function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
   const [state, dispatch] = useReducer(sidebarReducer, FIXTURE[mode], (rail) =>
-    initialSidebar(rail, "today"),
+    initialSidebar(rail, "today", size === "phone"),
   );
 
   const phone = size === "phone";
@@ -95,27 +98,33 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
             <Eyebrow>{gallery.groups.today}</Eyebrow>
           </div>
         </div>
-        <SidebarGrip shown={state.mode === "hidden"} onShow={() => dispatch({ type: "show" })} />
-        <SidebarRail
-          mode={state.mode}
+        <SidebarGrip
           phone={phone}
-          active="today"
-          onHide={() => dispatch({ type: "hide" })}
-          onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
+          shown={state.mode === "hidden"}
+          onShow={() => dispatch({ type: "show", phone })}
         />
-        <SidebarHandle
-          shown={state.mode !== "hidden"}
-          expanded={state.mode === "expanded"}
-          phone={phone}
-          onOpen={() => dispatch({ type: "open" })}
-        />
+        {!phone && (
+          <>
+            <SidebarRail
+              mode={state.mode}
+              active="today"
+              onHide={() => dispatch({ type: "hide" })}
+              onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
+            />
+            <SidebarHandle
+              shown={state.mode !== "hidden"}
+              expanded={state.mode === "expanded"}
+              onOpen={() => dispatch({ type: "open" })}
+            />
+          </>
+        )}
         <SidebarDrawer
           open={state.mode === "expanded"}
           phone={phone}
           active="today"
           onClose={() => dispatch({ type: "close" })}
-          onScrimTap={() => dispatch({ type: "back" })}
-          onNavigate={() => dispatch({ type: "viewChanged", view: "today" })}
+          onScrimTap={() => dispatch({ type: "back", phone })}
+          onNavigate={() => dispatch({ type: "viewChanged", view: "today", phone })}
         />
       </div>
     </div>

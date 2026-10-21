@@ -4,7 +4,7 @@
 |---|---|
 | Status | v2.11 |
 | Date | 2026-10-21 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.72) · [`tech-design.md`](tech-design.md) (v2.44) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.73) · [`tech-design.md`](tech-design.md) (v2.45) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -41,7 +41,7 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | D10 | ✅ | Design handoff v11 in the repo (Today open day, empty states, phone grip-only nav, week strip, event page, quick date, time picker); spec v0.72, tech design v2.43 and these rows | — | Docs merged | §2 |
 | J01 | ✅ | Today open day: pure `dayRibbon(events, now, sunset)` (elapsed, now and sunset percentages, ended segments), the "The day is wide open" / "That's a wrap for today" hero states, the ribbon and the "Next on the calendar" tile; fixture `events=none`; copy | D10 | Unit tests for the ribbon at 6 AM, noon, 10 PM, after sunset and with ended events; hero state tests for none, all ended, running, upcoming; tile hidden with no upcoming event; matches Today B at the six sizes | TODAY-02, TODAY-06, TODAY-13 |
 | J02 | ✅ | Empty states: the sticky-pad empty box on the Notes board and Today, the Picture of the day memory tile (one random prompt per load, upload pill hidden on phone); remove the first-use fixtures | D10 | Component tests for the pad opening New note, the tile opening Photos and one prompt per mount; gallery in four seasons; matches the Empty states board | TODAY-07, TODAY-09, NOTE-07 |
-| J03 | 🔄 | Phone nav: no Rail below 600 px; the grip opens the drawer directly and closing returns to the grip; "Open menu" label | D10 | Sidebar reducer tests: on phone Rail is never reached, grip → Expanded → Hidden, a view change returns to Hidden; matches the Phone drawer board | SHELL-08, SHELL-09 |
+| J03 | ✅ | Phone nav: no Rail below 600 px; the grip opens the drawer directly and closing returns to the grip; "Open menu" label | D10 | Sidebar reducer tests: on phone Rail is never reached, grip → Expanded → Hidden, a view change returns to Hidden; matches the Phone drawer board | SHELL-08, SHELL-09 |
 | J04 | ⬜ | Week strip: square cells, the sliding black indicator, corner forecast at 80 px, year eyebrow, soft today fill; note sheets without header and footer shadows | D10 | Component test that the selected cell carries `aria-current` and the indicator follows a tap; gallery; matches Calendar A at the six sizes | CAL-01, SHEET |
 | J05 | ⬜ | Event page shell: the full-screen page replacing the event sheet (slide in and out, sticky header with Back, actions, "Discard changes?", phone bottom bar), "Save event" with `check`, "Delete event?" | D10 | Component tests: Back closes at once when unchanged and asks when changed, Escape, delete confirm, focus returns to the opener; matches the Phone drawer board B and Calendar C | EVT-01, EVT-05..07, EVT-10, SHEET |
 | J06 | ⬜ | Day preview column: `overlappingEvents(events, start, end)` (all-day included), the weather tile with the hourly strip, "Also at this time" | J05 | Unit tests for overlap edges, all-day and no end (30 min); tests for the rain suffix and no-forecast line; hidden below 1180 px | EVT-13 |

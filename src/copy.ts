@@ -39,6 +39,7 @@ export const copy = {
     ambient: "Ambient",
     main: "Main",
     expandMenu: "Expand menu",
+    openMenu: "Open menu",
     showSidebar: "Show sidebar",
     hideSidebar: "Hide sidebar",
     closeSidebar: "Close sidebar",

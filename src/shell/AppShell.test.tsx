@@ -281,19 +281,96 @@ test("SHELL-09 the rail's ✕ moves focus to the grip", async () => {
   expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
 });
 
-test("SHELL-08 on a phone a scrim tap returns the drawer to Rail and focuses Expand menu", async () => {
+function onPhone() {
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: () => {},
     removeEventListener: () => {},
   }));
+}
+
+function phoneGrip() {
+  return screen.getByRole("button", { name: "Open menu" });
+}
+
+test("SHELL-08 on a phone there is no Rail: only the Open menu grip shows", async () => {
+  onPhone();
+
+  await renderShell("Calendar view");
+
+  expect(screen.queryByRole("button", { name: "Hide sidebar" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Expand menu" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Show sidebar" })).toBeNull();
+  expect(phoneGrip()).toBeVisible();
+  expect(drawer()).toHaveAttribute("inert");
+});
+
+test("SHELL-08 on a phone the grip opens the drawer directly and focuses the current row", async () => {
+  onPhone();
+
+  await renderShell("Today view");
+
+  await userEvent.click(phoneGrip());
+
+  expect(drawer()).not.toHaveAttribute("inert");
+  expect(within(drawer()).getByRole("button", { name: "Today" })).toHaveFocus();
+  expect(screen.queryByRole("button", { name: "Hide sidebar" })).toBeNull();
+});
+
+test("SHELL-08 on a phone Close returns to the grip and focuses it", async () => {
+  onPhone();
+
+  await renderShell("Today view", { rail: "open" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
+
+  expect(drawer()).toHaveAttribute("inert");
+  expect(phoneGrip()).toHaveFocus();
+});
+
+test("SHELL-08 on a phone a scrim tap returns to the grip and focuses it", async () => {
+  onPhone();
 
   await renderShell("Today view", { rail: "open" });
 
   await userEvent.click(drawer().previousElementSibling as HTMLElement);
 
-  expect(sidebarMode()).toBe("rail");
-  expect(expandMenu()).toHaveFocus();
+  expect(drawer()).toHaveAttribute("inert");
+  expect(phoneGrip()).toHaveFocus();
+});
+
+test("SHELL-08 on a phone picking a view returns to the grip", async () => {
+  onPhone();
+
+  await renderShell("Today view", { rail: "open" });
+
+  await userEvent.click(within(drawer()).getByRole("button", { name: "Calendar" }));
+
+  expect(navigation.push).toHaveBeenCalledWith("/calendar");
+  expect(drawer()).toHaveAttribute("inert");
+  expect(phoneGrip()).toHaveFocus();
+});
+
+test("SHELL-08 on a phone a view change returns the drawer to the grip", async () => {
+  onPhone();
+
+  const { rerender } = await renderShell("Today view", { rail: "open" });
+
+  changeView(rerender, "/calendar");
+
+  expect(drawer()).toHaveAttribute("inert");
+  expect(phoneGrip()).toBeVisible();
+});
+
+test("SHELL-09 on a phone Escape closes the drawer and focuses the grip", async () => {
+  onPhone();
+
+  await renderShell("Today view", { rail: "open" });
+
+  await userEvent.keyboard("{Escape}");
+
+  expect(drawer()).toHaveAttribute("inert");
+  expect(phoneGrip()).toHaveFocus();
 });
 
 test("SHELL-09 the grip's tap moves focus to Expand menu", async () => {
