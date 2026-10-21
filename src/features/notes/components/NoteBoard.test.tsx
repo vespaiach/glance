@@ -126,10 +126,10 @@ test("NOTE-06 with expiry off the caption says notes stay", () => {
 test("NOTE-07 the empty board invites a note and says how long notes stay", () => {
   renderBoard({ state: { kind: "empty" }, expiry: { on: true, days: 7 } });
 
-  expect(screen.getByText("No notes yet")).toBeInTheDocument();
+  expect(screen.getByText("Something to share at home?")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Leave a note for the family. Notes show on Today. They’re removed after 7 days.",
+      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. They’re removed after 7 days.",
     ),
   ).toBeInTheDocument();
   expect(screen.queryByText(/Select a note/)).not.toBeInTheDocument();
@@ -140,9 +140,19 @@ test("NOTE-07 with expiry off the empty board says notes stay", () => {
 
   expect(
     screen.getByText(
-      "Leave a note for the family. Notes show on Today. They stay until someone deletes them.",
+      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. They stay until someone deletes them.",
     ),
   ).toBeInTheDocument();
+});
+
+test("NOTE-07 tapping the pad on the empty board opens New note", async () => {
+  const onAddNote = vi.fn<() => void>();
+
+  renderBoard({ state: { kind: "empty" }, onAddNote });
+
+  await userEvent.click(screen.getByRole("button", { name: "Add the first note" }));
+
+  expect(onAddNote).toHaveBeenCalledOnce();
 });
 
 test("NOTE-01 Add note and tapping a note open the sheets", async () => {

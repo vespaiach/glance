@@ -100,10 +100,10 @@ test("NOTE-07 with no notes the board shows the empty state", async () => {
 
   renderNotes({ noteExpiry: { on: false, days: 7 } });
 
-  expect(await screen.findByText("No notes yet")).toBeInTheDocument();
+  expect(await screen.findByText("Something to share at home?")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Leave a note for the family. Notes show on Today. They stay until someone deletes them.",
+      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. They stay until someone deletes them.",
     ),
   ).toBeInTheDocument();
 });

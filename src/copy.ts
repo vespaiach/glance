@@ -86,6 +86,16 @@ export const copy = {
       onThisDay: (year: number) => `On this day · ${year}`,
       name: (title: string) => `Picture of the day: ${title}`,
       upload: "Upload a photo",
+      emptyBody: "Share a family photo and keep the memory here.",
+      prompts: [
+        "Remember the day we camped by the lake?",
+        "The first snow in the backyard",
+        "Grandma’s birthday cake",
+        "Our summer at the beach",
+        "The first day of school",
+        "Sunday pancakes, all of us",
+        "Pizza night on Friday",
+      ],
       allPhotos: "All photos",
       loading: "Loading photo",
     },
@@ -104,7 +114,8 @@ export const copy = {
       count: (count: number) => `Notes · ${count}`,
       loadingCount: "Notes",
       allNotes: "All notes",
-      emptyTitle: "No notes yet",
+      emptyTitle: "Something to share at home?",
+      emptyBody: "Milk in the fridge, flowers to water. Leave a note for the family.",
       addNote: "Add note",
       loading: "Loading notes",
     },
@@ -260,8 +271,10 @@ export const copy = {
     caption: (keep: string) => `Select a note to edit or delete it · ${keep}`,
     keep: (expiry: NoteExpiry) =>
       expiry.on ? `Notes are removed after ${dayCount(expiry.days)}` : "Notes stay until deleted",
-    emptyTitle: "No notes yet",
-    emptyBody: (keep: string) => `Leave a note for the family. Notes show on Today. ${keep}`,
+    addFirst: "Add the first note",
+    emptyTitle: "Something to share at home?",
+    emptyBody: (keep: string) =>
+      `Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. ${keep}`,
     emptyKeep: (expiry: NoteExpiry) =>
       expiry.on
         ? `They’re removed after ${dayCount(expiry.days)}.`

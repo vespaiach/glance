@@ -8,6 +8,7 @@ import { noteStampText } from "@/features/notes";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
+import { NotePad } from "@/ui/NotePad";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
@@ -59,21 +60,42 @@ const styles = stylex.create({
   empty: {
     marginInline: space.xs,
     minHeight: 160,
-    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: colors.borderHairline,
     borderRadius: radii.lg,
-    padding: space.lg,
+    paddingBlock: space.lg,
+    paddingInline: 28,
     boxSizing: "border-box",
     display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: space.xl,
+  },
+  emptyText: {
+    flexGrow: 1,
+    flexBasis: 180,
+    display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
     alignItems: "flex-start",
-    gap: 16,
+    gap: 14,
+  },
+  emptyCopy: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: 340,
     letterSpacing: "-0.3px",
     lineHeight: 1.2,
+  },
+  emptyBody: {
+    fontSize: 16,
+    fontWeight: 330,
+    lineHeight: 1.4,
+    textWrap: "pretty",
   },
 });
 
@@ -106,10 +128,16 @@ export function TodayNotes({
         loading={<NotesSkeleton />}
         empty={
           <div {...stylex.props(styles.empty)}>
-            <span {...stylex.props(styles.emptyTitle)}>{copy.today.notes.emptyTitle}</span>
-            <Button variant="secondary" icon={Plus} onClick={onAddNote}>
-              {copy.today.notes.addNote}
-            </Button>
+            <NotePad label={copy.notes.addFirst} onClick={onAddNote} />
+            <div {...stylex.props(styles.emptyText)}>
+              <div {...stylex.props(styles.emptyCopy)}>
+                <span {...stylex.props(styles.emptyTitle)}>{copy.today.notes.emptyTitle}</span>
+                <span {...stylex.props(styles.emptyBody)}>{copy.today.notes.emptyBody}</span>
+              </div>
+              <Button variant="secondary" icon={Plus} onClick={onAddNote}>
+                {copy.today.notes.addNote}
+              </Button>
+            </div>
           </div>
         }
         failed={

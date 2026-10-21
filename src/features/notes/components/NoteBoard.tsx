@@ -9,7 +9,7 @@ import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
-import { Icon } from "@/ui/Icon";
+import { NotePad } from "@/ui/NotePad";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
@@ -74,20 +74,23 @@ const styles = stylex.create({
   },
   emptyTile: {
     minHeight: 340,
-    backgroundColor: colors.surfaceSoft,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: colors.borderHairline,
     borderRadius: radii.lg,
     padding: "clamp(28px, 3.2vw, 48px)",
     boxSizing: "border-box",
     display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-start",
-    gap: space.md,
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "clamp(40px, 5vw, 72px)",
   },
   emptyText: {
+    flexGrow: 1,
+    flexBasis: 260,
     display: "flex",
     flexDirection: "column",
-    gap: 8,
+    gap: 10,
   },
   emptyTitle: {
     fontSize: type.displayLgSize,
@@ -133,7 +136,7 @@ export function NoteBoard({
       <Zone
         state={state}
         loading={<BoardSkeleton />}
-        empty={<EmptyBoard expiry={expiry} />}
+        empty={<EmptyBoard expiry={expiry} onAddNote={onAddNote} />}
         failed={
           <SourceFailure
             icon={StickyNoteGlyph}
@@ -196,10 +199,10 @@ function BoardSkeleton() {
   );
 }
 
-function EmptyBoard({ expiry }: { expiry: Expiry }) {
+function EmptyBoard({ expiry, onAddNote }: { expiry: Expiry; onAddNote: () => void }) {
   return (
     <div {...stylex.props(styles.emptyTile)}>
-      <Icon icon={StickyNoteGlyph} size={40} strokeWidth={1.5} />
+      <NotePad size="lg" label={copy.notes.addFirst} onClick={onAddNote} />
       <div {...stylex.props(styles.emptyText)}>
         <span {...stylex.props(styles.emptyTitle)}>{copy.notes.emptyTitle}</span>
         <span {...stylex.props(styles.emptyBody)}>

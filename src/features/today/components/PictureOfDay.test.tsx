@@ -60,14 +60,69 @@ test("TODAY-07 an On this day photo names its year in the panel eyebrow", () => 
   expect(screen.queryByText("Picture of the day")).not.toBeInTheDocument();
 });
 
-test("TODAY-07 with no photos the tile reads Upload a photo and tapping it uploads", async () => {
-  const onUpload = vi.fn<() => void>();
+const PROMPTS = [
+  "Remember the day we camped by the lake?",
+  "The first snow in the backyard",
+  "Grandma’s birthday cake",
+  "Our summer at the beach",
+  "The first day of school",
+  "Sunday pancakes, all of us",
+  "Pizza night on Friday",
+];
 
-  render(<PictureOfDayEmpty onUpload={onUpload} />);
+test("TODAY-07 with no photos the tile opens Photos", async () => {
+  const onOpenPhotos = vi.fn<() => void>();
 
-  const button = screen.getByRole("button", { name: "Upload a photo" });
+  render(<PictureOfDayEmpty onOpenPhotos={onOpenPhotos} canUpload />);
 
-  await userEvent.click(button);
+  await userEvent.click(screen.getByRole("button", { name: /Upload a photo/ }));
 
-  expect(onUpload).toHaveBeenCalledTimes(1);
+  expect(onOpenPhotos).toHaveBeenCalledTimes(1);
+  expect(screen.getByText("Share a family photo and keep the memory here.")).toBeInTheDocument();
+});
+
+test("TODAY-07 the tile shows one memory prompt and keeps it across re-renders", () => {
+  const { rerender } = render(<PictureOfDayEmpty onOpenPhotos={ignore} canUpload />);
+
+  const shown = PROMPTS.filter((prompt) => screen.queryByText(`“${prompt}”`));
+
+  expect(shown).toHaveLength(1);
+
+  rerender(<PictureOfDayEmpty onOpenPhotos={ignore} canUpload={false} />);
+
+  expect(screen.getByText(`“${shown[0]}”`)).toBeInTheDocument();
+});
+
+test("TODAY-07 each mount picks its prompt at random from the seven", () => {
+  const random = vi.spyOn(Math, "random");
+
+  const picks = PROMPTS.map((_, index) => {
+    random.mockReturnValueOnce((index + 0.5) / PROMPTS.length);
+
+    const { unmount, container } = render(<PictureOfDayEmpty onOpenPhotos={ignore} canUpload />);
+
+    const text = container.textContent;
+
+    unmount();
+
+    return text;
+  });
+
+  random.mockRestore();
+
+  PROMPTS.forEach((prompt, index) => {
+    expect(picks[index]).toContain(`“${prompt}”`);
+  });
+});
+
+test("TODAY-07 on phone the tile has no Upload a photo pill but still opens Photos", async () => {
+  const onOpenPhotos = vi.fn<() => void>();
+
+  render(<PictureOfDayEmpty onOpenPhotos={onOpenPhotos} canUpload={false} />);
+
+  expect(screen.queryByText("Upload a photo")).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button"));
+
+  expect(onOpenPhotos).toHaveBeenCalledTimes(1);
 });

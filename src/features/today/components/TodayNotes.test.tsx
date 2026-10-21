@@ -126,9 +126,22 @@ test("TODAY-09 with no notes Add note opens a new note", async () => {
   renderNotes({ kind: "empty" }, { onAddNote });
 
   expect(screen.getByText("Notes · 0")).toBeInTheDocument();
-  expect(screen.getByText("No notes yet")).toBeInTheDocument();
+  expect(screen.getByText("Something to share at home?")).toBeInTheDocument();
+  expect(
+    screen.getByText("Milk in the fridge, flowers to water. Leave a note for the family."),
+  ).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Add note" }));
+
+  expect(onAddNote).toHaveBeenCalledTimes(1);
+});
+
+test("TODAY-09 with no notes tapping the pad opens a new note", async () => {
+  const onAddNote = vi.fn<() => void>();
+
+  renderNotes({ kind: "empty" }, { onAddNote });
+
+  await userEvent.click(screen.getByRole("button", { name: "Add the first note" }));
 
   expect(onAddNote).toHaveBeenCalledTimes(1);
 });

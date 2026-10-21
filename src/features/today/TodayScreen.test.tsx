@@ -355,6 +355,25 @@ test("TODAY-07 with no photos Upload a photo goes to Photos", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/photos");
 });
 
+test("TODAY-07 on phone the empty tile has no Upload a photo pill and still goes to Photos", async () => {
+  await markSynced(store);
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+
+  renderToday();
+
+  await screen.findByText("Share a family photo and keep the memory here.");
+
+  expect(screen.queryByText("Upload a photo")).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByText("Share a family photo and keep the memory here."));
+
+  expect(navigation.push).toHaveBeenCalledWith("/photos");
+});
+
 test("TODAY-07 All photos goes to Photos", async () => {
   await markSynced(store);
 
@@ -405,6 +424,18 @@ test("TODAY-09 Add note opens New note", async () => {
   renderToday();
 
   await userEvent.click(await screen.findByRole("button", { name: "Add note" }));
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "newnote" }),
+  );
+});
+
+test("TODAY-09 the empty pad opens New note", async () => {
+  await markSynced(store);
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Add the first note" }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
     JSON.stringify({ kind: "newnote" }),

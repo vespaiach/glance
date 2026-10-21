@@ -232,7 +232,9 @@ function Picture({ state, day, tz, grid, canUpload, onOpen, onOpenPhotos }: Pict
 
   const height = grid === "threeColumn" ? todayPotdHeights.fill : todayPotdHeights.tall;
 
-  const empty = canUpload ? <PictureOfDayEmpty onUpload={onOpenPhotos} xstyle={height} /> : null;
+  const empty = (
+    <PictureOfDayEmpty onOpenPhotos={onOpenPhotos} canUpload={canUpload} xstyle={height} />
+  );
 
   const loading = <PictureOfDaySkeleton xstyle={height} />;
 
