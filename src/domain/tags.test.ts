@@ -1,13 +1,15 @@
 import { type Tag, TagColorSchema } from "./schemas";
 import {
   eventColor,
+  exactTag,
   filterTagIds,
   liveFilter,
   matchesFilter,
   nextFreeColor,
   toggleFilter,
-  toggleWho,
+  whoIds,
   whoLabel,
+  whoValue,
 } from "./tags";
 
 const tag = (n: number, name: string, color: Tag["color"]): Tag => ({
@@ -162,34 +164,44 @@ describe("filterTagIds", () => {
   });
 });
 
-describe("toggleWho", () => {
-  const family = FAMILY.map((one) => one.id);
-
-  it("EVT-11 tapping a tag while everyone is on keeps every other tag", () => {
-    expect(toggleWho(everyone, HY.id, family)).toEqual(forTags(AN, MOM));
+describe("whoValue", () => {
+  it("EVT-11 every tag on the draft stores everyone", () => {
+    expect(whoValue([MOM.id, AN.id, HY.id], ALL_IDS)).toEqual(everyone);
   });
 
-  it("EVT-11 tapping an unselected tag adds them in family order", () => {
-    expect(toggleWho(forTags(MOM), AN.id, family)).toEqual(forTags(AN, MOM));
+  it("EVT-11 some tags store those tags", () => {
+    expect(whoValue([MOM.id, AN.id], ALL_IDS)).toEqual(forTags(MOM, AN));
   });
 
-  it("EVT-11 tapping a selected tag takes them off", () => {
-    expect(toggleWho(forTags(AN, MOM), AN.id, family)).toEqual(forTags(MOM));
+  it("EVT-11 no tag stores nobody", () => {
+    expect(whoValue([], ALL_IDS)).toEqual(nobody);
   });
 
-  it("EVT-11 selecting every tag one by one means everyone", () => {
-    expect(toggleWho(forTags(AN, MOM), HY.id, family)).toEqual(everyone);
+  it("D24 with no tags yet a draft stores everyone, so the first tag joins it", () => {
+    expect(whoValue([], [])).toEqual(everyone);
   });
 
-  it("EVT-11 turning the last tag off leaves nobody", () => {
-    expect(toggleWho(forTags(MOM), MOM.id, family)).toEqual(nobody);
+  it("FAM-04 a tag just created and not yet listed stays on the draft", () => {
+    expect(whoValue([AN.id, "new"], ALL_IDS)).toEqual({ everyone: false, tagIds: [AN.id, "new"] });
+  });
+});
+
+describe("whoIds", () => {
+  it("EVT-11 an everyone event shows every tag", () => {
+    expect(whoIds(everyone, ALL_IDS)).toEqual(ALL_IDS);
   });
 
-  it("D24 ids of tags that are gone drop out on the next tap", () => {
-    const gone = "0192f1a0-0000-7000-8000-000000000099";
+  it("EVT-11 an event for some tags shows them", () => {
+    expect(whoIds(forTags(MOM, AN), ALL_IDS)).toEqual([MOM.id, AN.id]);
+  });
+});
 
-    expect(toggleWho({ everyone: false, tagIds: [gone, MOM.id] }, AN.id, family)).toEqual(
-      forTags(AN, MOM),
-    );
+describe("exactTag", () => {
+  it("EVT-11 finds the tag with exactly that name in any case", () => {
+    expect(exactTag(FAMILY, " mOM ")).toBe(MOM);
+  });
+
+  it("EVT-11 a partial name finds no tag", () => {
+    expect(exactTag(FAMILY, "Minh")).toBeUndefined();
   });
 });

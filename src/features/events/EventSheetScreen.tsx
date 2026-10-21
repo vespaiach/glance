@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useEvent, useEventsRepo, useTags } from "@/data/repos";
+import { useEvent, useEventsRepo, useTags, useTagsRepo } from "@/data/repos";
 import { eventDayKey } from "@/domain/allDay";
 import { type DetailsStatus, detailsStatus } from "@/domain/eventStatus";
 import type { EventTimes } from "@/domain/eventTimes";
 import { uuidv7 } from "@/domain/id";
-import type { CalendarEvent } from "@/domain/schemas";
-import type { EventWho } from "@/domain/tags";
+import type { CalendarEvent, Tag, TagColor } from "@/domain/schemas";
+import { EVERYONE, type EventWho, whoIds } from "@/domain/tags";
 import { formatDayTitle } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
-import { useNow } from "@/shell/providers/now";
+import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
@@ -31,6 +31,7 @@ type SheetFrameProps = {
   mode: "new" | "edit";
   day: string;
   id: string;
+  tags: readonly Tag[];
   initial: EventSheetState;
   status?: DetailsStatus;
   onDelete: () => void;
@@ -38,18 +39,28 @@ type SheetFrameProps = {
 
 type Fixtures = { time?: TimeFixture; discard?: true; edit?: true };
 
-type NewProps = Fixtures & { day: string; who?: EventWho; times?: EventTimes };
+type NewProps = Fixtures & {
+  day: string;
+  who?: EventWho;
+  times?: EventTimes;
+  tags: readonly Tag[];
+};
 
-type EditProps = Fixtures & { event: CalendarEvent };
+type EditProps = Fixtures & { event: CalendarEvent; tags: readonly Tag[] };
 
 export function EventSheetScreen() {
   const { sheet } = useSheetHost();
+
+  const tags = useTags();
+
+  if (!tags) return null;
 
   if (sheet?.kind === "event")
     return (
       <LoadedEventSheet
         key={sheet.id}
         id={sheet.id}
+        tags={tags}
         time={sheet.time}
         discard={sheet.discard}
         edit={sheet.edit}
@@ -62,6 +73,7 @@ export function EventSheetScreen() {
         key={sheet.day}
         day={sheet.day}
         who={sheet.who}
+        tags={tags}
         times={sheet.times}
         time={sheet.time}
         discard={sheet.discard}
@@ -71,7 +83,7 @@ export function EventSheetScreen() {
   return null;
 }
 
-function SheetFrame({ mode, day, id, initial, status, onDelete }: SheetFrameProps) {
+function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
 
   const events = useEventsRepo();
@@ -84,10 +96,22 @@ function SheetFrame({ mode, day, id, initial, status, onDelete }: SheetFrameProp
 
   const breakpoint = useBreakpoint();
 
-  const tags = useTags() ?? [];
+  const tagsRepo = useTagsRepo();
+
+  const { get: currentTime } = useNowStore();
 
   const onSave = (draft: EventDraft) => {
-    void events.put(eventFromDraft(draft, day, id, tz));
+    void events.put(eventFromDraft(draft, day, id, tz, tagIds(tags)));
+  };
+
+  const onCreateTag = (name: string, color: TagColor) => {
+    const now = currentTime();
+
+    const tag = { id: uuidv7(now), name, color, createdAt: now.toISOString() };
+
+    void tagsRepo.add(tag);
+
+    return tag.id;
   };
 
   return (
@@ -103,12 +127,13 @@ function SheetFrame({ mode, day, id, initial, status, onDelete }: SheetFrameProp
       onClose={close}
       onDelete={onDelete}
       onSave={onSave}
+      onCreateTag={onCreateTag}
       keyboardInset={useKeyboardInset()}
     />
   );
 }
 
-function EditEventSheet({ event, time, discard, edit }: EditProps) {
+function EditEventSheet({ event, tags, time, discard, edit }: EditProps) {
   const { close } = useSheetHost();
 
   const events = useEventsRepo();
@@ -131,8 +156,9 @@ function EditEventSheet({ event, time, discard, edit }: EditProps) {
       mode="edit"
       day={eventDayKey(event, tz)}
       id={event.id}
+      tags={tags}
       initial={initialEventSheet(
-        draftFromEvent(event, tz, now),
+        draftFromEvent(event, tz, now, tagIds(tags)),
         time,
         discard && !ended,
         !edit || ended,
@@ -143,13 +169,13 @@ function EditEventSheet({ event, time, discard, edit }: EditProps) {
   );
 }
 
-function LoadedEventSheet({ id, ...fixtures }: Fixtures & { id: string }) {
+function LoadedEventSheet({ id, ...props }: Fixtures & { id: string; tags: readonly Tag[] }) {
   const event = useEvent(id);
 
-  return event ? <EditEventSheet event={event} {...fixtures} /> : null;
+  return event ? <EditEventSheet event={event} {...props} /> : null;
 }
 
-function NewEventSheet({ day, who, times, time, discard }: NewProps) {
+function NewEventSheet({ day, who = EVERYONE, times, tags, time, discard }: NewProps) {
   const now = useNow("minute");
 
   const tz = useTimeZone();
@@ -161,8 +187,17 @@ function NewEventSheet({ day, who, times, time, discard }: NewProps) {
       mode="new"
       day={day}
       id={id}
-      initial={initialEventSheet(newEventDraft(now, tz, who, times), time, discard)}
+      tags={tags}
+      initial={initialEventSheet(
+        newEventDraft(now, tz, whoIds(who, tagIds(tags)), times),
+        time,
+        discard,
+      )}
       onDelete={() => {}}
     />
   );
+}
+
+function tagIds(tags: readonly Tag[]): string[] {
+  return tags.map((tag) => tag.id);
 }
