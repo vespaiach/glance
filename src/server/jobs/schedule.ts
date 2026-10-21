@@ -2,7 +2,7 @@ import "server-only";
 
 type Job = () => unknown;
 
-export type Jobs = { hourly: Job; daily: Job };
+export type Jobs = { hourly: Job; daily: Job[] };
 
 export function createJobTick({ hourly, daily }: Jobs): (now: Date) => Promise<void> {
   let lastDay: string | undefined;
@@ -16,7 +16,7 @@ export function createJobTick({ hourly, daily }: Jobs): (now: Date) => Promise<v
 
     lastDay = day;
 
-    await runSafely(daily);
+    for (const job of daily) await runSafely(job);
   };
 }
 

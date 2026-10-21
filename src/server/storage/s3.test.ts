@@ -42,4 +42,25 @@ describe("createS3Store", () => {
 
     await expect(createS3Store(AWS, failing).get("maria/photo.thumb")).rejects.toThrow("503");
   });
+
+  it("tech§6.3 sends every DELETE before it throws for a failed one", async () => {
+    const deleted: string[] = [];
+
+    const flaky = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = new Request(input, init);
+
+      if (request.url.endsWith(".orig")) return new Response("SlowDown", { status: 503 });
+
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      deleted.push(new URL(request.url).pathname);
+
+      return new Response(null, { status: 204 });
+    }) as typeof fetch;
+
+    const removal = createS3Store(AWS, flaky).remove(["maria/p.orig", "maria/p.thumb"]);
+
+    await expect(removal).rejects.toThrow("503");
+    expect(deleted).toEqual(["/maria/p.thumb"]);
+  });
 });

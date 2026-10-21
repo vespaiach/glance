@@ -10,5 +10,10 @@ export async function removeDeletedPhotoFiles({ db, store }: PhotoJobDeps): Prom
     "SELECT file_path FROM photos WHERE deleted_at IS NOT NULL",
   );
 
-  for (const row of rows) await store.remove(photoKeys(row.file_path));
+  const failures: unknown[] = [];
+
+  for (const row of rows)
+    await store.remove(photoKeys(row.file_path)).catch((error) => failures.push(error));
+
+  if (failures.length > 0) throw failures[0];
 }

@@ -140,7 +140,7 @@
                       "@/copy/**",
                       "**/copy/**"
                     ],
-                    "message": "theme and ui may import only theme and domain types (tech §3)."
+                    "message": "theme and ui may import only theme and domain (tech §3)."
                   },
                   {
                     "group": ["@/features/*/**"],
@@ -154,7 +154,64 @@
       }
     },
     {
-      "includes": ["src/data/**"],
+      "includes": [
+        "src/data/**",
+        "!src/data/**/*.test.ts",
+        "!src/data/**/*.test.tsx",
+        "!src/data/sync/fixtureTransport.ts",
+        "!src/data/repos/session.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/server",
+                      "@/server/**",
+                      "**/server/**",
+                      "@/copy",
+                      "@/copy/**",
+                      "**/copy/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**"
+                    ],
+                    "message": "data may import only domain; fixtures only in fixtureTransport.ts, session.ts and tests (tech §3)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/data/**/*.test.ts",
+        "src/data/**/*.test.tsx",
+        "src/data/sync/fixtureTransport.ts",
+        "src/data/repos/session.ts"
+      ],
       "linter": {
         "rules": {
           "style": {
@@ -183,7 +240,7 @@
                       "@/copy/**",
                       "**/copy/**"
                     ],
-                    "message": "data may import only domain (tech §3)."
+                    "message": "data may import only domain; fixtures only in fixtureTransport.ts, session.ts and tests (tech §3)."
                   },
                   {
                     "group": ["@/features/*/**"],
@@ -357,10 +414,9 @@
                       "@/fixtures/**",
                       "**/fixtures/**",
                       "@/server/db",
-                      "@/server/db/**",
-                      "better-sqlite3"
+                      "@/server/db/**"
                     ],
-                    "message": "Route handlers import only server services and never touch SQLite (tech §6.1)."
+                    "message": "Route handlers import only server services and never touch the database (tech §6.1)."
                   },
                   {
                     "group": ["@/features/*/**"],
@@ -392,8 +448,7 @@
                       "**/data/**",
                       "@/fixtures",
                       "@/fixtures/**",
-                      "**/fixtures/**",
-                      "better-sqlite3"
+                      "**/fixtures/**"
                     ],
                     "message": "Page files render features and shell only (tech §3)."
                   },
@@ -424,7 +479,6 @@
                       "**/server/**",
                       "**/data/repos/**",
                       "**/data/sync/**",
-                      "better-sqlite3",
                       "dexie",
                       "react",
                       "next",

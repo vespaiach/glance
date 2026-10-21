@@ -11,7 +11,7 @@ import { createJobTick } from "./schedule";
 const HOUR_MS = 60 * 60 * 1000;
 
 export function startJobs(): void {
-  const tick = createJobTick({ hourly: runHourly, daily: runDaily });
+  const tick = createJobTick({ hourly: runHourly, daily: [runLinkCleanup, runPhotoCleanup] });
 
   void tick(new Date());
 
@@ -28,8 +28,10 @@ async function runHourly(): Promise<void> {
   for (const { accountId, version } of await expireNotes(deps())) bus.publish(accountId, version);
 }
 
-async function runDaily(): Promise<void> {
+async function runLinkCleanup(): Promise<void> {
   await cleanupLinks(deps());
+}
 
+async function runPhotoCleanup(): Promise<void> {
   await removeDeletedPhotoFiles({ ...deps(), store: photoStore() });
 }

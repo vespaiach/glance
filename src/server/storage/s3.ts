@@ -22,7 +22,13 @@ export function createS3Store(config: S3Config, fetchImpl: typeof fetch): PhotoS
       return storedObject(await send(key, { method: "GET" }));
     },
     async remove(keys) {
-      await Promise.all(keys.map(async (key) => expectOk(await send(key, { method: "DELETE" }))));
+      const removals = await Promise.allSettled(
+        keys.map(async (key) => expectOk(await send(key, { method: "DELETE" }))),
+      );
+
+      const failed = removals.find((removal) => removal.status === "rejected");
+
+      if (failed) throw failed.reason;
     },
   };
 }

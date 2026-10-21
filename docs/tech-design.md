@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.31 |
+| Status | v2.32 |
 | Date | 2026-10-20 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.69) · [`design/handoff/`](design/handoff/README.md) (v9) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.70) · [`design/handoff/`](design/handoff/README.md) (v9) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -15,7 +15,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | # | Area | Decision |
 |---|---|---|
 | D1 | Framework | **Next.js App Router, run as a SPA.** A persistent client shell in `(display)/layout.tsx` keeps the clock, idle, slideshow and sync timers alive across views. Views are `'use client'` segments. |
-| D2 | Language / lint | TypeScript `strict`, Biome (lint + format, CI and pre-commit). |
+| D2 | Language / lint | TypeScript `strict`, Biome (lint + format, pre-commit and the §7 checks). |
 | D3 | Styling | **StyleX** via Babel + PostCSS (`useCSSLayers: true`); `globals.css` holds only `@stylex;`. Tokens in `theme/` (`tokens.stylex.ts`, `type.stylex.ts`, `seasons.stylex.ts`), seasons and Ambient as `createTheme` in `themes.ts`. Components use `season.*` roles directly. Geist / Geist Mono are vendored woff2 loaded with `next/font/local`. `ui/Icon` wraps `lucide-react` and takes the glyph component, not a name. |
 | D4 | Client data | **Local-first store on IndexedDB (Dexie).** The UI reads local data only; writes go local first; a sync engine in a Web Worker (D19) talks to the server. |
 | D5 | Shell state | React context + `useSyncExternalStore` stores. No state library. |
@@ -80,7 +80,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 - The sync worker never posts data to the page; data and sync status reach the UI through Dexie. Only `photosChanged` and `restart` are messages.
 - The server is the source of truth; IndexedDB is a replica plus a queue of pending writes.
 - Weather is read-through: the worker fetches it every 15 min and stores it for offline use.
-- Auth screens call the transport directly, not Dexie.
+- Auth screens reach the transport through `data/repos/auth.tsx` (`useSignInAuth`), not Dexie.
 - Boot decides "signed in" from `glance-meta`, never the network. The SW caches the app and photo files, never API JSON.
 
 ---
@@ -124,13 +124,13 @@ db-migrations/NNN_*.sql
 
 | Module | May import |
 |---|---|
-| `domain` | Valibot only |
-| `theme`, `ui` | `theme`, `domain` (types only) |
-| `data` | `domain`; `fixtures` only in `data/sync/fixtureTransport.ts` and `data/repos/session.ts` |
+| `domain` | Valibot only (Biome blocks app modules, React, Next and Dexie) |
+| `theme`, `ui` | `theme`, `domain` |
+| `data` | `domain`; `fixtures` only in `data/sync/fixtureTransport.ts`, `data/repos/session.ts` and tests |
 | `fixtures` | `domain` |
 | `shell`, `features/*` | `ui`, `theme`, `domain`, `data/repos`, `shell`, `copy`. A feature may import another feature's **index** only |
-| `server` | `domain`, and `copy` for the sign-in email. Never `data`, `ui` or `features` |
-| `src/app/**` | pages → `features`/`shell`; route handlers → `server`; `sw.ts` → `serwist` and `data/sw` |
+| `server` | `domain`, and `copy` for the sign-in email and weather place names. Never `data`, `ui` or `features` |
+| `src/app/**` | pages and layouts → `features`, `shell`, `theme`, `copy`; route handlers → `server` and `domain` schemas; `sw.ts` → `serwist` and `data/sw` |
 
 ---
 
@@ -159,11 +159,11 @@ db.version(2).stores({
 ### 4.2 Repository pattern
 Each repo has a small interface and one Dexie implementation (`createXRepo(store)` + a `useXRepo()` hook). A write is **one Dexie transaction** — the row plus an outbox entry — then `nudge()` once it commits. A put keeps the stored server fields (a new row gets version 0); a remove sets `deletedAt` locally and queues a delete. Settings are one row keyed by `accountId`, merged over defaults. Photo uploads skip the outbox (§6.3); photo edits and deletes use it.
 
-Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day, week or span (`useEventsBetween`) in `tz`, `useEvent`, `useMembers` (oldest first), `useMemberPlans` (every live event, for the Family sheet counts), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePictureOfDay`, `useSettings`, `useWeather`, `useSyncStatus`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `MembersRepo.remove(id)` reads the live events and writes the member tombstone and its event changes in one transaction (D24); `outbox.ts` `queued(store, tables, write)` runs several row writes and their outbox entries together.
+Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day, week or span (`useEventsOnDay`, `useEventsInWeek`, `useEventsBetween`) in `tz`, `useEvent`, `useNextEventAfter`, `useUpcomingEvent`, `useHasEvents`, `useMembers` (oldest first), `useMemberPlans` (every live event, for the Family sheet counts), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePhotoSrc`, `usePictureOfDay`, `useSettings`, `useWeather`, `useSyncStatus`, `useSourceStatus`, `useRetry`, `useSignedOut`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `MembersRepo.remove(id)` reads the live events and writes the member tombstone and its event changes in one transaction (D24); `outbox.ts` `queued(store, tables, write)` runs several row writes and their outbox entries together.
 
-`RepoProvider` takes a `RepoStore` (`db`, `accountId`, `account`, `now`, `nudge`, `refreshWeather`, `photoSrc`, `upload`, `places`, `locate`, `displays`, `issueQr`/`voidQr`, `signOut`, `markSignedOut`). The shell builds it; tests inject one.
+`RepoProvider` takes a `RepoStore` (`db`, `accountId`, `account`, `now`, `startedAt`, `nudge`, `refreshWeather`, `photoSrc`, `upload`, `places`, `locate`, `displays`, `issueQr`/`voidQr`, `signOut`, `markSignedOut`). The shell builds it; tests inject one.
 
-**Transport.** Every server call is a `Transport` method returning `Promise<Result<T, TransportError>>`, with `TransportError` = `network` · `unauthorized` (401) · `invalid` (400/404/409/422) · `outdated` (426) · `server` (5xx, 429, non-JSON 2xx). Methods: `push(entry)` → `Change`, `pull(cursor?)` → `{ cursor, changes }`, `weather`, `places(query)`, `locate(coords)` (adds `outside`), `upload(file, modifiedOn, onProgress)` (adds `too-large` / `not-a-photo`), `displays`, `issueQr`/`voidQr`, and `auth.*` (`link`, `status`, `name`, `location`, `signout`). Callers drop stale answers rather than cancel.
+**Transport.** Every server call is a `Transport` method returning `Promise<Result<T, TransportError>>`, with `TransportError` = `network` · `unauthorized` (401) · `invalid` (any other non-2xx: 400, 403, 404, 409, …) · `outdated` (426) · `server` (5xx, 429, non-JSON 2xx). Methods: `push(entry)` → `Change`, `pull(cursor?)` → `{ cursor, changes }`, `weather`, `places(query)`, `locate(coords)` (adds `outside`), `upload(file, modifiedOn, onProgress)` (adds `too-large` / `not-a-photo`), `displays`, `issueQr`/`voidQr`, and `auth.*` (`link`, `status`, `guestAvailable`, `guest`, `name`, `location`, `signout`). Callers drop stale answers rather than cancel.
 - `HttpTransport` talks to the same-origin API with fetch (XHR for upload progress) and sends `X-Glance-Build: {CLIENT_BUILD}` on every request. Bodies are trusted as typed.
 - `FixtureTransport` (demo) seeds Appendix A data, answers pushes locally, and simulates delays, failures and sign-in states from the fixture URL params.
 
@@ -175,10 +175,10 @@ Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered
 | `TimeZoneProvider` | `useTimeZone()` = the saved place's zone, else the device's (LOC-06) |
 | `SeasonProvider` | Active season as a StyleX theme on a `display: contents` wrapper; re-checks at midnight |
 | `NetworkProvider` | `online` (`navigator.onLine` and `meta.status.online`), `showOfflinePill` after 30 s, `savedAt` |
-| `SheetHost` | One open sheet `{ kind, … }`; closes on route change. `event` opens Event details (EVT-09); its `edit` flag opens Edit event directly and is only set by the `sheet=event\|allday\|past` fixtures without `details=1` (an ended event still opens details). `note` opens Note details (NOTE-10); its `edit` flag opens Edit note directly and is only set by the `sheet=note` fixture without `details=1`. `newevent` carries the day, the Calendar filter's `memberIds` (absent or empty = everyone, EVT-11) and, from a free slot, its `times` (minutes of the day from `domain/eventTimes.slotTimes`, TL-08; absent = TPK-05 defaults). `family` opens the Family sheet; its `removing`, `name` and `error` come only from the `rm=`, `famname=` and `famerr=1` fixtures |
+| `SheetHost` | One open sheet `{ kind, … }`; closes on route change. `event` opens Event details (EVT-09); `event` and `newevent` take a `time` from the `time=` fixture; its `edit` flag opens Edit event directly and is only set by the `sheet=event\|allday\|past` fixtures without `details=1` (an ended event still opens details). `note` opens Note details (NOTE-10); its `edit` flag opens Edit note directly and is only set by the `sheet=note` fixture without `details=1`. `newevent` carries the day, the Calendar filter's `memberIds` (absent or empty = everyone, EVT-11) and, from a free slot, its `times` (minutes of the day from `domain/eventTimes.slotTimes`, TL-08; absent = TPK-05 defaults). `newnote` opens New note (its `draft` comes only from the `sheet=newnote` fixture). `photo` opens a photo's details by id. `discard` (any kind) opens with Discard changes? up. `family` opens the Family sheet; its `removing`, `name` and `error` come only from the `rm=`, `famname=` and `famerr=1` fixtures |
 | `IdleProvider` | Touch timer → `/today`, or `/ambient` during ambient hours; enters and leaves Ambient on the schedule; paused while a text field is focused; applies a waiting update when idle (§4.5) |
 
-Nesting: Now → Repo → Settings → TimeZone → Season → Network → SheetHost → FixtureParams → Idle. `DisplayProviders` wraps the views and `/ambient`, so moving to Ambient keeps the clock, DB and sync host. `/signin` uses `SignedOutProviders` (no account DB).
+Nesting: Now → Repo → Settings → TimeZone → Season → Network → SheetHost → FixtureParams → Idle → SessionGuard. `DisplayProviders` wraps the views and `/ambient`, so moving to Ambient keeps the clock, DB and sync host. `/signin` uses `SignedOutProviders` (no account DB).
 
 **Boot** (`useDisplayBoot`): demo opens and reseeds `glance-fixture` with an inline host and `FixtureTransport`. Otherwise it reads `glance-meta`: no entry or `signedOut` → `/signin`; else open `glance-{accountId}`, clear a halt left by the last session (`restarted` status event) and start the worker host.
 
@@ -193,7 +193,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 ### 4.4 Screens and components
 - **Container / presentational.** `features/*/XScreen.tsx` reads hooks, `useNow()` and `useTimeZone()` and passes plain props. `ui` components are pure (props + optional `xstyle`), get words as props (they can't import `copy`), and render `<button>` only when given `onClick`.
 - **Rules are pure** in `domain` (`eventStatus`, `todayHero`, `timeline`, `members`, `pictureOfDay`, `inAmbient`, `zoneState`, …) and unit-tested. Components hold no business rules.
-- **Multi-state flows** are a discriminated union + reducer, with the fixture param as initial state: event and note sheets (`details | editing | discard`, where Cancel and Save from an edit opened in details return to `details`; Discard changes? via `ui/discard.ts`; the event sheet keeps `view`, `fromDetails` and `discardTo`, and Event details read the reducer's `opened` draft so a Save shows the new values at once, with the pill from `domain/eventStatus.detailsStatus` (`now | ended | null`) and the time from `domain/time.rangeParts`; the note sheet keeps the same `view`, `fromDetails` and `discardTo`, renders one `Sheet` for both views so the sticky-note fill, 6 px radius and tilt (`domain/notes.noteDetailsTilt`, ±1.5°) ease to the flat edit sheet over 280 ms, and `useNote` carries `waiting` for the "Waiting to post" time), the Family sheet (`features/family`: `removing` id or null, the add draft's name, picked color and error, and the discard prompt; the shown color is derived, the picked one while free, else the first free; rows come from `familyRows(members, useMemberPlans())`, where `shared` counts everyone plans too; changes go straight to `MembersRepo`, so Done only closes), the Calendar view (`features/calendar/calendarView.ts`: selected day (`undefined` = today), filter `everyone | Set<id>` (an empty set is nobody), `span24`, `picker` (the phone date picker is open; picking a day or Today selects and closes it, Close and the scrim only close it); tab-only, so it lives in `CalendarScreen` and resets when the view changes; `?date=` wins over the `day=` fixture, `who=`, `span=24` and `dp=open` set the rest; the filter is always read and tapped through `liveFilter`, so a removed member drops out (FAM-03); the week strip comes from `domain/week.ts`: `weekDays`, `stepWeek` (CAL-02), `weekHeading`, `weekDots` (always everyone), `readDateParam` and `pickerMonths` (CAL-03: the months from 2 before to 3 after today's month; the picker's dots come from `useEventsBetween` over that span, read only while it is open); on phone `DateControl` replaces `WeekStrip`, which then takes only `wide | mid | narrow`), photo sheet, weather setup (`editing | searching | choosing | locating | confirm-zone`, shared by Weather, Settings › Location and the sign-in location step through `useWeatherSetup`), sign-in, upload tiles, slideshow (`playing | paused | pinned`), full-screen photo, QR tile, sidebar.
+- **Multi-state flows** are a reducer with the fixture param as initial state, and a discriminated union where the states carry different data: event and note sheets (a record with `view: details | edit` and `confirm: delete | discard | null`, where Cancel and Save from an edit opened in details return to `details`; Discard changes? via `ui/discard.ts`; the event sheet also keeps `fromDetails` and `discardTo`, and Event details read the reducer's `opened` draft so a Save shows the new values at once, with the pill from `domain/eventStatus.detailsStatus` (`now | ended | null`) and the time from `domain/time.rangeParts`; the note sheet keeps the same `view`, `confirm`, `fromDetails` and `discardTo`, renders one `Sheet` for both views so the sticky-note fill, 6 px radius and tilt (`domain/notes.noteDetailsTilt`, ±1.5°) ease to the flat edit sheet over 280 ms, and `useNote` carries `waiting` for the "Waiting to post" time), the Family sheet (`features/family`: `removing` id or null, the add draft's name, picked color and error, and the discard prompt; the shown color is derived, the picked one while free, else the first free; rows come from `familyRows(members, useMemberPlans())`, where `shared` counts everyone plans too; changes go straight to `MembersRepo`, so Done only closes), the Calendar view (`features/calendar/calendarView.ts`: selected day (`undefined` = today), filter `everyone | Set<id>` (an empty set is nobody), `span24`, `picker` (the phone date picker is open; picking a day or Today selects and closes it, Close and the scrim only close it); tab-only, so it lives in `CalendarScreen` and resets when the view changes; `?date=` wins over the `day=` fixture, `who=`, `span=24` and `dp=open` set the rest; the filter is always read and tapped through `liveFilter`, so a removed member drops out (FAM-03); the week strip comes from `domain/week.ts`: `weekDays`, `stepWeek` (CAL-02), `weekHeading`, `weekDots` (always everyone), `readDateParam` and `pickerMonths` (CAL-03: the months from 2 before to 3 after today's month; the picker's dots come from `useEventsBetween` over that span, read only while it is open); on phone `DateControl` replaces `WeekStrip`, which then takes only `wide | mid | narrow`), photo sheet, weather setup (`editing | searching | choosing | locating | confirm-zone`, shared by Weather, Settings › Location and the sign-in location step through `useWeatherSetup`), sign-in, upload tiles, slideshow (`playing | paused | pinned`), full-screen photo, QR tile, sidebar.
 - **Layouts.** Each feature's `layout.ts` maps the breakpoint (`useBreakpoint()`, spec §5.1) to a StyleX grid. Today uses `todayLayout(width, height)` → `stacked` (< 1024 px) · `portrait` · `twoColumn` (1024–1180 px landscape) · `threeColumn`, plus `noteColumns` and `noteLimit` (TODAY-09, TODAY-13); `threeColumn` fits the window with no scroll and scales type by `min(width ÷ 1920, height ÷ 1080)` clamped to 1–1.5, and the Now panel sizes the Clock, temperature and title with container units. Calendar is a flex column: week strip, then the panel (filter row, all-day tiles, `DayTimeline`); it fills `main` (`height: 100%`) on wide, mid and narrow, and with 24 hours on, or on phone, it takes `min-height: 100%` and the timeline's own minimum (760 / 720 / 760 / 1000 px; 320, phone 720, with 24 hours off) so the page scrolls (CAL-04). `ui/useBoxSize` (a `ResizeObserver` hook) measures the timeline card and the week strip's day grid (CAL-01's 124 px forecast rule).
 - **Day timeline** (D25): `ui/DayTimeline` renders `timelineLayout(…)` for Calendar and Today; the reflow animates `top` and `height` over 280 ms. Props: the day's timed `plans` (already filtered), `members`, `day`, `now`, `tz`, `clock`, `variant: "calendar" | "today"` (passed factor 0.35 / 0.3, weather lane / gutter weather), `breakpoint` (gutter, lane width, title size, 40 px plans on phone), `span`, `free: "everyone" | "some" | "none"` (slot label; none = nobody selected), optional `weather: { hourly, unit }`, `labels` (`copy.timeline` + `copy.events.now`/`everyone` + `copy.weather.icon`), `onOpenEvent(id)` and `onAddEvent({ start, end })`. It measures its own box with a `ResizeObserver` (640 × 640 until measured). Card rules stay pure in `domain/timeline.ts`: `planCard({ width, height, titleSize, badge, note })` picks the TL-04 content (one line, range or start time, 1–2 title lines, who · where, notes), `planRain(start, end, rainByHour)` the TL-07 chip, `gutterWeather(mark, rowHeight, nowTop)` the TODAY-11 gutter weather; `domain/weather.hourlyByHour(hourly, day, tz)` keys the forecast by hour of that day. Free-slot lengths use `formatDuration` ("1 h 15 min").
 - **Now panel** (`features/today`: `TodayHero` with `NowWeather` and `HeroSummary`). `todayHero(events, now, tz)` returns `now` (the running event that started last, ties to the one ending first, an open-ended one last; `left` = minutes to its end rounded up, none without an end), `next` (`in` = minutes to its start, rounded up), `ended` or `none`. `domain/weather.rainHour(hourly)` is the first `cloud-drizzle` or `cloud-rain` hour for "Rain from {time}" (`rainStart`, the 50% rule, stays for the Weather view's banner). The panel is an inline-size container: the Clock reads `clockSize` from a theme set on its block, the temperature and title use `cqi` sizes directly.
@@ -207,7 +207,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 - **Accessibility**: `PillTabs` is a `<fieldset>` of `aria-pressed` buttons; `Sheet` and the date picker are `role="dialog"` with focus trap and return (`ui/dialogFocus.ts`: `useFocusOnOpen`, `dialogKeyDown` for Escape and Tab wrap); `onAccent` is black except in Winter (4.5:1, checked by `theme/contrast.test.ts`); reduced motion zeroes `durBase` and `durSeason`.
 - **Gallery** (`/dev/gallery`) shows every `ui` component in the four seasons and every state the boards show.
 
-**Zone state** (LOAD-\*, FAIL-\*, OFF-\*). Local reads don't fail, so a zone's state describes freshness. `zoneState()` is a pure function of (rows, ever synced, sync status, now); **ever synced** = a pull cursor exists in `meta`.
+**Zone state** (LOAD-\*, FAIL-\*, OFF-\*). Local reads don't fail, so a zone's state describes freshness. `zoneState({ rows, everSynced, failed, lastSyncedAt, timedOut })` is pure; **ever synced** = a pull cursor exists in `meta`, and `timedOut` comes from `loadingTimedOut(since, now)`.
 
 | State | When |
 |---|---|
@@ -224,7 +224,7 @@ A signed-in screen must cold-start offline with every view working.
 - **Auth offline.** `glance-meta` holds `{ accountId, name, email, signedOut? }`, written after sign-in. Offline, trust it; online, a 401 means signed out. Signing in to a different account first deletes the old account's DB and `photos` cache.
 - **Photos offline.** After each pull, and at start for every saved photo, the worker sends `photosChanged(ids)`; the page forwards them to the SW, which fetches `thumb` and `display` into the `photos` cache one at a time.
 - **Storage.** `navigator.storage.persist()` after sign-in. Manifest: `display: fullscreen`, `start_url /today`, `theme_color #000000`, `background_color #c8e6cd` (the icon's mint), the handoff's PWA icons (`pwa-icons/` copied to the `public/` root: 192 and 512, maskable 192 and 512); the root layout links favicons 16/32/48, apple-touch 180 and the `theme-color` meta. Home-screen install on iPad avoids Safari's 7-day cap.
-- **Updates.** A new SW waits. At an idle move with an empty outbox, `IdleProvider` posts `SKIP_WAITING` and loads the target path on `controllerchange`; the SW is checked hourly. **Build check:** entity writes and `/api/sync` answer **426** when `X-Glance-Build` is missing or below `MIN_CLIENT_BUILD`. After a 426 the outbox can't drain, so the update applies at the next idle even with entries pending; they survive the reload and the new build pushes them. Without a waiting SW, an `outdated` screen does a full page load at idle instead. Any change that adds a field to a synced row raises `CLIENT_BUILD` and `MIN_CLIENT_BUILD` (`domain/build.ts`), because Valibot drops unknown keys and an older client would write the row back without it. New settings fields use `v.optional(…, default)`, so older rows parse.
+- **Updates.** A new SW waits. At an idle move with an empty outbox, `IdleProvider` posts `SKIP_WAITING` and loads the target path on `controllerchange`; the SW is checked hourly. **Build check:** entity writes and `/api/sync` answer **426** when `X-Glance-Build` is missing or below `MIN_CLIENT_BUILD`. After a 426 the outbox can't drain, so the update applies at the next idle even with entries pending; they survive the reload and the new build pushes them. Without a waiting SW, an `outdated` screen does a full page load at idle instead. Any change that adds a field to a synced row raises `CLIENT_BUILD` (`domain/build.ts`) and `MIN_CLIENT_BUILD` (`server/http.ts`), because Valibot drops unknown keys and an older client would write the row back without it. New settings fields use `v.optional(…, default)`, so older rows parse.
 - **Sign-out.** Stop the host (terminates the worker), call `auth.signout()` (answer ignored), clear `glance-meta`, delete the account DB and the `photos` cache.
 
 | Request | Strategy |
@@ -270,9 +270,9 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 
 **Push.** The engine drains the outbox in `seq` order, one request at a time: `PUT /api/{entity}/{id}` (full row, idempotent upsert) or `DELETE /api/{entity}/{id}`. On 2xx it removes the entry and saves the returned row only if no other entry for that row remains. Errors:
 - **401** → keep the outbox, stop syncing, sign the screen out (§4.3).
-- **400/404/422** → drop the entry, delete the local row if nothing else is pending, and pull from scratch to restore the server's copy.
+- **Any other 4xx** (400, 403, 404, 409, 413, 415) → drop the entry, delete the local row if nothing else is pending, and pull from scratch to restore the server's copy.
 - **426** → keep the outbox, stop syncing, update at the next idle (§4.5).
-- **Network / 5xx** → keep the entry and retry with backoff and on reconnect.
+- **Network / 5xx / 429** → keep the entry and retry with backoff and on reconnect.
 
 **Pull.** Every write bumps a global `sync_state.version` in the same transaction and copies it to the row. `GET /api/sync?since={cursor}` returns `{ cursor, changes: [{ entity, row }] }` for the account's members, events, notes, photos and settings with `version > since`, tombstones included. The client applies them in one transaction, skipping rows with a pending outbox entry.
 
@@ -289,7 +289,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 ## 6. Server design
 
 ### 6.1 Route handlers
-`runtime = 'nodejs'`. Steps: Origin check (writes only) → build check (426) → session (`requireDisplay`, 401) → Valibot parse (400) → service → map the `Result` to JSON. Errors are `{ error: code }` with 400/401/403/404/409/413/415/426/429/502. No middleware for auth. Helpers in `server/http.ts`; handlers import service indexes, never `server/db`. Request schemas live in `domain/schemas.ts`.
+`runtime = 'nodejs'`. Steps: Origin check (writes only) → build check (426; the sign-in routes `link`, `verify`, `status`, `name`, `guest` and `signout` skip it) → session (`requireDisplay`, 401) → Valibot parse (400) → service → map the `Result` to JSON. Errors are `{ error: code }` with 400/401/403/404/409/413/415/426/429/502. No middleware for auth. Helpers in `server/http.ts`; handlers import service indexes, never `server/db`. Body schemas live in `domain/schemas.ts`; query and header parsers (cursor, `q`, lat/lon, `v=`, upload headers) are in `server/http.ts`.
 
 | Route | Notes |
 |---|---|
@@ -297,21 +297,21 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 | `GET /api/sync`, `GET /api/sync/stream` | §5 |
 | `POST /api/photos`, `GET /api/photos/{id}/file?v=` | §6.3 |
 | `GET /api/weather` | The account's forecast; 409 `no-location`, 502 `weather-failed` |
-| `GET /api/weather/places?q=` | `WeatherLocation[]` (empty = unknown place) |
-| `GET /api/weather/locate?lat=&lon=` | Place with its zone; 404 outside the US |
+| `GET /api/weather/places?q=` | `WeatherLocation[]` (empty = unknown place); 502 `weather-failed` |
+| `GET /api/weather/locate?lat=&lon=` | Place with its zone; 404 outside the US, 502 `weather-failed` |
 | `GET /api/displays` | The account's displays, this one first, then by `last_seen_at` |
 | `/api/auth/*` | §6.2 |
 
 Every accepted write is announced on the sync bus. A member `PUT` with a name already used by a live member of the account (ignoring case) → 409. Event member ids are filtered as D24. TPK-07 "same day" is a client rule; the server checks only `endAt > startAt` and a span under 24 h for timed events.
 
 ### 6.2 Auth (SIGNIN-*)
-1. `POST /api/auth/link { email, timeZone }` → 204 + `pending` cookie. Email trimmed and lowercased; older unused email links voided; same answer whether the account exists. Limits: 5 per email and 20 per IP per 10 min (in memory) → 429. Failed send (`mail-failed`) → 502.
-2. `GET /api/auth/verify?t=` → 303 to `/signin?link=opened` with a session for the opening device, or `/signin?link=stale` (unknown, used, voided, ≥ 10 min, or a QR ≥ 5 min); a stale email link sets `link_email` for "Send a new link". It creates the account if new (`time_zone` from the link).
+1. `POST /api/auth/link { email, timeZone }` → 204 + `pending` cookie. Email trimmed and lowercased; older unused email links deleted; same answer whether the account exists. Limits: 5 per email and 20 per IP per 10 min (in memory) → 429. Failed send (`mail-failed`) → 502.
+2. `GET /api/auth/verify?t=` → 303 to `/signin?link=opened` with a session for the opening device, or `/signin?link=stale` (unknown, used, voided, ≥ 10 min, or a QR ≥ 5 min); a used or expired email link sets `link_email` for "Send a new link" (a replaced one is gone, so it is unknown). It creates the account if new (`time_zone` from the link).
 3. `GET /api/auth/status` (2 s poll): a valid session → `signed-in { account, returning, setupDone }`; else the `pending` row → `waiting` · `expired { email }` · `finishing-elsewhere` (account unnamed or setup not done) · `signed-in` with a new session cookie. The waiting screen's display is created on that poll.
 4. `POST /api/auth/name { name }` saves the name (≤ 100 chars) and, when the account has no member yet, creates the first member with that name and the first color in the same transaction. `POST /api/auth/location` saves the SIGNIN-14 place or a skip and sets `accounts.setup_done_at`.
 5. `POST /api/auth/signout` deletes this display's session and display row.
 6. `POST /api/auth/qr` makes a one-time QR link for this display (voiding its older one; 30/hour); `DELETE /api/auth/qr { url }` voids it. A stale QR never reveals the account email.
-7. **Guest** (SIGNIN-16, §6.5 `GUEST_EMAIL`): `GET /api/auth/guest` → 204 when guest sign-in is on, else 404; the form reads it once and shows the button on 204 (the `demo=1` fixture forces it in demo builds). `POST /api/auth/guest` (Origin checked, 20 per IP per 10 min → 429) opens a display and session for that account exactly as `verify` does and answers `signed-in { account, returning: true, setupDone: true }`; 404 when off. It never takes an email from the client.
+7. **Guest** (SIGNIN-16, §6.5 `GUEST_EMAIL`): `GET /api/auth/guest` → 204 when guest sign-in is on, else 404; the form reads it once and shows the button on 204 (the `demo=1` fixture forces it in demo builds). `POST /api/auth/guest` (Origin checked, 20 per IP per 10 min → 429) opens a display and session for that account exactly as `verify` does and answers `signed-in { account, returning: true, setupDone: true }`; 404 when off (the IP limit is checked first). It never takes an email from the client.
 
 `requireDisplay` resolves the session cookie to `{ displayId, accountId }` and stamps `last_seen_at`. Displays store `kind` and `browser` from the `User-Agent`.
 
@@ -344,16 +344,16 @@ type PhotoStore = {
 };
 ```
 
-- **Contract** (`store.ts`): keys are `{file_path}.{variant}`; the original's content type is the one `sharp` decoded. `remove` of a missing key succeeds, and `remove` settles every key before it throws. Only `not-found` is a `Result`; disk and network failures throw (500).
+- **Contract** (`store.ts`): keys are `{file_path}.{variant}`; the original's content type is the one `sharp` decoded. `remove` of a missing key succeeds, and `remove` settles every key before it throws (both adapters use `allSettled`). Only `not-found` is a `Result`; disk and network failures throw (500).
 - **Adapters**: `createDiskStore(root)` (`disk.ts`) writes under `{DATA_DIR}/photos` and sniffs the original's type on read. `createS3Store(config, fetch)` (`s3.ts`) signs single-request `PUT`, `GET` and `DELETE` calls with **`aws4fetch`** (SigV4) for AWS S3 and any S3-compatible endpoint; an S3 404 maps to `not-found`. AWS buckets are addressed virtual-hosted (`https://{bucket}.s3.{region}.amazonaws.com/{key}`); a custom `endpoint` (S3-compatible hosts, R2) is addressed by path (`{endpoint}/{bucket}/{key}`).
 - **Factory** (`index.ts`): `createPhotoStore(config, fetch = globalThis.fetch)` switches on `config.kind`: `disk` → disk store at `{dataDir}/photos`, `s3` → S3 store, `r2` → S3 store with `endpoint = https://{accountId}.r2.cloudflarestorage.com` and `region = auto`. `photoStore()` builds it once from `env().storage` and is shared by services and jobs.
 - **Tests**: one contract suite (`contract.ts`: put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch` (`fakeS3.ts`, an in-memory bucket); the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
-`bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others. Jobs run across accounts.
+`bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others: `createJobTick({ hourly, daily: [links, photos] })` guards each one. Jobs run across accounts.
 - **Note expiry** (hourly): tombstones notes past the account's `noteExpiry` using the screens' `noteExpired` rule, then publishes each account's version on the bus.
 - **Link cleanup** (daily): deletes `magic_links` expired more than 24 h ago.
-- **Deleted photo files** (daily): removes the stored objects of tombstoned photos.
+- **Deleted photo files** (daily): removes the stored objects of tombstoned photos; one photo's failure doesn't stop the rest, and the job then throws so it is logged.
 
 `accountTimeZone(db, accountId)` = the saved place's `timeZone`, else `accounts.time_zone`; the upload-day fallback reads it. Backups belong to the PostgreSQL host.
 
@@ -390,6 +390,6 @@ Bad config names the variables (not their values) and exits. `next build` needs 
 | Data / sync | Vitest + `fake-indexeddb`, stubbed `fetch` / `EventSource` | Repos (row + outbox in one transaction), `engine.ts` (push order, backoff, 401 keeps the outbox, pending rows skipped, tombstones, weather retries), worker lock and restart |
 | Time zone | Vitest with `TZ=Asia/Kolkata` | `zone.ts` across DST in several zones; every rule that reads a day or hour runs in a zone other than the device's |
 
-CI: `biome check` → `tsc --noEmit` → Vitest → `next build`.
+Checks: `biome check` → `tsc --noEmit` → Vitest → `next build`. GitHub CI (`.github/workflows/ci.yml`) runs them on demand only for now; `/glance-next` runs them locally before each merge to `main`.
 
 **Manual checks** on a production build, before each release and every Next upgrade: visual parity with the boards at the 6 sizes; offline cold start with every view and synced photo (OFF-06); two screens syncing, offline replay, delete wins, polling fallback (SYNC-01..03); a 401 with a change waiting, then signing in with the same and another email (SIGNIN-13, SIGNIN-11); a new build applied on an idle screen (OFF-07).

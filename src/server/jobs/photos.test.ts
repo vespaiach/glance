@@ -5,6 +5,7 @@ import { tempDirPerTest } from "../db/testDir";
 import { uploadPhoto } from "../services/photos";
 import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
 import { createDiskStore } from "../storage/disk";
+import type { PhotoStore } from "../storage/store";
 import { removeDeletedPhotoFiles } from "./photos";
 
 const harness = serviceHarnessPerTest();
@@ -51,5 +52,26 @@ describe("removeDeletedPhotoFiles", () => {
     await removeDeletedPhotoFiles(deps());
 
     expect(storedFiles()).toEqual([`${kept}.display`, `${kept}.orig`, `${kept}.thumb`]);
+  });
+
+  it("PHOTO-13 removes the other deleted photos' files when one photo's removal fails, then throws", async () => {
+    const stuck = await stored(MARIA);
+    const gone = await stored(MARIA);
+    await harness
+      .deps()
+      .db.run("UPDATE photos SET deleted_at = updated_at WHERE id IN ($1, $2)", [stuck, gone]);
+    const disk = createDiskStore(photosDir());
+    const store: PhotoStore = {
+      ...disk,
+      remove: async (keys) => {
+        if (keys.some((key) => key.includes(stuck))) throw new Error("EBUSY");
+
+        await disk.remove(keys);
+      },
+    };
+
+    await expect(removeDeletedPhotoFiles({ ...harness.deps(), store })).rejects.toThrow("EBUSY");
+
+    expect(storedFiles()).toEqual([`${stuck}.display`, `${stuck}.orig`, `${stuck}.thumb`]);
   });
 });
