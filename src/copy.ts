@@ -717,7 +717,22 @@ export const copy = {
     loadingEvent: "Loading next event",
   },
   signIn: {
+    headline: "Your family’s day, at a glance.",
     tagline: "Calendar, weather, notes and photos for your family. Sign in to manage them.",
+    shortDate: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,
+    preview: {
+      eyebrow: "Today · 3 events",
+      events: [
+        { start: "8:00", title: "School drop-off", status: "past" },
+        { start: "10:30", title: "Piano lesson", status: "now" },
+        { start: "4:30 PM", title: "Soccer practice", status: "upcoming" },
+      ],
+      temperature: "64°",
+      rain: "Rain moving in after 4 PM",
+      note: "Soccer cleats are by the door",
+      noteAuthor: "Mom",
+      noteTime: "8:12 AM",
+    },
     lock: "Only your family can see its calendar, notes and photos.",
     form: {
       eyebrow: "One account per family",

@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { deviceTimeZone } from "@/domain/zone";
 import type { WeatherSetupFlow } from "@/features/weather";
-import { clockTime } from "@/ui/testClock";
 import type { SignInState } from "../signIn";
 import { SignInView } from "./SignInView";
 
@@ -56,17 +55,26 @@ function renderView(state: SignInState, props: Partial<Props> = {}) {
 
 const LOCK = "Only your family can see its calendar, notes and photos.";
 
-test("SIGNIN-01 the hero shows the wordmark, the season and month, the clock and the tagline", () => {
+test("SIGNIN-01 the hero shows the wordmark, the date and time, the headline and the preview", () => {
   renderView({ step: "form", email: "" });
 
   expect(screen.getByText("Glance")).toBeInTheDocument();
-  expect(screen.getByText("Fall · October")).toBeInTheDocument();
-  expect(screen.getByText(clockTime("10:41"))).toBeInTheDocument();
+  expect(screen.getByText("Friday, October 9")).toBeInTheDocument();
+  expect(screen.getByText("10:41 AM")).toBeInTheDocument();
+  expect(screen.getByText("Your family’s day, at a glance.")).toBeInTheDocument();
   expect(
     screen.getByText(
       "Calendar, weather, notes and photos for your family. Sign in to manage them.",
     ),
   ).toBeInTheDocument();
+  expect(screen.getByText("Soccer cleats are by the door")).toBeInTheDocument();
+});
+
+test("SIGNIN-01 on a phone the hero shows the short date and no preview", () => {
+  renderView({ step: "form", email: "" }, { breakpoint: "phone" });
+
+  expect(screen.getByText("Fri, Oct 9")).toBeInTheDocument();
+  expect(screen.queryByText("Today · 3 events")).not.toBeInTheDocument();
 });
 
 test("SIGNIN-01 the email form asks for an email with Send code", () => {
