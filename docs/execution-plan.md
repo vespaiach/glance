@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.07 |
+| Status | v2.08 |
 | Date | 2026-10-20 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.69) · [`tech-design.md`](tech-design.md) (v2.30) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.70) · [`tech-design.md`](tech-design.md) (v2.32) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -17,8 +17,8 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | ✅ Done ([#n](#)) | The task's code is **merged to `main`** |
 
 **Rules**
-- A task is PR-sized (about 0.5–2 days), cites the requirement IDs it covers (**Covers**) and has a **Done when** check. Done also means CI green (`biome check → tsc → Vitest → next build`).
-- **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: letters used so far are A B C D E F G H I K L M N P Q R S T U V W Y.
+- A task is PR-sized (about 0.5–2 days), cites the requirement IDs it covers (**Covers**) and has a **Done when** check. Done also means the checks pass (`biome check → tsc → Vitest → next build`), run locally by `/glance-next` while GitHub CI is off.
+- **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: letters used so far are A B C D E F G H I K L M N P Q R S T U V W X Y.
 - **Depends on** lists hard dependencies only, by ID, and only on rows still in this file. A task can start once they are ✅.
 - One task = one branch (`feat/<ID>-<slug>`) and one PR titled with the ID (`T05: …`). **Start:** `git fetch origin`, check its dependencies are ✅ on `origin/main`, branch from `origin/main`, open a draft PR; its first commit sets the row to 🔄. **Finish:** bring in the latest `origin/main`; the last commit before merge sets the row to ✅. A closed, unmerged PR resets it to ⬜.
 - **Docs move with the code:** a PR that changes behavior, a decision, a schema, an API or the structure updates `product-spec.md` and/or `tech-design.md` in the same PR (bump the version) and fixes any row it makes wrong.
@@ -35,3 +35,4 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | W04 | ✅ | Small UI: Now panel chevrons on the weather and event eyebrows; "‹ Settings" back link above and outside the panel on Location, Background and Ambient screen | D08 | Gallery in four seasons; matches the Today and Settings boards at the six sizes (styling only, no tests) | TODAY-01, SET-09, SET-10, BG-01 |
 | W05 | ✅ | Photos: thumbnail panel matches the featured height and scrolls inside (wide, mid); portrait featured photo contained via natural size; "Set as background" / "Background now · Change" | D08 | Component tests for both button states, the settings write and the slideshow pin, and contain for a portrait load; gallery and Photos board at the six sizes | PHOTO-15, PHOTO-16, §8.6 |
 | W06 | ✅ | Ambient transitions: `shell/ambientTransition.ts`, `useAmbientNavigate` for every way in and out, taps dropped while running, no page fade for `/ambient`, reduced-motion bypass | D08 | Tests: taps ignored mid-transition, navigation after the leave half, reduced motion pushes at once; visual check | AMB-10 |
+| X01 | 🔄 | Docs vs code consistency: daily jobs fail independently, S3 `remove` settles every key, the photo job continues past one failure; Biome enforces the `data`→`fixtures` rule and drops SQLite wording; spec v0.70 and tech design v2.32 match the code | — | Job, photo-job and S3 tests; checks green | tech§6.3, tech§6.4, §3 |
