@@ -171,6 +171,15 @@ export function databaseContract(open: () => Database): void {
       expect(await db().signInCodes.get("b@x.com")).toBeUndefined();
     });
 
+    it("D23 removing a display removes its QR links", async () => {
+      await db().displays.insert(display("d1", MARIA, NOW));
+      await db().magicLinks.insert(link("open", LATER));
+
+      await db().displays.remove("d1");
+
+      expect(await db().magicLinks.get("open")).toBeUndefined();
+    });
+
     it("SIGNIN-12 marks a link used, voids only unused links of a display and removes expired ones", async () => {
       await db().displays.insert(display("d1", MARIA, NOW));
       await db().magicLinks.insert(link("used", NOW));
