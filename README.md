@@ -20,7 +20,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Client data | [Dexie](https://dexie.org) (IndexedDB) as the local store, sync engine in a Web Worker via Comlink |
 | Offline | [Serwist](https://serwist.pages.dev) service worker (PWA) |
 | Validation | [Valibot](https://valibot.dev) schemas shared by client and server |
-| Server | Next.js Route Handlers, PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) |
+| Server | Next.js Route Handlers; storage behind a `Database` port: PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) or in memory (`DB=memory`) |
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
 | Email | Sign-in links through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, any SMTP server via `nodemailer`, or a local Mailpit |
@@ -66,7 +66,7 @@ docs/           spec, technical design, plan, design handoff and prompts
 ### Requirements
 
 - **Node 24** (see `.nvmrc`) and npm
-- **PostgreSQL** (any recent version) running locally, with a `glance` database: `createdb glance`. Tests don't need it (they run on PGlite)
+- **PostgreSQL** (any recent version) running locally, with a `glance` database: `createdb glance`. Tests don't need it (they run on PGlite and in memory). Without it, set `DB=memory` in `.env.development.local`: the data lives in the server process and is gone on restart
 - [Mailpit](https://mailpit.axllent.org) (`brew install mailpit`, then `mailpit`): the dev server sends sign-in emails to it over SMTP on port 1025; read them at <http://localhost:8025>
 
 ### Get started

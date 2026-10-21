@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.51 |
+| Status | v2.52 |
 | Date | 2026-10-21 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.77) · [`design/handoff/`](design/handoff/README.md) (v11) |
 
@@ -20,17 +20,17 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D4 | Client data | **Local-first store on IndexedDB (Dexie).** The UI reads local data only; writes go local first; a sync engine in a Web Worker (D19) talks to the server. |
 | D5 | Shell state | React context + `useSyncExternalStore` stores. No state library. |
 | D6 | Validation | **Valibot** schemas in `domain/schemas.ts` are the single contract for client and server; types come from `v.InferOutput`. `SyncedXSchema` adds `updatedAt`, `version`, optional `deletedAt`. IDs are UUIDs, timestamps ISO-8601, dates `YYYY-MM-DD`. Schemas never transform. The event schema checks `endAt > startAt` and a span under 24 h. Weather icons are a closed set of Lucide kebab names that `ui` maps to components. `DEFAULT_SETTINGS` in `domain/defaults.ts`. |
-| D7 | Database | **PostgreSQL** via `pg` with raw SQL behind a small `Db` interface (`all`, `one`, `run`, `exec`, `tx`; nested `tx` joins the outer one). Tests run on **PGlite** (`server/db/pglite.ts`). `timestamptz` → ISO string, `bigint` → number, `date` stays `YYYY-MM-DD`. Migrations are `db-migrations/NNN_*.sql`, applied at boot by `migrate()` (one transaction each, tracked in `schema_migrations`). Every service is `async` and takes the `Db`. Server tests get a fresh migrated PGlite DB per test (`migratedDbPerTest`). |
+| D7 | Database | **A `Database` port** (`server/db/database.ts`): one repo per table with methods shaped like the domain (`events.find/save/changedSince`, `tags.liveByName`, `versions.next`, …) plus `tx(fn)`. A transaction is atomic and runs **one at a time** against other transactions; a nested `tx` joins the outer one; inside `fn` only the handle it gets is used. Services, auth and jobs import only `server/db` (Biome blocks the adapters), get the `Database` in their deps and keep every rule themselves (ownership, tombstones, stamping, name checks). Adapters, picked by `DB` (§6.5): **`postgres`** (default), `pg` with raw SQL in `server/db/postgres/*`, whose `tx` takes the `sync_state` row lock first; `timestamptz` → ISO string, `bigint` → number, `date` stays `YYYY-MM-DD`; migrations are `db-migrations/NNN_*.sql`, applied at boot by `prepareDatabase()` (one transaction each, tracked in `schema_migrations`); tests run it on **PGlite**. **`memory`**, `Map`s in the process; `tx` runs behind an async lock on a copy that replaces the state on success; nothing survives a restart (dev, demos, tests). Both pass `databaseContract` (`server/db/contract.ts`); another store (a file, Google Sheets) is one more adapter that passes it. |
 | D8 | IDs | **UUIDv7 generated on the client** (`domain/id.ts`). Offline creates need no remapping. Server-made ids (accounts, displays, photos) are UUIDv7 too. |
 | D9 | Sync | Outbox push + versioned pull. SSE only says "something changed"; 30 s polling is the fallback (§5). |
 | D10 | Conflicts | Last write **to reach the server** wins. The server stamps `updated_at` and `version`. |
-| D11 | Auth | **Emailed 6-digit code** typed on the screen that asked for it (QR links stay, D23); opaque session token in an httpOnly cookie. A code is `crypto.randomInt(0, 1_000_000)` zero-padded; only `sha256(email + ":" + code)` is stored, one live row per email in `sign_in_codes` (a new send replaces it), 10 min life, 5 tries, then the row is dead. `verifyCode` locks the row (`FOR UPDATE`), checks expiry first (an expired or missing row is `code-expired`, even when locked), then the try count, then compares the hashes with `timingSafeEqual`; a wrong try bumps `tries` in the same transaction. Codes come from `AuthDeps.newCode`, so tests pass fixed ones. Session tokens and QR tokens are 32 random bytes (base64url); only their sha256 is stored. No polling and no `pending` or `link_email` cookies: the verify answer signs the screen in. Migration `008_sign_in_codes.sql` creates `sign_in_codes`, deletes the email rows of `magic_links` and drops its `kind`, `email`, `time_zone` and `pending_id` columns (and the shape check), making `account_id` and `display_id` required. Cookie: `session` (400 days, `HttpOnly; SameSite=Lax; Path=/`, `Secure` on https) (§6.2). |
+| D11 | Auth | **Emailed 6-digit code** typed on the screen that asked for it (QR links stay, D23); opaque session token in an httpOnly cookie. A code is `crypto.randomInt(0, 1_000_000)` zero-padded; only `sha256(email + ":" + code)` is stored, one live row per email in `sign_in_codes` (a new send replaces it), 10 min life, 5 tries, then the row is dead. `verifyCode` runs in one transaction (D7), checks expiry first (an expired or missing row is `code-expired`, even when locked), then the try count, then compares the hashes with `timingSafeEqual`; a wrong try bumps `tries` in the same transaction. Codes come from `AuthDeps.newCode`, so tests pass fixed ones. Session tokens and QR tokens are 32 random bytes (base64url); only their sha256 is stored. No polling and no `pending` or `link_email` cookies: the verify answer signs the screen in. Migration `008_sign_in_codes.sql` creates `sign_in_codes`, deletes the email rows of `magic_links` and drops its `kind`, `email`, `time_zone` and `pending_id` columns (and the shape check), making `account_id` and `display_id` required. Cookie: `session` (400 days, `HttpOnly; SameSite=Lax; Path=/`, `Secure` on https) (§6.2). |
 | D12 | Photos | Three objects per photo, keyed `{account}/{id}.{orig|display|thumb}` (`photos.file_path` holds `{account}/{id}`), in a **`PhotoStore`**: local disk, AWS S3 or Cloudflare R2, picked by `PHOTO_STORE` (§6.3, §6.5). **`sharp`** makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies, upright by EXIF; the original is kept byte for byte. Raster formats `sharp` decodes are accepted; SVG is refused. |
 | D13 | Weather and places | **Open-Meteo** forecast + geocoding behind `WeatherProvider`; **US Census Geocoder** behind `PlaceLocator` for reverse lookup. Both via `getJson` (8 s timeout, Valibot parse, any failure → `weather-failed`). Forecast cached per account for 15 min (`weather_cache`). Place search is US only, keeps names matching the query (a ZIP keeps all), requires a valid IANA zone, at most 5. `locatePlace` rounds to 2 decimals and asks the Census place and the Open-Meteo zone in parallel. |
 | D14 | Email | A **`Mailer`** (`send` answers `Result<void, "mail-failed">`) with one adapter per provider, picked by `MAIL_PROVIDER`: **Resend**, **Mailtrap** and **Mailgun** over their HTTP APIs with plain `fetch`, **SMTP** with **`nodemailer`**, and **Mailpit** (the SMTP adapter on a local catch-all, the dev default). Every provider sends from `MAIL_FROM`. One attempt, no retry or fallback provider (§6.2, §6.5). |
 | D15 | Time | No date library: `Intl.DateTimeFormat` + pure helpers in `domain/time.ts`, `week.ts` and `zone.ts`. "Local" means the **screen's time zone** `tz` (the saved place's zone, else the device's), never the device's: every helper that reads hours or dates takes `tz` last. `zone.ts` converts wall time ↔ instant (`wallTime`, `zonedInstant`, DST-safe: a skipped time moves forward, a repeated one is the earlier instant) and days (`dayNumber`, `dateKey`, `dayStart`, `addDays`). A date with no time (day key, `takenOn`, forecast day, month cell) is a UTC-midnight `Date` formatted in UTC. Formatters take minutes of the local day. `localZoneGuard.test.ts` bans local-zone `Date` getters in `src`; Vitest pins `TZ=Asia/Kolkata`. |
 | D16 | Offline shell | **Serwist** PWA: precache build assets, fonts and public files; cache route HTML on activate and RSC payloads as fetched; NetworkFirst (3 s) for navigations and RSC; CacheFirst for photo files with warming; NetworkOnly for other `/api/*`. New versions activate only when idle (§4.5). |
-| D17 | Runtime | **One Node process** (`next start`) behind HTTPS, with PostgreSQL at `DATABASE_URL` and photos in a persistent `DATA_DIR` (`disk`) or an S3 or R2 bucket. Migrations run at boot. One process is required by the in-process SSE bus. |
+| D17 | Runtime | **One Node process** (`next start`) behind HTTPS, with the database picked by `DB` (PostgreSQL at `DATABASE_URL` by default) and photos in a persistent `DATA_DIR` (`disk`) or an S3 or R2 bucket. Migrations run at boot. One process is required by the in-process SSE bus and the memory database. |
 | D18 | Tooling | npm with exact pins, Node 24 (`.nvmrc`). Vitest + Testing Library + `fake-indexeddb`; Vitest compiles StyleX through `@rolldown/plugin-babel`. **No e2e tests** (§7). `comlink` for worker messaging, `dexie-react-hooks` for `useLiveQuery`. |
 | D19 | Sync host | Sync runs in a **dedicated Web Worker** per tab. The page keeps reads and repo writes; the worker does push, pull/apply, SSE, polling, retries and weather (§4.6). |
 | D20 | Location | The browser position (`devicePosition`: low accuracy, 10 s timeout, `maximumAge` 10 min) goes to the server, which turns it into a place with its zone (D13). Offered only with `geolocation`, a secure context and permission not `denied`. Failures: `denied`, `no-position`, `outside` (404), `lookup` (5 s limit, 5xx, network). The browser never calls a geocoder. |
@@ -66,7 +66,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
                                    │ JSON over HTTPS, session cookie
 ┌─────────────────────── Next.js server (single Node process) ──────────────┐
 │  src/app/api/**/route.ts  (thin: session → Valibot parse → service → JSON)│
-│  server/services/*  ──▶  server/db (pg Pool, raw SQL)  ──▶ PostgreSQL     │
+│  server/services/*  ──▶  server/db port ──▶ postgres (pg) │ memory        │
 │  server/bus  (in-process EventEmitter → SSE fan-out per account)          │
 │  server/jobs (note expiry, code/link and photo-file cleanup)              │
 │  server/weather (Open-Meteo + Census)                                     │
@@ -115,7 +115,7 @@ src/
   features/<view>/                # XScreen.tsx (container), components/, reducers, layout.ts
   features/gallery/               # /dev/gallery
   fixtures/   # dev/demo data and URL params
-  server/     # 'server-only': db/, auth/, services/, weather/, mail/, storage/, jobs/, http.ts, env.ts, bus.ts, sse.ts, boot.ts
+  server/     # 'server-only': db/ (Database port; postgres/, memory/ adapters), auth/, services/, weather/, mail/, storage/, jobs/, http.ts, env.ts, bus.ts, sse.ts, boot.ts
 instrumentation.ts                # register() → bootServer() on the nodejs runtime
 db-migrations/NNN_*.sql
 ```
@@ -129,7 +129,7 @@ db-migrations/NNN_*.sql
 | `data` | `domain`; `fixtures` only in `data/sync/fixtureTransport.ts`, `data/repos/session.ts` and tests |
 | `fixtures` | `domain` |
 | `shell`, `features/*` | `ui`, `theme`, `domain`, `data/repos`, `shell`, `copy`. A feature may import another feature's **index** only |
-| `server` | `domain`, and `copy` for the sign-in email and weather place names. Never `data`, `ui` or `features` |
+| `server` | `domain`, and `copy` for the sign-in email and weather place names. Never `data`, `ui` or `features`. Outside `server/db`, never a database adapter (`server/db/postgres`, `server/db/memory`): only the `server/db` port |
 | `src/app/**` | pages and layouts → `features`, `shell`, `theme`, `copy`; route handlers → `server` and `domain` schemas; `sw.ts` → `serwist` and `data/sw` |
 
 ---
@@ -279,7 +279,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 
 **Pull.** Every write bumps a global `sync_state.version` in the same transaction and copies it to the row. `GET /api/sync?since={cursor}` returns `{ cursor, changes: [{ entity, row }] }` for the account's tags, events, notes, photos and settings with `version > since`, tombstones included. The client applies them in one transaction, skipping rows with a pending outbox entry.
 
-**Versions commit in order.** Each write transaction takes the `sync_state` row lock first (`stamp()` when it always writes, else `lockVersions()` then `stamp()`), so version *n* commits before *n + 1* is handed out. A no-op write bumps nothing. `pullChanges` runs in one `REPEATABLE READ` transaction. So a cursor never skips a version.
+**Versions commit in order.** Every write runs in a `Database.tx`, and transactions run one at a time (D7: PostgreSQL takes the `sync_state` row lock first, memory a process lock), so version *n* commits before *n + 1* is handed out by `stamp()`. A no-op write bumps nothing. `pullChanges` reads in one transaction too, so it never sees a write half done. So a cursor never skips a version.
 
 **Conflicts** (SYNC-03)
 - **Delete wins.** A `PUT` on a tombstone returns the tombstone unchanged.
@@ -353,15 +353,20 @@ type PhotoStore = {
 - **Tests**: one contract suite (`contract.ts`: put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch` (`fakeS3.ts`, an in-memory bucket); the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
-`bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others: `createJobTick({ hourly, daily: [signIns, photos] })` guards each one. Jobs run across accounts.
+`bootServer()` (from `instrumentation.ts`) prepares the database (`prepareDatabase()`: PostgreSQL migrates), exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others: `createJobTick({ hourly, daily: [signIns, photos] })` guards each one. Jobs run across accounts.
 - **Note expiry** (hourly): tombstones notes older than the account's `noteExpiry.days` while it is on, using the screens' `noteExpired` rule, then publishes each account's version on the bus.
 - **Code and link cleanup** (daily, `cleanupSignIns`): deletes `sign_in_codes` and `magic_links` expired more than 24 h ago.
 - **Deleted photo files** (daily): removes the stored objects of tombstoned photos; one photo's failure doesn't stop the rest, and the job then throws so it is logged.
 
-`accountTimeZone(db, accountId)` = the saved place's `timeZone`, else `accounts.time_zone`; the upload-day fallback reads it. Backups belong to the PostgreSQL host.
+`accountTimeZone(db, accountId)` = the saved place's `timeZone`, else the account's; the upload-day fallback reads it. Backups belong to the PostgreSQL host.
 
 ### 6.5 Config
-`server/env.ts` parses `process.env` at boot: `DATABASE_URL`, `APP_URL`, `MAIL_FROM` (`Name <address>` or a bare address, checked as an address), the mail provider chosen by `MAIL_PROVIDER` (read into `env().mail`) and the photo store chosen by `PHOTO_STORE` (read into `env().storage`). Both choices are Valibot `variant`s:
+`server/env.ts` parses `process.env` at boot: the database chosen by `DB` (read into `env().database`), `APP_URL`, `MAIL_FROM` (`Name <address>` or a bare address, checked as an address), the mail provider chosen by `MAIL_PROVIDER` (read into `env().mail`) and the photo store chosen by `PHOTO_STORE` (read into `env().storage`). The three choices are Valibot `variant`s:
+
+| `DB` | Variables |
+|---|---|
+| `postgres` (default) | `DATABASE_URL` (`postgres://…`) |
+| `memory` | none; the data lives in the process and is gone after a restart |
 
 | `MAIL_PROVIDER` | Variables |
 |---|---|
@@ -389,7 +394,7 @@ Bad config names the variables (not their values) and exits. `next build` needs 
 
 | Level | Tool | Scope |
 |---|---|---|
-| Unit | Vitest | `src/domain`; server services, auth and jobs on a fresh migrated PGlite DB per test, each with a cross-account test; recorded Census answers |
+| Unit | Vitest | `src/domain`; server services, auth and jobs run twice, on a fresh migrated PGlite DB per test and on the memory database (Vitest project `server-memory`, `TEST_DB=memory`), each with a cross-account test; `databaseContract` on both adapters; recorded Census answers |
 | Component | Vitest + Testing Library | `ui` and feature components: clicks, validation, ARIA |
 | Data / sync | Vitest + `fake-indexeddb`, stubbed `fetch` / `EventSource` | Repos (row + outbox in one transaction), `engine.ts` (push order, backoff, 401 keeps the outbox, pending rows skipped, tombstones, weather retries), worker lock and restart |
 | Time zone | Vitest with `TZ=Asia/Kolkata` | `zone.ts` across DST in several zones; every rule that reads a day or hour runs in a zone other than the device's |
