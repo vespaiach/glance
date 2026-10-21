@@ -186,6 +186,16 @@ export const copy = {
       offlineTitle: "You’re offline",
       offlineBody: "Changes save on this screen and sync when the connection is back.",
     },
+    who: {
+      people: "People on this event",
+      addPerson: "Add a person",
+      addSomeoneElse: "Add someone else",
+      remove: (name: string) => `Remove ${name}`,
+      suggestions: "Suggestions",
+      newMember: "New member",
+      addMember: "Add member",
+      memberColor: "Member color",
+    },
     details: {
       edit: "Edit",
       wholeDay: "Whole day",

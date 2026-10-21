@@ -31,14 +31,6 @@ export function nextFreeColor(tags: readonly Tag[]): TagColor {
   return TagColorSchema.options.find((color) => !used.has(color)) ?? first;
 }
 
-export function toggleWho(who: EventWho, tagId: string, allIds: readonly string[]): EventWho {
-  const selected = allIds.filter(
-    (id) => (who.everyone || who.tagIds.includes(id)) !== (id === tagId),
-  );
-
-  return selected.length === allIds.length ? EVERYONE : { everyone: false, tagIds: selected };
-}
-
 export function matchesFilter(
   event: EventWho,
   selected: ReadonlySet<string>,
@@ -74,4 +66,20 @@ export function filterTagIds(selected: ReadonlySet<string>, allIds: readonly str
   if (allIds.every((id) => selected.has(id))) return EVERYONE;
 
   return { everyone: false, tagIds: allIds.filter((id) => selected.has(id)) };
+}
+
+export function whoValue(ids: readonly string[], allIds: readonly string[]): EventWho {
+  if (allIds.every((id) => ids.includes(id))) return EVERYONE;
+
+  return { everyone: false, tagIds: [...ids] };
+}
+
+export function whoIds(event: EventWho, allIds: readonly string[]): readonly string[] {
+  return event.everyone ? allIds : event.tagIds;
+}
+
+export function exactTag(tags: readonly Tag[], input: string): Tag | undefined {
+  const name = input.trim().toLowerCase();
+
+  return tags.find((tag) => tag.name.toLowerCase() === name);
 }

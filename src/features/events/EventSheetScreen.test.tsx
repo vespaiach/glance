@@ -278,21 +278,69 @@ test("EVT-11 a new event request for some tags starts with them and saves their 
     who: { everyone: false, tagIds: [DAD.id] },
   });
 
-  const who = await screen.findByRole("group", { name: "Who" });
-
-  await waitFor(() =>
-    expect(within(who).getByRole("button", { name: "Dad" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    ),
-  );
-  expect(within(who).getByRole("button", { name: "Mom" })).toHaveAttribute("aria-pressed", "false");
+  await waitFor(() => expect(pills()).toEqual(["Remove Dad"]));
 
   await userEvent.type(screen.getByLabelText("Title"), "Haircut");
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   await waitFor(async () =>
     expect(await store.db.events.toArray()).toMatchObject([{ everyone: false, tagIds: [DAD.id] }]),
+  );
+});
+
+function pills() {
+  return within(screen.getByRole("group", { name: "People on this event" }))
+    .queryAllByRole("button", { name: /^Remove / })
+    .map((button) => button.getAttribute("aria-label"));
+}
+
+test("EVT-11 an everyone event opens with every tag as a pill", async () => {
+  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await screen.findByRole("dialog", { name: "Edit event" });
+
+  expect(pills()).toEqual(["Remove Mom", "Remove Dad"]);
+});
+
+test("EVT-11 saving with every tag on it stores everyone", async () => {
+  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
+  await store.db.events.put(synced({ ...LUNCH, everyone: false, tagIds: [DAD.id] }));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.type(await screen.findByLabelText("Who"), "mom{Enter}");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.get(LUNCH.id)).toMatchObject({ everyone: true, tagIds: [] }),
+  );
+});
+
+test("FAM-04 Add member writes the tag through the outbox and puts it on the event", async () => {
+  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
+
+  renderSheet({ kind: "newevent", day: "2026-10-12", who: { everyone: false, tagIds: [DAD.id] } });
+
+  await userEvent.type(await screen.findByLabelText("Title"), "Haircut");
+  await userEvent.type(screen.getByLabelText("Who"), "Grandma");
+  await userEvent.click(screen.getByRole("button", { name: "Add member" }));
+
+  await waitFor(() => expect(pills()).toEqual(["Remove Dad", "Remove Grandma"]));
+
+  const grandma = await store.db.tags.filter((one) => one.name === "Grandma").first();
+
+  expect(grandma).toMatchObject({ color: "lilac", createdAt: NOW.toISOString() });
+  expect(await store.db.outbox.filter((one) => one.entity === "tags").count()).toBe(1);
+
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.toArray()).toMatchObject([
+      { everyone: false, tagIds: [DAD.id, grandma?.id] },
+    ]),
   );
 });
 

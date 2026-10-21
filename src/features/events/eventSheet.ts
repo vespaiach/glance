@@ -6,8 +6,8 @@ import {
   endsAfterStart,
   moveStart,
 } from "@/domain/eventTimes";
-import type { CalendarEvent } from "@/domain/schemas";
-import { EVERYONE, type EventWho, toggleWho } from "@/domain/tags";
+import type { CalendarEvent, TagColor } from "@/domain/schemas";
+import { whoIds, whoValue } from "@/domain/tags";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
 
@@ -16,7 +16,6 @@ export type { TimeFixture };
 export type EventDraft = EventTimes & {
   title: string;
   location: string;
-  everyone: boolean;
   tagIds: string[];
   notes: string;
   allDay?: true;
@@ -31,6 +30,8 @@ export type EventEditFields = {
   titleError: boolean;
   endError: boolean;
   fromDetails: boolean;
+  whoInput: string;
+  newColor: TagColor | null;
 };
 
 export type EventSheetState =
@@ -42,8 +43,9 @@ export type EventEditState = Exclude<EventSheetState, { step: "details" }>;
 
 export type EventSheetAction =
   | { type: "title" | "location" | "notes"; value: string }
-  | { type: "tag"; id: string; family: readonly string[] }
-  | { type: "everyone" }
+  | { type: "whoInput"; value: string }
+  | { type: "addTag" | "removeTag"; id: string }
+  | { type: "newColor"; color: TagColor }
   | { type: "start" | "end"; value: number }
   | { type: "allDay"; value: boolean }
   | { type: "toggle"; field: TimeFieldName }
@@ -57,13 +59,19 @@ export type EventSheetAction =
   | { type: "back" }
   | { type: "saved" };
 
-export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): EventDraft {
+const NO_WHO_INPUT = { whoInput: "", newColor: null };
+
+export function draftFromEvent(
+  event: CalendarEvent,
+  tz: string,
+  now: Date,
+  allIds: readonly string[],
+): EventDraft {
   return {
     title: event.title,
     ...eventTimes(event, tz, now),
     location: event.location ?? "",
-    everyone: event.everyone,
-    tagIds: event.tagIds,
+    tagIds: [...whoIds(event, allIds)],
     notes: event.notes ?? "",
   };
 }
@@ -73,18 +81,21 @@ export function eventFromDraft(
   dayKey: string,
   id: string,
   tz: string,
+  allIds: readonly string[],
 ): CalendarEvent {
   const location = draft.location.trim();
 
   const notes = draft.notes.trim();
+
+  const who = whoValue(draft.tagIds, allIds);
 
   return {
     id,
     title: draft.title.trim(),
     ...eventSpan(draft, dayKey, tz),
     ...(location === "" ? {} : { location }),
-    everyone: draft.everyone,
-    tagIds: draft.tagIds,
+    everyone: who.everyone,
+    tagIds: [...who.tagIds],
     ...(notes === "" ? {} : { notes }),
   };
 }
@@ -92,14 +103,14 @@ export function eventFromDraft(
 export function newEventDraft(
   now: Date,
   tz: string,
-  who: EventWho = EVERYONE,
+  tagIds: readonly string[],
   times: EventTimes = defaultTimes(now, tz),
 ): EventDraft {
   return {
     title: "",
     ...times,
     location: "",
-    ...draftWho(who),
+    tagIds: [...tagIds],
     notes: "",
   };
 }
@@ -121,6 +132,7 @@ export function initialEventSheet(
     titleError: false,
     endError: time === "error",
     fromDetails: details,
+    ...NO_WHO_INPUT,
   };
 
   if (discard) return { ...fields, step: "discarding", discardTo: details ? "details" : null };
@@ -133,7 +145,7 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
     draft.title.trim() !== opened.title.trim() ||
     draft.location.trim() !== opened.location.trim() ||
     draft.notes.trim() !== opened.notes.trim() ||
-    !sameWho(draft, opened) ||
+    !sameWho(draft.tagIds, opened.tagIds) ||
     draft.start !== opened.start ||
     draft.end !== opened.end ||
     draft.allDay !== opened.allDay
@@ -163,10 +175,14 @@ function editReducer(state: EventEditState, action: EventSheetAction): EventShee
     case "location":
     case "notes":
       return edited(state, { ...draft, [action.type]: action.value });
-    case "tag":
-      return withWho(state, toggleWho(draft, action.id, action.family));
-    case "everyone":
-      return withWho(state, EVERYONE);
+    case "whoInput":
+      return { ...state, whoInput: action.value };
+    case "addTag":
+      return { ...withTagIds(state, withTag(draft.tagIds, action.id)), ...NO_WHO_INPUT };
+    case "removeTag":
+      return withTagIds(state, without(draft.tagIds, action.id));
+    case "newColor":
+      return { ...state, newColor: action.color };
     case "start":
       return edited(state, { ...draft, ...moveStart(draft, action.value) });
     case "end":
@@ -210,13 +226,14 @@ function editFromDetails({ opened }: { opened: EventDraft }): EventEditState {
     titleError: false,
     endError: false,
     fromDetails: true,
+    ...NO_WHO_INPUT,
   };
 }
 
 function editFields(state: EventEditState): EventEditFields {
-  const { draft, opened, picker, titleError, endError, fromDetails } = state;
+  const { draft, opened, picker, titleError, endError, fromDetails, whoInput, newColor } = state;
 
-  return { draft, opened, picker, titleError, endError, fromDetails };
+  return { draft, opened, picker, titleError, endError, fromDetails, whoInput, newColor };
 }
 
 function fixturePicker(time?: TimeFixture): TimeFieldName | null {
@@ -240,23 +257,22 @@ function eventSpan(draft: EventDraft, dayKey: string, tz: string) {
   return { startAt: atMinute(dayKey, draft.start, tz).toISOString(), ...end };
 }
 
-function withWho(state: EventEditState, who: EventWho): EventEditState {
-  if (sameWho(who, state.draft)) return state;
+function withTagIds(state: EventEditState, tagIds: string[]): EventEditState {
+  if (sameWho(tagIds, state.draft.tagIds)) return state;
 
-  return edited(state, { ...state.draft, ...draftWho(who) });
+  return edited(state, { ...state.draft, tagIds });
 }
 
-function draftWho({ everyone, tagIds }: EventWho) {
-  return { everyone, tagIds: [...tagIds] };
+function withTag(tagIds: readonly string[], id: string): string[] {
+  return tagIds.includes(id) ? [...tagIds] : [...tagIds, id];
 }
 
-function sameWho(draft: EventWho, opened: EventWho): boolean {
-  if (draft.everyone || opened.everyone) return draft.everyone === opened.everyone;
+function without(tagIds: readonly string[], id: string): string[] {
+  return tagIds.filter((one) => one !== id);
+}
 
-  return (
-    draft.tagIds.length === opened.tagIds.length &&
-    draft.tagIds.every((id) => opened.tagIds.includes(id))
-  );
+function sameWho(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((id) => b.includes(id));
 }
 
 function withAllDay({ allDay: _, ...draft }: EventDraft, allDay: boolean): EventDraft {

@@ -20,6 +20,8 @@ const MOM = "0195f0a0-0000-7000-8000-000000000501";
 
 const DAD = "0195f0a0-0000-7000-8000-000000000502";
 
+const FAMILY = [MOM, DAD];
+
 const LUNCH: CalendarEvent = {
   id: "0195f0a0-0000-7000-8000-000000000003",
   title: "Lunch with Aunt Rosa",
@@ -48,8 +50,7 @@ const DRAFT: EventDraft = {
   start: 720,
   end: 780,
   location: "Café",
-  everyone: true,
-  tagIds: [],
+  tagIds: [MOM, DAD],
   notes: "",
 };
 
@@ -71,12 +72,11 @@ function opening(...args: Parameters<typeof initialEventSheet>): EventEditState 
 
 describe("event sheet drafts", () => {
   it("EVT-02 an existing event fills the draft in minutes of its day", () => {
-    expect(draftFromEvent(LUNCH, tz, NOW)).toEqual({
+    expect(draftFromEvent(LUNCH, tz, NOW, FAMILY)).toEqual({
       title: "Lunch with Aunt Rosa",
       start: 720,
       end: 780,
       location: "Café Lumen",
-      everyone: false,
       tagIds: [MOM],
       notes: "Bring a gift",
     });
@@ -85,40 +85,33 @@ describe("event sheet drafts", () => {
   it("TPK-08 an event with no end leaves the draft end empty", () => {
     const { endAt: _, ...noEnd } = LUNCH;
 
-    expect(draftFromEvent(noEnd, tz, NOW).end).toBeUndefined();
+    expect(draftFromEvent(noEnd, tz, NOW, FAMILY).end).toBeUndefined();
   });
 
-  it("EVT-02 a new event is blank, for everyone, at the TPK-05 default times", () => {
-    expect(newEventDraft(new Date(2026, 9, 9, 10, 41), tz)).toEqual({
+  it("EVT-02 a new event is blank at the TPK-05 default times", () => {
+    expect(newEventDraft(new Date(2026, 9, 9, 10, 41), tz, FAMILY)).toEqual({
       title: "",
       start: 660,
       end: 720,
       location: "",
-      everyone: true,
-      tagIds: [],
+      tagIds: FAMILY,
       notes: "",
     });
   });
 
+  it("EVT-11 an everyone event opens with every tag on it", () => {
+    expect(draftFromEvent(NO_SCHOOL, tz, NOW, FAMILY).tagIds).toEqual(FAMILY);
+  });
+
   it("TL-08 a new event from a free slot starts and ends at the slot", () => {
-    expect(newEventDraft(NOW, tz, undefined, { start: 675, end: 735 })).toMatchObject({
+    expect(newEventDraft(NOW, tz, FAMILY, { start: 675, end: 735 })).toMatchObject({
       start: 675,
       end: 735,
     });
   });
 
-  it("EVT-11 a new event starts with the Calendar filter's tags", () => {
-    expect(newEventDraft(NOW, tz, { everyone: false, tagIds: [MOM] })).toMatchObject({
-      everyone: false,
-      tagIds: [MOM],
-    });
-  });
-
-  it("EVT-11 a new event from a filter with every tag off starts for nobody", () => {
-    expect(newEventDraft(NOW, tz, { everyone: false, tagIds: [] })).toMatchObject({
-      everyone: false,
-      tagIds: [],
-    });
+  it("EVT-11 a new event starts with the given tags", () => {
+    expect(newEventDraft(NOW, tz, [MOM]).tagIds).toEqual([MOM]);
   });
 });
 
@@ -132,6 +125,8 @@ describe("event sheet fixtures", () => {
       endError: false,
       opened: DRAFT,
       fromDetails: false,
+      whoInput: "",
+      newColor: null,
     });
   });
 
@@ -230,33 +225,56 @@ describe("event sheet reducer", () => {
     });
   });
 
-  it("EVT-11 a tag tap follows the Who rules", () => {
-    const next = reduce(closed, { type: "tag", id: MOM, family: [DAD, MOM] });
-
-    expect(next.draft).toMatchObject({ everyone: false, tagIds: [DAD] });
+  it("EVT-11 removing a tag takes only that pill off", () => {
+    expect(reduce(closed, { type: "removeTag", id: MOM }).draft.tagIds).toEqual([DAD]);
   });
 
-  it("EVT-11 Everyone selects the whole family", () => {
-    const forMom = opening({ ...DRAFT, everyone: false, tagIds: [MOM] });
+  it("EVT-11 removing the last tag leaves nobody", () => {
+    const forMom = opening({ ...DRAFT, tagIds: [MOM] });
 
-    expect(reduce(forMom, { type: "everyone" }).draft).toMatchObject({
-      everyone: true,
-      tagIds: [],
+    expect(reduce(forMom, { type: "removeTag", id: MOM }).draft.tagIds).toEqual([]);
+  });
+
+  it("EVT-11 adding a tag puts its pill last and clears the input", () => {
+    const typing = reduce(opening({ ...DRAFT, tagIds: [DAD] }), { type: "whoInput", value: "mo" });
+
+    expect(reduce(typing, { type: "addTag", id: MOM })).toMatchObject({
+      draft: { tagIds: [DAD, MOM] },
+      whoInput: "",
     });
   });
 
-  it("EVT-11 Everyone when everyone is selected leaves the sheet as it is", () => {
+  it("EVT-11 adding a tag already on the event keeps one pill and clears the input", () => {
+    const typing = reduce(closed, { type: "whoInput", value: "Mom" });
+
+    expect(reduce(typing, { type: "addTag", id: MOM })).toMatchObject({
+      draft: { tagIds: [MOM, DAD] },
+      whoInput: "",
+    });
+  });
+
+  it("EVT-11 typing in Who keeps the errors and doesn't make the draft dirty", () => {
     const failed = reduce(opening({ ...DRAFT, title: "" }), { type: "save" });
 
-    expect(reduce(failed, { type: "everyone" })).toBe(failed);
+    const next = reduce(failed, { type: "whoInput", value: "Gr" });
+
+    expect(next).toMatchObject({ whoInput: "Gr", titleError: true });
+    expect(isDirty(next.draft, next.opened)).toBe(false);
   });
 
   it("EVT-11 a Who change clears the errors", () => {
     const failed = reduce(opening({ ...DRAFT, title: "" }), { type: "save" });
 
-    const next = reduce(failed, { type: "tag", id: MOM, family: [DAD, MOM] });
+    const next = reduce(failed, { type: "removeTag", id: MOM });
 
     expect(next.titleError).toBe(false);
+  });
+
+  it("FAM-04 a picked swatch is the new tag's color until a tag is added", () => {
+    const picked = reduce(closed, { type: "newColor", color: "sage" });
+
+    expect(picked.newColor).toBe("sage");
+    expect(reduce(picked, { type: "addTag", id: MOM }).newColor).toBeNull();
   });
 
   it("EVT-06 Delete asks for the inline confirm", () => {
@@ -311,7 +329,7 @@ describe("event from draft", () => {
   const ID = "0195f0a0-0000-7000-8000-000000000009";
 
   it("EVT-07 the saved event places the draft times on the sheet's day", () => {
-    expect(eventFromDraft(DRAFT, DAY, ID, tz)).toEqual({
+    expect(eventFromDraft(DRAFT, DAY, ID, tz, FAMILY)).toEqual({
       id: ID,
       title: "Lunch",
       startAt: new Date(2026, 9, 12, 12, 0).toISOString(),
@@ -323,18 +341,26 @@ describe("event from draft", () => {
   });
 
   it("D24 the saved event keeps the opened event's tags and trimmed notes", () => {
-    const draft = { ...draftFromEvent(LUNCH, tz, NOW), notes: "  Bring a gift " };
+    const draft = { ...draftFromEvent(LUNCH, tz, NOW, FAMILY), notes: "  Bring a gift " };
 
-    expect(eventFromDraft(draft, DAY, ID, tz)).toMatchObject({
+    expect(eventFromDraft(draft, DAY, ID, tz, FAMILY)).toMatchObject({
       everyone: false,
       tagIds: [MOM],
       notes: "Bring a gift",
     });
-    expect(eventFromDraft({ ...draft, notes: " " }, DAY, ID, tz)).not.toHaveProperty("notes");
+    expect(eventFromDraft({ ...draft, notes: " " }, DAY, ID, tz, FAMILY)).not.toHaveProperty(
+      "notes",
+    );
   });
 
   it("EVT-07 the saved event trims the title and Where and drops a blank Where", () => {
-    const event = eventFromDraft({ ...DRAFT, title: " Picnic ", location: "  " }, DAY, ID, tz);
+    const event = eventFromDraft(
+      { ...DRAFT, title: " Picnic ", location: "  " },
+      DAY,
+      ID,
+      tz,
+      FAMILY,
+    );
 
     expect(event.title).toBe("Picnic");
     expect(event).not.toHaveProperty("location");
@@ -343,7 +369,21 @@ describe("event from draft", () => {
   it("TPK-08 a draft with no end saves no endAt", () => {
     const { end: _, ...noEnd } = DRAFT;
 
-    expect(eventFromDraft(noEnd, DAY, ID, tz)).not.toHaveProperty("endAt");
+    expect(eventFromDraft(noEnd, DAY, ID, tz, FAMILY)).not.toHaveProperty("endAt");
+  });
+
+  it("EVT-11 a draft with some tags saves those tags", () => {
+    expect(eventFromDraft({ ...DRAFT, tagIds: [DAD] }, DAY, ID, tz, FAMILY)).toMatchObject({
+      everyone: false,
+      tagIds: [DAD],
+    });
+  });
+
+  it("EVT-11 a draft with no tag saves nobody", () => {
+    expect(eventFromDraft({ ...DRAFT, tagIds: [] }, DAY, ID, tz, FAMILY)).toMatchObject({
+      everyone: false,
+      tagIds: [],
+    });
   });
 });
 
@@ -353,18 +393,24 @@ describe("event sheet in a zone", () => {
   it("LOC-06 an existing event fills the draft in minutes of its day in the given zone", () => {
     const late = { ...LUNCH, startAt: "2026-10-10T06:30:00.000Z", endAt: undefined };
 
-    expect(draftFromEvent(late, LA, NOW).start).toBe(23 * 60 + 30);
+    expect(draftFromEvent(late, LA, NOW, FAMILY).start).toBe(23 * 60 + 30);
   });
 
   it("LOC-06 the saved event places the draft times on the day in the given zone", () => {
-    const event = eventFromDraft(DRAFT, "2026-10-12", "0195f0a0-0000-7000-8000-000000000009", LA);
+    const event = eventFromDraft(
+      DRAFT,
+      "2026-10-12",
+      "0195f0a0-0000-7000-8000-000000000009",
+      LA,
+      FAMILY,
+    );
 
     expect(event.startAt).toBe("2026-10-12T19:00:00.000Z");
     expect(event.endAt).toBe("2026-10-12T20:00:00.000Z");
   });
 
   it("LOC-06 a new event's default times read the given zone", () => {
-    expect(newEventDraft(new Date("2026-10-09T17:41:00Z"), LA)).toMatchObject({
+    expect(newEventDraft(new Date("2026-10-09T17:41:00Z"), LA, FAMILY)).toMatchObject({
       start: 660,
       end: 720,
     });
@@ -391,13 +437,13 @@ describe("event sheet discard", () => {
     ["no end", { end: undefined }],
     ["place", { location: "Park" }],
     ["notes", { notes: "Bring a gift" }],
-    ["who", { everyone: false, tagIds: [MOM] }],
+    ["who", { tagIds: [MOM] }],
   ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
     expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
   });
 
   it("§8.9 spaces around the notes and the order of tags don't make the draft dirty", () => {
-    const opened = { ...DRAFT, everyone: false, tagIds: [MOM, DAD], notes: "Gift" };
+    const opened = { ...DRAFT, tagIds: [MOM, DAD], notes: "Gift" };
 
     expect(isDirty({ ...opened, tagIds: [DAD, MOM], notes: " Gift " }, opened)).toBe(false);
   });
@@ -455,14 +501,13 @@ describe("event sheet all day", () => {
   const allDay = reduce(closed, { type: "allDay", value: true });
 
   it("EVT-08 an all-day event fills the draft as all day with the TPK-05 default times", () => {
-    expect(draftFromEvent(NO_SCHOOL, tz, NOW)).toEqual({
+    expect(draftFromEvent(NO_SCHOOL, tz, NOW, FAMILY)).toEqual({
       title: "No school · teacher planning day",
       start: 660,
       end: 720,
       allDay: true,
       location: "Lincoln Elementary",
-      everyone: true,
-      tagIds: [],
+      tagIds: FAMILY,
       notes: "",
     });
   });
@@ -504,7 +549,13 @@ describe("event sheet all day", () => {
   });
 
   it("D21 an all-day draft saves on its date's UTC midnight with no end", () => {
-    const event = eventFromDraft(allDay.draft, "2026-10-16", NO_SCHOOL.id, "America/Los_Angeles");
+    const event = eventFromDraft(
+      allDay.draft,
+      "2026-10-16",
+      NO_SCHOOL.id,
+      "America/Los_Angeles",
+      FAMILY,
+    );
 
     expect(event).toEqual({
       id: NO_SCHOOL.id,

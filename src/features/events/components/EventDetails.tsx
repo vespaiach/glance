@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Tag } from "@/domain/schemas";
-import { eventColor } from "@/domain/tags";
+import { eventColor, whoValue } from "@/domain/tags";
 import { type Clock, formatLength, rangeParts, type TimeParts } from "@/domain/time";
 import { colors, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -141,7 +141,7 @@ const styles = stylex.create({
     gap: 8,
     paddingInline: 16,
     borderRadius: radii.full,
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor: colors.surfaceCanvas,
     fontSize: 16,
     fontWeight: 480,
   },
@@ -176,7 +176,12 @@ function TimeBlock({ draft, tags, clock, status }: EventDetailsProps) {
   const { time, meridiem } = blockTime(draft, clock);
 
   return (
-    <ColorBlock tone={eventColor(draft, tags)} radius="24px" padding="24px" xstyle={styles.block}>
+    <ColorBlock
+      tone={eventColor(draftWho(draft, tags), tags)}
+      radius="24px"
+      padding="24px"
+      xstyle={styles.block}
+    >
       <div {...stylex.props(styles.blockTop)}>
         <span {...stylex.props(styles.mono)}>{lengthLabel(draft)}</span>
         {status && <StatusPill status={status} />}
@@ -229,11 +234,18 @@ function WhoChips({ chips }: { chips: readonly WhoChip[] }) {
 }
 
 function whoChips(draft: EventDraft, tags: readonly Tag[]): WhoChip[] {
-  if (draft.everyone) return [{ key: "everyone", name: copy.events.everyone }];
+  if (draftWho(draft, tags).everyone) return [{ key: "everyone", name: copy.events.everyone }];
 
   return tags
     .filter((tag) => draft.tagIds.includes(tag.id))
     .map((tag) => ({ key: tag.id, name: tag.name, color: tag.color }));
+}
+
+function draftWho(draft: EventDraft, tags: readonly Tag[]) {
+  return whoValue(
+    draft.tagIds,
+    tags.map((tag) => tag.id),
+  );
 }
 
 function blockTime(draft: EventDraft, clock: Clock): TimeParts {

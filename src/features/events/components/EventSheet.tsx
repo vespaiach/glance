@@ -5,7 +5,8 @@ import { Pencil, Trash2, WifiOff } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
-import type { Tag } from "@/domain/schemas";
+import type { Tag, TagColor } from "@/domain/schemas";
+import { nextFreeColor } from "@/domain/tags";
 import type { Clock } from "@/domain/time";
 import { colors, shadows } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -29,7 +30,7 @@ import {
   type TimeFieldName,
 } from "../eventSheet";
 import { EventDetails } from "./EventDetails";
-import { WhoPicker } from "./WhoPicker";
+import { WhoField } from "./WhoField";
 
 type EventSheetProps = {
   mode: "new" | "edit";
@@ -44,6 +45,7 @@ type EventSheetProps = {
   onClose: () => void;
   onDelete: () => void;
   onSave: (draft: EventDraft) => void;
+  onCreateTag: (name: string, color: TagColor) => string;
 };
 
 const words = copy.events.sheet;
@@ -148,6 +150,7 @@ export function EventSheet({
   onClose,
   onDelete,
   onSave,
+  onCreateTag,
   keyboardInset,
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
@@ -193,6 +196,14 @@ export function EventSheet({
     const step = closeStep(asking, isDirty(draft, state.opened), "button");
 
     dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
+  };
+
+  const newColor = state.newColor ?? nextFreeColor(tags);
+
+  const createTag = () => {
+    const id = onCreateTag(state.whoInput.trim(), newColor);
+
+    dispatch({ type: "addTag", id });
   };
 
   const discardChanges = () =>
@@ -255,13 +266,16 @@ export function EventSheet({
       {!draft.allDay && (
         <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
       )}
-      <WhoPicker
-        label={words.who}
-        everyoneLabel={copy.events.everyone}
+      <WhoField
         tags={tags}
-        who={draft}
-        onEveryone={() => dispatch({ type: "everyone" })}
-        onTag={(id) => dispatch({ type: "tag", id, family: familyIds(tags) })}
+        tagIds={draft.tagIds}
+        input={state.whoInput}
+        newColor={newColor}
+        onInput={(value) => dispatch({ type: "whoInput", value })}
+        onAdd={(id) => dispatch({ type: "addTag", id })}
+        onRemove={(id) => dispatch({ type: "removeTag", id })}
+        onColor={(color) => dispatch({ type: "newColor", color })}
+        onCreate={createTag}
       />
       <TextInput
         label={words.where}
@@ -312,10 +326,6 @@ function DetailsSheet({
       <EventDetails draft={draft} tags={tags} clock={clock} status={status} />
     </Sheet>
   );
-}
-
-function familyIds(tags: readonly Tag[]): string[] {
-  return tags.map((tag) => tag.id);
 }
 
 function eventLength({ start, end }: EventDraft): number | undefined {
