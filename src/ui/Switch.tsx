@@ -6,6 +6,7 @@ type SwitchProps = {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  labelStyle?: "body" | "eyebrow";
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -26,6 +27,15 @@ const styles = stylex.create({
     color: colors.textPrimary,
     cursor: "pointer",
     textAlign: "left",
+  },
+  eyebrow: {
+    minHeight: 44,
+    fontFamily: type.fontMono,
+    fontSize: type.eyebrowSize,
+    fontWeight: 400,
+    lineHeight: type.eyebrowLh,
+    letterSpacing: type.eyebrowLs,
+    textTransform: "uppercase",
   },
   track: {
     position: "relative",
@@ -62,19 +72,25 @@ const styles = stylex.create({
   },
 });
 
-export function Switch({ label, checked, onChange, xstyle }: SwitchProps) {
+export function Switch({ label, checked, onChange, labelStyle = "body", xstyle }: SwitchProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      {...stylex.props(styles.row, xstyle)}
+      {...stylex.props(styles.row, labelStyle === "eyebrow" && styles.eyebrow, xstyle)}
     >
       {label}
-      <span aria-hidden="true" {...stylex.props(styles.track, checked && styles.trackOn)}>
-        <span {...stylex.props(styles.knob, checked && styles.knobOn)} />
-      </span>
+      <SwitchTrack checked={checked} />
     </button>
+  );
+}
+
+export function SwitchTrack({ checked }: { checked: boolean }) {
+  return (
+    <span aria-hidden="true" {...stylex.props(styles.track, checked && styles.trackOn)}>
+      <span {...stylex.props(styles.knob, checked && styles.knobOn)} />
+    </span>
   );
 }

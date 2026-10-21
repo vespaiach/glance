@@ -151,6 +151,10 @@ export const DEFAULT_AMBIENT: Ambient = {
   wknd: { start: "21:00", end: "09:00" },
 };
 
+export const IDLE_MINUTES = { min: 1, max: 15 } as const;
+
+export const NOTE_DAYS = { min: 1, max: 30 } as const;
+
 export const AccountSettingsSchema = v.object({
   season: v.picklist(["auto", ...SeasonSchema.options]),
   clock: v.picklist(["12h", "24h"]),
@@ -163,11 +167,16 @@ export const AccountSettingsSchema = v.object({
   }),
   idleTimeout: v.object({
     on: v.boolean(),
-    minutes: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(15)),
+    minutes: v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(IDLE_MINUTES.min),
+      v.maxValue(IDLE_MINUTES.max),
+    ),
   }),
   noteExpiry: v.object({
     on: v.boolean(),
-    days: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(30)),
+    days: v.pipe(v.number(), v.integer(), v.minValue(NOTE_DAYS.min), v.maxValue(NOTE_DAYS.max)),
   }),
   hideSidebarWhenIdle: v.optional(v.boolean(), true),
   ambient: v.optional(AmbientSchema, DEFAULT_AMBIENT),

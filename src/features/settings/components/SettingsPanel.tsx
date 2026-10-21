@@ -1,12 +1,14 @@
 import * as stylex from "@stylexjs/stylex";
+import { CalendarDays } from "lucide-react";
 import { copy } from "@/copy";
 import type { ShownBackground } from "@/domain/background";
 import type { AccountSettings, Season } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
-import { PillTabs } from "@/ui/PillTabs";
+import { Radio } from "@/ui/Radio";
 import { SettingsRow } from "@/ui/SettingsRow";
+import { seasonIcons } from "@/ui/seasonIcons";
 import { locationSummary } from "../location";
 import type { SettingsAccount } from "./AccountCard";
 
@@ -21,10 +23,11 @@ type SettingsPanelProps = {
 };
 
 const SEASON_OPTIONS = [
-  { value: "auto" as const, label: copy.settings.season.autoLabel },
+  { value: "auto" as const, label: copy.settings.season.autoLabel, icon: CalendarDays },
   ...(["spring", "summer", "fall", "winter"] as const).map((value) => ({
     value,
     label: copy.season[value],
+    icon: seasonIcons[value],
   })),
 ];
 
@@ -93,13 +96,14 @@ export function SettingsPanel({
         <SettingsRow
           title={text.season.title}
           description={seasonSubtitle(settings.season, season)}
+          align="start"
         >
-          <PillTabs
+          <Radio
             label={text.season.title}
             options={SEASON_OPTIONS}
             value={settings.season}
             onChange={(value) => onChange({ season: value })}
-            size="lg"
+            direction="column"
           />
         </SettingsRow>
         <SettingsRow
@@ -110,27 +114,28 @@ export function SettingsPanel({
           {backgroundSummary(background)}
         </SettingsRow>
         <SettingsRow title={text.clock.title} description={text.clock.body}>
-          <PillTabs
+          <Radio
             label={text.clock.title}
             options={text.clock.options}
             value={settings.clock}
             onChange={(value) => onChange({ clock: value })}
-            size="lg"
           />
         </SettingsRow>
-        <SettingsRow
-          title={text.temperature.title}
-          description={text.temperature.body}
-          divider={false}
-        >
-          <PillTabs
+        <SettingsRow title={text.temperature.title} description={text.temperature.body}>
+          <Radio
             label={text.temperature.title}
             options={text.temperature.options}
             value={settings.tempUnit}
             onChange={(value) => onChange({ tempUnit: value })}
-            size="lg"
           />
         </SettingsRow>
+        <SettingsRow
+          title={text.hideSidebar.title}
+          description={text.hideSidebar.body}
+          checked={settings.hideSidebarWhenIdle}
+          onCheckedChange={(checked) => onChange({ hideSidebarWhenIdle: checked })}
+          divider={false}
+        />
       </div>
     </div>
   );

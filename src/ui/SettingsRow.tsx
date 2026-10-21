@@ -1,15 +1,19 @@
 import * as stylex from "@stylexjs/stylex";
 import { ChevronRight } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { colors, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Icon } from "./Icon";
+import { SwitchTrack } from "./Switch";
 
 type SettingsRowProps = {
   title: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
   onClick?: () => void;
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  align?: "center" | "start";
   divider?: boolean;
   xstyle?: stylex.StyleXStyles;
 };
@@ -23,6 +27,9 @@ const styles = stylex.create({
     gap: `${space.sm} ${space.lg}`,
     paddingBlock: 20,
     color: colors.textPrimary,
+  },
+  start: {
+    alignItems: "flex-start",
   },
   divider: {
     boxShadow: `inset 0 -1px 0 ${colors.borderHairlineSoft}`,
@@ -42,6 +49,9 @@ const styles = stylex.create({
     gap: space.xxs,
     minWidth: 180,
   },
+  textStart: {
+    paddingTop: 12,
+  },
   title: {
     fontSize: type.headlineSize,
     fontWeight: type.headlineWeight,
@@ -50,6 +60,7 @@ const styles = stylex.create({
   description: {
     fontSize: type.bodySmSize,
     fontWeight: type.bodySmWeight,
+    textWrap: "pretty",
   },
   control: {
     maxWidth: "100%",
@@ -69,17 +80,45 @@ export function SettingsRow({
   description,
   children,
   onClick,
+  checked,
+  onCheckedChange,
+  align = "center",
   divider = true,
   xstyle,
 }: SettingsRowProps) {
-  const rowStyles = [styles.root, divider && styles.divider];
+  const id = useId();
+
+  const rowStyles = [styles.root, align === "start" && styles.start, divider && styles.divider];
 
   const text = (
-    <span {...stylex.props(styles.text)}>
-      <span {...stylex.props(styles.title)}>{title}</span>
-      {description && <span {...stylex.props(styles.description)}>{description}</span>}
+    <span {...stylex.props(styles.text, align === "start" && styles.textStart)}>
+      <span id={`${id}-title`} {...stylex.props(styles.title)}>
+        {title}
+      </span>
+      {description && (
+        <span id={`${id}-description`} {...stylex.props(styles.description)}>
+          {description}
+        </span>
+      )}
     </span>
   );
+
+  if (onCheckedChange) {
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked ?? false}
+        aria-labelledby={`${id}-title`}
+        aria-describedby={description ? `${id}-description` : undefined}
+        onClick={() => onCheckedChange(!checked)}
+        {...stylex.props(...rowStyles, styles.button, xstyle)}
+      >
+        {text}
+        <SwitchTrack checked={checked ?? false} />
+      </button>
+    );
+  }
 
   if (onClick) {
     return (

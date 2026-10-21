@@ -32,3 +32,39 @@ test("SET-03 SettingsRow with onClick is one button that reports taps", async ()
 
   expect(onClick).toHaveBeenCalledTimes(1);
 });
+
+test("SET-05 SettingsRow with a switch is one switch named by its title and described by its text", () => {
+  render(
+    <SettingsRow
+      title="Hide sidebar when idle"
+      description="After 20 seconds without a touch. Any tap brings it back."
+      checked
+      onCheckedChange={() => {}}
+    />,
+  );
+
+  const toggle = screen.getByRole("switch", { name: "Hide sidebar when idle" });
+
+  expect(toggle).toHaveAttribute("aria-checked", "true");
+  expect(toggle).toHaveAccessibleDescription(
+    "After 20 seconds without a touch. Any tap brings it back.",
+  );
+});
+
+test("SET-05 tapping anywhere on a switch row flips it", async () => {
+  const onCheckedChange = vi.fn();
+  render(
+    <SettingsRow
+      title="Hide sidebar when idle"
+      description="After 20 seconds without a touch. Any tap brings it back."
+      checked={false}
+      onCheckedChange={onCheckedChange}
+    />,
+  );
+
+  await userEvent.click(
+    screen.getByText("After 20 seconds without a touch. Any tap brings it back."),
+  );
+
+  expect(onCheckedChange).toHaveBeenCalledWith(true);
+});

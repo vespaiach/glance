@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { copy } from "@/copy";
-import type { Season, Tone } from "@/domain/schemas";
+import { IDLE_MINUTES, type Season, type Tone } from "@/domain/schemas";
+import type { Clock as ClockFormat } from "@/domain/time";
 import { colors, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
@@ -31,12 +32,15 @@ import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
 import { OfflinePill } from "@/ui/OfflinePill";
 import { PillTabs } from "@/ui/PillTabs";
+import { Radio } from "@/ui/Radio";
 import { SettingsRow } from "@/ui/SettingsRow";
 import { Sheet } from "@/ui/Sheet";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
+import { Slider } from "@/ui/Slider";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
 import { Switch } from "@/ui/Switch";
+import { seasonIcons } from "@/ui/seasonIcons";
 import { TextInput } from "@/ui/TextInput";
 import { TopBar } from "@/ui/TopBar";
 import { WeatherNow } from "@/ui/WeatherNow";
@@ -72,6 +76,12 @@ type SeasonGalleryProps = {
 const ignore = () => {};
 
 const BLOCK_TONES = [1, 2, 3, 4, "soft", "deep", "canvas", "ink"] as const;
+
+const SEASON_RADIOS = (["spring", "summer", "fall", "winter"] as const).map((value) => ({
+  value,
+  label: copy.season[value],
+  icon: seasonIcons[value],
+}));
 
 const styles = stylex.create({
   title: {
@@ -183,6 +193,9 @@ function FormsGroup() {
   const [note, setNote] = useState(gallery.input.notesValue);
   const [tone, setTone] = useState<Tone>(1);
   const [allDay, setAllDay] = useState(false);
+  const [clock, setClock] = useState<ClockFormat>("12h");
+  const [season, setSeason] = useState<Season>("fall");
+  const [minutes, setMinutes] = useState(3);
 
   return (
     <GalleryGroup title={gallery.groups.forms}>
@@ -223,6 +236,50 @@ function FormsGroup() {
       />
       <Switch label={gallery.switchLabel} checked={allDay} onChange={setAllDay} />
       <Switch label={gallery.switchLabel} checked onChange={ignore} />
+      <Switch
+        label={copy.settings.idle.title}
+        checked={allDay}
+        onChange={setAllDay}
+        labelStyle="eyebrow"
+      />
+      <Radio
+        label={copy.settings.clock.title}
+        options={copy.settings.clock.options}
+        value={clock}
+        onChange={setClock}
+      />
+      <Radio
+        label={copy.settings.season.title}
+        options={SEASON_RADIOS}
+        value={season}
+        onChange={setSeason}
+        direction="column"
+      />
+      <div {...stylex.props(styles.tile)}>
+        <Slider
+          label={copy.settings.idle.slider}
+          min={IDLE_MINUTES.min}
+          max={IDLE_MINUTES.max}
+          value={minutes}
+          valueText={copy.settings.idle.value(minutes)}
+          minLabel={copy.settings.idle.value(IDLE_MINUTES.min)}
+          maxLabel={copy.settings.idle.value(IDLE_MINUTES.max)}
+          onChange={setMinutes}
+        />
+      </div>
+      <div {...stylex.props(styles.tile)}>
+        <Slider
+          label={copy.settings.idle.slider}
+          min={IDLE_MINUTES.min}
+          max={IDLE_MINUTES.max}
+          value={minutes}
+          valueText={copy.settings.idle.value(minutes)}
+          minLabel={copy.settings.idle.value(IDLE_MINUTES.min)}
+          maxLabel={copy.settings.idle.value(IDLE_MINUTES.max)}
+          onChange={setMinutes}
+          disabled
+        />
+      </div>
     </GalleryGroup>
   );
 }
@@ -417,6 +474,13 @@ function SharedGroup() {
           description={gallery.settings.backgroundBody}
           onClick={ignore}
           divider
+        />
+        <SettingsRow
+          title={copy.settings.hideSidebar.title}
+          description={copy.settings.hideSidebar.body}
+          checked
+          onCheckedChange={ignore}
+          divider={false}
         />
       </div>
       <Button variant="secondary" onClick={() => setSheetOpen(true)}>

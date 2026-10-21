@@ -420,22 +420,23 @@ export const copy = {
       title: "Ambient screen",
       summary: (summary: AmbientSummary) => ambientSummaryText(summary),
     },
+    hideSidebar: {
+      title: "Hide sidebar when idle",
+      body: "After 20 seconds without a touch. Any tap brings it back.",
+    },
     idle: {
       title: "Back to Today after",
-      options: [
-        { value: "1", label: "1 min" },
-        { value: "3", label: "3 min" },
-        { value: "5", label: "5 min" },
-        { value: "never", label: "Never" },
-      ],
+      value: (minutes: number) => `${minutes} min`,
+      on: "without a touch",
+      off: "Off · stays on the current view",
+      slider: "Minutes before going back to Today",
     },
     noteExpiry: {
       title: "Remove notes after",
-      options: [
-        { value: "1", label: "1 day" },
-        { value: "7", label: "1 week" },
-        { value: "never", label: "Never" },
-      ],
+      value: (days: number) => dayCount(days),
+      on: "after posting",
+      off: "Off · notes stay until deleted",
+      slider: "Days before notes are removed",
     },
     account: {
       title: "Account",
