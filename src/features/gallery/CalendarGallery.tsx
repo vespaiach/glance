@@ -96,7 +96,7 @@ const week = () =>
   });
 
 const strip = {
-  heading: weekHeading(TODAY, TODAY),
+  heading: weekHeading(TODAY),
   label: copy.calendar.week("October", 4),
   selected: TODAY,
   today: TODAY,

@@ -103,7 +103,7 @@ export function CalendarScreen() {
         <DateControl {...dateControl(day)} onOpen={() => dispatch({ type: "openPicker" })} />
       ) : (
         <WeekStrip
-          heading={weekHeading(day, today)}
+          heading={weekHeading(day)}
           label={weekLabel(week[0] ?? day)}
           days={weekPills(week, weekEvents ?? [], tags, { tz, forecast, settings })}
           selected={day}

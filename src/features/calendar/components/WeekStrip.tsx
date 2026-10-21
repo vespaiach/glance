@@ -40,9 +40,11 @@ type WeekStripProps = {
   onSelect: (day: string) => void;
 };
 
-const WEATHER_CELL = 124;
+const WEATHER_CELL = 80;
 
 const DAYS = 7;
+
+const GAP = 2;
 
 const styles = stylex.create({
   root: {
@@ -66,7 +68,7 @@ const styles = stylex.create({
     gap: 4,
     paddingInline: 8,
   },
-  range: {
+  year: {
     fontFamily: type.fontMono,
     fontSize: 14,
     letterSpacing: "0.54px",
@@ -84,75 +86,101 @@ const styles = stylex.create({
     padding: 0,
     borderWidth: 0,
     flexGrow: 1,
+    position: "relative",
     display: "grid",
     gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-    gap: 6,
+    gap: GAP,
     minWidth: 0,
   },
-  day: (height: number) => ({
-    height,
+  indicator: (index: number) => ({
+    position: "absolute",
+    top: -12,
+    bottom: -12,
+    left: 0,
+    width: `calc((100% - ${(DAYS - 1) * GAP}px) / ${DAYS})`,
+    backgroundColor: colors.actionPrimary,
+    transform: `translateX(calc(${index} * (100% + ${GAP}px)))`,
+    transitionProperty: "transform",
+    transitionDuration: motion.durBase,
+    transitionTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+  }),
+  day: {
+    position: "relative",
+    zIndex: 1,
     minWidth: 0,
+    aspectRatio: "1 / 1",
     overflow: "hidden",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
     paddingBlock: 0,
-    paddingInline: 14,
+    paddingInline: 0,
     borderWidth: 0,
-    borderRadius: radii.full,
+    borderRadius: 0,
     backgroundColor: "transparent",
     color: colors.textPrimary,
     font: "inherit",
     cursor: "pointer",
-    transitionProperty: "transform, background-color",
-    transitionDuration: `${motion.durPress}, ${motion.durFast}`,
+    transitionProperty: "transform, color, background-color",
+    transitionDuration: `${motion.durPress}, 200ms, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
-  }),
+  },
   selected: {
-    backgroundColor: colors.actionPrimary,
     color: colors.onActionPrimary,
+    backgroundColor: "transparent",
   },
   today: {
-    boxShadow: `inset 0 0 0 2px ${colors.black}`,
-  },
-  dayText: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 3,
-    minWidth: 0,
+    backgroundColor: colors.surfaceSoft,
   },
   weekday: {
+    position: "absolute",
+    top: 12,
+    insetInline: 0,
+    textAlign: "center",
     fontFamily: type.fontMono,
     fontSize: 13,
     letterSpacing: "0.54px",
     textTransform: "uppercase",
   },
   date: {
+    position: "absolute",
+    top: "calc(50% + 12px)",
+    insetInline: 0,
+    transform: "translateY(-50%)",
+    textAlign: "center",
     fontSize: 28,
     fontWeight: 480,
     letterSpacing: "-0.5px",
     lineHeight: 1,
   },
   dots: {
+    position: "absolute",
+    bottom: 12,
+    insetInlineStart: "50%",
+    transform: "translateX(-50%)",
     display: "flex",
     gap: 2,
     height: 6,
-    maxWidth: "min(46px, 100%)",
+    maxWidth: 50,
     overflow: "hidden",
   },
+  dot: {
+    display: "flex",
+    borderRadius: radii.full,
+  },
+  dotOutlined: {
+    boxShadow: `0 0 0 1px ${colors.onActionPrimary}`,
+  },
   forecast: {
+    position: "absolute",
+    top: 8,
+    insetInlineEnd: 8,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 4,
-    fontSize: 16,
+    gap: 2,
+    fontSize: 12,
     fontWeight: 480,
+    lineHeight: 1,
   },
 });
-
-const DAY_HEIGHT: Record<StripBreakpoint, number> = { wide: 80, mid: 72, narrow: 72 };
 
 export function WeekStrip({
   heading,
@@ -173,25 +201,35 @@ export function WeekStrip({
 
   const roomy = breakpoint === "wide" || breakpoint === "mid";
 
-  const weather = roomy && width / DAYS >= WEATHER_CELL;
+  const weather = roomy && (width - (DAYS - 1) * GAP) / DAYS >= WEATHER_CELL;
+
+  const index = Math.max(
+    0,
+    days.findIndex((day) => day.key === selected),
+  );
 
   return (
     <div {...stylex.props(styles.root)}>
       {roomy && (
         <div {...stylex.props(styles.heading)}>
-          <span {...stylex.props(styles.range)}>{heading.range}</span>
+          <span {...stylex.props(styles.year)}>{heading.year}</span>
           <span {...stylex.props(styles.month)}>{heading.month}</span>
         </div>
       )}
       <IconButton icon={ChevronLeft} label={previousLabel} size="touch" onClick={onPrevious} />
       <fieldset ref={grid} aria-label={label} {...stylex.props(styles.days)}>
+        <span
+          aria-hidden="true"
+          data-testid="week-indicator"
+          data-day={selected}
+          {...stylex.props(styles.indicator(index))}
+        />
         {days.map((day) => (
-          <DayPill
+          <DayCell
             key={day.key}
             day={day}
             selected={day.key === selected}
             today={day.key === today}
-            height={DAY_HEIGHT[breakpoint]}
             weather={weather}
             onClick={() => onSelect(day.key)}
           />
@@ -202,16 +240,15 @@ export function WeekStrip({
   );
 }
 
-type DayPillProps = {
+type DayCellProps = {
   day: WeekDay;
   selected: boolean;
   today: boolean;
-  height: number;
   weather: boolean;
   onClick: () => void;
 };
 
-function DayPill({ day, selected, today, height, weather, onClick }: DayPillProps) {
+function DayCell({ day, selected, today, weather, onClick }: DayCellProps) {
   return (
     <button
       type="button"
@@ -220,26 +257,26 @@ function DayPill({ day, selected, today, height, weather, onClick }: DayPillProp
       aria-current={today ? "date" : undefined}
       onClick={onClick}
       {...stylex.props(
-        styles.day(height),
+        styles.day,
         selected && styles.selected,
         today && !selected && styles.today,
         press.scale,
       )}
     >
-      <span {...stylex.props(styles.dayText)}>
-        <span {...stylex.props(styles.weekday)}>{day.weekday}</span>
-        <span {...stylex.props(styles.date)}>{day.date}</span>
-        <span {...stylex.props(styles.dots)}>
-          {day.dots.map((dot) => (
-            <PersonDot key={dot.id} color={dot.color} size="xs" />
-          ))}
-        </span>
+      <span {...stylex.props(styles.weekday)}>{day.weekday}</span>
+      <span {...stylex.props(styles.date)}>{day.date}</span>
+      <span {...stylex.props(styles.dots)}>
+        {day.dots.map((dot) => (
+          <span key={dot.id} {...stylex.props(styles.dot, selected && styles.dotOutlined)}>
+            <PersonDot color={dot.color} size="xs" />
+          </span>
+        ))}
       </span>
       {weather && day.forecast && (
         <span {...stylex.props(styles.forecast)}>
           <Icon
             icon={weatherIcons[day.forecast.icon]}
-            size={24}
+            size={14}
             strokeWidth={1.5}
             label={day.forecast.label}
           />

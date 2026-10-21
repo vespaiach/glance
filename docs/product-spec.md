@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.73 |
+| Status | v0.74 |
 | Date | 2026-10-21 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -81,7 +81,7 @@ Typed components in `src/ui` (the calendar controls in `features/calendar/compon
 |---|---|
 | `Clock` | Tabular numerals, date line "Friday, October 9". The colon blinks every 0.6 s, and stays on with reduced motion. Takes the time from the screen; no timer of its own |
 | `DayTimeline` | The elastic day timeline (§8.3.2): hour gutter with hour weather, plan cards, free slots, now marker, rain chips (Calendar) |
-| `WeekStrip`, `DateControl`, `DatePicker` (calendar feature) | CAL-01, CAL-02, CAL-03. Day buttons named by the full date; selected = black (`aria-pressed`), today = ring (`aria-current="date"`) |
+| `WeekStrip`, `DateControl`, `DatePicker` (calendar feature) | CAL-01, CAL-02, CAL-03. Day buttons named by the full date; selected = black (`aria-pressed`), today = soft fill (`aria-current="date"`) |
 | `PersonDot` | A tag's color dot (6–12 px). Plan cards build their dot rows and Who suggestions their pills from it |
 | `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (`--danger`, white text, every season: delete and discard confirms) |
 | `IconButton` | `md` 40, `touch` 56, `lg` 72 px; `active` = black; `current="page"` |

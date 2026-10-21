@@ -144,7 +144,7 @@ test("CAL-01 the week strip runs Sunday to Saturday with today selected and ring
 
   renderCalendar();
 
-  expect(await screen.findByText("Oct 4 – 10")).toBeInTheDocument();
+  expect(await screen.findByText("2026")).toBeInTheDocument();
   expect(screen.getByText("October")).toBeInTheDocument();
   const week = within(screen.getByRole("group", { name: "Week of October 4" }));
   expect(week.getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
@@ -184,7 +184,7 @@ test("CAL-02 the next chevron steps a week and selects its Sunday", async () => 
 
   await userEvent.click(await screen.findByRole("button", { name: "Next week" }));
 
-  expect(screen.getByText("Oct 11 – 17")).toBeInTheDocument();
+  expect(screen.getByText("October")).toBeInTheDocument();
   expect(day("Sunday, October 11")).toHaveAttribute("aria-pressed", "true");
   expect(day("Friday, October 16")).not.toHaveAttribute("aria-current");
 });
@@ -196,7 +196,7 @@ test("CAL-02 stepping back onto this week selects today", async () => {
 
   await userEvent.click(await screen.findByRole("button", { name: "Previous week" }));
 
-  expect(screen.getByText("Sep 27 – Oct 3")).toBeInTheDocument();
+  expect(screen.getByText("October")).toBeInTheDocument();
   expect(day("Sunday, September 27")).toHaveAttribute("aria-pressed", "true");
 
   await userEvent.click(screen.getByRole("button", { name: "Next week" }));
@@ -210,7 +210,8 @@ test("CAL-04 ?date= selects that day, in another year too", async () => {
 
   renderCalendar();
 
-  expect(await screen.findByText("January 2027")).toBeInTheDocument();
+  expect(await screen.findByText("2027")).toBeInTheDocument();
+  expect(screen.getByText("January")).toBeInTheDocument();
   expect(day("Friday, January 1")).toHaveAttribute("aria-pressed", "true");
   expect(await screen.findByRole("button", { name: /^New Year brunch, / })).toBeInTheDocument();
 });

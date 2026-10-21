@@ -82,22 +82,16 @@ describe("stepWeek", () => {
 });
 
 describe("weekHeading", () => {
-  it("CAL-01 a week in one month reads 'Oct 4 – 10' and the month name", () => {
-    expect(weekHeading("2026-10-09", "2026-10-09")).toEqual({
-      range: "Oct 4 – 10",
-      month: "October",
-    });
+  it("CAL-01 the heading is the year and month name of the week's Saturday", () => {
+    expect(weekHeading("2026-10-09")).toEqual({ year: "2026", month: "October" });
   });
 
-  it("CAL-01 a week across months names both and the month of its Saturday", () => {
-    expect(weekHeading("2026-10-01", "2026-10-09")).toEqual({
-      range: "Sep 27 – Oct 3",
-      month: "October",
-    });
+  it("CAL-01 a week across months takes the month of its Saturday", () => {
+    expect(weekHeading("2026-10-01")).toEqual({ year: "2026", month: "October" });
   });
 
-  it("CAL-01 the month adds the year outside the current year", () => {
-    expect(weekHeading("2027-01-05", "2026-10-09").month).toBe("January 2027");
+  it("CAL-01 a week across years takes the year of its Saturday", () => {
+    expect(weekHeading("2026-12-31")).toEqual({ year: "2027", month: "January" });
   });
 });
 
