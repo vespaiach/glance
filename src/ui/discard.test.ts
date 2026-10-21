@@ -1,16 +1,14 @@
-import { type CloseFrom, closeStep, type SheetConfirm } from "./discard";
+import { type CloseFrom, closeStep } from "./discard";
 
-test.each<[SheetConfirm, boolean, CloseFrom, ReturnType<typeof closeStep>]>([
-  [null, false, "button", "close"],
-  [null, false, "scrim", "close"],
-  ["delete", false, "button", "close"],
-  [null, true, "button", "ask"],
-  [null, true, "scrim", "ask"],
-  ["delete", true, "scrim", "ask"],
-  ["discard", true, "scrim", "stay"],
-  ["discard", true, "button", "close"],
-  ["discard", false, "scrim", "stay"],
-  ["discard", false, "button", "close"],
-])("§8.9 confirm %s, dirty %s, from %s → %s", (confirm, dirty, from, step) => {
-  expect(closeStep(confirm, dirty, from)).toBe(step);
+test.each<[boolean, boolean, CloseFrom, ReturnType<typeof closeStep>]>([
+  [false, false, "button", "close"],
+  [false, false, "scrim", "close"],
+  [false, true, "button", "ask"],
+  [false, true, "scrim", "ask"],
+  [true, true, "scrim", "stay"],
+  [true, true, "button", "close"],
+  [true, false, "scrim", "stay"],
+  [true, false, "button", "close"],
+])("§8.9 asking %s, dirty %s, from %s → %s", (asking, dirty, from, step) => {
+  expect(closeStep(asking, dirty, from)).toBe(step);
 });

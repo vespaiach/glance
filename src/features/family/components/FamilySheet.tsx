@@ -104,7 +104,7 @@ export function FamilySheet({
   };
 
   const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(state.confirm, isDirty(state), from);
+    const step = closeStep(state.confirm === "discard", isDirty(state), from);
 
     if (step === "close") return onClose();
 

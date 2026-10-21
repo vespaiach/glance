@@ -4,8 +4,8 @@ export type CloseFrom = "scrim" | "button";
 
 export type CloseStep = "close" | "ask" | "stay";
 
-export function closeStep(confirm: SheetConfirm, dirty: boolean, from: CloseFrom): CloseStep {
-  if (confirm === "discard") return from === "scrim" ? "stay" : "close";
+export function closeStep(asking: boolean, dirty: boolean, from: CloseFrom): CloseStep {
+  if (asking) return from === "scrim" ? "stay" : "close";
 
   return dirty ? "ask" : "close";
 }

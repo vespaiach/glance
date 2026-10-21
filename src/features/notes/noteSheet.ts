@@ -2,7 +2,6 @@ import { copy } from "@/copy";
 import { uuidv7 } from "@/domain/id";
 import { noteTilt } from "@/domain/notes";
 import type { Note, NoteTone, Season } from "@/domain/schemas";
-import { afterEdit, type SheetConfirm } from "@/ui/discard";
 
 export type NoteDraft = {
   text: string;
@@ -10,17 +9,19 @@ export type NoteDraft = {
   tone: NoteTone;
 };
 
-export type NoteSheetView = "details" | "edit";
-
-export type NoteSheetState = {
+export type NoteEditFields = {
   draft: NoteDraft;
   opened: NoteDraft;
   textError: boolean;
-  confirm: SheetConfirm;
-  view: NoteSheetView;
   fromDetails: boolean;
-  discardTo: "details" | null;
 };
+
+export type NoteSheetState =
+  | { step: "details"; opened: NoteDraft }
+  | (NoteEditFields & { step: "editing" | "deleting" })
+  | (NoteEditFields & { step: "discarding"; discardTo: "details" | null });
+
+export type NoteEditState = Exclude<NoteSheetState, { step: "details" }>;
 
 export type NoteSheetOptions = {
   opened?: NoteDraft;
@@ -90,15 +91,13 @@ export function initialNoteSheet(
   draft: NoteDraft,
   { opened = draft, discard = false, details = false }: NoteSheetOptions = {},
 ): NoteSheetState {
-  return {
-    draft,
-    opened,
-    textError: false,
-    confirm: discard ? "discard" : null,
-    view: details && !discard ? "details" : "edit",
-    fromDetails: details,
-    discardTo: details && discard ? "details" : null,
-  };
+  if (details && !discard) return { step: "details", opened };
+
+  const fields: NoteEditFields = { draft, opened, textError: false, fromDetails: details };
+
+  if (discard) return { ...fields, step: "discarding", discardTo: details ? "details" : null };
+
+  return { ...fields, step: "editing" };
 }
 
 export function isDirty(draft: NoteDraft, opened: NoteDraft): boolean {
@@ -110,6 +109,12 @@ export function isDirty(draft: NoteDraft, opened: NoteDraft): boolean {
 }
 
 export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction): NoteSheetState {
+  if (state.step === "details") return action.type === "edit" ? editFromDetails(state) : state;
+
+  return editReducer(state, action);
+}
+
+function editReducer(state: NoteEditState, action: NoteSheetAction): NoteSheetState {
   switch (action.type) {
     case "text":
     case "author":
@@ -122,32 +127,30 @@ export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction)
     case "save":
       return { ...state, textError: !canSave(state.draft) };
     case "askDelete":
-      return { ...state, confirm: "delete" };
+      return { ...editFields(state), step: "deleting" };
     case "askDiscard":
-      return { ...state, confirm: "discard", discardTo: action.to ?? null };
+      return { ...editFields(state), step: "discarding", discardTo: action.to ?? null };
     case "keepEditing":
-      return { ...state, confirm: null };
+      return { ...editFields(state), step: "editing" };
     case "edit":
-      return { ...state, view: "edit" };
+      return state;
     case "back":
-      return inDetails(state, state.opened);
+      return { step: "details", opened: state.opened };
     case "saved":
-      return inDetails(state, state.draft);
+      return { step: "details", opened: state.draft };
   }
 }
 
-function edited(state: NoteSheetState, draft: NoteDraft): NoteSheetState {
-  return { ...state, draft, confirm: afterEdit(state.confirm) };
+function editFromDetails({ opened }: { opened: NoteDraft }): NoteEditState {
+  return { step: "editing", draft: opened, opened, textError: false, fromDetails: true };
 }
 
-function inDetails(state: NoteSheetState, opened: NoteDraft): NoteSheetState {
-  return {
-    ...state,
-    draft: opened,
-    opened,
-    textError: false,
-    confirm: null,
-    view: "details",
-    discardTo: null,
-  };
+function editFields({ draft, opened, textError, fromDetails }: NoteEditState): NoteEditFields {
+  return { draft, opened, textError, fromDetails };
+}
+
+function edited(state: NoteEditState, draft: NoteDraft): NoteEditState {
+  const step = state.step === "deleting" ? "deleting" : "editing";
+
+  return { ...editFields(state), draft, step };
 }
