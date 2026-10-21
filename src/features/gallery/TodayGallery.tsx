@@ -85,13 +85,17 @@ const PICTURES = [
     key: "empty",
     picture: (
       <PictureOfDayPanel onOpenPhotos={ignore}>
-        <PictureOfDayEmpty onUpload={ignore} />
+        <PictureOfDayEmpty onOpenPhotos={ignore} canUpload />
       </PictureOfDayPanel>
     ),
   },
   {
     key: "phone-empty",
-    picture: <PictureOfDayPanel onOpenPhotos={ignore}>{null}</PictureOfDayPanel>,
+    picture: (
+      <PictureOfDayPanel onOpenPhotos={ignore}>
+        <PictureOfDayEmpty onOpenPhotos={ignore} canUpload={false} />
+      </PictureOfDayPanel>
+    ),
   },
   {
     key: "loading",
