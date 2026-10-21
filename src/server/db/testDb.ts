@@ -1,34 +1,24 @@
-import type { PGlite } from "@electric-sql/pglite";
-import type { Db } from "./db";
-import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
-import { openPglite, pgliteDb } from "./pglite";
+import type { Database } from "./database";
+import { openMemoryDatabase } from "./memory";
+import { postgresDatabase } from "./postgres";
+import { migratedSqlPerTest } from "./postgres/testSql";
 
-export function migratedDbPerTest(): () => Db {
-  let template: Promise<PGlite> | undefined;
-
-  let client: PGlite | undefined;
-
-  beforeEach(async () => {
-    template ??= migratedPglite();
-    client = (await (await template).clone()) as PGlite;
-  });
-
-  afterEach(async () => {
-    await client?.close();
-    client = undefined;
-  });
-
-  afterAll(async () => {
-    await (await template)?.close();
-  });
-
-  return () => pgliteDb(client as PGlite);
+export function databasePerTest(): () => Database {
+  return process.env.TEST_DB === "memory" ? memoryPerTest() : postgresPerTest();
 }
 
-async function migratedPglite(): Promise<PGlite> {
-  const client = await openPglite();
+function memoryPerTest(): () => Database {
+  let db = openMemoryDatabase();
 
-  await migrate(pgliteDb(client), readMigrations(MIGRATIONS_DIR));
+  beforeEach(() => {
+    db = openMemoryDatabase();
+  });
 
-  return client;
+  return () => db;
+}
+
+function postgresPerTest(): () => Database {
+  const sql = migratedSqlPerTest();
+
+  return () => postgresDatabase(sql());
 }

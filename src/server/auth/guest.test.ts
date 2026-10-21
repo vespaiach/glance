@@ -18,18 +18,14 @@ const SIGN_IN = { ip: IP, userAgent: "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS
 const guestOn = (): AuthDeps => ({ ...harness.deps(), guestEmail: GUEST_EMAIL });
 
 async function addAccount(id: string, email: string, setupDone: boolean): Promise<void> {
-  await harness
-    .deps()
-    .db.run(
-      "INSERT INTO accounts (id, email, name, time_zone, setup_done_at, created_at) VALUES ($1, $2, $3, 'America/Indiana/Indianapolis', $4, $5)",
-      [
-        id,
-        email,
-        setupDone ? "Trinh" : null,
-        setupDone ? START.toISOString() : null,
-        START.toISOString(),
-      ],
-    );
+  await harness.deps().db.accounts.insert({
+    id,
+    email,
+    name: setupDone ? "Trinh" : null,
+    timeZone: "America/Indiana/Indianapolis",
+    setupDoneAt: setupDone ? START.toISOString() : null,
+    createdAt: START.toISOString(),
+  });
 }
 
 async function addAccounts(): Promise<void> {
@@ -77,7 +73,8 @@ describe("signInAsGuest", () => {
     await addAccount(OMAR, "omar@example.com", true);
 
     expect(await signInAsGuest(guestOn(), SIGN_IN)).toEqual({ ok: false, error: "not-found" });
-    expect(await harness.deps().db.all("SELECT * FROM sessions")).toEqual([]);
+    expect(await harness.deps().db.displays.forAccount(TRINH)).toEqual([]);
+    expect(await harness.deps().db.displays.forAccount(OMAR)).toEqual([]);
   });
 
   it("SIGNIN-16 signs in as the returning, set-up guest account", async () => {
@@ -101,9 +98,9 @@ describe("signInAsGuest", () => {
     const token = signedIn.ok ? signedIn.value.sessionToken : undefined;
     const display = await findDisplay(harness.deps().db, token);
     expect(display?.accountId).toBe(TRINH);
-    expect(
-      await harness.deps().db.all("SELECT account_id, kind, last_seen_at FROM displays"),
-    ).toEqual([{ account_id: TRINH, kind: "tablet", last_seen_at: START.toISOString() }]);
+    expect(await harness.deps().db.displays.forAccount(TRINH)).toMatchObject([
+      { accountId: TRINH, kind: "tablet", lastSeenAt: START.toISOString() },
+    ]);
   });
 
   it("SIGNIN-16 limits guest sign-ins to 20 per IP per 10 minutes", async () => {

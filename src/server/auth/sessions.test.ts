@@ -8,8 +8,8 @@ function signIn(email: string): Promise<{ sessionToken: string; accountId: strin
   return signInWithCode(harness, email);
 }
 
-function accountNames(): Promise<unknown[]> {
-  return harness.deps().db.all("SELECT email, name FROM accounts ORDER BY email");
+async function accountName(email: string): Promise<string | null | undefined> {
+  return (await harness.deps().db.accounts.byEmail(email))?.name;
 }
 
 describe("requireDisplay", () => {
@@ -28,20 +28,14 @@ describe("requireDisplay", () => {
   });
 
   it("tech§6.1 resolves a session to its display and account and records when it was seen", async () => {
-    const { sessionToken } = await signIn("maria@example.com");
+    const { sessionToken, accountId } = await signIn("maria@example.com");
     harness.advance(5000);
 
     const display = await requireDisplay(harness.deps(), sessionToken);
 
-    const row = await harness.deps().db.one("SELECT id, account_id, last_seen_at FROM displays");
-    expect(display).toEqual({
-      ok: true,
-      value: {
-        displayId: (row as { id: string }).id,
-        accountId: (row as { account_id: string }).account_id,
-      },
-    });
-    expect(row).toMatchObject({ last_seen_at: "2026-10-09T14:00:05.000Z" });
+    const [row] = await harness.deps().db.displays.forAccount(accountId);
+    expect(display).toEqual({ ok: true, value: { displayId: row?.id, accountId } });
+    expect(row).toMatchObject({ lastSeenAt: "2026-10-09T14:00:05.000Z" });
   });
 });
 
@@ -61,7 +55,7 @@ describe("signOut", () => {
 
     await signOut(harness.deps().db, kitchen.sessionToken);
 
-    expect(await harness.deps().db.all("SELECT id FROM displays")).toEqual([]);
+    expect(await harness.deps().db.displays.forAccount(kitchen.accountId)).toEqual([]);
   });
 
   it("SIGNIN-11 does nothing without a session", async () => {
@@ -69,8 +63,8 @@ describe("signOut", () => {
   });
 });
 
-function tagNames() {
-  return harness.deps().db.all("SELECT account_id, name FROM tags ORDER BY created_at");
+async function tagNames(accountId: string): Promise<string[]> {
+  return (await harness.deps().db.tags.changedSince(accountId, 0)).map((tag) => tag.name);
 }
 
 describe("saveName", () => {
@@ -94,7 +88,7 @@ describe("saveName", () => {
       name: "Maria Lopez",
       color: "lilac",
     });
-    expect(await tagNames()).toEqual([{ account_id: accountId, name: "Maria Lopez" }]);
+    expect(await tagNames(accountId)).toEqual(["Maria Lopez"]);
   });
 
   it("§7 saving the name again adds no tag", async () => {
@@ -104,7 +98,7 @@ describe("saveName", () => {
     const result = await saveName(harness.deps(), accountId, "Maria Lopez");
 
     expect(result.ok && result.value.firstTag).toBeUndefined();
-    expect(await tagNames()).toEqual([{ account_id: accountId, name: "Maria" }]);
+    expect(await tagNames(accountId)).toEqual(["Maria"]);
   });
 
   it("SIGNIN-06 never writes another account's name", async () => {
@@ -113,10 +107,8 @@ describe("saveName", () => {
 
     await saveName(harness.deps(), maria.accountId, "Maria");
 
-    expect(await accountNames()).toEqual([
-      { email: "maria@example.com", name: "Maria" },
-      { email: "sam@example.com", name: null },
-    ]);
+    expect(await accountName("maria@example.com")).toBe("Maria");
+    expect(await accountName("sam@example.com")).toBeNull();
   });
 
   it("SIGNIN-06 reports an account that doesn't exist", async () => {

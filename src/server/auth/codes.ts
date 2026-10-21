@@ -1,11 +1,10 @@
 import "server-only";
 import { uuidv7 } from "@/domain/id";
 import { err, ok, type Result } from "@/domain/result";
-import type { AccountSettings, Season } from "@/domain/schemas";
+import type { Season } from "@/domain/schemas";
 import { seasonFor } from "@/domain/season";
-import type { Db } from "../db/db";
+import type { AccountRecord, Database, SignInCodeRecord } from "../db";
 import { signInMessage } from "../mail/mailer";
-import { type AccountRow, accountByEmail } from "./account";
 import type { AuthDeps } from "./deps";
 import { openDisplay } from "./sessions";
 import { type SessionSignIn, signedIn } from "./status";
@@ -21,15 +20,7 @@ export type CodeInput = { email: string; timeZone: string; ip: string };
 
 export type VerifyCodeInput = { email: string; code: string; ip: string; userAgent?: string };
 
-type CodeRow = {
-  email: string;
-  code_hash: string;
-  time_zone: string;
-  tries: number;
-  expires_at: string;
-};
-
-type Checked = Result<CodeRow, CodeError>;
+type Checked = Result<SignInCodeRecord, CodeError>;
 
 export async function requestCode(
   deps: AuthDeps,
@@ -63,9 +54,9 @@ export async function verifyCode(
 
     if (!checked.ok) return checked;
 
-    await tx.run("DELETE FROM sign_in_codes WHERE email = $1", [address]);
+    await tx.signInCodes.remove(address);
 
-    const known = await accountByEmail(tx, address);
+    const known = await tx.accounts.byEmail(address);
 
     const account = known ?? (await createAccount(tx, checked.value, at));
 
@@ -93,11 +84,13 @@ async function storeCode(
 ): Promise<void> {
   const expiresAt = new Date(now().getTime() + CODE_TTL_MS).toISOString();
 
-  await db.run(
-    `INSERT INTO sign_in_codes (email, code_hash, time_zone, tries, expires_at) VALUES ($1, $2, $3, 0, $4)
-     ON CONFLICT (email) DO UPDATE SET code_hash = $2, time_zone = $3, tries = 0, expires_at = $4`,
-    [address, hashCode(address, code), timeZone, expiresAt],
-  );
+  await db.signInCodes.put({
+    email: address,
+    codeHash: hashCode(address, code),
+    timeZone,
+    tries: 0,
+    expiresAt,
+  });
 }
 
 async function emailSeason(
@@ -105,48 +98,51 @@ async function emailSeason(
   address: string,
   timeZone: string,
 ): Promise<Season> {
-  const row = await db.one<{ season: AccountSettings["season"] | null }>(
-    "SELECT s.json ->> 'season' AS season FROM accounts a JOIN settings s ON s.account_id = a.id WHERE a.email = $1",
-    [address],
-  );
+  const account = await db.accounts.byEmail(address);
 
-  return seasonFor(row?.season ?? "auto", now(), timeZone);
+  const settings = account && (await db.settings.get(account.id));
+
+  return seasonFor(settings?.season ?? "auto", now(), timeZone);
 }
 
-async function checkCode(db: Db, address: string, code: string, at: string): Promise<Checked> {
-  const row = await db.one<CodeRow>("SELECT * FROM sign_in_codes WHERE email = $1 FOR UPDATE", [
-    address,
-  ]);
+async function checkCode(
+  db: Database,
+  address: string,
+  code: string,
+  at: string,
+): Promise<Checked> {
+  const row = await db.signInCodes.get(address);
 
-  if (row === undefined || row.expires_at <= at) return err("code-expired");
+  if (row === undefined || row.expiresAt <= at) return err("code-expired");
 
   if (row.tries >= MAX_TRIES) return err("code-locked");
 
-  if (sameHash(row.code_hash, hashCode(address, code))) return ok(row);
+  if (sameHash(row.codeHash, hashCode(address, code))) return ok(row);
 
   return countWrongTry(db, row);
 }
 
-async function countWrongTry(db: Db, row: CodeRow): Promise<Checked> {
-  await db.run("UPDATE sign_in_codes SET tries = tries + 1 WHERE email = $1", [row.email]);
+async function countWrongTry(db: Database, row: SignInCodeRecord): Promise<Checked> {
+  await db.signInCodes.put({ ...row, tries: row.tries + 1 });
 
   return err(row.tries + 1 >= MAX_TRIES ? "code-locked" : "wrong-code");
 }
 
-async function createAccount(db: Db, row: CodeRow, at: string): Promise<AccountRow> {
+async function createAccount(
+  db: Database,
+  row: SignInCodeRecord,
+  at: string,
+): Promise<AccountRecord> {
   const account = {
     id: uuidv7(new Date(at)),
     email: row.email,
     name: null,
-    time_zone: row.time_zone,
-    setup_done_at: null,
-    created_at: at,
+    timeZone: row.timeZone,
+    setupDoneAt: null,
+    createdAt: at,
   };
 
-  await db.run(
-    "INSERT INTO accounts (id, email, name, time_zone, created_at) VALUES ($1, $2, $3, $4, $5)",
-    [account.id, account.email, account.name, account.time_zone, account.created_at],
-  );
+  await db.accounts.insert(account);
 
   return account;
 }

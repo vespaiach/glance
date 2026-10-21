@@ -5,37 +5,15 @@ import { uuidv7 } from "@/domain/id";
 import { type PhotoDetails, type PhotoFacts, photoDetails } from "@/domain/photoName";
 import { MAX_PHOTO_BYTES, type UploadProblem, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
-import type { Photo, PhotoSources, Synced } from "@/domain/schemas";
-import type { Db } from "../db/db";
+import type { Photo, Synced } from "@/domain/schemas";
 import { type PhotoStore, photoType, type StoredObject } from "../storage/store";
 import { placeLabel } from "../weather/places";
 import type { Coordinates, PlaceLocator, PlaceName } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
-import {
-  accountTimeZone,
-  lockVersions,
-  optional,
-  type ServerColumns,
-  type Stamp,
-  serverFields,
-  stamp,
-} from "./rows";
+import { accountTimeZone, type Stamp, stamp } from "./rows";
 import { roundedPoint } from "./weather";
 
 export type SyncedPhoto = Synced<Photo>;
-
-export type PhotoRow = ServerColumns & {
-  id: string;
-  title: string;
-  taken_on: string | null;
-  place: string | null;
-  created_at: string;
-  title_source: PhotoSources["title"];
-  date_source: PhotoSources["takenOn"];
-  place_source: PhotoSources["place"];
-  checked: boolean;
-  file_name: string | null;
-};
 
 export const PHOTO_VARIANTS = ["display", "thumb", "orig"] as const;
 
@@ -91,36 +69,17 @@ export function putPhoto(
   photo: Photo,
 ): Promise<Result<SyncedPhoto, "not-found">> {
   return db.tx(async (tx): Promise<Result<SyncedPhoto, "not-found">> => {
-    await lockVersions(tx);
-
-    const existing = await photoRow(tx, accountId, photo.id);
+    const existing = await tx.photos.find(accountId, photo.id);
 
     if (!existing) return err("not-found");
 
-    if (existing.deleted_at) return ok(toPhoto(existing));
+    if (existing.deletedAt) return ok(existing);
 
-    const { updatedAt, version } = await stamp(tx, now());
+    const edited = editedPhoto(existing, photo, await stamp(tx, now()));
 
-    const row = editedRow(existing, photo, { updatedAt, version });
+    await tx.photos.save(accountId, edited);
 
-    await tx.run(
-      `UPDATE photos SET title = $1, taken_on = $2, place = $3, title_source = $4, date_source = $5,
-         place_source = $6, checked = $7, updated_at = $8, version = $9 WHERE id = $10`,
-      [
-        row.title,
-        row.taken_on,
-        row.place,
-        row.title_source,
-        row.date_source,
-        row.place_source,
-        row.checked,
-        updatedAt,
-        version,
-        row.id,
-      ],
-    );
-
-    return ok(toPhoto(row));
+    return ok(edited);
   });
 }
 
@@ -142,53 +101,28 @@ export async function photoFile(
   id: string,
   variant: PhotoVariant,
 ): Promise<Result<StoredObject, "not-found">> {
-  const row = await db.one<{ file_path: string }>(
-    "SELECT file_path FROM photos WHERE id = $1 AND account_id = $2 AND deleted_at IS NULL",
-    [id, accountId],
-  );
+  const filePath = await db.photos.livePath(accountId, id);
 
-  if (!row) return err("not-found");
+  if (filePath === undefined) return err("not-found");
 
-  return store.get(objectKey(row.file_path, variant));
-}
-
-export function toPhoto(row: PhotoRow): SyncedPhoto {
-  return {
-    id: row.id,
-    title: row.title,
-    ...optional("takenOn", row.taken_on),
-    ...optional("place", row.place),
-    createdAt: row.created_at,
-    sources: { title: row.title_source, takenOn: row.date_source, place: row.place_source },
-    checked: row.checked,
-    ...optional("fileName", row.file_name),
-    ...serverFields(row),
-  };
+  return store.get(objectKey(filePath, variant));
 }
 
 export function photoKeys(filePath: string): string[] {
   return PHOTO_VARIANTS.map((variant) => objectKey(filePath, variant));
 }
 
-function photoRow(db: Db, accountId: string, id: string): Promise<PhotoRow | undefined> {
-  return db.one<PhotoRow>("SELECT * FROM photos WHERE id = $1 AND account_id = $2", [
-    id,
-    accountId,
-  ]);
-}
-
-function editedRow(existing: PhotoRow, photo: Photo, { updatedAt, version }: Stamp): PhotoRow {
+function editedPhoto(existing: SyncedPhoto, photo: Photo, stamped: Stamp): SyncedPhoto {
   return {
-    ...existing,
+    id: existing.id,
     title: photo.title,
-    taken_on: photo.takenOn ?? null,
-    place: photo.place ?? null,
-    title_source: photo.sources.title,
-    date_source: photo.sources.takenOn,
-    place_source: photo.sources.place,
+    ...(photo.takenOn !== undefined && { takenOn: photo.takenOn }),
+    ...(photo.place !== undefined && { place: photo.place }),
+    createdAt: existing.createdAt,
+    sources: photo.sources,
     checked: photo.checked,
-    updated_at: updatedAt,
-    version,
+    ...(existing.fileName !== undefined && { fileName: existing.fileName }),
+    ...stamped,
   };
 }
 
@@ -198,23 +132,19 @@ function tombstonePhoto(
   id: string,
 ): Promise<Result<SyncedPhoto, "not-found">> {
   return db.tx(async (tx): Promise<Result<SyncedPhoto, "not-found">> => {
-    await lockVersions(tx);
-
-    const existing = await photoRow(tx, accountId, id);
+    const existing = await tx.photos.find(accountId, id);
 
     if (!existing) return err("not-found");
 
-    if (existing.deleted_at) return ok(toPhoto(existing));
+    if (existing.deletedAt) return ok(existing);
 
     const { updatedAt, version } = await stamp(tx, now());
 
-    await tx.run("UPDATE photos SET deleted_at = $1, updated_at = $1, version = $2 WHERE id = $3", [
-      updatedAt,
-      version,
-      id,
-    ]);
+    const deleted = { ...existing, deletedAt: updatedAt, updatedAt, version };
 
-    return ok(toPhoto({ ...existing, deleted_at: updatedAt, updated_at: updatedAt, version }));
+    await tx.photos.save(accountId, deleted);
+
+    return ok(deleted);
   });
 }
 
@@ -438,44 +368,22 @@ function insertPhoto(
   return db.tx(async (tx): Promise<SyncedPhoto> => {
     const { updatedAt, version } = await stamp(tx, now());
 
-    const row: PhotoRow = {
+    const photo: SyncedPhoto = {
       id,
       title: details.title,
-      taken_on: details.takenOn ?? null,
-      place: details.place ?? null,
-      created_at: updatedAt,
-      updated_at: updatedAt,
-      deleted_at: null,
-      version,
-      title_source: details.sources.title,
-      date_source: details.sources.takenOn,
-      place_source: details.sources.place,
+      ...(details.takenOn !== undefined && { takenOn: details.takenOn }),
+      ...(details.place !== undefined && { place: details.place }),
+      createdAt: updatedAt,
+      sources: details.sources,
       checked: details.checked,
-      file_name: details.fileName,
+      fileName: details.fileName,
+      updatedAt,
+      version,
     };
 
-    await tx.run(
-      `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, updated_at,
-         version, title_source, date_source, place_source, checked, file_name)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, $10, $11, $12, $13)`,
-      [
-        row.id,
-        accountId,
-        row.title,
-        row.taken_on,
-        row.place,
-        photoPath(accountId, id),
-        row.created_at,
-        row.version,
-        row.title_source,
-        row.date_source,
-        row.place_source,
-        row.checked,
-        row.file_name,
-      ],
-    );
+    await tx.photos.insert(accountId, photo, photoPath(accountId, id));
 
-    return toPhoto(row);
+    return photo;
   });
 }
 

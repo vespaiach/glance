@@ -5,42 +5,54 @@ const harness = serviceHarnessPerTest();
 
 const HOUR_MS = 60 * 60 * 1000;
 
+const CODE_EMAILS = ["a@example.com", "b@example.com", "maria@example.com"];
+
+const LINK_HASHES = ["a-old", "b-old-used", "c-live"];
+
+beforeEach(async () => {
+  await harness.deps().db.displays.insert({
+    id: "d1",
+    accountId: MARIA,
+    kind: "monitor",
+    browser: null,
+    lastSeenAt: START.toISOString(),
+  });
+});
+
 async function storeCode(email: string, expiresAt: Date): Promise<void> {
-  await harness
-    .deps()
-    .db.run(
-      "INSERT INTO sign_in_codes (email, code_hash, time_zone, expires_at) VALUES ($1, 'hash', 'America/New_York', $2)",
-      [email, expiresAt.toISOString()],
-    );
+  await harness.deps().db.signInCodes.put({
+    email,
+    codeHash: "hash",
+    timeZone: "America/New_York",
+    tries: 0,
+    expiresAt: expiresAt.toISOString(),
+  });
 }
 
 async function storeQr(tokenHash: string, expiresAt: Date, usedAt: Date | null = null) {
-  const db = harness.deps().db;
-
-  await db.run("INSERT INTO displays (id, account_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [
-    "d1",
-    MARIA,
-  ]);
-  await db.run(
-    "INSERT INTO magic_links (token_hash, account_id, display_id, expires_at, used_at) VALUES ($1, $2, 'd1', $3, $4)",
-    [tokenHash, MARIA, expiresAt.toISOString(), usedAt?.toISOString() ?? null],
-  );
+  await harness.deps().db.magicLinks.insert({
+    tokenHash,
+    accountId: MARIA,
+    displayId: "d1",
+    expiresAt: expiresAt.toISOString(),
+    usedAt: usedAt?.toISOString() ?? null,
+  });
 }
 
 async function codeEmails(): Promise<string[]> {
-  const rows = await harness
-    .deps()
-    .db.all<{ email: string }>("SELECT email FROM sign_in_codes ORDER BY email");
+  const kept = await Promise.all(
+    CODE_EMAILS.map(async (email) => (await harness.deps().db.signInCodes.get(email)) && email),
+  );
 
-  return rows.map((row) => row.email);
+  return kept.filter((email) => email !== undefined);
 }
 
 async function linkHashes(): Promise<string[]> {
-  const rows = await harness
-    .deps()
-    .db.all<{ token_hash: string }>("SELECT token_hash FROM magic_links ORDER BY token_hash");
+  const kept = await Promise.all(
+    LINK_HASHES.map(async (hash) => (await harness.deps().db.magicLinks.get(hash)) && hash),
+  );
 
-  return rows.map((row) => row.token_hash);
+  return kept.filter((hash) => hash !== undefined);
 }
 
 function hoursAgo(hours: number): Date {
@@ -80,8 +92,6 @@ describe("cleanupSignIns", () => {
 
     await cleanupSignIns(harness.deps());
 
-    expect(await harness.deps().db.one("SELECT id FROM accounts WHERE id = $1", [MARIA])).toEqual({
-      id: MARIA,
-    });
+    expect(await harness.deps().db.accounts.byId(MARIA)).toMatchObject({ id: MARIA });
   });
 });

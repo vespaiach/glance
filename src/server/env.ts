@@ -1,5 +1,6 @@
 import "server-only";
 import * as v from "valibot";
+import type { DatabaseConfig } from "./db/database";
 import { type MailConfig, parseAddress } from "./mail/mailer";
 import type { PhotoStoreConfig } from "./storage/store";
 
@@ -12,7 +13,6 @@ const SMTP_CREDENTIALS = [["SMTP_USER"], ["SMTP_PASSWORD"]] as const;
 const Filled = v.pipe(v.string(), v.trim(), v.nonEmpty());
 
 const BaseSchema = v.object({
-  DATABASE_URL: v.pipe(v.string(), v.trim(), v.regex(POSTGRES_URL)),
   APP_URL: v.pipe(v.string(), v.url()),
   MAIL_FROM: v.pipe(
     Filled,
@@ -20,6 +20,20 @@ const BaseSchema = v.object({
   ),
   GUEST_EMAIL: v.optional(v.pipe(v.string(), v.trim(), v.toLowerCase(), v.email())),
 });
+
+const DatabaseSchema = v.variant("DB", [
+  v.pipe(
+    v.object({
+      DB: v.optional(v.literal("postgres")),
+      DATABASE_URL: v.pipe(v.string(), v.trim(), v.regex(POSTGRES_URL)),
+    }),
+    v.transform((source): DatabaseConfig => ({ kind: "postgres", url: source.DATABASE_URL })),
+  ),
+  v.pipe(
+    v.object({ DB: v.literal("memory") }),
+    v.transform((): DatabaseConfig => ({ kind: "memory" })),
+  ),
+]);
 
 const SmtpSchema = v.pipe(
   v.object({
@@ -149,6 +163,7 @@ const StorageSchema = v.variant("PHOTO_STORE", [
 ]);
 
 export type Env = v.InferOutput<typeof BaseSchema> & {
+  database: DatabaseConfig;
   mail: MailConfig;
   storage: PhotoStoreConfig;
 };
@@ -156,17 +171,26 @@ export type Env = v.InferOutput<typeof BaseSchema> & {
 let cached: Env | undefined;
 
 export function parseEnv(source: Record<string, string | undefined>): Env {
+  const database = v.safeParse(DatabaseSchema, source);
+
   const base = v.safeParse(BaseSchema, source);
 
   const mail = v.safeParse(MailSchema, source);
 
   const storage = v.safeParse(StorageSchema, source);
 
-  if (!base.success || !mail.success || !storage.success) {
-    throw new Error(`Invalid server config: ${invalidKeys([base, mail, storage]).join(", ")}`);
+  if (!database.success || !base.success || !mail.success || !storage.success) {
+    throw new Error(
+      `Invalid server config: ${invalidKeys([database, base, mail, storage]).join(", ")}`,
+    );
   }
 
-  return { ...base.output, mail: mail.output, storage: storage.output };
+  return {
+    ...base.output,
+    database: database.output,
+    mail: mail.output,
+    storage: storage.output,
+  };
 }
 
 export function env(): Env {

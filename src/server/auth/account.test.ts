@@ -1,4 +1,5 @@
-import { accountById, finishSetup } from "./account";
+import { newAccount } from "../services/testServices";
+import { finishSetup } from "./account";
 import { authHarnessPerTest, START } from "./testAuth";
 
 const harness = authHarnessPerTest();
@@ -8,15 +9,12 @@ const MARIA = "0192f3a0-0000-7000-8000-000000000001";
 const OMAR = "0192f3a0-0000-7000-8000-000000000002";
 
 async function addAccounts(): Promise<void> {
-  const insert =
-    "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ($1, $2, 'America/New_York', $3)";
-
-  await harness.deps().db.run(insert, [MARIA, "maria@example.com", START.toISOString()]);
-  await harness.deps().db.run(insert, [OMAR, "omar@example.com", START.toISOString()]);
+  await harness.deps().db.accounts.insert(newAccount(MARIA, "maria@example.com"));
+  await harness.deps().db.accounts.insert(newAccount(OMAR, "omar@example.com"));
 }
 
 const setupDoneAt = async (accountId: string) =>
-  (await accountById(harness.deps().db, accountId))?.setup_done_at;
+  (await harness.deps().db.accounts.byId(accountId))?.setupDoneAt;
 
 describe("finishSetup", () => {
   it("SIGNIN-14 records when the account's first setup ended", async () => {

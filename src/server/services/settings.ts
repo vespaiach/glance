@@ -3,9 +3,9 @@ import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, LocationRequest, Synced, WeatherLocation } from "@/domain/schemas";
 import { finishSetup } from "../auth/account";
-import type { Db } from "../db/db";
+import type { Database } from "../db";
 import type { ServiceDeps } from "./deps";
-import { lockVersions, stamp } from "./rows";
+import { stamp } from "./rows";
 
 export type SyncedSettings = Synced<AccountSettings> & { accountId: string };
 
@@ -49,21 +49,14 @@ function writePlace(
   place: WeatherLocation,
 ): Promise<SyncedSettings> {
   return db.tx(async (tx) => {
-    await lockVersions(tx);
-
     const saved = await savedSettings(tx, accountId);
 
     return writeSettings({ db: tx, now }, accountId, { ...saved, weatherLocation: place });
   });
 }
 
-async function savedSettings(db: Db, accountId: string): Promise<AccountSettings> {
-  const row = await db.one<{ json: AccountSettings }>(
-    "SELECT json FROM settings WHERE account_id = $1",
-    [accountId],
-  );
-
-  return row?.json ?? DEFAULT_SETTINGS;
+async function savedSettings(db: Database, accountId: string): Promise<AccountSettings> {
+  return (await db.settings.get(accountId)) ?? DEFAULT_SETTINGS;
 }
 
 function writeSettings(
@@ -72,15 +65,10 @@ function writeSettings(
   settings: AccountSettings,
 ): Promise<SyncedSettings> {
   return db.tx(async (tx) => {
-    const { updatedAt, version } = await stamp(tx, now());
+    const saved = { ...settings, accountId, ...(await stamp(tx, now())) };
 
-    await tx.run(
-      `INSERT INTO settings (account_id, json, updated_at, version) VALUES ($1, $2, $3, $4)
-       ON CONFLICT (account_id) DO UPDATE SET json = excluded.json,
-         updated_at = excluded.updated_at, version = excluded.version`,
-      [accountId, JSON.stringify(settings), updatedAt, version],
-    );
+    await tx.settings.save(saved);
 
-    return { ...settings, accountId, updatedAt, version };
+    return saved;
   });
 }

@@ -2,43 +2,35 @@ import "server-only";
 import { uuidv7 } from "@/domain/id";
 import { err, ok, type Result } from "@/domain/result";
 import { deviceOf } from "@/domain/screens";
-import type { Db } from "../db/db";
+import type { Database } from "../db";
 import type { Clocked } from "./deps";
 import { hashToken, newToken } from "./tokens";
 
 export type SignedInDisplay = { displayId: string; accountId: string };
 
-type DisplayRow = { display_id: string; account_id: string };
-
 export async function openDisplay(
-  db: Db,
+  db: Database,
   accountId: string,
   opened: { at: string; userAgent: string | undefined },
 ): Promise<string> {
-  const displayId = uuidv7(new Date(opened.at));
+  const id = uuidv7(new Date(opened.at));
 
   const { kind, browser } = deviceOf(opened.userAgent);
 
-  await db.run(
-    "INSERT INTO displays (id, account_id, kind, browser, last_seen_at) VALUES ($1, $2, $3, $4, $5)",
-    [displayId, accountId, kind, browser, opened.at],
-  );
+  await db.displays.insert({ id, accountId, kind, browser, lastSeenAt: opened.at });
 
-  return createSession(db, displayId, opened.at);
+  return createSession(db, id, opened.at);
 }
 
 export async function findDisplay(
-  db: Db,
+  db: Database,
   sessionToken: string | undefined,
 ): Promise<SignedInDisplay | undefined> {
   if (sessionToken === undefined) return undefined;
 
-  const row = await db.one<DisplayRow>(
-    "SELECT s.display_id, d.account_id FROM sessions s JOIN displays d ON d.id = s.display_id WHERE s.token_hash = $1",
-    [hashToken(sessionToken)],
-  );
+  const session = await db.sessions.find(hashToken(sessionToken));
 
-  return row && { displayId: row.display_id, accountId: row.account_id };
+  return session && { displayId: session.displayId, accountId: session.accountId };
 }
 
 export async function requireDisplay(
@@ -49,33 +41,26 @@ export async function requireDisplay(
 
   if (display === undefined) return err("unauthorized");
 
-  await db.run("UPDATE displays SET last_seen_at = $1 WHERE id = $2", [
-    now().toISOString(),
-    display.displayId,
-  ]);
+  await db.displays.seen(display.displayId, now().toISOString());
 
   return ok(display);
 }
 
-export async function signOut(db: Db, sessionToken: string | undefined): Promise<void> {
+export async function signOut(db: Database, sessionToken: string | undefined): Promise<void> {
   const display = await findDisplay(db, sessionToken);
 
   if (display === undefined) return;
 
   await db.tx(async (tx) => {
-    await tx.run("DELETE FROM sessions WHERE display_id = $1", [display.displayId]);
-    await tx.run("DELETE FROM displays WHERE id = $1", [display.displayId]);
+    await tx.sessions.removeForDisplay(display.displayId);
+    await tx.displays.remove(display.displayId);
   });
 }
 
-async function createSession(db: Db, displayId: string, at: string): Promise<string> {
+async function createSession(db: Database, displayId: string, at: string): Promise<string> {
   const token = newToken();
 
-  await db.run("INSERT INTO sessions (token_hash, display_id, created_at) VALUES ($1, $2, $3)", [
-    hashToken(token),
-    displayId,
-    at,
-  ]);
+  await db.sessions.insert({ tokenHash: hashToken(token), displayId, createdAt: at });
 
   return token;
 }

@@ -1,10 +1,10 @@
 import "server-only";
-import type { Db } from "../db/db";
+import type { Database } from "../db";
 import type { Mailer } from "../mail/mailer";
 import type { RateLimiter } from "./rateLimit";
 
 export type AuthDeps = {
-  db: Db;
+  db: Database;
   now: () => Date;
   mailer: Mailer;
   appUrl: string;

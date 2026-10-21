@@ -1,33 +1,37 @@
 import "server-only";
-import type { Browser, DeviceKind, SignedInScreen } from "@/domain/screens";
+import type { SignedInScreen } from "@/domain/screens";
+import type { DisplayRecord } from "../db";
 import type { ServiceDeps } from "./deps";
-
-type DisplayRow = {
-  id: string;
-  kind: DeviceKind;
-  browser: Browser | null;
-  last_seen_at: string;
-};
 
 export async function listDisplays(
   { db }: ServiceDeps,
   accountId: string,
   displayId: string,
 ): Promise<SignedInScreen[]> {
-  const rows = await db.all<DisplayRow>(
-    "SELECT id, kind, browser, last_seen_at FROM displays WHERE account_id = $1 ORDER BY id = $2 DESC, last_seen_at DESC NULLS LAST, id",
-    [accountId, displayId],
-  );
+  const displays = await db.displays.forAccount(accountId);
 
-  return rows.map((row) => toScreen(row, displayId));
+  return displays.sort(currentThenRecent(displayId)).map((display) => toScreen(display, displayId));
 }
 
-function toScreen(row: DisplayRow, displayId: string): SignedInScreen {
+function currentThenRecent(displayId: string) {
+  return (a: DisplayRecord, b: DisplayRecord): number =>
+    Number(b.id === displayId) - Number(a.id === displayId) ||
+    newerFirst(a.lastSeenAt, b.lastSeenAt) ||
+    (a.id < b.id ? -1 : 1);
+}
+
+function newerFirst(a: string, b: string): number {
+  if (a === b) return 0;
+
+  return a < b ? 1 : -1;
+}
+
+function toScreen(display: DisplayRecord, displayId: string): SignedInScreen {
   return {
-    id: row.id,
-    kind: row.kind,
-    browser: row.browser,
-    lastSeenAt: row.last_seen_at,
-    current: row.id === displayId,
+    id: display.id,
+    kind: display.kind,
+    browser: display.browser,
+    lastSeenAt: display.lastSeenAt,
+    current: display.id === displayId,
   };
 }

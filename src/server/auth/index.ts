@@ -1,7 +1,7 @@
 import "server-only";
 import { ok } from "@/domain/result";
 import { syncBus } from "../bus";
-import { getDb } from "../db/db";
+import { database } from "../db";
 import { env } from "../env";
 import { mailer } from "../mail";
 import * as account from "./account";
@@ -82,7 +82,7 @@ export async function saveName(accountId: string, name: string) {
 
 function deps(): AuthDeps {
   shared.glanceAuth ??= {
-    db: getDb(),
+    db: database(),
     now: () => new Date(),
     mailer: mailer(),
     appUrl: env().APP_URL,

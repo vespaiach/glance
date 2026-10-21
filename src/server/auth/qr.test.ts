@@ -46,28 +46,25 @@ describe("issueQrLink", () => {
     const token = new URL(url).searchParams.get("t") ?? "";
     expect(url).toBe(`${APP_URL}/api/auth/verify?t=${token}`);
     expect(token.length).toBeGreaterThanOrEqual(43);
-    expect(await harness.deps().db.all("SELECT token_hash FROM magic_links")).toEqual([
-      { token_hash: createHash("sha256").update(token).digest("hex") },
-    ]);
+    expect(
+      await harness.deps().db.magicLinks.get(createHash("sha256").update(token).digest("hex")),
+    ).toBeDefined();
   });
 
   it("SIGNIN-15 stores the account, the display and a 5-minute expiry", async () => {
     const maria = await signIn("maria@example.com");
 
-    await issue(maria);
+    const token = await issue(maria);
 
     expect(
-      await harness
-        .deps()
-        .db.all("SELECT account_id, display_id, expires_at, used_at FROM magic_links"),
-    ).toEqual([
-      {
-        account_id: maria.accountId,
-        display_id: maria.displayId,
-        expires_at: "2026-10-09T14:05:00.000Z",
-        used_at: null,
-      },
-    ]);
+      await harness.deps().db.magicLinks.get(createHash("sha256").update(token).digest("hex")),
+    ).toEqual({
+      tokenHash: expect.any(String),
+      accountId: maria.accountId,
+      displayId: maria.displayId,
+      expiresAt: "2026-10-09T14:05:00.000Z",
+      usedAt: null,
+    });
   });
 
   it("SIGNIN-15 rate-limits codes per display", async () => {
@@ -90,10 +87,8 @@ describe("verifyQrLink", () => {
 
     expect("accountId" in phone && phone.accountId).toBe(maria.accountId);
     expect("accountId" in phone && phone.accountId).not.toBe(sam.accountId);
-    expect(await harness.deps().db.all("SELECT email FROM accounts ORDER BY email")).toEqual([
-      { email: "maria@example.com" },
-      { email: "sam@example.com" },
-    ]);
+    expect(await harness.deps().db.accounts.byEmail("maria@example.com")).toBeDefined();
+    expect(await harness.deps().db.accounts.byEmail("sam@example.com")).toBeDefined();
   });
 
   it("SIGNIN-15 opens a new display with the opener's device", async () => {
@@ -108,8 +103,10 @@ describe("verifyQrLink", () => {
     const id = "displayId" in phone ? phone.displayId : "";
     expect(id).not.toBe(maria.displayId);
     expect(
-      await harness.deps().db.one("SELECT kind, browser FROM displays WHERE id = $1", [id]),
-    ).toEqual({ kind: "smartphone", browser: "Safari" });
+      (await harness.deps().db.displays.forAccount(maria.accountId)).find(
+        (display) => display.id === id,
+      ),
+    ).toMatchObject({ kind: "smartphone", browser: "Safari" });
   });
 
   it("SIGNIN-15 a code works once", async () => {
