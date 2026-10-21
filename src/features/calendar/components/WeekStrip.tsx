@@ -46,16 +46,18 @@ const DAYS = 7;
 
 const GAP = 2;
 
+const CELL_HEIGHT = { wide: 104, mid: 96, narrow: 96 } as const;
+
 const styles = stylex.create({
   root: {
     flexShrink: 0,
     display: "flex",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
     minWidth: 0,
+    overflow: "hidden",
     boxSizing: "border-box",
-    paddingBlock: 12,
-    paddingInline: 16,
+    paddingInline: 12,
     borderRadius: radii.lg,
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
@@ -94,8 +96,8 @@ const styles = stylex.create({
   },
   indicator: (index: number) => ({
     position: "absolute",
-    top: -12,
-    bottom: -12,
+    top: 0,
+    bottom: 0,
     left: 0,
     width: `calc((100% - ${(DAYS - 1) * GAP}px) / ${DAYS})`,
     backgroundColor: colors.actionPrimary,
@@ -104,14 +106,17 @@ const styles = stylex.create({
     transitionDuration: motion.durBase,
     transitionTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)",
   }),
-  day: {
+  day: (height: number) => ({
     position: "relative",
     zIndex: 1,
+    height,
     minWidth: 0,
-    aspectRatio: "1 / 1",
     overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     paddingBlock: 0,
-    paddingInline: 0,
+    paddingInline: 10,
     borderWidth: 0,
     borderRadius: 0,
     backgroundColor: "transparent",
@@ -121,7 +126,7 @@ const styles = stylex.create({
     transitionProperty: "transform, color, background-color",
     transitionDuration: `${motion.durPress}, 200ms, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
-  },
+  }),
   selected: {
     color: colors.onActionPrimary,
     backgroundColor: "transparent",
@@ -129,37 +134,34 @@ const styles = stylex.create({
   today: {
     backgroundColor: colors.surfaceSoft,
   },
+  stack: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 3,
+    minWidth: 0,
+    paddingTop: 12,
+  },
   weekday: {
-    position: "absolute",
-    top: 12,
-    insetInline: 0,
-    textAlign: "center",
     fontFamily: type.fontMono,
     fontSize: 13,
     letterSpacing: "0.54px",
     textTransform: "uppercase",
   },
   date: {
-    position: "absolute",
-    top: "calc(50% + 12px)",
-    insetInline: 0,
-    transform: "translateY(-50%)",
-    textAlign: "center",
     fontSize: 28,
     fontWeight: 480,
     letterSpacing: "-0.5px",
     lineHeight: 1,
   },
   dots: {
-    position: "absolute",
-    bottom: 12,
-    insetInlineStart: "50%",
-    transform: "translateX(-50%)",
     display: "flex",
-    gap: 2,
-    height: 6,
+    alignItems: "center",
+    gap: 3,
+    height: 8,
     maxWidth: 50,
     overflow: "hidden",
+    paddingInline: 1,
   },
   dot: {
     display: "flex",
@@ -171,14 +173,14 @@ const styles = stylex.create({
   forecast: {
     position: "absolute",
     top: 8,
-    insetInlineEnd: 8,
+    insetInlineEnd: 10,
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    gap: 2,
+    gap: 3,
     fontSize: 12,
     fontWeight: 480,
     lineHeight: 1,
+    fontVariantNumeric: "tabular-nums",
   },
 });
 
@@ -231,6 +233,7 @@ export function WeekStrip({
             selected={day.key === selected}
             today={day.key === today}
             weather={weather}
+            height={CELL_HEIGHT[breakpoint]}
             onClick={() => onSelect(day.key)}
           />
         ))}
@@ -245,10 +248,11 @@ type DayCellProps = {
   selected: boolean;
   today: boolean;
   weather: boolean;
+  height: number;
   onClick: () => void;
 };
 
-function DayCell({ day, selected, today, weather, onClick }: DayCellProps) {
+function DayCell({ day, selected, today, weather, height, onClick }: DayCellProps) {
   return (
     <button
       type="button"
@@ -257,27 +261,29 @@ function DayCell({ day, selected, today, weather, onClick }: DayCellProps) {
       aria-current={today ? "date" : undefined}
       onClick={onClick}
       {...stylex.props(
-        styles.day,
+        styles.day(height),
         selected && styles.selected,
         today && !selected && styles.today,
         press.scale,
       )}
     >
-      <span {...stylex.props(styles.weekday)}>{day.weekday}</span>
-      <span {...stylex.props(styles.date)}>{day.date}</span>
-      <span {...stylex.props(styles.dots)}>
-        {day.dots.map((dot) => (
-          <span key={dot.id} {...stylex.props(styles.dot, selected && styles.dotOutlined)}>
-            <PersonDot color={dot.color} size="xs" />
-          </span>
-        ))}
+      <span {...stylex.props(styles.stack)}>
+        <span {...stylex.props(styles.weekday)}>{day.weekday}</span>
+        <span {...stylex.props(styles.date)}>{day.date}</span>
+        <span {...stylex.props(styles.dots)}>
+          {day.dots.map((dot) => (
+            <span key={dot.id} {...stylex.props(styles.dot, selected && styles.dotOutlined)}>
+              <PersonDot color={dot.color} size="xs" />
+            </span>
+          ))}
+        </span>
       </span>
       {weather && day.forecast && (
         <span {...stylex.props(styles.forecast)}>
           <Icon
             icon={weatherIcons[day.forecast.icon]}
             size={14}
-            strokeWidth={1.5}
+            strokeWidth={1.75}
             label={day.forecast.label}
           />
           {day.forecast.high}
