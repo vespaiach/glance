@@ -6,15 +6,15 @@ import type { ReactNode } from "react";
 import {
   type ShownNote,
   useEventsOnDay,
-  useMembers,
   useNotes,
   usePhotoSrc,
   usePhotos,
   usePictureOfDay,
+  useTags,
   useWeather,
 } from "@/data/repos";
 import { slotTimes } from "@/domain/eventTimes";
-import type { AccountSettings, CalendarEvent, Member, Photo, Weather } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Photo, Tag, Weather } from "@/domain/schemas";
 import { todayHero } from "@/domain/todayHero";
 import { hourlyByHour } from "@/domain/weather";
 import { dateKey } from "@/domain/zone";
@@ -61,7 +61,7 @@ const styles = stylex.create({
 
 type HeroProps = {
   state: ZoneState<CalendarEvent>;
-  members: readonly Member[];
+  tags: readonly Tag[];
   clock: AccountSettings["clock"];
   now: Date;
   tz: string;
@@ -107,7 +107,7 @@ export function TodayScreen() {
 
   const events = useSyncedZone(useEventsOnDay(day, tz));
 
-  const members = useMembers() ?? [];
+  const tags = useTags() ?? [];
 
   const notes = useSyncedZone<ShownNote>(useNotes(now));
 
@@ -137,7 +137,7 @@ export function TodayScreen() {
       >
         <Hero
           state={events.state}
-          members={members}
+          tags={tags}
           clock={settings.clock}
           now={now}
           tz={tz}
@@ -146,7 +146,7 @@ export function TodayScreen() {
       </NowPanel>
       <TodaySchedule
         state={events.state}
-        members={members}
+        tags={tags}
         retryIn={events.retryIn}
         onRetry={events.retry}
         day={day}
@@ -250,7 +250,7 @@ function Picture({ state, day, tz, grid, canUpload, onOpen, onOpenPhotos }: Pict
   );
 }
 
-function Hero({ state, members, clock, now, tz, onOpenEvent }: HeroProps) {
+function Hero({ state, tags, clock, now, tz, onOpenEvent }: HeroProps) {
   if (state.kind === "loading") return <HeroSkeleton />;
 
   if (state.kind === "failed") return null;
@@ -258,7 +258,7 @@ function Hero({ state, members, clock, now, tz, onOpenEvent }: HeroProps) {
   return (
     <HeroSummary
       hero={todayHero(state.kind === "ready" ? state.data : [], now, tz)}
-      members={members}
+      tags={tags}
       clock={clock}
       tz={tz}
       onOpenEvent={onOpenEvent}

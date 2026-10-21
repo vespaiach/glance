@@ -2,7 +2,7 @@ import "server-only";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
 import type { Db } from "../db/db";
-import { addFirstMember, type SyncedMember } from "../services/members";
+import { addFirstTag, type SyncedTag } from "../services/tags";
 import type { Clocked } from "./deps";
 
 export type AccountRow = {
@@ -14,7 +14,7 @@ export type AccountRow = {
   created_at: string;
 };
 
-export type NamedAccount = { account: Account; firstMember?: SyncedMember };
+export type NamedAccount = { account: Account; firstTag?: SyncedTag };
 
 export function accountById(db: Db, accountId: string): Promise<AccountRow | undefined> {
   return db.one<AccountRow>("SELECT * FROM accounts WHERE id = $1", [accountId]);
@@ -40,9 +40,9 @@ export function saveName(
 
     if (!row) return err("not-found");
 
-    const firstMember = await addFirstMember({ db: tx, now }, accountId, name.trim());
+    const firstTag = await addFirstTag({ db: tx, now }, accountId, name.trim());
 
-    return ok({ account: toAccount(row), ...(firstMember && { firstMember }) });
+    return ok({ account: toAccount(row), ...(firstTag && { firstTag }) });
   });
 }
 

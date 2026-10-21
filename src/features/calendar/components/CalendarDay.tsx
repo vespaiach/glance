@@ -3,8 +3,8 @@ import { CalendarDays, CalendarX2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
-import { type MemberFilter, matchesFilter } from "@/domain/members";
-import type { CalendarEvent, Member } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
+import { filterTagIds, matchesFilter } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
@@ -19,8 +19,8 @@ import { Zone } from "@/ui/Zone";
 type CalendarDayProps = {
   state: ZoneState<CalendarEvent>;
   toolbar: ReactNode;
-  members: readonly Member[];
-  filter: MemberFilter;
+  tags: readonly Tag[];
+  filter: ReadonlySet<string>;
   calendarEmpty: boolean;
   day: string;
   now: Date;
@@ -181,7 +181,7 @@ export function CalendarDay({
 
 function Timeline({
   events,
-  members,
+  tags,
   filter,
   day,
   now,
@@ -193,7 +193,9 @@ function Timeline({
   onOpenEvent,
   onAddEvent,
 }: TimelineProps) {
-  const shown = events.filter((event) => matchesFilter(event, filter));
+  const allIds = tags.map((tag) => tag.id);
+
+  const shown = events.filter((event) => matchesFilter(event, filter, allIds));
 
   const minHeight = TIMELINE_MIN[breakpoint][span24 ? "full" : "day"];
 
@@ -201,14 +203,14 @@ function Timeline({
     <>
       <AllDayTiles
         events={shown.filter((event) => event.allDay)}
-        members={members}
+        tags={tags}
         label={copy.events.allDay}
         everyoneLabel={copy.events.everyone}
         onOpenEvent={onOpenEvent}
       />
       <DayTimeline
         plans={shown.filter((event) => !event.allDay)}
-        members={members}
+        tags={tags}
         day={day}
         now={now}
         tz={tz}
@@ -216,7 +218,7 @@ function Timeline({
         variant="calendar"
         breakpoint={breakpoint}
         span={span24 ? "24h" : "day"}
-        free={freeFor(filter)}
+        free={freeFor(filter, allIds)}
         weather={weather}
         labels={LABELS}
         onOpenEvent={onOpenEvent}
@@ -227,10 +229,12 @@ function Timeline({
   );
 }
 
-function freeFor(filter: MemberFilter) {
-  if (filter === "everyone") return "everyone";
+function freeFor(filter: ReadonlySet<string>, allIds: readonly string[]) {
+  const who = filterTagIds(filter, allIds);
 
-  return filter.size === 0 ? "none" : "some";
+  if (who.everyone) return "everyone";
+
+  return who.tagIds.length === 0 ? "none" : "some";
 }
 
 function DaySkeleton() {

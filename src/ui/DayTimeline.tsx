@@ -5,15 +5,15 @@ import { CloudRain, FileText } from "lucide-react";
 import { useRef } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { type EventStatus, eventStatus } from "@/domain/eventStatus";
-import { eventColor, whoLabel } from "@/domain/members";
 import type {
   AccountSettings,
   CalendarEvent,
-  Member,
-  MemberColor,
+  Tag,
+  TagColor,
   Weather,
   WeatherIcon,
 } from "@/domain/schemas";
+import { eventColor, whoLabel } from "@/domain/tags";
 import { displayTemp } from "@/domain/temperature";
 import {
   atMinute,
@@ -66,7 +66,7 @@ export type TimelineFree = "everyone" | "some" | "none";
 
 type DayTimelineProps = {
   plans: readonly CalendarEvent[];
-  members: readonly Member[];
+  tags: readonly Tag[];
   day: string;
   now: Date;
   tz: string;
@@ -84,10 +84,10 @@ type DayTimelineProps = {
 
 type Dimensions = { gutter: number; lane: number; titleSize: number };
 
-type Fill = MemberColor | "soft" | "past";
+type Fill = TagColor | "soft" | "past";
 
 type Shared = {
-  members: readonly Member[];
+  tags: readonly Tag[];
   now: Date;
   tz: string;
   clock: Clock;
@@ -489,7 +489,7 @@ const styles = stylex.create({
 
 export function DayTimeline({
   plans,
-  members,
+  tags,
   day,
   now,
   tz,
@@ -529,7 +529,7 @@ export function DayTimeline({
     },
   );
 
-  const shared: Shared = { members, now, tz, clock, labels };
+  const shared: Shared = { tags, now, tz, clock, labels };
 
   const areaWidth = size.width - dimensions.gutter - laneWidth;
 
@@ -745,7 +745,7 @@ function PlanTile({
         {...stylex.props(
           styles.card,
           card.oneLine && styles.oneLineCard,
-          styles[fillOf(event, status, shared.members)],
+          styles[fillOf(event, status, shared.tags)],
           status === "now" && styles.now,
         )}
       >
@@ -755,7 +755,7 @@ function PlanTile({
               <span {...stylex.props(styles.time)}>{timeText(placed, card, shared, end)}</span>
             )}
             {title}
-            <PersonDots event={event} members={shared.members} />
+            <PersonDots event={event} tags={shared.tags} />
           </span>
         ) : (
           <>
@@ -776,7 +776,7 @@ function PlanTile({
             {title}
             {card.meta && (
               <span {...stylex.props(styles.line, styles.meta)}>
-                <PersonDots event={event} members={shared.members} />
+                <PersonDots event={event} tags={shared.tags} />
                 <span {...stylex.props(styles.ellipsis)}>{metaText(event, shared)}</span>
               </span>
             )}
@@ -795,15 +795,15 @@ function PlanTile({
   );
 }
 
-function PersonDots({ event, members }: { event: CalendarEvent; members: readonly Member[] }) {
-  if (event.everyone || event.memberIds.length < 2) return null;
+function PersonDots({ event, tags }: { event: CalendarEvent; tags: readonly Tag[] }) {
+  if (event.everyone || event.tagIds.length < 2) return null;
 
-  const on = members.filter((member) => event.memberIds.includes(member.id));
+  const on = tags.filter((tag) => event.tagIds.includes(tag.id));
 
   return (
     <span {...stylex.props(styles.dots)}>
-      {on.map((member) => (
-        <PersonDot key={member.id} color={member.color} size="sm" />
+      {on.map((tag) => (
+        <PersonDot key={tag.id} color={tag.color} size="sm" />
       ))}
     </span>
   );
@@ -889,14 +889,14 @@ function timeText(
   return card.time === "range" ? rangeText(placed.start, end, clock) : format(placed.start);
 }
 
-function metaText(event: CalendarEvent, { members, labels }: Shared): string {
-  const who = whoLabel(event, members, labels.everyone);
+function metaText(event: CalendarEvent, { tags, labels }: Shared): string {
+  const who = whoLabel(event, tags, labels.everyone);
 
   return [who, event.location].filter(Boolean).join(" · ");
 }
 
-function fillOf(event: CalendarEvent, status: EventStatus, members: readonly Member[]): Fill {
-  return status === "past" ? "past" : eventColor(event, members);
+function fillOf(event: CalendarEvent, status: EventStatus, tags: readonly Tag[]): Fill {
+  return status === "past" ? "past" : eventColor(event, tags);
 }
 
 function firstLine(notes: string | undefined): string {

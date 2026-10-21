@@ -1,11 +1,11 @@
 import * as stylex from "@stylexjs/stylex";
 import { useId } from "react";
-import type { MemberColor, Tone } from "@/domain/schemas";
+import type { TagColor, Tone } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { press } from "./press";
 
-type Swatch = Tone | MemberColor;
+type Swatch = Tone | TagColor;
 
 type SwatchOption<T extends Swatch> = { value: T; label: string };
 

@@ -1,11 +1,11 @@
 import { eventDayKey } from "./allDay";
-import type { EventWho } from "./members";
-import type { CalendarEvent, Member } from "./schemas";
+import type { CalendarEvent, Tag } from "./schemas";
+import type { EventWho } from "./tags";
 import { addDays, dateKey, parseDateKey } from "./zone";
 
 export type WeekHeading = { range: string; month: string };
 
-export type Dot = Pick<Member, "id" | "color">;
+export type Dot = Pick<Tag, "id" | "color">;
 
 export type PickerMonth = { key: string; label: string; days: string[] };
 
@@ -61,7 +61,7 @@ export function weekHeading(day: string, today: string): WeekHeading {
 
 export function weekDots(
   events: readonly DottedEvent[],
-  members: readonly Member[],
+  tags: readonly Tag[],
   tz: string,
 ): Map<string, Dot[]> {
   const days = new Map<string, DottedEvent[]>();
@@ -72,7 +72,7 @@ export function weekDots(
     days.set(key, [...(days.get(key) ?? []), event]);
   }
 
-  return new Map([...days].map(([key, plans]) => [key, dotsFor(plans, members)]));
+  return new Map([...days].map(([key, plans]) => [key, dotsFor(plans, tags)]));
 }
 
 export function pickerMonths(today: string): PickerMonth[] {
@@ -107,8 +107,8 @@ function monthDay(date: Date): string {
   return `${shortMonth.format(date)} ${date.getUTCDate()}`;
 }
 
-function dotsFor(plans: readonly DottedEvent[], members: readonly Member[]): Dot[] {
-  return members
-    .filter((member) => plans.some((plan) => plan.everyone || plan.memberIds.includes(member.id)))
+function dotsFor(plans: readonly DottedEvent[], tags: readonly Tag[]): Dot[] {
+  return tags
+    .filter((tag) => plans.some((plan) => plan.everyone || plan.tagIds.includes(tag.id)))
     .map(({ id, color }) => ({ id, color }));
 }

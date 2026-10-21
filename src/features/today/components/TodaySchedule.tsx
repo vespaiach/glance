@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { ArrowRight, CalendarDays, CalendarX2, Plus } from "lucide-react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
-import type { CalendarEvent, Member } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -21,7 +21,7 @@ type Slot = { start: Date; end: Date };
 
 type TodayScheduleProps = {
   state: ZoneState<CalendarEvent>;
-  members: readonly Member[];
+  tags: readonly Tag[];
   retryIn: number;
   onRetry: () => void;
   day: string;
@@ -109,7 +109,7 @@ type ActionsProps = {
 
 type ScheduleProps = Pick<
   TodayScheduleProps,
-  | "members"
+  | "tags"
   | "day"
   | "now"
   | "clock"
@@ -247,7 +247,7 @@ function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
 
 function Schedule({
   events,
-  members,
+  tags,
   day,
   now,
   clock,
@@ -262,14 +262,14 @@ function Schedule({
     <>
       <AllDayTiles
         events={events.filter((event) => event.allDay)}
-        members={members}
+        tags={tags}
         label={copy.events.allDay}
         everyoneLabel={copy.events.everyone}
         onOpenEvent={onOpenEvent}
       />
       <DayTimeline
         plans={events.filter((event) => !event.allDay)}
-        members={members}
+        tags={tags}
         day={day}
         now={now}
         tz={tz}

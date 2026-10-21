@@ -27,7 +27,7 @@ const LUNCH: CalendarEvent = {
   endAt: new Date(2026, 9, 9, 13, 0).toISOString(),
   location: "Café Lumen",
   everyone: false,
-  memberIds: [MOM],
+  tagIds: [MOM],
   notes: "Bring a gift",
 };
 
@@ -40,7 +40,7 @@ const NO_SCHOOL: CalendarEvent = {
   allDay: true,
   location: "Lincoln Elementary",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const DRAFT: EventDraft = {
@@ -49,7 +49,7 @@ const DRAFT: EventDraft = {
   end: 780,
   location: "Café",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
   notes: "",
 };
 
@@ -77,7 +77,7 @@ describe("event sheet drafts", () => {
       end: 780,
       location: "Café Lumen",
       everyone: false,
-      memberIds: [MOM],
+      tagIds: [MOM],
       notes: "Bring a gift",
     });
   });
@@ -95,7 +95,7 @@ describe("event sheet drafts", () => {
       end: 720,
       location: "",
       everyone: true,
-      memberIds: [],
+      tagIds: [],
       notes: "",
     });
   });
@@ -107,8 +107,18 @@ describe("event sheet drafts", () => {
     });
   });
 
-  it("EVT-11 a new event starts with the Calendar filter's members", () => {
-    expect(newEventDraft(NOW, tz, [MOM])).toMatchObject({ everyone: false, memberIds: [MOM] });
+  it("EVT-11 a new event starts with the Calendar filter's tags", () => {
+    expect(newEventDraft(NOW, tz, { everyone: false, tagIds: [MOM] })).toMatchObject({
+      everyone: false,
+      tagIds: [MOM],
+    });
+  });
+
+  it("EVT-11 a new event from a filter with every tag off starts for nobody", () => {
+    expect(newEventDraft(NOW, tz, { everyone: false, tagIds: [] })).toMatchObject({
+      everyone: false,
+      tagIds: [],
+    });
   });
 });
 
@@ -220,18 +230,18 @@ describe("event sheet reducer", () => {
     });
   });
 
-  it("EVT-11 a member tap follows the Who rules", () => {
-    const next = reduce(closed, { type: "member", id: MOM, family: [DAD, MOM] });
+  it("EVT-11 a tag tap follows the Who rules", () => {
+    const next = reduce(closed, { type: "tag", id: MOM, family: [DAD, MOM] });
 
-    expect(next.draft).toMatchObject({ everyone: false, memberIds: [DAD] });
+    expect(next.draft).toMatchObject({ everyone: false, tagIds: [DAD] });
   });
 
   it("EVT-11 Everyone selects the whole family", () => {
-    const forMom = opening({ ...DRAFT, everyone: false, memberIds: [MOM] });
+    const forMom = opening({ ...DRAFT, everyone: false, tagIds: [MOM] });
 
     expect(reduce(forMom, { type: "everyone" }).draft).toMatchObject({
       everyone: true,
-      memberIds: [],
+      tagIds: [],
     });
   });
 
@@ -244,7 +254,7 @@ describe("event sheet reducer", () => {
   it("EVT-11 a Who change clears the errors", () => {
     const failed = reduce(opening({ ...DRAFT, title: "" }), { type: "save" });
 
-    const next = reduce(failed, { type: "member", id: MOM, family: [DAD, MOM] });
+    const next = reduce(failed, { type: "tag", id: MOM, family: [DAD, MOM] });
 
     expect(next.titleError).toBe(false);
   });
@@ -308,16 +318,16 @@ describe("event from draft", () => {
       endAt: new Date(2026, 9, 12, 13, 0).toISOString(),
       location: "Café",
       everyone: true,
-      memberIds: [],
+      tagIds: [],
     });
   });
 
-  it("D24 the saved event keeps the opened event's members and trimmed notes", () => {
+  it("D24 the saved event keeps the opened event's tags and trimmed notes", () => {
     const draft = { ...draftFromEvent(LUNCH, tz, NOW), notes: "  Bring a gift " };
 
     expect(eventFromDraft(draft, DAY, ID, tz)).toMatchObject({
       everyone: false,
-      memberIds: [MOM],
+      tagIds: [MOM],
       notes: "Bring a gift",
     });
     expect(eventFromDraft({ ...draft, notes: " " }, DAY, ID, tz)).not.toHaveProperty("notes");
@@ -381,15 +391,15 @@ describe("event sheet discard", () => {
     ["no end", { end: undefined }],
     ["place", { location: "Park" }],
     ["notes", { notes: "Bring a gift" }],
-    ["who", { everyone: false, memberIds: [MOM] }],
+    ["who", { everyone: false, tagIds: [MOM] }],
   ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
     expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
   });
 
-  it("§8.9 spaces around the notes and the order of members don't make the draft dirty", () => {
-    const opened = { ...DRAFT, everyone: false, memberIds: [MOM, DAD], notes: "Gift" };
+  it("§8.9 spaces around the notes and the order of tags don't make the draft dirty", () => {
+    const opened = { ...DRAFT, everyone: false, tagIds: [MOM, DAD], notes: "Gift" };
 
-    expect(isDirty({ ...opened, memberIds: [DAD, MOM], notes: " Gift " }, opened)).toBe(false);
+    expect(isDirty({ ...opened, tagIds: [DAD, MOM], notes: " Gift " }, opened)).toBe(false);
   });
 
   it("§8.9 the time fixtures are part of the opened draft", () => {
@@ -452,7 +462,7 @@ describe("event sheet all day", () => {
       allDay: true,
       location: "Lincoln Elementary",
       everyone: true,
-      memberIds: [],
+      tagIds: [],
       notes: "",
     });
   });
@@ -503,7 +513,7 @@ describe("event sheet all day", () => {
       allDay: true,
       location: "Café",
       everyone: true,
-      memberIds: [],
+      tagIds: [],
     });
   });
 });

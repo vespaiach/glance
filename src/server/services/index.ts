@@ -3,9 +3,9 @@ import type {
   AccountSettings,
   CalendarEvent,
   LocationRequest,
-  Member,
   Note,
   Photo,
+  Tag,
 } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
 import { getDb } from "../db/db";
@@ -16,19 +16,15 @@ import type { Coordinates } from "../weather/provider";
 import type { ServiceDeps } from "./deps";
 import * as displays from "./displays";
 import * as events from "./events";
-import * as members from "./members";
 import * as notes from "./notes";
 import * as photos from "./photos";
 import * as settings from "./settings";
 import * as sync from "./sync";
+import * as tags from "./tags";
 import * as weather from "./weather";
 
-export async function putMember(accountId: string, member: Member) {
-  return announce(syncBus(), accountId, await members.putMember(deps(), accountId, member));
-}
-
-export async function deleteMember(accountId: string, id: string) {
-  return announce(syncBus(), accountId, await members.deleteMember(deps(), accountId, id));
+export async function putTag(accountId: string, tag: Tag) {
+  return announce(syncBus(), accountId, await tags.putTag(deps(), accountId, tag));
 }
 
 export async function putEvent(accountId: string, event: CalendarEvent) {

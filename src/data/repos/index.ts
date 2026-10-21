@@ -18,13 +18,6 @@ export {
   useUpcomingEvent,
 } from "./events";
 export {
-  createMembersRepo,
-  type MembersRepo,
-  useMemberPlans,
-  useMembers,
-  useMembersRepo,
-} from "./members";
-export {
   createNotesRepo,
   type NotesRepo,
   type ShownNote,
@@ -87,4 +80,10 @@ export {
   useMarkSignedOut,
   useSignOut,
 } from "./store";
+export {
+  createTagsRepo,
+  type TagsRepo,
+  useTags,
+  useTagsRepo,
+} from "./tags";
 export { createWeatherRepo, useWeather, useWeatherRepo, type WeatherRepo } from "./weather";

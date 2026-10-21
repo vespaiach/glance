@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, putSyncStatus, synced } from "@/data/repos/testHarness";
-import type { AccountSettings, CalendarEvent, Member } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Tag } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
@@ -21,7 +21,7 @@ const LUNCH: CalendarEvent = {
   endAt: new Date(2026, 9, 9, 13, 0).toISOString(),
   location: "Café Lumen",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 let store: Harness;
@@ -194,7 +194,7 @@ test("EVT-07 Add event queues the new event on the request's day and closes the 
     startAt: new Date(2026, 9, 12, 11, 0).toISOString(),
     endAt: new Date(2026, 9, 12, 12, 0).toISOString(),
     everyone: true,
-    memberIds: [],
+    tagIds: [],
   });
   expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
 });
@@ -233,7 +233,7 @@ const NO_SCHOOL: CalendarEvent = {
   allDay: true,
   location: "Lincoln Elementary",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
@@ -255,24 +255,28 @@ test("D21 an all-day event opens and saves on its own date in a zone behind UTC"
   );
 });
 
-const MOM: Member = {
+const MOM: Tag = {
   id: "0195f0a0-0000-7000-8000-000000000501",
   name: "Mom",
   color: "coral",
   createdAt: "2026-10-01T15:00:00.000Z",
 };
 
-const DAD: Member = {
+const DAD: Tag = {
   id: "0195f0a0-0000-7000-8000-000000000502",
   name: "Dad",
   color: "mint",
   createdAt: "2026-10-02T15:00:00.000Z",
 };
 
-test("EVT-11 a new event request for some members starts with them and saves their ids", async () => {
-  await store.db.members.bulkPut([synced(MOM), synced(DAD)]);
+test("EVT-11 a new event request for some tags starts with them and saves their ids", async () => {
+  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
 
-  renderSheet({ kind: "newevent", day: "2026-10-12", memberIds: [DAD.id] });
+  renderSheet({
+    kind: "newevent",
+    day: "2026-10-12",
+    who: { everyone: false, tagIds: [DAD.id] },
+  });
 
   const who = await screen.findByRole("group", { name: "Who" });
 
@@ -288,9 +292,7 @@ test("EVT-11 a new event request for some members starts with them and saves the
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   await waitFor(async () =>
-    expect(await store.db.events.toArray()).toMatchObject([
-      { everyone: false, memberIds: [DAD.id] },
-    ]),
+    expect(await store.db.events.toArray()).toMatchObject([{ everyone: false, tagIds: [DAD.id] }]),
   );
 });
 

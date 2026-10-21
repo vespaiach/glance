@@ -65,7 +65,7 @@ const TODAY_EVENT: CalendarEvent = {
   startAt: at(9, 20),
   title: "Movie night",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const CONFERENCE: CalendarEvent = {
@@ -74,7 +74,7 @@ const CONFERENCE: CalendarEvent = {
   title: "Parent-teacher conference",
   location: "Lincoln Elementary",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const TOMORROW_EVENT: CalendarEvent = {
@@ -82,7 +82,7 @@ const TOMORROW_EVENT: CalendarEvent = {
   startAt: at(10, 9),
   title: "Farmers market",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 let store: Harness;

@@ -1,10 +1,10 @@
 import type {
   CalendarEvent,
-  Member,
   Note,
   NoteTone,
   Photo,
   Season,
+  Tag,
   Tone,
   Weather,
   WeatherIcon,
@@ -132,7 +132,7 @@ export const gallery = {
     empty: "Add a name",
     taken: "Already in the family",
     discard: "Discard changes?",
-    one: "One member",
+    one: "One tag",
     full: "Every color taken",
     typedName: "Bao",
     takenName: "Mom",
@@ -160,10 +160,10 @@ export const gallery = {
     discardEdit: "Discard changes? · edit",
     allDay: "All day",
     allDayPhone: "All day · phone",
-    members: "Two members with notes",
-    membersPhone: "Two members · phone",
-    details: "Details · two members",
-    detailsOne: "Details · one member",
+    tags: "Two tags with notes",
+    tagsPhone: "Two tags · phone",
+    details: "Details · two tags",
+    detailsOne: "Details · one tag",
     detailsNow: "Details · Happening now",
     detailsEnded: "Details · Ended",
     detailsAllDay: "Details · all day",
@@ -319,9 +319,9 @@ const todayAt = (hour: number, minute: number) => octoberAt(9, hour, minute).toI
 
 const sampleId = (n: number) => `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`;
 
-const EVERYONE = { everyone: true, memberIds: [] };
+const EVERYONE = { everyone: true, tagIds: [] };
 
-const FAMILY_ROWS: readonly (readonly [string, Member["color"]])[] = [
+const FAMILY_ROWS: readonly (readonly [string, Tag["color"]])[] = [
   ["Minh-An", "lilac"],
   ["Minh-Hy", "sky"],
   ["Mom", "coral"],
@@ -329,16 +329,16 @@ const FAMILY_ROWS: readonly (readonly [string, Member["color"]])[] = [
   ["Thang", "sun"],
 ];
 
-export const GALLERY_FAMILY: readonly Member[] = FAMILY_ROWS.map(([name, color], index) => ({
+export const GALLERY_FAMILY: readonly Tag[] = FAMILY_ROWS.map(([name, color], index) => ({
   id: sampleId(501 + index),
   name,
   color,
   createdAt: `2026-10-01T15:0${index}:00.000Z`,
 }));
 
-const forMembers = (...indexes: number[]) => ({
+const forTags = (...indexes: number[]) => ({
   everyone: false,
-  memberIds: indexes.map((index) => sampleId(501 + index)),
+  tagIds: indexes.map((index) => sampleId(501 + index)),
 });
 
 export const TODAY_EVENTS: readonly CalendarEvent[] = [
@@ -383,7 +383,7 @@ export const ALL_DAY_EVENTS = {
     location: "Lincoln Elementary",
     startAt: "2026-10-16T00:00:00.000Z",
     allDay: true,
-    ...forMembers(0, 1),
+    ...forTags(0, 1),
   },
   conference: {
     id: sampleId(6),
@@ -391,7 +391,7 @@ export const ALL_DAY_EVENTS = {
     location: "Convention Center",
     startAt: "2026-10-16T00:00:00.000Z",
     allDay: true,
-    ...forMembers(2),
+    ...forTags(2),
   },
 } as const satisfies Record<string, CalendarEvent>;
 

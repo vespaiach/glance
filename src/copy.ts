@@ -1,5 +1,5 @@
 import type { AmbientRange, AmbientSummary } from "@/domain/idle";
-import type { MemberColor, Season, WeatherIcon } from "@/domain/schemas";
+import type { Season, TagColor, WeatherIcon } from "@/domain/schemas";
 import type { ActiveStamp, Device, DeviceKind } from "@/domain/screens";
 import type { WmoCondition } from "@/domain/wmo";
 
@@ -119,8 +119,6 @@ export const copy = {
     nextWeek: "Next week",
     week: (month: string, day: number) => `Week of ${month} ${day}`,
     showPlansFor: "Show plans for",
-    edit: "Edit",
-    editFamily: "Edit family members",
     spanLabel: "24 hours",
     span: (outside: number) => {
       if (outside === 0) return "24 hours";
@@ -146,38 +144,8 @@ export const copy = {
     editEvent: "Your edits to this event won’t be saved.",
     note: "This note won’t be posted.",
     photo: "Your edits to this photo won’t be saved.",
-    member: (name: string) => `${name} won’t be added.`,
   },
-  family: {
-    title: "Family",
-    eyebrow: (count: number) => (count === 1 ? "1 member" : `${count} members`),
-    close: "Close",
-    done: "Done",
-    list: "Family members",
-    plans: (count: number) => {
-      if (count === 0) return "No plans";
-
-      return count === 1 ? "1 plan" : `${count} plans`;
-    },
-    remove: "Remove",
-    removeMember: (name: string) => `Remove ${name}`,
-    confirmTitle: (name: string) => `Remove ${name}?`,
-    impact: (solo: number, shared: number) => {
-      if (solo === 0 && shared === 0) return "They have no plans.";
-
-      const deleted = solo === 1 ? "Their 1 plan is deleted." : `Their ${solo} plans are deleted.`;
-
-      const takenOff = `They’re taken off ${shared === 1 ? "1 plan" : `${shared} plans`} shared with others.`;
-
-      return [solo > 0 && deleted, shared > 0 && takenOff].filter(Boolean).join(" ");
-    },
-    cancel: "Cancel",
-    addTitle: "Add member",
-    name: "Name",
-    add: "Add",
-    color: "Color",
-    addName: "Add a name",
-    taken: "Already in the family",
+  tags: {
     colors: {
       lilac: "Lilac",
       sky: "Sky",
@@ -191,7 +159,7 @@ export const copy = {
       amber: "Amber",
       sage: "Sage",
       ice: "Ice",
-    } satisfies Record<MemberColor, string>,
+    } satisfies Record<TagColor, string>,
   },
   events: {
     now: "Now",

@@ -21,7 +21,7 @@ const EVENT = {
   title: "Swim lesson",
   startAt: "2026-10-09T21:00:00.000Z",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 function request(headers: Record<string, string>, body?: unknown): NextRequest {

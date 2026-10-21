@@ -1,4 +1,4 @@
-import type { Member } from "./schemas";
+import type { Tag } from "./schemas";
 import {
   type Dot,
   pickerMonths,
@@ -11,27 +11,27 @@ import {
 
 const LA = "America/Los_Angeles";
 
-const member = (n: number, name: string, color: Member["color"]): Member => ({
+const tag = (n: number, name: string, color: Tag["color"]): Tag => ({
   id: `0192f1a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
   name,
   color,
   createdAt: `2026-10-0${n}T15:00:00.000Z`,
 });
 
-const AN = member(1, "Minh-An", "lilac");
+const AN = tag(1, "Minh-An", "lilac");
 
-const HY = member(2, "Minh-Hy", "sky");
+const HY = tag(2, "Minh-Hy", "sky");
 
-const MOM = member(3, "Mom", "coral");
+const MOM = tag(3, "Mom", "coral");
 
 const FAMILY = [AN, HY, MOM];
 
 const colors = (dots: Dot[] | undefined) => dots?.map((dot) => dot.color);
 
-const plan = (startAt: string, who: Member[] | "everyone", allDay?: true) => ({
+const plan = (startAt: string, who: Tag[] | "everyone", allDay?: true) => ({
   startAt,
   everyone: who === "everyone",
-  memberIds: who === "everyone" ? [] : who.map((one) => one.id),
+  tagIds: who === "everyone" ? [] : who.map((one) => one.id),
   ...(allDay && { allDay }),
 });
 
@@ -102,7 +102,7 @@ describe("weekHeading", () => {
 });
 
 describe("weekDots", () => {
-  it("CAL-01 each day lists the members with a plan that day, in family order", () => {
+  it("CAL-01 each day lists the tags with a plan that day, in family order", () => {
     const dots = weekDots(
       [plan("2026-10-09T17:00:00Z", [MOM]), plan("2026-10-09T20:00:00Z", [MOM, AN])],
       FAMILY,
@@ -113,7 +113,7 @@ describe("weekDots", () => {
     expect(dots.get("2026-10-10")).toBeUndefined();
   });
 
-  it("CAL-01 an everyone plan gives every member a dot", () => {
+  it("CAL-01 an everyone plan gives every tag a dot", () => {
     const dots = weekDots([plan("2026-10-09T17:00:00Z", "everyone")], FAMILY, LA);
 
     expect(colors(dots.get("2026-10-09"))).toEqual(["lilac", "sky", "coral"]);

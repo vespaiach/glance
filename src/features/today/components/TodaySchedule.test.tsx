@@ -16,7 +16,7 @@ const EVENTS: CalendarEvent[] = [
     startAt: iso(9, 0),
     endAt: iso(9, 30),
     everyone: true,
-    memberIds: [],
+    tagIds: [],
   },
   {
     id: "call",
@@ -24,7 +24,7 @@ const EVENTS: CalendarEvent[] = [
     startAt: iso(10, 30),
     endAt: iso(11, 15),
     everyone: true,
-    memberIds: [],
+    tagIds: [],
   },
   {
     id: "lunch",
@@ -32,7 +32,7 @@ const EVENTS: CalendarEvent[] = [
     startAt: iso(12, 0),
     endAt: iso(13, 0),
     everyone: true,
-    memberIds: [],
+    tagIds: [],
   },
 ];
 
@@ -56,7 +56,7 @@ function renderSchedule(
       retryIn={1}
       onRetry={() => {}}
       state={state}
-      members={[]}
+      tags={[]}
       day="2026-10-09"
       now={NOW}
       clock="12h"
@@ -164,7 +164,7 @@ const GRANDPA: CalendarEvent = {
   allDay: true,
   location: "Guest room",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const withAllDay = { kind: "ready", data: [GRANDPA, ...EVENTS] } as const;

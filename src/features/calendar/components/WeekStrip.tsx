@@ -4,7 +4,7 @@ import * as stylex from "@stylexjs/stylex";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
-import type { Member, WeatherIcon } from "@/domain/schemas";
+import type { Tag, WeatherIcon } from "@/domain/schemas";
 import type { WeekHeading } from "@/domain/week";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -20,7 +20,7 @@ export type WeekDay = {
   weekday: string;
   date: number;
   name: string;
-  dots: readonly Pick<Member, "id" | "color">[];
+  dots: readonly Pick<Tag, "id" | "color">[];
   forecast?: { icon: WeatherIcon; label: string; high: string };
 };
 

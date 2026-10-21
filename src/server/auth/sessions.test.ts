@@ -69,8 +69,8 @@ describe("signOut", () => {
   });
 });
 
-function memberNames() {
-  return harness.deps().db.all("SELECT account_id, name FROM members ORDER BY created_at");
+function tagNames() {
+  return harness.deps().db.all("SELECT account_id, name FROM tags ORDER BY created_at");
 }
 
 describe("saveName", () => {
@@ -85,26 +85,26 @@ describe("saveName", () => {
     });
   });
 
-  it("§7 a new family's first member gets the name and the first color", async () => {
+  it("§7 a new family's first tag gets the name and the first color", async () => {
     const { accountId } = await signIn("maria@example.com");
 
     const result = await saveName(harness.deps(), accountId, "  Maria Lopez ");
 
-    expect(result.ok && result.value.firstMember).toMatchObject({
+    expect(result.ok && result.value.firstTag).toMatchObject({
       name: "Maria Lopez",
       color: "lilac",
     });
-    expect(await memberNames()).toEqual([{ account_id: accountId, name: "Maria Lopez" }]);
+    expect(await tagNames()).toEqual([{ account_id: accountId, name: "Maria Lopez" }]);
   });
 
-  it("§7 saving the name again adds no member", async () => {
+  it("§7 saving the name again adds no tag", async () => {
     const { accountId } = await signIn("maria@example.com");
     await saveName(harness.deps(), accountId, "Maria");
 
     const result = await saveName(harness.deps(), accountId, "Maria Lopez");
 
-    expect(result.ok && result.value.firstMember).toBeUndefined();
-    expect(await memberNames()).toEqual([{ account_id: accountId, name: "Maria" }]);
+    expect(result.ok && result.value.firstTag).toBeUndefined();
+    expect(await tagNames()).toEqual([{ account_id: accountId, name: "Maria" }]);
   });
 
   it("SIGNIN-06 never writes another account's name", async () => {

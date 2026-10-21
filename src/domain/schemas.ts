@@ -20,7 +20,7 @@ export type Tone = v.InferOutput<typeof ToneSchema>;
 export const NoteToneSchema = v.picklist([1, 2, 3, 4, "soft"]);
 export type NoteTone = v.InferOutput<typeof NoteToneSchema>;
 
-export const MemberColorSchema = v.picklist([
+export const TagColorSchema = v.picklist([
   "lilac",
   "sky",
   "coral",
@@ -34,7 +34,7 @@ export const MemberColorSchema = v.picklist([
   "sage",
   "ice",
 ]);
-export type MemberColor = v.InferOutput<typeof MemberColorSchema>;
+export type TagColor = v.InferOutput<typeof TagColorSchema>;
 
 export const SeasonSchema = v.picklist(["spring", "summer", "fall", "winter"]);
 export type Season = v.InferOutput<typeof SeasonSchema>;
@@ -56,13 +56,13 @@ const eventEntries = {
   location: v.optional(v.string()),
   allDay: v.optional(v.literal(true)),
   everyone: v.boolean(),
-  memberIds: v.array(IdSchema),
+  tagIds: v.array(IdSchema),
   notes: v.optional(v.string()),
 };
 
 type EventSpan = { startAt: string; endAt?: string; allDay?: true };
 
-type EventWho = { everyone: boolean; memberIds: string[]; deletedAt?: string };
+type EventWho = { everyone: boolean; tagIds: string[] };
 
 const EventObjectSchema = v.object(eventEntries);
 
@@ -81,15 +81,15 @@ export const SyncedEventSchema = v.pipe(
   v.check<v.InferOutput<typeof SyncedEventObjectSchema>>(whoIsValid),
 );
 
-export const MemberSchema = v.object({
+export const TagSchema = v.object({
   id: IdSchema,
   name: RequiredTextSchema,
-  color: MemberColorSchema,
+  color: TagColorSchema,
   createdAt: IsoTimestampSchema,
 });
-export type Member = v.InferOutput<typeof MemberSchema>;
+export type Tag = v.InferOutput<typeof TagSchema>;
 
-export const SyncedMemberSchema = v.object({ ...MemberSchema.entries, ...serverEntries });
+export const SyncedTagSchema = v.object({ ...TagSchema.entries, ...serverEntries });
 
 export const NoteSchema = v.object({
   id: IdSchema,
@@ -276,8 +276,6 @@ function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
   return span > 0 && span < DAY_MS;
 }
 
-function whoIsValid({ everyone, memberIds, deletedAt }: EventWho) {
-  if (everyone) return memberIds.length === 0;
-
-  return memberIds.length > 0 || deletedAt !== undefined;
+function whoIsValid({ everyone, tagIds }: EventWho) {
+  return !everyone || tagIds.length === 0;
 }

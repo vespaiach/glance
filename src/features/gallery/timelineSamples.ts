@@ -1,11 +1,11 @@
-import type { CalendarEvent, Member, MemberColor, Weather, WeatherIcon } from "@/domain/schemas";
+import type { CalendarEvent, Tag, TagColor, Weather, WeatherIcon } from "@/domain/schemas";
 import { octoberAt } from "./samples";
 
 type Who = readonly number[] | "everyone";
 
 type Hour = readonly [icon: WeatherIcon, temp: number, precip?: number];
 
-const FAMILY: readonly (readonly [string, MemberColor])[] = [
+const FAMILY: readonly (readonly [string, TagColor])[] = [
   ["Minh-An", "lilac"],
   ["Minh-Hy", "sky"],
   ["Mom", "coral"],
@@ -21,14 +21,14 @@ const [AN, HY, MOM, DAD, THANG, TIN, NGHE, AN2, NGA] = [0, 1, 2, 3, 4, 5, 6, 7, 
 
 const timelineId = (n: number) => `0195f0a0-0000-7000-8000-0000000007${String(n).padStart(2, "0")}`;
 
-export const TIMELINE_FAMILY: readonly Member[] = FAMILY.map(([name, color], index) => ({
+export const TIMELINE_FAMILY: readonly Tag[] = FAMILY.map(([name, color], index) => ({
   id: timelineId(index + 1),
   name,
   color,
   createdAt: `2026-10-01T16:0${index}:00.000Z`,
 }));
 
-const memberIds = (who: readonly number[]) => who.map((index) => TIMELINE_FAMILY[index]?.id ?? "");
+const tagIds = (who: readonly number[]) => who.map((index) => TIMELINE_FAMILY[index]?.id ?? "");
 
 const plan = (
   n: number,
@@ -43,8 +43,8 @@ const plan = (
   startAt: octoberAt(day, 0, start).toISOString(),
   endAt: octoberAt(day, 0, end).toISOString(),
   ...(who === "everyone"
-    ? { everyone: true, memberIds: [] }
-    : { everyone: false, memberIds: memberIds(who) }),
+    ? { everyone: true, tagIds: [] }
+    : { everyone: false, tagIds: tagIds(who) }),
   ...(notes !== undefined && { notes }),
 });
 

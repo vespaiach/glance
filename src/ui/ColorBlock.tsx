@@ -1,10 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentPropsWithoutRef } from "react";
-import type { MemberColor } from "@/domain/schemas";
+import type { TagColor } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 
-export type BlockTone = 1 | 2 | 3 | 4 | "soft" | "deep" | "canvas" | "ink" | MemberColor;
+export type BlockTone = 1 | 2 | 3 | 4 | "soft" | "deep" | "canvas" | "ink" | TagColor;
 
 type ColorBlockProps = Omit<ComponentPropsWithoutRef<"section">, "style" | "className"> & {
   tone?: BlockTone;

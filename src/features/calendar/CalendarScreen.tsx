@@ -9,13 +9,13 @@ import {
   useEventsInWeek,
   useEventsOnDay,
   useHasEvents,
-  useMembers,
+  useTags,
   useWeather,
 } from "@/data/repos";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { slotTimes } from "@/domain/eventTimes";
-import { filterMemberIds, liveFilter, matchesFilter } from "@/domain/members";
-import type { AccountSettings, CalendarEvent, Member, Weather } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Tag, Weather } from "@/domain/schemas";
+import { type EventWho, filterTagIds, liveFilter, matchesFilter } from "@/domain/tags";
 import { displayTemp } from "@/domain/temperature";
 import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
 import { outsideDay } from "@/domain/timeline";
@@ -46,7 +46,7 @@ import { DatePicker, type PickerMonthView } from "./components/DatePicker";
 import { type WeekDay, WeekStrip } from "./components/WeekStrip";
 import { calendarLayout } from "./layout";
 
-const NO_MEMBERS: Member[] = [];
+const NO_MEMBERS: Tag[] = [];
 
 export function CalendarScreen() {
   const sheets = useSheetHost();
@@ -75,11 +75,11 @@ export function CalendarScreen() {
 
   const week = weekDays(day);
 
-  const members = useMembers() ?? NO_MEMBERS;
+  const tags = useTags() ?? NO_MEMBERS;
 
-  const family = members.map((member) => member.id);
+  const allIds = tags.map((tag) => tag.id);
 
-  const filter = liveFilter(view.filter, family);
+  const filter = liveFilter(view.filter, allIds);
 
   const events = useEventsOnDay(day, tz);
 
@@ -94,7 +94,7 @@ export function CalendarScreen() {
   const forecast = weather.state.kind === "ready" ? weather.state.data[0] : undefined;
 
   const shownTimed = (events ?? []).filter(
-    (event) => !event.allDay && matchesFilter(event, filter),
+    (event) => !event.allDay && matchesFilter(event, filter, allIds),
   );
 
   return (
@@ -105,7 +105,7 @@ export function CalendarScreen() {
         <WeekStrip
           heading={weekHeading(day, today)}
           label={weekLabel(week[0] ?? day)}
-          days={weekPills(week, weekEvents ?? [], members, { tz, forecast, settings })}
+          days={weekPills(week, weekEvents ?? [], tags, { tz, forecast, settings })}
           selected={day}
           today={today}
           breakpoint={breakpoint}
@@ -121,7 +121,7 @@ export function CalendarScreen() {
         retryIn={dayEvents.retryIn}
         onRetry={dayEvents.retry}
         calendarEmpty={hasEvents === false}
-        members={members}
+        tags={tags}
         filter={filter}
         day={day}
         now={now}
@@ -133,27 +133,26 @@ export function CalendarScreen() {
         onOpenEvent={(id) => sheets.open({ kind: "event", id })}
         onAddEvent={(slot) =>
           sheets.open({
-            ...newEvent(day, filterMemberIds(filter, family)),
+            ...newEvent(day, filterTagIds(filter, allIds)),
             times: slotTimes(slot, tz),
           })
         }
         toolbar={
           <CalendarToolbar
-            members={members}
+            tags={tags}
             filter={filter}
             span24={view.span24}
             outside={outsideDay(shownTimed, tz)}
             phone={breakpoint === "phone"}
-            onToggleMember={(id) => dispatch({ type: "toggleMember", id, family })}
-            onEditFamily={() => sheets.open({ kind: "family" })}
+            onToggleTag={(id) => dispatch({ type: "toggleTag", id, allIds })}
             onToggleSpan={() => dispatch({ type: "toggleSpan" })}
-            onAddEvent={() => sheets.open(newEvent(day, filterMemberIds(filter, family)))}
+            onAddEvent={() => sheets.open(newEvent(day, filterTagIds(filter, allIds)))}
           />
         }
       />
       {breakpoint === "phone" && view.picker && (
         <PhoneDatePicker
-          members={members}
+          tags={tags}
           selected={day}
           today={today}
           tz={tz}
@@ -166,7 +165,7 @@ export function CalendarScreen() {
 }
 
 type PhoneDatePickerProps = {
-  members: readonly Member[];
+  tags: readonly Tag[];
   selected: string;
   today: string;
   tz: string;
@@ -174,14 +173,7 @@ type PhoneDatePickerProps = {
   onClose: () => void;
 };
 
-function PhoneDatePicker({
-  members,
-  selected,
-  today,
-  tz,
-  onSelect,
-  onClose,
-}: PhoneDatePickerProps) {
+function PhoneDatePicker({ tags, selected, today, tz, onSelect, onClose }: PhoneDatePickerProps) {
   const months = pickerMonths(today);
 
   const first = months[0]?.days[0] ?? today;
@@ -192,7 +184,7 @@ function PhoneDatePicker({
 
   return (
     <DatePicker
-      months={pickerViews(months, weekDots(events ?? [], members, tz))}
+      months={pickerViews(months, weekDots(events ?? [], tags, tz))}
       selected={selected}
       today={today}
       onSelect={onSelect}
@@ -208,8 +200,8 @@ type PillContext = {
   settings: Pick<AccountSettings, "tempUnit">;
 };
 
-function newEvent(day: string, memberIds: string[] | undefined) {
-  return { kind: "newevent" as const, day, ...(memberIds && { memberIds }) };
+function newEvent(day: string, who: EventWho) {
+  return { kind: "newevent" as const, day, who };
 }
 
 function weekLabel(sunday: string): string {
@@ -253,10 +245,10 @@ function pickerViews(
 function weekPills(
   week: readonly string[],
   events: readonly CalendarEvent[],
-  members: readonly Member[],
+  tags: readonly Tag[],
   { tz, forecast, settings }: PillContext,
 ): WeekDay[] {
-  const dots = weekDots(events, members, tz);
+  const dots = weekDots(events, tags, tz);
 
   return week.map((key) => {
     const date = parseDateKey(key);

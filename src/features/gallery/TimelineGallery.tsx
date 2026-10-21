@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
 import { copy } from "@/copy";
-import { matchesFilter } from "@/domain/members";
+import { matchesFilter } from "@/domain/tags";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { DayTimeline, type DayTimelineLabels } from "@/ui/DayTimeline";
 import { Eyebrow } from "@/ui/Eyebrow";
@@ -28,6 +28,8 @@ const LABELS: DayTimelineLabels = {
   everyone: copy.events.everyone,
   icons: copy.weather.icon,
 };
+
+const ALL_IDS = TIMELINE_FAMILY.map((one) => one.id);
 
 const words = gallery.timeline;
 
@@ -64,7 +66,7 @@ const DEMOS: readonly Demo[] = [
     width: 860,
     height: 640,
     props: {
-      plans: OCT_9_PLANS.filter((plan) => matchesFilter(plan, MOM_AND_DAD)),
+      plans: OCT_9_PLANS.filter((plan) => matchesFilter(plan, MOM_AND_DAD, ALL_IDS)),
       free: "some",
       breakpoint: "mid",
     },
@@ -119,7 +121,7 @@ export function TimelineGallery() {
           <div {...stylex.props(styles.card(demo.width, demo.height))}>
             <DayTimeline
               plans={OCT_9_PLANS}
-              members={TIMELINE_FAMILY}
+              tags={TIMELINE_FAMILY}
               day="2026-10-09"
               now={NOW}
               tz={GALLERY_TZ}

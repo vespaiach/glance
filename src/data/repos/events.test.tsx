@@ -24,7 +24,7 @@ function event(n: number, startAt: string, title = `Event ${n}`): CalendarEvent 
     startAt,
     title,
     everyone: true,
-    memberIds: [],
+    tagIds: [],
   };
 }
 

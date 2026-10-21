@@ -5,7 +5,7 @@ import { Pencil, Trash2, WifiOff } from "lucide-react";
 import { useEffect, useReducer, useRef } from "react";
 import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
-import type { Member } from "@/domain/schemas";
+import type { Tag } from "@/domain/schemas";
 import type { Clock } from "@/domain/time";
 import { colors, shadows } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -36,7 +36,7 @@ type EventSheetProps = {
   eyebrow: string;
   initial: EventSheetState;
   clock: Clock;
-  members: readonly Member[];
+  tags: readonly Tag[];
   offline: boolean;
   status?: DetailsStatus;
   compact?: boolean;
@@ -122,7 +122,7 @@ type TimeModeProps = {
 type DetailsSheetProps = {
   eyebrow: string;
   draft: EventDraft;
-  members: readonly Member[];
+  tags: readonly Tag[];
   clock: Clock;
   status: DetailsStatus;
   keyboardInset?: number;
@@ -141,7 +141,7 @@ export function EventSheet({
   eyebrow,
   initial,
   clock,
-  members,
+  tags,
   offline,
   status = null,
   compact,
@@ -157,7 +157,7 @@ export function EventSheet({
       <DetailsSheet
         eyebrow={eyebrow}
         draft={state.opened}
-        members={members}
+        tags={tags}
         clock={clock}
         status={status}
         keyboardInset={keyboardInset}
@@ -258,10 +258,10 @@ export function EventSheet({
       <WhoPicker
         label={words.who}
         everyoneLabel={copy.events.everyone}
-        members={members}
+        tags={tags}
         who={draft}
         onEveryone={() => dispatch({ type: "everyone" })}
-        onMember={(id) => dispatch({ type: "member", id, family: familyIds(members) })}
+        onTag={(id) => dispatch({ type: "tag", id, family: familyIds(tags) })}
       />
       <TextInput
         label={words.where}
@@ -284,7 +284,7 @@ export function EventSheet({
 function DetailsSheet({
   eyebrow,
   draft,
-  members,
+  tags,
   clock,
   status,
   keyboardInset,
@@ -309,13 +309,13 @@ function DetailsSheet({
       }
       keyboardInset={keyboardInset}
     >
-      <EventDetails draft={draft} members={members} clock={clock} status={status} />
+      <EventDetails draft={draft} tags={tags} clock={clock} status={status} />
     </Sheet>
   );
 }
 
-function familyIds(members: readonly Member[]): string[] {
-  return members.map((member) => member.id);
+function familyIds(tags: readonly Tag[]): string[] {
+  return tags.map((tag) => tag.id);
 }
 
 function eventLength({ start, end }: EventDraft): number | undefined {

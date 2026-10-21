@@ -110,9 +110,9 @@ function onThisDay(index: Index, key: string): Dated | undefined {
 }
 
 function cycleStart(replay: Replay, entries: readonly Entry[], key: string, seed: string): Replay {
-  const members = entries.filter((entry) => entry.uploaded < key && aliveOn(entry, key));
+  const tags = entries.filter((entry) => entry.uploaded < key && aliveOn(entry, key));
 
-  return { cycle: replay.cycle + 1, queue: shuffled(members, seed, replay.cycle + 1) };
+  return { cycle: replay.cycle + 1, queue: shuffled(tags, seed, replay.cycle + 1) };
 }
 
 function fromNextAlive(queue: readonly Entry[], key: string): Entry[] {

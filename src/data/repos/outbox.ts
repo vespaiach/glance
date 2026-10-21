@@ -1,7 +1,7 @@
 import type { GlanceDb, OutboxEntry } from "../db";
 import type { RepoStore } from "./store";
 
-export type WritableEntity = "members" | "events" | "notes" | "photos" | "settings";
+export type WritableEntity = "tags" | "events" | "notes" | "photos" | "settings";
 
 export type NewEntry = Omit<OutboxEntry, "seq">;
 

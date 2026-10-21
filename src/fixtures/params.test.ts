@@ -29,7 +29,7 @@ describe("parseFixtureParams", () => {
   });
 
   it.each([
-    ["sheet", ["event", "newevent", "note", "newnote", "allday", "family", "photo", "photometa"]],
+    ["sheet", ["event", "newevent", "note", "newnote", "allday", "photo", "photometa"]],
     ["time", ["start", "end", "error", "noend"]],
     ["season", ["spring", "summer", "fall", "winter"]],
     ["net", ["loading", "offline", "wxerror"]],
@@ -137,7 +137,7 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("day=1")).toEqual({ day: "2026-10-01" });
   });
 
-  it("CAL-05 reads who= as the fixture members' ids and who=none as nobody", () => {
+  it("CAL-05 reads who= as the fixture tags' ids and who=none as nobody", () => {
     expect(parseFixtureParams("who=mom,an,bao")).toEqual({
       who: [FIXTURE_FAMILY[2]?.id, FIXTURE_FAMILY[0]?.id],
     });
@@ -156,21 +156,8 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("sheet=past&details=1")).toEqual({ sheet: "past", details: true });
   });
 
-  it("FAM-03 reads rm= as the fixture member's id", () => {
-    expect(parseFixtureParams("sheet=family&rm=an")).toEqual({
-      sheet: "family",
-      rm: FIXTURE_FAMILY[0]?.id,
-    });
-    expect(parseFixtureParams("rm=nga")).toEqual({ rm: FIXTURE_FAMILY[8]?.id });
-  });
-
-  it("FAM-03 ignores an unknown rm=", () => {
-    expect(parseFixtureParams("rm=bao")).toEqual({});
-  });
-
-  it("FAM-04 reads famname= and famerr=1", () => {
-    expect(parseFixtureParams("famname=Bao&famerr=1")).toEqual({ famname: "Bao", famerr: true });
-    expect(parseFixtureParams("famname=&famerr=0")).toEqual({});
+  it("FAM-07 ignores the old Family sheet params", () => {
+    expect(parseFixtureParams("sheet=family&rm=an&famname=Bao&famerr=1")).toEqual({});
   });
 
   it("§8.9 reads discard=1", () => {

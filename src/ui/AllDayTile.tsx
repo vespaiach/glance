@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
-import { eventColor, whoLabel } from "@/domain/members";
-import type { CalendarEvent, Member, MemberColor } from "@/domain/schemas";
+import type { CalendarEvent, Tag, TagColor } from "@/domain/schemas";
+import { eventColor, whoLabel } from "@/domain/tags";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { PersonDot } from "./PersonDot";
@@ -11,7 +11,7 @@ type AllDayTileProps = {
   title: string;
   who: string;
   location?: string;
-  dot: MemberColor | "soft";
+  dot: TagColor | "soft";
   onClick: () => void;
 };
 
@@ -70,7 +70,7 @@ const styles = stylex.create({
 
 type AllDayTilesProps = {
   events: readonly CalendarEvent[];
-  members: readonly Member[];
+  tags: readonly Tag[];
   label: string;
   everyoneLabel: string;
   onOpenEvent: (id: string) => void;
@@ -89,13 +89,7 @@ export function AllDayTile({ label, title, who, location, dot, onClick }: AllDay
   );
 }
 
-export function AllDayTiles({
-  events,
-  members,
-  label,
-  everyoneLabel,
-  onOpenEvent,
-}: AllDayTilesProps) {
+export function AllDayTiles({ events, tags, label, everyoneLabel, onOpenEvent }: AllDayTilesProps) {
   if (events.length === 0) return null;
 
   return (
@@ -105,9 +99,9 @@ export function AllDayTiles({
           key={event.id}
           label={label}
           title={event.title}
-          who={whoLabel(event, members, everyoneLabel)}
+          who={whoLabel(event, tags, everyoneLabel)}
           location={event.location}
-          dot={eventColor(event, members)}
+          dot={eventColor(event, tags)}
           onClick={() => onOpenEvent(event.id)}
         />
       ))}

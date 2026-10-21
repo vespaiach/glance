@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { CalendarEvent, Member } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { AllDayTile, AllDayTiles } from "./AllDayTile";
 
 const noSchool = {
@@ -11,14 +11,14 @@ const noSchool = {
   dot: "soft",
 } as const;
 
-const MOM: Member = {
+const MOM: Tag = {
   id: "0195f0a0-0000-7000-8000-000000000501",
   name: "Mom",
   color: "coral",
   createdAt: "2026-10-01T15:00:00.000Z",
 };
 
-const allDay = (n: number, who: Pick<CalendarEvent, "everyone" | "memberIds">): CalendarEvent => ({
+const allDay = (n: number, who: Pick<CalendarEvent, "everyone" | "tagIds">): CalendarEvent => ({
   id: `0195f0a0-0000-7000-8000-00000000001${n}`,
   title: `Plan ${n}`,
   startAt: "2026-10-09T00:00:00.000Z",
@@ -47,10 +47,10 @@ test("TODAY-12 AllDayTiles read who from the family, or Everyone", () => {
   render(
     <AllDayTiles
       events={[
-        allDay(1, { everyone: false, memberIds: [MOM.id] }),
-        allDay(2, { everyone: true, memberIds: [] }),
+        allDay(1, { everyone: false, tagIds: [MOM.id] }),
+        allDay(2, { everyone: true, tagIds: [] }),
       ]}
-      members={[MOM]}
+      tags={[MOM]}
       label="All day"
       everyoneLabel="Everyone"
       onOpenEvent={() => {}}
