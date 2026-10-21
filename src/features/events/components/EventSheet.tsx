@@ -32,14 +32,23 @@ import {
   type TimeFieldName,
 } from "../eventSheet";
 import { EventDetails } from "./EventDetails";
+import { QuickDate } from "./QuickDate";
 import { WhoField } from "./WhoField";
 
 export type SheetForecast = { icon: WeatherIcon; label: string; high: string };
+
+export type SheetDate = {
+  day: string;
+  today: string;
+  saved: string;
+  onChange: (day: string) => void;
+};
 
 type EventSheetProps = {
   mode: "new" | "edit";
   eyebrow: string;
   forecast?: SheetForecast;
+  date?: SheetDate;
   initial: EventSheetState;
   clock: Clock;
   tags: readonly Tag[];
@@ -120,6 +129,13 @@ type DetailsPageProps = {
   onEdit: () => void;
 };
 
+type DayEyebrowProps = {
+  day: string;
+  forecast?: SheetForecast;
+  date?: SheetDate;
+  onOpenDate: () => void;
+};
+
 type DeleteActionProps = {
   confirming: boolean;
   compact?: boolean;
@@ -131,6 +147,7 @@ export function EventSheet({
   mode,
   eyebrow,
   forecast,
+  date,
   initial,
   clock,
   tags,
@@ -150,11 +167,18 @@ export function EventSheet({
 
   const leave = (then: () => void) => setLeaving(() => then);
 
-  const heading = <DayEyebrow day={eyebrow} forecast={forecast} />;
+  const heading = (editable: boolean) => (
+    <DayEyebrow
+      day={eyebrow}
+      forecast={forecast}
+      date={editable ? date : undefined}
+      onOpenDate={() => dispatch({ type: "done" })}
+    />
+  );
 
   if (state.step === "details")
     return detailsPage({
-      eyebrow: heading,
+      eyebrow: heading(false),
       draft: state.opened,
       tags,
       clock,
@@ -171,6 +195,8 @@ export function EventSheet({
 
   const asking = state.step === "discarding";
 
+  const dirty = isDirty(draft, state.opened) || (date !== undefined && date.day !== date.saved);
+
   const save = () => {
     if (!canSave(draft)) return dispatch({ type: "save" });
 
@@ -181,7 +207,7 @@ export function EventSheet({
   };
 
   const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(asking, isDirty(draft, state.opened), from);
+    const step = closeStep(asking, dirty, from);
 
     if (step === "close") return leave(onClose);
 
@@ -191,9 +217,11 @@ export function EventSheet({
   const cancel = () => {
     if (!state.fromDetails) return requestClose("button")();
 
-    const step = closeStep(asking, isDirty(draft, state.opened), "button");
+    const step = closeStep(asking, dirty, "button");
 
-    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
+    if (step === "ask") return dispatch({ type: "askDiscard", to: "details" });
+
+    backToDetails();
   };
 
   const newColor = state.newColor ?? nextFreeColor(tags);
@@ -204,8 +232,14 @@ export function EventSheet({
     dispatch({ type: "addTag", id });
   };
 
+  const backToDetails = () => {
+    if (date) date.onChange(date.saved);
+
+    dispatch({ type: "back" });
+  };
+
   const discardChanges = () =>
-    asking && state.discardTo === "details" ? dispatch({ type: "back" }) : leave(onClose);
+    asking && state.discardTo === "details" ? backToDetails() : leave(onClose);
 
   const endActions = (
     <>
@@ -232,7 +266,7 @@ export function EventSheet({
   return (
     <Page
       title={mode === "new" ? words.newTitle : words.editTitle}
-      eyebrow={heading}
+      eyebrow={heading(true)}
       backLabel={words.back}
       onBack={requestClose("button")}
       leaving={leaving !== null}
@@ -338,10 +372,20 @@ function detailsPage({
   );
 }
 
-function DayEyebrow({ day, forecast }: { day: string; forecast?: SheetForecast }) {
+function DayEyebrow({ day, forecast, date, onOpenDate }: DayEyebrowProps) {
   return (
     <>
-      {day}
+      {date ? (
+        <QuickDate
+          label={day}
+          day={date.day}
+          today={date.today}
+          onOpen={onOpenDate}
+          onChange={date.onChange}
+        />
+      ) : (
+        day
+      )}
       {forecast && (
         <span {...stylex.props(styles.forecast)}>
           <Icon icon={weatherIcons[forecast.icon]} size={16} label={forecast.label} />

@@ -242,6 +242,16 @@ export const copy = {
       fall: ["Amber", "Rust", "Sage", "Coral", "Cream"],
       winter: ["Ice", "Lilac", "Glacier", "Mint", "Frost"],
     } satisfies Record<Season, readonly [string, string, string, string, string]>,
+    quickDate: {
+      change: (day: string) => `${day}. Change date`,
+      label: "Change date",
+      today: "Today",
+      tomorrow: "Tomorrow",
+      nextWeek: "Next week",
+      previousMonth: "Previous month",
+      nextMonth: "Next month",
+      weekdays: ["S", "M", "T", "W", "T", "F", "S"],
+    },
     time: {
       starts: "Starts",
       ends: "Ends",
