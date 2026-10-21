@@ -271,6 +271,22 @@ export function TodayGallery({ season }: { season: Season }) {
         xstyle={[styles.zone, styles.phone]}
       />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} />
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} weather={undefined} />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa] }}
+        {...schedule}
+        iconActions
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "empty" }}
+        {...schedule}
+        breakpoint="phone"
+        oneColumn
+        iconActions
+        xstyle={[styles.zone, styles.phone]}
+      />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule} />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "failed" }} {...schedule} />
       <TodaySchedule

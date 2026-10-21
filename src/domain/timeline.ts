@@ -60,6 +60,14 @@ export type PlanCard = {
   note: boolean;
 };
 
+export type LaneTile = {
+  content: boolean;
+  stacked: boolean;
+  large: boolean;
+  rain: boolean;
+  wet: boolean;
+};
+
 type TimelinePlan = Pick<CalendarEvent, "startAt" | "endAt">;
 
 type Interval<T> = { plan: T; start: number; end: number };
@@ -115,6 +123,16 @@ const RAIN_CHIP = 50;
 const GUTTER_WEATHER = 46;
 
 const GUTTER_NOW_CLEARANCE = 4;
+
+const LANE_STACKED = 64;
+
+const LANE_STACKED_CONTENT = 46;
+
+const LANE_ROW_CONTENT = 22;
+
+const LANE_STACKED_RAIN = 76;
+
+const LANE_ROW_RAIN = 30;
 
 export function timelineLayout<T extends TimelinePlan>(
   plans: readonly T[],
@@ -208,6 +226,22 @@ export function gutterWeather(
     nowTop < mark.top + GUTTER_NOW_CLEARANCE ||
     nowTop > mark.top + GUTTER_WEATHER
   );
+}
+
+export function laneTile(height: number, compact: boolean, precip: number): LaneTile {
+  const stacked = compact || height >= LANE_STACKED;
+
+  const wet = precip >= RAIN_CHIP;
+
+  const rainRoom = height >= (stacked ? LANE_STACKED_RAIN : LANE_ROW_RAIN);
+
+  return {
+    content: height >= (stacked ? LANE_STACKED_CONTENT : LANE_ROW_CONTENT),
+    stacked,
+    large: stacked && !compact,
+    rain: wet && !compact && rainRoom,
+    wet,
+  };
 }
 
 function intervalOf<T extends TimelinePlan>(plan: T, tz: string): Interval<T> {

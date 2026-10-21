@@ -78,8 +78,6 @@ export const copy = {
       failedCount: "Today",
       addEvent: "Add event",
       fullCalendar: "Full calendar",
-      emptyTitle: "No events yet",
-      emptyBody: "Add the first one. It shows here and on the calendar.",
       loading: "Loading events",
     },
     picture: {
@@ -134,6 +132,8 @@ export const copy = {
       `${everyone ? "Everyone free" : "Free"} · ${length}`,
     freeName: (range: string) => `Free ${range}. Add event`,
     planName: (title: string, range: string) => `${title}, ${range}`,
+    lane: "Hourly weather",
+    chance: (percent: number) => `${percent}%`,
   },
   calendar: {
     previousWeek: "Previous week",
