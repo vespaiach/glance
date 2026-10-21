@@ -9,7 +9,7 @@ describe("parseFixtureParams", () => {
   it("§6 reads every fixture param", () => {
     const query =
       "?bg=photo&sheet=newevent&time=noend&clock=24&season=winter&empty=1&net=wxerror&kb=1" +
-      "&signin=expired&on=link&acct=returning&upload=progress&wx=choose&now=2026-10-09T19:12";
+      "&signin=expired&acct=returning&upload=progress&wx=choose&now=2026-10-09T19:12";
 
     expect(parseFixtureParams(query)).toEqual({
       bg: "photo",
@@ -21,7 +21,6 @@ describe("parseFixtureParams", () => {
       net: "wxerror",
       kb: true,
       signin: "expired",
-      on: "link",
       acct: "returning",
       upload: "progress",
       wx: "choose",
@@ -34,7 +33,21 @@ describe("parseFixtureParams", () => {
     ["time", ["start", "end", "error", "noend"]],
     ["season", ["spring", "summer", "fall", "winter"]],
     ["net", ["loading", "offline", "wxerror"]],
-    ["signin", ["form", "sending", "sent", "name", "phone", "expired", "offline", "done"]],
+    [
+      "signin",
+      [
+        "form",
+        "sending",
+        "sent",
+        "checking",
+        "wrong",
+        "locked",
+        "name",
+        "expired",
+        "offline",
+        "done",
+      ],
+    ],
     ["upload", ["one", "progress", "error", "offline", "done"]],
     ["wx", ["searching", "unknown", "choose"]],
     ["events", ["many"]],
@@ -54,7 +67,9 @@ describe("parseFixtureParams", () => {
     "net=online",
     "kb=yes",
     "signin=welcome",
-    "on=device",
+    "signin=phone",
+    "on=link",
+    "code=abc",
     "acct=new",
     "upload=finished",
     "wx=found",
@@ -99,6 +114,11 @@ describe("parseFixtureParams", () => {
       hold: true,
     });
     expect(parseFixtureParams("backin=0")).toEqual({ backin: 0 });
+  });
+
+  it("SIGNIN-04 reads code= as up to 6 digits", () => {
+    expect(parseFixtureParams("signin=sent&code=482")).toEqual({ signin: "sent", code: "482" });
+    expect(parseFixtureParams("code=48 2913 7")).toEqual({ code: "482913" });
   });
 
   it.each(["backin=11", "backin=-1", "backin=soon", "hold=yes"])(

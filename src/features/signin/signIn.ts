@@ -1,17 +1,30 @@
-import { type AuthStatus, type FixtureParams, fixtureOtherEmail } from "@/data/repos";
+import {
+  type AuthStatus,
+  type CodeError,
+  type FixtureParams,
+  fixtureOtherEmail,
+  type TransportError,
+} from "@/data/repos";
 import type { Account } from "@/domain/schemas";
-import { DIFFERENT_EMAIL_WAIT_S, isValidEmail } from "@/domain/signIn";
+import {
+  CODE_LENGTH,
+  codeDigits,
+  codeExpired,
+  DIFFERENT_EMAIL_WAIT_S,
+  isValidEmail,
+} from "@/domain/signIn";
 
 export type SignInState =
   | { step: "opening" }
   | { step: "form"; email: string; error?: "invalid" | "failed" | "guest" }
   | { step: "sending"; email: string }
   | { step: "guest"; email: string }
-  | { step: "sent"; email: string; sentAt: Date }
+  | { step: "sent"; email: string; sentAt: Date; code: string; wrong?: true }
+  | { step: "checking"; email: string; sentAt: Date; code: string }
+  | { step: "locked"; email: string; sentAt: Date }
+  | { step: "expired"; email: string }
   | { step: "name"; email: string; draft: string; error?: "empty" | "failed"; saving?: true }
   | { step: "location"; account: Account; returning: boolean; skipping?: true }
-  | { step: "phone"; email: string }
-  | { step: "expired"; email: string; onLink: boolean }
   | { step: "done"; name: string; returning: boolean };
 
 export type SignInAction =
@@ -22,8 +35,12 @@ export type SignInAction =
   | { type: "back" }
   | { type: "name"; draft: string }
   | { type: "submit-name" }
-  | { type: "link-sent"; at: Date }
-  | { type: "link-failed" }
+  | { type: "code-sent"; at: Date }
+  | { type: "send-failed" }
+  | { type: "code"; text: string; online: boolean }
+  | { type: "verify"; online: boolean }
+  | { type: "rejected"; error: CodeError | TransportError }
+  | { type: "tick"; now: Date }
   | { type: "status"; status: AuthStatus }
   | { type: "status-failed" }
   | { type: "named"; account: Account }
@@ -32,13 +49,19 @@ export type SignInAction =
   | { type: "skip-failed" }
   | { type: "setup-done" };
 
-export type SignInFixture = Pick<FixtureParams, "signin" | "on" | "acct" | "switch" | "backin">;
+type CodeStepState = Extract<SignInState, { step: "sent" | "checking" | "locked" | "expired" }>;
+
+export type SignInFixture = Pick<FixtureParams, "signin" | "code" | "acct" | "switch" | "backin">;
 
 export type FixtureAccount = Account & { name: string };
 
 export type OpenedLink = "opened" | "stale";
 
 const EMPTY_FORM: SignInState = { step: "form", email: "" };
+
+const FIXTURE_CODE = "482913";
+
+const CODE_STEPS: readonly SignInState["step"][] = ["sent", "checking", "locked", "expired"];
 
 export function signInReducer(state: SignInState, action: SignInAction): SignInState {
   switch (action.type) {
@@ -56,10 +79,18 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
       return typeName(state, action.draft);
     case "submit-name":
       return submitName(state);
-    case "link-sent":
-      return linkSent(state, action.at);
-    case "link-failed":
-      return linkFailed(state);
+    case "code-sent":
+      return codeSent(state, action.at);
+    case "send-failed":
+      return sendFailed(state);
+    case "code":
+      return typeCode(state, action.text, action.online);
+    case "verify":
+      return state.step === "sent" ? verify(state, action.online) : state;
+    case "rejected":
+      return rejected(state, action.error);
+    case "tick":
+      return tick(state, action.now);
     case "status":
       return statusAnswered(state, action.status);
     case "status-failed":
@@ -97,12 +128,19 @@ export function initialSignIn(
   if (signedOut)
     return { step: "form", email: fixture.switch ? fixtureOtherEmail : signedOut.email };
 
+  const sentAt = fixtureSentAt(now, fixture.backin);
+
   switch (fixture.signin) {
     case "sending":
-    case "phone":
-      return { step: fixture.signin, email };
+      return { step: "sending", email };
     case "sent":
-      return { step: "sent", email, sentAt: fixtureSentAt(now, fixture.backin) };
+      return { step: "sent", email, sentAt, code: fixture.code ?? "" };
+    case "checking":
+      return { step: "checking", email, sentAt, code: FIXTURE_CODE };
+    case "wrong":
+      return { step: "sent", email, sentAt, code: "", wrong: true };
+    case "locked":
+      return { step: "locked", email, sentAt };
     case "offline":
       return { step: "form", email };
     case "sendfail":
@@ -112,7 +150,7 @@ export function initialSignIn(
     case "location":
       return { step: "location", account, returning: false };
     case "expired":
-      return { step: "expired", email, onLink: fixture.on === "link" };
+      return { step: "expired", email };
     case "done":
       return { step: "done", name, returning: fixture.acct === "returning" };
     default:
@@ -121,7 +159,7 @@ export function initialSignIn(
 }
 
 function send(state: SignInState): SignInState {
-  if (state.step === "expired") return { step: "sending", email: state.email };
+  if (isCodeStep(state)) return { step: "sending", email: state.email };
 
   if (state.step !== "form") return state;
 
@@ -131,9 +169,13 @@ function send(state: SignInState): SignInState {
 }
 
 function back(state: SignInState): SignInState {
-  if (state.step !== "sent" && state.step !== "phone" && state.step !== "expired") return state;
+  if (!isCodeStep(state)) return state;
 
   return { step: "form", email: state.email };
+}
+
+function isCodeStep(state: SignInState): state is CodeStepState {
+  return CODE_STEPS.includes(state.step);
 }
 
 function submitName(state: SignInState): SignInState {
@@ -144,16 +186,55 @@ function submitName(state: SignInState): SignInState {
   return { step: "name", email: state.email, draft: state.draft, saving: true };
 }
 
-function linkSent(state: SignInState, at: Date): SignInState {
+function codeSent(state: SignInState, at: Date): SignInState {
   if (state.step !== "sending") return state;
 
-  return { step: "sent", email: state.email, sentAt: at };
+  return { step: "sent", email: state.email, sentAt: at, code: "" };
 }
 
-function linkFailed(state: SignInState): SignInState {
+function sendFailed(state: SignInState): SignInState {
   if (state.step !== "sending") return state;
 
   return { step: "form", email: state.email, error: "failed" };
+}
+
+function typeCode(state: SignInState, text: string, online: boolean): SignInState {
+  if (state.step !== "sent") return state;
+
+  const code = codeDigits(text);
+
+  const typed: SignInState = { step: "sent", email: state.email, sentAt: state.sentAt, code };
+
+  return code.length > state.code.length ? verify(typed, online) : typed;
+}
+
+function verify(state: Extract<SignInState, { step: "sent" }>, online: boolean): SignInState {
+  if (!online || state.code.length < CODE_LENGTH) return state;
+
+  return { step: "checking", email: state.email, sentAt: state.sentAt, code: state.code };
+}
+
+function rejected(state: SignInState, error: CodeError | TransportError): SignInState {
+  if (state.step !== "checking") return state;
+
+  const { email, sentAt, code } = state;
+
+  switch (error) {
+    case "wrong-code":
+      return { step: "sent", email, sentAt, code: "", wrong: true };
+    case "code-locked":
+      return { step: "locked", email, sentAt };
+    case "code-expired":
+      return { step: "expired", email };
+    default:
+      return { step: "sent", email, sentAt, code };
+  }
+}
+
+function tick(state: SignInState, now: Date): SignInState {
+  if (state.step !== "sent" || !codeExpired(state.sentAt, now)) return state;
+
+  return { step: "expired", email: state.email };
 }
 
 function fixtureSentAt(now: Date, backin = DIFFERENT_EMAIL_WAIT_S): Date {
@@ -185,7 +266,7 @@ function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
 
   if (state.step === "guest") return guestChecked(state.email, status);
 
-  if (state.step !== "sent" && state.step !== "phone") return state;
+  if (state.step !== "checking") return state;
 
   if (status.state !== "signed-in") return state;
 

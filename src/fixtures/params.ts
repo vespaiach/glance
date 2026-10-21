@@ -1,3 +1,4 @@
+import { codeDigits } from "@/domain/signIn";
 import { zonedInstant } from "@/domain/zone";
 import { FIXTURE_TIME_ZONE, fixtureMemberId } from "./data";
 
@@ -10,16 +11,17 @@ const CHOICES = {
     "form",
     "sending",
     "sent",
+    "checking",
+    "wrong",
+    "locked",
     "name",
     "location",
-    "phone",
     "expired",
     "offline",
     "done",
     "ended",
     "sendfail",
   ],
-  on: ["link"],
   acct: ["returning"],
   upload: ["one", "progress", "error", "offline", "done"],
   wx: [
@@ -52,6 +54,7 @@ export type FixtureParams = ChoiceParams & {
   backin?: number;
   bg?: "photo";
   clock?: "24h";
+  code?: string;
   day?: string;
   demo?: true;
   details?: true;
@@ -103,6 +106,8 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
 
   const backin = parseBackin(query.get("backin"));
 
+  const code = codeDigits(query.get("code") ?? "");
+
   return {
     ...readChoices(query),
     ...readFlags(query),
@@ -114,6 +119,7 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
     ...(day && { day }),
     ...(who && { who }),
     ...(backin !== undefined && { backin }),
+    ...(code && { code }),
   };
 }
 

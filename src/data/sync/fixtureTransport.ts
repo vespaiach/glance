@@ -51,6 +51,8 @@ export const UPLOAD_STEP_PERCENT = 8;
 
 const SEED_VERSION = 1;
 
+const FIXTURE_WRONG_CODE = "000000";
+
 type Seed = {
   settings: AccountSettings;
   withRows: boolean;
@@ -98,11 +100,11 @@ export function createFixtureAuth(params: FixtureParams): Transport["auth"] {
 
         return ok(undefined);
       }),
-    verifyCode: () =>
+    verifyCode: ({ code }) =>
       online(async () => {
         await wait(SIGN_IN_DELAY_MS);
 
-        return ok(signedIn(params));
+        return code === FIXTURE_WRONG_CODE ? err("wrong-code") : ok(signedIn(params));
       }),
     status: () => online(async () => ok(authStatus(params))),
     guestAvailable: async () => params.demo === true,
@@ -288,8 +290,9 @@ function isOffline(params: FixtureParams): boolean {
 }
 
 function onlineOnly(offline: boolean) {
-  return async <T>(answer: () => Promise<Result<T, TransportError>>) =>
-    offline ? err<TransportError>("network") : answer();
+  return async <T, E = TransportError>(
+    answer: () => Promise<Result<T, E>>,
+  ): Promise<Result<T, E | TransportError>> => (offline ? err("network") : answer());
 }
 
 function signedInOnly(ended: boolean) {

@@ -34,7 +34,6 @@ const SETUP: WeatherSetupFlow = {
 function renderView(state: SignInState, props: Partial<Props> = {}) {
   const handlers = {
     onAction: vi.fn(),
-    onFinishedOnPhone: vi.fn(),
   };
 
   render(
@@ -47,7 +46,6 @@ function renderView(state: SignInState, props: Partial<Props> = {}) {
       tz={tz}
       breakpoint="wide"
       online
-      demo
       {...handlers}
       {...props}
     />,
@@ -71,27 +69,27 @@ test("SIGNIN-01 the hero shows the wordmark, the season and month, the clock and
   ).toBeInTheDocument();
 });
 
-test("SIGNIN-01 the email form asks for an email with Send sign-in link", () => {
+test("SIGNIN-01 the email form asks for an email with Send code", () => {
   renderView({ step: "form", email: "" });
 
   expect(screen.getByText("One account per family")).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Sign in or get started" })).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveAttribute("placeholder", "name@example.com");
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
   expect(screen.getByText(LOCK)).toBeInTheDocument();
 });
 
-test("SIGNIN-01 typing and Send sign-in link go out as actions", async () => {
+test("SIGNIN-01 typing and Send code go out as actions", async () => {
   const { onAction } = renderView({ step: "form", email: "" });
 
   await userEvent.type(screen.getByLabelText("Email"), "m");
-  await userEvent.click(screen.getByRole("button", { name: "Send sign-in link" }));
+  await userEvent.click(screen.getByRole("button", { name: "Send code" }));
 
   expect(onAction).toHaveBeenCalledWith({ type: "email", email: "m" });
   expect(onAction).toHaveBeenCalledWith({ type: "send" });
 });
 
-test("SIGNIN-01 pressing Return in the email field sends the link", async () => {
+test("SIGNIN-01 pressing Return in the email field sends the code", async () => {
   const { onAction } = renderView({ step: "form", email: EMAIL });
 
   await userEvent.type(screen.getByLabelText("Email"), "{Enter}");
@@ -109,49 +107,129 @@ test("SIGNIN-03 sending disables the button and shows the sending tile", () => {
   renderView({ step: "sending", email: EMAIL });
 
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
-  expect(screen.getByRole("status")).toHaveTextContent(`Sending a link to ${EMAIL}`);
+  expect(screen.getByRole("status")).toHaveTextContent(`Sending a code to ${EMAIL}`);
   expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
   expect(screen.getByText(LOCK)).toBeInTheDocument();
 });
 
-test("SIGNIN-04 Check your email names the address and the 10-minute expiry", () => {
-  renderView({ step: "sent", email: EMAIL, sentAt: NOW });
+const sent = (code = "", seconds = 10): SignInState => ({
+  step: "sent",
+  email: EMAIL,
+  sentAt: secondsLater(-seconds),
+  code,
+});
 
-  expect(screen.getByRole("heading", { name: "Check your email" })).toBeInTheDocument();
+const codeField = () => screen.getByRole("textbox", { name: "Code" });
+
+const SIGN_IN = { name: "Sign in" };
+
+const NEW_CODE = { name: "Send a new code" };
+
+const OTHER_EMAIL = { name: "Use a different email" };
+
+test("SIGNIN-04 Enter the code names the address and the 10-minute limit", () => {
+  renderView(sent());
+
+  expect(screen.getByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
   expect(
     screen.getByText(
       (_, node) =>
-        node?.textContent ===
-        `We sent a link to ${EMAIL}. Open it and this screen signs in by itself.`,
+        node?.textContent === `We sent a 6-digit code to ${EMAIL}. It works once, for 10 minutes.`,
     ),
   ).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Link expires in 10 minutes");
   expect(screen.queryByText(LOCK)).not.toBeInTheDocument();
 });
 
-test("SIGNIN-04 for 10 s after the send a mono timer stands in for Use a different email", () => {
-  renderView({ step: "sent", email: EMAIL, sentAt: NOW }, { time: secondsLater(2) });
+test("SIGNIN-04 focus lands in the code field when the step opens", () => {
+  renderView(sent());
 
-  expect(screen.getByRole("timer")).toHaveTextContent("Use a different email in 0:08");
-  expect(screen.queryByRole("button", { name: "Use a different email" })).not.toBeInTheDocument();
+  expect(codeField()).toHaveFocus();
 });
 
-test("SIGNIN-04 once the timer reaches 0 Use a different email goes back", async () => {
-  const { onAction } = renderView(
-    { step: "sent", email: EMAIL, sentAt: NOW },
-    { time: secondsLater(10) },
-  );
+test("SIGNIN-04 typing and pasting go out as code actions", async () => {
+  const { onAction } = renderView(sent());
 
-  await userEvent.click(screen.getByRole("button", { name: "Use a different email" }));
+  await userEvent.paste("482 913");
+
+  expect(onAction).toHaveBeenCalledWith({ type: "code", text: "482 913", online: true });
+});
+
+test("SIGNIN-04 Sign in is disabled under 6 digits", () => {
+  renderView(sent("48291"));
+
+  expect(screen.getByRole("button", SIGN_IN)).toBeDisabled();
+});
+
+test("SIGNIN-04 Sign in with 6 digits submits the code", async () => {
+  const { onAction } = renderView(sent("482913"));
+
+  await userEvent.click(screen.getByRole("button", SIGN_IN));
+
+  expect(onAction).toHaveBeenCalledWith({ type: "verify", online: true });
+});
+
+test("SIGNIN-04 checking locks the field and reads Checking…", () => {
+  renderView({ step: "checking", email: EMAIL, sentAt: secondsLater(-10), code: "482913" });
+
+  expect(screen.getByRole("button", { name: "Checking…" })).toBeDisabled();
+  expect(codeField()).toHaveAttribute("readonly");
+  expect(codeField()).toHaveValue("482913");
+});
+
+test("SIGNIN-04 for 10 s after the send a mono timer stands in for both ghost buttons", () => {
+  renderView(sent("", 2));
+
+  expect(screen.getByRole("timer")).toHaveTextContent("New code or different email in 0:08");
+  expect(screen.queryByRole("button", NEW_CODE)).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", OTHER_EMAIL)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-04 once the timer reaches 0 Send a new code and Use a different email show", async () => {
+  const { onAction } = renderView(sent());
+
+  await userEvent.click(screen.getByRole("button", NEW_CODE));
+  await userEvent.click(screen.getByRole("button", OTHER_EMAIL));
 
   expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  expect(onAction).toHaveBeenCalledWith({ type: "send" });
   expect(onAction).toHaveBeenCalledWith({ type: "back" });
 });
 
-test("SIGNIN-04 Check your email has no I opened the link button", () => {
-  renderView({ step: "sent", email: EMAIL, sentAt: NOW }, { time: secondsLater(10) });
+test("SIGNIN-17 a wrong code shows That code isn’t right on the field", () => {
+  renderView({ ...sent(), wrong: true } as SignInState);
 
-  expect(screen.queryByRole("button", { name: "I opened the link" })).not.toBeInTheDocument();
+  expect(codeField()).toBeInvalid();
+  expect(codeField()).toHaveAccessibleDescription("That code isn’t right. Try again.");
+  expect(codeField()).toHaveValue("");
+});
+
+test("SIGNIN-17 a locked code disables the field and shows both ghost buttons at once", () => {
+  renderView({ step: "locked", email: EMAIL, sentAt: secondsLater(-2) });
+
+  expect(codeField()).toBeDisabled();
+  expect(codeField()).toHaveAccessibleDescription("Too many tries. Send a new code.");
+  expect(screen.getByRole("button", SIGN_IN)).toBeDisabled();
+  expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", NEW_CODE)).toBeEnabled();
+  expect(screen.getByRole("button", OTHER_EMAIL)).toBeEnabled();
+});
+
+test("SIGNIN-10 offline the code can be typed but Sign in and Send a new code are off", async () => {
+  const { onAction } = renderView(sent("482913"), { online: false });
+
+  expect(screen.getByText("You’re offline")).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "The code can’t be checked right now. Sign in turns back on when the screen reconnects.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", SIGN_IN)).toBeDisabled();
+  expect(screen.getByRole("button", NEW_CODE)).toBeDisabled();
+  expect(screen.getByRole("button", OTHER_EMAIL)).toBeEnabled();
+
+  await userEvent.type(codeField(), "{Backspace}");
+
+  expect(onAction).toHaveBeenCalledWith({ type: "code", text: "48291", online: false });
 });
 
 test("SIGNIN-01 there is no Continue as guests, also in demo builds", () => {
@@ -166,7 +244,7 @@ test("SIGNIN-03 a failed send shows Couldn’t send on the field with Send enabl
 
   expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
   expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Couldn’t send. Try again.");
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
 });
 
 test("SIGNIN-06 What's your name asks for a name for the new account", async () => {
@@ -190,25 +268,19 @@ test("SIGNIN-06 a blank name shows Add your name on the field", () => {
   expect(screen.getByLabelText("Your name")).toHaveAccessibleDescription("Add your name");
 });
 
-test("SIGNIN-07 Finish on your phone waits for the phone", async () => {
-  const { onFinishedOnPhone } = renderView({ step: "phone", email: EMAIL });
+test("SIGNIN-08 an expired code offers a new code or a different email", async () => {
+  const { onAction } = renderView({ step: "expired", email: EMAIL });
 
-  expect(screen.getByRole("heading", { name: "Finish on your phone" })).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Waiting for your phone");
+  expect(screen.getByText("Sign in")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "This code has expired" })).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      (_, node) => node?.textContent === `Codes work for 10 minutes. Send a new one to ${EMAIL}.`,
+    ),
+  ).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "I finished on my phone" }));
-
-  expect(onFinishedOnPhone).toHaveBeenCalled();
-});
-
-test("SIGNIN-08 the waiting screen's expired link offers a new link or a different email", async () => {
-  const { onAction } = renderView({ step: "expired", email: EMAIL, onLink: false });
-
-  expect(screen.getByRole("heading", { name: "This link has expired" })).toBeInTheDocument();
-  expect(screen.getByText(EMAIL)).toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole("button", { name: "Send a new link" }));
-  await userEvent.click(screen.getByRole("button", { name: "Use a different email" }));
+  await userEvent.click(screen.getByRole("button", NEW_CODE));
+  await userEvent.click(screen.getByRole("button", OTHER_EMAIL));
 
   expect(onAction).toHaveBeenCalledWith({ type: "send" });
   expect(onAction).toHaveBeenCalledWith({ type: "back" });
@@ -234,26 +306,15 @@ test("SIGNIN-10 offline shows the banner and disables sending, but the email can
   expect(screen.getByText("You’re offline")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "A link can’t be sent right now. Sending turns back on when the screen reconnects.",
+      "A code can’t be sent right now. Sending turns back on when the screen reconnects.",
     ),
   ).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeDisabled();
 
   await userEvent.type(screen.getByLabelText("Email"), "x{Enter}");
 
   expect(onAction).toHaveBeenCalledWith({ type: "email", email: `${EMAIL}x` });
   expect(onAction).not.toHaveBeenCalledWith({ type: "send" });
-});
-
-test("SIGNIN-12 the device that opened a stale link can only send a new one", () => {
-  renderView({ step: "expired", email: EMAIL, onLink: true });
-
-  expect(screen.getByText("Sign-in link")).toBeInTheDocument();
-  expect(
-    screen.getByRole("heading", { name: "This link doesn’t work anymore" }),
-  ).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Send a new link" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Use a different email" })).not.toBeInTheDocument();
 });
 
 const LOCATION: SignInState = {
@@ -300,7 +361,7 @@ test("SIGNIN-13 the signed-out form shows the notice and Sign in again", () => {
   expect(screen.getByRole("heading", { name: "Sign in again" })).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Check your family’s email below. We’ll send a link that signs this screen back in.",
+      "Check your family’s email below. We’ll send a code that signs this screen back in.",
     ),
   ).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveValue(EMAIL);
@@ -329,7 +390,7 @@ test("SIGNIN-13 another email with changes waiting warns inline and offers the p
   expect(screen.getAllByRole("status")[1]).toHaveTextContent(
     `Changes waiting on this screen belong to ${EMAIL}. They’ll be removed from this screen if a different email signs in.`,
   );
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
 
   await userEvent.click(screen.getByRole("button", { name: `Use ${EMAIL}` }));
 
@@ -342,7 +403,7 @@ test("SIGNIN-13 another email with nothing waiting shows no warning", () => {
   expect(screen.queryByRole("button", { name: `Use ${EMAIL}` })).not.toBeInTheDocument();
 });
 
-test("SIGNIN-13 the notice stays while the link is sending", () => {
+test("SIGNIN-13 the notice stays while the code is sending", () => {
   renderView({ step: "sending", email: EMAIL }, { signedOut: SIGNED_OUT });
 
   expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
@@ -351,12 +412,12 @@ test("SIGNIN-13 the notice stays while the link is sending", () => {
 
 const GUEST_BUTTON = { name: "Sign-in as guests" };
 
-test("SIGNIN-16 Sign-in as guests sits next to Send sign-in link when guest sign-in is on", async () => {
+test("SIGNIN-16 Sign-in as guests sits next to Send code when guest sign-in is on", async () => {
   const { onAction } = renderView({ step: "form", email: "" }, { guest: true });
 
   await userEvent.click(screen.getByRole("button", GUEST_BUTTON));
 
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
   expect(onAction).toHaveBeenCalledWith({ type: "guest" });
 });
 
@@ -372,7 +433,7 @@ test("SIGNIN-16 Sign-in as guests is hidden on the signed-out form", () => {
   expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
 });
 
-test("SIGNIN-16 Sign-in as guests is disabled while a link is sending", () => {
+test("SIGNIN-16 Sign-in as guests is disabled while a code is sending", () => {
   renderView({ step: "sending", email: EMAIL }, { guest: true });
 
   expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
@@ -388,7 +449,7 @@ test("SIGNIN-16 both buttons are disabled while guest sign-in is on its way", ()
   renderView({ step: "guest", email: "" }, { guest: true });
 
   expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeDisabled();
 });
 
 test("SIGNIN-16 a failed guest sign-in shows Couldn’t sign in under the buttons, not on the field", () => {

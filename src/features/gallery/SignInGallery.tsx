@@ -27,6 +27,8 @@ const LOCATION = { step: "location", account: MARIA, returning: false } as const
 
 const [PORTLAND] = PLACES;
 
+const CODE = { step: "sent", email: EMAIL, sentAt: secondsBefore(10), code: "" } as const;
+
 const styles = stylex.create({
   view: {
     width: 1280,
@@ -50,8 +52,13 @@ const DEMOS: readonly Demo[] = [
   { key: "guest-sending", guest: true, state: { step: "sending", email: EMAIL } },
   { key: "guest-offline", guest: true, online: false },
   { key: "guest-phone", guest: true, phone: true, breakpoint: "phone" },
-  { key: "sent", state: { step: "sent", email: EMAIL, sentAt: secondsBefore(2) } },
-  { key: "sent-ready", state: { step: "sent", email: EMAIL, sentAt: secondsBefore(10) } },
+  { key: "code", state: { ...CODE, sentAt: secondsBefore(2) } },
+  { key: "code-typed", state: { ...CODE, code: "482" } },
+  { key: "code-checking", state: { ...CODE, step: "checking", code: "482913" } },
+  { key: "code-wrong", state: { ...CODE, wrong: true } },
+  { key: "code-locked", state: { step: "locked", email: EMAIL, sentAt: secondsBefore(2) } },
+  { key: "code-offline", state: { ...CODE, code: "482913" }, online: false },
+  { key: "code-phone", phone: true, breakpoint: "phone", state: { ...CODE, code: "482" } },
   { key: "name", state: { step: "name", email: EMAIL, draft: "" } },
   { key: "name-empty", state: { step: "name", email: EMAIL, draft: "", error: "empty" } },
   { key: "location", state: LOCATION },
@@ -81,9 +88,7 @@ const DEMOS: readonly Demo[] = [
     }),
   },
   { key: "location-phone", phone: true, breakpoint: "phone", state: LOCATION },
-  { key: "phone-wait", state: { step: "phone", email: EMAIL } },
-  { key: "expired", state: { step: "expired", email: EMAIL, onLink: false } },
-  { key: "link-expired", state: { step: "expired", email: EMAIL, onLink: true } },
+  { key: "expired", state: { step: "expired", email: EMAIL } },
   { key: "done", state: { step: "done", name: "Maria", returning: false } },
   { key: "done-returning", state: { step: "done", name: "Maria", returning: true } },
   { key: "phone", phone: true, breakpoint: "phone" },
@@ -125,9 +130,7 @@ function signInBase(season: Season): SignInProps {
     tz: GALLERY_TZ,
     breakpoint: "wide",
     online: true,
-    demo: true,
     onAction: ignore,
-    onFinishedOnPhone: ignore,
   };
 }
 

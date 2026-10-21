@@ -649,6 +649,14 @@ describe("FixtureTransport auth", () => {
     });
   });
 
+  it("SIGNIN-17 the demo code 000000 is wrong", async () => {
+    useTimers();
+    const pending = transport().auth.verifyCode({ email: "maria@example.com", code: "000000" });
+
+    await vi.advanceTimersByTimeAsync(1_400);
+    expect(await pending).toEqual({ ok: false, error: "wrong-code" });
+  });
+
   it("SIGNIN-10 signin=offline can't check a code", async () => {
     expect(
       await transport({ signin: "offline" }).auth.verifyCode({

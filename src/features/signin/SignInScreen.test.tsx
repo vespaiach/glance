@@ -36,6 +36,7 @@ const TRINH: Account = { id: "a-guest", email: "guests@takeaglance.app", name: "
 
 type FakeAuth = {
   sendCode: Mock<SignInAuth["sendCode"]>;
+  verifyCode: Mock<SignInAuth["verifyCode"]>;
   status: Mock<SignInAuth["status"]>;
   guestAvailable: Mock<SignInAuth["guestAvailable"]>;
   guest: Mock<SignInAuth["guest"]>;
@@ -57,6 +58,9 @@ const PORTLAND: WeatherLocation = {
 function fakeAuth(): FakeAuth {
   return {
     sendCode: vi.fn<SignInAuth["sendCode"]>(async () => ok(undefined)),
+    verifyCode: vi.fn<SignInAuth["verifyCode"]>(async () =>
+      ok({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
+    ),
     status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "signed-out" })),
     guestAvailable: vi.fn<SignInAuth["guestAvailable"]>(async () => false),
     guest: vi.fn<SignInAuth["guest"]>(async () =>
@@ -101,7 +105,7 @@ function renderScreen(
           <FixtureParamsProvider params={params}>
             <SignInAuthProvider auth={auth}>
               <SignedOutAccountProvider account={signedOut}>
-                <SignInScreen demo />
+                <SignInScreen />
               </SignedOutAccountProvider>
             </SignInAuthProvider>
           </FixtureParamsProvider>
@@ -119,12 +123,14 @@ async function advance(ms: number) {
   await act(() => vi.advanceTimersByTimeAsync(ms));
 }
 
-async function sendLink(email: string) {
+async function sendCode(email: string) {
   const person = user();
 
   await person.type(screen.getByLabelText("Email"), email);
-  await person.click(screen.getByRole("button", { name: "Send sign-in link" }));
+  await person.click(screen.getByRole("button", { name: "Send code" }));
 }
+
+const codeField = () => screen.getByRole("textbox", { name: "Code" });
 
 test("SIGNIN-01 opens on the empty email form", () => {
   renderScreen();
@@ -141,10 +147,10 @@ test("SIGNIN-13 a screen signed out by the server opens the form with its email 
   expect(screen.getByText(/Changes waiting on this screen: 2\./)).toBeInTheDocument();
 });
 
-test("SIGNIN-13 Use a different email from Check your email keeps the signed-out notice", async () => {
+test("SIGNIN-13 Use a different email from Enter the code keeps the signed-out notice", async () => {
   renderScreen({}, fakeAuth(), { email: MARIA.email, pending: 0 });
 
-  await user().click(screen.getByRole("button", { name: "Send sign-in link" }));
+  await user().click(screen.getByRole("button", { name: "Send code" }));
   await advance(10_000);
 
   await user().click(await screen.findByRole("button", { name: "Use a different email" }));
@@ -155,7 +161,7 @@ test("SIGNIN-13 Use a different email from Check your email keeps the signed-out
 test("SIGNIN-02 an invalid email shows the error until the next keystroke", async () => {
   renderScreen();
 
-  await sendLink("maria@example");
+  await sendCode("maria@example");
 
   expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Enter a valid email address");
 
@@ -171,15 +177,15 @@ test("SIGNIN-03 a valid email moves to Sending", async () => {
 
   renderScreen({}, auth);
 
-  await sendLink("maria@example.com");
+  await sendCode("maria@example.com");
 
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
 });
 
-test("SIGNIN-03 Send asks for a link to the trimmed email with this screen's time zone", async () => {
+test("SIGNIN-03 Send asks for a code to the trimmed email with this screen's time zone", async () => {
   const auth = renderScreen();
 
-  await sendLink(" maria@example.com ");
+  await sendCode(" maria@example.com ");
 
   expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith({
     email: "maria@example.com",
@@ -187,12 +193,125 @@ test("SIGNIN-03 Send asks for a link to the trimmed email with this screen's tim
   });
 });
 
-test("SIGNIN-04 the server accepting the link opens Check your email", async () => {
+test("SIGNIN-04 the server accepting the send opens Enter the code with focus in the field", async () => {
   renderScreen();
 
-  await sendLink("maria@example.com");
+  await sendCode("maria@example.com");
 
-  expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
+  expect(codeField()).toHaveFocus();
+});
+
+test("SIGNIN-04 the 6th digit checks the code for the email and signs in", async () => {
+  const auth = renderScreen({ signin: "sent" });
+
+  await user().type(codeField(), "482913");
+
+  expect(auth.verifyCode).toHaveBeenCalledExactlyOnceWith({
+    email: "maria@example.com",
+    code: "482913",
+  });
+  expect(await screen.findByRole("heading", { name: "Welcome back, Maria" })).toBeInTheDocument();
+  expect(auth.remember).toHaveBeenCalledExactlyOnceWith(MARIA);
+});
+
+test('SIGNIN-04 pasting "482 913" checks 482913', async () => {
+  const auth = renderScreen({ signin: "sent" });
+
+  await user().click(codeField());
+  await user().paste("482 913");
+
+  expect(auth.verifyCode).toHaveBeenCalledExactlyOnceWith({
+    email: "maria@example.com",
+    code: "482913",
+  });
+});
+
+test("SIGNIN-04 Checking… holds the field while the code is checked", async () => {
+  const auth = fakeAuth();
+
+  auth.verifyCode.mockReturnValue(new Promise(() => {}));
+
+  renderScreen({ signin: "sent" }, auth);
+
+  await user().type(codeField(), "482913");
+
+  expect(screen.getByRole("button", { name: "Checking…" })).toBeDisabled();
+  expect(codeField()).toHaveAttribute("readonly");
+});
+
+test("SIGNIN-17 a wrong code clears the field until the next digit", async () => {
+  const auth = fakeAuth();
+
+  auth.verifyCode.mockResolvedValueOnce(err("wrong-code"));
+
+  renderScreen({ signin: "sent" }, auth);
+
+  await user().type(codeField(), "000000");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("That code isn’t right. Try again.");
+  expect(codeField()).toHaveValue("");
+  expect(codeField()).toBeInvalid();
+
+  await user().type(codeField(), "4");
+
+  expect(codeField()).toHaveValue("4");
+  expect(codeField()).toBeValid();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+test("SIGNIN-17 the 5th wrong try locks the field", async () => {
+  const auth = fakeAuth();
+
+  auth.verifyCode.mockResolvedValueOnce(err("code-locked"));
+
+  renderScreen({ signin: "sent", backin: 8 }, auth);
+
+  await user().type(codeField(), "000000");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Too many tries. Send a new code.");
+  expect(codeField()).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Send a new code" })).toBeEnabled();
+});
+
+test("SIGNIN-08 a code the server finds expired opens This code has expired", async () => {
+  const auth = fakeAuth();
+
+  auth.verifyCode.mockResolvedValueOnce(err("code-expired"));
+
+  renderScreen({ signin: "sent" }, auth);
+
+  await user().type(codeField(), "482913");
+
+  expect(await screen.findByRole("heading", { name: "This code has expired" })).toBeInTheDocument();
+});
+
+test("SIGNIN-08 Enter the code expires after 10 minutes", async () => {
+  renderScreen({ signin: "sent" });
+
+  await user().click(codeField());
+  await advance(10 * 60_000);
+
+  expect(screen.getByRole("heading", { name: "This code has expired" })).toBeInTheDocument();
+});
+
+test("SIGNIN-10 offline the 6th digit never submits, and Sign in works after reconnecting", async () => {
+  const offline = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+  const auth = renderScreen({ signin: "sent" });
+
+  await user().type(codeField(), "482913");
+
+  expect(auth.verifyCode).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
+
+  offline.mockReturnValue(true);
+  await act(() => window.dispatchEvent(new Event("online")));
+  await user().click(screen.getByRole("button", { name: "Sign in" }));
+
+  expect(auth.verifyCode).toHaveBeenCalledOnce();
+
+  vi.restoreAllMocks();
 });
 
 test("SIGNIN-03 a failed send returns to the form with the email kept", async () => {
@@ -202,78 +321,30 @@ test("SIGNIN-03 a failed send returns to the form with the email kept", async ()
 
   renderScreen({}, auth);
 
-  await sendLink("maria@example.com");
+  await sendCode("maria@example.com");
 
   expect(await screen.findByText("Couldn’t send. Try again.")).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveValue("maria@example.com");
   expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Couldn’t send. Try again.");
 });
 
-test("SIGNIN-04 the waiting screen polls the sign-in status every 2 s", async () => {
-  const auth = renderScreen();
-
-  await sendLink("maria@example.com");
-  await screen.findByRole("heading", { name: "Check your email" });
-
-  expect(auth.status).not.toHaveBeenCalled();
-
-  await advance(2_000);
-
-  expect(auth.status).toHaveBeenCalledTimes(1);
-
-  await advance(2_000);
-
-  expect(auth.status).toHaveBeenCalledTimes(2);
-});
-
-test("SIGNIN-04 Use a different email stops polling", async () => {
-  const auth = renderScreen({ signin: "sent", backin: 0 });
-
-  await user().click(screen.getByRole("button", { name: "Use a different email" }));
-  await advance(4_000);
-
-  expect(auth.status).not.toHaveBeenCalled();
-});
-
-test("SIGNIN-10 offline while waiting keeps Check your email and polls again", async () => {
-  const auth = fakeAuth();
-
-  auth.status.mockResolvedValueOnce(err("network"));
-
-  renderScreen({ signin: "sent" }, auth);
-
-  await advance(2_000);
-
-  expect(screen.getByRole("heading", { name: "Check your email" })).toBeInTheDocument();
-
-  await advance(2_000);
-
-  expect(auth.status).toHaveBeenCalledTimes(2);
-});
-
-test("SIGNIN-08 Send a new link sends again from the expired screen", async () => {
+test("SIGNIN-08 Send a new code sends again from the expired screen", async () => {
   const auth = renderScreen({ signin: "expired" });
 
-  await user().click(screen.getByRole("button", { name: "Send a new link" }));
+  await user().click(screen.getByRole("button", { name: "Send a new code" }));
 
   expect(auth.sendCode).toHaveBeenCalledWith(
     expect.objectContaining({ email: "maria@example.com" }),
   );
-  expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
 });
 
 test("SIGNIN-09 signing in saves the account to glance-meta and opens Today after 2.2 s", async () => {
-  const auth = fakeAuth();
+  const auth = renderScreen({ signin: "sent" });
 
-  auth.status.mockResolvedValue(
-    answer({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
-  );
+  await user().type(codeField(), "482913");
 
-  renderScreen({ signin: "sent" }, auth);
-
-  await advance(2_000);
-
-  expect(screen.getByRole("heading", { name: "Welcome back, Maria" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Welcome back, Maria" })).toBeInTheDocument();
   expect(auth.remember).toHaveBeenCalledExactlyOnceWith(MARIA);
 
   await advance(2_100);
@@ -289,7 +360,7 @@ function openLink(link: "opened" | "stale") {
   window.history.replaceState(null, "", `/signin?link=${link}`);
 }
 
-test("SIGNIN-09 the device that opened a returning account's link signs in and opens Today", async () => {
+test("SIGNIN-15 the device that opened a returning account's QR link signs in and opens Today", async () => {
   const auth = fakeAuth();
 
   auth.status.mockResolvedValue(
@@ -309,19 +380,18 @@ test("SIGNIN-09 the device that opened a returning account's link signs in and o
   expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
 });
 
-test("SIGNIN-06 the device that opened a new account's link asks for the name first", async () => {
+test("SIGNIN-06 a new account's right code asks for the name first", async () => {
   const auth = fakeAuth();
 
   const ana = { ...MARIA, email: "ana@example.com", name: null };
 
-  auth.status.mockResolvedValue(
-    answer({ state: "signed-in", account: ana, returning: false, setupDone: false }),
+  auth.verifyCode.mockResolvedValue(
+    ok({ state: "signed-in", account: ana, returning: false, setupDone: false }),
   );
 
-  openLink("opened");
+  renderScreen({ signin: "sent" }, auth);
 
-  renderScreen({}, auth);
-
+  await user().type(codeField(), "482913");
   await user().type(await screen.findByLabelText("Your name"), "Ana");
 
   expect(auth.remember).not.toHaveBeenCalled();
@@ -490,42 +560,46 @@ test("SIGNIN-06 a failed name save keeps the name step and says so", async () =>
   expect(screen.getByLabelText("Your name")).toHaveValue("Ana");
 });
 
-test("SIGNIN-07 [Mock] I finished on my phone welcomes the new account", async () => {
-  const auth = renderScreen({ signin: "phone" });
-
-  await user().click(screen.getByRole("button", { name: "I finished on my phone" }));
-
-  expect(await screen.findByRole("heading", { name: "Welcome, Maria" })).toBeInTheDocument();
-  expect(auth.remember).toHaveBeenCalledWith(MARIA);
-});
-
-test("SIGNIN-04 Use a different email appears 10 s after the link is sent", async () => {
+test("SIGNIN-04 Send a new code and Use a different email appear 10 s after the send", async () => {
   renderScreen();
 
-  await sendLink("maria@example.com");
+  await sendCode("maria@example.com");
 
-  expect(await screen.findByRole("timer")).toHaveTextContent("Use a different email in 0:10");
+  expect(await screen.findByRole("timer")).toHaveTextContent("New code or different email in 0:10");
 
   await advance(3_000);
 
-  expect(screen.getByRole("timer")).toHaveTextContent("Use a different email in 0:07");
+  expect(screen.getByRole("timer")).toHaveTextContent("New code or different email in 0:07");
 
   await advance(7_000);
 
   expect(screen.queryByRole("timer")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Use a different email" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Send a new code" })).toBeInTheDocument();
+});
+
+test("SIGNIN-04 Send a new code sends again and restarts the countdown", async () => {
+  const auth = renderScreen({ signin: "sent", backin: 0 });
+
+  await user().click(screen.getByRole("button", { name: "Send a new code" }));
+
+  expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({ email: "maria@example.com" }),
+  );
+  expect(await screen.findByRole("timer")).toHaveTextContent("New code or different email in 0:10");
 });
 
 test("SIGNIN-04 signin=sent&backin=8 holds at 0:08 on a frozen clock", () => {
   renderScreen({ signin: "sent", backin: 8 });
 
-  expect(screen.getByRole("timer")).toHaveTextContent("Use a different email in 0:08");
+  expect(screen.getByRole("timer")).toHaveTextContent("New code or different email in 0:08");
 });
 
-test("SIGNIN-04 signin=sent opens Check your email for the fixture account", () => {
-  renderScreen({ signin: "sent" });
+test("SIGNIN-04 signin=sent&code=482 opens Enter the code with 3 digits typed", () => {
+  renderScreen({ signin: "sent", code: "482" });
 
-  expect(screen.getByRole("heading", { name: "Check your email" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
+  expect(codeField()).toHaveValue("482");
   expect(screen.getByText("maria@example.com")).toBeInTheDocument();
 });
 
@@ -533,7 +607,7 @@ test("SIGNIN-10 signin=offline shows the offline form", () => {
   renderScreen({ signin: "offline" });
 
   expect(screen.getByText("You’re offline")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeDisabled();
 });
 
 test("SIGNIN-10 the browser going offline disables sending", () => {
@@ -541,7 +615,7 @@ test("SIGNIN-10 the browser going offline disables sending", () => {
 
   renderScreen();
 
-  expect(screen.getByRole("button", { name: "Send sign-in link" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Send code" })).toBeDisabled();
 
   vi.restoreAllMocks();
 });
@@ -555,12 +629,12 @@ test("SIGNIN-03 signin=sendfail clears on the next keystroke and Send retries", 
 
   expect(screen.getByLabelText("Email")).not.toHaveAccessibleDescription();
 
-  await user().click(screen.getByRole("button", { name: "Send sign-in link" }));
+  await user().click(screen.getByRole("button", { name: "Send code" }));
 
   expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({ email: "maria@example.com" }),
   );
-  expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
 });
 
 const GUEST_BUTTON = { name: "Sign-in as guests" };

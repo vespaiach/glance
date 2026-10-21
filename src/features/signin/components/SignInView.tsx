@@ -9,7 +9,6 @@ import {
   LogOut,
   Mail,
   RotateCw,
-  Smartphone,
   Undo2,
   UserRound,
   WifiOff,
@@ -18,13 +17,14 @@ import { type FormEvent, type Ref, useRef } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
-import { differentEmailIn, firstName, isSwitchingEmail } from "@/domain/signIn";
+import { CODE_LENGTH, differentEmailIn, firstName, isSwitchingEmail } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
 import { PlaceForm, type WeatherSetupFlow } from "@/features/weather";
 import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
+import { CodeField } from "@/ui/CodeField";
 import { useFieldInView } from "@/ui/fieldInView";
 import { Icon } from "@/ui/Icon";
 import { TextInput } from "@/ui/TextInput";
@@ -34,6 +34,8 @@ import { SignInHero } from "./SignInHero";
 import { Actions, Email, Heading, LockFooter, StatusTile, SwitchTile } from "./SignInParts";
 
 type SignedOut = { email: string; pending: number };
+
+type CodeState = Extract<SignInState, { step: "sent" | "checking" | "locked" }>;
 
 type SignInViewProps = {
   state: SignInState;
@@ -45,10 +47,8 @@ type SignInViewProps = {
   tz: string;
   breakpoint: Breakpoint;
   online: boolean;
-  demo: boolean;
   guest?: boolean;
   onAction: (action: SignInAction) => void;
-  onFinishedOnPhone: () => void;
   keyboardInset?: number;
   rootRef?: Ref<HTMLDivElement>;
   xstyle?: stylex.StyleXStyles;
@@ -106,7 +106,7 @@ const styles = stylex.create({
     paddingTop: space.lg,
     boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
   },
-  backTimer: {
+  waitTimer: {
     display: "flex",
     alignItems: "center",
     minHeight: 44,
@@ -300,36 +300,94 @@ function BackButton({ onAction }: Pick<StepProps, "onAction">) {
   );
 }
 
-function ResendButton({ onAction }: Pick<StepProps, "onAction">) {
+function ResendButton({
+  variant,
+  disabled,
+  onAction,
+}: Pick<StepProps, "onAction"> & { variant?: "ghost"; disabled?: boolean }) {
   return (
-    <Button icon={RotateCw} onClick={() => onAction({ type: "send" })}>
+    <Button
+      variant={variant}
+      icon={RotateCw}
+      disabled={disabled}
+      onClick={() => onAction({ type: "send" })}
+    >
       {copy.signIn.resend}
     </Button>
   );
 }
 
-function BackTimer({ seconds }: { seconds: number }) {
+function WaitTimer({ seconds }: { seconds: number }) {
   return (
-    <span role="timer" aria-live="off" {...stylex.props(styles.backTimer)}>
-      {copy.signIn.differentEmailIn(seconds)}
+    <span role="timer" aria-live="off" {...stylex.props(styles.waitTimer)}>
+      {copy.signIn.waitFor(seconds)}
     </span>
   );
 }
 
-function SentStep({ email, backIn, onAction }: StepProps & { email: string; backIn: number }) {
-  const { sent } = copy.signIn;
+function CodeStep({ state, time, online, onAction }: StepProps & { state: CodeState; time: Date }) {
+  const { code } = copy.signIn;
+
+  const checking = state.step === "checking";
+
+  const locked = state.step === "locked";
+
+  const digits = locked ? "" : state.code;
+
+  const waitFor = locked ? 0 : differentEmailIn(state.sentAt, time);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+
+    onAction({ type: "verify", online });
+  };
 
   return (
     <>
-      <Heading eyebrow={copy.signIn.eyebrow} title={sent.title}>
-        <Email before={sent.before} email={email} after={sent.after} />
+      <Heading eyebrow={copy.signIn.eyebrow} title={code.title}>
+        <Email before={code.before} email={state.email} after={code.after} />
       </Heading>
-      <StatusTile icon={Mail}>{sent.expires}</StatusTile>
-      <Actions>
-        {backIn > 0 ? <BackTimer seconds={backIn} /> : <BackButton onAction={onAction} />}
+      <form noValidate onSubmit={submit} {...stylex.props(styles.form)}>
+        <CodeField
+          label={code.label}
+          value={digits}
+          onChange={(text) => onAction({ type: "code", text, online })}
+          error={codeError(state)}
+          busy={checking}
+          disabled={locked}
+          autoFocus
+        />
+        {!online && (
+          <Banner tone="soft" icon={WifiOff} title={code.offlineTitle} body={code.offlineBody} />
+        )}
+        <Actions>
+          <Button
+            type="submit"
+            iconRight={checking ? undefined : ArrowRight}
+            disabled={!online || checking || locked || digits.length < CODE_LENGTH}
+          >
+            {checking ? code.checking : code.submit}
+          </Button>
+        </Actions>
+      </form>
+      <Actions ruled>
+        {waitFor > 0 ? (
+          <WaitTimer seconds={waitFor} />
+        ) : (
+          <>
+            <ResendButton variant="ghost" disabled={!online} onAction={onAction} />
+            <BackButton onAction={onAction} />
+          </>
+        )}
       </Actions>
     </>
   );
+}
+
+function codeError(state: CodeState): string | undefined {
+  if (state.step === "locked") return copy.signIn.code.locked;
+
+  return state.step === "sent" && state.wrong ? copy.signIn.code.wrong : undefined;
 }
 
 function NameStep({
@@ -402,41 +460,21 @@ function LocationStep({
   );
 }
 
-function PhoneStep({ demo, onAction, onFinishedOnPhone }: StepProps) {
-  const { phone } = copy.signIn;
-
-  return (
-    <>
-      <Heading eyebrow={copy.signIn.eyebrow} title={phone.title}>
-        {phone.body}
-      </Heading>
-      <StatusTile icon={Smartphone} pulsing>
-        {phone.waiting}
-      </StatusTile>
-      <Actions>
-        {demo && <Button onClick={onFinishedOnPhone}>{phone.finished}</Button>}
-        <BackButton onAction={onAction} />
-      </Actions>
-    </>
-  );
-}
-
 function ExpiredStep({
   state,
+  online,
   onAction,
 }: StepProps & { state: Extract<SignInState, { step: "expired" }> }) {
-  const text = state.onLink ? copy.signIn.linkExpired : copy.signIn.expired;
-
-  const eyebrow = state.onLink ? copy.signIn.linkExpired.eyebrow : copy.signIn.eyebrow;
+  const { expired } = copy.signIn;
 
   return (
     <>
-      <Heading eyebrow={eyebrow} title={text.title}>
-        <Email before={text.before} email={state.email} after={text.after} />
+      <Heading eyebrow={copy.signIn.eyebrow} title={expired.title}>
+        <Email before={expired.before} email={state.email} after={expired.after} />
       </Heading>
       <Actions>
-        <ResendButton onAction={onAction} />
-        {!state.onLink && <BackButton onAction={onAction} />}
+        <ResendButton disabled={!online} onAction={onAction} />
+        <BackButton onAction={onAction} />
       </Actions>
     </>
   );
@@ -468,15 +506,13 @@ function SignInStep({ time, ...props }: StepProps & { time: Date }) {
     case "guest":
       return <FormStep {...props} />;
     case "sent":
-      return (
-        <SentStep {...props} email={state.email} backIn={differentEmailIn(state.sentAt, time)} />
-      );
+    case "checking":
+    case "locked":
+      return <CodeStep {...props} state={state} time={time} />;
     case "name":
       return <NameStep {...props} state={state} />;
     case "location":
       return <LocationStep {...props} state={state} />;
-    case "phone":
-      return <PhoneStep {...props} />;
     case "expired":
       return <ExpiredStep {...props} state={state} />;
     case "done":

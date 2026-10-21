@@ -2,9 +2,8 @@ import { useEffect, useEffectEvent, useReducer, useRef, useState } from "react";
 import type { AuthStatus, SignInAuth } from "@/data/repos";
 import type { Account, LocationRequest, WeatherLocation } from "@/domain/schemas";
 import { useWeatherSetup, type WeatherSetupFlow, type WeatherSetupState } from "@/features/weather";
-import { type FixtureAccount, type SignInAction, type SignInState, signInReducer } from "./signIn";
-
-export const POLL_MS = 2_000;
+import type { NowStore } from "@/shell/providers/now";
+import { type SignInAction, type SignInState, signInReducer } from "./signIn";
 
 export const OPEN_TODAY_MS = 2_200;
 
@@ -12,8 +11,7 @@ type Options = {
   initial: SignInState;
   initialSetup: () => WeatherSetupState;
   auth: SignInAuth;
-  fixture: FixtureAccount;
-  now: () => Date;
+  clock: NowStore;
   onSignedIn: () => void;
 };
 
@@ -22,21 +20,13 @@ export type SignInFlow = {
   guest: boolean;
   setup: WeatherSetupFlow;
   act(action: SignInAction): void;
-  finishedOnPhone(): void;
 };
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-export function useSignIn({
-  initial,
-  initialSetup,
-  auth,
-  fixture,
-  now,
-  onSignedIn,
-}: Options): SignInFlow {
+export function useSignIn({ initial, initialSetup, auth, clock, onSignedIn }: Options): SignInFlow {
   const [state, dispatch] = useReducer(signInReducer, initial);
 
   const mounted = useMounted();
@@ -54,9 +44,6 @@ export function useSignIn({
 
     if (status.account.name !== null) finish(status.account);
   };
-
-  const signedIn = (account: Account, returning: boolean) =>
-    statusAnswered({ state: "signed-in", account, returning, setupDone: true });
 
   const endSetup = async (account: Account, request: LocationRequest) => {
     const answer = await auth.location(request);
@@ -86,7 +73,7 @@ export function useSignIn({
       return ended;
     });
 
-  usePolling(isWaiting(state), auth.status, statusAnswered);
+  useCodeExpiry(state.step === "sent", clock, (now) => dispatch({ type: "tick", now }));
 
   useLinkCheck(state.step === "opening", auth.status, (answer) => {
     if (!answer.ok) return dispatch({ type: "status-failed" });
@@ -104,10 +91,18 @@ export function useSignIn({
     statusAnswered(answer.value);
   };
 
-  const sendLink = async (email: string) => {
+  const sendCode = async (email: string) => {
     const answer = await auth.sendCode({ email, timeZone: timeZone() });
 
-    dispatch(answer.ok ? { type: "link-sent", at: now() } : { type: "link-failed" });
+    dispatch(answer.ok ? { type: "code-sent", at: clock.get() } : { type: "send-failed" });
+  };
+
+  const verifyCode = async (email: string, code: string) => {
+    const answer = await auth.verifyCode({ email, code });
+
+    if (!answer.ok) return dispatch({ type: "rejected", error: answer.error });
+
+    statusAnswered(answer.value);
   };
 
   const saveName = async (draft: string) => {
@@ -125,7 +120,9 @@ export function useSignIn({
 
     if (next === state) return;
 
-    if (next.step === "sending") void sendLink(next.email);
+    if (next.step === "sending") void sendCode(next.email);
+
+    if (next.step === "checking") void verifyCode(next.email, next.code);
 
     if (next.step === "guest") void signInAsGuest();
 
@@ -134,42 +131,17 @@ export function useSignIn({
     if (next.step === "location" && next.skipping) skip(next.account);
   };
 
-  const finishedOnPhone = () => {
-    if (state.step === "phone") signedIn(fixture, false);
-  };
-
-  return { state, guest, setup, act, finishedOnPhone };
+  return { state, guest, setup, act };
 }
 
-function isWaiting(state: SignInState): boolean {
-  return state.step === "sent" || state.step === "phone";
-}
-
-function usePolling(
-  waiting: boolean,
-  status: SignInAuth["status"],
-  onStatus: (answer: AuthStatus) => void,
-) {
-  const answered = useEffectEvent(onStatus);
+function useCodeExpiry(open: boolean, clock: NowStore, onTick: (now: Date) => void) {
+  const ticked = useEffectEvent(onTick);
 
   useEffect(() => {
-    if (!waiting) return;
+    if (!open) return;
 
-    let live = true;
-
-    const poll = async () => {
-      const answer = await status();
-
-      if (live && answer.ok) answered(answer.value);
-    };
-
-    const timer = setInterval(() => void poll(), POLL_MS);
-
-    return () => {
-      live = false;
-      clearInterval(timer);
-    };
-  }, [waiting, status]);
+    return clock.subscribe(() => ticked(clock.get()));
+  }, [open, clock]);
 }
 
 function useLinkCheck(
