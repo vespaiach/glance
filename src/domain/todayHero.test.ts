@@ -1,4 +1,4 @@
-import { todayHero } from "./todayHero";
+import { hasEvent, todayHero } from "./todayHero";
 import { deviceTimeZone } from "./zone";
 
 const tz = deviceTimeZone();
@@ -25,7 +25,11 @@ describe("todayHero", () => {
   });
 
   it("TODAY-02 once every event ended there is nothing else today", () => {
-    expect(todayHero(day, at(13, 0), tz)).toEqual({ kind: "ended" });
+    expect(todayHero(day, at(13, 0), tz)).toEqual({ kind: "ended", done: 3 });
+  });
+
+  it("TODAY-02 the ended day counts the timed events that are done", () => {
+    expect(todayHero([call], at(12, 0), tz)).toEqual({ kind: "ended", done: 1 });
   });
 
   it("TODAY-02 a day with no events has nothing scheduled", () => {
@@ -88,6 +92,7 @@ describe("todayHero in a zone", () => {
 
     expect(todayHero([late], new Date("2026-10-10T16:00:00Z"), "America/Los_Angeles")).toEqual({
       kind: "ended",
+      done: 1,
     });
   });
 
@@ -112,6 +117,15 @@ describe("todayHero in a zone", () => {
   });
 
   it("TODAY-02 all-day events don't keep the day from ending", () => {
-    expect(todayHero([grandpa, ...day], at(13, 0), tz)).toEqual({ kind: "ended" });
+    expect(todayHero([grandpa, ...day], at(13, 0), tz)).toEqual({ kind: "ended", done: 3 });
+  });
+});
+
+describe("hasEvent", () => {
+  it("TODAY-02 running and upcoming heroes carry an event, open days don't", () => {
+    expect(hasEvent(todayHero(day, at(10, 41), tz))).toBe(true);
+    expect(hasEvent(todayHero(day, at(9, 45), tz))).toBe(true);
+    expect(hasEvent(todayHero(day, at(13, 0), tz))).toBe(false);
+    expect(hasEvent(todayHero([], at(10, 41), tz))).toBe(false);
   });
 });

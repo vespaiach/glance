@@ -1,5 +1,6 @@
 export { HeroSkeleton, HeroSummary } from "./components/HeroSummary";
 export { NowWeather } from "./components/NowWeather";
+export { OpenDay } from "./components/OpenDay";
 export {
   PictureOfDay,
   PictureOfDayEmpty,

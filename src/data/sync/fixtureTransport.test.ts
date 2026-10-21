@@ -117,6 +117,20 @@ describe("seedFixtureDb", () => {
     expect(await db.tags.count()).toBe(FIXTURE_FAMILY.length);
   });
 
+  it("TODAY-13 events=none leaves Oct 9 empty and keeps the later days", async () => {
+    await seedFixtureDb(db, { events: "none", allday: true });
+
+    const rows = await db.events.toArray();
+
+    const onNinth = rows.filter(
+      (event) =>
+        dateKey(new Date(event.startAt), event.allDay ? "UTC" : FIXTURE_TIME_ZONE) === "2026-10-09",
+    );
+
+    expect(onNinth).toEqual([]);
+    expect(rows.some((event) => event.title === "Fishing trip")).toBe(true);
+  });
+
   it("TODAY-11 events=many adds four plans, so Oct 9 has 22", async () => {
     await seedFixtureDb(db, { events: "many" });
 

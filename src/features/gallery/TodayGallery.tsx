@@ -1,10 +1,12 @@
 import * as stylex from "@stylexjs/stylex";
-import type { Season } from "@/domain/schemas";
-import { todayHero } from "@/domain/todayHero";
+import { dayRibbon } from "@/domain/dayRibbon";
+import type { CalendarEvent, Season } from "@/domain/schemas";
+import { type EventHero, hasEvent, todayHero } from "@/domain/todayHero";
 import {
   HeroSkeleton,
   HeroSummary,
   NowWeather,
+  OpenDay,
   PictureOfDay,
   PictureOfDayEmpty,
   PictureOfDayPanel,
@@ -42,14 +44,25 @@ const LATER = octoberAt(9, 9, 45);
 
 const EVENING = octoberAt(9, 19, 0);
 
-const NOW_HERO = todayHero(TODAY_EVENTS, NOW, GALLERY_TZ);
+const NOW_HERO = eventHero(NOW);
 
-const HEROES = [
-  NOW_HERO,
-  todayHero(TODAY_EVENTS, LATER, GALLERY_TZ),
-  todayHero(TODAY_EVENTS, EVENING, GALLERY_TZ),
-  todayHero([], NOW, GALLERY_TZ),
-];
+const NEXT_HERO = eventHero(LATER);
+
+const SUNSET = TODAY_WEATHER.current.sunset;
+
+const NEXT_LINE = "Tomorrow · 9:00 AM · Soccer game, Laurelhurst Park";
+
+const WRAPPED = { kind: "ended", done: TODAY_EVENTS.length } as const;
+
+const WIDE = { kind: "none" } as const;
+
+const OPEN_DAYS = [
+  { key: "wrap", hero: WRAPPED, now: EVENING, events: TODAY_EVENTS, nextLine: NEXT_LINE },
+  { key: "wide", hero: WIDE, now: NOW, events: [], nextLine: NEXT_LINE },
+  { key: "morning", hero: WIDE, now: octoberAt(9, 6, 0), events: [], nextLine: NEXT_LINE },
+  { key: "after-sunset", hero: WIDE, now: octoberAt(9, 20, 30), events: [], nextLine: NEXT_LINE },
+  { key: "no-next", hero: WIDE, now: NOW, events: [], nextLine: undefined },
+] as const;
 
 const PICTURES = [
   {
@@ -163,7 +176,7 @@ const WEATHERS = [
 export function TodayGallery({ season }: { season: Season }) {
   return (
     <GalleryGroup title={gallery.groups.today}>
-      {HEROES.map((hero) => (
+      {[NOW_HERO, NEXT_HERO].map((hero) => (
         <TodayHero
           tz={GALLERY_TZ}
           key={hero.kind}
@@ -179,6 +192,27 @@ export function TodayGallery({ season }: { season: Season }) {
             tags={GALLERY_FAMILY}
             clock="12h"
             onOpenEvent={ignore}
+          />
+        </TodayHero>
+      ))}
+      {OPEN_DAYS.map(({ key, hero, now, events, nextLine }) => (
+        <TodayHero
+          tz={GALLERY_TZ}
+          key={key}
+          season={season}
+          time={now}
+          clock="12h"
+          weather={<NowWeather tz={GALLERY_TZ} state={WEATHERS[0].state} {...weather} />}
+          xstyle={styles.hero}
+        >
+          <OpenDay
+            hero={hero}
+            ribbon={dayRibbon(events, now, new Date(SUNSET), GALLERY_TZ)}
+            now={now}
+            clock="12h"
+            tz={GALLERY_TZ}
+            nextLine={nextLine}
+            onOpenCalendar={ignore}
           />
         </TodayHero>
       ))}
@@ -253,4 +287,12 @@ export function TodayGallery({ season }: { season: Season }) {
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "failed" }} {...notes} />
     </GalleryGroup>
   );
+}
+
+function eventHero(now: Date): EventHero<CalendarEvent> {
+  const hero = todayHero(TODAY_EVENTS, now, GALLERY_TZ);
+
+  if (!hasEvent(hero)) throw new Error("The gallery day has no event at this time");
+
+  return hero;
 }

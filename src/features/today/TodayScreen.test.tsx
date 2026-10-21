@@ -66,6 +66,16 @@ const GRANDPA: CalendarEvent = {
   tagIds: [],
 };
 
+const TOMORROW: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000005",
+  title: "Soccer game",
+  location: "Park",
+  startAt: new Date(2026, 9, 10, 9, 0).toISOString(),
+  endAt: new Date(2026, 9, 10, 10, 0).toISOString(),
+  everyone: true,
+  tagIds: [],
+};
+
 const WEATHER: Weather = {
   location: "Portland, OR",
   fetchedAt: iso(10, 0),
@@ -144,6 +154,57 @@ test("TODAY-02 the hero shows the event running now", async () => {
   expect(screen.getByText("34 min left")).toBeInTheDocument();
   expect(screen.getByText("Living room · until 11:15 · Everyone")).toBeInTheDocument();
   expect(screen.getByText("Today · 1 event")).toBeInTheDocument();
+});
+
+test("TODAY-13 a day with no events is wide open, with the next event in a tile", async () => {
+  await store.db.events.put(synced(TOMORROW));
+
+  await markSynced(store);
+
+  renderToday();
+
+  expect(await screen.findByText("The day is wide open")).toBeInTheDocument();
+  expect(screen.getByText("Free until 10 PM · 11 h 19 min")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: /Next on the calendar/ }));
+
+  expect(screen.getByRole("button", { name: /Next on the calendar/ })).toHaveTextContent(
+    "Tomorrow · 9:00 AM · Soccer game, Park",
+  );
+  expect(navigation.push).toHaveBeenCalledWith("/calendar");
+});
+
+test("TODAY-13 with nothing upcoming the open day has no tile", async () => {
+  await markSynced(store);
+
+  renderToday();
+
+  expect(await screen.findByText("The day is wide open")).toBeInTheDocument();
+  expect(screen.queryByText("Next on the calendar")).not.toBeInTheDocument();
+});
+
+test("TODAY-02 once every event ended the day is a wrap", async () => {
+  await store.db.events.put(synced({ ...CALL, startAt: iso(8, 0), endAt: iso(9, 0) }));
+
+  await markSynced(store);
+
+  renderToday();
+
+  expect(await screen.findByText("That’s a wrap for today")).toBeInTheDocument();
+  expect(screen.getByText("1 event done · free until 10 PM")).toBeInTheDocument();
+});
+
+test("TODAY-13 the open day ribbon marks the sunset from the forecast", async () => {
+  await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
+  await store.db.weather.put({ ...WEATHER, accountId: store.accountId });
+
+  await markSynced(store);
+
+  const { container } = renderToday();
+
+  await screen.findByText("The day is wide open");
+
+  expect(container.querySelector(".lucide-sunset")).toBeInTheDocument();
 });
 
 test("TODAY-03 tapping the hero event opens Edit event", async () => {

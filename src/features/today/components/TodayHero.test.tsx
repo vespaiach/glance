@@ -120,21 +120,6 @@ test("TODAY-02 an event with no place shows only its time", () => {
   expect(screen.getByText("12:00 PM · Mom, Leo")).toBeInTheDocument();
 });
 
-test("TODAY-02 once today's events ended the hero says so", () => {
-  render(<HeroSummary {...summary} hero={{ kind: "ended" }} />);
-
-  expect(screen.getByText("Nothing else today")).toBeInTheDocument();
-  expect(screen.getByText("Today’s events have ended.")).toBeInTheDocument();
-  expect(screen.queryByRole("button")).not.toBeInTheDocument();
-});
-
-test("TODAY-02 a day with no events has nothing scheduled", () => {
-  render(<HeroSummary {...summary} hero={{ kind: "none" }} />);
-
-  expect(screen.getByText("Nothing scheduled")).toBeInTheDocument();
-  expect(screen.getByText("Events show here while they happen.")).toBeInTheDocument();
-});
-
 test("TODAY-03 tapping the hero event opens it", async () => {
   const onOpenEvent = vi.fn<(id: string) => void>();
 

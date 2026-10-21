@@ -2,18 +2,10 @@ import * as stylex from "@stylexjs/stylex";
 import { LogOut, WifiOff } from "lucide-react";
 import type { Ref } from "react";
 import { copy } from "@/copy";
-import { eventDayKey } from "@/domain/allDay";
-import { isTomorrow } from "@/domain/ambient";
 import { nextNotableDay } from "@/domain/nextNotableDay";
 import type { AccountSettings, CalendarEvent, Season, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
-import {
-  type Clock as ClockSetting,
-  clockAt,
-  formatMonth,
-  formatMonthDay,
-  formatWeekday,
-} from "@/domain/time";
+import { type Clock as ClockSetting, formatMonth, formatWeekday } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { conditionText } from "@/features/weather";
@@ -29,6 +21,7 @@ import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { seasonIcons } from "@/ui/seasonIcons";
 import { weatherIcons } from "@/ui/weatherIcons";
 import { Zone } from "@/ui/Zone";
+import { eventLine } from "../eventLine";
 
 type Unit = AccountSettings["tempUnit"];
 
@@ -237,20 +230,6 @@ function lowLine(weather: Weather, now: Date, tz: string, unit: Unit): string {
   if (rainy === undefined) return low;
 
   return `${low} · ${copy.ambient.rain(formatWeekday(parseDateKey(rainy.date), "UTC"), rainy.precip ?? 0)}`;
-}
-
-function eventDay(event: CalendarEvent, now: Date, tz: string): string {
-  if (isTomorrow(event, now, tz)) return copy.ambient.tomorrow;
-
-  const date = parseDateKey(eventDayKey(event, tz));
-
-  return copy.ambient.day(formatWeekday(date, "UTC"), formatMonthDay(date, "UTC"));
-}
-
-function eventLine(event: CalendarEvent, now: Date, clock: ClockSetting, tz: string): string {
-  const start = event.allDay ? copy.ambient.allDay : clockAt(event.startAt, clock, tz);
-
-  return copy.ambient.event(eventDay(event, now, tz), start, event.title, event.location);
 }
 
 function LineSkeleton({ label }: { label: string }) {

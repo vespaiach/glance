@@ -1,9 +1,11 @@
+import { eventDayKey } from "@/domain/allDay";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { inAmbient } from "@/domain/idle";
 import { photoDetails } from "@/domain/photoName";
 import { uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, CalendarEvent, Weather, WeatherLocation } from "@/domain/schemas";
+import { dateKey } from "@/domain/zone";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_ALL_DAY,
@@ -255,7 +257,15 @@ function fixtureEvents(params: FixtureParams): CalendarEvent[] {
 
   const many = params.events === "many" ? FIXTURE_MANY_EVENTS : [];
 
-  return [...FIXTURE_SEEDED_EVENTS, ...allDay, ...many];
+  const events = [...FIXTURE_SEEDED_EVENTS, ...allDay, ...many];
+
+  return params.events === "none" ? events.filter(notOnFixtureDay(params)) : events;
+}
+
+function notOnFixtureDay(params: FixtureParams) {
+  const today = dateKey(params.now ?? FIXTURE_NOW, FIXTURE_TIME_ZONE);
+
+  return (event: CalendarEvent) => eventDayKey(event, FIXTURE_TIME_ZONE) !== today;
 }
 
 function hasUploadedPhotos(params: FixtureParams): boolean {
