@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.10 |
-| Date | 2026-10-20 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.71) · [`tech-design.md`](tech-design.md) (v2.42) |
+| Status | v2.11 |
+| Date | 2026-10-21 |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.72) · [`tech-design.md`](tech-design.md) (v2.43) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -18,7 +18,7 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 
 **Rules**
 - A task is PR-sized (about 0.5–2 days), cites the requirement IDs it covers (**Covers**) and has a **Done when** check. Done also means the checks pass (`biome check → tsc → Vitest → next build`), run locally by `/glance-next` while GitHub CI is off.
-- **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: letters used so far are A B C D E F G H I K L M N P Q R S T U V W X Y Z.
+- **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: letters used so far are A B C D E F G H I J K L M N P Q R S T U V W X Y Z.
 - **Depends on** lists hard dependencies only, by ID, and only on rows still in this file. A task can start once they are ✅.
 - One task = one branch (`feat/<ID>-<slug>`) and one PR titled with the ID (`T05: …`). **Start:** `git fetch origin`, check its dependencies are ✅ on `origin/main`, branch from `origin/main`, open a draft PR; its first commit sets the row to 🔄. **Finish:** bring in the latest `origin/main`; the last commit before merge sets the row to ✅. A closed, unmerged PR resets it to ⬜.
 - **Docs move with the code:** a PR that changes behavior, a decision, a schema, an API or the structure updates `product-spec.md` and/or `tech-design.md` in the same PR (bump the version) and fixes any row it makes wrong.
@@ -38,3 +38,12 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | Z07 | ✅ | Sheets: sticky header and footer with shadows and the soft body in `ui/Sheet` (white tiles inside); `ui/Switch`; the All day row with disabled struck-through fields; day forecast after the eyebrow in event sheets and Event details | Z05 | Switch and All day tests (row tap, picker closes, error clears, times restored); `dayForecast` tests; gallery and the Calendar board | §8.9, EVT-01, EVT-02, EVT-08 |
 | Z08 | ✅ | Settings values: `idleTimeout { on, minutes }`, `noteExpiry { on, days }`, `hideSidebarWhenIdle`; `010_settings_values.sql`, Dexie v4, defaults, `noteExpired` and the note job by days, `IdleProvider` by minutes, `useHideWhenIdle` at 20 s behind the setting; NOTE-06/07 captions; `CLIENT_BUILD` bump | Z04 | Migration and Dexie upgrade tests map every old value; job and `noteExpired` tests for 1 and 30 days and off; idle tests for off and minutes; AppShell test: setting off never hides | SET-07, NOTE-06..08, IDLE-01, SHELL-11, §7 |
 | Z09 | ✅ | Settings UI: `ui/Radio`, `ui/Slider`; the Season radio list with icons, Clock and Temperature radios, Hide sidebar when idle switch, the Back to Today and Remove notes switch + slider tiles (off keeps the value) | Z07, Z08 | Component tests for radio keys, switch writes and the kept value; gallery in four seasons; matches the Settings board at the six sizes | SET-02, SET-04, SET-05, SET-07, A11Y-02 |
+| D10 | ✅ | Design handoff v11 in the repo (Today open day, empty states, phone grip-only nav, week strip, event page, quick date, time picker); spec v0.72, tech design v2.43 and these rows | — | Docs merged | §2 |
+| J01 | ⬜ | Today open day: pure `dayRibbon(events, now, sunset)` (elapsed, now and sunset percentages, ended segments), the "The day is wide open" / "That's a wrap for today" hero states, the ribbon and the "Next on the calendar" tile; fixture `events=none`; copy | D10 | Unit tests for the ribbon at 6 AM, noon, 10 PM, after sunset and with ended events; hero state tests for none, all ended, running, upcoming; tile hidden with no upcoming event; matches Today B at the six sizes | TODAY-02, TODAY-06, TODAY-13 |
+| J02 | ⬜ | Empty states: the sticky-pad empty box on the Notes board and Today, the Picture of the day memory tile (one random prompt per load, upload pill hidden on phone); remove the first-use fixtures | D10 | Component tests for the pad opening New note, the tile opening Photos and one prompt per mount; gallery in four seasons; matches the Empty states board | TODAY-07, TODAY-09, NOTE-07 |
+| J03 | ⬜ | Phone nav: no Rail below 600 px; the grip opens the drawer directly and closing returns to the grip; "Open menu" label | D10 | Sidebar reducer tests: on phone Rail is never reached, grip → Expanded → Hidden, a view change returns to Hidden; matches the Phone drawer board | SHELL-08, SHELL-09 |
+| J04 | ⬜ | Week strip: square cells, the sliding black indicator, corner forecast at 80 px, year eyebrow, soft today fill; note sheets without header and footer shadows | D10 | Component test that the selected cell carries `aria-current` and the indicator follows a tap; gallery; matches Calendar A at the six sizes | CAL-01, SHEET |
+| J05 | ⬜ | Event page shell: the full-screen page replacing the event sheet (slide in and out, sticky header with Back, actions, "Discard changes?", phone bottom bar), "Save event" with `check`, "Delete event?" | D10 | Component tests: Back closes at once when unchanged and asks when changed, Escape, delete confirm, focus returns to the opener; matches the Phone drawer board B and Calendar C | EVT-01, EVT-05..07, EVT-10, SHEET |
+| J06 | ⬜ | Day preview column: `overlappingEvents(events, start, end)` (all-day included), the weather tile with the hourly strip, "Also at this time" | J05 | Unit tests for overlap edges, all-day and no end (30 min); tests for the rain suffix and no-forecast line; hidden below 1180 px | EVT-13 |
+| J07 | ⬜ | Quick date popover on the New and Edit event eyebrow: Today, Tomorrow, Next week chips and the month grid | J05 | Component tests: each chip sets the date and keeps the times, outside tap closes unchanged, opening closes a time picker | EVT-12 |
+| J08 | ⬜ | Time picker refresh: the sliding AM/PM toggle, the clip-reveal open animation that doesn't scroll the page, 44 px chips | J05 | Component tests: toggle keeps hour and minute, switching Starts ⇄ Ends keeps one picker, only the end error scrolls | TPK-02, TPK-03 |
