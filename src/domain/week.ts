@@ -3,7 +3,7 @@ import type { CalendarEvent, Tag } from "./schemas";
 import type { EventWho } from "./tags";
 import { addDays, dateKey, parseDateKey } from "./zone";
 
-export type WeekHeading = { range: string; month: string };
+export type WeekHeading = { year: string; month: string };
 
 export type Dot = Pick<Tag, "id" | "color">;
 
@@ -18,8 +18,6 @@ const MONTHS_BEFORE = 2;
 const MONTHS_AFTER = 3;
 
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
-
-const shortMonth = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
 
 const monthName = new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" });
 
@@ -41,22 +39,10 @@ export function stepWeek(day: string, delta: -1 | 1, today: string): string {
   return weekDays(sunday).includes(today) ? today : sunday;
 }
 
-export function weekHeading(day: string, today: string): WeekHeading {
-  const days = weekDays(day);
+export function weekHeading(day: string): WeekHeading {
+  const saturday = parseDateKey(weekDays(day)[WEEK - 1] ?? day);
 
-  const first = parseDateKey(days[0] ?? day);
-  const last = parseDateKey(days[WEEK - 1] ?? day);
-
-  const sameMonth = first.getUTCMonth() === last.getUTCMonth();
-
-  const end = sameMonth ? `${last.getUTCDate()}` : monthDay(last);
-
-  const sameYear = last.getUTCFullYear() === parseDateKey(today).getUTCFullYear();
-
-  return {
-    range: `${monthDay(first)} – ${end}`,
-    month: (sameYear ? monthName : monthYear).format(last),
-  };
+  return { year: String(saturday.getUTCFullYear()), month: monthName.format(saturday) };
 }
 
 export function weekDots(
@@ -101,10 +87,6 @@ function pickerMonth(year: number, month: number): PickerMonth {
     label: monthYear.format(first),
     days: Array.from({ length }, (_, offset) => addDays(start, offset)),
   };
-}
-
-function monthDay(date: Date): string {
-  return `${shortMonth.format(date)} ${date.getUTCDate()}`;
 }
 
 function dotsFor(plans: readonly DottedEvent[], tags: readonly Tag[]): Dot[] {

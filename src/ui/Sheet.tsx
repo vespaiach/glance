@@ -120,6 +120,7 @@ const styles = stylex.create({
   },
   cardFill: {
     backgroundColor: "inherit",
+    boxShadow: "none",
   },
   group: {
     display: "flex",
