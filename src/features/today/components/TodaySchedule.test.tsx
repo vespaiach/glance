@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { CalendarEvent } from "@/domain/schemas";
 import { deviceTimeZone } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
+import type { TimelineWeather } from "@/ui/DayTimeline";
 import { TodaySchedule } from "./TodaySchedule";
 
 const tz = deviceTimeZone();
@@ -38,6 +39,26 @@ const EVENTS: CalendarEvent[] = [
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
+const GRANDPA: CalendarEvent = {
+  id: "grandpa",
+  title: "Grandpa staying over",
+  startAt: "2026-10-09T00:00:00.000Z",
+  allDay: true,
+  location: "Guest room",
+  everyone: true,
+  tagIds: [],
+};
+
+const WEATHER: TimelineWeather = {
+  hourly: [12, 13].map((hour) => ({
+    time: iso(hour, 0),
+    icon: "cloud" as const,
+    temp: 66 + hour - 12,
+    precip: 10,
+  })),
+  unit: "F",
+};
+
 type Handlers = {
   onOpenEvent: (id: string) => void;
   onAddEvent: () => void;
@@ -49,6 +70,7 @@ function renderSchedule(
   state: ZoneState<CalendarEvent>,
   handlers: Partial<Handlers> = {},
   iconActions = false,
+  weather?: TimelineWeather,
 ) {
   return render(
     <TodaySchedule
@@ -62,6 +84,7 @@ function renderSchedule(
       clock="12h"
       breakpoint="wide"
       iconActions={iconActions}
+      weather={weather}
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
       onAddEvent={handlers.onAddEvent ?? (() => {})}
       onAddSlot={handlers.onAddSlot ?? (() => {})}
@@ -135,20 +158,55 @@ test("TODAY-03 tapping a free slot adds an event at that slot", async () => {
   });
 });
 
-test("TODAY-06 an empty day shows the empty tile with its own Add event", async () => {
+test("TODAY-06 an empty day shows the day timeline with one free slot and no empty card", () => {
+  renderSchedule({ kind: "empty" });
+
+  expect(screen.getByText("Today · No events")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Free .*Add event$/ })).toHaveTextContent(
+    /^Everyone free · /,
+  );
+  expect(screen.queryByText("No events yet")).not.toBeInTheDocument();
+});
+
+test("TODAY-06 an empty day keeps Add event in the header", async () => {
   const onAddEvent = vi.fn<() => void>();
 
   renderSchedule({ kind: "empty" }, { onAddEvent });
 
-  expect(screen.getByText("Today · No events")).toBeInTheDocument();
-  expect(screen.getByText("No events yet")).toBeInTheDocument();
-  expect(
-    screen.getByText("Add the first one. It shows here and on the calendar."),
-  ).toBeInTheDocument();
-
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   expect(onAddEvent).toHaveBeenCalledTimes(1);
+});
+
+test("TODAY-06 with a forecast, a day with no timed plans shows the weather lane", () => {
+  renderSchedule({ kind: "empty" }, {}, false, WEATHER);
+
+  expect(screen.getByRole("list", { name: "Hourly weather" })).toBeInTheDocument();
+});
+
+test("TODAY-06 a day with only all-day events also shows the weather lane", () => {
+  renderSchedule({ kind: "ready", data: [GRANDPA] }, {}, false, WEATHER);
+
+  expect(screen.getByRole("list", { name: "Hourly weather" })).toBeInTheDocument();
+});
+
+test("TODAY-06 without a forecast an empty day has no weather lane", () => {
+  renderSchedule({ kind: "empty" });
+
+  expect(screen.queryByRole("list", { name: "Hourly weather" })).not.toBeInTheDocument();
+});
+
+test("TODAY-11 a day with timed plans keeps the hour weather in the gutter", () => {
+  renderSchedule(ready, {}, false, WEATHER);
+
+  expect(screen.queryByRole("list", { name: "Hourly weather" })).not.toBeInTheDocument();
+  expect(screen.getByText("66°")).toBeInTheDocument();
+});
+
+test("TODAY-04 a schedule still loading has no Add event", () => {
+  renderSchedule({ kind: "loading" });
+
+  expect(screen.queryByRole("button", { name: "Add event" })).not.toBeInTheDocument();
 });
 
 test("LOAD-02 a schedule still loading shows a skeleton", () => {
@@ -156,16 +214,6 @@ test("LOAD-02 a schedule still loading shows a skeleton", () => {
 
   expect(screen.getByRole("status", { name: "Loading events" })).toBeInTheDocument();
 });
-
-const GRANDPA: CalendarEvent = {
-  id: "grandpa",
-  title: "Grandpa staying over",
-  startAt: "2026-10-09T00:00:00.000Z",
-  allDay: true,
-  location: "Guest room",
-  everyone: true,
-  tagIds: [],
-};
 
 const withAllDay = { kind: "ready", data: [GRANDPA, ...EVENTS] } as const;
 
@@ -222,8 +270,8 @@ test("TODAY-04 below wide, Add event and Full calendar are icon-only and keep th
   expect([onAddEvent, onOpenCalendar].map((fn) => fn.mock.calls.length)).toEqual([1, 1]);
 });
 
-test("TODAY-04 icon-only, an empty day still has no Add event in the header", () => {
+test("TODAY-04 icon-only, an empty day keeps Add event in the header", () => {
   renderSchedule({ kind: "empty" }, {}, true);
 
-  expect(screen.getAllByRole("button", { name: "Add event" })).toHaveLength(1);
+  expect(screen.getByRole("button", { name: "Add event" })).toHaveTextContent("");
 });

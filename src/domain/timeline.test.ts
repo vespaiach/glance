@@ -1,5 +1,6 @@
 import {
   gutterWeather,
+  laneTile,
   outsideDay,
   planCard,
   planRain,
@@ -461,5 +462,42 @@ describe("gutterWeather", () => {
     expect(gutterWeather(mark, 80, 120)).toBe(false);
     expect(gutterWeather(mark, 80, 103)).toBe(true);
     expect(gutterWeather(mark, 80, 147)).toBe(true);
+  });
+});
+
+describe("laneTile", () => {
+  it("TL-11 a tile 64 px or taller stacks a large icon over the temperature", () => {
+    expect(laneTile(64, false, 0)).toEqual({
+      content: true,
+      stacked: true,
+      large: true,
+      rain: false,
+      wet: false,
+    });
+  });
+
+  it("TL-11 a shorter tile puts icon and temperature in a row from 22 px", () => {
+    expect(laneTile(63, false, 0)).toMatchObject({ content: true, stacked: false, large: false });
+    expect(laneTile(22, false, 0)).toMatchObject({ content: true });
+    expect(laneTile(21, false, 0)).toMatchObject({ content: false });
+  });
+
+  it("TL-11 on phone every tile stacks small from 46 px", () => {
+    expect(laneTile(46, true, 0)).toMatchObject({ content: true, stacked: true, large: false });
+    expect(laneTile(45, true, 0)).toMatchObject({ content: false });
+  });
+
+  it("TL-11 an hour with rain of 50% or more is wet", () => {
+    expect(laneTile(20, false, 50)).toMatchObject({ wet: true, content: false });
+    expect(laneTile(100, true, 49)).toMatchObject({ wet: false });
+  });
+
+  it("TL-11 rain of 50% or more shows its chance when the tile has room", () => {
+    expect(laneTile(76, false, 70)).toMatchObject({ rain: true });
+    expect(laneTile(75, false, 70)).toMatchObject({ rain: false });
+    expect(laneTile(30, false, 70)).toMatchObject({ rain: true });
+    expect(laneTile(29, false, 70)).toMatchObject({ rain: false });
+    expect(laneTile(100, false, 40)).toMatchObject({ rain: false });
+    expect(laneTile(100, true, 80)).toMatchObject({ rain: false });
   });
 });

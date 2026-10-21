@@ -27,6 +27,7 @@ import {
 import {
   type FreeSlot,
   gutterWeather,
+  laneTile,
   type PlacedPlan,
   type PlanCard,
   planCard,
@@ -52,6 +53,8 @@ export type DayTimelineLabels = {
   free: (everyone: boolean, length: string) => string;
   freeName: (range: string) => string;
   planName: (title: string, range: string) => string;
+  lane: string;
+  chance: (percent: number) => string;
   icons: Record<WeatherIcon, string>;
 };
 
@@ -74,6 +77,7 @@ type DayTimelineProps = {
   span?: "day" | "24h";
   free: TimelineFree;
   weather?: TimelineWeather;
+  weatherAt?: "gutter" | "lane";
   labels: DayTimelineLabels;
   onOpenEvent: (id: string) => void;
   onAddEvent: (slot: { start: Date; end: Date }) => void;
@@ -114,6 +118,8 @@ const DIMENSIONS: Record<"calendar" | "today", Record<Breakpoint, Dimensions>> =
     phone: { gutter: 52, titleSize: 16 },
   },
 };
+
+const LANE_WIDTH: Record<Breakpoint, number> = { wide: 112, mid: 96, narrow: 96, phone: 48 };
 
 const SLOT_INSET = 2;
 
@@ -186,12 +192,12 @@ const styles = stylex.create({
     marginTop: 10,
     backgroundColor: colors.borderHairline,
   },
-  area: (left: number) => ({
+  area: (left: number, right: number) => ({
     position: "absolute",
     top: 0,
     bottom: 0,
     left,
-    right: 0,
+    right,
   }),
   slot: (top: number, height: number) => ({
     position: "absolute",
@@ -386,6 +392,57 @@ const styles = stylex.create({
     letterSpacing: "0.4px",
     backgroundColor: colors.surfaceCanvas,
   },
+  lane: (width: number) => ({
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width,
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+  }),
+  laneHour: (top: number, height: number) => ({
+    position: "absolute",
+    left: SLOT_GAP,
+    right: 0,
+    top,
+    height,
+    boxSizing: "border-box",
+    paddingBlock: SLOT_INSET,
+  }),
+  laneTile: {
+    height: "100%",
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceSoft,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  laneWet: {
+    backgroundColor: season.block3,
+  },
+  laneContent: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 15,
+    fontWeight: 480,
+    fontVariantNumeric: "tabular-nums",
+  },
+  laneStacked: {
+    flexDirection: "column",
+    gap: 2,
+  },
+  laneLarge: {
+    fontSize: 18,
+  },
+  laneChance: {
+    fontFamily: type.fontMono,
+    fontSize: 13,
+    letterSpacing: "0.4px",
+  },
   nowMarker: (top: number) => ({
     position: "absolute",
     insetInline: 0,
@@ -433,6 +490,7 @@ export function DayTimeline({
   span = "day",
   free,
   weather,
+  weatherAt = "gutter",
   labels,
   onOpenEvent,
   onAddEvent,
@@ -463,7 +521,9 @@ export function DayTimeline({
 
   const shared: Shared = { tags, now, tz, clock, labels };
 
-  const areaWidth = size.width - dimensions.gutter;
+  const lane = weather && weatherAt === "lane" && hours.size > 0 ? LANE_WIDTH[breakpoint] : 0;
+
+  const areaWidth = size.width - dimensions.gutter - lane;
 
   const rain = chips ? rainByHour(hours) : new Map<number, number>();
 
@@ -474,11 +534,11 @@ export function DayTimeline({
           layout={layout}
           gutter={dimensions.gutter}
           hours={hours}
-          weather={weather}
+          weather={lane > 0 ? undefined : weather}
           clock={clock}
           labels={labels}
         />
-        <div {...stylex.props(styles.area(dimensions.gutter))}>
+        <div {...stylex.props(styles.area(dimensions.gutter, lane))}>
           {free !== "none" &&
             layout.freeSlots.map((slot) => (
               <FreeSlotTile
@@ -502,6 +562,16 @@ export function DayTimeline({
             />
           ))}
         </div>
+        {lane > 0 && weather && (
+          <WeatherLane
+            width={lane}
+            rows={layout.rows}
+            hours={hours}
+            unit={weather.unit}
+            compact={breakpoint === "phone"}
+            labels={labels}
+          />
+        )}
         {layout.now && (
           <div {...stylex.props(styles.nowMarker(layout.now.top))}>
             <span {...stylex.props(styles.nowGutter(dimensions.gutter))}>
@@ -563,6 +633,60 @@ function HourMarks({
       </div>
     );
   });
+}
+
+function WeatherLane({
+  width,
+  rows,
+  hours,
+  unit,
+  compact,
+  labels,
+}: {
+  width: number;
+  rows: TimelineLayout<CalendarEvent>["rows"];
+  hours: ReadonlyMap<number, HourlyPoint>;
+  unit: TimelineWeather["unit"];
+  compact: boolean;
+  labels: DayTimelineLabels;
+}) {
+  return (
+    <ul aria-label={labels.lane} {...stylex.props(styles.lane(width))}>
+      {rows.map((row) => {
+        const point = hours.get(row.hour);
+        if (!point) return null;
+        const tile = laneTile(row.height, compact, point.precip ?? 0);
+        return (
+          <li key={row.hour} {...stylex.props(styles.laneHour(row.top, row.height), styles.reflow)}>
+            <div {...stylex.props(styles.laneTile, tile.wet && styles.laneWet)}>
+              {tile.content && (
+                <span
+                  {...stylex.props(
+                    styles.laneContent,
+                    tile.stacked && styles.laneStacked,
+                    tile.large && styles.laneLarge,
+                  )}
+                >
+                  <Icon
+                    icon={weatherIcons[point.icon]}
+                    size={tile.large ? 26 : 18}
+                    strokeWidth={1.5}
+                    label={labels.icons[point.icon]}
+                  />
+                  {temperature(point.temp, unit)}
+                  {tile.rain && (
+                    <span {...stylex.props(styles.laneChance)}>
+                      {labels.chance(point.precip ?? 0)}
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function FreeSlotTile({

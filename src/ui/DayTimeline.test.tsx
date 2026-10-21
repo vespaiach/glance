@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import type { CalendarEvent, Tag, Weather } from "@/domain/schemas";
@@ -50,6 +50,8 @@ const labels: DayTimelineLabels = {
   free: (everyone, length) => `${everyone ? "Everyone free" : "Free"} · ${length}`,
   freeName: (range) => `Free ${range}. Add event`,
   planName: (title, range) => `${title}, ${range}`,
+  lane: "Hourly weather",
+  chance: (percent) => `${percent}%`,
   icons: {
     sun: "Clear",
     moon: "Clear",
@@ -200,4 +202,24 @@ test("TODAY-11 Today shows each hour's weather under its label instead of a lane
   expect(screen.queryByRole("list")).not.toBeInTheDocument();
   expect(screen.getByText("66°")).toBeVisible();
   expect(screen.getAllByRole("img", { name: "Cloudy" })[0]).toBeVisible();
+});
+
+test("TL-11 with the lane, Today lists each forecast hour on the right instead of the gutter", () => {
+  const weather = {
+    hourly: hourly(9, [
+      [12, 66, 10],
+      [13, 67, 80],
+    ]),
+    unit: "F",
+  } as const;
+  render(
+    <DayTimeline {...base} variant="today" day="2026-10-09" weather={weather} weatherAt="lane" />,
+  );
+
+  const lane = screen.getByRole("list", { name: "Hourly weather" });
+
+  expect(within(lane).getAllByRole("listitem")).toHaveLength(2);
+  expect(within(lane).getByText("66°")).toBeVisible();
+  expect(within(lane).getByRole("img", { name: "Rain" })).toBeVisible();
+  expect(screen.getAllByText(/^6[67]°$/)).toHaveLength(2);
 });
