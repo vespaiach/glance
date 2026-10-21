@@ -152,6 +152,7 @@ export function SignInView({
           time={time}
           clock={clock}
           tz={tz}
+          phone={breakpoint === "phone"}
           xstyle={tall && styles.heroTall}
         />
         <div {...stylex.props(styles.panel)}>

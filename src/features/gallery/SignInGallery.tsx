@@ -7,7 +7,7 @@ import { GALLERY_TZ, gallery, gallerySetup, NOW, PLACES } from "./samples";
 
 type SignInProps = ComponentProps<typeof SignInView>;
 
-type Demo = { key: string; phone?: boolean } & Partial<SignInProps>;
+type Demo = { key: string; phone?: boolean; narrow?: boolean } & Partial<SignInProps>;
 
 const ignore = () => {};
 
@@ -33,6 +33,10 @@ const styles = stylex.create({
   view: {
     width: 1280,
     height: 720,
+  },
+  narrow: {
+    width: 820,
+    height: 1180,
   },
   phone: {
     width: 390,
@@ -91,6 +95,7 @@ const DEMOS: readonly Demo[] = [
   { key: "expired", state: { step: "expired", email: EMAIL } },
   { key: "done", state: { step: "done", name: "Maria", returning: false } },
   { key: "done-returning", state: { step: "done", name: "Maria", returning: true } },
+  { key: "narrow", narrow: true, breakpoint: "narrow" },
   { key: "phone", phone: true, breakpoint: "phone" },
   { key: "ended", state: ENDED, signedOut: SIGNED_OUT },
   { key: "ended-pending", state: ENDED, signedOut: WAITING },
@@ -108,13 +113,8 @@ const DEMOS: readonly Demo[] = [
 export function SignInGallery({ season }: { season: Season }) {
   return (
     <GalleryGroup title={gallery.groups.signInView}>
-      {DEMOS.map(({ key, phone, ...demo }) => (
-        <SignInView
-          key={key}
-          {...signInBase(season)}
-          {...demo}
-          xstyle={phone ? styles.phone : styles.view}
-        />
+      {DEMOS.map(({ key, phone, narrow, ...demo }) => (
+        <SignInView key={key} {...signInBase(season)} {...demo} xstyle={demoSize(phone, narrow)} />
       ))}
     </GalleryGroup>
   );
@@ -132,6 +132,12 @@ function signInBase(season: Season): SignInProps {
     online: true,
     onAction: ignore,
   };
+}
+
+function demoSize(phone?: boolean, narrow?: boolean): stylex.StyleXStyles {
+  if (phone) return styles.phone;
+
+  return narrow ? styles.narrow : styles.view;
 }
 
 function secondsBefore(seconds: number): Date {
