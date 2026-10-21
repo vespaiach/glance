@@ -445,3 +445,153 @@ test("EVT-01 with no location the sheet shows no forecast", async () => {
   expect(await screen.findByRole("dialog", { name: "New event" })).toBeInTheDocument();
   expect(screen.queryByRole("img", { name: "Partly cloudy" })).not.toBeInTheDocument();
 });
+
+describe("day preview", () => {
+  const hour = (h: number, icon: string, temp: number, precip?: number) => ({
+    time: new Date(2026, 9, 9, h).toISOString(),
+    icon,
+    temp,
+    ...(precip !== undefined && { precip }),
+  });
+
+  const WEEK = Array.from({ length: 7 }, (_, index) => ({
+    date: `2026-10-${String(9 + index).padStart(2, "0")}`,
+    icon: "sun",
+    high: 70 + index,
+    low: 50,
+  }));
+
+  const WITH_HOURS = {
+    ...FORECAST,
+    hourly: [
+      hour(12, "cloud-rain", 52, 40),
+      hour(13, "cloud", 54, 10),
+      hour(14, "cloud", 55),
+      hour(15, "sun", 57),
+      hour(16, "sun", 58),
+      hour(17, "sun", 59),
+      hour(18, "sun", 60),
+      hour(19, "moon", 58),
+    ],
+    daily: WEEK,
+  } as Weather;
+
+  const FIELD_TRIP: CalendarEvent = {
+    id: "0195f0a0-0000-7000-8000-000000000011",
+    title: "Field trip",
+    startAt: new Date(2026, 9, 9, 8, 15).toISOString(),
+    endAt: new Date(2026, 9, 9, 15, 0).toISOString(),
+    everyone: true,
+    tagIds: [],
+  };
+
+  const HOLIDAY: CalendarEvent = {
+    id: "0195f0a0-0000-7000-8000-000000000012",
+    title: "School holiday",
+    startAt: new Date(Date.UTC(2026, 9, 9)).toISOString(),
+    allDay: true,
+    everyone: true,
+    tagIds: [],
+  };
+
+  const EARLY: CalendarEvent = {
+    id: "0195f0a0-0000-7000-8000-000000000013",
+    title: "Breakfast",
+    startAt: new Date(2026, 9, 9, 7, 0).toISOString(),
+    endAt: new Date(2026, 9, 9, 8, 0).toISOString(),
+    everyone: true,
+    tagIds: [],
+  };
+
+  const setWidth = (width: number) => {
+    vi.stubGlobal("innerWidth", width);
+  };
+
+  async function openLunch(width = 1280, weather = WITH_HOURS) {
+    setWidth(width);
+    await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
+    await store.db.weather.put({ ...weather, accountId: store.accountId });
+    await store.db.events.bulkPut([LUNCH, FIELD_TRIP, HOLIDAY, EARLY].map(synced));
+
+    renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+  }
+
+  test("EVT-13 shows the weather at the start hour with the rain suffix from 30%", async () => {
+    await openLunch();
+
+    const preview = await screen.findByRole("complementary");
+
+    expect(within(preview).getByText("52°")).toBeInTheDocument();
+    expect(within(preview).getByText("Rain · 40% rain")).toBeInTheDocument();
+  });
+
+  test("EVT-13 omits the rain suffix below 30%", async () => {
+    const calm = {
+      ...WITH_HOURS,
+      hourly: WITH_HOURS.hourly.map((point) => ({ ...point, precip: 29 })),
+    } as Weather;
+
+    await openLunch(1280, calm);
+
+    const preview = await screen.findByRole("complementary");
+
+    expect(within(preview).getByText("Rain")).toBeInTheDocument();
+  });
+
+  test("EVT-13 lists the other plans overlapping the event, all-day first", async () => {
+    await openLunch();
+
+    const preview = await screen.findByRole("complementary");
+
+    const list = await within(preview).findByRole("list", { name: "Also at this time · 2" });
+
+    const rows = within(list).getAllByRole("listitem");
+
+    expect(rows[0]).toHaveTextContent("All day");
+    expect(rows[0]).toHaveTextContent("School holiday · Everyone");
+    expect(rows[1]).toHaveTextContent("Field trip");
+    expect(rows[1]).toHaveTextContent("8:15 AM – 3:00 PM");
+    expect(within(preview).queryByText("Breakfast")).not.toBeInTheDocument();
+  });
+
+  test("EVT-13 follows the All day switch: the day high and every plan that day", async () => {
+    await openLunch();
+    await userEvent.click(await screen.findByRole("switch", { name: "All day" }));
+
+    const preview = await screen.findByRole("complementary");
+
+    expect(
+      await within(preview).findByText("High for the day", { exact: false }),
+    ).toBeInTheDocument();
+    expect(within(preview).getByText("Also at this time · 3")).toBeInTheDocument();
+  });
+
+  test("EVT-13 is hidden below 1180 px", async () => {
+    await openLunch(1179);
+
+    expect(await screen.findByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  });
+
+  test("EVT-13 says there is no forecast for a date past the forecast", async () => {
+    setWidth(1280);
+    await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
+    await store.db.weather.put({ ...WITH_HOURS, accountId: store.accountId });
+
+    renderSheet({ kind: "newevent", day: "2026-10-20" });
+
+    expect(await screen.findByText("No forecast for this date yet.")).toBeInTheDocument();
+    expect(screen.getByText("Nothing else at this time.")).toBeInTheDocument();
+  });
+
+  test("EVT-13 shows no weather tile without a location", async () => {
+    setWidth(1280);
+    await store.db.weather.put({ ...WITH_HOURS, accountId: store.accountId });
+
+    renderSheet({ kind: "newevent", day: "2026-10-09" });
+
+    expect(await screen.findByRole("complementary")).toBeInTheDocument();
+    expect(screen.queryByText("No forecast for this date yet.")).not.toBeInTheDocument();
+    expect(screen.queryByText("52°")).not.toBeInTheDocument();
+  });
+});

@@ -22,6 +22,7 @@ type PageProps = {
   startActions?: ReactNode;
   endActions?: ReactNode;
   keyboardInset?: number;
+  aside?: ReactNode;
   children: ReactNode;
 };
 
@@ -116,8 +117,14 @@ const styles = stylex.create({
     paddingTop: 12,
     paddingInline: 16,
   },
+  main: {
+    flexGrow: 1,
+    display: "flex",
+    alignItems: "stretch",
+  },
   body: {
     flexGrow: 1,
+    minWidth: 0,
     display: "flex",
     flexDirection: "column",
     gap: 20,
@@ -165,6 +172,7 @@ export function Page({
   startActions,
   endActions,
   keyboardInset = 0,
+  aside,
   children,
 }: PageProps) {
   const titleId = useId();
@@ -209,7 +217,10 @@ export function Page({
         {banner && (
           <div {...stylex.props(styles.banner, compact && styles.bannerCompact)}>{banner}</div>
         )}
-        <div {...stylex.props(styles.body, compact && styles.bodyCompact)}>{children}</div>
+        <div {...stylex.props(styles.main)}>
+          <div {...stylex.props(styles.body, compact && styles.bodyCompact)}>{children}</div>
+          {aside}
+        </div>
         {compact && (
           <div data-page-bar {...stylex.props(styles.bar)}>
             {actions}

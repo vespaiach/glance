@@ -187,6 +187,17 @@ export const copy = {
     now: "Now",
     allDay: "All day",
     everyone: "Everyone",
+    preview: {
+      noForecast: "No forecast for this date yet.",
+      dayHigh: "High for the day",
+      rain: (percent: number) => `${percent}% rain`,
+      also: (count: number) => (count > 0 ? `Also at this time · ${count}` : "Also at this time"),
+      nothing: "Nothing else at this time.",
+      hourly: "Hourly forecast",
+      hour: (time: string, condition: string, temp: string) =>
+        `${time}, ${condition}, ${temp} degrees`,
+      label: (day: string, when: string) => `${day} · ${when}`,
+    },
     sheet: {
       newTitle: "New event",
       editTitle: "Edit event",

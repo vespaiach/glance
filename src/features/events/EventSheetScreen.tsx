@@ -21,6 +21,7 @@ import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
 import { EventSheet, type SheetForecast } from "./components/EventSheet";
+import { DayPreviewPanel } from "./DayPreviewPanel";
 import {
   draftFromEvent,
   type EventDraft,
@@ -133,6 +134,7 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
       onSave={onSave}
       onCreateTag={onCreateTag}
       keyboardInset={useKeyboardInset()}
+      preview={(draft) => <DayPreviewPanel day={day} id={id} tags={tags} times={draft} />}
     />
   );
 }
