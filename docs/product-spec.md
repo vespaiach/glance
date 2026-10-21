@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.76 |
+| Status | v0.77 |
 | Date | 2026-10-21 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -405,7 +405,7 @@ Top: the week strip card (CAL-01; the date control on phone). Below: one white p
 |---|---|
 | TPK-01 | **TimeField:** label (body-lg), and for Ends the length in mono ("1 hr", "45 min", "1 hr 30 min"). A 56 px button, radius 8, hairline border: time (22 px tabular, 19 on phone), mono AM/PM, chevron. Open = black border + 2 px ring. Error = `--danger` border + mono error below (`role="alert"`). `aria-label` "{Starts\|Ends}, {time}. Change". |
 | TPK-02 | Starts and Ends side by side. Tapping one opens the TimePicker below the row; one at a time; tapping the open field or "Done" closes it; opening doesn't scroll the page (only an "Ends before it starts" error does). No keyboard and no typing. |
-| TPK-03 | **TimePicker:** a `surface-soft` tile (radius 24, padding 16, 12 on phone), a group named "Start time"/"End time", opening directly below the Starts/Ends row and above the All day row: clip reveal + fade + 6 px drop, 260 ms `cubic-bezier(0.2, 0.8, 0.2, 1)`; switching Starts ⇄ Ends doesn't replay it and closing is instant. Header "{Starts\|Ends} · {time}" + (12-hour only) a sliding AM/PM toggle at the top right: a 144×44 white pill with mono "AM" and "PM" always visible and a black knob that slides under the chosen label (220 ms; the chosen label turns white). "Hour": 12, 1 … 11, or 00 … 23. "Minutes": 00 … 55 by 5. 6 columns (4 on phone), 56 px pill cells (48 on phone): selected black/540, else white with hairline; hour, minute and Length chips are 44 px tall. Each tap changes one part. |
+| TPK-03 | **TimePicker:** a `surface-soft` tile (radius 24, padding 16, 12 on phone), a group named "Start time"/"End time", opening directly below the Starts/Ends row and above the All day row: clip reveal + fade + 6 px drop, 260 ms `cubic-bezier(0.2, 0.8, 0.2, 1)`; switching Starts ⇄ Ends doesn't replay it and closing is instant. Header "{Starts\|Ends} · {time}" + (12-hour only) a sliding AM/PM toggle at the top right: a 144×44 white pill with mono "AM" and "PM" always visible and a black knob that slides under the chosen label (220 ms; the chosen label turns white). "Hour": 12, 1 … 11, or 00 … 23. "Minutes": 00 … 55 by 5. 6 columns (4 on phone), 44 px pill cells (hour, minute and Length chips alike): selected black/540, else white with hairline. Each tap changes one part. |
 | TPK-04 | Ends adds "Length" chips (30 min · 1 hr · 1.5 hr · 2 hr) from Starts and a ghost "No end time" (✕). Footer: secondary "Done". |
 | TPK-05 | **Defaults:** start at the next full half hour (10:41 → 11:00, 11:00 → 11:30), capped at 11:30 PM; end = start + 1 h, capped at 11:55 PM. |
 | TPK-06 | Moving Starts moves Ends by the same amount (capped at 11:55 PM). An empty or invalid Ends stays put. |

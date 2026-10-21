@@ -1,9 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 import { X } from "lucide-react";
-import { type ReactNode, useEffect, useId, useRef } from "react";
+import { type ReactNode, useId } from "react";
 import {
   endForLength,
-  type Meridiem,
   type MinuteStep,
   pickerHours,
   pickerMinutes,
@@ -16,12 +15,13 @@ import { colors, motion, radii, shadows } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "./Button";
 import { Eyebrow } from "./Eyebrow";
-import { PillTabs } from "./PillTabs";
+import { MeridiemToggle } from "./MeridiemToggle";
 import { press } from "./press";
 
 type TimePickerLabels = {
   hour: string;
   minutes: string;
+  meridiem: string;
   length: string;
   noEnd: string;
   done: string;
@@ -52,7 +52,10 @@ type TimePickerProps = {
   xstyle?: stylex.StyleXStyles;
 };
 
-const MERIDIEMS: readonly Meridiem[] = ["AM", "PM"];
+const reveal = stylex.keyframes({
+  from: { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(-6px)" },
+  to: { opacity: 1, clipPath: "inset(0 0 0 0)", transform: "translateY(0)" },
+});
 
 const styles = stylex.create({
   fieldset: {
@@ -67,8 +70,15 @@ const styles = stylex.create({
     gap: 16,
     padding: 16,
     borderRadius: radii.lg,
-    backgroundColor: colors.surfaceCanvas,
+    backgroundColor: colors.surfaceSoft,
     color: colors.textPrimary,
+    animationName: reveal,
+    animationDuration: {
+      default: "260ms",
+      "@media (prefers-reduced-motion: reduce)": "0ms",
+    },
+    animationTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+    animationFillMode: "backwards",
   },
   compactRoot: {
     padding: 12,
@@ -104,7 +114,7 @@ const styles = stylex.create({
     gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   },
   cell: {
-    height: 56,
+    height: 44,
     minWidth: 0,
     borderWidth: 0,
     borderRadius: radii.full,
@@ -119,9 +129,6 @@ const styles = stylex.create({
     transitionProperty: "transform, background-color",
     transitionDuration: `${motion.durPress}, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
-  },
-  compactCell: {
-    height: 48,
   },
   lengthCell: {
     paddingBlock: 0,
@@ -155,7 +162,6 @@ type CellProps = {
   ariaLabel?: string;
   selected: boolean;
   onClick: () => void;
-  compact?: boolean;
   variant?: "time" | "length";
 };
 
@@ -179,8 +185,6 @@ export function TimePicker({
   compact,
   xstyle,
 }: TimePickerProps) {
-  const ref = useScrollIntoView();
-
   const meridiem = timeParts(value, "12h").meridiem ?? "AM";
 
   const hour = Math.floor(value / 60);
@@ -195,16 +199,14 @@ export function TimePicker({
 
   return (
     <fieldset
-      ref={ref}
       aria-label={groupLabel}
       {...stylex.props(styles.fieldset, styles.root, compact && styles.compactRoot, xstyle)}
     >
       <div {...stylex.props(styles.header)}>
         <Eyebrow>{`${label} · ${formatClock(value, clock)}`}</Eyebrow>
         {clock === "12h" && (
-          <PillTabs
-            size="lg"
-            options={MERIDIEMS}
+          <MeridiemToggle
+            label={labels.meridiem}
             value={meridiem}
             onChange={(next) => onChange(withMeridiem(value, next))}
           />
@@ -216,7 +218,6 @@ export function TimePicker({
             key={h}
             {...hourCell(h, clock, labels)}
             selected={h === hour}
-            compact={compact}
             onClick={() => onChange(withHour(value, h))}
           />
         ))}
@@ -228,7 +229,6 @@ export function TimePicker({
             label={String(m).padStart(2, "0")}
             ariaLabel={labels.minuteCell(m)}
             selected={m === minute}
-            compact={compact}
             onClick={() => onChange(withMinute(value, m))}
           />
         ))}
@@ -241,7 +241,6 @@ export function TimePicker({
               label={length.label}
               variant="length"
               selected={value === ends.start + length.value}
-              compact={compact}
               onClick={() => onChange(endForLength(ends.start, length.value))}
             />
           ))}
@@ -267,7 +266,7 @@ export function TimePicker({
   );
 }
 
-function Cell({ label, ariaLabel, selected, onClick, compact, variant = "time" }: CellProps) {
+function Cell({ label, ariaLabel, selected, onClick, variant = "time" }: CellProps) {
   return (
     <button
       type="button"
@@ -276,7 +275,6 @@ function Cell({ label, ariaLabel, selected, onClick, compact, variant = "time" }
       onClick={onClick}
       {...stylex.props(
         styles.cell,
-        compact && styles.compactCell,
         variant === "length" && styles.lengthCell,
         selected && styles.selected,
         press.scale,
@@ -309,14 +307,4 @@ function hourCell(hour: number, clock: Clock, labels: TimePickerLabels) {
   const label = String(hour).padStart(2, "0");
 
   return { label, ariaLabel: labels.hour24Cell(label) };
-}
-
-function useScrollIntoView() {
-  const ref = useRef<HTMLFieldSetElement>(null);
-
-  useEffect(() => {
-    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, []);
-
-  return ref;
 }
