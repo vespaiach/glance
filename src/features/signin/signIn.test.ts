@@ -20,9 +20,22 @@ const NOW = new Date("2026-10-09T17:41:00Z");
 
 const LATER = new Date("2026-10-09T17:45:00Z");
 
-const sent: SignInState = { step: "sent", email: "maria@example.com", sentAt: NOW };
+const sent: SignInState = { step: "sent", email: "maria@example.com", sentAt: NOW, code: "" };
 
-const phone: SignInState = { step: "phone", email: "maria@example.com" };
+const typed = (code: string): SignInState => ({ ...sent, code });
+
+const checking: SignInState = {
+  step: "checking",
+  email: "maria@example.com",
+  sentAt: NOW,
+  code: "482913",
+};
+
+const locked: SignInState = { step: "locked", email: "maria@example.com", sentAt: NOW };
+
+const expired: SignInState = { step: "expired", email: "maria@example.com" };
+
+const minutesLater = (minutes: number) => new Date(NOW.getTime() + minutes * 60_000);
 
 const locating: SignInState = { step: "location", account: ACCOUNT, returning: false };
 
@@ -35,20 +48,20 @@ describe("sign-in reducer", () => {
   it.each([
     ["sending", { step: "sending", email: "maria@example.com" }],
     ["offline", { step: "form", email: "maria@example.com" }],
-    ["sent", { step: "sent", email: "maria@example.com", sentAt: NOW }],
+    ["sent", { step: "sent", email: "maria@example.com", sentAt: NOW, code: "" }],
+    ["checking", { step: "checking", email: "maria@example.com", sentAt: NOW, code: "482913" }],
+    ["wrong", { step: "sent", email: "maria@example.com", sentAt: NOW, code: "", wrong: true }],
+    ["locked", { step: "locked", email: "maria@example.com", sentAt: NOW }],
     ["name", { step: "name", email: "maria@example.com", draft: "" }],
-    ["phone", { step: "phone", email: "maria@example.com" }],
-    ["expired", { step: "expired", email: "maria@example.com", onLink: false }],
+    ["expired", { step: "expired", email: "maria@example.com" }],
     ["location", { step: "location", account: ACCOUNT, returning: false }],
     ["done", { step: "done", name: "Maria", returning: false }],
   ] as const)("tech§4.2 signin=%s opens its state with the fixture account", (signin, state) => {
     expect(initialSignIn({ signin }, ACCOUNT, NOW)).toEqual(state);
   });
 
-  it("SIGNIN-12 signin=expired&on=link opens the device that opened the link", () => {
-    expect(initialSignIn({ signin: "expired", on: "link" }, ACCOUNT, NOW)).toMatchObject({
-      onLink: true,
-    });
+  it("SIGNIN-04 signin=sent&code=482 opens Enter the code with 3 digits typed", () => {
+    expect(initialSignIn({ signin: "sent", code: "482" }, ACCOUNT, NOW)).toEqual(typed("482"));
   });
 
   it("SIGNIN-09 signin=done&acct=returning opens Welcome back", () => {
@@ -109,24 +122,113 @@ describe("sign-in reducer", () => {
     expect(signInReducer(sending, { type: "send" })).toBe(sending);
   });
 
-  it.each([
-    { step: "sent", email: "maria@example.com", sentAt: NOW },
-    { step: "phone", email: "maria@example.com" },
-    { step: "expired", email: "maria@example.com", onLink: false },
-  ] as const)(
+  it.each([typed("48"), checking, locked, expired])(
     "SIGNIN-04 Use a different email returns to the form with the email kept ($step)",
     (state) => {
       expect(signInReducer(state, { type: "back" })).toEqual(form("maria@example.com"));
     },
   );
 
-  it.each([true, false])("SIGNIN-08 Send a new link starts sending again (onLink %s)", (onLink) => {
-    const expired: SignInState = { step: "expired", email: "maria@example.com", onLink };
+  it.each([typed("48"), checking, locked, expired])(
+    "SIGNIN-04 Send a new code starts sending again ($step)",
+    (state) => {
+      expect(signInReducer(state, { type: "send" })).toEqual(sending);
+    },
+  );
 
-    expect(signInReducer(expired, { type: "send" })).toEqual({
-      step: "sending",
-      email: "maria@example.com",
+  it("SIGNIN-04 typing keeps only the digits, at most 6", () => {
+    expect(signInReducer(sent, { type: "code", text: "48 2a", online: true })).toEqual(
+      typed("482"),
+    );
+  });
+
+  it("SIGNIN-04 the 6th digit submits on its own", () => {
+    expect(signInReducer(typed("48291"), { type: "code", text: "482913", online: true })).toEqual(
+      checking,
+    );
+  });
+
+  it('SIGNIN-04 pasting "482 913" submits the code', () => {
+    expect(signInReducer(sent, { type: "code", text: "482 913", online: true })).toEqual(checking);
+  });
+
+  it("SIGNIN-10 offline the 6th digit is kept but never submits", () => {
+    expect(signInReducer(typed("48291"), { type: "code", text: "482913", online: false })).toEqual(
+      typed("482913"),
+    );
+  });
+
+  it("SIGNIN-04 Sign in submits 6 digits", () => {
+    expect(signInReducer(typed("482913"), { type: "verify", online: true })).toEqual(checking);
+  });
+
+  it("SIGNIN-04 Sign in does nothing under 6 digits", () => {
+    const state = typed("48291");
+
+    expect(signInReducer(state, { type: "verify", online: true })).toBe(state);
+  });
+
+  it("SIGNIN-10 Sign in does nothing offline", () => {
+    const state = typed("482913");
+
+    expect(signInReducer(state, { type: "verify", online: false })).toBe(state);
+  });
+
+  it("SIGNIN-04 the field is locked while the code is checked", () => {
+    expect(signInReducer(checking, { type: "code", text: "1", online: true })).toBe(checking);
+    expect(signInReducer(checking, { type: "verify", online: true })).toBe(checking);
+  });
+
+  it("SIGNIN-17 a wrong code clears the field and turns the cells red", () => {
+    expect(signInReducer(checking, { type: "rejected", error: "wrong-code" })).toEqual({
+      ...sent,
+      wrong: true,
     });
+  });
+
+  it("SIGNIN-17 the next digit clears the wrong code", () => {
+    expect(
+      signInReducer({ ...sent, wrong: true }, { type: "code", text: "4", online: true }),
+    ).toEqual(typed("4"));
+  });
+
+  it("SIGNIN-17 the 5th wrong try locks the code", () => {
+    expect(signInReducer(checking, { type: "rejected", error: "code-locked" })).toEqual(locked);
+  });
+
+  it("SIGNIN-17 a locked code takes no digits and never submits", () => {
+    expect(signInReducer(locked, { type: "code", text: "4", online: true })).toBe(locked);
+    expect(signInReducer(locked, { type: "verify", online: true })).toBe(locked);
+  });
+
+  it("SIGNIN-08 the server finding the code expired opens This code has expired", () => {
+    expect(signInReducer(checking, { type: "rejected", error: "code-expired" })).toEqual(expired);
+  });
+
+  it("SIGNIN-10 a check that can't reach the server keeps the code for another try", () => {
+    expect(signInReducer(checking, { type: "rejected", error: "network" })).toEqual(
+      typed("482913"),
+    );
+  });
+
+  it("SIGNIN-04 check answers are ignored outside Checking", () => {
+    const state = typed("4");
+
+    expect(signInReducer(state, { type: "rejected", error: "wrong-code" })).toBe(state);
+  });
+
+  it("SIGNIN-08 Enter the code expires 10 min after the send", () => {
+    expect(signInReducer(typed("48"), { type: "tick", now: minutesLater(10) })).toEqual(expired);
+  });
+
+  it("SIGNIN-08 Enter the code stays open before 10 min", () => {
+    const state = typed("48");
+
+    expect(signInReducer(state, { type: "tick", now: minutesLater(9.99) })).toBe(state);
+  });
+
+  it("SIGNIN-08 a code being checked doesn't expire under it", () => {
+    expect(signInReducer(checking, { type: "tick", now: minutesLater(11) })).toBe(checking);
   });
 
   it("SIGNIN-06 typing updates the name", () => {
@@ -159,24 +261,21 @@ describe("sign-in reducer", () => {
     });
   });
 
-  it("SIGNIN-04 the server accepting the link opens Check your email from that moment", () => {
-    expect(signInReducer(sending, { type: "link-sent", at: NOW })).toEqual(sent);
+  it("SIGNIN-04 the server accepting the send opens Enter the code from that moment", () => {
+    expect(signInReducer(sending, { type: "code-sent", at: NOW })).toEqual(sent);
   });
 
   it("SIGNIN-04 a new send restarts the countdown", () => {
     const resent = [
-      { type: "back" },
       { type: "send" },
-      { type: "link-sent", at: LATER },
+      { type: "code-sent", at: LATER },
     ] as const satisfies SignInAction[];
 
-    expect(resent.reduce(signInReducer, sent)).toEqual({ ...sent, sentAt: LATER });
+    expect(resent.reduce(signInReducer, typed("48"))).toEqual({ ...sent, sentAt: LATER });
   });
 
-  it("SIGNIN-08 Send a new link from the expired screen restarts the countdown", () => {
-    const expired: SignInState = { step: "expired", email: "maria@example.com", onLink: false };
-
-    const resent = [{ type: "send" }, { type: "link-sent", at: LATER }] as const;
+  it("SIGNIN-08 Send a new code from the expired screen restarts the countdown", () => {
+    const resent = [{ type: "send" }, { type: "code-sent", at: LATER }] as const;
 
     expect(resent.reduce(signInReducer, expired)).toEqual({ ...sent, sentAt: LATER });
   });
@@ -192,7 +291,7 @@ describe("sign-in reducer", () => {
   );
 
   it("SIGNIN-03 a failed send returns to the form with the email kept", () => {
-    expect(signInReducer(sending, { type: "link-failed" })).toEqual({
+    expect(signInReducer(sending, { type: "send-failed" })).toEqual({
       step: "form",
       email: "maria@example.com",
       error: "failed",
@@ -221,11 +320,11 @@ describe("sign-in reducer", () => {
     expect(signInReducer(failed, { type: "send" })).toEqual(sending);
   });
 
-  it("SIGNIN-03 link answers are ignored outside Sending", () => {
+  it("SIGNIN-03 send answers are ignored outside Sending", () => {
     const typing = form("ana@example.com");
 
-    expect(signInReducer(typing, { type: "link-sent", at: NOW })).toBe(typing);
-    expect(signInReducer(typing, { type: "link-failed" })).toBe(typing);
+    expect(signInReducer(typing, { type: "code-sent", at: NOW })).toBe(typing);
+    expect(signInReducer(typing, { type: "send-failed" })).toBe(typing);
   });
 
   it("SIGNIN-16 Sign-in as guests starts signing in with the typed email kept", () => {
@@ -235,7 +334,7 @@ describe("sign-in reducer", () => {
     });
   });
 
-  it("SIGNIN-16 Sign-in as guests does nothing while a link is sending", () => {
+  it("SIGNIN-16 Sign-in as guests does nothing while a code is sending", () => {
     expect(signInReducer(sending, { type: "guest" })).toBe(sending);
   });
 
@@ -276,14 +375,7 @@ describe("sign-in reducer", () => {
     expect(signInReducer(typing, { type: "guest-failed" })).toBe(typing);
   });
 
-  it.each([sent, phone])(
-    "tech§6.2 a signed-out answer keeps the waiting screen ($step)",
-    (state) => {
-      expect(signInReducer(state, { type: "status", status: { state: "signed-out" } })).toBe(state);
-    },
-  );
-
-  it.each([sent, phone])("SIGNIN-09 a signed-in answer welcomes the account ($step)", (state) => {
+  it("SIGNIN-09 the right code welcomes the account", () => {
     const status = {
       state: "signed-in",
       account: ACCOUNT,
@@ -291,18 +383,26 @@ describe("sign-in reducer", () => {
       setupDone: true,
     } as const;
 
-    expect(signInReducer(state, { type: "status", status })).toEqual({
+    expect(signInReducer(checking, { type: "status", status })).toEqual({
       step: "done",
       name: "Maria",
       returning: true,
     });
   });
 
-  it("SIGNIN-04 status answers are ignored once the person left the waiting screen", () => {
-    const typing = form("maria@example.com");
+  it.each([form("maria@example.com"), typed("48")])(
+    "SIGNIN-04 sign-in answers are ignored outside Checking ($step)",
+    (state) => {
+      const status = {
+        state: "signed-in",
+        account: ACCOUNT,
+        returning: true,
+        setupDone: true,
+      } as const;
 
-    expect(signInReducer(typing, { type: "status", status: { state: "signed-out" } })).toBe(typing);
-  });
+      expect(signInReducer(state, { type: "status", status })).toBe(state);
+    },
+  );
 
   it("SIGNIN-06 Continue with a name starts saving it", () => {
     const naming: SignInState = { step: "name", email: "maria@example.com", draft: "Ana" };
@@ -339,7 +439,7 @@ describe("sign-in reducer", () => {
     });
   });
 
-  it.each([{ step: "opening" }, sent] as const)(
+  it.each([{ step: "opening" }, checking] as const)(
     "SIGNIN-14 a named account whose location step never ended asks for it ($step)",
     (state) => {
       const status = {
@@ -406,7 +506,7 @@ describe("sign-in reducer", () => {
     });
   });
 
-  it("SIGNIN-09 the device that opened a link starts by checking it", () => {
+  it("SIGNIN-15 the device that opened a QR link starts by checking it", () => {
     expect(initialSignIn({ signin: "sent" }, ACCOUNT, NOW, "opened")).toEqual({ step: "opening" });
     expect(initialSignIn({}, ACCOUNT, NOW, "stale")).toEqual({ step: "opening" });
   });
@@ -426,7 +526,7 @@ describe("sign-in reducer", () => {
     });
   });
 
-  it.each([{ step: "opening" }, sent] as const)(
+  it.each([{ step: "opening" }, checking] as const)(
     "SIGNIN-06 a signed-in account with no name asks for one ($step)",
     (state) => {
       const account = { ...ACCOUNT, email: "ana@example.com", name: null };
@@ -451,7 +551,7 @@ describe("sign-in reducer", () => {
     expect(signInReducer({ step: "opening" }, { type: "status-failed" })).toEqual(form(""));
   });
 
-  it("SIGNIN-04 a failed status poll keeps the waiting screen", () => {
+  it("SIGNIN-04 a failed link check is ignored on Enter the code", () => {
     expect(signInReducer(sent, { type: "status-failed" })).toBe(sent);
   });
 
@@ -460,7 +560,7 @@ describe("sign-in reducer", () => {
     ["?link=stale", "stale"],
     ["?link=other", undefined],
     ["", undefined],
-  ] as const)("SIGNIN-12 reads the link answer from %j", (search, link) => {
+  ] as const)("SIGNIN-15 reads the QR link answer from %j", (search, link) => {
     expect(openedLinkFrom(search)).toBe(link);
   });
 

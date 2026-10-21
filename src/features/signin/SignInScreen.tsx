@@ -10,7 +10,6 @@ import {
 } from "@/data/repos";
 import { initialWeatherSetup } from "@/features/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { DEMO_BUILD } from "@/shell/demo";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useFixtureFieldFocus, useKeyboardInset } from "@/shell/keyboard";
 import { useBrowserOnline } from "@/shell/providers/network";
@@ -24,7 +23,7 @@ import { SignInView } from "./components/SignInView";
 import { initialSignIn, openedLinkFrom } from "./signIn";
 import { useSignIn } from "./useSignIn";
 
-export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
+export function SignInScreen() {
   const router = useRouter();
 
   const params = useFixtureParams();
@@ -39,8 +38,7 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
     initial: initialSignIn(params, fixtureSignIn, clock.get(), link, signedOut),
     initialSetup: () => initialWeatherSetup(params.wx, fixtureWeatherSearch),
     auth: useSignInAuth(),
-    fixture: fixtureSignIn,
-    now: clock.get,
+    clock,
     onSignedIn: () => router.replace(viewPath("today")),
   });
 
@@ -64,10 +62,8 @@ export function SignInScreen({ demo = DEMO_BUILD }: { demo?: boolean }) {
       breakpoint={useBreakpoint()}
       keyboardInset={useKeyboardInset()}
       online={online}
-      demo={demo}
       guest={flow.guest}
       onAction={flow.act}
-      onFinishedOnPhone={flow.finishedOnPhone}
       rootRef={root}
     />
   );

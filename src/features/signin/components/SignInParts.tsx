@@ -90,6 +90,10 @@ const styles = stylex.create({
     alignItems: "center",
     gap: 12,
   },
+  ruled: {
+    paddingTop: space.lg,
+    boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
+  },
   lock: {
     display: "flex",
     alignItems: "center",
@@ -171,8 +175,8 @@ export function SwitchTile({
   );
 }
 
-export function Actions({ children }: { children: ReactNode }) {
-  return <div {...stylex.props(styles.actions)}>{children}</div>;
+export function Actions({ ruled = false, children }: { ruled?: boolean; children: ReactNode }) {
+  return <div {...stylex.props(styles.actions, ruled && styles.ruled)}>{children}</div>;
 }
 
 export function LockFooter() {

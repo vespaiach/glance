@@ -1,10 +1,36 @@
-import { differentEmailIn, firstName, isSwitchingEmail, isValidEmail } from "./signIn";
+import {
+  codeDigits,
+  codeExpired,
+  differentEmailIn,
+  firstName,
+  isSwitchingEmail,
+  isValidEmail,
+} from "./signIn";
 
 const SENT_AT = new Date("2026-10-09T17:41:00Z");
 
-const after = (ms: number) => new Date(SENT_AT.getTime() + ms);
+const sinceSend = (ms: number) => new Date(SENT_AT.getTime() + ms);
 
 describe("sign-in rules", () => {
+  it.each([
+    ["482913", "482913"],
+    ["482 913", "482913"],
+    ["48-29a13", "482913"],
+    ["4829131", "482913"],
+    [" ", ""],
+  ])("SIGNIN-04 the code field keeps the digits of %j as %j", (text, digits) => {
+    expect(codeDigits(text)).toBe(digits);
+  });
+
+  it.each([
+    [0, false],
+    [599_999, false],
+    [600_000, true],
+    [3_600_000, true],
+  ])("SIGNIN-08 %i ms after the send the code has expired: %s", (ms, expired) => {
+    expect(codeExpired(SENT_AT, sinceSend(ms))).toBe(expired);
+  });
+
   it.each([
     [0, 10],
     [500, 10],
@@ -14,9 +40,12 @@ describe("sign-in rules", () => {
     [10_000, 0],
     [60_000, 0],
     [-3_000, 10],
-  ])("SIGNIN-04 %i ms after the send, Use a different email is %i s away", (ms, seconds) => {
-    expect(differentEmailIn(SENT_AT, after(ms))).toBe(seconds);
-  });
+  ])(
+    "SIGNIN-04 %i ms after the send, Send a new code and Use a different email are %i s away",
+    (ms, seconds) => {
+      expect(differentEmailIn(SENT_AT, sinceSend(ms))).toBe(seconds);
+    },
+  );
 
   it.each(["maria@example.com", "a.b+c@mail.example.org", "  maria@example.com  "])(
     "SIGNIN-02 accepts %j as name@domain.tld",
