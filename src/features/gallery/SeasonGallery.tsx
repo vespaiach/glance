@@ -36,6 +36,7 @@ import { Sheet } from "@/ui/Sheet";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
+import { Switch } from "@/ui/Switch";
 import { TextInput } from "@/ui/TextInput";
 import { TopBar } from "@/ui/TopBar";
 import { WeatherNow } from "@/ui/WeatherNow";
@@ -181,6 +182,7 @@ function FormsGroup() {
   const [title, setTitle] = useState(gallery.input.value);
   const [note, setNote] = useState(gallery.input.notesValue);
   const [tone, setTone] = useState<Tone>(1);
+  const [allDay, setAllDay] = useState(false);
 
   return (
     <GalleryGroup title={gallery.groups.forms}>
@@ -219,6 +221,8 @@ function FormsGroup() {
         value={tone}
         onChange={setTone}
       />
+      <Switch label={gallery.switchLabel} checked={allDay} onChange={setAllDay} />
+      <Switch label={gallery.switchLabel} checked onChange={ignore} />
     </GalleryGroup>
   );
 }

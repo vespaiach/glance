@@ -1,5 +1,5 @@
 import type { Weather } from "./schemas";
-import { hourlyByHour, rainHour, rainStart, weatherZone } from "./weather";
+import { dayForecast, hourlyByHour, rainHour, rainStart, weatherZone } from "./weather";
 import { zonedInstant } from "./zone";
 
 const at = (hour: number) => new Date(2026, 9, 9, hour).toISOString();
@@ -117,5 +117,52 @@ describe("hourlyByHour", () => {
 
     expect([...byHour.keys()]).toEqual([0, 1]);
     expect(byHour.get(1)?.temp).toBe(51);
+  });
+});
+
+describe("dayForecast", () => {
+  const day = (date: string, high: number): Weather["daily"][number] => ({
+    date,
+    icon: "cloud-sun",
+    high,
+    low: 50,
+  });
+
+  const DAILY = [
+    day("2026-10-08", 64),
+    day("2026-10-09", 68),
+    day("2026-10-10", 70),
+    day("2026-10-15", 61),
+    day("2026-10-16", 59),
+  ];
+
+  const NOW = new Date("2026-10-09T17:41:00.000Z");
+
+  const TZ = "America/Los_Angeles";
+
+  it("EVT-01 is the forecast for the event's day when it is today", () => {
+    expect(dayForecast(DAILY, "2026-10-09", NOW, TZ)).toEqual(day("2026-10-09", 68));
+  });
+
+  it("EVT-01 reaches 6 days out", () => {
+    expect(dayForecast(DAILY, "2026-10-15", NOW, TZ)?.high).toBe(61);
+  });
+
+  it("EVT-01 is undefined 7 days out, even with a point for that day", () => {
+    expect(dayForecast(DAILY, "2026-10-16", NOW, TZ)).toBeUndefined();
+  });
+
+  it("EVT-01 is undefined for a past day left in an older forecast", () => {
+    expect(dayForecast(DAILY, "2026-10-08", NOW, TZ)).toBeUndefined();
+  });
+
+  it("EVT-01 is undefined when the forecast has no point for the day", () => {
+    expect(dayForecast(DAILY, "2026-10-12", NOW, TZ)).toBeUndefined();
+  });
+
+  it("EVT-01 counts today in the screen's time zone", () => {
+    const lateEvening = new Date("2026-10-10T05:30:00.000Z");
+
+    expect(dayForecast(DAILY, "2026-10-09", lateEvening, TZ)?.high).toBe(68);
   });
 });

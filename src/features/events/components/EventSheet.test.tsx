@@ -8,7 +8,7 @@ import {
   initialEventSheet,
   type TimeFixture,
 } from "../eventSheet";
-import { EventSheet } from "./EventSheet";
+import { EventSheet, type SheetForecast } from "./EventSheet";
 
 const tag = (n: number, name: string, color: Tag["color"]): Tag => ({
   id: `0195f0a0-0000-7000-8000-00000000050${n}`,
@@ -46,7 +46,10 @@ type Options = {
   onDelete?: () => void;
   onSave?: (draft: EventDraft) => void;
   onCreateTag?: (name: string, color: TagColor) => string;
+  forecast?: SheetForecast;
 };
+
+const CLOUDY: SheetForecast = { icon: "cloud-sun", label: "Partly cloudy", high: "68°" };
 
 function renderSheet(options: Options = {}) {
   const mode = options.mode ?? "edit";
@@ -64,6 +67,7 @@ function renderSheet(options: Options = {}) {
       onDelete={options.onDelete ?? (() => {})}
       onSave={options.onSave ?? (() => {})}
       onCreateTag={options.onCreateTag ?? (() => "")}
+      forecast={options.forecast}
     />,
   );
 }
@@ -74,6 +78,31 @@ test("EVT-01 a new event sheet is titled New event under the day eyebrow", () =>
   const dialog = screen.getByRole("dialog", { name: "New event" });
 
   expect(within(dialog).getByText("Friday, Oct 9")).toBeInTheDocument();
+});
+
+test("EVT-01 the day's forecast follows the eyebrow as icon and high", () => {
+  renderSheet({ mode: "new", forecast: CLOUDY });
+
+  const eyebrow = screen.getByText("Friday, Oct 9");
+  const icon = screen.getByRole("img", { name: "Partly cloudy" });
+
+  expect(eyebrow).toContainElement(icon);
+  expect(eyebrow.firstChild?.textContent).toBe("Friday, Oct 9");
+  expect(eyebrow.lastChild).toHaveTextContent("68°");
+});
+
+test("EVT-01 with no forecast for the day the eyebrow stands alone", () => {
+  renderSheet({ mode: "new" });
+
+  expect(screen.queryByRole("img", { name: "Partly cloudy" })).not.toBeInTheDocument();
+});
+
+test("EVT-01 Event details show the day's forecast the same way", () => {
+  renderSheet({ initial: initialEventSheet(DRAFT, undefined, false, true), forecast: CLOUDY });
+
+  expect(screen.getByRole("dialog", { name: "Lunch with Aunt Rosa" })).toBeInTheDocument();
+  expect(screen.getByRole("img", { name: "Partly cloudy" })).toBeInTheDocument();
+  expect(screen.getByText("68°")).toBeInTheDocument();
 });
 
 test("EVT-01 an existing event opens as Edit event", () => {
@@ -285,13 +314,12 @@ async function tabOrder(count: number) {
 test("A11Y-04 Tab moves through Close, the fields in visual order, then the actions, and wraps", async () => {
   renderSheet();
 
-  expect(await tabOrder(15)).toEqual([
+  expect(await tabOrder(14)).toEqual([
     screen.getByRole("button", { name: "Close" }),
     screen.getByLabelText("Title"),
-    screen.getByRole("button", { name: "Set times" }),
-    screen.getByRole("button", { name: "All day" }),
     screen.getByRole("button", { name: /^Starts/ }),
     screen.getByRole("button", { name: /^Ends/ }),
+    screen.getByRole("switch", { name: "All day" }),
     screen.getByRole("button", { name: "Remove Mom" }),
     screen.getByRole("button", { name: "Remove Dad" }),
     screen.getByLabelText("Who"),
@@ -424,45 +452,68 @@ test("§8.9 the discard=1 state opens asking", () => {
   expect(screen.getByRole("alert")).toHaveTextContent("This event won’t be added.");
 });
 
-test("EVT-02 the Time row offers Set times · All day with Set times chosen", () => {
+test("EVT-08 the All day row is an off switch under Starts and Ends", () => {
   renderSheet();
 
-  const time = screen.getByRole("group", { name: "Time" });
+  const allDay = screen.getByRole("switch", { name: "All day" });
 
-  expect(within(time).getByRole("button", { name: "Set times" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(within(time).getByRole("button", { name: "All day" })).toHaveAttribute(
-    "aria-pressed",
-    "false",
+  expect(allDay).toHaveAttribute("aria-checked", "false");
+  expect(screen.getByRole("button", { name: /^Ends/ }).compareDocumentPosition(allDay)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
   );
 });
 
-test("EVT-08 All day hides Starts, Ends and the open picker", async () => {
+test("EVT-08 All day keeps Starts and Ends but disables them, with no length", async () => {
+  renderSheet();
+
+  await userEvent.click(screen.getByText("All day"));
+
+  expect(screen.getByRole("switch", { name: "All day" })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("button", { name: "Starts, off for all-day events" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Ends, off for all-day events" })).toBeDisabled();
+  expect(screen.queryByText("1 hr")).not.toBeInTheDocument();
+});
+
+test("EVT-08 All day closes the open picker", async () => {
   renderSheet({ time: "start" });
 
-  await userEvent.click(screen.getByRole("button", { name: "All day" }));
+  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
 
-  expect(screen.queryByRole("button", { name: /^Starts/ })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: /^Ends/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("group", { name: "Start time" })).not.toBeInTheDocument();
 });
 
-test("EVT-08 Set times brings back the draft's times", async () => {
-  renderSheet();
+test("EVT-08 All day clears the end-time error", async () => {
+  renderSheet({ time: "error" });
 
-  await userEvent.click(screen.getByRole("button", { name: "All day" }));
-  await userEvent.click(screen.getByRole("button", { name: "Set times" }));
+  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
 
-  expect(screen.getByRole("button", { name: "Starts, 12:00 PM. Change" })).toBeInTheDocument();
+  expect(screen.queryByText("Ends before it starts")).not.toBeInTheDocument();
 });
 
-test("EVT-08 an all-day event opens on All day", () => {
+test("EVT-08 tapping a disabled time field opens no picker", async () => {
+  renderSheet();
+
+  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
+  await userEvent.click(screen.getByRole("button", { name: "Starts, off for all-day events" }));
+
+  expect(screen.queryByRole("group", { name: "Start time" })).not.toBeInTheDocument();
+});
+
+test("EVT-08 turning All day off brings back the draft's times", async () => {
+  renderSheet();
+
+  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
+  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
+
+  expect(screen.getByRole("button", { name: "Starts, 12:00 PM. Change" })).toBeEnabled();
+  expect(screen.getByText("1 hr")).toBeInTheDocument();
+});
+
+test("EVT-08 an all-day event opens with All day on", () => {
   renderSheet({ initial: initialEventSheet({ ...DRAFT, allDay: true }) });
 
-  expect(screen.getByRole("button", { name: "All day" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.queryByRole("button", { name: /^Starts/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("switch", { name: "All day" })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("button", { name: /^Starts/ })).toBeDisabled();
 });
 
 test("TPK-07 an all-day event saves even with the draft times out of order", async () => {
@@ -470,7 +521,7 @@ test("TPK-07 an all-day event saves even with the draft times out of order", asy
 
   renderSheet({ time: "error", onSave });
 
-  await userEvent.click(screen.getByRole("button", { name: "All day" }));
+  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   expect(onSave).toHaveBeenCalledWith({ ...DRAFT, end: 690, allDay: true });

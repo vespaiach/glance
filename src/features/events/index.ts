@@ -1,4 +1,4 @@
-export { EventSheet } from "./components/EventSheet";
+export { EventSheet, type SheetForecast } from "./components/EventSheet";
 export { EventSheetScreen } from "./EventSheetScreen";
 export {
   draftFromEvent,
