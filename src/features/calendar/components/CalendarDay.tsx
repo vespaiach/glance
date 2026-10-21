@@ -19,6 +19,7 @@ import { Zone } from "@/ui/Zone";
 type CalendarDayProps = {
   state: ZoneState<CalendarEvent>;
   toolbar: ReactNode;
+  spanLink: ReactNode;
   tags: readonly Tag[];
   filter: ReadonlySet<string>;
   calendarEmpty: boolean;
@@ -190,6 +191,7 @@ function Timeline({
   breakpoint,
   span24,
   weather,
+  spanLink,
   onOpenEvent,
   onAddEvent,
 }: TimelineProps) {
@@ -225,6 +227,7 @@ function Timeline({
         onAddEvent={onAddEvent}
         xstyle={styles.timeline(minHeight)}
       />
+      {spanLink}
     </>
   );
 }

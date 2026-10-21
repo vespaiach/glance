@@ -113,7 +113,9 @@ export const gallery = {
   calendarView: {
     today: "Today · everyone",
     filtered: "Mom and Dad · all day",
+    morePlans: "Oct 10 · more plans",
     allHours: "Oct 10 · 24 hours",
+    allHours24: "Oct 10 · 24 hours · 24-hour clock",
     nobody: "Nobody selected",
     emptyDay: "Empty day",
     emptyCalendar: "Empty calendar",

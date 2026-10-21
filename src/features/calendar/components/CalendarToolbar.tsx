@@ -1,21 +1,17 @@
 import * as stylex from "@stylexjs/stylex";
-import { Clock, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { copy } from "@/copy";
 import type { Tag } from "@/domain/schemas";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
-import { Icon } from "@/ui/Icon";
 import { press } from "@/ui/press";
 
 type CalendarToolbarProps = {
   tags: readonly Tag[];
   filter: ReadonlySet<string>;
-  span24: boolean;
-  outside: number;
   phone: boolean;
   onToggleTag: (id: string) => void;
-  onToggleSpan: () => void;
   onAddEvent: () => void;
 };
 
@@ -88,29 +84,6 @@ const styles = stylex.create({
     paddingInlineEnd: 18,
     backgroundColor: colors.borderHairline,
   },
-  span: {
-    paddingInlineStart: 14,
-    paddingInlineEnd: 18,
-    fontSize: type.buttonSize,
-  },
-  on: {
-    backgroundColor: colors.actionPrimary,
-    color: colors.onActionPrimary,
-  },
-  badge: {
-    minWidth: 24,
-    height: 24,
-    boxSizing: "border-box",
-    paddingInline: 7,
-    display: "grid",
-    placeItems: "center",
-    borderRadius: radii.full,
-    backgroundColor: colors.actionPrimary,
-    color: colors.onActionPrimary,
-    fontFamily: type.fontMono,
-    fontSize: 13,
-    letterSpacing: "0.4px",
-  },
   soft: (height: number) => ({
     flexShrink: 0,
     minHeight: height,
@@ -142,11 +115,8 @@ const PILL_HEIGHT = { phone: 44, other: 48 } as const;
 export function CalendarToolbar({
   tags,
   filter,
-  span24,
-  outside,
   phone,
   onToggleTag,
-  onToggleSpan,
   onAddEvent,
 }: CalendarToolbarProps) {
   const height = phone ? PILL_HEIGHT.phone : PILL_HEIGHT.other;
@@ -169,17 +139,6 @@ export function CalendarToolbar({
         </fieldset>
       </div>
       <div {...stylex.props(styles.actions, phone && styles.actionsPhone)}>
-        <button
-          type="button"
-          aria-pressed={span24}
-          aria-label={words.span(span24 ? 0 : outside)}
-          onClick={onToggleSpan}
-          {...stylex.props(styles.pill(height), styles.span, span24 && styles.on, press.scale)}
-        >
-          <Icon icon={Clock} size={20} />
-          {words.spanLabel}
-          {!span24 && outside > 0 && <span {...stylex.props(styles.badge)}>{outside}</span>}
-        </button>
         <Button
           variant="ghost"
           icon={Plus}
