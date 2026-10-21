@@ -1,8 +1,8 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { Pencil, Trash2, WifiOff } from "lucide-react";
-import { type ReactNode, useEffect, useReducer, useRef } from "react";
+import { Check, Pencil, Trash2, WifiOff } from "lucide-react";
+import { type ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Tag, TagColor, WeatherIcon } from "@/domain/schemas";
@@ -15,7 +15,7 @@ import { Button } from "@/ui/Button";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
 import { type CloseFrom, closeStep } from "@/ui/discard";
 import { Icon } from "@/ui/Icon";
-import { Sheet } from "@/ui/Sheet";
+import { Page } from "@/ui/Page";
 import { Switch } from "@/ui/Switch";
 import { TextInput } from "@/ui/TextInput";
 import { TimeField } from "@/ui/TimeField";
@@ -105,19 +105,22 @@ type TimesProps = {
   dispatch: (action: EventSheetAction) => void;
 };
 
-type DetailsSheetProps = {
+type DetailsPageProps = {
   eyebrow: ReactNode;
   draft: EventDraft;
   tags: readonly Tag[];
   clock: Clock;
   status: DetailsStatus;
+  compact?: boolean;
   keyboardInset?: number;
+  leaving: (() => void) | null;
   onClose: () => void;
   onEdit: () => void;
 };
 
 type DeleteActionProps = {
   confirming: boolean;
+  compact?: boolean;
   onAsk: () => void;
   onDelete: () => void;
 };
@@ -140,21 +143,25 @@ export function EventSheet({
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
 
+  const [leaving, setLeaving] = useState<(() => void) | null>(null);
+
+  const leave = (then: () => void) => setLeaving(() => then);
+
   const heading = <DayEyebrow day={eyebrow} forecast={forecast} />;
 
   if (state.step === "details")
-    return (
-      <DetailsSheet
-        eyebrow={heading}
-        draft={state.opened}
-        tags={tags}
-        clock={clock}
-        status={status}
-        keyboardInset={keyboardInset}
-        onClose={onClose}
-        onEdit={() => dispatch({ type: "edit" })}
-      />
-    );
+    return detailsPage({
+      eyebrow: heading,
+      draft: state.opened,
+      tags,
+      clock,
+      status,
+      compact,
+      keyboardInset,
+      leaving,
+      onClose: () => leave(onClose),
+      onEdit: () => dispatch({ type: "edit" }),
+    });
 
   const { draft } = state;
 
@@ -166,13 +173,13 @@ export function EventSheet({
     onSave(draft);
 
     if (state.fromDetails) dispatch({ type: "saved" });
-    else onClose();
+    else leave(onClose);
   };
 
   const requestClose = (from: CloseFrom) => () => {
     const step = closeStep(asking, isDirty(draft, state.opened), from);
 
-    if (step === "close") return onClose();
+    if (step === "close") return leave(onClose);
 
     if (step === "ask") dispatch({ type: "askDiscard" });
   };
@@ -194,34 +201,44 @@ export function EventSheet({
   };
 
   const discardChanges = () =>
-    asking && state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
+    asking && state.discardTo === "details" ? dispatch({ type: "back" }) : leave(onClose);
 
   const endActions = (
     <>
       <Button variant="secondary" onClick={cancel} xstyle={styles.cancel}>
         {words.cancel}
       </Button>
-      <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
+      <Button icon={Check} onClick={save}>
+        {primaryLabel(mode, offline)}
+      </Button>
     </>
   );
 
   const startActions = mode === "edit" && (
     <DeleteAction
       confirming={state.step === "deleting"}
+      compact={compact}
       onAsk={() => dispatch({ type: "askDelete" })}
-      onDelete={onDelete}
+      onDelete={() => leave(onDelete)}
     />
   );
 
   const discardBody = mode === "new" ? discard.newEvent : discard.editEvent;
 
   return (
-    <Sheet
+    <Page
       title={mode === "new" ? words.newTitle : words.editTitle}
       eyebrow={heading}
-      closeLabel={words.close}
-      onClose={requestClose("button")}
-      onScrimTap={requestClose("scrim")}
+      backLabel={words.back}
+      onBack={requestClose("button")}
+      leaving={leaving !== null}
+      onLeft={() => leaving?.()}
+      compact={compact}
+      banner={
+        offline && (
+          <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />
+        )
+      }
       startActions={
         asking ? <DiscardMessage title={discard.title} body={discardBody} /> : startActions
       }
@@ -239,9 +256,6 @@ export function EventSheet({
       }
       keyboardInset={keyboardInset}
     >
-      {offline && (
-        <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />
-      )}
       <TextInput
         label={words.title}
         placeholder={words.titlePlaceholder}
@@ -275,28 +289,33 @@ export function EventSheet({
         multiline
         rows={3}
       />
-    </Sheet>
+    </Page>
   );
 }
 
-function DetailsSheet({
+function detailsPage({
   eyebrow,
   draft,
   tags,
   clock,
   status,
+  compact,
   keyboardInset,
+  leaving,
   onClose,
   onEdit,
-}: DetailsSheetProps) {
+}: DetailsPageProps) {
   const ended = status === "ended";
 
   return (
-    <Sheet
+    <Page
       title={draft.title}
       eyebrow={eyebrow}
-      closeLabel={words.close}
-      onClose={onClose}
+      backLabel={words.back}
+      onBack={onClose}
+      leaving={leaving !== null}
+      onLeft={() => leaving?.()}
+      compact={compact}
       startActions={ended && <span {...stylex.props(styles.ended)}>{details.endedBody}</span>}
       endActions={
         !ended && (
@@ -308,7 +327,7 @@ function DetailsSheet({
       keyboardInset={keyboardInset}
     >
       <EventDetails draft={draft} tags={tags} clock={clock} status={status} />
-    </Sheet>
+    </Page>
   );
 }
 
@@ -345,7 +364,9 @@ function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
 
     if (row.bottom <= box.bottom && row.top >= box.top) return;
 
-    body.scrollTop += row.top - box.top - REVEAL_GAP;
+    const header = body.querySelector<HTMLElement>("[data-page-header]")?.offsetHeight ?? 0;
+
+    body.scrollTop += row.top - box.top - header - REVEAL_GAP;
   }, [picker, endError]);
 
   return times;
@@ -430,7 +451,7 @@ function primaryLabel(mode: EventSheetProps["mode"], offline: boolean): string {
   return mode === "new" ? words.add : words.save;
 }
 
-function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
+function DeleteAction({ confirming, compact, onAsk, onDelete }: DeleteActionProps) {
   if (confirming)
     return (
       <Button variant="danger" icon={Trash2} onClick={onDelete}>
@@ -439,7 +460,7 @@ function DeleteAction({ confirming, onAsk, onDelete }: DeleteActionProps) {
     );
 
   return (
-    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={styles.delete}>
+    <Button variant="ghost" icon={Trash2} onClick={onAsk} xstyle={compact && styles.delete}>
       {words.delete}
     </Button>
   );
