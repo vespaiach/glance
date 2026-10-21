@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.08 |
+| Status | v2.09 |
 | Date | 2026-10-20 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.70) · [`tech-design.md`](tech-design.md) (v2.32) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.70) · [`tech-design.md`](tech-design.md) (v2.33) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -36,3 +36,4 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | W05 | ✅ | Photos: thumbnail panel matches the featured height and scrolls inside (wide, mid); portrait featured photo contained via natural size; "Set as background" / "Background now · Change" | D08 | Component tests for both button states, the settings write and the slideshow pin, and contain for a portrait load; gallery and Photos board at the six sizes | PHOTO-15, PHOTO-16, §8.6 |
 | W06 | ✅ | Ambient transitions: `shell/ambientTransition.ts`, `useAmbientNavigate` for every way in and out, taps dropped while running, no page fade for `/ambient`, reduced-motion bypass | D08 | Tests: taps ignored mid-transition, navigation after the leave half, reduced motion pushes at once; visual check | AMB-10 |
 | X01 | ✅ | Docs vs code consistency: daily jobs fail independently, S3 `remove` settles every key, the photo job continues past one failure; Biome enforces the `data`→`fixtures` rule and drops SQLite wording; spec v0.70 and tech design v2.32 match the code | — | Job, photo-job and S3 tests; checks green | tech§6.3, tech§6.4, §3 |
+| X02 | 🔄 | Event and note sheets as a discriminated union: `step: details \| editing \| deleting \| discarding`, `discardTo` only on `discarding`; `closeStep(asking, dirty, from)` | X01 | Reducer tests on the new steps; component tests unchanged and green | EVT-09, EVT-10, NOTE-10, §8.9 |
