@@ -100,6 +100,8 @@ const styles = stylex.create({
   },
   place: {
     padding: 0,
+    backgroundColor: "transparent",
+    borderRadius: 0,
   },
   skip: {
     display: "flex",
