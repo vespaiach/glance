@@ -1,5 +1,5 @@
-import type { Db } from "../db/db";
-import { migratedDbPerTest } from "../db/testDb";
+import type { AccountRecord, Database } from "../db";
+import { databasePerTest } from "../db/testDb";
 import type { ServiceDeps } from "./deps";
 
 export const START = new Date("2026-10-09T14:00:00.000Z");
@@ -15,7 +15,7 @@ export type ServiceHarness = {
 };
 
 export function serviceHarnessPerTest(): ServiceHarness {
-  const db = migratedDbPerTest();
+  const db = databasePerTest();
 
   let clock = START;
 
@@ -29,19 +29,22 @@ export function serviceHarnessPerTest(): ServiceHarness {
     advance: (ms) => {
       clock = new Date(clock.getTime() + ms);
     },
-    globalVersion: async () =>
-      (
-        (await db().one<{ version: number }>("SELECT version FROM sync_state")) as {
-          version: number;
-        }
-      ).version,
+    globalVersion: () => db().versions.current(),
   };
 }
 
-async function addAccounts(db: Db): Promise<void> {
-  const insert =
-    "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ($1, $2, 'America/New_York', $3)";
+export function newAccount(id: string, email: string): AccountRecord {
+  return {
+    id,
+    email,
+    name: null,
+    timeZone: "America/New_York",
+    setupDoneAt: null,
+    createdAt: START.toISOString(),
+  };
+}
 
-  await db.run(insert, [MARIA, "maria@example.com", START.toISOString()]);
-  await db.run(insert, [OMAR, "omar@example.com", START.toISOString()]);
+async function addAccounts(db: Database): Promise<void> {
+  await db.accounts.insert(newAccount(MARIA, "maria@example.com"));
+  await db.accounts.insert(newAccount(OMAR, "omar@example.com"));
 }

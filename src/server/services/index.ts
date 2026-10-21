@@ -8,7 +8,7 @@ import type {
   Tag,
 } from "@/domain/schemas";
 import { announce, syncBus } from "../bus";
-import { getDb } from "../db/db";
+import { database } from "../db";
 import { photoStore } from "../storage";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
@@ -99,7 +99,7 @@ export function locatePlace(position: Coordinates) {
 export type { WeatherError } from "./weather";
 
 function deps(): ServiceDeps {
-  return { db: getDb(), now: () => new Date() };
+  return { db: database(), now: () => new Date() };
 }
 
 function weatherDeps(): weather.WeatherDeps {

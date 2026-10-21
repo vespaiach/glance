@@ -33,6 +33,13 @@ async function stored(accountId: string): Promise<string> {
   return answer.value.id;
 }
 
+async function markDeleted(accountId: string, id: string): Promise<void> {
+  const photo = await harness.deps().db.photos.find(accountId, id);
+
+  if (photo)
+    await harness.deps().db.photos.save(accountId, { ...photo, deletedAt: photo.updatedAt });
+}
+
 function storedFiles(): string[] {
   return readdirSync(photosDir(), { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
@@ -45,9 +52,8 @@ describe("removeDeletedPhotoFiles", () => {
     const gone = await stored(MARIA);
     const otherGone = await stored(OMAR);
     const kept = await stored(MARIA);
-    await harness
-      .deps()
-      .db.run("UPDATE photos SET deleted_at = updated_at WHERE id IN ($1, $2)", [gone, otherGone]);
+    await markDeleted(MARIA, gone);
+    await markDeleted(OMAR, otherGone);
 
     await removeDeletedPhotoFiles(deps());
 
@@ -57,9 +63,8 @@ describe("removeDeletedPhotoFiles", () => {
   it("PHOTO-13 removes the other deleted photos' files when one photo's removal fails, then throws", async () => {
     const stuck = await stored(MARIA);
     const gone = await stored(MARIA);
-    await harness
-      .deps()
-      .db.run("UPDATE photos SET deleted_at = updated_at WHERE id IN ($1, $2)", [stuck, gone]);
+    await markDeleted(MARIA, stuck);
+    await markDeleted(MARIA, gone);
     const disk = createDiskStore(photosDir());
     const store: PhotoStore = {
       ...disk,

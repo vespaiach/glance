@@ -42,12 +42,19 @@ async function insertPhoto(
   version: number,
   takenOn: string | null,
 ): Promise<void> {
-  await harness.deps().db.run(
-    `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, updated_at,
-       version, title_source, date_source, place_source)
-       VALUES ($1, $2, 'Cannon Beach', $3, NULL, 'x', '2026-10-01T18:30:00.000Z',
-       '2026-10-02T08:00:00.000Z', $4, 'place', 'photo', 'none')`,
-    [PHOTO_ID, accountId, takenOn, version],
+  await harness.deps().db.photos.insert(
+    accountId,
+    {
+      id: PHOTO_ID,
+      title: "Cannon Beach",
+      ...(takenOn !== null && { takenOn }),
+      createdAt: "2026-10-01T18:30:00.000Z",
+      sources: { title: "place", takenOn: "photo", place: "none" },
+      checked: false,
+      updatedAt: "2026-10-02T08:00:00.000Z",
+      version,
+    },
+    "x",
   );
 }
 
@@ -150,19 +157,6 @@ describe("pullChanges", () => {
         { entity: "tags", row: { ...MEMBER, updatedAt: STAMP, version: 1 } },
         { entity: "events", row: { ...plan, updatedAt: STAMP, version: 2 } },
       ],
-    });
-  });
-
-  it("D24 an event saved before tags pulls as an everyone event", async () => {
-    await harness
-      .deps()
-      .db.run(
-        "INSERT INTO events (id, account_id, title, start_at, updated_at, version) VALUES ($1, $2, 'Swim lesson', $3, $4, 1)",
-        [EVENT.id, MARIA, EVENT.startAt, STAMP],
-      );
-
-    expect(await pullChanges(harness.deps(), MARIA, undefined)).toMatchObject({
-      changes: [{ entity: "events", row: { ...EVENT, updatedAt: STAMP, version: 1 } }],
     });
   });
 

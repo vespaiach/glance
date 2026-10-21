@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
+import type { AccountSettings } from "@/domain/schemas";
 import { finishSetup, saveName } from "./account";
 import { requestCode, verifyCode } from "./codes";
 import { requireDisplay } from "./sessions";
@@ -14,8 +15,16 @@ const TEN_MINUTES = 10 * 60 * 1000;
 const TABLET_UA =
   "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
 
-function rows(sql: string): Promise<unknown[]> {
-  return harness.deps().db.all(sql);
+function storedCode(email = "maria@example.com") {
+  return harness.deps().db.signInCodes.get(email);
+}
+
+function account(email = "maria@example.com") {
+  return harness.deps().db.accounts.byEmail(email);
+}
+
+async function displays(email = "maria@example.com") {
+  return harness.deps().db.displays.forAccount((await account(email))?.id ?? "");
 }
 
 async function sendCode(request = REQUEST): Promise<string> {
@@ -34,13 +43,14 @@ function wrongCode(code: string): string {
   return code === "000000" ? "000001" : "000000";
 }
 
-async function saveSeason(season: string): Promise<void> {
-  await harness
-    .deps()
-    .db.run(
-      "INSERT INTO settings (account_id, json, updated_at, version) SELECT id, $1, $2, 1 FROM accounts",
-      [JSON.stringify({ ...DEFAULT_SETTINGS, season }), "2026-10-09T14:00:00.000Z"],
-    );
+async function saveSeason(season: AccountSettings["season"]): Promise<void> {
+  await harness.deps().db.settings.save({
+    ...DEFAULT_SETTINGS,
+    season,
+    accountId: (await account())?.id ?? "",
+    updatedAt: "2026-10-09T14:00:00.000Z",
+    version: 1,
+  });
 }
 
 describe("requestCode", () => {
@@ -49,22 +59,21 @@ describe("requestCode", () => {
 
     expect(code).toMatch(/^\d{6}$/);
     expect(harness.sent[0]?.to).toBe("maria@example.com");
-    expect(await rows("SELECT code_hash FROM sign_in_codes")).toEqual([
-      { code_hash: createHash("sha256").update(`maria@example.com:${code}`).digest("hex") },
-    ]);
+    expect((await storedCode())?.codeHash).toBe(
+      createHash("sha256").update(`maria@example.com:${code}`).digest("hex"),
+    );
   });
 
   it("SIGNIN-12 stores the time zone, no tries and a 10-minute expiry", async () => {
     await sendCode();
 
-    expect(await rows("SELECT email, time_zone, tries, expires_at FROM sign_in_codes")).toEqual([
-      {
-        email: "maria@example.com",
-        time_zone: "America/New_York",
-        tries: 0,
-        expires_at: "2026-10-09T14:10:00.000Z",
-      },
-    ]);
+    expect(await storedCode()).toEqual({
+      email: "maria@example.com",
+      codeHash: expect.any(String),
+      timeZone: "America/New_York",
+      tries: 0,
+      expiresAt: "2026-10-09T14:10:00.000Z",
+    });
   });
 
   it("SIGNIN-04 answers the same for a known and an unknown email", async () => {
@@ -81,7 +90,6 @@ describe("requestCode", () => {
     const older = await sendCode();
     const newer = await sendCode();
 
-    expect(await rows("SELECT email FROM sign_in_codes")).toHaveLength(1);
     expect(await enter(older)).toEqual({ ok: false, error: "wrong-code" });
     expect((await enter(newer)).ok).toBe(true);
   });
@@ -100,10 +108,8 @@ describe("requestCode", () => {
 
     await sendCode({ ...REQUEST, email: "sam@example.com" });
 
-    expect(await rows("SELECT email FROM sign_in_codes ORDER BY email")).toEqual([
-      { email: "maria@example.com" },
-      { email: "sam@example.com" },
-    ]);
+    expect(await storedCode("maria@example.com")).toBeDefined();
+    expect(await storedCode("sam@example.com")).toBeDefined();
   });
 
   it("tech§6.2 rate-limits codes per email and sends nothing over the limit", async () => {
@@ -176,14 +182,12 @@ describe("verifyCode", () => {
       returning: false,
       setupDone: false,
     });
-    expect(await rows("SELECT email, name, time_zone, created_at FROM accounts")).toEqual([
-      {
-        email: "maria@example.com",
-        name: null,
-        time_zone: "America/New_York",
-        created_at: "2026-10-09T14:00:00.000Z",
-      },
-    ]);
+    expect(await account()).toMatchObject({
+      email: "maria@example.com",
+      name: null,
+      timeZone: "America/New_York",
+      createdAt: "2026-10-09T14:00:00.000Z",
+    });
   });
 
   it("SIGNIN-12 signs the screen in with a session for the account", async () => {
@@ -199,9 +203,7 @@ describe("verifyCode", () => {
   it("D23 the display records the screen's device kind and browser", async () => {
     await enter(await sendCode(), "maria@example.com", { userAgent: TABLET_UA });
 
-    expect(await rows("SELECT kind, browser FROM displays")).toEqual([
-      { kind: "tablet", browser: "Chrome" },
-    ]);
+    expect(await displays()).toMatchObject([{ kind: "tablet", browser: "Chrome" }]);
   });
 
   it("SIGNIN-12 a known email signs in to the existing account as returning", async () => {
@@ -219,10 +221,8 @@ describe("verifyCode", () => {
       returning: true,
       setupDone: true,
     });
-    expect(await rows("SELECT time_zone FROM accounts")).toEqual([
-      { time_zone: "America/New_York" },
-    ]);
-    expect(await rows("SELECT id FROM displays")).toHaveLength(2);
+    expect((await account())?.timeZone).toBe("America/New_York");
+    expect(await displays()).toHaveLength(2);
   });
 
   it("SIGNIN-12 reads the email trimmed and without case", async () => {
@@ -236,15 +236,15 @@ describe("verifyCode", () => {
     await enter(code);
 
     expect(await enter(code)).toEqual({ ok: false, error: "code-expired" });
-    expect(await rows("SELECT email FROM sign_in_codes")).toEqual([]);
+    expect(await storedCode()).toBeUndefined();
   });
 
   it("SIGNIN-17 a wrong code is refused and counts a try", async () => {
     const code = await sendCode();
 
     expect(await enter(wrongCode(code))).toEqual({ ok: false, error: "wrong-code" });
-    expect(await rows("SELECT tries FROM sign_in_codes")).toEqual([{ tries: 1 }]);
-    expect(await rows("SELECT id FROM accounts")).toEqual([]);
+    expect((await storedCode())?.tries).toBe(1);
+    expect(await account()).toBeUndefined();
   });
 
   it("SIGNIN-17 the right code after 4 wrong tries still signs in", async () => {
@@ -260,7 +260,7 @@ describe("verifyCode", () => {
 
     expect(await enter(wrongCode(code))).toEqual({ ok: false, error: "code-locked" });
     expect(await enter(code)).toEqual({ ok: false, error: "code-locked" });
-    expect(await rows("SELECT id FROM accounts")).toEqual([]);
+    expect(await account()).toBeUndefined();
   });
 
   it("SIGNIN-08 a code stops working after 10 minutes", async () => {
@@ -268,7 +268,7 @@ describe("verifyCode", () => {
     harness.advance(TEN_MINUTES);
 
     expect(await enter(code)).toEqual({ ok: false, error: "code-expired" });
-    expect(await rows("SELECT id FROM accounts")).toEqual([]);
+    expect(await account()).toBeUndefined();
   });
 
   it("SIGNIN-08 an email with no code reads the same as an expired code", async () => {
@@ -285,7 +285,9 @@ describe("verifyCode", () => {
     expect(await enter(marias, "sam@example.com")).toEqual({ ok: false, error: "wrong-code" });
     expect((await enter(sams, "sam@example.com")).ok).toBe(true);
     expect(await enter(marias, "omar@example.com")).toEqual({ ok: false, error: "code-expired" });
-    expect(await rows("SELECT email FROM accounts")).toEqual([{ email: "sam@example.com" }]);
+    expect(await account("sam@example.com")).toBeDefined();
+    expect(await account("maria@example.com")).toBeUndefined();
+    expect(await account("omar@example.com")).toBeUndefined();
   });
 
   it("tech§6.2 rate-limits tries per IP", async () => {

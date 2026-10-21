@@ -56,13 +56,7 @@ describe("putSettings", () => {
 const PDX = { ...PORTLAND, timeZone: "America/Los_Angeles" };
 
 const setupDoneAt = async (accountId: string) =>
-  (
-    (await harness
-      .deps()
-      .db.one("SELECT setup_done_at FROM accounts WHERE id = $1", [accountId])) as {
-      setup_done_at: string | null;
-    }
-  ).setup_done_at;
+  (await harness.deps().db.accounts.byId(accountId))?.setupDoneAt;
 
 describe("saveLocation", () => {
   it("SIGNIN-14 starts from the default settings when the account has none", async () => {
@@ -94,11 +88,14 @@ describe("saveLocation", () => {
 
     await saveLocation(harness.deps(), MARIA, PDX);
 
-    const omar = await harness
-      .deps()
-      .db.one("SELECT json FROM settings WHERE account_id = $1", [OMAR]);
+    const omar = await harness.deps().db.settings.get(OMAR);
 
-    expect(omar).toEqual({ json: DEFAULT_SETTINGS });
+    expect(omar).toEqual({
+      ...DEFAULT_SETTINGS,
+      accountId: OMAR,
+      updatedAt: "2026-10-09T14:00:00.000Z",
+      version: 1,
+    });
   });
 });
 

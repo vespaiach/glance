@@ -1,7 +1,7 @@
 import "server-only";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import type { Db } from "./db";
+import type { Sql } from "./sql";
 
 export type Migration = { version: number; sql: string };
 
@@ -23,7 +23,7 @@ export function readMigrations(dir: string): Migration[] {
     .sort((a, b) => a.version - b.version);
 }
 
-export async function migrate(db: Db, migrations: Migration[]): Promise<void> {
+export async function migrate(db: Sql, migrations: Migration[]): Promise<void> {
   await db.exec(CREATE_SCHEMA_MIGRATIONS);
 
   const applied = await appliedVersions(db);
@@ -35,13 +35,13 @@ export async function migrate(db: Db, migrations: Migration[]): Promise<void> {
   }
 }
 
-async function appliedVersions(db: Db): Promise<Set<number>> {
+async function appliedVersions(db: Sql): Promise<Set<number>> {
   const rows = await db.all<{ version: number }>("SELECT version FROM schema_migrations");
 
   return new Set(rows.map((row) => row.version));
 }
 
-async function applyMigration(db: Db, migration: Migration): Promise<void> {
+async function applyMigration(db: Sql, migration: Migration): Promise<void> {
   await db.tx(async (tx) => {
     await tx.exec(migration.sql);
     await tx.run("INSERT INTO schema_migrations (version) VALUES ($1)", [migration.version]);

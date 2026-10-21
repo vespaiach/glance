@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.12 |
+| Status | v2.13 |
 | Date | 2026-10-21 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.77) · [`tech-design.md`](tech-design.md) (v2.50) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.77) · [`tech-design.md`](tech-design.md) (v2.52) |
 
 The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
@@ -18,7 +18,7 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 
 **Rules**
 - A task is PR-sized (about 0.5–2 days), cites the requirement IDs it covers (**Covers**) and has a **Done when** check. Done also means the checks pass (`biome check → tsc → Vitest → next build`), run locally by `/glance-next` while GitHub CI is off.
-- **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: letters used so far are A B C D E F G H I J K L M N P Q R S T U V W X Y Z.
+- **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: letters used so far are A B C D E F G H I J K L M N O P Q R S T U V W X Y Z.
 - **Depends on** lists hard dependencies only, by ID, and only on rows still in this file. A task can start once they are ✅.
 - One task = one branch (`feat/<ID>-<slug>`) and one PR titled with the ID (`T05: …`). **Start:** `git fetch origin`, check its dependencies are ✅ on `origin/main`, branch from `origin/main`, open a draft PR; its first commit sets the row to 🔄. **Finish:** bring in the latest `origin/main`; the last commit before merge sets the row to ✅. A closed, unmerged PR resets it to ⬜.
 - **Docs move with the code:** a PR that changes behavior, a decision, a schema, an API or the structure updates `product-spec.md` and/or `tech-design.md` in the same PR (bump the version) and fixes any row it makes wrong.
@@ -47,3 +47,4 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | J06 | ✅ | Day preview column: `overlappingEvents(events, start, end)` (all-day included), the weather tile with the hourly strip, "Also at this time" | J05 | Unit tests for overlap edges, all-day and no end (30 min); tests for the rain suffix and no-forecast line; hidden below 1180 px | EVT-13 |
 | J07 | ✅ | Quick date popover on the New and Edit event eyebrow: Today, Tomorrow, Next week chips and the month grid | J05 | Component tests: each chip sets the date and keeps the times, outside tap closes unchanged, opening closes a time picker | EVT-12 |
 | J08 | ✅ | Time picker refresh: the sliding AM/PM toggle, the clip-reveal open animation that doesn't scroll the page, 44 px chips | J05 | Component tests: toggle keeps hour and minute, switching Starts ⇄ Ends keeps one picker, only the end error scrolls | TPK-02, TPK-03 |
+| O01 | ✅ | Database port: `server/db/database.ts` (`Database` = repos + `tx`), today's SQL moved into `server/db/postgres/` repos, an in-memory adapter in `server/db/memory/`, `DB=postgres\|memory`, services/auth/jobs import only `@/server/db` | — | `databaseContract` green on both adapters; every server suite green under `TEST_DB=postgres` and `TEST_DB=memory`; `DB=memory npm run dev` signs in and syncs without Postgres | D7, tech§5, §7 |

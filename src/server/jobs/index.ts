@@ -1,6 +1,6 @@
 import "server-only";
 import { syncBus } from "../bus";
-import { getDb } from "../db/db";
+import { database } from "../db";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
 import { expireNotes } from "./notes";
@@ -19,7 +19,7 @@ export function startJobs(): void {
 }
 
 function deps(): ServiceDeps {
-  return { db: getDb(), now: () => new Date() };
+  return { db: database(), now: () => new Date() };
 }
 
 async function runHourly(): Promise<void> {

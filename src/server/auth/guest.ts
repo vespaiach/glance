@@ -1,6 +1,6 @@
 import "server-only";
 import { err, ok, type Result } from "@/domain/result";
-import { type AccountRow, accountByEmail } from "./account";
+import type { AccountRecord } from "../db";
 import type { AuthDeps } from "./deps";
 import { openDisplay } from "./sessions";
 import { type SessionSignIn, type SignedInBody, signedIn } from "./status";
@@ -29,18 +29,18 @@ export async function signInAsGuest(
   return ok({ status: signedInGuest(account), sessionToken });
 }
 
-async function guestAccount({ db, guestEmail }: AuthDeps): Promise<AccountRow | undefined> {
+async function guestAccount({ db, guestEmail }: AuthDeps): Promise<AccountRecord | undefined> {
   if (guestEmail === undefined) return undefined;
 
-  const account = await accountByEmail(db, guestEmail);
+  const account = await db.accounts.byEmail(guestEmail);
 
   return account && isSetUp(account) ? account : undefined;
 }
 
-function isSetUp(account: AccountRow): boolean {
-  return account.name !== null && account.setup_done_at !== null;
+function isSetUp(account: AccountRecord): boolean {
+  return account.name !== null && account.setupDoneAt !== null;
 }
 
-function signedInGuest(account: AccountRow): SignedInBody {
+function signedInGuest(account: AccountRecord): SignedInBody {
   return signedIn(account, true);
 }

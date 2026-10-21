@@ -1,18 +1,22 @@
+import type { Browser, DeviceKind } from "@/domain/screens";
 import { listDisplays } from "./displays";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
 const harness = serviceHarnessPerTest();
 
-type Seen = { id: string; account: string; kind?: string; browser?: string; seen: string };
+type Seen = {
+  id: string;
+  account: string;
+  kind?: DeviceKind;
+  browser?: Browser | null;
+  seen: string;
+};
 
 async function addDisplays(displays: Seen[]): Promise<void> {
   for (const { id, account, kind = "monitor", browser = null, seen } of displays) {
     await harness
       .deps()
-      .db.run(
-        "INSERT INTO displays (id, account_id, kind, browser, last_seen_at) VALUES ($1, $2, $3, $4, $5)",
-        [id, account, kind, browser, seen],
-      );
+      .db.displays.insert({ id, accountId: account, kind, browser, lastSeenAt: seen });
   }
 }
 

@@ -1,19 +1,18 @@
 import "server-only";
 import pg from "pg";
-import { env } from "../env";
 
-export type Db = {
+export type Sql = {
   all<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
   one<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | undefined>;
   run(sql: string, params?: unknown[]): Promise<number>;
   exec(sql: string): Promise<void>;
-  tx<T>(fn: (db: Db) => Promise<T>): Promise<T>;
+  tx<T>(fn: (db: Sql) => Promise<T>): Promise<T>;
 };
 
-export type DbDriver = {
+export type SqlDriver = {
   query(sql: string, params: unknown[]): Promise<{ rows: unknown[]; count: number }>;
   exec(sql: string): Promise<unknown>;
-  tx<T>(fn: (db: Db) => Promise<T>): Promise<T>;
+  tx<T>(fn: (db: Sql) => Promise<T>): Promise<T>;
 };
 
 const OID = { int8: 20, date: 1082, timestamptz: 1184 };
@@ -31,9 +30,7 @@ export const pgTypes = {
     PG_PARSERS[oid] ?? pg.types.getTypeParser(oid, format)) as typeof pg.types.getTypeParser,
 };
 
-const shared = globalThis as typeof globalThis & { glanceDb?: Db };
-
-export function driverDb(driver: DbDriver): Db {
+export function driverSql(driver: SqlDriver): Sql {
   return {
     all: async <T>(sql: string, params: unknown[] = []) =>
       (await driver.query(sql, params)).rows as T[],
@@ -47,18 +44,12 @@ export function driverDb(driver: DbDriver): Db {
   };
 }
 
-export function getDb(): Db {
-  shared.glanceDb ??= openPgDb(env().DATABASE_URL);
-
-  return shared.glanceDb;
+export function openPgSql(connectionString: string): Sql {
+  return pgSql(new pg.Pool({ connectionString, types: pgTypes }));
 }
 
-export function openPgDb(connectionString: string): Db {
-  return pgDb(new pg.Pool({ connectionString, types: pgTypes }));
-}
-
-export function pgDb(pool: pg.Pool): Db {
-  return driverDb({
+export function pgSql(pool: pg.Pool): Sql {
+  return driverSql({
     query: (sql, params) => pgQuery(pool, sql, params),
     exec: (sql) => pool.query(sql),
     tx: (fn) => pgTx(pool, fn),
@@ -77,7 +68,7 @@ async function pgQuery(client: pg.Pool | pg.PoolClient, sql: string, params: unk
   return { rows: result.rows, count: result.rowCount ?? 0 };
 }
 
-async function pgTx<T>(pool: pg.Pool, fn: (db: Db) => Promise<T>): Promise<T> {
+async function pgTx<T>(pool: pg.Pool, fn: (db: Sql) => Promise<T>): Promise<T> {
   const client = await pool.connect();
 
   try {
@@ -87,11 +78,11 @@ async function pgTx<T>(pool: pg.Pool, fn: (db: Db) => Promise<T>): Promise<T> {
   }
 }
 
-async function inPgTx<T>(client: pg.PoolClient, fn: (db: Db) => Promise<T>): Promise<T> {
+async function inPgTx<T>(client: pg.PoolClient, fn: (db: Sql) => Promise<T>): Promise<T> {
   await client.query("BEGIN");
 
   try {
-    const result = await fn(clientDb(client));
+    const result = await fn(clientSql(client));
     await client.query("COMMIT");
     return result;
   } catch (error) {
@@ -100,8 +91,8 @@ async function inPgTx<T>(client: pg.PoolClient, fn: (db: Db) => Promise<T>): Pro
   }
 }
 
-function clientDb(client: pg.PoolClient): Db {
-  const db: Db = driverDb({
+function clientSql(client: pg.PoolClient): Sql {
+  const db: Sql = driverSql({
     query: (sql, params) => pgQuery(client, sql, params),
     exec: (sql) => client.query(sql),
     tx: (fn) => fn(db),

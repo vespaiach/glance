@@ -1,20 +1,20 @@
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import type { PGlite } from "@electric-sql/pglite";
-import type { Db } from "./db";
+import { tempDirPerTest } from "../testDir";
 import { migrate, readMigrations } from "./migrate";
-import { openPglite, pgliteDb } from "./pglite";
-import { tempDirPerTest } from "./testDir";
+import { openPglite, pgliteSql } from "./pglite";
+import type { Sql } from "./sql";
 
 const tempDir = tempDirPerTest();
 
 let client: PGlite;
 
-let db: Db;
+let db: Sql;
 
 beforeEach(async () => {
   client = await openPglite();
-  db = pgliteDb(client);
+  db = pgliteSql(client);
 });
 
 afterEach(async () => {

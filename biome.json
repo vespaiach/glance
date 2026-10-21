@@ -385,6 +385,62 @@
       }
     },
     {
+      "includes": ["src/server/**", "!src/server/db/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@/theme",
+                      "@/theme/**",
+                      "**/theme/**",
+                      "@/ui",
+                      "@/ui/**",
+                      "**/ui/**",
+                      "@/data",
+                      "@/data/**",
+                      "**/data/**",
+                      "@/shell",
+                      "@/shell/**",
+                      "**/shell/**",
+                      "@/features",
+                      "@/features/**",
+                      "**/features/**",
+                      "@/fixtures",
+                      "@/fixtures/**",
+                      "**/fixtures/**"
+                    ],
+                    "message": "server may import only domain and copy (tech §3)."
+                  },
+                  {
+                    "group": [
+                      "@/server/db/postgres",
+                      "@/server/db/postgres/**",
+                      "**/db/postgres",
+                      "**/db/postgres/**",
+                      "@/server/db/memory",
+                      "@/server/db/memory/**",
+                      "**/db/memory",
+                      "**/db/memory/**"
+                    ],
+                    "message": "Server code reaches storage only through the server/db port, never an adapter (tech §3, D7)."
+                  },
+                  {
+                    "group": ["@/features/*/**"],
+                    "message": "Import another feature through its index only (tech §3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/app/api/**"],
       "linter": {
         "rules": {

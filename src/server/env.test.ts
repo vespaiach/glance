@@ -33,10 +33,29 @@ const R2 = {
 describe("parseEnv", () => {
   it("tech§6.5 reads DATABASE_URL, APP_URL, MAIL_FROM, Resend mail and a disk store at DATA_DIR by default", () => {
     expect(parseEnv({ ...VALID, OTHER: "x" })).toEqual({
-      ...CORE,
+      APP_URL: CORE.APP_URL,
+      MAIL_FROM: CORE.MAIL_FROM,
+      database: { kind: "postgres", url: CORE.DATABASE_URL },
       mail: { provider: "resend", apiKey: "re_123" },
       storage: { kind: "disk", dataDir: "/data" },
     });
+  });
+
+  it("D7 reads DB=postgres the same as the default", () => {
+    expect(parseEnv({ ...VALID, DB: "postgres" }).database).toEqual({
+      kind: "postgres",
+      url: CORE.DATABASE_URL,
+    });
+  });
+
+  it("D7 needs no DATABASE_URL with DB=memory", () => {
+    const { DATABASE_URL: _, ...withoutUrl } = VALID;
+
+    expect(parseEnv({ ...withoutUrl, DB: "memory" }).database).toEqual({ kind: "memory" });
+  });
+
+  it("D7 rejects an unknown DB", () => {
+    expect(() => parseEnv({ ...VALID, DB: "sheets" })).toThrow("Invalid server config: DB");
   });
 
   it("tech§6.5 fails fast naming every missing variable", () => {

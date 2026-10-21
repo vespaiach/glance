@@ -1,0 +1,227 @@
+import "server-only";
+import type { Browser, DeviceKind } from "@/domain/screens";
+import type {
+  AccountRecord,
+  DisplayRecord,
+  MagicLinkRecord,
+  Repos,
+  SignInCodeRecord,
+} from "../database";
+import type { Sql } from "./sql";
+
+type AccountRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  time_zone: string;
+  setup_done_at: string | null;
+  created_at: string;
+};
+
+type DisplayRow = {
+  id: string;
+  account_id: string;
+  kind: DeviceKind;
+  browser: Browser | null;
+  last_seen_at: string;
+};
+
+type SessionRow = { display_id: string; account_id: string; created_at: string };
+
+type CodeRow = {
+  email: string;
+  code_hash: string;
+  time_zone: string;
+  tries: number;
+  expires_at: string;
+};
+
+type LinkRow = {
+  token_hash: string;
+  account_id: string;
+  display_id: string;
+  expires_at: string;
+  used_at: string | null;
+};
+
+export function accountsRepo(sql: Sql): Repos["accounts"] {
+  return {
+    byId: async (id) => {
+      const row = await sql.one<AccountRow>("SELECT * FROM accounts WHERE id = $1", [id]);
+
+      return row && toAccount(row);
+    },
+    byEmail: async (email) => {
+      const row = await sql.one<AccountRow>("SELECT * FROM accounts WHERE email = $1", [email]);
+
+      return row && toAccount(row);
+    },
+    insert: async (account) => {
+      await sql.run(
+        "INSERT INTO accounts (id, email, name, time_zone, setup_done_at, created_at) VALUES ($1, $2, $3, $4, $5, $6)",
+        [
+          account.id,
+          account.email,
+          account.name,
+          account.timeZone,
+          account.setupDoneAt,
+          account.createdAt,
+        ],
+      );
+    },
+    rename: async (id, name) => {
+      await sql.run("UPDATE accounts SET name = $1 WHERE id = $2", [name, id]);
+    },
+    finishSetup: async (id, at) => {
+      await sql.run(
+        "UPDATE accounts SET setup_done_at = $1 WHERE id = $2 AND setup_done_at IS NULL",
+        [at, id],
+      );
+    },
+  };
+}
+
+export function displaysRepo(sql: Sql): Repos["displays"] {
+  return {
+    insert: async (display) => {
+      await sql.run(
+        "INSERT INTO displays (id, account_id, kind, browser, last_seen_at) VALUES ($1, $2, $3, $4, $5)",
+        [display.id, display.accountId, display.kind, display.browser, display.lastSeenAt],
+      );
+    },
+    forAccount: async (accountId) => {
+      const rows = await sql.all<DisplayRow>(
+        "SELECT id, account_id, kind, browser, last_seen_at FROM displays WHERE account_id = $1 ORDER BY id",
+        [accountId],
+      );
+
+      return rows.map(toDisplay);
+    },
+    seen: async (id, at) => {
+      await sql.run("UPDATE displays SET last_seen_at = $1 WHERE id = $2", [at, id]);
+    },
+    remove: async (id) => {
+      await sql.run("DELETE FROM displays WHERE id = $1", [id]);
+    },
+  };
+}
+
+export function sessionsRepo(sql: Sql): Repos["sessions"] {
+  return {
+    insert: async (session) => {
+      await sql.run(
+        "INSERT INTO sessions (token_hash, display_id, created_at) VALUES ($1, $2, $3)",
+        [session.tokenHash, session.displayId, session.createdAt],
+      );
+    },
+    find: async (tokenHash) => {
+      const row = await sql.one<SessionRow>(
+        "SELECT s.display_id, d.account_id, s.created_at FROM sessions s JOIN displays d ON d.id = s.display_id WHERE s.token_hash = $1",
+        [tokenHash],
+      );
+
+      return (
+        row && { displayId: row.display_id, accountId: row.account_id, createdAt: row.created_at }
+      );
+    },
+    removeForDisplay: async (displayId) => {
+      await sql.run("DELETE FROM sessions WHERE display_id = $1", [displayId]);
+    },
+  };
+}
+
+export function signInCodesRepo(sql: Sql): Repos["signInCodes"] {
+  return {
+    get: async (email) => {
+      const row = await sql.one<CodeRow>("SELECT * FROM sign_in_codes WHERE email = $1", [email]);
+
+      return row && toCode(row);
+    },
+    put: async (code) => {
+      await sql.run(
+        `INSERT INTO sign_in_codes (email, code_hash, time_zone, tries, expires_at) VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (email) DO UPDATE SET code_hash = $2, time_zone = $3, tries = $4, expires_at = $5`,
+        [code.email, code.codeHash, code.timeZone, code.tries, code.expiresAt],
+      );
+    },
+    remove: async (email) => {
+      await sql.run("DELETE FROM sign_in_codes WHERE email = $1", [email]);
+    },
+    removeExpired: async (before) => {
+      await sql.run("DELETE FROM sign_in_codes WHERE expires_at < $1", [before]);
+    },
+  };
+}
+
+export function magicLinksRepo(sql: Sql): Repos["magicLinks"] {
+  return {
+    get: async (tokenHash) => {
+      const row = await sql.one<LinkRow>("SELECT * FROM magic_links WHERE token_hash = $1", [
+        tokenHash,
+      ]);
+
+      return row && toLink(row);
+    },
+    insert: async (link) => {
+      await sql.run(
+        "INSERT INTO magic_links (token_hash, account_id, display_id, expires_at, used_at) VALUES ($1, $2, $3, $4, $5)",
+        [link.tokenHash, link.accountId, link.displayId, link.expiresAt, link.usedAt],
+      );
+    },
+    markUsed: async (tokenHash, at) => {
+      await sql.run("UPDATE magic_links SET used_at = $1 WHERE token_hash = $2", [at, tokenHash]);
+    },
+    remove: async (tokenHash) => {
+      await sql.run("DELETE FROM magic_links WHERE token_hash = $1", [tokenHash]);
+    },
+    removeUnusedFor: async (displayId) => {
+      await sql.run("DELETE FROM magic_links WHERE display_id = $1 AND used_at IS NULL", [
+        displayId,
+      ]);
+    },
+    removeExpired: async (before) => {
+      await sql.run("DELETE FROM magic_links WHERE expires_at < $1", [before]);
+    },
+  };
+}
+
+function toAccount(row: AccountRow): AccountRecord {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    timeZone: row.time_zone,
+    setupDoneAt: row.setup_done_at,
+    createdAt: row.created_at,
+  };
+}
+
+function toDisplay(row: DisplayRow): DisplayRecord {
+  return {
+    id: row.id,
+    accountId: row.account_id,
+    kind: row.kind,
+    browser: row.browser,
+    lastSeenAt: row.last_seen_at,
+  };
+}
+
+function toCode(row: CodeRow): SignInCodeRecord {
+  return {
+    email: row.email,
+    codeHash: row.code_hash,
+    timeZone: row.time_zone,
+    tries: row.tries,
+    expiresAt: row.expires_at,
+  };
+}
+
+function toLink(row: LinkRow): MagicLinkRecord {
+  return {
+    tokenHash: row.token_hash,
+    accountId: row.account_id,
+    displayId: row.display_id,
+    expiresAt: row.expires_at,
+    usedAt: row.used_at,
+  };
+}

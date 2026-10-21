@@ -1,5 +1,5 @@
 import { err, ok } from "@/domain/result";
-import { migratedDbPerTest } from "../db/testDb";
+import { databasePerTest } from "../db/testDb";
 import type { Mailer, MailMessage } from "../mail/mailer";
 import { requestCode, verifyCode } from "./codes";
 import type { AuthDeps } from "./deps";
@@ -20,7 +20,7 @@ export type AuthHarness = {
 };
 
 export function authHarnessPerTest(): AuthHarness {
-  const db = migratedDbPerTest();
+  const db = databasePerTest();
 
   const sent: MailMessage[] = [];
 

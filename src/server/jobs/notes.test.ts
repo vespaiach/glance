@@ -25,20 +25,16 @@ function note(id: number, ageMs: number): Note {
 }
 
 async function liveNoteIds(accountId: string): Promise<string[]> {
-  const rows = await harness
-    .deps()
-    .db.all<{ id: string }>(
-      "SELECT id FROM notes WHERE account_id = $1 AND deleted_at IS NULL ORDER BY id",
-      [accountId],
-    );
+  const live = await harness.deps().db.notes.live();
 
-  return rows.map((row) => row.id);
+  return live
+    .filter((note) => note.accountId === accountId)
+    .map((note) => note.value.id)
+    .sort();
 }
 
-function noteRow(id: string) {
-  return harness
-    .deps()
-    .db.one("SELECT text, deleted_at, updated_at, version FROM notes WHERE id = $1", [id]);
+async function savedNote(id: string) {
+  return (await harness.deps().db.notes.find(id))?.value;
 }
 
 describe("expireNotes", () => {
@@ -89,10 +85,10 @@ describe("expireNotes", () => {
 
     await expireNotes(harness.deps());
 
-    expect(await noteRow(note(1, 0).id)).toEqual({
+    expect(await savedNote(note(1, 0).id)).toMatchObject({
       text: "Note 1",
-      deleted_at: "2026-10-09T14:01:00.000Z",
-      updated_at: "2026-10-09T14:01:00.000Z",
+      deletedAt: "2026-10-09T14:01:00.000Z",
+      updatedAt: "2026-10-09T14:01:00.000Z",
       version: 2,
     });
   });

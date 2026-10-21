@@ -1,4 +1,4 @@
 import "server-only";
-import type { Db } from "../db/db";
+import type { Database } from "../db";
 
-export type ServiceDeps = { db: Db; now: () => Date };
+export type ServiceDeps = { db: Database; now: () => Date };

@@ -1,10 +1,11 @@
-import { pullChanges } from "../services/sync";
-import type { Db } from "./db";
+import { pullChanges } from "../../services/sync";
+import { postgresDatabase } from ".";
 import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
-import { openPglite, pgliteDb } from "./pglite";
-import { migratedDbPerTest } from "./testDb";
+import { openPglite, pgliteSql } from "./pglite";
+import type { Sql } from "./sql";
+import { migratedSqlPerTest } from "./testSql";
 
-const db = migratedDbPerTest();
+const db = migratedSqlPerTest();
 
 const NOW = "2026-10-09T14:00:00.000Z";
 
@@ -205,7 +206,7 @@ describe("003_photo_details", () => {
 
   it("D22 gives B05's photos their upload time, their sources, checked and a new version", async () => {
     const client = await openPglite();
-    const old = pgliteDb(client);
+    const old = pgliteSql(client);
     const migrations = readMigrations(MIGRATIONS_DIR);
     await migrate(
       old,
@@ -336,7 +337,7 @@ describe("008_sign_in_codes", () => {
 
   it("D11 drops the email links and keeps the QR links", async () => {
     const client = await openPglite();
-    const old = pgliteDb(client);
+    const old = pgliteSql(client);
     const migrations = readMigrations(MIGRATIONS_DIR);
     await migrate(
       old,
@@ -460,7 +461,11 @@ describe("009_tags", () => {
 
     await migrate(old, readMigrations(MIGRATIONS_DIR));
 
-    const pulled = await pullChanges({ db: old, now: () => new Date(NOW) }, "a1", undefined);
+    const pulled = await pullChanges(
+      { db: postgresDatabase(old), now: () => new Date(NOW) },
+      "a1",
+      undefined,
+    );
     expect(pulled.changes.find((change) => change.entity === "events")?.row).toMatchObject({
       id: "e1",
       everyone: false,
@@ -527,7 +532,11 @@ describe("010_settings_values", () => {
       { account_id: "a2", version: 12 },
     ]);
     expect(await old.one("SELECT version FROM sync_state")).toEqual({ version: 12 });
-    const pulled = await pullChanges({ db: old, now: () => new Date(NOW) }, "a2", 10);
+    const pulled = await pullChanges(
+      { db: postgresDatabase(old), now: () => new Date(NOW) },
+      "a2",
+      10,
+    );
     expect(pulled.changes).toEqual([
       {
         entity: "settings",
@@ -545,7 +554,7 @@ describe("010_settings_values", () => {
 describe("007_members", () => {
   it("D24 gives each named account one lilac member and turns old events into everyone events", async () => {
     const client = await openPglite();
-    const old = pgliteDb(client);
+    const old = pgliteSql(client);
     const migrations = readMigrations(MIGRATIONS_DIR);
     await migrate(
       old,
@@ -600,7 +609,7 @@ const OLD_SETTINGS = {
 };
 
 async function insertOldSettings(
-  old: Db,
+  old: Sql,
   accountId: string,
   idleTimeout: number | null,
   noteExpiry: string | null,
@@ -614,7 +623,7 @@ async function insertOldSettings(
 async function migratedTo(version: number) {
   const client = await openPglite();
 
-  const old = pgliteDb(client);
+  const old = pgliteSql(client);
 
   await migrate(
     old,

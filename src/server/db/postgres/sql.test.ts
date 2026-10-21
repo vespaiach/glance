@@ -1,6 +1,6 @@
 import type { PGlite } from "@electric-sql/pglite";
-import { type Db, pgTypes } from "./db";
-import { openPglite, pgliteDb } from "./pglite";
+import { openPglite, pgliteSql } from "./pglite";
+import { pgTypes, type Sql } from "./sql";
 
 const TIMESTAMPTZ = 1184;
 
@@ -10,11 +10,11 @@ const DATE = 1082;
 
 let client: PGlite;
 
-let db: Db;
+let db: Sql;
 
 beforeEach(async () => {
   client = await openPglite();
-  db = pgliteDb(client);
+  db = pgliteSql(client);
   await db.exec("CREATE TABLE t (id integer PRIMARY KEY, name text NOT NULL)");
   await db.exec("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, 'c')");
 });
@@ -29,7 +29,7 @@ async function names(): Promise<string[]> {
   return rows.map((row) => row.name);
 }
 
-describe("pgliteDb", () => {
+describe("pgliteSql", () => {
   it("D7 all returns every matching row with $n parameters", async () => {
     const rows = await db.all("SELECT id, name FROM t WHERE id > $1 ORDER BY id", [1]);
 
