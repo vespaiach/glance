@@ -21,6 +21,7 @@ import { TimePicker } from "@/ui/TimePicker";
 import {
   canSave,
   type EventDraft,
+  type EventEditState,
   type EventSheetAction,
   type EventSheetState,
   eventSheetReducer,
@@ -100,7 +101,7 @@ const ACTIONS_ROOM = 96;
 const REVEAL_GAP = 16;
 
 type TimesProps = {
-  state: EventSheetState;
+  state: EventEditState;
   clock: Clock;
   compact?: boolean;
   dispatch: (action: EventSheetAction) => void;
@@ -151,37 +152,7 @@ export function EventSheet({
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
 
-  const { draft } = state;
-
-  const save = () => {
-    if (!canSave(draft)) return dispatch({ type: "save" });
-
-    onSave(draft);
-
-    if (state.fromDetails) dispatch({ type: "saved" });
-    else onClose();
-  };
-
-  const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(state.confirm, isDirty(draft, state.opened), from);
-
-    if (step === "close") return onClose();
-
-    if (step === "ask") dispatch({ type: "askDiscard" });
-  };
-
-  const cancel = () => {
-    if (!state.fromDetails) return requestClose("button")();
-
-    const step = closeStep(state.confirm, isDirty(draft, state.opened), "button");
-
-    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
-  };
-
-  const discardChanges = () =>
-    state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
-
-  if (state.view === "details")
+  if (state.step === "details")
     return (
       <DetailsSheet
         eyebrow={eyebrow}
@@ -195,6 +166,38 @@ export function EventSheet({
       />
     );
 
+  const { draft } = state;
+
+  const asking = state.step === "discarding";
+
+  const save = () => {
+    if (!canSave(draft)) return dispatch({ type: "save" });
+
+    onSave(draft);
+
+    if (state.fromDetails) dispatch({ type: "saved" });
+    else onClose();
+  };
+
+  const requestClose = (from: CloseFrom) => () => {
+    const step = closeStep(asking, isDirty(draft, state.opened), from);
+
+    if (step === "close") return onClose();
+
+    if (step === "ask") dispatch({ type: "askDiscard" });
+  };
+
+  const cancel = () => {
+    if (!state.fromDetails) return requestClose("button")();
+
+    const step = closeStep(asking, isDirty(draft, state.opened), "button");
+
+    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
+  };
+
+  const discardChanges = () =>
+    asking && state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
+
   const endActions = (
     <>
       <Button variant="secondary" onClick={cancel} xstyle={styles.cancel}>
@@ -206,13 +209,11 @@ export function EventSheet({
 
   const startActions = mode === "edit" && (
     <DeleteAction
-      confirming={state.confirm === "delete"}
+      confirming={state.step === "deleting"}
       onAsk={() => dispatch({ type: "askDelete" })}
       onDelete={onDelete}
     />
   );
-
-  const asking = state.confirm === "discard";
 
   const discardBody = mode === "new" ? discard.newEvent : discard.editEvent;
 

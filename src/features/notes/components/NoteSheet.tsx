@@ -89,40 +89,10 @@ export function NoteSheet({
 }: NoteSheetProps) {
   const [state, dispatch] = useReducer(noteSheetReducer, initial);
 
-  const { draft, opened } = state;
-
-  const save = () => {
-    if (!canSave(draft)) return dispatch({ type: "save" });
-
-    onSave(draft);
-
-    if (state.fromDetails) dispatch({ type: "saved" });
-    else onClose();
-  };
-
-  const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(state.confirm, isDirty(draft, opened), from);
-
-    if (step === "close") return onClose();
-
-    if (step === "ask") dispatch({ type: "askDiscard" });
-  };
-
-  const cancel = () => {
-    if (!state.fromDetails) return requestClose("button")();
-
-    const step = closeStep(state.confirm, isDirty(draft, opened), "button");
-
-    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
-  };
-
-  const discardChanges = () =>
-    state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
-
-  if (state.view === "details")
+  if (state.step === "details")
     return (
       <Sheet
-        title={details.title(authorName(opened.author))}
+        title={details.title(authorName(state.opened.author))}
         eyebrow={copy.notes.board}
         closeLabel={words.close}
         onClose={onClose}
@@ -135,13 +105,45 @@ export function NoteSheet({
         xstyle={[
           styles.morph,
           styles.sticky,
-          toneStyle(opened.tone),
+          toneStyle(state.opened.tone),
           styles.tilt(noteDetailsTilt(rotation)),
         ]}
       >
-        <NoteDetails text={opened.text.trim()} time={time} />
+        <NoteDetails text={state.opened.text.trim()} time={time} />
       </Sheet>
     );
+
+  const { draft, opened } = state;
+
+  const asking = state.step === "discarding";
+
+  const save = () => {
+    if (!canSave(draft)) return dispatch({ type: "save" });
+
+    onSave(draft);
+
+    if (state.fromDetails) dispatch({ type: "saved" });
+    else onClose();
+  };
+
+  const requestClose = (from: CloseFrom) => () => {
+    const step = closeStep(asking, isDirty(draft, opened), from);
+
+    if (step === "close") return onClose();
+
+    if (step === "ask") dispatch({ type: "askDiscard" });
+  };
+
+  const cancel = () => {
+    if (!state.fromDetails) return requestClose("button")();
+
+    const step = closeStep(asking, isDirty(draft, opened), "button");
+
+    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
+  };
+
+  const discardChanges = () =>
+    asking && state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
 
   const endActions = (
     <>
@@ -154,13 +156,11 @@ export function NoteSheet({
 
   const startActions = mode === "edit" && (
     <DeleteAction
-      confirming={state.confirm === "delete"}
+      confirming={state.step === "deleting"}
       onAsk={() => dispatch({ type: "askDelete" })}
       onDelete={onDelete}
     />
   );
-
-  const asking = state.confirm === "discard";
 
   return (
     <Sheet

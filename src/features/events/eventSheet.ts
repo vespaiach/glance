@@ -10,7 +10,6 @@ import { EVERYONE, type EventWho, toggleWho, whoFromFilter } from "@/domain/memb
 import type { CalendarEvent } from "@/domain/schemas";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
-import { afterEdit, type SheetConfirm } from "@/ui/discard";
 
 export type { TimeFixture };
 
@@ -25,19 +24,21 @@ export type EventDraft = EventTimes & {
 
 export type TimeFieldName = "start" | "end";
 
-export type EventSheetView = "details" | "edit";
-
-export type EventSheetState = {
+export type EventEditFields = {
   draft: EventDraft;
   opened: EventDraft;
   picker: TimeFieldName | null;
   titleError: boolean;
   endError: boolean;
-  confirm: SheetConfirm;
-  view: EventSheetView;
   fromDetails: boolean;
-  discardTo: "details" | null;
 };
+
+export type EventSheetState =
+  | { step: "details"; opened: EventDraft }
+  | (EventEditFields & { step: "editing" | "deleting" })
+  | (EventEditFields & { step: "discarding"; discardTo: "details" | null });
+
+export type EventEditState = Exclude<EventSheetState, { step: "details" }>;
 
 export type EventSheetAction =
   | { type: "title" | "location" | "notes"; value: string }
@@ -111,19 +112,20 @@ export function initialEventSheet(
 ): EventSheetState {
   const opened = fixtureDraft(draft, time);
 
-  const picker = time === "start" || time === "end" ? time : null;
+  if (details && !discard) return { step: "details", opened };
 
-  return {
+  const fields: EventEditFields = {
     draft: opened,
     opened,
-    picker: discard || details ? null : picker,
+    picker: discard || details ? null : fixturePicker(time),
     titleError: false,
     endError: time === "error",
-    confirm: discard ? "discard" : null,
-    view: details && !discard ? "details" : "edit",
     fromDetails: details,
-    discardTo: details && discard ? "details" : null,
   };
+
+  if (discard) return { ...fields, step: "discarding", discardTo: details ? "details" : null };
+
+  return { ...fields, step: "editing" };
 }
 
 export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
@@ -148,6 +150,12 @@ export function eventSheetReducer(
   state: EventSheetState,
   action: EventSheetAction,
 ): EventSheetState {
+  if (state.step === "details") return action.type === "edit" ? editFromDetails(state) : state;
+
+  return editReducer(state, action);
+}
+
+function editReducer(state: EventEditState, action: EventSheetAction): EventSheetState {
   const { draft } = state;
 
   switch (action.type) {
@@ -174,32 +182,45 @@ export function eventSheetReducer(
     case "save":
       return failedSave(state);
     case "askDelete":
-      return { ...state, confirm: "delete" };
+      return { ...editFields(state), step: "deleting" };
     case "askDiscard":
-      return { ...state, confirm: "discard", picker: null, discardTo: action.to ?? null };
+      return {
+        ...editFields(state),
+        picker: null,
+        step: "discarding",
+        discardTo: action.to ?? null,
+      };
     case "keepEditing":
-      return { ...state, confirm: null };
+      return { ...editFields(state), step: "editing" };
     case "edit":
-      return { ...state, view: "edit" };
+      return state;
     case "back":
-      return inDetails(state, state.opened);
+      return { step: "details", opened: state.opened };
     case "saved":
-      return inDetails(state, draft);
+      return { step: "details", opened: draft };
   }
 }
 
-function inDetails(state: EventSheetState, opened: EventDraft): EventSheetState {
+function editFromDetails({ opened }: { opened: EventDraft }): EventEditState {
   return {
-    ...state,
+    step: "editing",
     draft: opened,
     opened,
     picker: null,
     titleError: false,
     endError: false,
-    confirm: null,
-    view: "details",
-    discardTo: null,
+    fromDetails: true,
   };
+}
+
+function editFields(state: EventEditState): EventEditFields {
+  const { draft, opened, picker, titleError, endError, fromDetails } = state;
+
+  return { draft, opened, picker, titleError, endError, fromDetails };
+}
+
+function fixturePicker(time?: TimeFixture): TimeFieldName | null {
+  return time === "start" || time === "end" ? time : null;
 }
 
 function eventTimes(event: CalendarEvent, tz: string, now: Date): EventTimes & { allDay?: true } {
@@ -219,7 +240,7 @@ function eventSpan(draft: EventDraft, dayKey: string, tz: string) {
   return { startAt: atMinute(dayKey, draft.start, tz).toISOString(), ...end };
 }
 
-function withWho(state: EventSheetState, who: EventWho): EventSheetState {
+function withWho(state: EventEditState, who: EventWho): EventEditState {
   if (sameWho(who, state.draft)) return state;
 
   return edited(state, { ...state.draft, ...draftWho(who) });
@@ -259,17 +280,19 @@ function saveErrors(draft: EventDraft) {
   };
 }
 
-function failedSave(state: EventSheetState): EventSheetState {
+function failedSave(state: EventEditState): EventEditState {
   const errors = saveErrors(state.draft);
 
   return { ...state, ...errors, picker: errors.endError ? null : state.picker };
 }
 
-function edited(state: EventSheetState, draft: EventDraft): EventSheetState {
-  return { ...state, draft, titleError: false, endError: false, confirm: afterEdit(state.confirm) };
+function edited(state: EventEditState, draft: EventDraft): EventEditState {
+  const step = state.step === "deleting" ? "deleting" : "editing";
+
+  return { ...editFields(state), draft, titleError: false, endError: false, step };
 }
 
-function toggled(state: EventSheetState, field: TimeFieldName): EventSheetState {
+function toggled(state: EventEditState, field: TimeFieldName): EventEditState {
   if (state.picker === field) return { ...state, picker: null };
 
   const { draft } = state;

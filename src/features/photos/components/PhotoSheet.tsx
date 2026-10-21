@@ -87,7 +87,7 @@ export function PhotoSheet({
   };
 
   const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(state.confirm, isDirty(draft, state.opened), from);
+    const step = closeStep(state.confirm === "discard", isDirty(draft, state.opened), from);
 
     if (step === "close") return onClose();
 

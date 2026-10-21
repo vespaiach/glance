@@ -4,6 +4,7 @@ import {
   canSave,
   draftFromEvent,
   type EventDraft,
+  type EventEditState,
   type EventSheetAction,
   type EventSheetState,
   eventFromDraft,
@@ -52,7 +53,21 @@ const DRAFT: EventDraft = {
   notes: "",
 };
 
-const closed: EventSheetState = initialEventSheet(DRAFT);
+const closed = opening(DRAFT);
+
+function editing(state: EventSheetState): EventEditState {
+  if (state.step === "details") throw new Error("expected an edit step");
+
+  return state;
+}
+
+function reduce(state: EventSheetState, action: EventSheetAction): EventEditState {
+  return editing(eventSheetReducer(state, action));
+}
+
+function opening(...args: Parameters<typeof initialEventSheet>): EventEditState {
+  return editing(initialEventSheet(...args));
+}
 
 describe("event sheet drafts", () => {
   it("EVT-02 an existing event fills the draft in minutes of its day", () => {
@@ -100,95 +115,93 @@ describe("event sheet drafts", () => {
 describe("event sheet fixtures", () => {
   it("tech§6 no time fixture opens with the picker closed and no errors", () => {
     expect(closed).toEqual({
+      step: "editing",
       draft: DRAFT,
       picker: null,
       titleError: false,
       endError: false,
-      confirm: null,
       opened: DRAFT,
-      view: "edit",
       fromDetails: false,
-      discardTo: null,
     });
   });
 
   it("TPK-02 time=start and time=end open that picker", () => {
-    expect(initialEventSheet(DRAFT, "start").picker).toBe("start");
-    expect(initialEventSheet(DRAFT, "end").picker).toBe("end");
+    expect(opening(DRAFT, "start").picker).toBe("start");
+    expect(opening(DRAFT, "end").picker).toBe("end");
   });
 
   it("TPK-07 time=error ends 30 min before the start and shows the end error", () => {
-    const state = initialEventSheet(DRAFT, "error");
+    const state = opening(DRAFT, "error");
 
     expect(state.draft.end).toBe(690);
     expect(state.endError).toBe(true);
   });
 
   it("TPK-08 time=noend clears the end", () => {
-    expect(initialEventSheet(DRAFT, "noend").draft.end).toBeUndefined();
+    expect(opening(DRAFT, "noend").draft.end).toBeUndefined();
   });
 });
 
 describe("event sheet reducer", () => {
   it("TPK-02 tapping a field opens its picker, and tapping it again closes it", () => {
-    const open = eventSheetReducer(closed, { type: "toggle", field: "start" });
+    const open = reduce(closed, { type: "toggle", field: "start" });
 
     expect(open.picker).toBe("start");
-    expect(eventSheetReducer(open, { type: "toggle", field: "start" }).picker).toBeNull();
+    expect(reduce(open, { type: "toggle", field: "start" }).picker).toBeNull();
   });
 
   it("TPK-02 one picker at a time", () => {
-    const open = eventSheetReducer(closed, { type: "toggle", field: "start" });
+    const open = reduce(closed, { type: "toggle", field: "start" });
 
-    expect(eventSheetReducer(open, { type: "toggle", field: "end" }).picker).toBe("end");
+    expect(reduce(open, { type: "toggle", field: "end" }).picker).toBe("end");
   });
 
   it("TPK-04 Done closes the picker", () => {
-    const open = eventSheetReducer(closed, { type: "toggle", field: "end" });
+    const open = reduce(closed, { type: "toggle", field: "end" });
 
-    expect(eventSheetReducer(open, { type: "done" }).picker).toBeNull();
+    expect(reduce(open, { type: "done" }).picker).toBeNull();
   });
 
   it("TPK-06 a new start moves the end and keeps the length", () => {
-    expect(eventSheetReducer(closed, { type: "start", value: 600 }).draft).toMatchObject({
+    expect(reduce(closed, { type: "start", value: 600 }).draft).toMatchObject({
       start: 600,
       end: 660,
     });
   });
 
   it("TPK-04 a new end keeps the start", () => {
-    expect(eventSheetReducer(closed, { type: "end", value: 810 }).draft).toMatchObject({
+    expect(reduce(closed, { type: "end", value: 810 }).draft).toMatchObject({
       start: 720,
       end: 810,
     });
   });
 
   it("TPK-04 No end time clears the end and closes the picker", () => {
-    const open = eventSheetReducer(closed, { type: "toggle", field: "end" });
+    const open = reduce(closed, { type: "toggle", field: "end" });
 
-    const next = eventSheetReducer(open, { type: "noEnd" });
+    const next = reduce(open, { type: "noEnd" });
 
     expect(next.draft.end).toBeUndefined();
     expect(next.picker).toBeNull();
   });
 
   it("TPK-08 tapping Ends with no end fills Starts + 1 h", () => {
-    const noEnd = initialEventSheet(DRAFT, "noend");
+    const noEnd = opening(DRAFT, "noend");
 
-    expect(eventSheetReducer(noEnd, { type: "toggle", field: "end" }).draft.end).toBe(780);
+    expect(reduce(noEnd, { type: "toggle", field: "end" }).draft.end).toBe(780);
   });
 
   it("TPK-07 the end error clears on the next change to any field", () => {
-    const error = initialEventSheet(DRAFT, "error");
+    const error = opening(DRAFT, "error");
 
-    expect(eventSheetReducer(error, { type: "title", value: "Lunch!" }).endError).toBe(false);
-    expect(eventSheetReducer(error, { type: "location", value: "Park" }).endError).toBe(false);
+    expect(reduce(error, { type: "title", value: "Lunch!" }).endError).toBe(false);
+    expect(reduce(error, { type: "location", value: "Park" }).endError).toBe(false);
   });
 
   it("EVT-03 the title error clears on the next change", () => {
     const missing = { ...closed, titleError: true };
 
-    expect(eventSheetReducer(missing, { type: "location", value: "Park" }).titleError).toBe(false);
+    expect(reduce(missing, { type: "location", value: "Park" }).titleError).toBe(false);
   });
 
   it("EVT-02 title, where and notes edits update the draft", () => {
@@ -198,7 +211,7 @@ describe("event sheet reducer", () => {
       { type: "notes", value: "Bring a blanket" },
     ] as const;
 
-    const next = actions.reduce(eventSheetReducer, closed);
+    const next = actions.reduce<EventEditState>(reduce, closed);
 
     expect(next.draft).toMatchObject({
       title: "Picnic",
@@ -208,64 +221,64 @@ describe("event sheet reducer", () => {
   });
 
   it("EVT-11 a member tap follows the Who rules", () => {
-    const next = eventSheetReducer(closed, { type: "member", id: MOM, family: [DAD, MOM] });
+    const next = reduce(closed, { type: "member", id: MOM, family: [DAD, MOM] });
 
     expect(next.draft).toMatchObject({ everyone: false, memberIds: [DAD] });
   });
 
   it("EVT-11 Everyone selects the whole family", () => {
-    const forMom = initialEventSheet({ ...DRAFT, everyone: false, memberIds: [MOM] });
+    const forMom = opening({ ...DRAFT, everyone: false, memberIds: [MOM] });
 
-    expect(eventSheetReducer(forMom, { type: "everyone" }).draft).toMatchObject({
+    expect(reduce(forMom, { type: "everyone" }).draft).toMatchObject({
       everyone: true,
       memberIds: [],
     });
   });
 
   it("EVT-11 Everyone when everyone is selected leaves the sheet as it is", () => {
-    const failed = eventSheetReducer(initialEventSheet({ ...DRAFT, title: "" }), { type: "save" });
+    const failed = reduce(opening({ ...DRAFT, title: "" }), { type: "save" });
 
-    expect(eventSheetReducer(failed, { type: "everyone" })).toBe(failed);
+    expect(reduce(failed, { type: "everyone" })).toBe(failed);
   });
 
   it("EVT-11 a Who change clears the errors", () => {
-    const failed = eventSheetReducer(initialEventSheet({ ...DRAFT, title: "" }), { type: "save" });
+    const failed = reduce(opening({ ...DRAFT, title: "" }), { type: "save" });
 
-    const next = eventSheetReducer(failed, { type: "member", id: MOM, family: [DAD, MOM] });
+    const next = reduce(failed, { type: "member", id: MOM, family: [DAD, MOM] });
 
     expect(next.titleError).toBe(false);
   });
 
   it("EVT-06 Delete asks for the inline confirm", () => {
-    expect(eventSheetReducer(closed, { type: "askDelete" }).confirm).toBe("delete");
+    expect(reduce(closed, { type: "askDelete" }).step).toBe("deleting");
   });
 });
 
 describe("event sheet save", () => {
   it("EVT-03 Save with a blank title shows Add a title", () => {
-    const blank = initialEventSheet({ ...DRAFT, title: "  " });
+    const blank = opening({ ...DRAFT, title: "  " });
 
-    expect(eventSheetReducer(blank, { type: "save" }).titleError).toBe(true);
+    expect(reduce(blank, { type: "save" }).titleError).toBe(true);
   });
 
   it("EVT-03 a title-only failure keeps the open picker", () => {
-    const open = { ...initialEventSheet({ ...DRAFT, title: "" }), picker: "start" as const };
+    const open = { ...opening({ ...DRAFT, title: "" }), picker: "start" as const };
 
-    expect(eventSheetReducer(open, { type: "save" }).picker).toBe("start");
+    expect(reduce(open, { type: "save" }).picker).toBe("start");
   });
 
   it("TPK-07 Save with equal times shows the end error and closes the picker", () => {
-    const equal = { ...initialEventSheet({ ...DRAFT, end: 720 }), picker: "end" as const };
+    const equal = { ...opening({ ...DRAFT, end: 720 }), picker: "end" as const };
 
-    const saved = eventSheetReducer(equal, { type: "save" });
+    const saved = reduce(equal, { type: "save" });
 
     expect(saved).toMatchObject({ endError: true, titleError: false, picker: null });
   });
 
   it("TPK-07 Save checks the title and the end together", () => {
-    const both = initialEventSheet({ ...DRAFT, title: "", end: 700 });
+    const both = opening({ ...DRAFT, title: "", end: 700 });
 
-    expect(eventSheetReducer(both, { type: "save" })).toMatchObject({
+    expect(reduce(both, { type: "save" })).toMatchObject({
       titleError: true,
       endError: true,
     });
@@ -278,7 +291,7 @@ describe("event sheet save", () => {
   });
 
   it("TPK-08 a draft with no end passes the end check", () => {
-    expect(canSave(initialEventSheet(DRAFT, "noend").draft)).toBe(true);
+    expect(canSave(opening(DRAFT, "noend").draft)).toBe(true);
   });
 });
 
@@ -349,7 +362,7 @@ describe("event sheet in a zone", () => {
 });
 
 describe("event sheet discard", () => {
-  const asking = eventSheetReducer(eventSheetReducer(closed, { type: "title", value: "Picnic" }), {
+  const asking = reduce(reduce(closed, { type: "title", value: "Picnic" }), {
     type: "askDiscard",
   });
 
@@ -380,33 +393,33 @@ describe("event sheet discard", () => {
   });
 
   it("§8.9 the time fixtures are part of the opened draft", () => {
-    const error = initialEventSheet(DRAFT, "error");
+    const error = opening(DRAFT, "error");
 
     expect(isDirty(error.draft, error.opened)).toBe(false);
   });
 
   it("§8.9 discard=1 opens on Discard changes?", () => {
-    expect(initialEventSheet(DRAFT, undefined, true).confirm).toBe("discard");
+    expect(opening(DRAFT, undefined, true).step).toBe("discarding");
   });
 
   it("§8.9 asking to discard closes the time picker", () => {
-    const open = eventSheetReducer(closed, { type: "toggle", field: "start" });
+    const open = reduce(closed, { type: "toggle", field: "start" });
 
-    expect(eventSheetReducer(open, { type: "askDiscard" })).toMatchObject({
-      confirm: "discard",
+    expect(reduce(open, { type: "askDiscard" })).toMatchObject({
+      step: "discarding",
       picker: null,
     });
   });
 
   it("§8.9 asking to discard replaces a waiting delete confirm", () => {
-    const deleting = eventSheetReducer(closed, { type: "askDelete" });
+    const deleting = reduce(closed, { type: "askDelete" });
 
-    expect(eventSheetReducer(deleting, { type: "askDiscard" }).confirm).toBe("discard");
+    expect(reduce(deleting, { type: "askDiscard" }).step).toBe("discarding");
   });
 
   it("§8.9 Keep editing brings the footer back with the draft kept", () => {
-    expect(eventSheetReducer(asking, { type: "keepEditing" })).toMatchObject({
-      confirm: null,
+    expect(reduce(asking, { type: "keepEditing" })).toMatchObject({
+      step: "editing",
       draft: { title: "Picnic" },
     });
   });
@@ -418,18 +431,18 @@ describe("event sheet discard", () => {
     { type: "end", value: 800 },
     { type: "noEnd" },
   ])("§8.9 an edit ($type) brings the footer back", (action) => {
-    expect(eventSheetReducer(asking, action).confirm).toBeNull();
+    expect(reduce(asking, action).step).toBe("editing");
   });
 
   it("§8.9 an edit keeps a waiting delete confirm", () => {
-    const deleting = eventSheetReducer(closed, { type: "askDelete" });
+    const deleting = reduce(closed, { type: "askDelete" });
 
-    expect(eventSheetReducer(deleting, { type: "title", value: "Picnic" }).confirm).toBe("delete");
+    expect(reduce(deleting, { type: "title", value: "Picnic" }).step).toBe("deleting");
   });
 });
 
 describe("event sheet all day", () => {
-  const allDay = eventSheetReducer(closed, { type: "allDay", value: true });
+  const allDay = reduce(closed, { type: "allDay", value: true });
 
   it("EVT-08 an all-day event fills the draft as all day with the TPK-05 default times", () => {
     expect(draftFromEvent(NO_SCHOOL, tz, NOW)).toEqual({
@@ -445,29 +458,29 @@ describe("event sheet all day", () => {
   });
 
   it("EVT-08 All day keeps the draft times and closes the open picker", () => {
-    const open = eventSheetReducer(closed, { type: "toggle", field: "start" });
+    const open = reduce(closed, { type: "toggle", field: "start" });
 
-    expect(eventSheetReducer(open, { type: "allDay", value: true })).toMatchObject({
+    expect(reduce(open, { type: "allDay", value: true })).toMatchObject({
       draft: { start: 720, end: 780, allDay: true },
       picker: null,
     });
   });
 
   it("EVT-08 Set times restores the times the draft had", () => {
-    expect(eventSheetReducer(allDay, { type: "allDay", value: false }).draft).toEqual(DRAFT);
+    expect(reduce(allDay, { type: "allDay", value: false }).draft).toEqual(DRAFT);
   });
 
   it("TPK-07 switching to All day clears the end error", () => {
-    const error = initialEventSheet(DRAFT, "error");
+    const error = opening(DRAFT, "error");
 
-    expect(eventSheetReducer(error, { type: "allDay", value: true }).endError).toBe(false);
+    expect(reduce(error, { type: "allDay", value: true }).endError).toBe(false);
   });
 
   it("TPK-07 an all-day draft skips the end check", () => {
     const backwards = { ...DRAFT, end: 600, allDay: true } as const;
 
     expect(canSave(backwards)).toBe(true);
-    expect(eventSheetReducer(initialEventSheet(backwards), { type: "save" }).endError).toBe(false);
+    expect(reduce(opening(backwards), { type: "save" }).endError).toBe(false);
   });
 
   it("§8.9 switching to All day makes the draft dirty", () => {
@@ -475,9 +488,9 @@ describe("event sheet all day", () => {
   });
 
   it("§8.9 switching to All day brings the footer back", () => {
-    const asking = eventSheetReducer(closed, { type: "askDiscard" });
+    const asking = reduce(closed, { type: "askDiscard" });
 
-    expect(eventSheetReducer(asking, { type: "allDay", value: true }).confirm).toBeNull();
+    expect(reduce(asking, { type: "allDay", value: true }).step).toBe("editing");
   });
 
   it("D21 an all-day draft saves on its date's UTC midnight with no end", () => {
@@ -498,82 +511,77 @@ describe("event sheet all day", () => {
 describe("event details", () => {
   const details = initialEventSheet(DRAFT, undefined, false, true);
 
-  const editing = eventSheetReducer(details, { type: "edit" });
+  const editingFromDetails = reduce(details, { type: "edit" });
 
-  const changed = eventSheetReducer(editing, { type: "title", value: "Picnic" });
+  const changed = reduce(editingFromDetails, { type: "title", value: "Picnic" });
 
   it("EVT-09 details=1 opens Event details with the draft as opened", () => {
-    expect(details).toMatchObject({ view: "details", fromDetails: true, draft: DRAFT });
+    expect(details).toEqual({ step: "details", opened: DRAFT });
   });
 
   it("EVT-09 details=1 ignores a time picker fixture", () => {
-    expect(initialEventSheet(DRAFT, "start", false, true).picker).toBeNull();
+    expect(initialEventSheet(DRAFT, "start", false, true)).toEqual({
+      step: "details",
+      opened: DRAFT,
+    });
+  });
+
+  it("EVT-09 details ignore every action but Edit", () => {
+    expect(eventSheetReducer(details, { type: "title", value: "Picnic" })).toBe(details);
   });
 
   it("EVT-10 Edit swaps the sheet to Edit event", () => {
-    expect(editing).toMatchObject({ view: "edit", fromDetails: true, draft: DRAFT });
+    expect(editingFromDetails).toMatchObject({ step: "editing", fromDetails: true, draft: DRAFT });
   });
 
   it("EVT-10 going back to details drops the changes", () => {
-    const open = eventSheetReducer(changed, { type: "toggle", field: "start" });
+    const open = reduce(changed, { type: "toggle", field: "start" });
 
-    expect(eventSheetReducer(open, { type: "back" })).toMatchObject({
-      view: "details",
-      draft: DRAFT,
-      picker: null,
-      confirm: null,
-    });
+    expect(eventSheetReducer(open, { type: "back" })).toEqual({ step: "details", opened: DRAFT });
   });
 
   it("EVT-10 going back clears the field errors", () => {
-    const failed = eventSheetReducer(eventSheetReducer(editing, { type: "title", value: "" }), {
+    const failed = reduce(reduce(editingFromDetails, { type: "title", value: "" }), {
       type: "save",
     });
 
-    expect(eventSheetReducer(failed, { type: "back" })).toMatchObject({
-      titleError: false,
-      endError: false,
-    });
+    const back = eventSheetReducer(failed, { type: "back" });
+
+    expect(reduce(back, { type: "edit" })).toMatchObject({ titleError: false, endError: false });
   });
 
   it("EVT-10 Cancel asks to discard and remembers to return to details", () => {
-    expect(eventSheetReducer(changed, { type: "askDiscard", to: "details" })).toMatchObject({
-      confirm: "discard",
+    expect(reduce(changed, { type: "askDiscard", to: "details" })).toMatchObject({
+      step: "discarding",
       discardTo: "details",
     });
   });
 
   it("EVT-10 the close button asks to discard and closes afterwards", () => {
-    const asking = eventSheetReducer(changed, { type: "askDiscard", to: "details" });
+    const asking = reduce(changed, { type: "askDiscard", to: "details" });
 
-    const kept = eventSheetReducer(asking, { type: "keepEditing" });
+    const kept = reduce(asking, { type: "keepEditing" });
 
-    expect(eventSheetReducer(kept, { type: "askDiscard" }).discardTo).toBeNull();
+    expect(reduce(kept, { type: "askDiscard" })).toMatchObject({ discardTo: null });
   });
 
   it("EVT-10 Discard from Cancel returns to details", () => {
-    const asking = eventSheetReducer(changed, { type: "askDiscard", to: "details" });
+    const asking = reduce(changed, { type: "askDiscard", to: "details" });
 
-    expect(eventSheetReducer(asking, { type: "back" })).toMatchObject({
-      view: "details",
-      draft: DRAFT,
-      confirm: null,
-      discardTo: null,
-    });
+    expect(eventSheetReducer(asking, { type: "back" })).toEqual({ step: "details", opened: DRAFT });
   });
 
   it("EVT-07 Save from details returns to details with the new values", () => {
     const saved = eventSheetReducer(changed, { type: "saved" });
 
-    expect(saved).toMatchObject({ view: "details", opened: { title: "Picnic" } });
-    expect(isDirty(saved.draft, saved.opened)).toBe(false);
+    expect(saved).toEqual({ step: "details", opened: { ...DRAFT, title: "Picnic" } });
+    expect(reduce(saved, { type: "edit" }).draft).toEqual({ ...DRAFT, title: "Picnic" });
   });
 
   it("EVT-10 discard=1 with details=1 opens the edit with the prompt that returns to details", () => {
     expect(initialEventSheet(DRAFT, undefined, true, true)).toMatchObject({
-      view: "edit",
+      step: "discarding",
       fromDetails: true,
-      confirm: "discard",
       discardTo: "details",
     });
   });
