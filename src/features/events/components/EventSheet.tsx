@@ -47,6 +47,7 @@ type EventSheetProps = {
   status?: DetailsStatus;
   compact?: boolean;
   keyboardInset?: number;
+  preview?: (draft: EventDraft) => ReactNode;
   onClose: () => void;
   onDelete: () => void;
   onSave: (draft: EventDraft) => void;
@@ -113,6 +114,7 @@ type DetailsPageProps = {
   status: DetailsStatus;
   compact?: boolean;
   keyboardInset?: number;
+  aside?: ReactNode;
   leaving: (() => void) | null;
   onClose: () => void;
   onEdit: () => void;
@@ -135,6 +137,7 @@ export function EventSheet({
   offline,
   status = null,
   compact,
+  preview,
   onClose,
   onDelete,
   onSave,
@@ -158,6 +161,7 @@ export function EventSheet({
       status,
       compact,
       keyboardInset,
+      aside: preview?.(state.opened),
       leaving,
       onClose: () => leave(onClose),
       onEdit: () => dispatch({ type: "edit" }),
@@ -255,6 +259,7 @@ export function EventSheet({
         )
       }
       keyboardInset={keyboardInset}
+      aside={preview?.(draft)}
     >
       <TextInput
         label={words.title}
@@ -301,6 +306,7 @@ function detailsPage({
   status,
   compact,
   keyboardInset,
+  aside,
   leaving,
   onClose,
   onEdit,
@@ -325,6 +331,7 @@ function detailsPage({
         )
       }
       keyboardInset={keyboardInset}
+      aside={aside}
     >
       <EventDetails draft={draft} tags={tags} clock={clock} status={status} />
     </Page>

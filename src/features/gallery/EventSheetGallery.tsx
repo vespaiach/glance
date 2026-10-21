@@ -4,10 +4,14 @@ import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
 import { type Clock, formatDayTitle } from "@/domain/time";
 import {
+  DayPreview,
   EventSheet,
   type EventSheetState,
   initialEventSheet,
   newEventDraft,
+  type PreviewHour,
+  type PreviewPlan,
+  type PreviewTile,
   type SheetForecast,
 } from "@/features/events";
 import { Button } from "@/ui/Button";
@@ -30,7 +34,10 @@ type Demo = {
   nobody?: true;
   typed?: string;
   noForecast?: true;
+  preview?: PreviewVariant;
 };
+
+type PreviewVariant = "hours" | "rain" | "day" | "none" | "empty";
 
 const words = gallery.eventSheet;
 
@@ -62,7 +69,32 @@ const DEMOS: readonly Demo[] = [
   { label: words.newMember, mode: "edit", tags: true, typed: "Grandma" },
   { label: words.newMemberPhone, mode: "edit", tags: true, typed: "Grandma", compact: true },
   { label: words.noForecast, mode: "edit", noForecast: true },
+  { label: words.previewHours, mode: "edit", preview: "hours" },
+  { label: words.previewRain, mode: "edit", preview: "rain" },
+  { label: words.previewDay, mode: "edit", allDay: true, preview: "day" },
+  { label: words.previewNone, mode: "edit", preview: "none" },
+  { label: words.previewEmpty, mode: "edit", preview: "empty" },
+  { label: words.previewDetails, mode: "edit", details: true, preview: "hours" },
 ];
+
+const PREVIEW_HOURS: PreviewHour[] = [
+  { time: "12 PM", icon: "cloud-sun", temp: "66°", label: "12 PM, Partly cloudy, 66 degrees" },
+  { time: "1 PM", icon: "cloud-sun", temp: "67°", label: "1 PM, Partly cloudy, 67 degrees" },
+  { time: "2 PM", icon: "cloud", temp: "68°", label: "2 PM, Cloudy, 68 degrees" },
+];
+
+const PREVIEW_PLANS: PreviewPlan[] = [
+  { id: "a", time: "All day", title: "School holiday", who: "Everyone" },
+  { id: "b", time: "8:15 AM – 3:00 PM", title: "Field trip", who: "Mia" },
+];
+
+const PREVIEW_WEATHER: Record<PreviewVariant, PreviewTile | "none"> = {
+  hours: { icon: "cloud-sun", temp: "66°", condition: "Partly cloudy", hours: PREVIEW_HOURS },
+  rain: { icon: "cloud-rain", temp: "58°", condition: "Rain · 70% rain", hours: [] },
+  day: { icon: "cloud-sun", temp: "68°", condition: "Partly cloudy · High for the day", hours: [] },
+  none: "none",
+  empty: { icon: "sun", temp: "66°", condition: "Clear", hours: [] },
+};
 
 const FORECAST: SheetForecast = {
   icon: "cloud-sun",
@@ -136,6 +168,7 @@ export function EventSheetGallery() {
           offline={open.offline ?? false}
           status={open.status}
           compact={open.compact}
+          preview={open.preview && galleryPreview(open.preview)}
           onClose={close}
           onDelete={close}
           onSave={() => {}}
@@ -143,6 +176,16 @@ export function EventSheetGallery() {
         />
       )}
     </GalleryGroup>
+  );
+}
+
+function galleryPreview(variant: PreviewVariant) {
+  return () => (
+    <DayPreview
+      label={formatDayTitle(NOW, GALLERY_TZ)}
+      weather={PREVIEW_WEATHER[variant]}
+      plans={variant === "empty" ? [] : PREVIEW_PLANS}
+    />
   );
 }
 
