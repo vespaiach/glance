@@ -10,12 +10,10 @@ import { AllDayTiles } from "@/ui/AllDayTile";
 import { Button } from "@/ui/Button";
 import { DayTimeline, type DayTimelineLabels, type TimelineWeather } from "@/ui/DayTimeline";
 import { Eyebrow } from "@/ui/Eyebrow";
-import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
-import { tile } from "./tile";
 
 type Slot = { start: Date; end: Date };
 
@@ -92,13 +90,6 @@ const styles = stylex.create({
   oneColumn: {
     minHeight: 560,
   },
-  empty: {
-    flexGrow: 1,
-    marginTop: space.xs,
-    minHeight: 220,
-    backgroundColor: colors.surfaceSoft,
-    justifyContent: "center",
-  },
 });
 
 type ActionsProps = {
@@ -141,7 +132,7 @@ export function TodaySchedule({
         <Eyebrow>{eyebrowFor(state, clock, tz)}</Eyebrow>
         <div {...stylex.props(styles.actions)}>
           <Actions
-            canAdd={state.kind === "ready"}
+            canAdd={state.kind === "ready" || state.kind === "empty"}
             onAddEvent={onAddEvent}
             onOpenCalendar={onOpenCalendar}
           />
@@ -150,7 +141,7 @@ export function TodaySchedule({
       <Zone
         state={state}
         loading={<ScheduleSkeleton />}
-        empty={<EmptyDay onAddEvent={onAddEvent} />}
+        empty={<Schedule events={[]} {...schedule} />}
         failed={
           <SourceFailure
             icon={CalendarX2}
@@ -230,21 +221,6 @@ function ScheduleSkeleton() {
   );
 }
 
-function EmptyDay({ onAddEvent }: { onAddEvent: () => void }) {
-  return (
-    <div {...stylex.props(tile.root, tile.start, styles.empty)}>
-      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
-      <div {...stylex.props(tile.text)}>
-        <span {...stylex.props(tile.title)}>{copy.today.schedule.emptyTitle}</span>
-        <span {...stylex.props(tile.body)}>{copy.today.schedule.emptyBody}</span>
-      </div>
-      <Button icon={Plus} onClick={onAddEvent}>
-        {copy.today.schedule.addEvent}
-      </Button>
-    </div>
-  );
-}
-
 function Schedule({
   events,
   tags,
@@ -258,6 +234,8 @@ function Schedule({
   onOpenEvent,
   onAddSlot,
 }: ScheduleProps) {
+  const timed = events.filter((event) => !event.allDay);
+
   return (
     <>
       <AllDayTiles
@@ -268,7 +246,7 @@ function Schedule({
         onOpenEvent={onOpenEvent}
       />
       <DayTimeline
-        plans={events.filter((event) => !event.allDay)}
+        plans={timed}
         tags={tags}
         day={day}
         now={now}
@@ -278,6 +256,7 @@ function Schedule({
         breakpoint={breakpoint}
         free="everyone"
         weather={weather}
+        weatherAt={timed.length === 0 ? "lane" : "gutter"}
         labels={LABELS}
         onOpenEvent={onOpenEvent}
         onAddEvent={onAddSlot}
