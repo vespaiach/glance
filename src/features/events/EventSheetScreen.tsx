@@ -12,7 +12,7 @@ import { EVERYONE, type EventWho, whoIds } from "@/domain/tags";
 import { displayTemp } from "@/domain/temperature";
 import { formatDayTitle } from "@/domain/time";
 import { dayForecast } from "@/domain/weather";
-import { parseDateKey } from "@/domain/zone";
+import { dateKey, parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
@@ -104,8 +104,16 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
 
   const { get: currentTime } = useNowStore();
 
+  const [saved, setSaved] = useState(day);
+
+  const [chosen, setChosen] = useState(day);
+
+  const today = dateKey(useNow("minute"), tz);
+
   const onSave = (draft: EventDraft) => {
-    void events.put(eventFromDraft(draft, day, id, tz, tagIds(tags)));
+    void events.put(eventFromDraft(draft, chosen, id, tz, tagIds(tags)));
+
+    setSaved(chosen);
   };
 
   const onCreateTag = (name: string, color: TagColor) => {
@@ -121,8 +129,9 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
   return (
     <EventSheet
       mode={mode}
-      eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
-      forecast={useDayForecast(day)}
+      eyebrow={formatDayTitle(parseDateKey(chosen), "UTC")}
+      forecast={useDayForecast(chosen)}
+      date={{ day: chosen, saved, today, onChange: setChosen }}
       initial={initial}
       clock={clock}
       tags={tags}
@@ -134,7 +143,7 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
       onSave={onSave}
       onCreateTag={onCreateTag}
       keyboardInset={useKeyboardInset()}
-      preview={(draft) => <DayPreviewPanel day={day} id={id} tags={tags} times={draft} />}
+      preview={(draft) => <DayPreviewPanel day={chosen} id={id} tags={tags} times={draft} />}
     />
   );
 }

@@ -595,3 +595,23 @@ describe("day preview", () => {
     expect(screen.queryByText("52°")).not.toBeInTheDocument();
   });
 });
+
+test("EVT-12 Tomorrow moves a saved event to the next day at the same times", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Friday, Oct 9. Change date" }));
+  await userEvent.click(screen.getByRole("button", { name: "Tomorrow" }));
+
+  expect(screen.getByRole("button", { name: "Saturday, Oct 10. Change date" })).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () => {
+    const saved = await store.db.events.get(LUNCH.id);
+
+    expect(saved?.startAt).toBe(new Date(2026, 9, 10, 12, 0).toISOString());
+    expect(saved?.endAt).toBe(new Date(2026, 9, 10, 13, 0).toISOString());
+  });
+});

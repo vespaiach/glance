@@ -3,6 +3,7 @@ import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
 import { type Clock, formatDayTitle } from "@/domain/time";
+import { dateKey, parseDateKey } from "@/domain/zone";
 import {
   DayPreview,
   EventSheet,
@@ -129,6 +130,10 @@ export function EventSheetGallery() {
 
   const [added, setAdded] = useState<Tag[]>([]);
 
+  const today = dateKey(NOW, GALLERY_TZ);
+
+  const [day, setDay] = useState(today);
+
   const close = () => setOpen(null);
 
   const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ, FAMILY_IDS) : LUNCH;
@@ -160,7 +165,8 @@ export function EventSheetGallery() {
         <EventSheet
           key={open.label}
           mode={open.mode}
-          eyebrow={formatDayTitle(NOW, GALLERY_TZ)}
+          eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
+          date={{ day, saved: today, today, onChange: setDay }}
           forecast={open.noForecast ? undefined : FORECAST}
           initial={typedWho(initial, open.typed)}
           clock={open.clock ?? "12h"}

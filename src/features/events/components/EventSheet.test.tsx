@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import type { DetailsStatus } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
 import {
@@ -937,4 +938,75 @@ describe("Event details", () => {
 
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+});
+
+type DatedOptions = { initial?: EventSheetState; onSave?: (draft: EventDraft) => void };
+
+function DatedSheet({ initial, onSave }: DatedOptions) {
+  const [day, setDay] = useState("2026-10-09");
+
+  return (
+    <EventSheet
+      mode="edit"
+      eyebrow="Friday, Oct 9"
+      initial={initial ?? initialEventSheet(DRAFT, "start")}
+      clock="12h"
+      tags={FAMILY}
+      offline={false}
+      onClose={() => {}}
+      onDelete={() => {}}
+      onSave={onSave ?? (() => {})}
+      onCreateTag={() => ""}
+      date={{ day, saved: "2026-10-09", today: "2026-10-09", onChange: setDay }}
+    />
+  );
+}
+
+const dateButton = () => screen.getByRole("button", { name: "Friday, Oct 9. Change date" });
+
+test("EVT-12 the eyebrow of New and Edit event opens the quick date popover", async () => {
+  render(<DatedSheet initial={initialEventSheet(DRAFT)} />);
+
+  await userEvent.click(dateButton());
+
+  expect(screen.getByRole("dialog", { name: "Change date" })).toBeInTheDocument();
+});
+
+test("EVT-12 Event details keeps a plain eyebrow", () => {
+  render(<DatedSheet initial={initialEventSheet(DRAFT, undefined, false, true)} />);
+
+  expect(screen.getByText("Friday, Oct 9")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Change date/ })).not.toBeInTheDocument();
+});
+
+test("EVT-12 opening the popover closes an open time picker", async () => {
+  render(<DatedSheet />);
+
+  expect(screen.getByRole("group", { name: "Start time" })).toBeInTheDocument();
+
+  await userEvent.click(dateButton());
+
+  expect(screen.queryByRole("group", { name: "Start time" })).not.toBeInTheDocument();
+});
+
+test("EVT-12 picking a day keeps the times that were set", async () => {
+  const onSave = vi.fn();
+  render(<DatedSheet initial={initialEventSheet(DRAFT)} onSave={onSave} />);
+
+  await userEvent.click(dateButton());
+  await userEvent.click(screen.getByRole("button", { name: "Tomorrow" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(onSave).toHaveBeenCalledWith(DRAFT);
+  expect(screen.queryByRole("dialog", { name: "Change date" })).not.toBeInTheDocument();
+});
+
+test("EVT-12 a changed date asks Discard changes? on Cancel", async () => {
+  render(<DatedSheet initial={initialEventSheet(DRAFT)} />);
+
+  await userEvent.click(dateButton());
+  await userEvent.click(screen.getByRole("button", { name: "Tomorrow" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.getByText("Discard changes?")).toBeInTheDocument();
 });
