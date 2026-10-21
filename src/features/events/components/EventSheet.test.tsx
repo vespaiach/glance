@@ -154,6 +154,42 @@ test("TPK-02 tapping Starts opens the start picker below the fields", async () =
   expect(screen.getByRole("button", { name: /^Starts/ })).toHaveAttribute("aria-expanded", "true");
 });
 
+test("TPK-02 switching Starts to Ends keeps one picker and does not remount it", async () => {
+  renderSheet();
+
+  await userEvent.click(screen.getByRole("button", { name: /^Starts/ }));
+
+  const picker = screen.getByRole("group", { name: "Start time" });
+
+  await userEvent.click(screen.getByRole("button", { name: /^Ends/ }));
+
+  expect(screen.getAllByRole("group", { name: /^(Start|End) time$/ })).toHaveLength(1);
+  expect(screen.getByRole("group", { name: "End time" })).toBe(picker);
+  expect(screen.getByRole("button", { name: /^Ends/ })).toHaveAttribute("aria-expanded", "true");
+});
+
+test("TPK-02 opening a picker does not scroll the sheet", async () => {
+  renderSheet();
+
+  const body = scrollableBody();
+
+  await userEvent.click(screen.getByRole("button", { name: /^Ends/ }));
+
+  expect(body.scrollTop).toBe(0);
+});
+
+test("TPK-02 only the Ends before it starts error scrolls the sheet to the times", async () => {
+  const initial = { ...initialEventSheet({ ...DRAFT, end: 720 }), picker: "end" as const };
+
+  renderSheet({ initial });
+
+  const body = scrollableBody();
+
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(body.scrollTop).toBeGreaterThan(0);
+});
+
 test("TPK-03 a picker tap changes the time shown in the field", async () => {
   renderSheet({ time: "start" });
 
@@ -1010,3 +1046,13 @@ test("EVT-12 a changed date asks Discard changes? on Cancel", async () => {
 
   expect(screen.getByText("Discard changes?")).toBeInTheDocument();
 });
+
+function scrollableBody() {
+  const rect = (top: number, bottom: number) => ({ top, bottom }) as DOMRect;
+
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    return this.hasAttribute("data-sheet-body") ? rect(0, 100) : rect(200, 300);
+  });
+
+  return document.querySelector("[data-sheet-body]") as HTMLElement;
+}

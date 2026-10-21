@@ -402,13 +402,13 @@ function eventLength({ start, end, allDay }: EventDraft): number | undefined {
   return end !== undefined && end > start ? end - start : undefined;
 }
 
-function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
+function useRevealTimes(endError: boolean) {
   const times = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const body = times.current?.closest("[data-sheet-body]");
 
-    if ((picker === null && !endError) || !times.current || !body) return;
+    if (!endError || !times.current || !body) return;
 
     const box = body.getBoundingClientRect();
     const row = times.current.getBoundingClientRect();
@@ -418,7 +418,7 @@ function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
     const header = body.querySelector<HTMLElement>("[data-page-header]")?.offsetHeight ?? 0;
 
     body.scrollTop += row.top - box.top - header - REVEAL_GAP;
-  }, [picker, endError]);
+  }, [endError]);
 
   return times;
 }
@@ -426,7 +426,7 @@ function useRevealTimes(picker: TimeFieldName | null, endError: boolean) {
 function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
   const { draft, picker } = state;
 
-  const times = useRevealTimes(picker, state.endError);
+  const times = useRevealTimes(state.endError);
 
   const toggle = (field: TimeFieldName) => () => dispatch({ type: "toggle", field });
 
@@ -463,37 +463,31 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
         checked={draft.allDay === true}
         onChange={(value) => dispatch({ type: "allDay", value })}
       />
-      {picker === "start" && (
+      {picker && (
         <TimePicker
-          label={time.starts}
-          groupLabel={time.startGroup}
-          value={draft.start}
+          {...pickerProps(draft, picker)}
           clock={clock}
           labels={time}
-          onChange={(value) => dispatch({ type: "start", value })}
           onDone={() => dispatch({ type: "done" })}
+          onChange={(value) => dispatch({ type: picker, value })}
           compact={compact}
-        />
-      )}
-      {picker === "end" && (
-        <TimePicker
-          label={time.ends}
-          groupLabel={time.endGroup}
-          value={draft.end ?? draft.start}
-          clock={clock}
-          labels={time}
-          onChange={(value) => dispatch({ type: "end", value })}
-          onDone={() => dispatch({ type: "done" })}
-          ends={{
-            start: draft.start,
-            lengths: time.lengths,
-            onNoEnd: () => dispatch({ type: "noEnd" }),
-          }}
-          compact={compact}
+          {...(picker === "end" && {
+            ends: {
+              start: draft.start,
+              lengths: time.lengths,
+              onNoEnd: () => dispatch({ type: "noEnd" }),
+            },
+          })}
         />
       )}
     </div>
   );
+}
+
+function pickerProps({ start, end }: EventDraft, picker: TimeFieldName) {
+  if (picker === "start") return { label: time.starts, groupLabel: time.startGroup, value: start };
+
+  return { label: time.ends, groupLabel: time.endGroup, value: end ?? start };
 }
 
 function primaryLabel(mode: EventSheetProps["mode"], offline: boolean): string {

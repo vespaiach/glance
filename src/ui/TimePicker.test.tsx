@@ -7,6 +7,7 @@ const at = (h: number, m: number) => h * 60 + m;
 const labels = {
   hour: "Hour",
   minutes: "Minutes",
+  meridiem: "AM or PM",
   length: "Length",
   noEnd: "No end time",
   done: "Done",
@@ -215,10 +216,36 @@ test("TPK-04 'No end time' asks to clear the end", async () => {
   expect(onNoEnd).toHaveBeenCalledTimes(1);
 });
 
-test("TPK-02 TimePicker scrolls itself into view when it opens", () => {
-  const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView");
+test("TPK-02 TimePicker never scrolls the page when it opens", () => {
+  const scrollIntoView = vi.fn();
+  Element.prototype.scrollIntoView = scrollIntoView;
 
   render(<TimePicker {...starts} value={at(14, 30)} />);
 
-  expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+  expect(scrollIntoView).not.toHaveBeenCalled();
+});
+
+test("TPK-03 tapping PM keeps the clock hour and minutes", async () => {
+  const onChange = vi.fn();
+  render(<TimePicker {...starts} value={at(9, 25)} onChange={onChange} />);
+
+  await userEvent.click(screen.getByRole("button", { name: "PM" }));
+
+  expect(onChange).toHaveBeenCalledWith(at(21, 25));
+});
+
+test("TPK-03 the AM/PM toggle keeps both labels in one group and marks the chosen one", () => {
+  render(<TimePicker {...starts} value={at(9, 25)} />);
+
+  const toggle = screen.getByRole("group", { name: "AM or PM" });
+
+  expect(
+    within(toggle)
+      .getAllByRole("button")
+      .map((b) => b.textContent),
+  ).toEqual(["AM", "PM"]);
+  expect(within(toggle).getByRole("button", { name: "AM" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });

@@ -263,6 +263,7 @@ export const copy = {
       endsBeforeStart: "Ends before it starts",
       hour: "Hour",
       minutes: "Minutes",
+      meridiem: "AM or PM",
       length: "Length",
       done: "Done",
       hour24Cell: (hour: string) => `${hour} hundred`,
