@@ -28,15 +28,22 @@ export type Change =
 
 export type PullResponse = { cursor: string; changes: Change[] };
 
-export type AuthStatus =
-  | { state: "waiting" }
-  | { state: "expired"; email?: string }
-  | { state: "finishing-elsewhere" }
-  | { state: "signed-in"; account: Account; returning: boolean; setupDone: boolean };
+export type SignedIn = {
+  state: "signed-in";
+  account: Account;
+  returning: boolean;
+  setupDone: boolean;
+};
+
+export type AuthStatus = SignedIn | { state: "signed-out" };
+
+export type CodeError = "wrong-code" | "code-locked" | "code-expired";
 
 export type QrCode = { url: string };
 
-export type LinkRequest = { email: string; timeZone: string };
+export type CodeRequest = { email: string; timeZone: string };
+
+export type CodeVerify = { email: string; code: string };
 
 type Answer<T, E = TransportError> = Promise<Result<T, E>>;
 
@@ -50,7 +57,8 @@ export interface Transport {
   issueQr(): Answer<QrCode>;
   voidQr(url: string): Answer<void>;
   auth: {
-    link(request: LinkRequest): Answer<void>;
+    sendCode(request: CodeRequest): Answer<void>;
+    verifyCode(request: CodeVerify): Answer<SignedIn, TransportError | CodeError>;
     status(): Answer<AuthStatus>;
     guestAvailable(): Promise<boolean>;
     guest(): Answer<AuthStatus>;

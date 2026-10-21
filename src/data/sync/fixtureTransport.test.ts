@@ -614,9 +614,9 @@ describe("FixtureTransport places", () => {
 });
 
 describe("FixtureTransport auth", () => {
-  it("SIGNIN-03 accepts a link request after 1.4 s, not before", async () => {
+  it("SIGNIN-03 accepts a code request after 1.4 s, not before", async () => {
     useTimers();
-    const pending = transport().auth.link({
+    const pending = transport().auth.sendCode({
       email: "maria@example.com",
       timeZone: "America/Los_Angeles",
     });
@@ -629,8 +629,8 @@ describe("FixtureTransport auth", () => {
     expect(await pending).toEqual({ ok: true, value: undefined });
   });
 
-  it("SIGNIN-10 signin=offline can't send a link", async () => {
-    const result = await transport({ signin: "offline" }).auth.link({
+  it("SIGNIN-10 signin=offline can't send a code", async () => {
+    const result = await transport({ signin: "offline" }).auth.sendCode({
       email: "maria@example.com",
       timeZone: "America/Los_Angeles",
     });
@@ -638,24 +638,30 @@ describe("FixtureTransport auth", () => {
     expect(result).toEqual({ ok: false, error: "network" });
   });
 
-  it("SIGNIN-04 status is waiting until the link is opened", async () => {
+  it("SIGNIN-04 a code signs Maria in after 1.4 s", async () => {
+    useTimers();
+    const pending = transport().auth.verifyCode({ email: "maria@example.com", code: "482913" });
+
+    await vi.advanceTimersByTimeAsync(1_400);
+    expect(await pending).toEqual({
+      ok: true,
+      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: false, setupDone: true },
+    });
+  });
+
+  it("SIGNIN-10 signin=offline can't check a code", async () => {
+    expect(
+      await transport({ signin: "offline" }).auth.verifyCode({
+        email: "maria@example.com",
+        code: "482913",
+      }),
+    ).toEqual({ ok: false, error: "network" });
+  });
+
+  it("tech§6.2 status is signed out until signin=done", async () => {
     expect(await transport({ signin: "sent" }).auth.status()).toEqual({
       ok: true,
-      value: { state: "waiting" },
-    });
-  });
-
-  it("SIGNIN-07 signin=phone is waiting for the first sign-in to finish elsewhere", async () => {
-    expect(await transport({ signin: "phone" }).auth.status()).toEqual({
-      ok: true,
-      value: { state: "finishing-elsewhere" },
-    });
-  });
-
-  it("SIGNIN-08 signin=expired reports the link expired", async () => {
-    expect(await transport({ signin: "expired" }).auth.status()).toEqual({
-      ok: true,
-      value: { state: "expired" },
+      value: { state: "signed-out" },
     });
   });
 

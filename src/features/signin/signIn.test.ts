@@ -276,23 +276,12 @@ describe("sign-in reducer", () => {
     expect(signInReducer(typing, { type: "guest-failed" })).toBe(typing);
   });
 
-  it("SIGNIN-04 a waiting answer keeps Check your email", () => {
-    expect(signInReducer(sent, { type: "status", status: { state: "waiting" } })).toBe(sent);
-  });
-
-  it("SIGNIN-08 an expired answer shows the expired waiting screen", () => {
-    expect(signInReducer(sent, { type: "status", status: { state: "expired" } })).toEqual({
-      step: "expired",
-      email: "maria@example.com",
-      onLink: false,
-    });
-  });
-
-  it("SIGNIN-07 a link opened elsewhere on a new account shows Finish on your phone", () => {
-    expect(
-      signInReducer(sent, { type: "status", status: { state: "finishing-elsewhere" } }),
-    ).toEqual({ step: "phone", email: "maria@example.com" });
-  });
+  it.each([sent, phone])(
+    "tech§6.2 a signed-out answer keeps the waiting screen ($step)",
+    (state) => {
+      expect(signInReducer(state, { type: "status", status: { state: "signed-out" } })).toBe(state);
+    },
+  );
 
   it.each([sent, phone])("SIGNIN-09 a signed-in answer welcomes the account ($step)", (state) => {
     const status = {
@@ -312,7 +301,7 @@ describe("sign-in reducer", () => {
   it("SIGNIN-04 status answers are ignored once the person left the waiting screen", () => {
     const typing = form("maria@example.com");
 
-    expect(signInReducer(typing, { type: "status", status: { state: "expired" } })).toBe(typing);
+    expect(signInReducer(typing, { type: "status", status: { state: "signed-out" } })).toBe(typing);
   });
 
   it("SIGNIN-06 Continue with a name starts saving it", () => {
@@ -452,19 +441,9 @@ describe("sign-in reducer", () => {
     },
   );
 
-  it("SIGNIN-12 a stale link shows the expired step for its email on the opening device", () => {
-    const status = { state: "expired", email: "maria@example.com" } as const;
-
-    expect(signInReducer({ step: "opening" }, { type: "status", status })).toEqual({
-      step: "expired",
-      email: "maria@example.com",
-      onLink: true,
-    });
-  });
-
-  it("SIGNIN-12 a stale link with no known email opens the empty form", () => {
+  it("SIGNIN-15 a stale QR link opens the empty form and never shows an email", () => {
     expect(
-      signInReducer({ step: "opening" }, { type: "status", status: { state: "expired" } }),
+      signInReducer({ step: "opening" }, { type: "status", status: { state: "signed-out" } }),
     ).toEqual(form(""));
   });
 

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { clientIp, guestAvailable, signInAsGuest } from "@/server/auth";
-import { clearCookie, crossOrigin, errorJson, setCookie } from "@/server/http";
+import { crossOrigin, errorJson, setCookie } from "@/server/http";
 
 export const runtime = "nodejs";
 
@@ -27,8 +27,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.json(signedIn.value.status);
 
   setCookie(response, "session", signedIn.value.sessionToken);
-  clearCookie(response, "pending");
-  clearCookie(response, "link_email");
 
   return response;
 }

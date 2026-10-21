@@ -7,10 +7,12 @@ import type { OutboxEntry, StoredPhoto } from "../db";
 import type {
   AuthStatus,
   Change,
+  CodeError,
   Coordinates,
   LocateError,
   PullResponse,
   QrCode,
+  SignedIn,
   Transport,
   TransportError,
   UploadError,
@@ -26,6 +28,8 @@ type Send<E = TransportError> = <T>(path: string, init?: RequestInit) => Promise
 const BUILD = String(CLIENT_BUILD);
 
 const JSON_TYPE = "application/json";
+
+const CODE_ERRORS: readonly string[] = ["wrong-code", "code-locked", "code-expired"];
 
 export function createHttpTransport({
   fetch = globalThis.fetch.bind(globalThis),
@@ -46,7 +50,8 @@ export function createHttpTransport({
     issueQr: () => send<QrCode>("/api/auth/qr", { method: "POST" }),
     voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
     auth: {
-      link: (request) => send<void>("/api/auth/link", jsonBody("POST", request)),
+      sendCode: (request) => send<void>("/api/auth/code", jsonBody("POST", request)),
+      verifyCode: verifyCodeWith(fetch),
       status: () => send<AuthStatus>("/api/auth/status"),
       guestAvailable: async () => (await send<void>("/api/auth/guest")).ok,
       guest: () => send<AuthStatus>("/api/auth/guest", { method: "POST" }),
@@ -114,6 +119,29 @@ function sender<E>(
 
 function jsonBody(method: string, body: unknown): RequestInit {
   return { method, headers: { "content-type": JSON_TYPE }, body: JSON.stringify(body) };
+}
+
+function verifyCodeWith(fetch: typeof globalThis.fetch): Transport["auth"]["verifyCode"] {
+  return async (request) => {
+    const response = await fetch("/api/auth/code/verify", {
+      ...jsonBody("POST", request),
+      headers: { "content-type": JSON_TYPE, [BUILD_HEADER]: BUILD },
+    }).catch(() => undefined);
+
+    if (response === undefined) return err("network");
+
+    if (response.status === 400) return err(await codeError(response));
+
+    return readAnswer<SignedIn, TransportError>(response, transportError);
+  };
+}
+
+async function codeError(response: Response): Promise<CodeError | TransportError> {
+  const body = (await response.json().catch(() => undefined)) as { error?: string } | undefined;
+
+  const error = body?.error ?? "";
+
+  return CODE_ERRORS.includes(error) ? (error as CodeError) : "invalid";
 }
 
 function pushRequest(entry: OutboxEntry): RequestInit {

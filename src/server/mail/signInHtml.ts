@@ -17,12 +17,12 @@ const ESCAPES: Record<string, string> = {
   "'": "&#39;",
 };
 
-export function signInHtml(email: string, url: string, season: Season): string {
+export function signInHtml(email: string, code: string, season: Season): string {
   const t = copy.signIn.email;
 
   const { hero, page } = SEASON_COLORS[season];
 
-  const link = escapeHtml(url);
+  const digits = escapeHtml(code);
 
   const address = escapeHtml(email);
 
@@ -50,7 +50,7 @@ export function signInHtml(email: string, url: string, season: Season): string {
 </style>
 </head>
 <body style="margin:0;padding:0;background-color:${page};">
-<span style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${page};">${t.preheader}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</span>
+<span style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${page};">${escapeHtml(t.preheader(code))}&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</span>
 <table role="presentation" class="page" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${page}" style="background-color:${page};">
 <tr><td align="center" class="px" style="padding:40px 24px 48px 24px;">
 <!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
@@ -66,13 +66,9 @@ export function signInHtml(email: string, url: string, season: Season): string {
 <tr><td class="h1" style="padding:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:40px;line-height:44px;font-weight:normal;letter-spacing:-1px;color:#000000;mso-line-height-rule:exactly;">${t.title}</td></tr>
 <tr><td style="padding:0 0 32px 0;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:25px;color:#000000;mso-line-height-rule:exactly;">${t.body}</td></tr>
 <tr><td align="left">
-<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${link}" style="height:56px;v-text-anchor:middle;width:200px;" arcsize="50%" stroke="f" fillcolor="#111111"><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:17px;font-weight:bold;">${t.button}</center></v:roundrect><![endif]-->
-<!--[if !mso]><!-->
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td bgcolor="#111111" style="background-color:#111111;border-radius:50px;">
-<a href="${link}" target="_blank" style="display:block;padding:18px 44px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:20px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:50px;mso-line-height-rule:exactly;">${t.button}</a>
-</td></tr></table>
-<!--<![endif]-->
+<td bgcolor="#ffffff" style="background-color:#ffffff;border-radius:8px;padding:20px 28px;font-family:'Courier New',Courier,monospace;font-size:44px;line-height:48px;font-weight:bold;letter-spacing:10px;color:#000000;mso-line-height-rule:exactly;">${digits}</td>
+</tr></table>
 </td></tr>
 <tr><td style="padding:20px 0 0 0;font-family:'Courier New',Courier,monospace;font-size:13px;line-height:18px;letter-spacing:0.5px;text-transform:uppercase;color:#000000;mso-line-height-rule:exactly;">${t.expires}</td></tr>
 </table>
@@ -83,8 +79,7 @@ export function signInHtml(email: string, url: string, season: Season): string {
 <!-- DETAIL -->
 <tr><td class="card" bgcolor="#fffffe" style="background-color:#fffffe;border:1px solid #e6e6e6;border-radius:24px;padding:32px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-<tr><td style="padding:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#000000;mso-line-height-rule:exactly;">${t.fallback}</td></tr>
-<tr><td style="padding:0 0 24px 0;font-family:'Courier New',Courier,monospace;font-size:13px;line-height:19px;color:#000000;word-break:break-all;mso-line-height-rule:exactly;"><a href="${link}" target="_blank" style="color:#000000;text-decoration:underline;">${link}</a></td></tr>
+<tr><td style="padding:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#000000;mso-line-height-rule:exactly;">${t.warning}</td></tr>
 <tr><td style="border-top:1px solid #f1f1f1;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
 <tr><td style="padding:24px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#000000;mso-line-height-rule:exactly;"><strong>${t.ignoreTitle}</strong> ${t.ignoreBody}</td></tr>
 </table>

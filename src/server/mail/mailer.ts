@@ -51,23 +51,24 @@ export function mailFailed(provider: string, reason: string): MailResult {
   return err("mail-failed");
 }
 
-export function signInMessage(to: string, url: string, season: Season): MailMessage {
+export function signInMessage(to: string, code: string, season: Season): MailMessage {
   return {
     to,
     subject: copy.signIn.email.subject,
-    text: signInText(to, url),
-    html: signInHtml(to, url, season),
+    text: signInText(to, code),
+    html: signInHtml(to, code, season),
   };
 }
 
-function signInText(to: string, url: string): string {
+function signInText(to: string, code: string): string {
   const t = copy.signIn.email;
 
   return [
     t.title,
     t.body,
-    `${t.button}: ${url}`,
+    code,
     t.expires,
+    t.warning,
     `${t.ignoreTitle} ${t.ignoreBody}`,
     `${t.sentToBefore}${to}${t.sentToAfter}\n${t.tagline}`,
   ].join("\n\n");

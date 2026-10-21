@@ -1,22 +1,11 @@
 import { saveName } from "./account";
-import { requestLink, verifyLink } from "./links";
 import { requireDisplay, signOut } from "./sessions";
-import { authHarnessPerTest, linkToken } from "./testAuth";
+import { authHarnessPerTest, signIn as signInWithCode } from "./testAuth";
 
 const harness = authHarnessPerTest();
 
-async function signIn(email: string): Promise<{ sessionToken: string; accountId: string }> {
-  await requestLink(harness.deps(), { email, timeZone: "America/New_York", ip: "203.0.113.5" });
-
-  const verified = await verifyLink(harness.deps(), { token: linkToken(harness.sent.at(-1)) });
-
-  if (!verified.ok) throw new Error(verified.error.code);
-
-  const display = await requireDisplay(harness.deps(), verified.value.sessionToken);
-
-  if (!display.ok) throw new Error(display.error);
-
-  return { sessionToken: verified.value.sessionToken, accountId: display.value.accountId };
+function signIn(email: string): Promise<{ sessionToken: string; accountId: string }> {
+  return signInWithCode(harness, email);
 }
 
 function accountNames(): Promise<unknown[]> {

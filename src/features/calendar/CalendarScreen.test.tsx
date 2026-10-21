@@ -241,7 +241,8 @@ test("CAL-05 tapping a member shows only their plans and everyone plans", async 
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Mom" }));
+  await screen.findByRole("button", { name: /^Soccer, / });
+  await userEvent.click(screen.getByRole("button", { name: "Mom" }));
 
   expect(pill("Mom")).toHaveAttribute("aria-pressed", "true");
   expect(plan("Grandma’s video call")).toBeInTheDocument();
@@ -258,7 +259,8 @@ test("CAL-05 removing the last member shows nobody: no plans, tiles or free slot
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Mom" }));
+  await screen.findByRole("button", { name: /^Family dinner, / });
+  await userEvent.click(screen.getByRole("button", { name: "Mom" }));
   await userEvent.click(pill("Mom"));
 
   expect(pill("Mom")).toHaveAttribute("aria-pressed", "false");

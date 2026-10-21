@@ -169,14 +169,9 @@ function signedIn(account: Account, returning: boolean, setupDone: boolean): Sig
 }
 
 function linkChecked(status: AuthStatus): SignInState {
-  switch (status.state) {
-    case "signed-in":
-      return signedIn(status.account, status.returning, status.setupDone);
-    case "expired":
-      return status.email ? { step: "expired", email: status.email, onLink: true } : EMPTY_FORM;
-    default:
-      return EMPTY_FORM;
-  }
+  if (status.state !== "signed-in") return EMPTY_FORM;
+
+  return signedIn(status.account, status.returning, status.setupDone);
 }
 
 function guestChecked(email: string, status: AuthStatus): SignInState {
@@ -192,16 +187,9 @@ function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
 
   if (state.step !== "sent" && state.step !== "phone") return state;
 
-  switch (status.state) {
-    case "waiting":
-      return state;
-    case "expired":
-      return { step: "expired", email: state.email, onLink: false };
-    case "finishing-elsewhere":
-      return state.step === "phone" ? state : { step: "phone", email: state.email };
-    case "signed-in":
-      return signedIn(status.account, status.returning, status.setupDone);
-  }
+  if (status.state !== "signed-in") return state;
+
+  return signedIn(status.account, status.returning, status.setupDone);
 }
 
 function named(state: SignInState, account: Account): SignInState {

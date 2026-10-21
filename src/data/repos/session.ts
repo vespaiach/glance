@@ -73,7 +73,7 @@ export type SignedOutAccount = {
 
 export type SignInAuth = Pick<
   Transport["auth"],
-  "link" | "status" | "guestAvailable" | "guest" | "name" | "location"
+  "sendCode" | "status" | "guestAvailable" | "guest" | "name" | "location"
 > &
   Pick<WeatherRepo, "searchPlaces" | "locate"> & {
     remember(account: Account): Promise<void>;
@@ -106,7 +106,7 @@ export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth 
   const { auth, places, locate } = signInTransport(demo, params);
 
   return {
-    link: auth.link,
+    sendCode: auth.sendCode,
     status: auth.status,
     guestAvailable: auth.guestAvailable,
     guest: auth.guest,
