@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.50 |
+| Status | v2.51 |
 | Date | 2026-10-21 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.77) · [`design/handoff/`](design/handoff/README.md) (v11) |
 
@@ -381,7 +381,7 @@ Bad config names the variables (not their values) and exits. `next build` needs 
 
 **Guest sign-in** (SIGNIN-16): optional `GUEST_EMAIL` names an existing account whose setup is done (the demo site's shared family, created once through a normal sign-in). When it is unset or that account doesn't exist, the guest routes answer 404 and the button stays hidden.
 
-**Demo build** (`NEXT_PUBLIC_DEMO=1`, implied by `next dev`): fixture URL params, `/dev/gallery` and the sign-in dev buttons are compiled in; the display uses `glance-fixture` + `FixtureTransport` and skips the `glance-meta` gate. Demo-only routes are `page.demo.tsx`, added to `pageExtensions` only for dev or demo builds.
+**Demo build** (`NEXT_PUBLIC_DEMO=1`, `npm run dev:demo` locally): fixture URL params and the sign-in dev buttons are compiled in; the display uses `glance-fixture` + `FixtureTransport` and skips the `glance-meta` gate. Plain `next dev` is not a demo build: it signs in, syncs and sends mail through the server like production, without the service worker. Demo-only routes are `page.demo.tsx` (`/dev/gallery`), added to `pageExtensions` for `next dev` and demo builds.
 
 ---
 

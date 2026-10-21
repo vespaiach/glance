@@ -186,7 +186,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 | `/ambient` | Ambient |
 | `/dev/gallery` | Component gallery (DS-01; dev and demo builds only) |
 
-**Fixture params** (dev and demo builds only) open any frame directly. They are frozen snapshots: the reducer's or seed's initial state, and timers run only after a tap. `now=ISO` freezes the clock (default Fri Oct 9 2026 10:41 AM Pacific).
+**Fixture params** (demo builds only) open any frame directly. They are frozen snapshots: the reducer's or seed's initial state, and timers run only after a tap. `now=ISO` freezes the clock (default Fri Oct 9 2026 10:41 AM Pacific).
 
 | Area | Params |
 |---|---|
