@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import type { Note } from "@/domain/schemas";
+import type { AccountSettings, Note } from "@/domain/schemas";
 import { createNotesRepo, useNote, useNotes } from "./notes";
 import {
   type Harness,
@@ -40,7 +40,7 @@ beforeEach(() => {
 
 afterEach(() => store.close());
 
-function saveExpiry(noteExpiry: "1d" | "1w" | null) {
+function saveExpiry(noteExpiry: AccountSettings["noteExpiry"]) {
   return store.db.settings.put({
     ...synced(DEFAULT_SETTINGS),
     noteExpiry,
@@ -77,7 +77,7 @@ describe("notes repo", () => {
 
 describe("useNotes", () => {
   it("NOTE-04 lists the newest note first", async () => {
-    await saveExpiry(null);
+    await saveExpiry({ on: false, days: 1 });
     await store.db.notes.bulkPut([synced(OLD), synced(NEW), synced(FRESH)]);
 
     const { result } = renderNotes();
@@ -118,7 +118,7 @@ describe("useNotes", () => {
   });
 
   it("NOTE-08 hides notes past the expiry setting, even offline", async () => {
-    await saveExpiry("1d");
+    await saveExpiry({ on: true, days: 1 });
     await store.db.notes.bulkPut([synced(FRESH), synced(OLD)]);
 
     const { result } = renderNotes();
@@ -127,7 +127,7 @@ describe("useNotes", () => {
   });
 
   it("NOTE-08 keeps every note when expiry is off", async () => {
-    await saveExpiry(null);
+    await saveExpiry({ on: false, days: 1 });
     await store.db.notes.bulkPut([synced(FRESH), synced(OLD)]);
 
     const { result } = renderNotes();

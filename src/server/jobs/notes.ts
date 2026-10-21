@@ -21,7 +21,11 @@ export function expireNotes({ db, now }: ServiceDeps): Promise<Expired[]> {
     const expiries = await noteExpiries(tx);
 
     const expired = (await liveNotes(tx)).filter((note) =>
-      noteExpired({ createdAt: note.created_at }, expiries.get(note.account_id) ?? null, at),
+      noteExpired(
+        { createdAt: note.created_at },
+        expiries.get(note.account_id) ?? DEFAULT_SETTINGS.noteExpiry,
+        at,
+      ),
     );
 
     const versions = new Map<string, number>();

@@ -34,6 +34,10 @@ export type OutboxEntry = {
 
 type MemberEntry = Omit<OutboxEntry, "entity"> & { entity: "members" };
 
+const IDLE_MINUTES: Record<string, number> = { "60": 1, "180": 3, "300": 5 };
+
+const EXPIRY_DAYS: Record<string, number> = { "1d": 1, "1w": 7 };
+
 export type MetaEntry = { key: string; value: unknown };
 
 export type GlanceDb = Dexie & {
@@ -91,6 +95,12 @@ export function openGlanceDb(name: string): GlanceDb {
       await moveMemberOutbox(tx);
     });
 
+  db.version(4).upgrade(async (tx) => {
+    await tx.table("settings").toCollection().modify(withSettingsValues);
+
+    await mapSettingsOutbox(tx);
+  });
+
   return db;
 }
 
@@ -125,6 +135,26 @@ async function moveMemberOutbox(tx: Transaction): Promise<void> {
     .modify((entry) => {
       if (isRecord(entry.payload)) withTagIds(entry.payload);
     });
+}
+
+async function mapSettingsOutbox(tx: Transaction): Promise<void> {
+  await tx
+    .table<OutboxEntry, number>("outbox")
+    .where("entity")
+    .equals("settings")
+    .modify((entry) => {
+      if (isRecord(entry.payload)) withSettingsValues(entry.payload);
+    });
+}
+
+function withSettingsValues(settings: Record<string, unknown>): void {
+  const minutes = IDLE_MINUTES[String(settings.idleTimeout)];
+
+  const days = EXPIRY_DAYS[String(settings.noteExpiry)];
+
+  settings.idleTimeout = { on: minutes !== undefined, minutes: minutes ?? 3 };
+  settings.noteExpiry = { on: days !== undefined, days: days ?? 7 };
+  settings.hideSidebarWhenIdle = true;
 }
 
 function withTagIds(event: Record<string, unknown>): void {

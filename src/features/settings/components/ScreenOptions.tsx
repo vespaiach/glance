@@ -21,13 +21,6 @@ type IdleOption = (typeof copy.settings.idle.options)[number]["value"];
 
 type ExpiryOption = (typeof copy.settings.noteExpiry.options)[number]["value"];
 
-const IDLE_TIMEOUTS: Record<IdleOption, AccountSettings["idleTimeout"]> = {
-  "60": 60,
-  "180": 180,
-  "300": 300,
-  never: null,
-};
-
 const styles = stylex.create({
   block: {
     display: "flex",
@@ -89,8 +82,10 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
         <PillTabs
           label={text.idle.title}
           options={text.idle.options}
-          value={idleOption(settings.idleTimeout)}
-          onChange={(value) => onChange({ idleTimeout: IDLE_TIMEOUTS[value] })}
+          value={pillValue(settings.idleTimeout.on, settings.idleTimeout.minutes) as IdleOption}
+          onChange={(value) =>
+            onChange({ idleTimeout: idleTimeoutFor(value, settings.idleTimeout.minutes) })
+          }
           size="lg"
         />
       </div>
@@ -99,8 +94,10 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
         <PillTabs<ExpiryOption>
           label={text.noteExpiry.title}
           options={text.noteExpiry.options}
-          value={settings.noteExpiry ?? "never"}
-          onChange={(value) => onChange({ noteExpiry: value === "never" ? null : value })}
+          value={pillValue(settings.noteExpiry.on, settings.noteExpiry.days) as ExpiryOption}
+          onChange={(value) =>
+            onChange({ noteExpiry: noteExpiryFor(value, settings.noteExpiry.days) })
+          }
           size="lg"
         />
       </div>
@@ -108,8 +105,16 @@ export function ScreenOptions({ settings, onChange, onOpenAmbient }: ScreenOptio
   );
 }
 
-function idleOption(timeout: AccountSettings["idleTimeout"]): IdleOption {
-  return timeout === null ? "never" : (`${timeout}` as const);
+function pillValue(on: boolean, value: number): string {
+  return on ? String(value) : "never";
+}
+
+function idleTimeoutFor(option: IdleOption, kept: number): AccountSettings["idleTimeout"] {
+  return option === "never" ? { on: false, minutes: kept } : { on: true, minutes: Number(option) };
+}
+
+function noteExpiryFor(option: ExpiryOption, kept: number): AccountSettings["noteExpiry"] {
+  return option === "never" ? { on: false, days: kept } : { on: true, days: Number(option) };
 }
 
 function AmbientTile({ settings, onOpenAmbient }: Omit<ScreenOptionsProps, "onChange">) {

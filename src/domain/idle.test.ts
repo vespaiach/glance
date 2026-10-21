@@ -7,6 +7,7 @@ import {
   ambientSummary,
   ambientTime,
   idleDue,
+  idleTimeoutSeconds,
   inAmbient,
 } from "./idle";
 import type { AccountSettings } from "./schemas";
@@ -234,5 +235,19 @@ describe("idleDue", () => {
 
   it("IDLE-01 Never is never due", () => {
     expect(idleDue(last, at("23:00"), null)).toBe(false);
+  });
+});
+
+describe("idleTimeoutSeconds", () => {
+  it.each([
+    [1, 60],
+    [3, 180],
+    [15, 900],
+  ])("IDLE-01 %i minutes while on is %i seconds", (minutes, seconds) => {
+    expect(idleTimeoutSeconds({ on: true, minutes })).toBe(seconds);
+  });
+
+  it("IDLE-01 off is never, whatever minutes it keeps", () => {
+    expect(idleTimeoutSeconds({ on: false, minutes: 3 })).toBeNull();
   });
 });

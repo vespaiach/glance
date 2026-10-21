@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.40 |
+| Status | v2.41 |
 | Date | 2026-10-21 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.71) · [`design/handoff/`](design/handoff/README.md) (v10) |
 
@@ -150,7 +150,7 @@ db.version(4).stores({
   meta:     'key',                        // cursor, status
 });
 ```
-- The v3 upgrade copies `members` into `tags` (live rows) and renames each event's `memberIds` to `tagIds`, also in waiting outbox payloads; waiting member puts become tag puts and member deletes are dropped; the v4 upgrade rewrites the stored settings as `010_settings_values.sql` does. The server migrations do the same, so both sides agree before the first pull.
+- The v3 upgrade copies `members` into `tags` (live rows) and renames each event's `memberIds` to `tagIds`, also in waiting outbox payloads; waiting member puts become tag puts and member deletes are dropped; the v4 upgrade rewrites the stored settings, and any waiting settings put, as `010_settings_values.sql` does. The server migrations do the same, so both sides agree before the first pull.
 - **One database per account** (`glance-{accountId}`), deleted on sign-out. Demo builds use `glance-fixture`, reseeded on each load.
 - Rows keep the server's soft delete (`deletedAt`); hooks filter it out.
 - Pending ("Waiting to post") is derived from the outbox, never stored.

@@ -42,7 +42,7 @@ function renderBoard(options: Options = {}) {
       retryIn={1}
       onRetry={() => {}}
       state={options.state ?? { kind: "ready", data: [NEWEST, WIFI] }}
-      expiry={options.expiry === undefined ? "1w" : options.expiry}
+      expiry={options.expiry ?? { on: true, days: 7 }}
       now={NOW}
       clock="12h"
       onOpenNote={options.onOpenNote ?? (() => {})}
@@ -90,7 +90,7 @@ test("OFF-04 a new note waiting to post says so instead of its stamp", () => {
 });
 
 test("NOTE-06 the caption names the expiry setting", () => {
-  const { rerender } = renderBoard({ expiry: "1d" });
+  const { rerender } = renderBoard({ expiry: { on: true, days: 1 } });
 
   expect(
     screen.getByText("Select a note to edit or delete it · Notes are removed after 1 day"),
@@ -102,7 +102,7 @@ test("NOTE-06 the caption names the expiry setting", () => {
       retryIn={1}
       onRetry={() => {}}
       state={{ kind: "ready", data: [WIFI] }}
-      expiry={null}
+      expiry={{ on: true, days: 30 }}
       now={NOW}
       clock="12h"
       onOpenNote={() => {}}
@@ -111,24 +111,32 @@ test("NOTE-06 the caption names the expiry setting", () => {
   );
 
   expect(
+    screen.getByText("Select a note to edit or delete it · Notes are removed after 30 days"),
+  ).toBeInTheDocument();
+});
+
+test("NOTE-06 with expiry off the caption says notes stay", () => {
+  renderBoard({ expiry: { on: false, days: 7 } });
+
+  expect(
     screen.getByText("Select a note to edit or delete it · Notes stay until deleted"),
   ).toBeInTheDocument();
 });
 
 test("NOTE-07 the empty board invites a note and says how long notes stay", () => {
-  renderBoard({ state: { kind: "empty" }, expiry: "1w" });
+  renderBoard({ state: { kind: "empty" }, expiry: { on: true, days: 7 } });
 
   expect(screen.getByText("No notes yet")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Leave a note for the family. Notes show on Today. They’re removed after 1 week.",
+      "Leave a note for the family. Notes show on Today. They’re removed after 7 days.",
     ),
   ).toBeInTheDocument();
   expect(screen.queryByText(/Select a note/)).not.toBeInTheDocument();
 });
 
 test("NOTE-07 with expiry off the empty board says notes stay", () => {
-  renderBoard({ state: { kind: "empty" }, expiry: null });
+  renderBoard({ state: { kind: "empty" }, expiry: { on: false, days: 1 } });
 
   expect(
     screen.getByText(

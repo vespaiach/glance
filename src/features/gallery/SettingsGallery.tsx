@@ -116,14 +116,14 @@ const AMBIENT_DEMOS: readonly Demo<AmbientProps>[] = [
   { key: "split", ambient: SPLIT, initialPick: "wknd.e" },
   { key: "same", ambient: { ...DEFAULT_AMBIENT, all: { start: "18:00", end: "18:00" } } },
   { key: "off", ambient: { ...DEFAULT_AMBIENT, mode: "off" } },
-  { key: "clock-24", clock: "24h", idleTimeout: null, initialPick: "all.e" },
+  { key: "clock-24", clock: "24h", idleTimeout: { on: false, minutes: 3 }, initialPick: "all.e" },
   { key: "phone", phone: true, breakpoint: "phone", initialPick: "all.s" },
 ];
 
 const AMBIENT_BASE: AmbientProps = {
   ambient: DEFAULT_AMBIENT,
   clock: "12h",
-  idleTimeout: 180,
+  idleTimeout: { on: true, minutes: 3 },
   breakpoint: "wide",
   onChange: ignore,
   onBack: ignore,
@@ -189,7 +189,13 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "auto" },
     {
       key: "fixed",
-      settings: { ...DEFAULT_SETTINGS, season, clock: "24h", tempUnit: "C", noteExpiry: null },
+      settings: {
+        ...DEFAULT_SETTINGS,
+        season,
+        clock: "24h",
+        tempUnit: "C",
+        noteExpiry: { on: false, days: 7 },
+      },
       background: COAST && { mode: "slideshow", photo: COAST, rotate: "daily" },
     },
     { key: "photo", background: COAST && { mode: "photo", photo: COAST } },

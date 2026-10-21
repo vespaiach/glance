@@ -14,7 +14,7 @@ export type SidebarAction =
   | { type: "idle" }
   | { type: "viewChanged"; view: View | undefined };
 
-export const SIDEBAR_IDLE_SECONDS = 15;
+export const SIDEBAR_IDLE_SECONDS = 20;
 
 const INSET: Record<SidebarMode, number> = { hidden: 0, rail: 80, expanded: 332 };
 

@@ -52,8 +52,9 @@ const settings = {
   clock: "12h",
   tempUnit: "F",
   background: { mode: "season", dim: 0.2, rotate: "daily" },
-  idleTimeout: 180,
-  noteExpiry: "1w",
+  idleTimeout: { on: true, minutes: 3 },
+  noteExpiry: { on: true, days: 7 },
+  hideSidebarWhenIdle: true,
   ambient: {
     mode: "same",
     all: { start: "18:00", end: "07:30" },
@@ -313,10 +314,35 @@ describe("AccountSettingsSchema", () => {
     expect(accepts(AccountSettingsSchema, { ...settings, background })).toBe(false);
   });
 
-  it("SET-07 accepts Never for idle and note expiry", () => {
-    expect(
-      accepts(AccountSettingsSchema, { ...settings, idleTimeout: null, noteExpiry: null }),
-    ).toBe(true);
+  it("SET-07 accepts idle and note expiry turned off with their values kept", () => {
+    const idleTimeout = { on: false, minutes: 15 };
+
+    const noteExpiry = { on: false, days: 30 };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, idleTimeout, noteExpiry })).toBe(true);
+  });
+
+  it.each([0, 16, 2.5])("SET-07 rejects %s idle minutes", (minutes) => {
+    const idleTimeout = { on: true, minutes };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, idleTimeout })).toBe(false);
+  });
+
+  it.each([0, 31, 1.5])("SET-07 rejects %s note expiry days", (days) => {
+    const noteExpiry = { on: true, days };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, noteExpiry })).toBe(false);
+  });
+
+  it("SET-07 rejects the old idle and note expiry values", () => {
+    expect(accepts(AccountSettingsSchema, { ...settings, idleTimeout: 180 })).toBe(false);
+    expect(accepts(AccountSettingsSchema, { ...settings, noteExpiry: "1w" })).toBe(false);
+  });
+
+  it("tech§4.5 a settings row without hideSidebarWhenIdle parses with it on", () => {
+    const { hideSidebarWhenIdle: _, ...saved } = settings;
+
+    expect(v.parse(AccountSettingsSchema, saved)).toEqual(settings);
   });
 
   it("LOC-05 accepts a weather location with its IANA time zone", () => {
