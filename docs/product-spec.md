@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.77 |
+| Status | v0.78 |
 | Date | 2026-10-21 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -376,7 +376,7 @@ Top: the week strip card (CAL-01; the date control on phone). Below: one white p
 
 | ID | Requirement |
 |---|---|
-| CAL-01 | **Week strip** (600 px and up): the year (of the week's Saturday) as the eyebrow over the month name of its Saturday with no year (wide and mid only), prev/next IconButtons (56), then 7 square day cells Sunday to Saturday (radius 0, 2 px apart): weekday, date (12 px below center) and one 6 px dot per tag with a plan that day (always everyone, capped at 50 px wide), plus the day's forecast in the top-right corner (14 px icon + 12 px high) when the cell is at least 80 px wide (measured) and the day has a forecast. Selected = one black rectangle spanning the strip card's full height that slides to the tapped day (280 ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`; the text cross-fades to white in 200 ms); its dots get a 1 px white outline. Today (not selected) has a soft gray fill (`surface-soft`), no ring. Narrow drops the eyebrow, month name and weather. |
+| CAL-01 | **Week strip** (600 px and up): the year (of the week's Saturday) as the eyebrow over the month name of its Saturday with no year (wide and mid only), prev/next IconButtons (56), then 7 day cells Sunday to Saturday (radius 0, 2 px apart, 104 px tall on wide and 96 px on mid and narrow, filling the strip card's height): a left-aligned stack (12 px top padding, centered in the cell) of the weekday, the date (28 px) and one 6 px dot per tag with a plan that day (3 px apart, always everyone, capped at 50 px wide), plus the day's forecast in the top-right corner (14 px icon beside the 12 px high) when the cell is at least 80 px wide (measured) and the day has a forecast. Selected = one black rectangle spanning the strip card's full height that slides to the tapped day (280 ms, `cubic-bezier(0.2, 0.8, 0.2, 1)`; the text cross-fades to white in 200 ms); its dots get a 1 px white outline. Today (not selected) has a soft gray fill (`surface-soft`), no ring. Narrow drops the eyebrow, month name and weather. |
 | CAL-02 | Chevrons step a week; landing on this week selects today, any other week its Sunday. **Phone date control** (< 600, replaces the week strip): one full-width white card button: mono year over the month name (28 px) on the left, the selected date as a black pill (weekday + date) with `chevron-down` on the right; tap → date picker. |
 | CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per tag with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered (today when the selected day is outside the list). A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
 | CAL-04 | The timeline fills the panel with no scroll; with 24 hours on its minimum height is 760 px (720 mid, 1000 phone) and the page scrolls. Changing the day or the filter reflows the timeline over 280 ms. `/calendar?date=` selects that day. |
