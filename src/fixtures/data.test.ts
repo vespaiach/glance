@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import * as v from "valibot";
 import { eventDayKey } from "@/domain/allDay";
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { eventStatus } from "@/domain/eventStatus";
 import { noteExpired, noteStamp } from "@/domain/notes";
 import { pictureOfDay } from "@/domain/pictureOfDay";
@@ -208,8 +209,10 @@ describe("Appendix A fixtures", () => {
     ]);
   });
 
-  it("NOTE-08 no fixture note has expired under the default week", () => {
-    expect(FIXTURE_NOTES.some((note) => noteExpired(note, "1w", FIXTURE_NOW))).toBe(false);
+  it("NOTE-08 no fixture note has expired under the default 7 days", () => {
+    expect(
+      FIXTURE_NOTES.some((note) => noteExpired(note, DEFAULT_SETTINGS.noteExpiry, FIXTURE_NOW)),
+    ).toBe(false);
   });
 
   it("TODAY-07 Cannon Beach is the picture of the day on Oct 9", () => {

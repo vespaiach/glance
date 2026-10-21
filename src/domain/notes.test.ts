@@ -44,18 +44,23 @@ describe("notes", () => {
   });
 
   it.each([
-    ["1d", iso(8, 10, 42), false],
-    ["1d", iso(8, 10, 41), false],
-    ["1d", iso(8, 10, 40), true],
-    ["1w", iso(3, 10, 41), false],
-    ["1w", iso(2, 10, 40), true],
-    [null, iso(1, 0, 0), false],
-  ] as const)(
-    "NOTE-08 with expiry %s a note from %s is expired: %s",
-    (expiry, createdAt, expected) => {
-      expect(noteExpired({ createdAt }, expiry, now)).toBe(expected);
+    [1, iso(8, 10, 42), false],
+    [1, iso(8, 10, 41), false],
+    [1, iso(8, 10, 40), true],
+    [7, iso(2, 10, 41), false],
+    [7, iso(2, 10, 40), true],
+    [30, new Date(2026, 8, 9, 10, 41).toISOString(), false],
+    [30, new Date(2026, 8, 9, 10, 40).toISOString(), true],
+  ])(
+    "NOTE-08 with expiry on at %i days a note from %s is expired: %s",
+    (days, createdAt, expected) => {
+      expect(noteExpired({ createdAt }, { on: true, days }, now)).toBe(expected);
     },
   );
+
+  it("NOTE-08 with expiry off a note never expires, whatever days it keeps", () => {
+    expect(noteExpired({ createdAt: iso(1, 0, 0) }, { on: false, days: 1 }, now)).toBe(false);
+  });
 
   it.each([
     [true, 0, true],

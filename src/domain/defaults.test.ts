@@ -3,14 +3,15 @@ import { DEFAULT_SETTINGS } from "./defaults";
 import { AccountSettingsSchema } from "./schemas";
 
 describe("DEFAULT_SETTINGS", () => {
-  it("spec§7.0 are Auto, 12-hour, Fahrenheit, Season color (Light, Daily), 3 min, 1 week, every night 6:00 PM – 7:30 AM", () => {
+  it("spec§7.0 are Auto, 12-hour, Fahrenheit, Season color (Light, Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle, every night 6:00 PM – 7:30 AM", () => {
     expect(DEFAULT_SETTINGS).toEqual({
       season: "auto",
       clock: "12h",
       tempUnit: "F",
       background: { mode: "season", dim: 0.2, rotate: "daily" },
-      idleTimeout: 180,
-      noteExpiry: "1w",
+      idleTimeout: { on: true, minutes: 3 },
+      noteExpiry: { on: true, days: 7 },
+      hideSidebarWhenIdle: true,
       ambient: {
         mode: "same",
         all: { start: "18:00", end: "07:30" },

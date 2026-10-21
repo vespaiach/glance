@@ -1,8 +1,10 @@
 import type { AmbientRange, AmbientSummary } from "@/domain/idle";
-import type { Season, TagColor, WeatherIcon } from "@/domain/schemas";
+import type { AccountSettings, Season, TagColor, WeatherIcon } from "@/domain/schemas";
 import type { ActiveStamp, Device, DeviceKind } from "@/domain/screens";
 import type { Clock } from "@/domain/time";
 import type { WmoCondition } from "@/domain/wmo";
+
+type NoteExpiry = AccountSettings["noteExpiry"];
 
 export const copy = {
   appName: "Glance",
@@ -249,18 +251,14 @@ export const copy = {
     loading: "Loading notes",
     unavailable: "Notes unavailable",
     caption: (keep: string) => `Select a note to edit or delete it · ${keep}`,
-    keep: {
-      "1d": "Notes are removed after 1 day",
-      "1w": "Notes are removed after 1 week",
-      never: "Notes stay until deleted",
-    },
+    keep: (expiry: NoteExpiry) =>
+      expiry.on ? `Notes are removed after ${dayCount(expiry.days)}` : "Notes stay until deleted",
     emptyTitle: "No notes yet",
     emptyBody: (keep: string) => `Leave a note for the family. Notes show on Today. ${keep}`,
-    emptyKeep: {
-      "1d": "They’re removed after 1 day.",
-      "1w": "They’re removed after 1 week.",
-      never: "They stay until someone deletes them.",
-    },
+    emptyKeep: (expiry: NoteExpiry) =>
+      expiry.on
+        ? `They’re removed after ${dayCount(expiry.days)}.`
+        : "They stay until someone deletes them.",
     details: {
       title: (author: string) => `From ${author}`,
       edit: "Edit",
@@ -425,17 +423,17 @@ export const copy = {
     idle: {
       title: "Back to Today after",
       options: [
-        { value: "60", label: "1 min" },
-        { value: "180", label: "3 min" },
-        { value: "300", label: "5 min" },
+        { value: "1", label: "1 min" },
+        { value: "3", label: "3 min" },
+        { value: "5", label: "5 min" },
         { value: "never", label: "Never" },
       ],
     },
     noteExpiry: {
       title: "Remove notes after",
       options: [
-        { value: "1d", label: "1 day" },
-        { value: "1w", label: "1 week" },
+        { value: "1", label: "1 day" },
+        { value: "7", label: "1 week" },
         { value: "never", label: "Never" },
       ],
     },
@@ -488,10 +486,10 @@ export const copy = {
     noon: "Noon",
     midnight: "Midnight",
     noHours: "No ambient hours.",
-    wakeLine: (idleTimeout: number | null) =>
-      idleTimeout === null
-        ? "After a touch it stays awake until the next ambient start."
-        : `After a touch it dims again when nobody has touched it for ${idleTimeout / 60} min.`,
+    wakeLine: ({ on, minutes }: AccountSettings["idleTimeout"]) =>
+      on
+        ? `After a touch it dims again when nobody has touched it for ${minutes} min.`
+        : "After a touch it stays awake until the next ambient start.",
     wakeLineOff: "Touch-to-wake and the idle timer work as usual.",
     preview: "Preview",
   },
@@ -811,6 +809,10 @@ const DEVICE_KIND: Record<DeviceKind, string> = {
   tablet: "Tablet",
   smartphone: "Phone",
 };
+
+function dayCount(days: number): string {
+  return days === 1 ? "1 day" : `${days} days`;
+}
 
 function ambientRangeText(range: AmbientRange | null): string {
   return range === null ? "Not set" : `${range.start} – ${range.end}`;

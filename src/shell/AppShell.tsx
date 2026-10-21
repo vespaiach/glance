@@ -23,6 +23,7 @@ import { useFixtureParams } from "./fixtureOptions";
 import { isTextField, useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
 import { OfflineNotice } from "./OfflineNotice";
 import { useNowStore } from "./providers/now";
+import { useAccountSettings } from "./providers/settings";
 import { VIEWS, type View, viewForPath, viewPath } from "./routes";
 import { useSheetHost } from "./SheetHost";
 import { SidebarDrawer } from "./SidebarDrawer";
@@ -90,6 +91,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const sheetOpen = useSheetHost().sheet !== null;
 
+  const { hideSidebarWhenIdle } = useAccountSettings();
+
   const [sidebar, dispatch] = useReducer(sidebarReducer, rail, (fixture) =>
     initialSidebar(fixture, view),
   );
@@ -108,7 +111,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEscapeToRail(sidebar.mode === "expanded", dispatch, handle);
 
-  useHideWhenIdle(sidebar.mode !== "hidden" && !sheetOpen && keyboardInset === 0, dispatch);
+  useHideWhenIdle(
+    hideSidebarWhenIdle && sidebar.mode !== "hidden" && !sheetOpen && keyboardInset === 0,
+    dispatch,
+  );
 
   usePrefetchViews();
 

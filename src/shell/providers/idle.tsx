@@ -9,7 +9,7 @@ import {
   useSignedOut,
   useSyncStatus,
 } from "@/data/repos";
-import { idleDue, inAmbient } from "@/domain/idle";
+import { idleDue, idleTimeoutSeconds, inAmbient } from "@/domain/idle";
 import { isTextField } from "../keyboard";
 import { useSheetHost } from "../SheetHost";
 import { useAmbientNavigate } from "../useAmbientNavigate";
@@ -46,6 +46,8 @@ export function IdleProvider({
   children,
 }: IdleProps) {
   const { idleTimeout, ambient: schedule } = useAccountSettings();
+
+  const idleSeconds = idleTimeoutSeconds(idleTimeout);
 
   const store = useNowStore();
 
@@ -119,7 +121,7 @@ export function IdleProvider({
         if (nowAmbient || latest.current.pathname === AMBIENT) go(nowAmbient ? AMBIENT : awake());
       }
 
-      if (idleDue(lastActivity, now, idleTimeout)) {
+      if (idleDue(lastActivity, now, idleSeconds)) {
         lastActivity = now;
 
         const target = ambient ? AMBIENT : awake();
@@ -143,7 +145,7 @@ export function IdleProvider({
       stopWatching();
       unsubscribe();
     };
-  }, [store, idleTimeout, schedule, tz]);
+  }, [store, idleSeconds, schedule, tz]);
 
   return children;
 }

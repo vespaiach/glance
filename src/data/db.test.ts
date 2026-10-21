@@ -24,6 +24,16 @@ const MOM = {
   version: 2,
 };
 
+const OLD_SETTINGS = {
+  accountId: ACCOUNT_A,
+  season: "auto",
+  clock: "12h",
+  tempUnit: "F",
+  background: { mode: "season", dim: 0.2, rotate: "daily" },
+  updatedAt: "2026-10-01T09:00:00.000Z",
+  version: 3,
+};
+
 const GONE = { ...MOM, id: "0195f0a0-0000-7000-8000-000000000202", name: "Gone" };
 
 afterEach(async () => {
@@ -86,7 +96,7 @@ describe("account database", () => {
     const db = openGlanceDb(name);
     await db.events.put(EVENT);
     const upgraded = new Dexie(name);
-    upgraded.version(4).stores({ events: "id, startAt, deletedAt, title" });
+    upgraded.version(5).stores({ events: "id, startAt, deletedAt, title" });
 
     await upgraded.open();
 
@@ -152,6 +162,64 @@ describe("account database", () => {
     db.close();
   });
 
+  it.each([
+    [60, "1d", { on: true, minutes: 1 }, { on: true, days: 1 }],
+    [180, "1w", { on: true, minutes: 3 }, { on: true, days: 7 }],
+    [300, null, { on: true, minutes: 5 }, { on: false, days: 7 }],
+    [null, "1w", { on: false, minutes: 3 }, { on: true, days: 7 }],
+  ])(
+    "SET-07 the v4 upgrade maps stored idle %s and note expiry %s as 010_settings_values does",
+    async (idle, expiry, idleTimeout, noteExpiry) => {
+      const name = accountDbName(ACCOUNT_A);
+      const old = v3Dexie(name);
+      await old.table("settings").put({ ...OLD_SETTINGS, idleTimeout: idle, noteExpiry: expiry });
+      old.close();
+
+      const db = openGlanceDb(name);
+
+      expect(await db.settings.get(ACCOUNT_A)).toEqual({
+        ...OLD_SETTINGS,
+        idleTimeout,
+        noteExpiry,
+        hideSidebarWhenIdle: true,
+      });
+      db.close();
+    },
+  );
+
+  it("SET-07 the v4 upgrade maps the values in a waiting settings put", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = v3Dexie(name);
+    await old.table("outbox").bulkAdd([
+      { entity: "events", entityId: EVENT.id, op: "put", payload: EVENT, attempts: 0 },
+      {
+        entity: "settings",
+        entityId: ACCOUNT_A,
+        op: "put",
+        payload: { ...OLD_SETTINGS, idleTimeout: 300, noteExpiry: null },
+        attempts: 2,
+      },
+    ]);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.outbox.toArray()).toMatchObject([
+      { entity: "events", payload: EVENT },
+      {
+        entity: "settings",
+        payload: {
+          ...OLD_SETTINGS,
+          idleTimeout: { on: true, minutes: 5 },
+          noteExpiry: { on: false, days: 7 },
+          hideSidebarWhenIdle: true,
+        },
+        attempts: 2,
+      },
+    ]);
+    db.close();
+  });
+
   it("tech§4.1 deleting one account's database leaves another account's rows", async () => {
     const a = openGlanceDb(accountDbName(ACCOUNT_A));
     const b = openGlanceDb(accountDbName(ACCOUNT_B));
@@ -172,6 +240,23 @@ function v2Dexie(name: string): Dexie {
   old.version(2).stores({
     events: "id, startAt, deletedAt",
     members: "id, createdAt, deletedAt",
+    notes: "id, createdAt, deletedAt",
+    photos: "id, createdAt",
+    settings: "accountId",
+    weather: "accountId",
+    outbox: "++seq, entity, entityId",
+    meta: "key",
+  });
+
+  return old;
+}
+
+function v3Dexie(name: string): Dexie {
+  const old = new Dexie(name);
+
+  old.version(3).stores({
+    events: "id, startAt, deletedAt",
+    tags: "id, createdAt, deletedAt",
     notes: "id, createdAt, deletedAt",
     photos: "id, createdAt",
     settings: "accountId",

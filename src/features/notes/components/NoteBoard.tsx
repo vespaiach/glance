@@ -107,8 +107,6 @@ const styles = stylex.create({
   },
 });
 
-const keepKey = (expiry: Expiry) => expiry ?? "never";
-
 export function NoteBoard({
   state,
   retryIn,
@@ -165,7 +163,7 @@ export function NoteBoard({
               ))}
             </div>
             <Eyebrow size="caption" xstyle={styles.caption}>
-              {copy.notes.caption(copy.notes.keep[keepKey(expiry)])}
+              {copy.notes.caption(copy.notes.keep(expiry))}
             </Eyebrow>
           </>
         )}
@@ -205,7 +203,7 @@ function EmptyBoard({ expiry }: { expiry: Expiry }) {
       <div {...stylex.props(styles.emptyText)}>
         <span {...stylex.props(styles.emptyTitle)}>{copy.notes.emptyTitle}</span>
         <span {...stylex.props(styles.emptyBody)}>
-          {copy.notes.emptyBody(copy.notes.emptyKeep[keepKey(expiry)])}
+          {copy.notes.emptyBody(copy.notes.emptyKeep(expiry))}
         </span>
       </div>
     </div>

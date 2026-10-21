@@ -161,8 +161,15 @@ export const AccountSettingsSchema = v.object({
     dim: v.picklist([0, 0.2, 0.4]),
     rotate: v.picklist(["hourly", "daily", "weekly"]),
   }),
-  idleTimeout: v.nullable(v.picklist([60, 180, 300])),
-  noteExpiry: v.nullable(v.picklist(["1d", "1w"])),
+  idleTimeout: v.object({
+    on: v.boolean(),
+    minutes: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(15)),
+  }),
+  noteExpiry: v.object({
+    on: v.boolean(),
+    days: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(30)),
+  }),
+  hideSidebarWhenIdle: v.optional(v.boolean(), true),
   ambient: v.optional(AmbientSchema, DEFAULT_AMBIENT),
   weatherLocation: v.optional(WeatherLocationSchema),
 });

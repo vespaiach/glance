@@ -1,4 +1,5 @@
 import { pullChanges } from "../services/sync";
+import type { Db } from "./db";
 import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
 import { openPglite, pgliteDb } from "./pglite";
 import { migratedDbPerTest } from "./testDb";
@@ -482,6 +483,65 @@ describe("009_tags", () => {
   });
 });
 
+describe("010_settings_values", () => {
+  it.each([
+    [60, "1d", { on: true, minutes: 1 }, { on: true, days: 1 }],
+    [180, "1w", { on: true, minutes: 3 }, { on: true, days: 7 }],
+    [300, null, { on: true, minutes: 5 }, { on: false, days: 7 }],
+    [null, "1w", { on: false, minutes: 3 }, { on: true, days: 7 }],
+  ])(
+    "SET-07 maps idle %s and note expiry %s to on/off values and turns on hide sidebar when idle",
+    async (idle, expiry, idleTimeout, noteExpiry) => {
+      const { client, old } = await migratedTo(10);
+      await old.run(
+        "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+        [NOW],
+      );
+      await insertOldSettings(old, "a1", idle, expiry);
+
+      await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+      expect(await old.one("SELECT json FROM settings")).toEqual({
+        json: { ...OLD_SETTINGS, idleTimeout, noteExpiry, hideSidebarWhenIdle: true },
+      });
+      await client.close();
+    },
+  );
+
+  it("SET-07 bumps one version per account so screens pull the new values", async () => {
+    const { client, old } = await migratedTo(10);
+    await old.run(
+      `INSERT INTO accounts (id, email, time_zone, created_at) VALUES
+         ('a1', 'a1@example.com', 'America/New_York', $1),
+         ('a2', 'a2@example.com', 'America/New_York', $1)`,
+      [NOW],
+    );
+    await old.run("UPDATE sync_state SET version = 10");
+    await insertOldSettings(old, "a1", 180, "1w");
+    await insertOldSettings(old, "a2", null, null);
+
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    expect(await old.all("SELECT account_id, version FROM settings ORDER BY account_id")).toEqual([
+      { account_id: "a1", version: 11 },
+      { account_id: "a2", version: 12 },
+    ]);
+    expect(await old.one("SELECT version FROM sync_state")).toEqual({ version: 12 });
+    const pulled = await pullChanges({ db: old, now: () => new Date(NOW) }, "a2", 10);
+    expect(pulled.changes).toEqual([
+      {
+        entity: "settings",
+        row: expect.objectContaining({
+          idleTimeout: { on: false, minutes: 3 },
+          noteExpiry: { on: false, days: 7 },
+          hideSidebarWhenIdle: true,
+        }),
+      },
+    ]);
+    await client.close();
+  });
+});
+
 describe("007_members", () => {
   it("D24 gives each named account one lilac member and turns old events into everyone events", async () => {
     const client = await openPglite();
@@ -531,6 +591,25 @@ describe("007_members", () => {
     await client.close();
   });
 });
+
+const OLD_SETTINGS = {
+  season: "auto",
+  clock: "12h",
+  tempUnit: "F",
+  background: { mode: "season", dim: 0.2, rotate: "daily" },
+};
+
+async function insertOldSettings(
+  old: Db,
+  accountId: string,
+  idleTimeout: number | null,
+  noteExpiry: string | null,
+): Promise<void> {
+  await old.run(
+    "INSERT INTO settings (account_id, json, updated_at, version) VALUES ($1, $2, $3, 1)",
+    [accountId, JSON.stringify({ ...OLD_SETTINGS, idleTimeout, noteExpiry }), NOW],
+  );
+}
 
 async function migratedTo(version: number) {
   const client = await openPglite();

@@ -9,6 +9,10 @@ const harness = serviceHarnessPerTest();
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const ON_1_DAY = { on: true, days: 1 };
+
+const OFF = { on: false, days: 1 };
+
 function note(id: number, ageMs: number): Note {
   return {
     id: `0192f3a0-3333-7000-8000-00000000000${id}`,
@@ -38,7 +42,7 @@ function noteRow(id: string) {
 }
 
 describe("expireNotes", () => {
-  it("NOTE-08 soft-deletes notes older than the default week and keeps younger ones", async () => {
+  it("NOTE-08 soft-deletes notes older than the default 7 days and keeps younger ones", async () => {
     await putNote(harness.deps(), MARIA, note(1, 8 * DAY_MS));
     await putNote(harness.deps(), MARIA, note(2, 6 * DAY_MS));
 
@@ -47,8 +51,8 @@ describe("expireNotes", () => {
     expect(await liveNoteIds(MARIA)).toEqual([note(2, 0).id]);
   });
 
-  it("NOTE-08 follows the account's one-day expiry", async () => {
-    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, noteExpiry: "1d" });
+  it("NOTE-08 follows the account's 1-day expiry", async () => {
+    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, noteExpiry: ON_1_DAY });
     await putNote(harness.deps(), MARIA, note(1, 25 * 60 * 60 * 1000));
     await putNote(harness.deps(), MARIA, note(2, 23 * 60 * 60 * 1000));
 
@@ -57,8 +61,21 @@ describe("expireNotes", () => {
     expect(await liveNoteIds(MARIA)).toEqual([note(2, 0).id]);
   });
 
+  it("NOTE-08 follows the account's 30-day expiry", async () => {
+    await putSettings(harness.deps(), MARIA, MARIA, {
+      ...DEFAULT_SETTINGS,
+      noteExpiry: { on: true, days: 30 },
+    });
+    await putNote(harness.deps(), MARIA, note(1, 31 * DAY_MS));
+    await putNote(harness.deps(), MARIA, note(2, 29 * DAY_MS));
+
+    await expireNotes(harness.deps());
+
+    expect(await liveNoteIds(MARIA)).toEqual([note(2, 0).id]);
+  });
+
   it("NOTE-08 never expires notes when the account turned expiry off", async () => {
-    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, noteExpiry: null });
+    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, noteExpiry: OFF });
     await putNote(harness.deps(), MARIA, note(1, 90 * DAY_MS));
 
     await expireNotes(harness.deps());
@@ -100,8 +117,8 @@ describe("expireNotes", () => {
   });
 
   it("tech§5 applies each account's expiry only to that account's notes", async () => {
-    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, noteExpiry: null });
-    await putSettings(harness.deps(), OMAR, OMAR, { ...DEFAULT_SETTINGS, noteExpiry: "1d" });
+    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, noteExpiry: OFF });
+    await putSettings(harness.deps(), OMAR, OMAR, { ...DEFAULT_SETTINGS, noteExpiry: ON_1_DAY });
     await putNote(harness.deps(), MARIA, note(1, 2 * DAY_MS));
     await putNote(harness.deps(), OMAR, note(2, 2 * DAY_MS));
 

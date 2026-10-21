@@ -12,7 +12,7 @@ function renderView(overrides: Partial<Props> = {}) {
   const props: Props = {
     ambient: DEFAULT_AMBIENT,
     clock: "12h",
-    idleTimeout: 180,
+    idleTimeout: { on: true, minutes: 3 },
     breakpoint: "wide",
     onChange: vi.fn(),
     onBack: vi.fn(),
@@ -157,8 +157,16 @@ test("SET-10 the wake line follows the idle timeout (SET-07)", () => {
   ).toBeInTheDocument();
 });
 
-test("SET-10 with Never the screen stays awake until the next ambient start", () => {
-  renderView({ idleTimeout: null });
+test("SET-10 the wake line names the chosen minutes", () => {
+  renderView({ idleTimeout: { on: true, minutes: 12 } });
+
+  expect(
+    screen.getByText("After a touch it dims again when nobody has touched it for 12 min."),
+  ).toBeInTheDocument();
+});
+
+test("SET-10 with the idle timeout off the screen stays awake until the next ambient start", () => {
+  renderView({ idleTimeout: { on: false, minutes: 3 } });
 
   expect(
     screen.getByText("After a touch it stays awake until the next ambient start."),

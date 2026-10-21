@@ -88,7 +88,7 @@ test("NOTE-04 the board lists the saved notes newest first", async () => {
 test("NOTE-06 the caption follows the note expiry setting", async () => {
   await store.db.notes.put(synced(WIFI));
 
-  renderNotes({ noteExpiry: "1d" });
+  renderNotes({ noteExpiry: { on: true, days: 1 } });
 
   expect(
     await screen.findByText("Select a note to edit or delete it · Notes are removed after 1 day"),
@@ -98,7 +98,7 @@ test("NOTE-06 the caption follows the note expiry setting", async () => {
 test("NOTE-07 with no notes the board shows the empty state", async () => {
   await markSynced(store);
 
-  renderNotes({ noteExpiry: null });
+  renderNotes({ noteExpiry: { on: false, days: 7 } });
 
   expect(await screen.findByText("No notes yet")).toBeInTheDocument();
   expect(

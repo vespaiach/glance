@@ -42,6 +42,12 @@ const WAITING_NOTES = BOARD_NOTES.map((note, index) =>
   index === 0 ? { ...note, waiting: true } : note,
 );
 
+const WEEK = { on: true, days: 7 };
+
+const DAY = { on: true, days: 1 };
+
+const OFF = { on: false, days: 7 };
+
 const ignore = () => {};
 
 const styles = stylex.create({
@@ -72,7 +78,7 @@ export function NotesGallery({ season }: { season: Season }) {
           <NoteBoard
             tz={GALLERY_TZ}
             state={{ kind: "ready", data: BOARD_NOTES }}
-            expiry="1w"
+            expiry={WEEK}
             {...board}
           />
         </div>
@@ -80,27 +86,27 @@ export function NotesGallery({ season }: { season: Season }) {
           <NoteBoard
             tz={GALLERY_TZ}
             state={{ kind: "ready", data: WAITING_NOTES }}
-            expiry="1w"
+            expiry={WEEK}
             {...board}
           />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard tz={GALLERY_TZ} state={{ kind: "empty" }} expiry="1w" {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "empty" }} expiry={WEEK} {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard tz={GALLERY_TZ} state={{ kind: "empty" }} expiry={null} {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "empty" }} expiry={OFF} {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard tz={GALLERY_TZ} state={{ kind: "loading" }} expiry="1w" {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "loading" }} expiry={WEEK} {...board} />
         </div>
         <div {...stylex.props(styles.view)}>
-          <NoteBoard tz={GALLERY_TZ} state={{ kind: "failed" }} expiry="1w" {...board} />
+          <NoteBoard tz={GALLERY_TZ} state={{ kind: "failed" }} expiry={WEEK} {...board} />
         </div>
         <div {...stylex.props(styles.phone)}>
           <NoteBoard
             tz={GALLERY_TZ}
             state={{ kind: "ready", data: BOARD_NOTES }}
-            expiry="1d"
+            expiry={DAY}
             {...board}
           />
         </div>

@@ -66,7 +66,7 @@ async function renderIdle(
   settings: Partial<AccountSettings> = {},
   { reload, updates, queued = true }: IdleOptions = {},
 ) {
-  await createSettingsRepo(store).update({ idleTimeout: 60, ...settings });
+  await createSettingsRepo(store).update({ idleTimeout: { on: true, minutes: 1 }, ...settings });
 
   if (!queued) await store.db.outbox.clear();
 
@@ -93,6 +93,8 @@ async function renderIdle(
     rerender(tree());
   };
 }
+
+const IDLE_OFF = { on: false, minutes: 1 };
 
 const seconds = (n: number) => act(() => vi.advanceTimersByTime(n * 1000));
 
@@ -233,8 +235,20 @@ describe("IdleProvider", () => {
     expect(navigation.push).not.toHaveBeenCalled();
   });
 
-  it("IDLE-01 Never turns the timeout off", async () => {
-    await renderIdle("10:41:00", { idleTimeout: null });
+  it("IDLE-01 follows the chosen minutes", async () => {
+    await renderIdle("10:41:00", { idleTimeout: { on: true, minutes: 15 } });
+
+    seconds(899);
+
+    expect(navigation.push).not.toHaveBeenCalled();
+
+    seconds(1);
+
+    expect(navigation.push).toHaveBeenCalledWith("/today");
+  });
+
+  it("IDLE-01 off turns the timeout off, whatever minutes it keeps", async () => {
+    await renderIdle("10:41:00", { idleTimeout: IDLE_OFF });
 
     seconds(600);
 
@@ -274,7 +288,7 @@ describe("IdleProvider", () => {
   it("AMB-05 enters Ambient at the schedule start", async () => {
     navigation.pathname = "/today";
 
-    await renderIdle("17:59:30", { idleTimeout: null });
+    await renderIdle("17:59:30", { idleTimeout: IDLE_OFF });
 
     seconds(29);
 
@@ -294,7 +308,7 @@ describe("IdleProvider", () => {
       wknd: { start: "21:00", end: "09:00" },
     } as const;
 
-    await renderIdle("17:59:30", { idleTimeout: null, ambient });
+    await renderIdle("17:59:30", { idleTimeout: IDLE_OFF, ambient });
 
     seconds(60);
 
@@ -310,7 +324,7 @@ describe("IdleProvider", () => {
       wknd: { start: "21:00", end: "09:00" },
     } as const;
 
-    await renderIdle("17:59:30", { idleTimeout: null, ambient });
+    await renderIdle("17:59:30", { idleTimeout: IDLE_OFF, ambient });
 
     seconds(60);
 
@@ -320,7 +334,7 @@ describe("IdleProvider", () => {
   it("AMB-05 leaves Ambient for Today at the schedule end", async () => {
     navigation.pathname = "/ambient";
 
-    await renderIdle("07:29:30", { idleTimeout: null });
+    await renderIdle("07:29:30", { idleTimeout: IDLE_OFF });
 
     seconds(30);
 
@@ -330,7 +344,7 @@ describe("IdleProvider", () => {
   it("AMB-05 the schedule end leaves other views alone", async () => {
     navigation.pathname = "/calendar";
 
-    await renderIdle("07:29:30", { idleTimeout: null });
+    await renderIdle("07:29:30", { idleTimeout: IDLE_OFF });
 
     seconds(30);
 
@@ -407,7 +421,7 @@ describe("IdleProvider", () => {
 
     await putSyncStatus(store, UNAUTHORIZED);
 
-    await renderIdle("07:29:00", { idleTimeout: null });
+    await renderIdle("07:29:00", { idleTimeout: IDLE_OFF });
 
     await act(() => vi.advanceTimersByTimeAsync(200));
 

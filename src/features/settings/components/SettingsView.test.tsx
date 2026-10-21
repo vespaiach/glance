@@ -227,7 +227,7 @@ test("SET-06 Off reads Off", () => {
   expect(ambientTileText()).toBe("Off");
 });
 
-test("SET-07 Back to Today after saves the idle timeout, Never as none", async () => {
+test("SET-07 Back to Today after saves the minutes, Never as off with the minutes kept", async () => {
   const props = renderView();
 
   expect(selectedPill("Back to Today after")).toBe("3 min");
@@ -235,18 +235,24 @@ test("SET-07 Back to Today after saves the idle timeout, Never as none", async (
   await userEvent.click(pills("Back to Today after").getByRole("button", { name: "1 min" }));
   await userEvent.click(pills("Back to Today after").getByRole("button", { name: "Never" }));
 
-  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: 60 });
-  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: null });
+  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: { on: true, minutes: 1 } });
+  expect(props.onChange).toHaveBeenCalledWith({ idleTimeout: { on: false, minutes: 3 } });
 });
 
-test("SET-07 Remove notes after saves the note expiry, Never as none", async () => {
-  const props = renderView({ settings: { ...DEFAULT_SETTINGS, noteExpiry: null } });
+test("SET-07 Remove notes after saves the days, Never as off with the days kept", async () => {
+  const props = renderView({
+    settings: { ...DEFAULT_SETTINGS, noteExpiry: { on: false, days: 7 } },
+  });
 
   expect(selectedPill("Remove notes after")).toBe("Never");
 
   await userEvent.click(pills("Remove notes after").getByRole("button", { name: "1 day" }));
 
-  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: "1d" });
+  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: { on: true, days: 1 } });
+
+  await userEvent.click(pills("Remove notes after").getByRole("button", { name: "Never" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ noteExpiry: { on: false, days: 7 } });
 });
 
 test("SET-08 the account card shows the initial, name and email and signs out", async () => {
