@@ -1,6 +1,7 @@
 import type { AmbientRange, AmbientSummary } from "@/domain/idle";
 import type { Season, TagColor, WeatherIcon } from "@/domain/schemas";
 import type { ActiveStamp, Device, DeviceKind } from "@/domain/screens";
+import type { Clock } from "@/domain/time";
 import type { WmoCondition } from "@/domain/wmo";
 
 export const copy = {
@@ -112,19 +113,19 @@ export const copy = {
       `${everyone ? "Everyone free" : "Free"} · ${length}`,
     freeName: (range: string) => `Free ${range}. Add event`,
     planName: (title: string, range: string) => `${title}, ${range}`,
-    hourlyWeather: "Hourly weather",
   },
   calendar: {
     previousWeek: "Previous week",
     nextWeek: "Next week",
     week: (month: string, day: number) => `Week of ${month} ${day}`,
     showPlansFor: "Show plans for",
-    spanLabel: "24 hours",
-    span: (outside: number) => {
-      if (outside === 0) return "24 hours";
+    showAllHours: (outside: number) => {
+      if (outside === 0) return "Show all 24 hours";
 
-      return `24 hours, ${outside} more ${outside === 1 ? "plan" : "plans"}`;
+      return `Show all 24 hours · ${outside} more ${outside === 1 ? "plan" : "plans"}`;
     },
+    showDayHours: (clock: Clock) =>
+      clock === "24h" ? "Show 05:00 – 21:00 only" : "Show 5 AM – 9 PM only",
     addEvent: "Add event",
     emptyTitle: "The calendar is empty",
     emptyBody: "Select a day, then add an event. Days with plans get a dot for each person.",

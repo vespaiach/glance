@@ -32,7 +32,6 @@ import {
   planCard,
   planRain,
   type TimelineLayout,
-  type TimelineRow,
   timelineLayout,
 } from "@/domain/timeline";
 import { type HourlyPoint, hourlyByHour } from "@/domain/weather";
@@ -53,7 +52,6 @@ export type DayTimelineLabels = {
   free: (everyone: boolean, length: string) => string;
   freeName: (range: string) => string;
   planName: (title: string, range: string) => string;
-  hourlyWeather: string;
   icons: Record<WeatherIcon, string>;
 };
 
@@ -82,7 +80,7 @@ type DayTimelineProps = {
   xstyle?: stylex.StyleXStyles;
 };
 
-type Dimensions = { gutter: number; lane: number; titleSize: number };
+type Dimensions = { gutter: number; titleSize: number };
 
 type Fill = TagColor | "soft" | "past";
 
@@ -104,16 +102,16 @@ const MIN_PLAN_HEIGHT = { phone: 40, other: 44 } as const;
 
 const DIMENSIONS: Record<"calendar" | "today", Record<Breakpoint, Dimensions>> = {
   calendar: {
-    wide: { gutter: 96, lane: 150, titleSize: 22 },
-    mid: { gutter: 88, lane: 128, titleSize: 20 },
-    narrow: { gutter: 80, lane: 112, titleSize: 20 },
-    phone: { gutter: 52, lane: 0, titleSize: 16 },
+    wide: { gutter: 96, titleSize: 22 },
+    mid: { gutter: 88, titleSize: 20 },
+    narrow: { gutter: 80, titleSize: 20 },
+    phone: { gutter: 52, titleSize: 16 },
   },
   today: {
-    wide: { gutter: 80, lane: 0, titleSize: 18 },
-    mid: { gutter: 76, lane: 0, titleSize: 18 },
-    narrow: { gutter: 76, lane: 0, titleSize: 18 },
-    phone: { gutter: 52, lane: 0, titleSize: 16 },
+    wide: { gutter: 80, titleSize: 18 },
+    mid: { gutter: 76, titleSize: 18 },
+    narrow: { gutter: 76, titleSize: 18 },
+    phone: { gutter: 52, titleSize: 16 },
   },
 };
 
@@ -124,18 +122,6 @@ const SLOT_GAP = 8;
 const MIN_SLOT = 10;
 
 const SLOT_LABEL = 28;
-
-const LANE_TALL = 64;
-
-const LANE_TALL_CONTENT = 46;
-
-const LANE_CONTENT = 22;
-
-const LANE_TALL_PERCENT = 76;
-
-const LANE_PERCENT = 30;
-
-const RAIN = 50;
 
 const styles = stylex.create({
   root: {
@@ -200,12 +186,12 @@ const styles = stylex.create({
     marginTop: 10,
     backgroundColor: colors.borderHairline,
   },
-  area: (left: number, right: number) => ({
+  area: (left: number) => ({
     position: "absolute",
     top: 0,
     bottom: 0,
     left,
-    right,
+    right: 0,
   }),
   slot: (top: number, height: number) => ({
     position: "absolute",
@@ -400,58 +386,6 @@ const styles = stylex.create({
     letterSpacing: "0.4px",
     backgroundColor: colors.surfaceCanvas,
   },
-  lane: (width: number) => ({
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    right: 0,
-    width,
-    margin: 0,
-    padding: 0,
-    listStyle: "none",
-  }),
-  laneHour: (top: number, height: number) => ({
-    position: "absolute",
-    left: 8,
-    right: 0,
-    top,
-    height,
-    boxSizing: "border-box",
-    paddingBlock: 2,
-  }),
-  laneCell: {
-    height: "100%",
-    borderRadius: radii.md,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    backgroundColor: colors.surfaceSoft,
-  },
-  laneRain: {
-    backgroundColor: season.block3,
-  },
-  laneContent: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-  },
-  laneTall: {
-    flexDirection: "column",
-    gap: 2,
-  },
-  laneTemp: {
-    fontSize: 15,
-    fontWeight: 480,
-  },
-  laneTallTemp: {
-    fontSize: 18,
-  },
-  lanePercent: {
-    fontFamily: type.fontMono,
-    fontSize: 13,
-    letterSpacing: "0.4px",
-  },
   nowMarker: (top: number) => ({
     position: "absolute",
     insetInline: 0,
@@ -512,9 +446,7 @@ export function DayTimeline({
 
   const hours = weather ? hourlyByHour(weather.hourly, day, tz) : new Map<number, HourlyPoint>();
 
-  const lane = variant === "calendar" && weather !== undefined && dimensions.lane > 0;
-
-  const laneWidth = lane ? dimensions.lane : 0;
+  const chips = variant === "calendar" && breakpoint !== "phone";
 
   const height = Math.max(0, size.height - 2 * INSET);
 
@@ -531,9 +463,9 @@ export function DayTimeline({
 
   const shared: Shared = { tags, now, tz, clock, labels };
 
-  const areaWidth = size.width - dimensions.gutter - laneWidth;
+  const areaWidth = size.width - dimensions.gutter;
 
-  const rain = lane ? rainByHour(hours) : new Map<number, number>();
+  const rain = chips ? rainByHour(hours) : new Map<number, number>();
 
   return (
     <div ref={ref} {...stylex.props(styles.root, xstyle)}>
@@ -541,12 +473,12 @@ export function DayTimeline({
         <HourMarks
           layout={layout}
           gutter={dimensions.gutter}
-          hours={variant === "today" ? hours : new Map()}
+          hours={hours}
           weather={weather}
           clock={clock}
           labels={labels}
         />
-        <div {...stylex.props(styles.area(dimensions.gutter, laneWidth))}>
+        <div {...stylex.props(styles.area(dimensions.gutter))}>
           {free !== "none" &&
             layout.freeSlots.map((slot) => (
               <FreeSlotTile
@@ -570,15 +502,6 @@ export function DayTimeline({
             />
           ))}
         </div>
-        {lane && weather && (
-          <WeatherLane
-            rows={layout.rows}
-            hours={hours}
-            width={laneWidth}
-            unit={weather.unit}
-            labels={labels}
-          />
-        )}
         {layout.now && (
           <div {...stylex.props(styles.nowMarker(layout.now.top))}>
             <span {...stylex.props(styles.nowGutter(dimensions.gutter))}>
@@ -806,53 +729,6 @@ function PersonDots({ event, tags }: { event: CalendarEvent; tags: readonly Tag[
         <PersonDot key={tag.id} color={tag.color} size="sm" />
       ))}
     </span>
-  );
-}
-
-function WeatherLane({
-  rows,
-  hours,
-  width,
-  unit,
-  labels,
-}: {
-  rows: readonly TimelineRow[];
-  hours: ReadonlyMap<number, HourlyPoint>;
-  width: number;
-  unit: TimelineWeather["unit"];
-  labels: DayTimelineLabels;
-}) {
-  return (
-    <ul aria-label={labels.hourlyWeather} {...stylex.props(styles.lane(width))}>
-      {rows.map((row) => {
-        const point = hours.get(row.hour);
-        const tall = row.height >= LANE_TALL;
-        const fits = row.height >= (tall ? LANE_TALL_CONTENT : LANE_CONTENT);
-        const precip = point?.precip ?? 0;
-        return (
-          <li key={row.hour} {...stylex.props(styles.laneHour(row.top, row.height), styles.reflow)}>
-            <div {...stylex.props(styles.laneCell, precip >= RAIN && styles.laneRain)}>
-              {point && fits && (
-                <span {...stylex.props(styles.laneContent, tall && styles.laneTall)}>
-                  <Icon
-                    icon={weatherIcons[point.icon]}
-                    size={tall ? 26 : 18}
-                    strokeWidth={1.5}
-                    label={labels.icons[point.icon]}
-                  />
-                  <span {...stylex.props(styles.laneTemp, tall && styles.laneTallTemp)}>
-                    {temperature(point.temp, unit)}
-                  </span>
-                  {precip > 0 && row.height >= (tall ? LANE_TALL_PERCENT : LANE_PERCENT) && (
-                    <span {...stylex.props(styles.lanePercent)}>{`${precip}%`}</span>
-                  )}
-                </span>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 

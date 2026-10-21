@@ -322,33 +322,35 @@ test("FAM-05 a new tag stays off when some tags are off", async () => {
   );
 });
 
-test("CAL-06 24 hours counts the plans outside 5 AM to 9 PM and shows them when on", async () => {
+test("CAL-06 the 24 hours link counts the plans outside 5 AM to 9 PM and shows them when on", async () => {
   await seed(CALL, LATE_SHOW);
 
   renderCalendar();
 
-  const span = await screen.findByRole("button", { name: "24 hours, 1 more plan" });
+  const link = await screen.findByRole("button", { name: "Show all 24 hours · 1 more plan" });
 
-  expect(span).toHaveAttribute("aria-pressed", "false");
-  expect(within(span).getByText("1")).toBeInTheDocument();
+  expect(link).toHaveAttribute("aria-pressed", "false");
 
-  await userEvent.click(span);
+  await userEvent.click(link);
 
-  const on = screen.getByRole("button", { name: "24 hours" });
+  const on = screen.getByRole("button", { name: "Show 5 AM – 9 PM only" });
   expect(on).toHaveAttribute("aria-pressed", "true");
-  expect(within(on).queryByText("1")).not.toBeInTheDocument();
   expect(screen.getAllByText("12 AM")[0]).toBeInTheDocument();
 });
 
-test("CAL-06 the badge hides at 0 and 24 hours stays on across days", async () => {
+test("CAL-06 the filter row has no 24 hours pill and 24 hours stays on across days", async () => {
   await seed(CALL, DENTIST);
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "24 hours" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Show all 24 hours" }));
   await userEvent.click(day("Wednesday, October 7"));
 
-  expect(screen.getByRole("button", { name: "24 hours" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: "Show 5 AM – 9 PM only" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.queryByRole("button", { name: /^24 hours/ })).not.toBeInTheDocument();
 });
 
 test("CAL-07 Add event opens New event on the selected day for everyone", async () => {

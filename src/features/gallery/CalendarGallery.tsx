@@ -12,6 +12,7 @@ import {
   DateControl,
   DatePicker,
   type PickerMonthView,
+  SpanLink,
   WeekStrip,
 } from "@/features/calendar";
 import { colors, space } from "@/theme/tokens.stylex";
@@ -137,15 +138,12 @@ const EVERY_TAG = new Set(TIMELINE_FAMILY.map((one) => one.id));
 
 const toolbar = {
   tags: TIMELINE_FAMILY,
-  span24: false,
-  outside: 0,
   phone: false,
   onToggleTag: ignore,
-  onToggleSpan: ignore,
   onAddEvent: ignore,
 } as const;
 
-const day: Omit<DayProps, "toolbar" | "state"> = {
+const day: Omit<DayProps, "toolbar" | "spanLink" | "state"> = {
   tags: TIMELINE_FAMILY,
   filter: EVERY_TAG,
   calendarEmpty: false,
@@ -174,7 +172,12 @@ const ALL_DAY = {
 
 const words = gallery.calendarView;
 
-const DAYS: readonly { label: string; height: number; props: Partial<DayProps> }[] = [
+const DAYS: readonly {
+  label: string;
+  height: number;
+  outside?: number;
+  props: Partial<DayProps>;
+}[] = [
   { label: words.today, height: 760, props: {} },
   {
     label: words.filtered,
@@ -185,11 +188,32 @@ const DAYS: readonly { label: string; height: number; props: Partial<DayProps> }
     },
   },
   {
+    label: words.morePlans,
+    height: 760,
+    outside: 2,
+    props: {
+      day: "2026-10-10",
+      weather: { hourly: hourlyOn(10), unit: "F" },
+      state: { kind: "ready", data: OCT_10_PLANS },
+    },
+  },
+  {
     label: words.allHours,
     height: 900,
     props: {
       day: "2026-10-10",
       span24: true,
+      weather: { hourly: hourlyOn(10), unit: "F" },
+      state: { kind: "ready", data: OCT_10_PLANS },
+    },
+  },
+  {
+    label: words.allHours24,
+    height: 900,
+    props: {
+      day: "2026-10-10",
+      span24: true,
+      clock: "24h",
       weather: { hourly: hourlyOn(10), unit: "F" },
       state: { kind: "ready", data: OCT_10_PLANS },
     },
@@ -214,7 +238,7 @@ const DAYS: readonly { label: string; height: number; props: Partial<DayProps> }
       state: { kind: "ready", data: OCT_9_PLANS, updatedAt: octoberAt(9, 9, 32).toISOString() },
     },
   },
-  { label: words.phone, height: 900, props: { breakpoint: "phone", weather: undefined } },
+  { label: words.phone, height: 900, props: { breakpoint: "phone" } },
 ];
 
 export function CalendarGallery() {
@@ -267,9 +291,15 @@ export function CalendarGallery() {
                 <CalendarToolbar
                   {...toolbar}
                   filter={demo.props.filter ?? EVERY_TAG}
-                  span24={demo.props.span24 ?? false}
-                  outside={demo.props.day === "2026-10-10" ? 2 : 0}
                   phone={demo.props.breakpoint === "phone"}
+                />
+              }
+              spanLink={
+                <SpanLink
+                  on={demo.props.span24 ?? false}
+                  outside={demo.outside ?? 0}
+                  clock={demo.props.clock ?? "12h"}
+                  onToggle={ignore}
                 />
               }
             />

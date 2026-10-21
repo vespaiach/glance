@@ -12,7 +12,6 @@ import {
   useTags,
   useWeather,
 } from "@/data/repos";
-import type { Breakpoint } from "@/domain/breakpoint";
 import { slotTimes } from "@/domain/eventTimes";
 import type { AccountSettings, CalendarEvent, Tag, Weather } from "@/domain/schemas";
 import { type EventWho, filterTagIds, liveFilter, matchesFilter } from "@/domain/tags";
@@ -43,6 +42,7 @@ import { CalendarDay } from "./components/CalendarDay";
 import { CalendarToolbar } from "./components/CalendarToolbar";
 import { DateControl } from "./components/DateControl";
 import { DatePicker, type PickerMonthView } from "./components/DatePicker";
+import { SpanLink } from "./components/SpanLink";
 import { type WeekDay, WeekStrip } from "./components/WeekStrip";
 import { calendarLayout } from "./layout";
 
@@ -129,7 +129,7 @@ export function CalendarScreen() {
         clock={settings.clock}
         breakpoint={breakpoint}
         span24={view.span24}
-        weather={laneWeather(forecast, day, tz, settings.tempUnit, breakpoint)}
+        weather={timelineWeather(forecast, day, tz, settings.tempUnit)}
         onOpenEvent={(id) => sheets.open({ kind: "event", id })}
         onAddEvent={(slot) =>
           sheets.open({
@@ -141,12 +141,17 @@ export function CalendarScreen() {
           <CalendarToolbar
             tags={tags}
             filter={filter}
-            span24={view.span24}
-            outside={outsideDay(shownTimed, tz)}
             phone={breakpoint === "phone"}
             onToggleTag={(id) => dispatch({ type: "toggleTag", id, allIds })}
-            onToggleSpan={() => dispatch({ type: "toggleSpan" })}
             onAddEvent={() => sheets.open(newEvent(day, filterTagIds(filter, allIds)))}
+          />
+        }
+        spanLink={
+          <SpanLink
+            on={view.span24}
+            outside={outsideDay(shownTimed, tz)}
+            clock={settings.clock}
+            onToggle={() => dispatch({ type: "toggleSpan" })}
           />
         }
       />
@@ -274,14 +279,13 @@ function weekPills(
   });
 }
 
-function laneWeather(
+function timelineWeather(
   forecast: Weather | undefined,
   day: string,
   tz: string,
   unit: AccountSettings["tempUnit"],
-  breakpoint: Breakpoint,
 ): TimelineWeather | undefined {
-  if (!forecast || breakpoint === "phone") return undefined;
+  if (!forecast) return undefined;
 
   return hourlyByHour(forecast.hourly, day, tz).size > 0
     ? { hourly: forecast.hourly, unit }

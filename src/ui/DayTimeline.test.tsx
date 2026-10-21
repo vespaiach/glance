@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import type { CalendarEvent, Tag, Weather } from "@/domain/schemas";
@@ -50,7 +50,6 @@ const labels: DayTimelineLabels = {
   free: (everyone, length) => `${everyone ? "Everyone free" : "Free"} · ${length}`,
   freeName: (range) => `Free ${range}. Add event`,
   planName: (title, range) => `${title}, ${range}`,
-  hourlyWeather: "Hourly weather",
   icons: {
     sun: "Clear",
     moon: "Clear",
@@ -163,7 +162,7 @@ test("TL-09 today shows the now time in the gutter and other days don't", () => 
   expect(screen.queryByText("10:41")).not.toBeInTheDocument();
 });
 
-test("TL-07 the weather lane shows each hour and plans in rain get a chip", () => {
+test("TL-07 Calendar shows each hour's weather in the gutter, no lane, and plans in rain get a chip", () => {
   const weather = {
     hourly: hourly(10, [
       [9, 52, 70],
@@ -174,18 +173,17 @@ test("TL-07 the weather lane shows each hour and plans in rain get a chip", () =
   } as const;
   render(<DayTimeline {...base} plans={[SOCCER]} weather={weather} />);
 
-  const lane = screen.getByRole("list", { name: "Hourly weather" });
-
-  expect(within(lane).getByText("54°")).toBeVisible();
-  expect(within(lane).getAllByRole("img", { name: "Rain" })).toHaveLength(2);
+  expect(screen.queryByRole("list")).not.toBeInTheDocument();
+  expect(screen.getByText("54°")).toBeVisible();
+  expect(screen.getAllByRole("img", { name: "Rain" })).toHaveLength(2);
   expect(screen.getByRole("button", { name: /^Soccer game/ })).toHaveTextContent("80% rain");
 });
 
-test("TL-07 phone has no weather lane and no rain chips", () => {
+test("TL-07 on phone Calendar keeps the gutter weather and drops the rain chips", () => {
   const weather = { hourly: hourly(10, [[9, 52, 70]]), unit: "F" } as const;
   render(<DayTimeline {...base} breakpoint="phone" plans={[SOCCER]} weather={weather} />);
 
-  expect(screen.queryByRole("list", { name: "Hourly weather" })).not.toBeInTheDocument();
+  expect(screen.getByText("52°")).toBeVisible();
   expect(screen.getByRole("button", { name: /^Soccer game/ })).not.toHaveTextContent("rain");
 });
 
@@ -199,7 +197,7 @@ test("TODAY-11 Today shows each hour's weather under its label instead of a lane
   } as const;
   render(<DayTimeline {...base} variant="today" day="2026-10-09" weather={weather} />);
 
-  expect(screen.queryByRole("list", { name: "Hourly weather" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("list")).not.toBeInTheDocument();
   expect(screen.getByText("66°")).toBeVisible();
   expect(screen.getAllByRole("img", { name: "Cloudy" })[0]).toBeVisible();
 });
