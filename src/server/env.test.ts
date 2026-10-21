@@ -171,6 +171,31 @@ describe("parseEnv", () => {
     ).toThrow("Invalid server config: MAILGUN_API_KEY, MAILGUN_DOMAIN, MAILGUN_REGION");
   });
 
+  it("tech§6.5 MAIL_PROVIDER=mailpit defaults to localhost:1025 without any other variable", () => {
+    expect(parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "mailpit" }).mail).toEqual({
+      provider: "mailpit",
+      host: "localhost",
+      port: 1025,
+    });
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=mailpit reads MAILPIT_HOST and MAILPIT_PORT", () => {
+    expect(
+      parseEnv({
+        ...NO_MAIL,
+        MAIL_PROVIDER: "mailpit",
+        MAILPIT_HOST: "mailpit",
+        MAILPIT_PORT: "2525",
+      }).mail,
+    ).toEqual({ provider: "mailpit", host: "mailpit", port: 2525 });
+  });
+
+  it("tech§6.5 MAIL_PROVIDER=mailpit rejects a port that isn't a number", () => {
+    expect(() => parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "mailpit", MAILPIT_PORT: "mail" })).toThrow(
+      "Invalid server config: MAILPIT_PORT",
+    );
+  });
+
   it("tech§6.5 MAIL_PROVIDER=smtp reads the host on port 587 with STARTTLS and no auth by default", () => {
     expect(parseEnv({ ...NO_MAIL, MAIL_PROVIDER: "smtp", SMTP_HOST: "localhost" }).mail).toEqual({
       provider: "smtp",

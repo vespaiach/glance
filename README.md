@@ -23,7 +23,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Server | Next.js Route Handlers, PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) |
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
-| Email | Sign-in links through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, or any SMTP server via `nodemailer` |
+| Email | Sign-in links through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, any SMTP server via `nodemailer`, or a local Mailpit |
 | Tooling | npm, Node 24, [Biome](https://biomejs.dev) (lint + format), Vitest + Testing Library + `fake-indexeddb` |
 
 ## Architecture
@@ -79,13 +79,13 @@ npm ci
 npm run dev
 ```
 
-Open <http://localhost:3000>. The dev server reads `.env.development` (committed: `DATABASE_URL=postgres://localhost:5432/glance`, photos in `.data/`, git-ignored, mail to Mailpit with `MAIL_PROVIDER=smtp`), then `.env.development.local` (git-ignored) for a different `DATABASE_URL` or mail provider (`.env.example` lists every variable). Migrations run on boot; without a reachable database the server logs the error and stops.
+Open <http://localhost:3000>. The dev server reads `.env.development` (committed: `DATABASE_URL=postgres://localhost:5432/glance`, photos in `.data/`, git-ignored, mail to Mailpit with `MAIL_PROVIDER=mailpit`), then `.env.development.local` (git-ignored) for a different `DATABASE_URL` or mail provider (`.env.example` lists every variable). Migrations run on boot; without a reachable database the server logs the error and stops.
 
 The dev server is also a **demo build**: it opens Today on seeded fixture data with no backend and no sign-in, and **`/dev/gallery`** shows every component in all four seasons. Fixture URL params reproduce any design state, e.g. `/today?season=winter&net=offline` or `/notes?sheet=newnote` (full list in [product spec §6](docs/product-spec.md)). The server still checks its config at boot; a missing or bad variable stops it with `Invalid server config:` and the variable names.
 
 ### Real sign-in and offline
 
-Sign-in, sync and the service worker only run in a production build. Run `npm run build`, then `npm start` with `DATABASE_URL`, `DATA_DIR` (an empty folder), `APP_URL=http://localhost:3000`, `MAIL_FROM` and a mail provider: `MAIL_PROVIDER=smtp` with `SMTP_HOST=localhost` and `SMTP_PORT=1025` sends to Mailpit, or `RESEND_API_KEY` alone uses Resend (with `MAIL_FROM` on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email). Request a link on `/signin` and open it from the email. Browsers treat `localhost` as secure, so the service worker and the offline cold start work there too.
+Sign-in, sync and the service worker only run in a production build. Run `npm run build`, then `npm start` with `DATABASE_URL`, `DATA_DIR` (an empty folder), `APP_URL=http://localhost:3000`, `MAIL_FROM` and a mail provider: `MAIL_PROVIDER=mailpit` sends to Mailpit on `localhost:1025`, or `RESEND_API_KEY` alone uses Resend (with `MAIL_FROM` on a domain verified in Resend, or `Glance <onboarding@resend.dev>`, which only delivers to your Resend account's own email). Request a link on `/signin` and open it from the email. Browsers treat `localhost` as secure, so the service worker and the offline cold start work there too.
 
 ### Commands
 

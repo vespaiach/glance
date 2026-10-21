@@ -62,4 +62,12 @@ describe("createMailer", () => {
 
     expect(createTransport).toHaveBeenCalledWith({ host: "localhost", port: 1025, secure: false });
   });
+
+  it("D14 mailpit sends through an unauthenticated plain SMTP transport on its host and port", () => {
+    vi.mocked(createTransport).mockClear();
+
+    createMailer({ provider: "mailpit", host: "localhost", port: 1025 }, FROM);
+
+    expect(createTransport).toHaveBeenCalledWith({ host: "localhost", port: 1025, secure: false });
+  });
 });

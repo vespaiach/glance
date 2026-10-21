@@ -25,11 +25,14 @@ export type SmtpConfig = {
   auth?: { user: string; password: string };
 };
 
+export type MailpitConfig = { host: string; port: number };
+
 export type MailConfig =
   | ({ provider: "resend" } & ResendConfig)
   | ({ provider: "mailtrap" } & MailtrapConfig)
   | ({ provider: "mailgun" } & MailgunConfig)
-  | ({ provider: "smtp" } & SmtpConfig);
+  | ({ provider: "smtp" } & SmtpConfig)
+  | ({ provider: "mailpit" } & MailpitConfig);
 
 const NAMED_ADDRESS = /^(.*?)\s*<([^\s<>@]+@[^\s<>@]+)>$/;
 

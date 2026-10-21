@@ -25,6 +25,8 @@ export function createMailer(
       return createMailgunMailer(config, from, fetchImpl);
     case "smtp":
       return createSmtpMailer(smtpTransport(config), from);
+    case "mailpit":
+      return createSmtpMailer(smtpTransport({ ...config, secure: false }), from);
   }
 }
 

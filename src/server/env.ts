@@ -46,6 +46,24 @@ const SmtpSchema = v.pipe(
   ),
 );
 
+const MailpitSchema = v.pipe(
+  v.object({
+    MAIL_PROVIDER: v.literal("mailpit"),
+    MAILPIT_HOST: v.optional(Filled, "localhost"),
+    MAILPIT_PORT: v.optional(
+      v.pipe(v.string(), v.trim(), v.regex(PORT), v.transform(Number)),
+      "1025",
+    ),
+  }),
+  v.transform(
+    (source): MailConfig => ({
+      provider: "mailpit",
+      host: source.MAILPIT_HOST,
+      port: source.MAILPIT_PORT,
+    }),
+  ),
+);
+
 const MailSchema = v.variant("MAIL_PROVIDER", [
   v.pipe(
     v.object({ MAIL_PROVIDER: v.optional(v.literal("resend")), RESEND_API_KEY: Filled }),
@@ -82,6 +100,7 @@ const MailSchema = v.variant("MAIL_PROVIDER", [
     ),
   ),
   SmtpSchema,
+  MailpitSchema,
 ]);
 
 const StorageSchema = v.variant("PHOTO_STORE", [
