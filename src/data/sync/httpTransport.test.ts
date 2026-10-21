@@ -274,33 +274,78 @@ describe("HttpTransport", () => {
     expect(await transport(fetch).locate(at)).toEqual({ ok: false, error: "network" });
   });
 
-  it("SIGNIN-03 auth.link posts the email and time zone and answers on 204", async () => {
+  it("SIGNIN-03 auth.sendCode posts the email and time zone and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
 
-    const answer = await transport(fetch).auth.link({
+    const answer = await transport(fetch).auth.sendCode({
       email: "maria@example.com",
       timeZone: "America/Los_Angeles",
     });
 
     expect(answer).toEqual({ ok: true, value: undefined });
-    expect(calls[0]?.url).toBe("/api/auth/link");
+    expect(calls[0]?.url).toBe("/api/auth/code");
     expect(calls[0]?.init.method).toBe("POST");
     expect(calls[0]?.init.body).toBe(
       JSON.stringify({ email: "maria@example.com", timeZone: "America/Los_Angeles" }),
     );
   });
 
-  it("tech§6.2 auth.status reads the waiting screen's state", async () => {
+  it("SIGNIN-04 auth.verifyCode posts the email and code and answers the signed-in status", async () => {
     const status = {
       state: "signed-in",
-      account: { id: "a1", name: "Maria", email: "m@x.com" },
-      returning: true,
+      account: { id: "a1", name: null, email: "maria@example.com" },
+      returning: false,
+      setupDone: false,
     };
     const { calls, fetch } = fakeFetch(json(status));
 
-    const answer = await transport(fetch).auth.status();
+    const answer = await transport(fetch).auth.verifyCode({
+      email: "maria@example.com",
+      code: "482913",
+    });
 
     expect(answer).toEqual({ ok: true, value: status });
+    expect(calls[0]?.url).toBe("/api/auth/code/verify");
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(calls[0]?.init.body).toBe(
+      JSON.stringify({ email: "maria@example.com", code: "482913" }),
+    );
+  });
+
+  it.each(["wrong-code", "code-locked", "code-expired"] as const)(
+    "SIGNIN-17 auth.verifyCode answers a 400 %s as that error",
+    async (error) => {
+      const { fetch } = fakeFetch(json({ error }, 400));
+
+      const answer = await transport(fetch).auth.verifyCode({
+        email: "maria@example.com",
+        code: "482913",
+      });
+
+      expect(answer).toEqual({ ok: false, error });
+    },
+  );
+
+  it("tech§6.2 auth.verifyCode keeps the usual errors for anything else", async () => {
+    const { fetch } = fakeFetch(
+      json({ error: "invalid" }, 400),
+      json({ error: "rate-limited" }, 429),
+      new TypeError("offline"),
+    );
+    const auth = transport(fetch).auth;
+    const request = { email: "maria@example.com", code: "482913" };
+
+    expect(await auth.verifyCode(request)).toEqual({ ok: false, error: "invalid" });
+    expect(await auth.verifyCode(request)).toEqual({ ok: false, error: "server" });
+    expect(await auth.verifyCode(request)).toEqual({ ok: false, error: "network" });
+  });
+
+  it("tech§6.2 auth.status reads whether the screen is signed in", async () => {
+    const { calls, fetch } = fakeFetch(json({ state: "signed-out" }));
+
+    const answer = await transport(fetch).auth.status();
+
+    expect(answer).toEqual({ ok: true, value: { state: "signed-out" } });
     expect(calls[0]?.url).toBe("/api/auth/status");
   });
 

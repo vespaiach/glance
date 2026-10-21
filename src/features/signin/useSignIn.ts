@@ -105,7 +105,7 @@ export function useSignIn({
   };
 
   const sendLink = async (email: string) => {
-    const answer = await auth.link({ email, timeZone: timeZone() });
+    const answer = await auth.sendCode({ email, timeZone: timeZone() });
 
     dispatch(answer.ok ? { type: "link-sent", at: now() } : { type: "link-failed" });
   };

@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
-import { requestLink, verifyLink } from "./links";
-import { issueQrLink, voidQrLink } from "./qr";
+import { requestCode } from "./codes";
+import { issueQrLink, verifyQrLink, voidQrLink } from "./qr";
 import { requireDisplay, type SignedInDisplay, signOut } from "./sessions";
-import { APP_URL, authHarnessPerTest, linkToken } from "./testAuth";
+import { APP_URL, authHarnessPerTest, signIn as signInWithCode } from "./testAuth";
 
 const harness = authHarnessPerTest();
 
@@ -10,14 +10,8 @@ const FIVE_MINUTES = 5 * 60 * 1000;
 
 type Opened = SignedInDisplay & { sessionToken: string };
 
-async function signIn(email: string): Promise<Opened> {
-  await requestLink(harness.deps(), { email, timeZone: "America/New_York", ip: "203.0.113.5" });
-
-  const verified = await verifyLink(harness.deps(), { token: linkToken(harness.sent.at(-1)) });
-
-  if (!verified.ok) throw new Error(verified.error.code);
-
-  return opened(verified.value.sessionToken);
+function signIn(email: string): Promise<Opened> {
+  return signInWithCode(harness, email);
 }
 
 async function opened(sessionToken: string): Promise<Opened> {
@@ -37,7 +31,7 @@ async function issue(display: SignedInDisplay): Promise<string> {
 }
 
 async function scan(token: string, userAgent?: string) {
-  const verified = await verifyLink(harness.deps(), { token, userAgent });
+  const verified = await verifyQrLink(harness.deps(), { token, userAgent });
 
   return verified.ok ? opened(verified.value.sessionToken) : verified;
 }
@@ -52,12 +46,12 @@ describe("issueQrLink", () => {
     const token = new URL(url).searchParams.get("t") ?? "";
     expect(url).toBe(`${APP_URL}/api/auth/verify?t=${token}`);
     expect(token.length).toBeGreaterThanOrEqual(43);
-    expect(
-      await harness.deps().db.all("SELECT token_hash, kind FROM magic_links WHERE kind = 'qr'"),
-    ).toEqual([{ token_hash: createHash("sha256").update(token).digest("hex"), kind: "qr" }]);
+    expect(await harness.deps().db.all("SELECT token_hash FROM magic_links")).toEqual([
+      { token_hash: createHash("sha256").update(token).digest("hex") },
+    ]);
   });
 
-  it("SIGNIN-15 stores the account, the display, no pending id and a 5-minute expiry", async () => {
+  it("SIGNIN-15 stores the account, the display and a 5-minute expiry", async () => {
     const maria = await signIn("maria@example.com");
 
     await issue(maria);
@@ -65,15 +59,11 @@ describe("issueQrLink", () => {
     expect(
       await harness
         .deps()
-        .db.all(
-          "SELECT email, account_id, display_id, pending_id, expires_at, used_at FROM magic_links WHERE kind = 'qr'",
-        ),
+        .db.all("SELECT account_id, display_id, expires_at, used_at FROM magic_links"),
     ).toEqual([
       {
-        email: "maria@example.com",
         account_id: maria.accountId,
         display_id: maria.displayId,
-        pending_id: null,
         expires_at: "2026-10-09T14:05:00.000Z",
         used_at: null,
       },
@@ -90,7 +80,7 @@ describe("issueQrLink", () => {
   });
 });
 
-describe("verifyLink with a QR code", () => {
+describe("verifyQrLink", () => {
   it("SIGNIN-15 signs the opener in to the code's own account only", async () => {
     const maria = await signIn("maria@example.com");
     const sam = await signIn("sam@example.com");
@@ -127,7 +117,7 @@ describe("verifyLink with a QR code", () => {
     const token = await issue(maria);
     await scan(token);
 
-    expect(await scan(token)).toEqual({ ok: false, error: { code: "stale", email: null } });
+    expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 
   it("SIGNIN-15 a code stops working after 5 minutes", async () => {
@@ -135,7 +125,7 @@ describe("verifyLink with a QR code", () => {
     const token = await issue(maria);
     harness.advance(FIVE_MINUTES);
 
-    expect(await scan(token)).toEqual({ ok: false, error: { code: "stale", email: null } });
+    expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 
   it("SIGNIN-15 a code still works just before 5 minutes", async () => {
@@ -151,7 +141,7 @@ describe("verifyLink with a QR code", () => {
     const older = await issue(maria);
     const newer = await issue(maria);
 
-    expect(await scan(older)).toEqual({ ok: false, error: { code: "stale", email: null } });
+    expect(await scan(older)).toEqual({ ok: false, error: "stale" });
     expect(await scan(newer)).toMatchObject({ accountId: maria.accountId });
   });
 
@@ -164,10 +154,10 @@ describe("verifyLink with a QR code", () => {
     expect(await scan(token)).toMatchObject({ accountId: kitchen.accountId });
   });
 
-  it("SIGNIN-15 an email link for the account leaves the open code working", async () => {
+  it("SIGNIN-15 an emailed code for the account leaves the open QR code working", async () => {
     const maria = await signIn("maria@example.com");
     const token = await issue(maria);
-    await requestLink(harness.deps(), {
+    await requestCode(harness.deps(), {
       email: "maria@example.com",
       timeZone: "America/New_York",
       ip: "203.0.113.9",
@@ -188,7 +178,7 @@ describe("voidQrLink", () => {
 
     await voidQrLink(harness.deps().db, maria, codeUrl(token));
 
-    expect(await scan(token)).toEqual({ ok: false, error: { code: "stale", email: null } });
+    expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 
   it("SIGNIN-15 can't void another account's or another screen's code", async () => {
@@ -228,6 +218,6 @@ describe("voidQrLink", () => {
 
     await signOut(harness.deps().db, maria.sessionToken);
 
-    expect(await scan(token)).toEqual({ ok: false, error: { code: "stale", email: null } });
+    expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 });

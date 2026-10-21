@@ -3,15 +3,15 @@ import { syncBus } from "../bus";
 import { getDb } from "../db/db";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
-import { cleanupLinks } from "./links";
 import { expireNotes } from "./notes";
 import { removeDeletedPhotoFiles } from "./photos";
 import { createJobTick } from "./schedule";
+import { cleanupSignIns } from "./signIns";
 
 const HOUR_MS = 60 * 60 * 1000;
 
 export function startJobs(): void {
-  const tick = createJobTick({ hourly: runHourly, daily: [runLinkCleanup, runPhotoCleanup] });
+  const tick = createJobTick({ hourly: runHourly, daily: [runSignInCleanup, runPhotoCleanup] });
 
   void tick(new Date());
 
@@ -28,8 +28,8 @@ async function runHourly(): Promise<void> {
   for (const { accountId, version } of await expireNotes(deps())) bus.publish(accountId, version);
 }
 
-async function runLinkCleanup(): Promise<void> {
-  await cleanupLinks(deps());
+async function runSignInCleanup(): Promise<void> {
+  await cleanupSignIns(deps());
 }
 
 async function runPhotoCleanup(): Promise<void> {

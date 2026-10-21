@@ -3,7 +3,8 @@ import {
   AccountSchema,
   AccountSettingsSchema,
   CalendarEventSchema,
-  LinkRequestSchema,
+  CodeRequestSchema,
+  CodeVerifySchema,
   MemberColorSchema,
   MemberSchema,
   NameRequestSchema,
@@ -395,23 +396,35 @@ describe("AccountSchema", () => {
   });
 });
 
-describe("LinkRequestSchema", () => {
+describe("CodeRequestSchema", () => {
   it("SIGNIN-12 accepts an email and an IANA time zone", () => {
     expect(
-      accepts(LinkRequestSchema, { email: "maria@example.com", timeZone: "America/New_York" }),
+      accepts(CodeRequestSchema, { email: "maria@example.com", timeZone: "America/New_York" }),
     ).toBe(true);
   });
 
   it("SIGNIN-02 rejects an invalid email", () => {
-    expect(accepts(LinkRequestSchema, { email: "maria@", timeZone: "America/New_York" })).toBe(
+    expect(accepts(CodeRequestSchema, { email: "maria@", timeZone: "America/New_York" })).toBe(
       false,
     );
   });
 
   it("tech§6.2 rejects a time zone that isn't an IANA name", () => {
-    expect(accepts(LinkRequestSchema, { email: "maria@example.com", timeZone: "Mars/Base" })).toBe(
+    expect(accepts(CodeRequestSchema, { email: "maria@example.com", timeZone: "Mars/Base" })).toBe(
       false,
     );
+  });
+});
+
+describe("CodeVerifySchema", () => {
+  it("SIGNIN-04 accepts an email and six digits, a leading zero included", () => {
+    expect(accepts(CodeVerifySchema, { email: "maria@example.com", code: "048291" })).toBe(true);
+  });
+
+  it("SIGNIN-04 rejects a code that isn't exactly six digits", () => {
+    for (const code of ["48291", "4829130", "48 291", "48291a"]) {
+      expect(accepts(CodeVerifySchema, { email: "maria@example.com", code })).toBe(false);
+    }
   });
 });
 

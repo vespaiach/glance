@@ -5,15 +5,17 @@ import { getDb } from "../db/db";
 import { env } from "../env";
 import { mailer } from "../mail";
 import * as account from "./account";
+import * as codes from "./codes";
 import type { AuthDeps } from "./deps";
 import * as guest from "./guest";
-import * as links from "./links";
 import * as qr from "./qr";
 import { createRateLimiter } from "./rateLimit";
 import type { SignedInDisplay } from "./sessions";
 import * as sessions from "./sessions";
 import * as status from "./status";
+import { newCode } from "./tokens";
 
+export type { CodeError } from "./codes";
 export { clientIp, isAllowedOrigin } from "./guards";
 export type { QrCode } from "./qr";
 export type { SignedInDisplay } from "./sessions";
@@ -28,12 +30,16 @@ export function appUrl(): string {
   return deps().appUrl;
 }
 
-export function requestLink(input: links.LinkInput) {
-  return links.requestLink(deps(), input);
+export function requestCode(input: codes.CodeInput) {
+  return codes.requestCode(deps(), input);
 }
 
-export function verifyLink(input: links.VerifyInput) {
-  return links.verifyLink(deps(), input);
+export function verifyCode(input: codes.VerifyCodeInput) {
+  return codes.verifyCode(deps(), input);
+}
+
+export function verifyQrLink(input: qr.QrVerifyInput) {
+  return qr.verifyQrLink(deps(), input);
 }
 
 export function issueQrLink(display: SignedInDisplay) {
@@ -52,8 +58,8 @@ export function signInAsGuest(input: guest.GuestInput) {
   return guest.signInAsGuest(deps(), input);
 }
 
-export function authStatus(input: status.StatusInput) {
-  return status.authStatus(deps(), input);
+export function authStatus(sessionToken: string | undefined) {
+  return status.authStatus(deps(), sessionToken);
 }
 
 export function requireDisplay(sessionToken: string | undefined) {
@@ -81,9 +87,11 @@ function deps(): AuthDeps {
     mailer: mailer(),
     appUrl: env().APP_URL,
     guestEmail: env().GUEST_EMAIL,
+    newCode,
     limits: {
       email: createRateLimiter({ limit: 5, windowMs: TEN_MINUTES }),
       ip: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
+      verify: createRateLimiter({ limit: 30, windowMs: TEN_MINUTES }),
       qr: createRateLimiter({ limit: 30, windowMs: ONE_HOUR }),
       guest: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
     },

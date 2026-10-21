@@ -28,7 +28,14 @@ import {
 import type { FixtureParams } from "@/fixtures/params";
 import { CURSOR_KEY, type GlanceDb, type OutboxEntry, type StoredPhoto } from "../db";
 import { STATUS_KEY, type SyncStatus } from "./status";
-import type { AuthStatus, Change, Transport, TransportError, UploadError } from "./transport";
+import type {
+  AuthStatus,
+  Change,
+  SignedIn,
+  Transport,
+  TransportError,
+  UploadError,
+} from "./transport";
 
 export const FIXTURE_CURSOR = "fixture";
 
@@ -85,11 +92,17 @@ export function createFixtureAuth(params: FixtureParams): Transport["auth"] {
   const online = onlineOnly(isOffline(params));
 
   return {
-    link: () =>
+    sendCode: () =>
       online(async () => {
         await wait(SIGN_IN_DELAY_MS);
 
         return ok(undefined);
+      }),
+    verifyCode: () =>
+      online(async () => {
+        await wait(SIGN_IN_DELAY_MS);
+
+        return ok(signedIn(params));
       }),
     status: () => online(async () => ok(authStatus(params))),
     guestAvailable: async () => params.demo === true,
@@ -285,12 +298,10 @@ function signedInOnly(ended: boolean) {
 }
 
 function authStatus(params: FixtureParams): AuthStatus {
-  if (params.signin === "phone") return { state: "finishing-elsewhere" };
+  return params.signin === "done" ? signedIn(params) : { state: "signed-out" };
+}
 
-  if (params.signin === "expired") return { state: "expired" };
-
-  if (params.signin !== "done") return { state: "waiting" };
-
+function signedIn(params: FixtureParams): SignedIn {
   return {
     state: "signed-in",
     account: FIXTURE_ACCOUNT,
@@ -299,7 +310,7 @@ function authStatus(params: FixtureParams): AuthStatus {
   };
 }
 
-function guestStatus(): AuthStatus {
+function guestStatus(): SignedIn {
   return { state: "signed-in", account: FIXTURE_GUEST_ACCOUNT, returning: true, setupDone: true };
 }
 

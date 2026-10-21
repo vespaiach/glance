@@ -15,7 +15,7 @@ const MIN_CLIENT_BUILD = 7;
 
 const DAY_S = 24 * 60 * 60;
 
-const MAX_AGE_S = { session: 400 * DAY_S, pending: DAY_S, link_email: 10 * 60 } as const;
+const MAX_AGE_S = { session: 400 * DAY_S } as const;
 
 export type CookieName = keyof typeof MAX_AGE_S;
 

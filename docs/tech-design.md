@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.34 |
+| Status | v2.35 |
 | Date | 2026-10-20 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.71) · [`design/handoff/`](design/handoff/README.md) (v10) |
 
@@ -24,7 +24,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D8 | IDs | **UUIDv7 generated on the client** (`domain/id.ts`). Offline creates need no remapping. Server-made ids (accounts, displays, photos) are UUIDv7 too. |
 | D9 | Sync | Outbox push + versioned pull. SSE only says "something changed"; 30 s polling is the fallback (§5). |
 | D10 | Conflicts | Last write **to reach the server** wins. The server stamps `updated_at` and `version`. |
-| D11 | Auth | **Emailed 6-digit code** typed on the screen that asked for it (QR links stay, D23); opaque session token in an httpOnly cookie. A code is `crypto.randomInt(0, 1_000_000)` zero-padded; only `sha256(email + ":" + code)` is stored, one live row per email in `sign_in_codes` (a new send replaces it), 10 min life, 5 tries, then the row is dead. Session tokens and QR tokens are 32 random bytes (base64url); only their sha256 is stored. No polling and no `pending` or `link_email` cookies: the verify answer signs the screen in. Migration `008_sign_in_codes.sql` creates `sign_in_codes`, deletes the email rows of `magic_links` and drops its `kind`, `email`, `time_zone` and `pending_id` columns. Cookie: `session` (400 days, `HttpOnly; SameSite=Lax; Path=/`, `Secure` on https) (§6.2). |
+| D11 | Auth | **Emailed 6-digit code** typed on the screen that asked for it (QR links stay, D23); opaque session token in an httpOnly cookie. A code is `crypto.randomInt(0, 1_000_000)` zero-padded; only `sha256(email + ":" + code)` is stored, one live row per email in `sign_in_codes` (a new send replaces it), 10 min life, 5 tries, then the row is dead. `verifyCode` locks the row (`FOR UPDATE`), checks expiry first (an expired or missing row is `code-expired`, even when locked), then the try count, then compares the hashes with `timingSafeEqual`; a wrong try bumps `tries` in the same transaction. Codes come from `AuthDeps.newCode`, so tests pass fixed ones. Session tokens and QR tokens are 32 random bytes (base64url); only their sha256 is stored. No polling and no `pending` or `link_email` cookies: the verify answer signs the screen in. Migration `008_sign_in_codes.sql` creates `sign_in_codes`, deletes the email rows of `magic_links` and drops its `kind`, `email`, `time_zone` and `pending_id` columns (and the shape check), making `account_id` and `display_id` required. Cookie: `session` (400 days, `HttpOnly; SameSite=Lax; Path=/`, `Secure` on https) (§6.2). |
 | D12 | Photos | Three objects per photo, keyed `{account}/{id}.{orig|display|thumb}` (`photos.file_path` holds `{account}/{id}`), in a **`PhotoStore`**: local disk, AWS S3 or Cloudflare R2, picked by `PHOTO_STORE` (§6.3, §6.5). **`sharp`** makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies, upright by EXIF; the original is kept byte for byte. Raster formats `sharp` decodes are accepted; SVG is refused. |
 | D13 | Weather and places | **Open-Meteo** forecast + geocoding behind `WeatherProvider`; **US Census Geocoder** behind `PlaceLocator` for reverse lookup. Both via `getJson` (8 s timeout, Valibot parse, any failure → `weather-failed`). Forecast cached per account for 15 min (`weather_cache`). Place search is US only, keeps names matching the query (a ZIP keeps all), requires a valid IANA zone, at most 5. `locatePlace` rounds to 2 decimals and asks the Census place and the Open-Meteo zone in parallel. |
 | D14 | Email | A **`Mailer`** (`send` answers `Result<void, "mail-failed">`) with one adapter per provider, picked by `MAIL_PROVIDER`: **Resend**, **Mailtrap** and **Mailgun** over their HTTP APIs with plain `fetch`, and **SMTP** with **`nodemailer`** (dev sends to a local Mailpit). Every provider sends from `MAIL_FROM`. One attempt, no retry or fallback provider (§6.2, §6.5). |
@@ -353,9 +353,9 @@ type PhotoStore = {
 - **Tests**: one contract suite (`contract.ts`: put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch` (`fakeS3.ts`, an in-memory bucket); the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
-`bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others: `createJobTick({ hourly, daily: [links, photos] })` guards each one. Jobs run across accounts.
+`bootServer()` (from `instrumentation.ts`) migrates, exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day. A failing job is logged and doesn't stop the others: `createJobTick({ hourly, daily: [signIns, photos] })` guards each one. Jobs run across accounts.
 - **Note expiry** (hourly): tombstones notes older than the account's `noteExpiry.days` while it is on, using the screens' `noteExpired` rule, then publishes each account's version on the bus.
-- **Code and link cleanup** (daily): deletes `sign_in_codes` and `magic_links` expired more than 24 h ago.
+- **Code and link cleanup** (daily, `cleanupSignIns`): deletes `sign_in_codes` and `magic_links` expired more than 24 h ago.
 - **Deleted photo files** (daily): removes the stored objects of tombstoned photos; one photo's failure doesn't stop the rest, and the job then throws so it is logged.
 
 `accountTimeZone(db, accountId)` = the saved place's `timeZone`, else `accounts.time_zone`; the upload-day fallback reads it. Backups belong to the PostgreSQL host.

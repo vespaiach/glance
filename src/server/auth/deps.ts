@@ -9,7 +9,14 @@ export type AuthDeps = {
   mailer: Mailer;
   appUrl: string;
   guestEmail?: string;
-  limits: { email: RateLimiter; ip: RateLimiter; qr: RateLimiter; guest: RateLimiter };
+  newCode: () => string;
+  limits: {
+    email: RateLimiter;
+    ip: RateLimiter;
+    verify: RateLimiter;
+    qr: RateLimiter;
+    guest: RateLimiter;
+  };
 };
 
 export type Clocked = Pick<AuthDeps, "db" | "now">;

@@ -44,6 +44,7 @@ describe("001_init", () => {
       "schema_migrations",
       "sessions",
       "settings",
+      "sign_in_codes",
       "sync_state",
       "weather_cache",
     ]);
@@ -284,52 +285,79 @@ describe("005_display_device", () => {
 
 async function insertLink(columns: string, values: string): Promise<void> {
   await db().run(
-    `INSERT INTO magic_links (token_hash, email, time_zone, expires_at${columns}) VALUES ('h1', 'a1@example.com', 'America/New_York', '${NOW}'${values})`,
+    `INSERT INTO magic_links (token_hash, expires_at${columns}) VALUES ('h1', '${NOW}'${values})`,
   );
 }
 
-describe("006_qr_links", () => {
-  it("D23 a link is an email link with its pending id unless told", async () => {
-    await insertLink(", pending_id", ", 'p1'");
+async function insertCode(email: string): Promise<void> {
+  await db().run(
+    "INSERT INTO sign_in_codes (email, code_hash, time_zone, expires_at) VALUES ($1, 'c1', 'America/New_York', $2)",
+    [email, NOW],
+  );
+}
 
-    expect(await db().one("SELECT kind, account_id, display_id FROM magic_links")).toEqual({
-      kind: "email",
-      account_id: null,
-      display_id: null,
+describe("008_sign_in_codes", () => {
+  it("D11 a code row starts with no tries", async () => {
+    await insertCode("a1@example.com");
+
+    expect(await db().one("SELECT email, tries, expires_at FROM sign_in_codes")).toEqual({
+      email: "a1@example.com",
+      tries: 0,
+      expires_at: NOW,
     });
   });
 
-  it("D23 an email link needs its pending id", async () => {
-    await expect(insertLink("", "")).rejects.toThrow(/check constraint/);
+  it("D11 keeps one code row per email", async () => {
+    await insertCode("a1@example.com");
+
+    await expect(insertCode("a1@example.com")).rejects.toThrow(/duplicate key/);
   });
 
-  it("D23 a QR link needs its account and display and has no pending id", async () => {
+  it("D23 a QR link needs its account and display", async () => {
     await insertAccount("a1");
     await insertDisplay("", "");
 
-    await expect(insertLink(", kind", ", 'qr'")).rejects.toThrow(/check constraint/);
-    await expect(
-      insertLink(", kind, account_id, display_id, pending_id", ", 'qr', 'a1', 'd1', 'p1'"),
-    ).rejects.toThrow(/check constraint/);
-    await expect(
-      insertLink(", kind, account_id, display_id", ", 'qr', 'a1', 'd1'"),
-    ).resolves.toBeUndefined();
-  });
-
-  it("D23 rejects an unknown link kind", async () => {
-    await expect(insertLink(", kind, pending_id", ", 'sms', 'p1'")).rejects.toThrow(
-      /check constraint/,
-    );
+    await expect(insertLink(", account_id", ", 'a1'")).rejects.toThrow(/not-null/);
+    await expect(insertLink(", display_id", ", 'd1'")).rejects.toThrow(/not-null/);
+    await expect(insertLink(", account_id, display_id", ", 'a1', 'd1'")).resolves.toBeUndefined();
   });
 
   it("D23 deleting a display deletes its QR links", async () => {
     await insertAccount("a1");
     await insertDisplay("", "");
-    await insertLink(", kind, account_id, display_id", ", 'qr', 'a1', 'd1'");
+    await insertLink(", account_id, display_id", ", 'a1', 'd1'");
 
     await db().run("DELETE FROM displays WHERE id = 'd1'");
 
     expect(await db().all("SELECT token_hash FROM magic_links")).toEqual([]);
+  });
+
+  it("D11 drops the email links and keeps the QR links", async () => {
+    const client = await openPglite();
+    const old = pgliteDb(client);
+    const migrations = readMigrations(MIGRATIONS_DIR);
+    await migrate(
+      old,
+      migrations.filter((migration) => migration.version < 8),
+    );
+    await old.run(
+      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+      [NOW],
+    );
+    await old.run("INSERT INTO displays (id, account_id) VALUES ('d1', 'a1')");
+    await old.run(
+      `INSERT INTO magic_links (token_hash, email, kind, pending_id, account_id, display_id, time_zone, expires_at) VALUES
+         ('email', 'a1@example.com', 'email', 'p1', NULL, NULL, 'America/New_York', $1),
+         ('qr', 'a1@example.com', 'qr', NULL, 'a1', 'd1', 'America/New_York', $1)`,
+      [NOW],
+    );
+
+    await migrate(old, migrations);
+
+    expect(await old.all("SELECT * FROM magic_links")).toEqual([
+      { token_hash: "qr", expires_at: NOW, used_at: null, account_id: "a1", display_id: "d1" },
+    ]);
+    await client.close();
   });
 });
 

@@ -351,9 +351,9 @@ describe("signInAuthFor", () => {
   });
 
   it("tech§6.5 a demo build signs in through the fixture transport", async () => {
-    expect(await signInAuthFor(true, { signin: "phone" }).status()).toEqual({
+    expect(await signInAuthFor(true, { signin: "done" }).status()).toEqual({
       ok: true,
-      value: { state: "finishing-elsewhere" },
+      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: false, setupDone: true },
     });
   });
 
@@ -362,12 +362,12 @@ describe("signInAuthFor", () => {
 
     const request = { email: "maria@example.com", timeZone: "UTC" };
 
-    expect(await signInAuthFor(false, params).link(request)).toEqual({
+    expect(await signInAuthFor(false, params).sendCode(request)).toEqual({
       ok: true,
       value: undefined,
     });
     expect(fetch).toHaveBeenCalledWith(
-      "/api/auth/link",
+      "/api/auth/code",
       expect.objectContaining({ method: "POST" }),
     );
   });

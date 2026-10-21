@@ -35,7 +35,7 @@ const MARIA: Account = fixtureSignIn;
 const TRINH: Account = { id: "a-guest", email: "guests@takeaglance.app", name: "Trinh" };
 
 type FakeAuth = {
-  link: Mock<SignInAuth["link"]>;
+  sendCode: Mock<SignInAuth["sendCode"]>;
   status: Mock<SignInAuth["status"]>;
   guestAvailable: Mock<SignInAuth["guestAvailable"]>;
   guest: Mock<SignInAuth["guest"]>;
@@ -56,8 +56,8 @@ const PORTLAND: WeatherLocation = {
 
 function fakeAuth(): FakeAuth {
   return {
-    link: vi.fn<SignInAuth["link"]>(async () => ok(undefined)),
-    status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "waiting" })),
+    sendCode: vi.fn<SignInAuth["sendCode"]>(async () => ok(undefined)),
+    status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "signed-out" })),
     guestAvailable: vi.fn<SignInAuth["guestAvailable"]>(async () => false),
     guest: vi.fn<SignInAuth["guest"]>(async () =>
       ok({ state: "signed-in", account: TRINH, returning: true, setupDone: true }),
@@ -167,7 +167,7 @@ test("SIGNIN-02 an invalid email shows the error until the next keystroke", asyn
 test("SIGNIN-03 a valid email moves to Sending", async () => {
   const auth = fakeAuth();
 
-  auth.link.mockReturnValue(new Promise(() => {}));
+  auth.sendCode.mockReturnValue(new Promise(() => {}));
 
   renderScreen({}, auth);
 
@@ -181,7 +181,7 @@ test("SIGNIN-03 Send asks for a link to the trimmed email with this screen's tim
 
   await sendLink(" maria@example.com ");
 
-  expect(auth.link).toHaveBeenCalledExactlyOnceWith({
+  expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith({
     email: "maria@example.com",
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   });
@@ -198,7 +198,7 @@ test("SIGNIN-04 the server accepting the link opens Check your email", async () 
 test("SIGNIN-03 a failed send returns to the form with the email kept", async () => {
   const auth = fakeAuth();
 
-  auth.link.mockResolvedValue(err("server"));
+  auth.sendCode.mockResolvedValue(err("server"));
 
   renderScreen({}, auth);
 
@@ -251,47 +251,15 @@ test("SIGNIN-10 offline while waiting keeps Check your email and polls again", a
   expect(auth.status).toHaveBeenCalledTimes(2);
 });
 
-test("SIGNIN-08 an expired link shows the expired waiting screen", async () => {
-  const auth = fakeAuth();
-
-  auth.status.mockResolvedValue(answer({ state: "expired" }));
-
-  renderScreen({ signin: "sent" }, auth);
-
-  await advance(2_000);
-
-  expect(screen.getByRole("heading", { name: "This link has expired" })).toBeInTheDocument();
-});
-
 test("SIGNIN-08 Send a new link sends again from the expired screen", async () => {
   const auth = renderScreen({ signin: "expired" });
 
   await user().click(screen.getByRole("button", { name: "Send a new link" }));
 
-  expect(auth.link).toHaveBeenCalledWith(expect.objectContaining({ email: "maria@example.com" }));
+  expect(auth.sendCode).toHaveBeenCalledWith(
+    expect.objectContaining({ email: "maria@example.com" }),
+  );
   expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();
-});
-
-test("SIGNIN-07 a link opened elsewhere on a new account shows Finish on your phone", async () => {
-  const auth = fakeAuth();
-
-  auth.status.mockResolvedValue(answer({ state: "finishing-elsewhere" }));
-
-  renderScreen({ signin: "sent" }, auth);
-
-  await advance(2_000);
-
-  expect(screen.getByRole("heading", { name: "Finish on your phone" })).toBeInTheDocument();
-  expect(
-    screen.getByText(
-      "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself.",
-    ),
-  ).toBeInTheDocument();
-  expect(screen.getByText("Waiting for your phone")).toBeInTheDocument();
-
-  await advance(2_000);
-
-  expect(auth.status).toHaveBeenCalledTimes(2);
 });
 
 test("SIGNIN-09 signing in saves the account to glance-meta and opens Today after 2.2 s", async () => {
@@ -379,22 +347,15 @@ test("SIGNIN-14 a returning sign-in whose location step never ended asks where t
   expect(auth.remember).not.toHaveBeenCalled();
 });
 
-test("SIGNIN-12 the device that opened a stale link offers a new one to its email", async () => {
-  const auth = fakeAuth();
-
-  auth.status.mockResolvedValue(answer({ state: "expired", email: "maria@example.com" }));
-
+test("SIGNIN-15 the device that opened a stale QR link gets the email form with no email", async () => {
   openLink("stale");
 
-  renderScreen({}, auth);
+  renderScreen();
 
   expect(
-    await screen.findByRole("heading", { name: "This link doesn’t work anymore" }),
+    await screen.findByRole("heading", { name: "Sign in or get started" }),
   ).toBeInTheDocument();
-
-  await user().click(screen.getByRole("button", { name: "Send a new link" }));
-
-  expect(auth.link).toHaveBeenCalledWith(expect.objectContaining({ email: "maria@example.com" }));
+  expect(screen.getByLabelText("Email")).toHaveValue("");
 });
 
 test("SIGNIN-10 a link check that can't reach the server opens the email form", async () => {
@@ -596,7 +557,7 @@ test("SIGNIN-03 signin=sendfail clears on the next keystroke and Send retries", 
 
   await user().click(screen.getByRole("button", { name: "Send sign-in link" }));
 
-  expect(auth.link).toHaveBeenCalledExactlyOnceWith(
+  expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({ email: "maria@example.com" }),
   );
   expect(await screen.findByRole("heading", { name: "Check your email" })).toBeInTheDocument();

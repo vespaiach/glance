@@ -232,11 +232,17 @@ export const AccountSchema = v.object({
 });
 export type Account = v.InferOutput<typeof AccountSchema>;
 
-export const LinkRequestSchema = v.object({
+export const CodeRequestSchema = v.object({
   email: v.pipe(v.string(), v.check(isValidEmail)),
   timeZone: v.pipe(v.string(), v.check(isTimeZone)),
 });
-export type LinkRequest = v.InferOutput<typeof LinkRequestSchema>;
+export type CodeRequest = v.InferOutput<typeof CodeRequestSchema>;
+
+export const CodeVerifySchema = v.object({
+  email: v.pipe(v.string(), v.check(isValidEmail)),
+  code: v.pipe(v.string(), v.regex(/^\d{6}$/)),
+});
+export type CodeVerify = v.InferOutput<typeof CodeVerifySchema>;
 
 export const QrVoidRequestSchema = v.object({
   url: v.pipe(v.string(), v.url()),
