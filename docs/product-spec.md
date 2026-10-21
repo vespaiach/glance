@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.70 |
+| Status | v0.71 |
 | Date | 2026-10-20 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance - Behavior Notes.dc.html`](design/handoff/Glance%20-%20Behavior%20Notes.dc.html) · [`Glance Frames.dc.html`](design/handoff/Glance%20Frames.dc.html) (boards) |
@@ -25,7 +25,7 @@ Requirement IDs (`TODAY-03`, `NOTE-05` …) are cited in tasks, PRs and tests. A
 3. The screen stays useful offline, when a source fails, and during quiet hours (Ambient).
 
 ### 1.2 Out of scope
-Calendar sync (Google/Outlook) · recurring and multi-day events · renaming or recoloring family members · note moderation, character limit, board overflow · photo albums · photo upload on phones · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming or remotely signing out screens · roles and permissions · changing the account name or email, deleting the account · session expiry, kiosk lock.
+Calendar sync (Google/Outlook) · recurring and multi-day events · removing, renaming or recoloring tags · note moderation, character limit, board overflow · photo albums · photo upload on phones · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming or remotely signing out screens · roles and permissions · changing the account name or email, deleting the account · session expiry, kiosk lock.
 
 ### 1.3 Open questions
 - Burn-in protection and screen dimming (Ambient).
@@ -47,7 +47,7 @@ Where Glance departs from the design system:
 | Type | Smaller fluid `clamp()` sizes (§4.3). Mono captions 14 px minimum (16 on Ambient). All text black or white, never grey |
 | Spacing | 8 px scale only: 4, 8, 12, 16, 24, 32, 48, 96 |
 | 12-hour times | Plan cards omit AM/PM; Now panel, forecast, sunset and Ambient include it |
-| People | Family members with fixed colors (§7) tag events; the season palette never colors a person |
+| People | Tags (people) with fixed colors (§7) mark events; the season palette never colors a person |
 
 ---
 
@@ -80,12 +80,14 @@ Typed components in `src/ui` (the calendar controls in `features/calendar/compon
 | Component | Notes |
 |---|---|
 | `Clock` | Tabular numerals, date line "Friday, October 9". The colon blinks every 0.6 s, and stays on with reduced motion. Takes the time from the screen; no timer of its own |
-| `DayTimeline` | The elastic day timeline (§8.3.2): hour gutter, plan cards, free slots, now marker, and a weather lane (Calendar) or gutter weather (Today) |
+| `DayTimeline` | The elastic day timeline (§8.3.2): hour gutter with hour weather, plan cards, free slots, now marker, rain chips (Calendar) |
 | `WeekStrip`, `DateControl`, `DatePicker` (calendar feature) | CAL-01, CAL-02, CAL-03. Day buttons named by the full date; selected = black (`aria-pressed`), today = ring (`aria-current="date"`) |
-| `PersonDot` | A member's color dot (6–12 px). The person filter and the Who picker build their toggle pills (dot + name) and plan cards their dot rows from it |
+| `PersonDot` | A tag's color dot (6–12 px). Plan cards build their dot rows and Who suggestions their pills from it |
 | `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (`--danger`, white text, every season: delete and discard confirms) |
 | `IconButton` | `md` 40, `touch` 56, `lg` 72 px; `active` = black; `current="page"` |
 | `PillTabs` | Segmented control, a group of `aria-pressed` buttons. `lg` (56 px) wraps onto more rows |
+| `Radio`, `Switch`, `Slider` | §8.7. Radio: 24 px black ring, 12 px dot when selected, label 18 px (540 selected, 330 not), 56 px tap height. Switch: 56×32 track, 24 px white knob; on = black track, knob right; off = soft track with hairline; 180 ms; `role="switch"`. Slider: 44 px tall, black, mono end labels; disabled = gray |
+| `CodeField` | SIGNIN-04: six cells over one numeric input |
 | `TextInput` | 2 px black focus ring, error below, optional mono caption right of the label, `type="date"` |
 | `ColorBlock`, `Card`, `Banner`, `Eyebrow`, `Icon`, `TopBar` | As in the design system. Blocks are never shadowed. `TopBar` is in the gallery only |
 | `WeatherNow`, `ForecastDay` | Values arrive in the display unit; no unit letter |
@@ -93,7 +95,7 @@ Typed components in `src/ui` (the calendar controls in `features/calendar/compon
 | `TimeField`, `TimePicker` | §8.3.1 |
 | `Skeleton`, `EmptyState`, `SourceFailure`, `Zone` | §9.3–9.4. `Zone` renders loading / empty / ready / failed in its own error boundary |
 | `Sheet` | §8.9 |
-| `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring. Notes use the 5 season tones, members the 12 member colors |
+| `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring. Notes use the 5 season tones, tags the 12 tag colors |
 | `OfflinePill`, `SettingsRow`, `AllDayTile` | OFF-01, §8.7, TODAY-12 |
 | `BackLink`, `DiscardPrompt`, `PhotoBackdrop`, `QrCode` | §8.7 "‹ Settings" link, "Discard changes?" (§8.9), photo background (BG-*), SIGNIN-15 QR |
 
@@ -148,7 +150,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
   - Fixtures: `rail=1` (Rail), `rail=open` (Expanded).
 - **SHELL-09 Keyboard and focus:** the grip and Expand menu carry `aria-expanded`. Escape in Expanded → Rail. Opening the drawer focuses the current view's row. Escape or a row → focus to Expand menu; Close or ✕ → the grip; the grip → Expand menu. A view change that brings the rail back, and a page load, move no focus. Parts not shown are `inert`. No focus trap.
 - **SHELL-10 Offsets:** the sidebar inset (0, 80 or 332 px; phone 0 or 56, the drawer overlays the 56) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
-- **SHELL-11 Hides when idle:** after 15 s with no touch or key press, Rail or Expanded → Hidden (the drawer closes and the rail slides away). The timer doesn't run while a sheet is open, the keyboard is up or a text field is focused. Tapping the grip → Rail and restarts the 15 s. No focus moves.
+- **SHELL-11 Hides when idle** (when `hideSidebarWhenIdle` is on, SET-05): after 20 s with no touch or key press, Rail or Expanded → Hidden (the drawer closes and the rail slides away). The timer doesn't run while a sheet is open, the keyboard is up or a text field is focused. Tapping the grip → Rail and restarts the 20 s. No focus moves. Off: the sidebar stays as it is.
 
 ### 5.3 Grid templates
 
@@ -164,7 +166,7 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 
 ### 5.4 Phone (< 600)
 - Starts from `narrow`. Hourly `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways.
-- Calendar: the date control replaces the week strip (CAL-02); the timeline is 720 px tall with no weather lane or rain chips, and the page scrolls.
+- Calendar: the date control replaces the week strip (CAL-02); the timeline is 720 px tall with gutter hour weather and no rain chips, and the page scrolls.
 - Photos: featured 260 px, thumbs 2 col. Background thumbs 2 col.
 - **No photo upload:** every upload entry point is hidden (PHOTO-03/05, BG-02, Today's "Upload a photo").
 - Smaller sidebar, drawer over the page (SHELL-08).
@@ -189,12 +191,12 @@ The sidebar narrows the page but doesn't change the breakpoint. Today's grid fol
 | Area | Params |
 |---|---|
 | Shell, data | `clock=24`, `season=…`, `bg=photo`, `empty=1`, `net=loading\|offline\|wxerror`, `kb=1`, `rail=1\|open` |
-| Sheets | `sheet=event\|newevent\|note\|newnote\|allday\|past\|family\|photo\|photometa`, `details=1`, `time=start\|end\|error\|noend`, `discard=1`, `rm={member}`, `famname={name}`, `famerr=1` |
-| Today, Calendar | `events=many`, `allday=1`, `day={d}` (day of October 2026), `who={member,…\|none}`, `span=24`, `dp=open` |
+| Sheets | `sheet=event\|newevent\|note\|newnote\|allday\|past\|photo\|photometa`, `details=1`, `time=start\|end\|error\|noend`, `discard=1` |
+| Today, Calendar | `events=many`, `allday=1`, `day={d}` (day of October 2026), `who={tag,…\|none}`, `span=24`, `dp=open` |
 | Photos, Background | `upload=one\|progress\|error\|offline\|done`, `full=1`, `chrome=0` |
 | Weather setup | `wx=searching\|unknown\|choose\|locating\|no-position\|denied\|outside\|lookup\|tz\|savefail` |
 | Settings | `amb=same\|split\|off`, `pick=all.s\|all.e\|wknd.s\|wknd.e`, `qr=open\|failed` |
-| Sign in | `signin=form\|sending\|sendfail\|sent\|name\|location\|phone\|expired\|offline\|done\|ended`, `on=link`, `acct=returning`, `pending={n}`, `switch=1`, `backin={s}` (+ `hold=1`), `demo=1` |
+| Sign in | `signin=form\|sending\|sendfail\|sent\|checking\|wrong\|locked\|name\|location\|expired\|offline\|done\|ended`, `code={digits}`, `acct=returning`, `pending={n}`, `switch=1`, `backin={s}` (+ `hold=1`), `demo=1` |
 
 ---
 
@@ -206,14 +208,14 @@ type NoteTone = 1 | 2 | 3 | 4 | 'soft';              // notes
 type Season = 'spring' | 'summer' | 'fall' | 'winter';
 type Synced<T> = T & { updatedAt: string; version: number; deletedAt?: string };  // stamped by the server
 
-type MemberColor = 'lilac' | 'sky' | 'coral' | 'mint' | 'sun' | 'pink' | 'lime' | 'rust'
-                 | 'glacier' | 'amber' | 'sage' | 'ice';  // the design system's block colors; never change with the season
+type TagColor = 'lilac' | 'sky' | 'coral' | 'mint' | 'sun' | 'pink' | 'lime' | 'rust'
+              | 'glacier' | 'amber' | 'sage' | 'ice';  // the design system's block colors; never change with the season
 
-interface Member {
+interface Tag {      // a person; created from an event's Who field, never removed, renamed or recolored
   id: string;
-  name: string;      // required, unique in the family ignoring case
-  color: MemberColor;
-  createdAt: string; // members are listed oldest first
+  name: string;      // required, at most 32 characters, unique in the family ignoring case
+  color: TagColor;
+  createdAt: string; // tags are listed oldest first
 }
 
 interface CalendarEvent {
@@ -223,8 +225,8 @@ interface CalendarEvent {
   allDay?: true;    // fills its date: startAt = the date's UTC midnight, no endAt (EVT-08)
   title: string;    // required
   location?: string;
-  everyone: boolean;   // true = for the whole family, including members added later
-  memberIds: string[]; // when not everyone: at least one member
+  everyone: boolean;   // true = every tag, including tags added later
+  tagIds: string[];    // when not everyone: the tags on it, possibly none ("nobody")
   notes?: string;      // free text, trimmed
 }
 
@@ -269,8 +271,9 @@ interface AccountSettings {            // per account: every screen of the famil
   tempUnit: 'F' | 'C';
   background: { mode: 'season' | 'photo' | 'slideshow'; photoId?: string;
                 dim: 0 | 0.2 | 0.4; rotate: 'hourly' | 'daily' | 'weekly' };
-  idleTimeout: 60 | 180 | 300 | null;
-  noteExpiry: '1d' | '1w' | null;
+  idleTimeout: { on: boolean; minutes: number };  // 1–15; off = never, minutes kept for when it turns on
+  noteExpiry: { on: boolean; days: number };      // 1–30; off = never, days kept
+  hideSidebarWhenIdle: boolean;                   // SHELL-11
   ambient: { mode: 'same' | 'split' | 'off';
              all:  { start: string; end: string };   // "HH:MM", 15-min steps; every night, or Sun–Thu when split
              wknd: { start: string; end: string } }; // Fri & Sat nights when split
@@ -281,11 +284,11 @@ interface Account { id: string; email: string; name: string | null } // name nul
 interface Display { id: string; accountId: string } // kind, browser and lastSeenAt are server columns, read through the screens list (SET-12)
 ```
 
-**Defaults:** season Auto, 12-hour, °F, background Season color (dim Light, rotate Daily), idle 3 min, notes 1 week, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM).
+**Defaults:** season Auto, 12-hour, °F, background Season color (dim Light, rotate Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle on, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM).
 
-**Account model:** one family = one account = one email. Sign-up and sign-in are the same magic-link flow. Events, members, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
+**Account model:** one family = one account = one email. Sign-up and sign-in are the same email-code flow (SIGNIN-12). Events, tags, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
 
-**Family members** are names with a color that tag events; they never sign in. A family always has at least one. A new account gets one member named after the account (SIGNIN-06), with the first color. An event's people are **everyone** (the flag; a member added later joins it) or a set of members; "who" reads "Everyone" or the names in member order, joined by ", ". An event's color: one member → that member's color; more than one or everyone → the season soft color with person dots (no dots for everyone).
+**Tags** are the family's people: a name with a color that marks events; they never sign in. They work like tags: there is no list to manage, a tag exists because an event's Who field created it (FAM-04), and tags are never removed, renamed or recolored. A new account gets one tag named after the account (SIGNIN-06), with the first color. An event's people are **everyone** (the flag, set when every tag is on it; a tag added later joins it), a set of tags, or **nobody**; "who" reads "Everyone", the names in tag order joined by ", ", or nothing. An event's color: one tag → that tag's color; more than one, everyone or nobody → the season soft color with person dots (no dots for everyone or nobody).
 
 ### 7.0 Database
 PostgreSQL, from `db-migrations/`:
@@ -295,9 +298,10 @@ PostgreSQL, from `db-migrations/`:
 | `accounts` | `id`, `email citext UNIQUE`, `name`, `time_zone` (the first browser's zone), `setup_done_at` (first-run location step ended), `created_at` |
 | `displays` | `id`, `account_id`, `last_seen_at`, `kind` (`monitor` default), `browser` |
 | `sessions` | `token_hash`, `display_id`, `created_at` |
-| `magic_links` | `token_hash`, `kind` (`email \| qr`), `email`, `time_zone`, `pending_id` (email links), `account_id` + `display_id` (QR links), `expires_at`, `used_at` |
-| `members` | `id`, `account_id`, `name`, `color`, `created_at`, `updated_at`, `deleted_at`, `version` |
-| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `member_ids text[]` (empty when `everyone`), `notes`, `updated_at`, `deleted_at`, `version` |
+| `sign_in_codes` | `email citext` (one live code per email), `code_hash`, `time_zone`, `attempts` (0–5), `expires_at`, `created_at` |
+| `magic_links` | `token_hash`, `account_id`, `display_id` (QR links, SIGNIN-15), `expires_at`, `used_at` |
+| `tags` | `id`, `account_id`, `name`, `color`, `created_at`, `updated_at`, `deleted_at`, `version` |
+| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `tag_ids text[]` (empty when `everyone`; empty and not `everyone` = nobody), `notes`, `updated_at`, `deleted_at`, `version` |
 | `notes` | `id`, `account_id`, `text`, `author`, `tone`, `rotation`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `photos` | `id`, `account_id`, `title`, `taken_on date`, `place`, `title_source`, `date_source`, `place_source`, `checked`, `file_path`, `file_name`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `settings` | `account_id`, `json jsonb` (AccountSettings), `updated_at`, `version` |
@@ -327,25 +331,25 @@ For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcomi
 ## 8. Screens
 
 ### 8.1 Sign in & account — `SIGNIN`
-Layout: left = block-1 hero ("Glance" wordmark, "{Season} · {Month}", live Clock, "Calendar, weather, notes and photos for your family. Sign in to manage them."). Right = form, max width 560, with the lock footer "Only your family can see its calendar, notes and photos." in every form state. The screen that asks for the link is the **waiting screen**; the link may be opened there or on another device.
+Layout: left = block-1 hero: "Glance" wordmark; top right the date and time ("Tuesday, October 20 · 10:41 AM", follows the clock setting; phone "Tue, Oct 20", wrapping under the wordmark if needed) and the season icon (no season text, no Clock); headline "Your family’s day, at a glance."; body "Calendar, weather, notes and photos for your family. Sign in to manage them."; then a static, non-interactive preview: a white tile "Today · 3 events" (School drop-off 8:00 past, Piano lesson 10:30 now, Soccer practice 4:30 PM), a block-3 weather tile (64°, `cloud-sun`, "Rain moving in after 4 PM") and a sticky note ("Soccer cleats are by the door", Mom, 8:12 AM). The note sits with the weather tile: under it beside the events tile on wide heroes, side by side below the events tile when the hero is narrow. No preview on phones. Right = form, max width 560, with the lock footer "Only your family can see its calendar, notes and photos." in every form state. Sign-in always happens on the screen that asked for the code; there are no email links.
 
 | ID | Requirement |
 |---|---|
-| SIGNIN-01 | **Email form:** eyebrow "One account per family", title "Sign in or get started", body "Enter your email. We'll send a link that signs this screen in. New here? The same link sets up your family's Glance." Field placeholder `name@example.com`, primary "Send sign-in link" (→ icon). |
+| SIGNIN-01 | **Email form:** eyebrow "One account per family", title "Sign in or get started", body "Enter your email. We’ll send a 6-digit code to sign this screen in. New here? The same code sets up your family’s Glance." Field placeholder `name@example.com`, primary "Send code" (→ icon). |
 | SIGNIN-02 | Invalid email → "Enter a valid email address", cleared on the next keystroke. |
-| SIGNIN-03 | **Sending:** "Sending…" disabled, email locked, soft tile "Sending a link to {email}" with a pulsing mail icon → Check your email. A failed send returns to the form with the email kept and "Couldn’t send. Try again." under the field (clears on the next keystroke). |
-| SIGNIN-04 | **Check your email** (the same for new and known emails): "Check your email" · "We sent a link to **{email}**. Open it and this screen signs in by itself." Tile "Link expires in 10 minutes", ghost "Use a different email" (email kept). For 10 s after each send the ghost is replaced by a mono timer "Use a different email in 0:10" … "0:01" (min height 44); a new send restarts it. Polls every 2 s. |
-| SIGNIN-06 | **"What's your name?"** on the device that opened the link, only for a new account: eyebrow "New family account", body "This is the first sign-in for {email}. Your name shows in Settings." Field "Your name" ("First name is fine"), primary "Continue" → SIGNIN-14. Empty → "Add your name". The server accepts at most 100 characters. Continue is disabled while saving; a failed save shows "Couldn’t save. Try again." Another tab of the same browser counts as that device. |
-| SIGNIN-07 | **Finish on your phone:** when the link opened elsewhere for a new account, the waiting screen shows "Finish on your phone" · "The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself." with a "Waiting for your phone" tile. It signs in once the name is saved and the location step has ended. "I finished on my phone" is dev only. |
-| SIGNIN-08 | **Expired, waiting screen** (10 min): "This link has expired" · "Sign-in links work for 10 minutes. Send a new one to {email}." + "Send a new link", "Use a different email". |
-| SIGNIN-09 | **Signed in:** check icon, "Signed in", "Welcome, {first name}" (new) or "Welcome back, {first name}", "Opening Today…"; Today opens after 2.2 s. The device that opened the link checks it first: setup done → this step; no name → SIGNIN-06; location step unfinished → SIGNIN-14; stale → SIGNIN-12; server unreachable → the empty form. |
-| SIGNIN-10 | **Offline form:** banner "You're offline" · "A link can't be sent right now. Sending turns back on when the screen reconnects." Send disabled, email still editable. Offline while waiting: keep waiting and poll on reconnect. |
+| SIGNIN-03 | **Sending:** "Sending…" disabled, email locked, soft tile "Sending a code to {email}" with a pulsing mail icon → Enter the code. A failed send returns to the form with the email kept and "Couldn’t send. Try again." under the field (clears on the next keystroke). |
+| SIGNIN-04 | **Enter the code** (the same for new and known emails): eyebrow "Sign in", title "Enter the code", body "We sent a 6-digit code to **{email}**. It works once, for 10 minutes." `CodeField` labelled "Code": six white 8 px-radius cells (hairline ring, mono tabular digits) over one input (`inputmode="numeric"`, `autocomplete="one-time-code"`, max 6); non-digits and spaces are dropped, so pasting "482 913" works; the next empty cell has the 2 px black focus ring while focused; focus lands in it when the step opens. Primary "Sign in" is disabled until 6 digits are in; the 6th digit submits on its own. Checking: "Checking…", field locked. Below a hairline, ghost "Send a new code" and "Use a different email" (email kept); for 10 s after each send both are replaced by a mono timer "New code or different email in 0:10" … "0:01" (min height 44); a new send restarts it. "Send a new code" → Sending → Enter the code. |
+| SIGNIN-17 | **Wrong code:** the field clears, every cell turns red, "That code isn’t right. Try again." in the TextInput error style, cleared on the next digit. The 5th wrong try kills the code: "Too many tries. Send a new code.", field disabled, and both ghost buttons show at once. |
+| SIGNIN-06 | **"What's your name?"** on this screen, only for a new account: eyebrow "New family account", body "This is the first sign-in for {email}. Your name shows in Settings." Field "Your name" ("First name is fine"), primary "Continue" → SIGNIN-14. Empty → "Add your name". The server accepts at most 100 characters. Continue is disabled while saving; a failed save shows "Couldn’t save. Try again." |
+| SIGNIN-08 | **Expired** (10 min on Enter the code): "This code has expired" · "Codes work for 10 minutes. Send a new one to {email}." + "Send a new code", "Use a different email". |
+| SIGNIN-09 | **Signed in:** check icon, "Signed in", "Welcome, {first name}" (new) or "Welcome back, {first name}", "Opening Today…"; Today opens after 2.2 s. After the right code: setup done → this step; no name → SIGNIN-06; location step unfinished → SIGNIN-14. |
+| SIGNIN-10 | **Offline form:** banner "You're offline" · "A code can't be sent right now. Sending turns back on when the screen reconnects." Send disabled, email still editable. **Offline on Enter the code:** the code can still be typed; banner "You're offline" · "The code can't be checked right now. Sign in turns back on when the screen reconnects." Sign in and Send a new code are disabled and nothing submits until reconnect. |
 | SIGNIN-11 | Settings › Sign out signs out **this screen only**, with no confirm, back to the empty form. Changes not yet synced on this screen are discarded. |
-| SIGNIN-12 | **Links:** one link signs up or in. Each works once, for 10 minutes; a new link voids older ones. A stale link on the opening device: "This link doesn't work anymore" · "It expired or was already used. Each link works once, for 10 minutes. Send a new one to {email}." + "Send a new link". A stale link on a still-signed-in screen just signs it in; with no known email it opens the empty form. **Email** (HTML with a plain-text part; source `docs/design/handoff/emails/sign-in-link.html`, the same for new and known emails): subject "Your Glance sign-in link", preheader "Tap to sign in. The link works once, for 10 minutes." Header "Glance"; a hero in the season's block-1 color on its soft page color (the account's fixed season, else the send date's) with mono eyebrow "Sign-in link", title "Sign in to Glance", "Tap the button and the screen that asked for this link signs in by itself. New here? The same link sets up your family’s Glance.", a black pill "Sign in" and mono "Works once, for 10 minutes"; a white card "Button not working? Copy this link into your browser:" with the raw link, then "Didn’t ask for this? You can ignore this email. No one can sign in unless this link is opened."; footer "Sent to {email} because it was entered on a Glance screen. Glance · Calendar, weather, notes and photos for your family." The text part carries the same words and the link. |
-| SIGNIN-13 | **Signed out by the server** (an online 401; never while offline; no reason shown). **Form:** the SIGNIN-01 form with a banner "This screen was signed out" · "Sign in again to keep the calendar, notes and photos up to date.", title "Sign in again", body "Check your family’s email below. We’ll send a link that signs this screen back in.", the last email prefilled. **Waiting changes:** the banner adds "Changes waiting on this screen: {n}. They’ll be sent after you sign in." **Different email:** with changes waiting, a tile under the field reads "Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in." with ghost "Use {previous email}", and the banner drops its second sentence. **Timing:** never interrupts an edit; the form shows once the sheet closes or no field is focused, or at the idle timeout (to Ambient during ambient hours, AMB-07). **Clears** only when a sign-in finishes: the same email syncs the waiting changes, another email removes them. |
+| SIGNIN-12 | **Codes:** one code signs up or in: an unknown email creates the account when its code is entered. A code is 6 digits, works once, for 10 minutes, and allows 5 tries; a new code voids older ones. The responses never reveal whether an account exists. **Email** (HTML with a plain-text part; source `docs/design/handoff/emails/sign-in-code.html`, the same for new and known emails): subject "Your Glance sign-in code", preheader "{code} is your Glance code. It works once, for 10 minutes." Header "Glance"; a hero in the season's block-1 color on its soft page color (the account's fixed season, else the send date's) with mono eyebrow "Sign-in code", title "Your sign-in code", "Enter this code on the Glance screen that asked for it. New here? The same code sets up your family’s Glance.", the code large in a white tile and mono "Works once, for 10 minutes"; a white card "Glance never asks for this code by phone, text or email. Only type it on your Glance screen.", then "Didn’t ask for this? You can ignore this email. No one can sign in without this code."; footer "Sent to {email} because it was entered on a Glance screen. Glance · Calendar, weather, notes and photos for your family." No button or link. The text part carries the same words and the code. |
+| SIGNIN-13 | **Signed out by the server** (an online 401; never while offline; no reason shown). **Form:** the SIGNIN-01 form with a banner "This screen was signed out" · "Sign in again to keep the calendar, notes and photos up to date.", title "Sign in again", body "Check your family’s email below. We’ll send a code that signs this screen back in.", the last email prefilled. **Waiting changes:** the banner adds "Changes waiting on this screen: {n}. They’ll be sent after you sign in." **Different email:** with changes waiting, a tile under the field reads "Changes waiting on this screen belong to {previous email}. They’ll be removed from this screen if a different email signs in." with ghost "Use {previous email}", and the banner drops its second sentence. **Timing:** never interrupts an edit; the form shows once the sheet closes or no field is focused, or at the idle timeout (to Ambient during ambient hours, AMB-07). **Clears** only when a sign-in finishes: the same email syncs the waiting changes, another email removes them. |
 | SIGNIN-14 | **"Where is this screen?"** while the first setup isn't finished: after SIGNIN-06, or on the next sign-in of an account whose step never ended. Eyebrow "New family account", body "The weather and the clock’s time zone follow this place. You can change it later in Settings." The setup card (WX-04) with primary "Continue", "Use my location", and below a hairline ghost "Skip for now". A found place is saved → Signed in (no zone confirm). Skip → Signed in, cancelling any search or locating. Either ends the first setup. A failed save or skip shows "Couldn’t save. Try again." with the place kept; Continue saves it again, editing the field drops it. |
 | SIGNIN-15 | **QR sign-in** (Settings › Account, under the screen list): secondary "Sign in another device" (`qr-code`) → a block-1 tile with the code on white, "Scan to sign in", "Open the camera on the other device and point it at the code. It signs in with {email}.", mono "Code expires in {m:ss}" from 5:00, ghost "Done". The code is a one-time link for this account that signs the opener in (SIGNIN-09 "Welcome back"). At 0:00 a new code replaces it. A code works once, for 5 minutes, and a new one voids the old. While a code is made the box is empty at 5:00; a failure reads "Couldn’t make a code. Try again." with "Try again" (`rotate-cw`) before "Done". Done or leaving Settings voids the code. Offline the buttons are disabled. A used or expired code opens the email form, never showing the account email. Anyone who can see the screen may scan it. |
-| SIGNIN-16 | **Guest sign-in** (demo site only): a secondary "Sign-in as guests" (`user-round`) next to "Send sign-in link" signs this screen in at once to the shared guest account named by the server's `GUEST_EMAIL` (on the demo site: Trinh, guests@takeaglance.app, Carmel, IN 46032, Eastern time) as a returning account → SIGNIN-09 "Welcome back, {first name}". With no such account the button stays hidden. Disabled while a link is sending and offline; hidden on the signed-out form (SIGNIN-13). A failure shows "Couldn’t sign in. Try again." under the buttons. Everyone who uses it shares that family's data. |
+| SIGNIN-16 | **Guest sign-in** (demo site only): a secondary "Sign-in as guests" (`user-round`) next to "Send code" signs this screen in at once to the shared guest account named by the server's `GUEST_EMAIL` (on the demo site: Trinh, guests@takeaglance.app, Carmel, IN 46032, Eastern time) as a returning account → SIGNIN-09 "Welcome back, {first name}". With no such account the button stays hidden. Disabled while a code is sending and offline; hidden on the signed-out form (SIGNIN-13). A failure shows "Couldn’t sign in. Try again." under the buttons. Everyone who uses it shares that family's data. |
 
 ### 8.2 Today — `TODAY`
 Zones: Now panel (block-1), schedule (white panel), notes (white panel), Picture of the day (white panel).
@@ -362,35 +366,35 @@ Zones: Now panel (block-1), schedule (white panel), notes (white panel), Picture
 | TODAY-08 | **Weather now** in the Now panel, a button named "Weather now" → Weather: "{city} · Now" ("{city} · Updated {time}" for a saved forecast after a failed fetch, FAIL-02), condition icon + temperature, "{condition} · High {h}° · Low {l}°", and `umbrella` "Rain from {time}" at the first drizzle or rain hour of the hourly forecast. No location → `cloud-sun` "Set weather location" / "The forecast and the clock follow it." → Weather setup. Failure → `cloud-off` "Weather unavailable" / "Trying again in {n} min.", with no button (the Weather view keeps WX-05's "Try again"). |
 | TODAY-09 | Notes eyebrow "Notes · {n}", ghost "All notes". Shows the two newest; one on three-column screens under 880 px tall. Tap → Note details (NOTE-10). Empty → "No notes yet" + "Add note". |
 | TODAY-10 | On a photo background every zone sits on its white panel. |
-| TODAY-11 | **Schedule** = the day timeline (§8.3.2) for today, always for everyone, with no person filter and no weather lane: passed hours shrink × 0.3, and each hour label shows that hour's weather under it (16 px icon + temperature, 15 px / 480) when the hour is at least 46 px tall and clear of the now marker. Gutter 80 px on wide, 76 on mid and narrow, 52 on phone. It fills the card (min 200 px; 560 px in the one-column layout). Every plan from 5 AM to 9 PM stays on it; there is no "See all" row. |
+| TODAY-11 | **Schedule** = the day timeline (§8.3.2) for today, always for everyone, with no person filter and no rain chips: passed hours shrink × 0.3, with hour weather in the gutter (TL-07). Gutter 80 px on wide, 76 on mid and narrow, 52 on phone. It fills the card (min 200 px; 560 px in the one-column layout). Every plan from 5 AM to 9 PM stays on it; there is no "See all" row. |
 | TODAY-12 | **All-day events:** soft tiles (min height 56, radius 8) above the timeline, in event order: mono "ALL DAY", person dot (soft for shared), title, "{who} · {location}". They never show in the event summary and never strike through. |
 | TODAY-13 | **Layout** (Now panel, `lay=n`). **Landscape above 1180 px: no page scroll**; columns `0.95fr 1.5fr 1fr`, areas `"hero sched notes" "hero sched potd"`, rows `1fr 1fr`; notes in one column below 1600 px, else two. **1024–1180 px landscape:** columns `0.9fr 1.3fr`, areas `"hero sched" "notes potd"`, first row `max(660px, 100vh − 160px)`, the second row reached by scrolling, notes in two columns, Picture of the day min 240 px. **Portrait at 1024 px and up:** columns `1fr 1fr`, areas `"hero notes" "hero potd" "sched sched"`, rows `auto auto 1fr`, notes in one column. **Below 1024 px:** one scrolling column: Now panel, schedule, notes, Picture of the day (min 240 px); notes in two columns, one below 600 px. Body type grows by min(width ÷ 1920, height ÷ 1080), between 1× and 1.5×. |
 
 ### 8.3 Calendar & events — `CAL`, `EVT`
-Top: the week strip card (CAL-01; the date control on phone). Below: one white panel with the person filter row (CAL-05), all-day tiles and the day timeline (§8.3.2).
+Top: the week strip card (CAL-01; the date control on phone). Below: one white panel with the person filter row (CAL-05), all-day tiles, the day timeline (§8.3.2) and the 24 hours link (CAL-06).
 
 | ID | Requirement |
 |---|---|
-| CAL-01 | **Week strip** (600 px and up): eyebrow "{Mon d – d}" ("{Mon d} – {Mon d}" across months) and the month name of its Saturday, with the year outside the current year (wide and mid only), prev/next IconButtons (56), then 7 day pills Sunday to Saturday: weekday, date, one 6 px dot per member with a plan that day (always everyone, capped at 46 px wide), and the day's forecast icon + high when the cell is at least 124 px wide (measured) and the day has a forecast. Selected = black; today keeps a 2 px ring. Narrow drops the eyebrow, month name and weather. |
+| CAL-01 | **Week strip** (600 px and up): eyebrow "{Mon d – d}" ("{Mon d} – {Mon d}" across months) and the month name of its Saturday, with the year outside the current year (wide and mid only), prev/next IconButtons (56), then 7 day pills Sunday to Saturday: weekday, date, one 6 px dot per tag with a plan that day (always everyone, capped at 46 px wide), and the day's forecast icon + high when the cell is at least 124 px wide (measured) and the day has a forecast. Selected = black; today keeps a 2 px ring. Narrow drops the eyebrow, month name and weather. |
 | CAL-02 | Chevrons step a week; landing on this week selects today, any other week its Sunday. **Phone date control** (< 600, replaces the week strip): one full-width white card button: mono year over the month name (28 px) on the left, the selected date as a black pill (weekday + date) with `chevron-down` on the right; tap → date picker. |
-| CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per member with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered (today when the selected day is outside the list). A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
+| CAL-03 | **Date picker:** centered modal over the scrim (max 480 × 760 px, radius 24). Header "Pick a date", ghost "Today", Close. A vertical list of days from 2 months before to 3 months after the current month with sticky month headers; each row a 56 px pill: weekday, date, one 8 px dot per tag with a plan, a "Today" tag. Selected = black, today = 2 px ring. Opens with the selected day centered (today when the selected day is outside the list). A day → selects it and closes; Today → today and closes; scrim or Close → no change. |
 | CAL-04 | The timeline fills the panel with no scroll; with 24 hours on its minimum height is 760 px (720 mid, 1000 phone) and the page scrolls. Changing the day or the filter reflows the timeline over 280 ms. `/calendar?date=` selects that day. |
-| CAL-05 | **Person filter:** a row of soft pills (48 px, 44 on phone, 8 px apart), one per member: 12 px color dot + name (16 px / 480). It scrolls sideways; "Edit" (`pencil`, same pill) stays pinned after it → Family sheet. All members selected = everyone (the default): every dot filled, no black pill. Tap a member while everyone shows → only that member (black pill); tap others to add them; tap a selected one to remove it. Selecting every member → everyone. Removing the last → nobody: every dot a hollow ring and the day shows no plans, tiles or free slots. While filtered, hidden members show a hollow ring in their color. A plan shows when any selected member is on it (everyone plans always). Filters the timeline, all-day tiles and free slots. Belongs to this tab; `who=` sets it. |
-| CAL-06 | **24 hours:** a soft toggle pill (`clock` + "24 hours") left of "Add event". Off: 5 AM to 9 PM, with a black mono badge counting the day's plans that start before 5 AM or end after 9 PM (hidden at 0). On: black, no badge, 12 AM to 12 AM (TL-06). Stays on across days for this tab. |
-| CAL-07 | **Add event:** soft pill (`plus`, 48 px, 44 on phone) at the end of the filter row → New event on the selected day for the selected members (everyone when all are selected). |
+| CAL-05 | **Person filter:** a row of pills (48 px, 44 on phone, 8 px apart), one per tag: the name only (16 px / 480, black, 18 px side padding), no dot. Selected = filled with the tag's color; not selected = gray (hairline `#e6e6e6`). Every tag is selected by default; a tap toggles that tag. Turning every tag off leaves the day with no plans, tiles or free slots. A plan shows when any selected tag is on it; everyone plans show while any tag is selected; nobody plans only while every tag is selected. It scrolls sideways when it doesn't fit. Filters the timeline, all-day tiles and free slots; week dots always show everyone. Belongs to this tab; `who=` sets it (`who=none` = nobody). |
+| CAL-06 | **24 hours:** a centered text link under the timeline at the bottom of the card (14 px / 480, underlined, 32 px tall, then a 14 px icon: `chevrons-up-down` off, `chevrons-down-up` on; close to the timeline). Off: 5 AM to 9 PM, "Show all 24 hours", or "Show all 24 hours · {n} more plans" when the day has plans that start before 5 AM or end after 9 PM. On: 12 AM to 12 AM (TL-06), "Show 5 AM – 9 PM only" ("05:00 – 21:00" on the 24-hour clock). Stays on across days for this tab. |
+| CAL-07 | **Add event:** soft pill (`plus`, 48 px, 44 on phone) at the end of the filter row → New event on the selected day for the selected tags (everyone when all are selected, nobody when none are). |
 | CAL-08 | Empty day: the timeline shows one free slot, "Everyone free · 16 h" (or "Free · 16 h"). No events at all: the tile (`calendar-days`) "The calendar is empty" / "Select a day, then add an event. Days with plans get a dot for each person." replaces the timeline. |
 | CAL-09 | All-day tiles above the timeline, as TODAY-12, filtered by CAL-05. |
-| EVT-01 | Sheet "New event" / "Edit event", eyebrow "{Weekday}, {Mon} {d}". |
-| EVT-02 | Fields: Title* ("What's happening"), "Time" PillTabs "Set times · All day" (lg), Starts and Ends (§8.3.1), **Who**, Where ("Home, school, park…"), **Notes** (3 rows, "Anything to remember", saved trimmed). Events have no color of their own. |
+| EVT-01 | Sheet "New event" / "Edit event", eyebrow "{Weekday}, {Mon} {d}", then 12 px after it the day's forecast: 16 px icon + high ("68°") in the same mono caption style. The weather follows the event's day, uses the °F/°C setting and shows only with a location and a forecast for that day (today through 6 days out). Event details shows it the same way. |
+| EVT-02 | Fields: Title* ("What's happening"), Starts and Ends (§8.3.1), the **All day** row (EVT-08), **Who**, Where ("Home, school, park…"), **Notes** (3 rows, "Anything to remember", saved trimmed). Events have no color of their own. |
 | EVT-03 | Empty title → "Add a title", cleared on the next change. |
 | EVT-04 | Time entry and validation: §8.3.1. |
 | EVT-05 | Primary "Add event" / "Save" / "Save for later" (offline). Secondary "Cancel". |
 | EVT-06 | Delete (edit only): ghost "Delete" → `danger` "Delete event" inline confirm. |
 | EVT-07 | Save closes the sheet, or returns to Event details when editing from there; the timeline, week dots and Today update at once. |
-| EVT-08 | **All day** hides Starts, Ends and any picker; the event fills its date. "Set times" restores the draft's times, or the TPK-05 defaults. No TPK-07 check. Ambient reads "All day". |
-| EVT-09 | **Event details** (read-only; every tap on an existing event opens it, new events skip it): eyebrow = the day, title = the event title, ✕. A color block (the event's color, radius 24) with a mono label (the length "1 hr", "No end time" or "Whole day") over the time in large light numerals with mono AM/PM, or "All day"; on today a black "Happening now" pill while running. Rows with an icon, a mono label and hairline dividers, hidden when empty: **Who** (dot + name pills, or "Everyone"), **Where**, **Notes** (line breaks kept). Footer: primary "Edit" (`pencil`). An ended event (ended today, or any earlier day) shows a hairline "Ended" pill, no Edit, and the footer line "This event has ended and can't be changed." No offline banner. |
+| EVT-08 | **All day:** a left-aligned row under Starts and Ends (56 px tall; label, then 16 px after it a `Switch`); the whole row is the tap target. On: Starts and Ends stay but are disabled (transparent with a hairline, times struck through, no length label, taps do nothing), any open picker closes and any end-time error clears; the event fills its date. Off: the fields return with the draft's times, or the TPK-05 defaults. No TPK-07 check. Ambient reads "All day". `sheet=allday`. |
+| EVT-09 | **Event details** (read-only; every tap on an existing event opens it, new events skip it): eyebrow = the day, title = the event title, ✕. A color block (the event's color, radius 24) with a mono label (the length "1 hr", "No end time" or "Whole day") over the time in large light numerals with mono AM/PM, or "All day"; on today a black "Happening now" pill while running. Rows with an icon, a mono label and hairline dividers, hidden when empty: **Who** (dot + name pills, white; "Everyone"; hidden for nobody), **Where**, **Notes** (line breaks kept). Footer: primary "Edit" (`pencil`). An ended event (ended today, or any earlier day) shows a hairline "Ended" pill, no Edit, and the footer line "This event has ended and can't be changed." No offline banner. |
 | EVT-10 | **Edit from details:** "Edit" swaps the same sheet to Edit event. Cancel returns to details (after "Discard changes?" when changed; Discard returns to details). The ✕ and the scrim close the sheet (same check). Delete closes it. |
-| EVT-11 | **Who:** pills for "Everyone" and each member (color dot + name, 48 px), selected = black, any number. "Everyone" selects all (stored as everyone); tapping it when selected does nothing. Selecting every member one by one also means everyone. The last selected member can't be turned off. New events start with the Calendar filter's members, or everyone. |
+| EVT-11 | **Who** (a tag field): a 56 px hairline field (radius 8) holding the event's tags as pills in their color (44 px, name + a 36 px ✕ named "Remove {name}"), then an inline input, placeholder "Add a person" ("Add someone else" once someone is added), max 32 characters. No "Everyone" pill: every tag shows as its own pill, also when all are on it. **Suggestions** appear only while typing: white pills (dot + name, 48 px) for tags not yet on the event whose name fuzzy-matches, best first: starts with it → a word starts with it → contains it → its letters appear in order ("mnh" → Minh-An) → one typo away (3+ characters); matching ignores case, accents, spaces and hyphens; no match → no Suggestions block. A tap adds that tag and clears the input. Enter on an exact name (any case) adds that tag. Backspace in an empty input removes the last pill. Nobody is allowed. Saving with every tag on it stores everyone. New events start with the Calendar filter's tags, or everyone. |
 
 #### 8.3.1 Time entry — `TPK`
 
@@ -418,21 +422,18 @@ Used by Calendar (any day, filtered) and Today (today, everyone). Pure layout ru
 | TL-04 | **Plan cards** (radius 8, a button named "{title}, {range}"): content follows the card's real size: time + title, then a second title line, then "{who} · {location}", then the first line of Notes (`file-text`). Too short for that → one line: start time (hidden under 200 px wide), title, person dots. Under 260 px wide → the start time only. A plan that started before 5 AM shows "Until {end}" for its time. Lines end in "…", never wrap. |
 | TL-05 | **Colors:** the event's color (§7); past (STATUS-01) → white with a hairline and the title struck through, weight 340; now → 2 px black ring and a NOW pill (a one-line card keeps only the ring). Other days are never now. |
 | TL-06 | **24 hours** (Calendar only): 12 AM to 12 AM; night hours (before 5 AM, from 9 PM) without plans weigh half, night hours with plans are elastic as TL-02. Hour labels and hairlines thin out when rows get tight. |
-| TL-07 | **Weather lane** (Calendar only) on the right, 150 px wide (128 mid, 112 narrow; none on phone), aligned to the elastic hours: icon (named by condition) + temperature per hour, and its rain % when it fits; hours with rain ≥ 50% filled with the season block-3 color; hours the forecast doesn't cover stay empty. Plans that aren't past and overlap such an hour get a white "{p}% rain" chip (on the time line, so not on one-line cards). Only with a location and an hourly forecast for that day. |
-| TL-08 | **Free slots:** gaps of 30 min or more between 5 AM and 9 PM with no plan for the selected members show as dashed tiles: "Everyone free · {length}" when everyone is selected, else "Free · {length}"; named "Free {range}. Add event". On today a slot starts at now, and one left shorter than 30 min hides. Tap → New event starting at the slot start rounded up to 15 min, 1 hour long or to the slot's end. |
+| TL-07 | **Hour weather** (Calendar and Today, every size): each hour label in the gutter shows that hour's weather under it (16 px icon named by condition + temperature, 15 px / 480) when the hour is at least 46 px tall and clear of the now marker. No weather lane: plans use the full width. On Calendar (not on phone), plans that aren't past and overlap an hour with rain ≥ 50% get a white "{p}% rain" chip (on the time line, so not on one-line cards). Only with a location and an hourly forecast for that day; covers all 24 hours when TL-06 is on. |
+| TL-08 | **Free slots:** gaps of 30 min or more between 5 AM and 9 PM with no plan for the selected tags show as dashed tiles: "Everyone free · {length}" when everyone is selected, else "Free · {length}"; named "Free {range}. Add event". On today a slot starts at now, and one left shorter than 30 min hides. Tap → New event starting at the slot start rounded up to 15 min, 1 hour long or to the slot's end. |
 | TL-09 | **Now marker** (today only): a 2 px black line across the timeline with a black mono time pill in the gutter, moving every minute. |
 | TL-10 | Tapping a plan opens Event details (EVT-09). Day or filter changes reflow over 280 ms (at once with reduced motion). |
 
-#### 8.3.3 Family — `FAM`
+#### 8.3.3 Tags — `FAM`
 
 | ID | Requirement |
 |---|---|
-| FAM-01 | **Family sheet** (Calendar → Edit; max 560 px, radius 32): eyebrow "{n} members", title "Family", ✕, footer primary "Done". Changes save at once; Done only closes. |
-| FAM-02 | One row per member with hairline dividers: 20 px color dot, name (20 px / 480), mono "{n} plans" / "1 plan" / "No plans" (every plan they're on, everyone plans included), ghost "Remove" (`user-minus`). The last member has no Remove. |
-| FAM-03 | **Remove** → an inline soft confirm under the row: "Remove {name}?", what happens ("Their {n} plans are deleted. They're taken off {m} plans shared with others.", where {m} counts everyone plans too; only the parts that apply; "They have no plans." when neither does), "Cancel" and `danger` "Remove". Plans only for that member are deleted; shared plans lose them; everyone plans are unchanged. A filter showing only them returns to everyone. |
-| FAM-04 | **Add member:** a soft tile under the list: Name field + primary "Add" (48 px), then 44 px color swatches offering only colors no member uses (all 12 once every color is taken), the first preselected. Empty → "Add a name"; a name already in the family, ignoring case → "Already in the family"; cleared on the next keystroke. |
-| FAM-05 | A new member goes last in the filter, Who pickers and week dots, and joins every everyone plan. A filter showing everyone still does. |
-| FAM-06 | Closing with a typed name not added asks "Discard changes?" ("{name} won't be added."). Offline: add and remove work and sync later (SYNC-02). |
+| FAM-07 | Tags are the family's people (§7). There is no list or sheet to manage them and no Edit button on the person filter; they are never removed, renamed or recolored. |
+| FAM-04 | **New tag** from the Who field: when the typed name matches no tag exactly (any case), a white tile between the field and the suggestions: "NEW MEMBER" + a preview pill in the chosen color, primary "Add member", then the 12 color swatches (44 px; the first color no tag uses is preselected, any color once all are taken). "Add member" or Enter creates the tag and puts it on this event. Offline it syncs later (SYNC-02). |
+| FAM-05 | A new tag goes last in the filter and the week dots (selected when the filter shows everyone) and joins every everyone plan. |
 
 ### 8.4 Weather — `WX`
 
@@ -458,9 +459,9 @@ White panel: count, "Notice board", "Add note". Grid `auto-fill minmax(220px,1fr
 | NOTE-03 | Empty message → "Write a message". Blank name → "Guest". |
 | NOTE-04 | Newest first everywhere. Tilt cycles −2°, 1.5°, −1°, 2.5°. Stamp: "Just now" for 5 min, then the time the same day, the short weekday within 6 days, then "{Mon} {d}". |
 | NOTE-05 | Primary "Post note" / "Save" / "Save for later". Delete → `danger` "Delete note". |
-| NOTE-06 | Count "{n} notes" / "1 note" / "No notes". Caption "Notes are removed after {1 day\|1 week}" or "Notes stay until deleted". |
+| NOTE-06 | Count "{n} notes" / "1 note" / "No notes". Caption "Notes are removed after {n} days" ("1 day") or "Notes stay until deleted". |
 | NOTE-07 | Empty: "No notes yet" / "Leave a note for the family. Notes show on Today. {They're removed after X. \| They stay until someone deletes them.}" |
-| NOTE-08 | Notes past the expiry (24 h or 7 days since created) are deleted by the server and hidden by every screen, offline too. |
+| NOTE-08 | Notes older than the expiry (`noteExpiry.days` × 24 h since created, while it's on) are deleted by the server and hidden by every screen, offline too. |
 | NOTE-09 | Anyone can edit or delete any note. The board scrolls. |
 | NOTE-10 | **Note details** (read-only): eyebrow "Notice board", title "From {author}" ("Guest" when blank), ✕. The sheet is the sticky note: filled with the note's tone (footer too), radius 6, tilted by the note's rotation clamped to ±1.5°, modal shadow. The full text in 26–36 px light type with line breaks kept, nothing clipped; the mono post time at the bottom ("8:12 AM", "Waiting to post"). Footer: primary "Edit" (`pencil`), which turns it into the flat white Edit note sheet (280 ms). Cancel returns to details (after "Discard changes?" when changed); Save returns to details with the new text; ✕ and the scrim close; Delete closes. No color picker and no offline banner in details. |
 
@@ -487,20 +488,20 @@ Left: soft block with the featured image (radius 8), name, "{date} · {place}", 
 | PHOTO-16 | **Portrait photos** (taller than wide): thumbs, Picture of the day and backgrounds crop them like any photo; the featured photo shows them whole (contain, canvas-colored bars at the sides); full screen always shows the whole photo. |
 
 ### 8.7 Settings & Background — `SET`, `BG`
-Settings apply instantly, with no Save button. Choices use the large wrapping PillTabs. Sub-pages (Location, Background, Ambient screen) keep Settings active in the sidebar and put the ghost "‹ Settings" back link at the top left, above and outside the white panel, aligned with its left edge.
+Settings apply instantly, with no Save button. The main panel uses `Radio`, `Switch` and `Slider` (§4.2); Background and Ambient screen keep the large wrapping PillTabs. Sub-pages (Location, Background, Ambient screen) keep Settings active in the sidebar and put the ghost "‹ Settings" back link at the top left, above and outside the white panel, aligned with its left edge.
 
 | ID | Requirement |
 |---|---|
 | SET-01 | Header "Screen settings", "Settings", "Signed in as **{name}** · {email}". |
-| SET-02 | **Season** Auto · Spring · Summer · Fall · Winter; "Follows the month · now {Season}" / "Fixed to {Season}". Auto re-checks at midnight. |
+| SET-02 | **Season:** a vertical list of radios, 56 px rows, left-aligned: Auto (`calendar-days`), Spring (`flower-2`), Summer (`sun`), Fall (`leaf`), Winter (`snowflake`), each radio, 20 px icon, label. "Follows the month · now {Season}" / "Fixed to {Season}". Auto re-checks at midnight. |
 | SET-03 | **Background** row → Background page; summary "Season color" / "Photo · {title}" / "Slideshow · {interval}". |
-| SET-04 | **Clock** 12-hour · 24-hour ("Used for every time on the screen"). |
-| SET-05 | **Temperature** Fahrenheit · Celsius ("Weather is shown without a unit letter"). Last row. |
+| SET-04 | **Clock:** two radios on one line, "12-hour" and "24-hour" ("Used for every time on the screen"). |
+| SET-05 | **Temperature:** two radios on one line, "Fahrenheit" and "Celsius", 24 px apart, never wrapping ("Weather is shown without a unit letter"). Then **Hide sidebar when idle:** a `Switch` on the right of the row, "After 20 seconds without a touch. Any tap brings it back." (SHELL-11). Last row. |
 | SET-06 | Tile "Ambient screen" · its hours ("6:00 PM – 7:30 AM", "Sun – Thu 6:00 PM – 7:30 AM · Fri & Sat 9:00 PM – 9:00 AM", "Off"; a set with equal times reads "Not set") → SET-10. |
-| SET-07 | "Back to Today after" 1 min · 3 min · 5 min · Never. "Remove notes after" 1 day · 1 week · Never. |
+| SET-07 | **Back to Today after** and **Remove notes after:** each an eyebrow with a `Switch` on its right, then a white tile with the value (28 px / 340: "3 min" + "without a touch"; "7 days" + "after posting") and a `Slider` (1–15 min by 1; 1–30 days by 1) with mono end labels ("1 min" · "15 min"; "1 day" · "30 days"). Switch off = never: the slider is disabled, the value struck through, reading "Off · stays on the current view" / "Off · notes stay until deleted"; the last value comes back when it turns on. |
 | SET-08 | Account card: block-4 initial, name, email, the screen list (SET-12), "Sign in another device" (SIGNIN-15), then below a hairline the note "Sign out this device only." (info icon, mono) on the left and "Sign out" on the right. |
 | SET-09 | **Location** row, first: "Location" · "Sets the weather and the time zone" · "{city}, {state code} · {time zone name}" or "Not set" → **Location page** ("‹ Settings", white panel). Left: "Now set to" with the place and "{time zone name} · {clock}", or "Not set" · "Times follow this device’s own clock"; then "Change location" ("Set location" when unset) with the setup card (primary "Search") and its states. Right: soft block "What the location sets": Weather ("The forecast on Today, Weather and the ambient screen"), Time zone ("{zone} for the clock, Today, the calendar and event times"), a caption ("The clock and event times follow {zone}, even if this device is set to a different time." / "Until a location is set, times follow this device’s own clock.") and "Shared by every screen on this account". A place in the same zone saves and returns to Settings; another zone asks first (LOC-09). |
-| SET-10 | **Ambient screen page:** "Schedule" Every night · Weekends differ · Off. Weekends differ splits it into "Sun – Thu nights" and "Fri & Sat nights"; a night belongs to the day it starts, and a dim time before noon belongs to the night before. Modes keep both sets. Each set has TimeFields "Dims at" and "Wakes at" (with the length, past midnight when earlier); the picker has minutes 00 · 15 · 30 · 45. Equal times: "Same as dim time", the bar reads "Not set", and that set never runs. Off: "The screen stays bright all day and night.", right block "No ambient hours." / "Touch-to-wake and the idle timer work as usual." Right: "Over 24 hours", one noon-to-noon bar per set with the span dark, "After a touch it dims again when nobody has touched it for {n} min." (Never → "After a touch it stays awake until the next ambient start."), and "Preview" (moon) → Ambient. |
+| SET-10 | **Ambient screen page:** "Schedule" Every night · Weekends differ · Off. Weekends differ splits it into "Sun – Thu nights" and "Fri & Sat nights"; a night belongs to the day it starts, and a dim time before noon belongs to the night before. Modes keep both sets. Each set has TimeFields "Dims at" and "Wakes at" (with the length, past midnight when earlier); the picker has minutes 00 · 15 · 30 · 45. Equal times: "Same as dim time", the bar reads "Not set", and that set never runs. Off: "The screen stays bright all day and night.", right block "No ambient hours." / "Touch-to-wake and the idle timer work as usual." Right: "Over 24 hours", one noon-to-noon bar per set with the span dark, "After a touch it dims again when nobody has touched it for {n} min." (idle off → "After a touch it stays awake until the next ambient start."), and "Preview" (moon) → Ambient. |
 | SET-12 | **Signed-in screens:** "{n} screens signed in" ("1 screen signed in"), soft rows: type icon (`monitor`, `tablet`, `smartphone`) in a white circle, name, mono caption "This screen" (first, with an accent dot) or "Active {n} min ago" / "Active {n} hr ago" / "Active yesterday" / "Active {Mon} {d}". Type from the browser that signed in: iPhone or Android phone → smartphone, iPad or Android tablet → tablet, else monitor. Name "{browser} {screen \| tablet \| phone}" (Chrome, Edge, Firefox, Safari), else "Screen", "Tablet", "Phone". Read-only. Read from the server when Settings opens; offline or on failure only this screen shows. |
 | BG-01 | "‹ Settings", "Background", Season color · Photo · Slideshow. |
 | BG-02 | 16:9 thumb grid + "Upload photo" tile; uploads behave as PHOTO-06/08. Offline: "Upload when online", disabled. Label "Family photos · select one" / "Family photos · all {n} in rotation". |
@@ -526,6 +527,7 @@ One full-screen button, text on deep.
 
 ### 8.9 Sheets — `SHEET`
 - Modal over a 60% scrim (also over the sidebar). Card radius 32, max width 560, padding `clamp(24px,3vw,40px)`, shadow-3, 56 px close button.
+- **Sticky header and footer** (every sheet): the eyebrow, title and ✕ stay pinned at the top while the body scrolls, and the footer at the bottom. Both are white; the header casts `0 2px 8px` 4% black down onto the body and the footer the same up (`0 -2px 8px`); the body between them is surface-soft (`#f7f7f5`), 12 px below the header. In the body, tiles and pills that were soft are white (time picker, New member tile, suggestion pills, Who pills in Event details); inputs stay white with a hairline. Note sheets keep the note color everywhere.
 - An unchanged sheet closes at once on scrim, Cancel, ✕ or Escape.
 - **Discard changes?** When the draft changed, those replace the footer with "Discard changes?", a line ("This event won’t be added." · "Your edits to this event won’t be saved." · "This note won’t be posted." · "Your edits to this photo won’t be saved."), secondary "Keep editing" (focused) and `danger` "Discard". While shown, the scrim is ignored and ✕ or Escape discards. An edit or "Keep editing" brings the footer back. The idle timeout discards without asking.
 - Sticky action row: Delete left, Cancel + primary right. Details sheets (EVT-09, NOTE-10) have a single primary "Edit".
@@ -542,7 +544,7 @@ One full-screen button, text on deep.
 - "Local" always means the screen's time zone (LOC-06).
 
 ### 9.2 Idle — `IDLE`
-- IDLE-01: after no touch for the chosen time, any view returns to Today; sheets are discarded and full-screen Photos closes; the sidebar is Hidden (SHELL-11). A tap, key press or scroll counts as a touch.
+- IDLE-01: while "Back to Today after" is on (SET-07), after no touch for the chosen minutes, any view returns to Today; sheets are discarded and full-screen Photos closes; the sidebar is Hidden (SHELL-11). A tap, key press or scroll counts as a touch.
 - IDLE-02: paused while a text field is focused; leaving it restarts the wait.
 - IDLE-03: during ambient hours, idle returns to Ambient.
 
@@ -573,7 +575,7 @@ One full-screen button, text on deep.
 - `kb=1` fakes the keyboard height (36% of the window, 260–380 px) and focuses the first field; the drawn keyboard isn't built.
 
 ### 9.7 Sync — `SYNC`
-- SYNC-01: events, members, notes, photos and settings are saved to the account and sync to every screen. The Calendar filter, 24 hours and the selected day belong to the tab.
+- SYNC-01: events, tags, notes, photos and settings are saved to the account and sync to every screen. The Calendar filter, 24 hours and the selected day belong to the tab.
 - SYNC-02: writes go to IndexedDB with an outbox entry; the engine pushes them in order and pulls changes since its cursor; an SSE ping triggers a pull, else polling every 30 s. A pull never overwrites a row with a pending write (tech design §5).
 - SYNC-03: last write to reach the server wins; offline edits replay in order. **Delete wins** over a concurrent edit. Settings are one record: the later change replaces the whole set.
 
@@ -582,7 +584,7 @@ One full-screen button, text on deep.
 | ID | Requirement |
 |---|---|
 | A11Y-01 | Every control has a name. Meaningful icons without text are named images (hourly and 7-day icons by condition); decorative icons are hidden. |
-| A11Y-02 | Choices use `aria-pressed`: swatches, PillTabs, week and date picker days, member pills (filter and Who), 24 hours, picker cells, thumbs, active IconButtons. |
+| A11Y-02 | Choices use `aria-pressed`: swatches, PillTabs, week and date picker days, tag pills (filter) and suggestions, radios (`aria-checked`), switches (`role="switch"`), picker cells, thumbs, active IconButtons. |
 | A11Y-03 | Sheets are `role="dialog"` + `aria-modal`, named by their title. Targets ≥ 44 px (rail 56, drawer rows 64, grip 44×144, handle 56×96; sheet close and upload buttons 56). |
 | A11Y-04 | Sheet focus follows the visual order: ✕ → fields → swatches → actions, wrapping. |
 | A11Y-05 | Hierarchy by weight, never opacity. WCAG AA 4.5:1 everywhere: black on season blocks, soft surfaces and panels; white on deep and Winter's accent; **black on the Spring, Summer and Fall accents**; white over the Ambient photo at dim ≥ 0.55. |
@@ -610,11 +612,11 @@ All user-facing strings live in `src/copy.ts`, except time formats (TIME-01) and
 ---
 
 ## Appendix A — Fixture data
-Frozen at **Fri Oct 9 2026, 10:41 AM Pacific** (Ambient 7:12 PM). Fixture times are Pacific wall times, and a `now=` without offset is read in that zone. Account maria@example.com, name "Maria"; any other email is new. Location "Portland, OR · Pacific time".
+Frozen at **Fri Oct 9 2026, 10:41 AM Pacific** (Ambient 7:12 PM). Fixture times are Pacific wall times, and a `now=` without offset is read in that zone. Account maria@example.com, name "Maria"; any other email is new. Sign-in code: `000000` is wrong, any other 6 digits are right. Location "Portland, OR · Pacific time".
 
-**Family:** Minh-An (lilac), Minh-Hy (sky), Mom (coral), Dad (mint), Thang (sun), Tin (pink), Nghe (lime), An (rust), Nga (glacier), in that order.
+**Tags:** Minh-An (lilac), Minh-Hy (sky), Mom (coral), Dad (mint), Thang (sun), Tin (pink), Nghe (lime), An (rust), Nga (glacier), in that order.
 
-**Events (Oct 2026):** ported from the prototype's `Component.init()` list; plans listing all nine members are stored as everyone, and "Bring …" lists become Notes. The 9th has 18 timed plans from Morning run 7:00 AM (Thang) to Movie night 7:00–8:30 PM (everyone), with School 8:15 AM–3:00 PM (Minh-An, Minh-Hy), Yoga class 10:00–11:00 AM (Nga) and Grandma's video call 10:30–11:15 AM (Mom) running at 10:41; the event summary shows the video call. The 10th adds Pick up bait 4:30 AM and Late movie 10:00 PM (24 hours). The 16th has the all-day "No school · teacher planning day". School weeks (5th–8th, 12th–15th) have drop-off, School and pickup. `allday=1` adds Grandpa staying over (everyone, all day) on the 9th. `events=many` adds Family dinner, Bedtime story, Call the plumber and Walk the dog on the 9th (22 plans).
+**Events (Oct 2026):** ported from the prototype's `Component.init()` list; plans listing all nine tags are stored as everyone, and "Bring …" lists become Notes. The 9th has 18 timed plans from Morning run 7:00 AM (Thang) to Movie night 7:00–8:30 PM (everyone), with School 8:15 AM–3:00 PM (Minh-An, Minh-Hy), Yoga class 10:00–11:00 AM (Nga) and Grandma's video call 10:30–11:15 AM (Mom) running at 10:41; the event summary shows the video call. The 10th adds Pick up bait 4:30 AM and Late movie 10:00 PM (24 hours). The 16th has the all-day "No school · teacher planning day". School weeks (5th–8th, 12th–15th) have drop-off, School and pickup. `allday=1` adds Grandpa staying over (everyone, all day) on the 9th. `events=many` adds Family dinner, Bedtime story, Call the plumber and Walk the dog on the 9th (22 plans).
 
 **Notes:** "Wi-Fi password is on the fridge!" Dad 8:12 AM (1, −2°) · "Package for Minh-Hy at the front door." Mom 9:05 AM (2, 1.5°) · "Window cleaner comes Wednesday — please leave blinds up." Mom Mon (3, −1°) · "Welcome home, Grandpa!" Minh-Hy Tue (4, 2.5°) · "Bike lock code changes Friday. Ask Dad." Dad Tue (soft, −1.5°). Keyboard-frame draft: "Has anyone seen my blue umbr".
 

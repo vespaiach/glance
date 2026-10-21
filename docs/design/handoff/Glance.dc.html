@@ -18,14 +18,31 @@
 <sc-if value="{{ is.signin }}" hint-placeholder-val="{{ false }}">
 <main style="flex:1;min-height:0;overflow:auto;padding:var(--kiosk-gutter);box-sizing:border-box;display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-content:start">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="1" padding="clamp(24px,3.2vw,48px)" dc-props="{{ heroBlock }}" hint-size="100%,100%">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px">
 <span style="font-size:24px;font-weight:540;letter-spacing:-0.4px">Glance</span>
-<div style="display:flex;align-items:center;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="20" hint-size="20px,20px"></x-import><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">{{ seasonLabel }}</span></div>
+<div style="display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;font-variant-numeric:tabular-nums;white-space:nowrap"><span>{{ heroDateShown }}</span><span>·</span><span>{{ heroTime }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="20" hint-size="20px,20px"></x-import></div>
 </div>
 <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="{{ clockTime }}" hour12="{{ hour12 }}" hint-size="100%,140px"></x-import>
-<div style="font-size:clamp(22px,2vw,28px);font-weight:340;line-height:1.3;letter-spacing:-0.3px;max-width:520px;text-wrap:pretty">Calendar, weather, notes and photos for your family. Sign in to manage them.</div>
+<div style="font-size:clamp(40px,4.4vw,86px);font-weight:340;line-height:1;letter-spacing:-1.72px;max-width:15ch;text-wrap:balance">Your family’s day, at a glance.</div>
+<div style="font-size:clamp(20px,1.6vw,24px);font-weight:330;line-height:1.35;letter-spacing:-0.2px;max-width:520px;text-wrap:pretty">Calendar, weather, notes and photos for your family. Sign in to manage them.</div>
 </div>
+<sc-if value="{{ heroPreview }}" hint-placeholder-val="{{ true }}">
+<div aria-hidden="true" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:20px;min-width:0">
+<div style="flex:1.6 1 320px;min-width:0;background:var(--surface-canvas);border-radius:24px;padding:16px;box-sizing:border-box;box-shadow:0 4px 16px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:4px">
+<div style="padding:4px 12px 8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Today · 3 events</x-import></div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.EventRow" start="8:00" title="School drop-off" status="past" dc-props="{{ heroRow }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.EventRow" start="10:30" title="Piano lesson" status="now" dc-props="{{ heroRow }}" hint-size="100%,56px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.EventRow" start="4:30 PM" title="Soccer practice" dot="var(--season-block-2)" dc-props="{{ heroRow }}" hint-size="100%,56px"></x-import>
+</div>
+<div style="flex:1 1 200px;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px">
+<div style="flex:1 1 180px;min-width:0;background:var(--season-block-3);border-radius:24px;padding:20px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="font-size:64px;font-weight:300;line-height:1;letter-spacing:-2px;font-variant-numeric:tabular-nums">64°</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="48" stroke-width="1.5" hint-size="48px,48px"></x-import></div>
+<span style="font-size:16px;font-weight:330;line-height:1.35;text-wrap:pretty">Rain moving in after 4 PM</span>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="2" author="Mom" time="8:12 AM" min-height="0" dc-props="{{ heroNote }}" hint-size="100%,120px">Soccer cleats are by the door</x-import>
+</div>
+</div>
+</sc-if>
 </x-import>
 <div style="display:flex;flex-direction:column;justify-content:center;gap:32px;padding:clamp(8px,3vw,48px);box-sizing:border-box;min-width:0;max-width:560px;width:100%;justify-self:center">
 <sc-if value="{{ si.form }}" hint-placeholder-val="{{ true }}">
@@ -34,33 +51,42 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">One account per family</x-import>
 <sc-if value="{{ si.notEnded }}" hint-placeholder-val="{{ true }}">
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Sign in or get started</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Enter your email. We’ll send a link that signs this screen in. New here? The same link sets up your family’s Glance.</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Enter your email. We’ll send a 6-digit code to sign this screen in. New here? The same code sets up your family’s Glance.</div>
 </sc-if>
 <sc-if value="{{ si.ended }}" hint-placeholder-val="{{ false }}">
 <div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Sign in again</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Check your family’s email below. We’ll send a link that signs this screen back in.</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Check your family’s email below. We’ll send a code that signs this screen back in.</div>
 </sc-if>
 </div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Email" placeholder="name@example.com" value="{{ email }}" on-change="{{ setEmail }}" error="{{ emailErr }}" hint-size="100%,84px"></x-import>
 <sc-if value="{{ si.switchWarn }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;flex-direction:column;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px;margin-top:-16px"><div style="display:flex;align-items:flex-start;gap:12px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="info" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0;overflow-wrap:anywhere">Changes waiting on this screen belong to <strong style="font-weight:540">{{ si.prevEmail }}</strong>. They’ll be removed from this screen if a different email signs in.</span></div><div style="display:flex;margin-left:18px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="undo-2" on-click="{{ usePrevEmail }}" hint-size="240px,44px">Use {{ si.prevEmail }}</x-import></div></div></sc-if>
-<sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="A link can’t be sent right now. Sending turns back on when the screen reconnects." tone="soft" hint-size="100%,80px"></x-import></sc-if>
+<sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="A code can’t be sent right now. Sending turns back on when the screen reconnects." tone="soft" hint-size="100%,80px"></x-import></sc-if>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="{{ si.sendIcon }}" disabled="{{ si.sendOff }}" on-click="{{ sendLink }}" hint-size="200px,44px">{{ si.sendLabel }}</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="{{ si.sendIcon }}" disabled="{{ si.sendOff }}" on-click="{{ sendCode }}" hint-size="200px,44px">{{ si.sendLabel }}</x-import>
 <sc-if value="{{ si.demo }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="user-round" disabled="{{ si.sending }}" on-click="{{ guestSignIn }}" hint-size="220px,44px">Sign-in as guests</x-import></sc-if>
 </div>
-<sc-if value="{{ si.sending }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Sending a link to <strong style="font-weight:540">{{ emailShown }}</strong></span></div></sc-if>
+<sc-if value="{{ si.sending }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Sending a code to <strong style="font-weight:540">{{ emailShown }}</strong></span></div></sc-if>
 <div style="display:flex;align-items:center;gap:12px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="lock" size="18" hint-size="18px,18px"></x-import><span style="font-size:15px;font-weight:330;line-height:1.45">Only your family can see its calendar, notes and photos.</span></div>
 </sc-if>
 <sc-if value="{{ si.sent }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Sign in</x-import>
-<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Check your email</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">We sent a link to <strong style="font-weight:540">{{ emailShown }}</strong>. Open it and this screen signs in by itself.</div>
+<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Enter the code</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">We sent a 6-digit code to <strong style="font-weight:540">{{ emailShown }}</strong>. It works once, for 10 minutes.</div>
 </div>
-<div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Link expires in 10 minutes</span></div>
-<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-<sc-if value="{{ backReady }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import></sc-if>
-<sc-if value="{{ backWaiting }}" hint-placeholder-val="{{ true }}"><span role="timer" aria-live="off" style="display:flex;align-items:center;min-height:44px;padding:0 12px;font-family:var(--font-mono);font-size:14px;font-weight:400;text-transform:uppercase;letter-spacing:0.02em;font-variant-numeric:tabular-nums">Use a different email in {{ backWaitLabel }}</span></sc-if>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span id="si-code-label" style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">Code</span>
+<div style="position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;max-width:456px">
+<sc-for list="{{ codeCells }}" as="c" hint-placeholder-count="6"><span aria-hidden="true" style="height:clamp(56px,5vw,72px);border-radius:var(--radius-md);background:var(--surface-canvas);box-shadow:{{ c.ring }};display:grid;place-items:center;font-family:var(--font-mono);font-size:clamp(28px,2.4vw,36px);font-variant-numeric:tabular-nums;transition:box-shadow var(--dur-fast)">{{ c.d }}</span></sc-for>
+<input value="{{ code }}" onChange="{{ setCodeEv }}" onFocus="{{ codeFocusOn }}" onBlur="{{ codeFocusOff }}" disabled="{{ codeInputOff }}" autoFocus="{{ true }}" inputMode="numeric" autoComplete="one-time-code" maxLength="6" aria-labelledby="si-code-label" aria-describedby="si-code-err" style="position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;font-size:16px;cursor:text">
+</div>
+<sc-if value="{{ codeErrOn }}" hint-placeholder-val="{{ false }}"><span id="si-code-err" role="alert" style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;color:var(--danger)">{{ codeErr }}</span></sc-if>
+</div>
+<sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="The code can’t be checked right now. Sign in turns back on when the screen reconnects." tone="soft" hint-size="100%,80px"></x-import></sc-if>
+<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="{{ codeBtnIcon }}" disabled="{{ codeBtnOff }}" on-click="{{ submitCode }}" hint-size="140px,44px">{{ codeBtnLabel }}</x-import></div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)">
+<sc-if value="{{ backReady }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="rotate-cw" disabled="{{ off }}" on-click="{{ resend }}" hint-size="200px,44px">Send a new code</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import></sc-if>
+<sc-if value="{{ backWaiting }}" hint-placeholder-val="{{ true }}"><span role="timer" aria-live="off" style="display:flex;align-items:center;min-height:44px;padding:0 12px;font-family:var(--font-mono);font-size:14px;font-weight:400;text-transform:uppercase;letter-spacing:0.02em;font-variant-numeric:tabular-nums">New code or different email in {{ backWaitLabel }}</span></sc-if>
 </div>
 </sc-if>
 <sc-if value="{{ si.name }}" hint-placeholder-val="{{ false }}">
@@ -93,37 +119,15 @@
 </div>
 <div style="display:flex;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ skipLoc }}" dc-props="{{ sx.ml16 }}" hint-size="140px,44px">Skip for now</x-import></div>
 </sc-if>
-<sc-if value="{{ si.phone }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;flex-direction:column;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Sign in</x-import>
-<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">Finish on your phone</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">The link opened on another device. Add your name and this screen’s location there, and this screen signs in by itself.</div>
-</div>
-<div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="smartphone" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Waiting for your phone</span></div>
-<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" on-click="{{ phoneDone }}" hint-size="220px,44px">I finished on my phone</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import>
-</div>
-</sc-if>
 <sc-if value="{{ si.expired }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Sign in</x-import>
-<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">This link has expired</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Sign-in links work for 10 minutes. Send a new one to <strong style="font-weight:540">{{ emailShown }}</strong>.</div>
+<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">This code has expired</div>
+<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">Codes work for 10 minutes. Send a new one to <strong style="font-weight:540">{{ emailShown }}</strong>.</div>
 </div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="rotate-cw" on-click="{{ resend }}" hint-size="190px,44px">Send a new link</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="rotate-cw" on-click="{{ resend }}" hint-size="190px,44px">Send a new code</x-import>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="chevron-left" on-click="{{ backToForm }}" hint-size="220px,44px">Use a different email</x-import>
-</div>
-</sc-if>
-<sc-if value="{{ si.expiredLink }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;flex-direction:column;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Sign-in link</x-import>
-<div style="font-size:var(--type-display-xl-size);font-weight:340;letter-spacing:-1px;line-height:1.05">This link doesn’t work anymore</div>
-<div style="font-size:18px;font-weight:330;line-height:1.45;text-wrap:pretty">It expired or was already used. Each link works once, for 10 minutes. Send a new one to <strong style="font-weight:540">{{ emailShown }}</strong>.</div>
-</div>
-<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="rotate-cw" on-click="{{ resend }}" hint-size="190px,44px">Send a new link</x-import>
 </div>
 </sc-if>
 <sc-if value="{{ si.done }}" hint-placeholder-val="{{ false }}">
@@ -382,12 +386,10 @@
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap">
 <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 520px">
 <div role="group" aria-label="Show plans for" style="display:flex;align-items:center;gap:8px;overflow-x:auto;min-width:0;flex:0 1 auto;scrollbar-width:none">
-<sc-for list="{{ whoF }}" as="c" hint-placeholder-count="9"><button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.pressed }}" style="flex:none;height:{{ L.chipH }};border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;gap:8px;padding:0 16px 0 12px;font-family:inherit;font-size:16px;font-weight:480;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease,color 180ms ease" style-active="transform:scale(0.97)"><span style="width:12px;height:12px;flex:none;box-sizing:border-box;border-radius:9999px;background:{{ c.dotBg }};border:3px solid {{ c.c }};transition:background 180ms ease"></span>{{ c.label }}</button></sc-for>
+<sc-for list="{{ whoF }}" as="c" hint-placeholder-count="9"><button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.pressed }}" style="flex:none;height:{{ L.chipH }};border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;gap:8px;padding:0 18px;font-family:inherit;font-size:16px;font-weight:480;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease,color 180ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for>
 </div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="pencil" aria-label="Edit family members" on-click="{{ openFamily }}" dc-props="{{ famBtn }}" hint-size="96px,48px">Edit</x-import>
 </div>
 <div style="display:flex;align-items:center;gap:12px 16px;flex:{{ L.freeFlex }};flex-wrap:wrap;min-width:0">
-<button type="button" onClick="{{ span.toggle }}" aria-pressed="{{ span.pressed }}" aria-label="{{ span.aria }}" style="flex:none;height:{{ L.chipH }};border:0;border-radius:9999px;background:{{ span.bg }};color:{{ span.fg }};display:flex;align-items:center;gap:8px;padding:0 18px 0 14px;font-family:inherit;font-size:var(--type-button-size);font-weight:480;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease,color 180ms ease" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" hint-size="20px,20px"></x-import>24 hours<sc-if value="{{ span.hasMore }}" hint-placeholder-val="{{ false }}"><span style="min-width:24px;height:24px;padding:0 7px;box-sizing:border-box;border-radius:9999px;background:var(--action-primary);color:var(--on-action-primary);display:grid;place-items:center;font-family:var(--font-mono);font-size:13px;letter-spacing:0.4px">{{ span.more }}</span></sc-if></button>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" on-click="{{ addEvent }}" dc-props="{{ addEvBtn }}" hint-size="140px,48px">Add event</x-import>
 </div>
 </div>
@@ -403,7 +405,7 @@
 </sc-if>
 <sc-if value="{{ calTl }}" hint-placeholder-val="{{ true }}"><div data-tl="cal" style="flex:1;min-height:{{ L.tlMin }};position:relative">
 <div style="position:absolute;left:0;right:0;top:12px;height:{{ calT.H }}">
-<sc-for list="{{ calT.hours }}" as="h" hint-placeholder-count="8"><div style="position:absolute;left:0;right:0;top:{{ h.y }};transform:translateY(-10px);display:flex;align-items:flex-start;pointer-events:none;transition:top 280ms ease"><div style="width:{{ calT.gut }};flex:none;box-sizing:border-box;padding-right:10px;visibility:{{ h.vis }}"><span style="font-family:var(--font-mono);font-size:14px;line-height:20px;letter-spacing:0.54px;white-space:nowrap">{{ h.label }}</span></div><div style="flex:1;height:1px;margin-top:10px;background:var(--border-hairline);visibility:{{ h.lvis }}"></div></div></sc-for>
+<sc-for list="{{ calT.hours }}" as="h" hint-placeholder-count="8"><div style="position:absolute;left:0;right:0;top:{{ h.y }};transform:translateY(-10px);display:flex;align-items:flex-start;pointer-events:none;transition:top 280ms ease"><div style="width:{{ calT.gut }};flex:none;box-sizing:border-box;padding-right:10px;visibility:{{ h.vis }};display:flex;flex-direction:column;gap:4px"><span style="font-family:var(--font-mono);font-size:14px;line-height:20px;letter-spacing:0.54px;white-space:nowrap">{{ h.label }}</span><sc-if value="{{ h.wx }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:4px;font-size:15px;font-weight:480;line-height:18px;font-variant-numeric:tabular-nums;white-space:nowrap"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ h.icon }}" size="16" stroke-width="1.5" hint-size="16px,16px"></x-import>{{ h.temp }}</span></sc-if></div><div style="flex:1;height:1px;margin-top:10px;background:var(--border-hairline);visibility:{{ h.lvis }}"></div></div></sc-for>
 <div style="position:absolute;top:0;bottom:0;left:{{ calT.gut }};right:{{ calT.laneW }}">
 <sc-for list="{{ calT.gaps }}" as="g" hint-placeholder-count="0"><button type="button" onClick="{{ g.open }}" aria-label="{{ g.aria }}" style="position:absolute;left:0;right:8px;top:{{ g.top }};height:{{ g.h }};border-radius:8px;border:2px dashed var(--border-hairline);background:transparent;box-sizing:border-box;display:flex;align-items:center;padding:0 14px;overflow:hidden;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:top 280ms ease,height 280ms ease"><sc-if value="{{ g.lbl }}" hint-placeholder-val="{{ true }}"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.label }}</span></sc-if></button></sc-for>
 <sc-for list="{{ calT.items }}" as="it" hint-placeholder-count="4"><button type="button" onClick="{{ it.open }}" aria-label="{{ it.aria }}" style="position:absolute;top:{{ it.top }};height:{{ it.h }};left:{{ it.l }};width:{{ it.w }};padding:0 8px 4px 0;box-sizing:border-box;border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:top 280ms ease,height 280ms ease,transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="height:100%;box-sizing:border-box;border-radius:8px;background:{{ it.fill }};box-shadow:{{ it.ring }};padding:{{ it.pad }};display:flex;flex-direction:column;justify-content:{{ it.jc }};gap:4px;overflow:hidden">
@@ -414,10 +416,11 @@
 <sc-if value="{{ it.bring }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px;min-width:0;font-size:15px;font-weight:480;line-height:1.3;flex:none"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="file-text" size="18" hint-size="18px,18px"></x-import></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ it.bringText }}</span></span></sc-if></sc-if>
 </span></button></sc-for>
 </div>
-<sc-if value="{{ calT.hasLane }}" hint-placeholder-val="{{ false }}"><div aria-label="Hourly weather" style="position:absolute;top:0;bottom:0;right:0;width:{{ calT.laneW }}"><sc-for list="{{ calT.lane }}" as="w" hint-placeholder-count="0"><div style="position:absolute;left:8px;right:0;top:{{ w.top }};height:{{ w.h }};box-sizing:border-box;padding:2px 0;transition:top 280ms ease,height 280ms ease"><div style="height:100%;border-radius:8px;background:{{ w.bg }};display:flex;align-items:center;justify-content:center;overflow:hidden"><sc-if value="{{ w.has }}" hint-placeholder-val="{{ false }}"><span style="display:flex;flex-direction:{{ w.dir }};align-items:center;gap:{{ w.gap }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ w.icon }}" size="{{ w.is }}" stroke-width="1.5" hint-size="20px,20px"></x-import><span style="font-size:{{ w.fs }};font-weight:480">{{ w.temp }}</span><sc-if value="{{ w.rain }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:13px;letter-spacing:0.4px">{{ w.p }}</span></sc-if></span></sc-if></div></div></sc-for></div></sc-if>
+
 <sc-if value="{{ calT.now.has }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;top:{{ calT.now.y }};transform:translateY(-50%);display:flex;align-items:center;pointer-events:none;z-index:2"><div style="width:{{ calT.gut }};flex:none;display:flex;justify-content:flex-end;padding-right:8px;box-sizing:border-box"><span style="background:var(--action-primary);color:var(--on-action-primary);border-radius:9999px;padding:4px 10px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px">{{ calT.now.label }}</span></div><div style="flex:1;height:2px;background:var(--black)"></div></div></sc-if>
 </div>
 </div></sc-if>
+<sc-if value="{{ calTl }}" hint-placeholder-val="{{ true }}"><div style="display:flex;justify-content:center"><button type="button" onClick="{{ span.toggle }}" aria-pressed="{{ span.pressed }}" style="min-height:32px;display:flex;align-items:center;gap:4px;padding:0 8px;margin:-8px 0 -4px;border:0;background:transparent;font-family:inherit;font-size:14px;font-weight:480;color:var(--text-primary);text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">{{ span.link }}<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ span.icon }}" size="14" hint-size="14px,14px"></x-import></button></div></sc-if>
 </div>
 </div>
 </sc-if>
@@ -621,11 +624,11 @@
 </div>
 <div style="display:flex;flex-direction:column">
 <button onClick="{{ go.location }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Location</span><span style="font-size:15px;font-weight:330">Sets the weather and the time zone</span></div><div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:17px;font-weight:330">{{ locInfo.summary }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Season</span><span style="font-size:15px;font-weight:330">{{ seasonSub }}</span></div><div style="max-width:100%;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.season }}" value="{{ seasonPick }}" on-change="{{ set.seasonPick }}" dc-props="{{ pillWrap }}" hint-size="572px,64px"></x-import></div></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px;padding-top:12px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Season</span><span style="font-size:15px;font-weight:330">{{ seasonSub }}</span></div><div style="max-width:100%;display:flex"><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Season" style="display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:0"><sc-for list="{{ seasonR }}" as="o" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ o.icon }}" size="20" hint-size="20px,20px"></x-import></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div></div>
 <button onClick="{{ go.background }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Background</span><span style="font-size:15px;font-weight:330">Photo, slideshow or the plain season palette</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:330">{{ bgSummary }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Clock</span><span style="font-size:15px;font-weight:330">Used for every time on the screen</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.clock }}" value="{{ clockFmt }}" on-change="{{ set.clockFmt }}" dc-props="{{ pillWrap }}" hint-size="286px,64px"></x-import></div>
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Temperature</span><span style="font-size:15px;font-weight:330">Weather is shown without a unit letter</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.temp }}" value="{{ tempUnit }}" on-change="{{ set.tempUnit }}" dc-props="{{ pillWrap }}" hint-size="312px,64px"></x-import></div>
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Hide bar when idle</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">After 20 seconds without a touch. Any tap brings it back.</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.barAuto }}" value="{{ barAuto }}" on-change="{{ set.barAuto }}" dc-props="{{ pillWrap }}" hint-size="200px,64px"></x-import></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Clock</span><span style="font-size:15px;font-weight:330">Used for every time on the screen</span></div><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Clock format" style="display:flex;flex-wrap:nowrap;align-items:center;gap:8px 24px;flex:none"><sc-for list="{{ clockR }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Temperature</span><span style="font-size:15px;font-weight:330">Weather is shown without a unit letter</span></div><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Temperature unit" style="display:flex;flex-wrap:nowrap;align-items:center;gap:8px 24px;flex:none"><sc-for list="{{ tempT.opts }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Hide sidebar when idle</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">After 20 seconds without a touch. Any tap brings it back.</span></div><button data-ds-new="SettingSwitch" type="button" role="switch" aria-checked="{{ barT.on }}" aria-label="Hide sidebar when idle" onClick="{{ barT.toggle }}" style="min-height:56px;display:flex;align-items:center;padding:0 4px;border:0;background:transparent;cursor:pointer"><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ barT.track }};box-shadow:{{ barT.ring }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ barT.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ barT.ring }};transition:left 180ms ease"></span></span></button></div>
 </div>
 </div>
 <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
@@ -635,12 +638,30 @@
 <button type="button" onClick="{{ go.quiet }}" style="border:0;width:100%;min-height:72px;background:var(--surface-canvas);border-radius:8px;padding:16px 20px;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Ambient screen</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ ambientHours }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px">
+<div data-ds-new="IdleSlider" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Back to Today after</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.idle }}" value="{{ idle }}" on-change="{{ set.idle }}" dc-props="{{ pillWrap }}" hint-size="416px,64px"></x-import>
+<button type="button" role="switch" aria-checked="{{ idleS.on }}" aria-label="Go back to Today when idle" onClick="{{ idleS.toggle }}" style="min-height:44px;display:flex;align-items:center;padding:0 4px;border:0;background:transparent;cursor:pointer"><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ idleS.track }};box-shadow:{{ idleS.ring }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ idleS.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ idleS.ring }};transition:left 180ms ease"></span></span></button>
+</div>
+<div style="background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;text-decoration:{{ idleS.deco }}">{{ idleS.value }}</span><span style="font-size:15px;font-weight:330">{{ idleS.sub }}</span></div>
+<input type="range" min="1" max="15" step="1" value="{{ idleS.n }}" onChange="{{ idleS.set }}" disabled="{{ idleS.off }}" aria-label="Minutes before going back to Today" aria-valuetext="{{ idleS.value }}" style="width:100%;height:44px;margin:0;accent-color:{{ idleS.accent }};cursor:{{ idleS.cur }}">
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase"><span>1 min</span><span>15 min</span></div>
+</div>
+</div>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px">
+<div data-ds-new="NoteKeepSlider" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Remove notes after</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ opts.keep }}" value="{{ noteKeep }}" on-change="{{ set.noteKeep }}" dc-props="{{ pillWrap }}" hint-size="338px,64px"></x-import>
+<button type="button" role="switch" aria-checked="{{ keepS.on }}" aria-label="Remove old notes automatically" onClick="{{ keepS.toggle }}" style="min-height:44px;display:flex;align-items:center;padding:0 4px;border:0;background:transparent;cursor:pointer"><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ keepS.track }};box-shadow:{{ keepS.ring }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ keepS.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ keepS.ring }};transition:left 180ms ease"></span></span></button>
+</div>
+<div style="background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;font-variant-numeric:tabular-nums;text-decoration:{{ keepS.deco }}">{{ keepS.value }}</span><span style="font-size:15px;font-weight:330">{{ keepS.sub }}</span></div>
+<input type="range" min="1" max="30" step="1" value="{{ keepS.n }}" onChange="{{ keepS.set }}" disabled="{{ keepS.off }}" aria-label="Days before notes are removed" aria-valuetext="{{ keepS.value }}" style="width:100%;height:44px;margin:0;accent-color:{{ keepS.accent }};cursor:{{ keepS.cur }}">
+<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase"><span>1 day</span><span>30 days</span></div>
+</div>
+</div>
 </div>
 </x-import>
 <div style="background:var(--surface-canvas);border-radius:24px;box-shadow:var(--shadow-1);padding:clamp(20px,2.4vw,32px);box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
@@ -1018,10 +1039,10 @@
 <sc-if value="{{ sheet.open }}" hint-placeholder-val="{{ false }}">
 <div style="position:fixed;top:0;left:0;right:0;bottom:{{ kbPad }};z-index:10;display:grid;place-items:center;padding:24px;box-sizing:border-box;transition:bottom 280ms cubic-bezier(.2,.7,.2,1)">
 <div onClick="{{ scrimTap }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
-<div role="dialog" aria-label="{{ sheet.title }}" style="position:relative;width:100%;max-width:560px;max-height:100%;overflow:auto;background:{{ sheet.bg }};border-radius:{{ sheet.radius }};transform:{{ sheet.rot }};transition:transform 280ms ease-out;padding:clamp(24px,3vw,40px);box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
-<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+<div role="dialog" aria-label="{{ sheet.title }}" style="position:relative;width:100%;max-width:560px;max-height:100%;overflow:auto;background:{{ sheet.bodyBg }};border-radius:{{ sheet.radius }};transform:{{ sheet.rot }};transition:transform 280ms ease-out;padding:clamp(24px,3vw,40px);box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
+<div data-ds-new="SheetHeader" style="position:sticky;top:calc(-1 * clamp(24px,3vw,40px));z-index:2;background:{{ sheet.bg }};box-shadow:0 2px 8px rgba(0,0,0,.04);margin:calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px)) 0;padding:clamp(24px,3vw,40px) clamp(24px,3vw,40px) 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
 <div style="display:flex;flex-direction:column;gap:6px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import><sc-if value="{{ sheet.wx.has }}" hint-placeholder-val="{{ false }}"><span data-ds-new="SheetWeather" aria-label="{{ sheet.wx.aria }}" style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);white-space:nowrap"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ sheet.wx.icon }}" size="16" stroke-width="1.5" hint-size="16px,16px"></x-import>{{ sheet.wx.temp }}</span></sc-if></div>
 <div style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">{{ sheet.title }}</div>
 </div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" label="Close" size="touch" on-click="{{ closeSheet }}" hint-size="56px,56px"></x-import>
@@ -1042,7 +1063,7 @@
 <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
 <span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ r.label }}</span>
 <sc-if value="{{ r.isText }}" hint-placeholder-val="{{ true }}"><span style="font-size:var(--type-body-lg-size);font-weight:330;letter-spacing:var(--type-body-lg-ls);line-height:1.35;text-wrap:pretty;white-space:pre-line">{{ r.text }}</span></sc-if>
-<sc-if value="{{ r.isChips }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ r.chips }}" as="c" hint-placeholder-count="2"><span style="min-height:40px;display:inline-flex;align-items:center;gap:8px;padding:0 16px;border-radius:9999px;background:var(--surface-soft);font-size:16px;font-weight:480"><sc-if value="{{ c.dot }}" hint-placeholder-val="{{ true }}"><span style="width:12px;height:12px;border-radius:9999px;background:{{ c.c }};flex:none"></span></sc-if>{{ c.label }}</span></sc-for></div></sc-if>
+<sc-if value="{{ r.isChips }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ r.chips }}" as="c" hint-placeholder-count="2"><span style="min-height:40px;display:inline-flex;align-items:center;gap:8px;padding:0 16px;border-radius:9999px;background:var(--surface-canvas);font-size:16px;font-weight:480"><sc-if value="{{ c.dot }}" hint-placeholder-val="{{ true }}"><span style="width:12px;height:12px;border-radius:9999px;background:{{ c.c }};flex:none"></span></sc-if>{{ c.label }}</span></sc-for></div></sc-if>
 </div>
 </div>
 </sc-for>
@@ -1050,23 +1071,23 @@
 </sc-if>
 <sc-if value="{{ sheet.isEventEdit }}" hint-placeholder-val="{{ true }}">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Title" placeholder="What’s happening" value="{{ draft.title }}" on-change="{{ edit.title }}" error="{{ sheet.err }}" hint-size="100%,84px"></x-import>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">Time</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ tf.modeOpts }}" value="{{ tf.mode }}" on-change="{{ tf.setMode }}" dc-props="{{ sx.pillSoft }}" hint-size="280px,64px"></x-import></div>
 <sc-if value="{{ tf.show }}" hint-placeholder-val="{{ true }}">
 <div data-time-row="1" style="display:flex;flex-direction:column;gap:12px">
 <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
 <sc-for list="{{ tf.fields }}" as="f" hint-placeholder-count="2">
 <div data-ds-new="TimeField" style="display:flex;flex-direction:column;gap:8px;min-width:0">
 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">{{ f.label }}</span><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;white-space:nowrap">{{ f.dur }}</span></div>
-<button type="button" onClick="{{ f.toggle }}" aria-expanded="{{ f.open }}" aria-label="{{ f.aria }}" style="min-height:56px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 10px 14px;box-sizing:border-box;background:var(--surface-canvas);border:1px solid {{ f.border }};border-radius:var(--radius-md);box-shadow:{{ f.ring }};font-family:inherit;color:var(--text-primary);cursor:pointer;text-align:left;transition:transform 120ms ease-out,box-shadow 180ms" style-active="transform:scale(.97)">
-<span style="display:flex;align-items:baseline;gap:6px;min-width:0;flex-wrap:wrap"><span style="font-size:{{ tf.fs }};font-weight:{{ f.weight }};letter-spacing:-0.2px;font-variant-numeric:tabular-nums;line-height:1.2">{{ f.time }}</span><span style="font-family:var(--font-mono);font-size:15px;letter-spacing:0.5px">{{ f.mer }}</span></span>
+<button type="button" onClick="{{ f.toggle }}" disabled="{{ f.disabled }}" aria-disabled="{{ f.ariaDis }}" aria-expanded="{{ f.open }}" aria-label="{{ f.aria }}" style="min-height:56px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 10px 14px;box-sizing:border-box;background:{{ f.bg }};border:1px solid {{ f.border }};border-radius:var(--radius-md);box-shadow:{{ f.ring }};font-family:inherit;color:var(--text-primary);cursor:{{ f.cur }};text-align:left;transition:transform 120ms ease-out,box-shadow 180ms,background 180ms" style-active="{{ f.press }}">
+<span style="display:flex;align-items:baseline;gap:6px;min-width:0;flex-wrap:wrap;text-decoration:{{ f.deco }}"><span style="font-size:{{ tf.fs }};font-weight:{{ f.weight }};letter-spacing:-0.2px;font-variant-numeric:tabular-nums;line-height:1.2">{{ f.time }}</span><span style="font-family:var(--font-mono);font-size:15px;letter-spacing:0.5px">{{ f.mer }}</span></span>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ f.chev }}" size="20" hint-size="20px,20px"></x-import>
 </button>
 <sc-if value="{{ f.hasErr }}" hint-placeholder-val="{{ false }}"><span role="alert" style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;color:var(--danger)">{{ f.err }}</span></sc-if>
 </div>
 </sc-for>
 </div>
+<button data-ds-new="AllDayToggle" type="button" role="switch" aria-checked="{{ tf.on }}" onClick="{{ tf.toggleAllDay }}" style="min-height:56px;align-self:flex-start;display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:0;background:transparent;border:0;font-family:inherit;color:var(--text-primary);cursor:pointer;text-align:left"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">All day</span><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ tf.track }};box-shadow:{{ tf.trackRing }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ tf.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ tf.knobRing }};transition:left 180ms ease"></span></span></button>
 <sc-if value="{{ tp.open }}" hint-placeholder-val="{{ false }}">
-<div data-ds-new="TimePicker" data-time-panel="1" role="group" aria-label="{{ tp.aria }}" style="background:var(--surface-soft);border-radius:24px;padding:{{ tp.pad }};display:flex;flex-direction:column;gap:16px">
+<div data-ds-new="TimePicker" data-time-panel="1" role="group" aria-label="{{ tp.aria }}" style="background:var(--surface-canvas);border-radius:24px;padding:{{ tp.pad }};display:flex;flex-direction:column;gap:16px">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:56px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="140px,20px">{{ tp.eyebrow }}</x-import>
 <sc-if value="{{ tp.h12 }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ tp.merOpts }}" value="{{ tp.mer }}" on-change="{{ tp.setMer }}" hint-size="180px,64px"></x-import></sc-if>
@@ -1099,7 +1120,32 @@
 </sc-if>
 </div>
 </sc-if>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">Who</span><div role="group" aria-label="Who" style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ whoChips }}" as="c" hint-placeholder-count="10"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.on }}" style="min-height:48px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;gap:8px;padding:0 18px 0 14px;font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease" style-active="transform:scale(0.97)"><sc-if value="{{ c.dot }}" hint-placeholder-val="{{ true }}"><span style="width:12px;height:12px;border-radius:9999px;background:{{ c.c }};flex:none"></span></sc-if><sc-if value="{{ c.all }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="16" hint-size="16px,16px"></x-import></sc-if>{{ c.label }}</button></sc-for></div></div>
+<div data-ds-new="WhoInput" style="display:flex;flex-direction:column;gap:12px">
+<label for="ev-tag-q" style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">Who</label>
+<div role="group" aria-label="People on this event" style="min-height:56px;box-sizing:border-box;padding:5px;border:1px solid var(--border-hairline);border-radius:8px;background:var(--surface-canvas);display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+<sc-for list="{{ tg.sel }}" as="t" hint-placeholder-count="1"><span style="height:44px;box-sizing:border-box;border-radius:9999px;background:{{ t.c }};display:flex;align-items:center;gap:2px;padding:0 4px 0 16px;font-size:16px;font-weight:480;white-space:nowrap"><sc-if value="{{ t.all }}" hint-placeholder-val="{{ false }}"><span style="display:flex;margin-right:6px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="16" hint-size="16px,16px"></x-import></span></sc-if>{{ t.label }}<button type="button" onClick="{{ t.remove }}" aria-label="{{ t.rmLabel }}" style="width:36px;height:36px;border:0;padding:0;border-radius:9999px;background:transparent;color:var(--text-primary);display:grid;place-items:center;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="x" size="16" hint-size="16px,16px"></x-import></button></span></sc-for>
+<input id="ev-tag-q" type="text" autocomplete="off" value="{{ tg.q }}" onChange="{{ tg.setQ }}" onKeyDown="{{ tg.key }}" placeholder="{{ tg.ph }}" maxlength="32" style="flex:1 1 160px;min-width:140px;height:44px;border:0;outline:none;background:transparent;padding:0 10px;font-family:var(--font-sans);font-size:var(--type-body-size);font-weight:var(--type-body-weight);letter-spacing:var(--type-body-ls);color:var(--text-primary)">
+</div>
+<sc-if value="{{ tg.creating }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--surface-canvas);border-radius:24px;padding:16px 16px 16px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">New member</span><span style="height:40px;box-sizing:border-box;border-radius:9999px;background:{{ tg.newC }};display:flex;align-items:center;padding:0 16px;font-size:16px;font-weight:480;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tg.newName }}</span></div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" icon="plus" on-click="{{ tg.create }}" hint-size="150px,44px">Add member</x-import>
+</div>
+<div role="group" aria-label="Member color" style="display:flex;gap:10px;flex-wrap:wrap">
+<sc-for list="{{ tg.swatches }}" as="s" hint-placeholder-count="12"><button type="button" onClick="{{ s.pick }}" aria-label="{{ s.label }}" aria-pressed="{{ s.sel }}" style="width:44px;height:44px;border:0;padding:0;cursor:pointer;border-radius:9999px;background:{{ s.bg }};box-shadow:{{ s.ring }}"></button></sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ tg.hasSugg }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ tg.suggLabel }}</span>
+<div role="group" aria-label="{{ tg.suggLabel }}" style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ tg.sugg }}" as="c" hint-placeholder-count="7"><button type="button" onClick="{{ c.add }}" style="min-height:48px;border:0;border-radius:9999px;background:var(--surface-canvas);color:var(--text-primary);display:flex;align-items:center;gap:8px;padding:0 18px 0 14px;font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><sc-if value="{{ c.dot }}" hint-placeholder-val="{{ true }}"><span style="width:12px;height:12px;border-radius:9999px;background:{{ c.c }};flex:none"></span></sc-if><sc-if value="{{ c.all }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="16" hint-size="16px,16px"></x-import></sc-if>{{ c.label }}</button></sc-for>
+</div>
+</div>
+</sc-if>
+</div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Where" placeholder="Home, school, park…" value="{{ draft.location }}" on-change="{{ edit.location }}" hint-size="100%,84px"></x-import>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" multiline="{{ true }}" rows="3" label="Notes" placeholder="Anything to remember" value="{{ draft.notes }}" on-change="{{ edit.notes }}" hint-size="100%,140px"></x-import>
 </sc-if>
@@ -1128,41 +1174,6 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" placeholder="Optional" value="{{ draft.place }}" on-change="{{ edit.place }}" hint-size="100%,48px"></x-import>
 </div>
 </sc-if>
-<sc-if value="{{ sheet.isFamily }}" hint-placeholder-val="{{ false }}">
-<div data-ds-new="FamilyList" role="list" aria-label="Family members" style="display:flex;flex-direction:column">
-<sc-for list="{{ fam.rows }}" as="m" hint-placeholder-count="9">
-<div role="listitem" style="display:flex;flex-direction:column;gap:12px;padding:8px 0;border-top:{{ m.bd }}">
-<div style="display:flex;align-items:center;gap:16px;min-height:56px">
-<span style="width:20px;height:20px;flex:none;border-radius:9999px;background:{{ m.c }}"></span>
-<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:480;letter-spacing:-0.2px;line-height:1.2;overflow-wrap:anywhere">{{ m.name }}</span><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ m.count }}</span></span>
-<sc-if value="{{ m.canRemove }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="user-minus" aria-label="{{ m.removeLabel }}" on-click="{{ m.ask }}" hint-size="120px,44px">Remove</x-import></sc-if>
-</div>
-<sc-if value="{{ m.confirming }}" hint-placeholder-val="{{ false }}">
-<div role="alert" style="background:var(--surface-soft);border-radius:24px;padding:16px 16px 16px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px">
-<div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 220px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px;line-height:1.2">{{ m.askTitle }}</span><span style="font-size:16px;font-weight:330;line-height:1.4;text-wrap:pretty">{{ m.askBody }}</span></div>
-<div style="display:flex;gap:8px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" on-click="{{ m.keep }}" dc-props="{{ sx.ring }}" hint-size="100px,44px">Cancel</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" icon="user-minus" on-click="{{ m.remove }}" dc-props="{{ dangerBtn }}" hint-size="120px,44px">Remove</x-import>
-</div>
-</div>
-</sc-if>
-</div>
-</sc-for>
-</div>
-<div data-ds-new="AddMember" style="background:var(--surface-soft);border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:16px">
-<span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">Add member</span>
-<div style="display:flex;gap:8px;align-items:flex-start">
-<div style="flex:1;min-width:0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" placeholder="Name" value="{{ fam.name }}" on-change="{{ fam.setName }}" error="{{ fam.err }}" hint-size="100%,48px"></x-import></div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="plus" on-click="{{ fam.add }}" dc-props="{{ fam.addBtn }}" hint-size="90px,48px">Add</x-import>
-</div>
-<div style="display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap">
-<span style="font-size:18px;font-weight:330">Color</span>
-<div style="display:flex;gap:12px;flex-wrap:wrap">
-<sc-for list="{{ fam.swatches }}" as="s" hint-placeholder-count="3"><button type="button" onClick="{{ s.pick }}" aria-label="{{ s.label }}" aria-pressed="{{ s.sel }}" style="width:44px;height:44px;border:0;padding:0;cursor:pointer;border-radius:9999px;background:{{ s.bg }};box-shadow:{{ s.ring }}"></button></sc-for>
-</div>
-</div>
-</div>
-</sc-if>
 <sc-if value="{{ sheet.hasColor }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
 <span style="font-size:18px;font-weight:330">Color</span>
@@ -1171,7 +1182,7 @@
 </div>
 </div>
 </sc-if>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px;position:sticky;bottom:calc(-1 * clamp(24px,3vw,40px));margin-bottom:calc(-1 * clamp(24px,3vw,40px));padding-bottom:clamp(24px,3vw,40px);background:{{ sheet.bg }}">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;bottom:calc(-1 * clamp(24px,3vw,40px));z-index:2;margin:0 calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px));padding:16px clamp(24px,3vw,40px) clamp(24px,3vw,40px);background:{{ sheet.bg }};box-shadow:0 -2px 8px rgba(0,0,0,.04)">
 <sc-if value="{{ sheet.notAsking }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex">
 <sc-if value="{{ sheet.canDelete }}" hint-placeholder-val="{{ false }}">
@@ -1289,7 +1300,6 @@ class Component extends DCLogic {
     if (sq === 'allday') { const ev = events.find((e) => e.allDay); if (ev) sheet = { kind: 'event', id: ev.id, draft: evDraft(ev), confirm: false, err: '' }; }
     if (sq === 'past') { const ev = events.find((e) => e.id === 'e1'); if (ev) sheet = { kind: 'event', id: ev.id, draft: evDraft(ev), confirm: false, err: '' }; }
     if (sq === 'newevent') sheet = { kind: 'event', id: null, draft: Component.newDraft(9, 2026 * 12 + 9), confirm: false, err: '' };
-    if (sq === 'family') { const nm = q.get('famname') || ''; sheet = { kind: 'family', draft: { name: nm }, orig: { name: '' }, err: q.get('famerr') === '1' ? (nm ? 'Already in the family' : 'Add a name') : '', rm: q.get('rm') || null, color: null }; }
     if (sheet && sheet.kind === 'event') {
       if (tq === 'start' || tq === 'end') sheet.pick = tq;
       if (tq === 'error') { sheet.draft.end = sheet.draft.start - 30; sheet.endErr = 'Ends before it starts'; }
@@ -1302,7 +1312,7 @@ class Component extends DCLogic {
     if (sheet && !sheet.orig) sheet.orig = sq === 'newnote' ? { text: '', author: '', tone: 2 } : { ...sheet.draft };
     if (sheet && q.get('discard') === '1') sheet.discard = true;
     if (sheet && (sheet.kind === 'event' || sheet.kind === 'note') && sheet.id && q.get('details') === '1') sheet.mode = 'view';
-    const SIS = { sendfail: 'form', form: 'form', sending: 'sending', sent: 'sent', name: 'name', location: 'location', phone: 'phone', expired: 'expired', offline: 'form', done: 'done', ended: 'form' };
+    const SIS = { sendfail: 'form', form: 'form', sending: 'sending', sent: 'sent', code: 'sent', checking: 'sent', wrong: 'sent', locked: 'sent', name: 'name', location: 'location', expired: 'expired', offline: 'form', done: 'done', ended: 'form' };
     const pic = (n) => `https://picsum.photos/seed/kiosk-up${n}/600/450`;
     const UPM = {
       one: [{ id: 'm1', title: 'IMG_2041', url: pic(1), st: 'up', pct: 64, hold: true }],
@@ -1323,15 +1333,16 @@ class Component extends DCLogic {
       net, kb: q.get('kb') === '1', vh: window.innerHeight,
       amb: { mode: { split: 'Weekends differ', off: 'Off' }[q.get('amb')] || 'Every night', all: { s: 1080, e: 450 }, wknd: { s: 1260, e: 540 }, ...(q.get('amb') === 'same' ? { all: { s: 1080, e: 1080 } } : {}) }, ambPick: q.get('pick') || null,
       view: view0, vw: window.innerWidth, geo, geoOff: false, wxPending: '',
-      demo: q.get('demo') === '1' || /^demo\./.test(location.hostname), signinStep: SIS[siq] || 'form', linkSide: q.get('on') === 'link', acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
+      demo: q.get('demo') === '1' || /^demo\./.test(location.hostname), signinStep: SIS[siq] || 'form', code: { code: (q.get('code') || '').replace(/\D/g, '').slice(0, 6), checking: '482913', wrong: '' }[siq] ?? '', codeBusy: siq === 'checking', codeTries: siq === 'locked' ? 5 : siq === 'wrong' ? 1 : 0, codeErr: { wrong: 'That code isn’t right. Try again.', locked: 'Too many tries. Send a new code.' }[siq] || '', codeFocus: false, acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
       email: sw ? 'sam.lee@example.com' : siq && siq !== 'form' ? 'maria@example.com' : '', emailErr: siq === 'sendfail' ? 'Couldn’t send. Try again.' : '', ended, pendingN: ended ? Math.max(0, parseInt(q.get('pending'), 10) || 0) : 0, endedEmail: 'maria@example.com', wxStep: '', wxMatches: [], wxQ: '',
       people: Component.PEOPLE.map((p) => [...p]), events, notes, span24: q.get('span') === '24', dpOpen: q.get('dp') === 'open', selDay: parseInt(q.get('day'), 10) || 9, who: q.get('who') === 'none' ? [] : q.get('who') ? q.get('who').split(',').filter((k) => Component.PEOPLE.some((p) => p[0] === k)) : Component.PEOPLE.map((p) => p[0]), tl: {}, sheet, photoIdx: 0, full: q.get('full') === '1', fsChrome: q.get('chrome') !== '0', empty, wxLoc: empty || siq === 'location' || siq === 'name' || (wxq && view0 !== 'location') ? '' : 'Portland, OR', wxDraft: '', wxErr: '', hasPhotos: !empty,
       bgMode: q.get('bg') === 'photo' ? 'Photo' : 'Season color', bgId: 'coast', dim: 'Light', rotate: 'Daily',
-      seasonPick: sn ? sn[0].toUpperCase() + sn.slice(1) : 'Auto', clockFmt: q.get('clock') === '24' ? '24-hour' : '12-hour', tempUnit: 'Fahrenheit', idle: '3 min', barMode: ['hidden', 'float'].includes(q.get('bar')) ? q.get('bar') : 'docked', barAuto: q.get('barauto') === 'off' ? 'Off' : 'On', railHidden: q.get('rail') !== '1' && q.get('drawer') !== '1' && view0 === 'today', drawerOpen: q.get('drawer') === '1', noteKeep: '1 week', calYM: 2026 * 12 + 9, playing: true, uploads: UPM[upq] || (sheet && sheet.kind === 'photo' ? UPM.done : []), phEdits: {}, phGone: [], ...WXS,
+      seasonPick: sn ? sn[0].toUpperCase() + sn.slice(1) : 'Auto', clockFmt: q.get('clock') === '24' ? '24-hour' : '12-hour', tempUnit: 'Fahrenheit', idle: '3 min', idleN: 3, barMode: ['hidden', 'float'].includes(q.get('bar')) ? q.get('bar') : 'docked', barAuto: q.get('barauto') === 'off' ? 'Off' : 'On', railHidden: q.get('rail') !== '1' && q.get('drawer') !== '1' && view0 === 'today', drawerOpen: q.get('drawer') === '1', noteKeep: '7 days', keepN: 7, calYM: 2026 * 12 + 9, playing: true, uploads: UPM[upq] || (sheet && sheet.kind === 'photo' ? UPM.done : []), phEdits: {}, phGone: [], ...WXS,
     };
   }
   static NOW = 10 * 60 + 41;
   static PEOPLE = [['an', 'Minh-An', 'var(--block-lilac)'], ['hy', 'Minh-Hy', 'var(--block-sky)'], ['mom', 'Mom', 'var(--block-coral)'], ['dad', 'Dad', 'var(--block-mint)'], ['thang', 'Thang', 'var(--block-sun)'], ['tin', 'Tin', 'var(--block-pink)'], ['nghe', 'Nghe', 'var(--block-lime)'], ['an2', 'An', 'var(--block-rust)'], ['nga', 'Nga', 'var(--block-glacier)']];
+  static TAG_PAL = ['lilac', 'sky', 'coral', 'mint', 'sun', 'pink', 'lime', 'rust', 'glacier', 'amber', 'sage', 'ice'].map((k) => ['var(--block-' + k + ')', k[0].toUpperCase() + k.slice(1)]);
   static DAILY = { 9: ['cloud-sun', 68], 10: ['cloud-rain', 59], 11: ['cloud', 61], 12: ['sun', 66], 13: ['sun', 69], 14: ['cloud-sun', 65], 15: ['cloud-lightning', 58] };
   static HOURLY = {
     9: [['cloud', 52], ['cloud', 55], ['cloud-sun', 58], ['cloud-sun', 62], ['cloud-sun', 64], ['cloud-sun', 66], ['cloud', 67], ['cloud', 68], ['cloud-drizzle', 65, 40], ['cloud-rain', 61, 80], ['cloud-rain', 58, 70], ['cloud', 56], ['cloud', 54], ['cloud', 53], ['cloud', 52]],
@@ -1528,10 +1539,26 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { clearInterval(this.drawerTimer); clearInterval(this.backTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
   later(ms, fn) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
+  setCode(v) {
+    const S = this.state; if (S.codeBusy || S.codeTries >= 5) return;
+    const code = String(v).replace(/\D/g, '').slice(0, 6);
+    this.setState({ code, codeErr: '' }, () => { if (code.length === 6 && S.code.length < 6) this.submitCode(); });
+  }
+  submitCode() {
+    const S = this.state; if (S.codeBusy || S.codeTries >= 5 || S.net === 'offline') return;
+    if (S.code.length < 6) return this.setState({ codeErr: 'Enter all 6 digits' });
+    this.setState({ codeBusy: true });
+    this.later(900, () => {
+      const s = this.state;
+      if (s.code === '000000') { const t = s.codeTries + 1; return this.setState({ codeBusy: false, codeTries: t, code: '', codeErr: t >= 5 ? 'Too many tries. Send a new code.' : 'That code isn’t right. Try again.' }); }
+      this.setState({ codeBusy: false });
+      if (s.email.trim().toLowerCase() === 'maria@example.com') { this.setState({ acctNew: false, userName: 'Maria' }); this.finishSignIn(); } else this.setState({ signinStep: 'name', nameDraft: '', nameErr: '' });
+    });
+  }
   sendLink() {
     const S = this.state; if (S.net === 'offline' || S.signinStep === 'sending') return;
     if (!/\S+@\S+\.\S+/.test(S.email)) return this.setState({ emailErr: 'Enter a valid email address' });
-    this.setState({ signinStep: 'sending', linkSide: false, emailErr: '' });
+    this.setState({ signinStep: 'sending', emailErr: '', code: '', codeErr: '', codeTries: 0, codeBusy: false });
     this.later(1400, () => /fail/i.test(this.state.email) ? this.setState({ signinStep: 'form', emailErr: 'Couldn’t send. Try again.' }) : this.setState({ signinStep: 'sent' }));
   }
   endNow(add = 0) { this.setState((s) => ({ pendingN: s.pendingN + add })); this.go('signin'); }
@@ -1588,7 +1615,16 @@ class Component extends DCLogic {
     this.commitGo(view);
   }
   commitGo(view) { this.wxTok = (this.wxTok || 0) + 1; this.setState({ view, ambPick: null, sheet: null, wxStep: '', wxDraft: '', wxErr: '', wxMatches: [], wxPending: '' }); const m = document.querySelector('main'); if (m) m.scrollTop = 0; }
-  openEvent(ev, over) { const S = this.state, mine = S.who.length && S.who.length < S.people.length ? { who: [...S.who] } : {}; const draft = ev ? { ...ev, who: ev.who || [], notes: ev.notes || '' } : { ...Component.newDraft(S.selDay, S.calYM, S.people.map((p) => p[0])), ...mine, ...(over || {}) }; this.setState({ sheet: { kind: 'event', id: ev ? ev.id : null, mode: ev ? 'view' : 'edit', draft, orig: { ...draft }, confirm: false, err: '' } }); }
+  openEvent(ev, over) { const S = this.state, mine = S.who.length && S.who.length < S.people.length ? { who: [...S.who] } : {}; const draft = ev ? { ...ev, who: ev.who || [], notes: ev.notes || '' } : { ...Component.newDraft(S.selDay, S.calYM, S.people.map((p) => p[0])), ...mine, ...(over || {}) }; this.setState({ sheet: { kind: 'event', id: ev ? ev.id : null, mode: ev ? 'view' : 'edit', draft, orig: { ...draft }, confirm: false, err: '', tagQ: '', tagColor: null } }); }
+  setTagQ(v) { this.setState((s) => ({ sheet: { ...s.sheet, tagQ: v, discard: false } })); }
+  addTag(k) { this.setState((s) => { const w = s.sheet.draft.who || []; return { sheet: { ...s.sheet, tagQ: '', draft: { ...s.sheet.draft, who: w.includes(k) ? w : w.concat(k) } } }; }); }
+  dropTag(k) { this.setState((s) => ({ sheet: { ...s.sheet, draft: { ...s.sheet.draft, who: (s.sheet.draft.who || []).filter((x) => x !== k) } } })); }
+  setWho(w) { this.setState((s) => ({ sheet: { ...s.sheet, tagQ: '', draft: { ...s.sheet.draft, who: w } } })); }
+  createTag(name, c) {
+    const k = 'm' + Date.now();
+    this.setState((st) => { const all = st.people.map((p) => p[0]), every = (w) => all.every((x) => (w || []).includes(x)), dw = st.sheet.draft.who || [];
+      return { people: st.people.concat([[k, name, c]]), events: st.events.map((e) => (every(e.who) ? { ...e, who: e.who.concat(k) } : e)), who: st.who.length === all.length ? st.who.concat(k) : st.who, sheet: { ...st.sheet, tagQ: '', tagColor: null, draft: { ...st.sheet.draft, who: dw.includes(k) ? dw : dw.concat(k) } } }; });
+  }
   dpListRef = (el) => { if (!el) return; requestAnimationFrame(() => { const r = el.querySelector('[aria-current="date"]'); if (r) el.scrollTop = r.offsetTop - (el.clientHeight - r.offsetHeight) / 2; }); };
   wkRef = (el) => { if (el === this._wkEl) return; if (this._wkRO) this._wkRO.disconnect(); this._wkEl = el; if (!el || typeof ResizeObserver === 'undefined') return; this._wkRO = new ResizeObserver(([e]) => { const w = Math.round(e.contentRect.width); if (Math.abs(w - (this.state.wkW || 0)) > 4) this.setState({ wkW: w }); }); this._wkRO.observe(el); };
   startEdit() { this.setState((st) => ({ sheet: { ...st.sheet, mode: 'edit', from: 'view', confirm: false } })); }
@@ -1812,7 +1848,7 @@ class Component extends DCLogic {
     const fillOf = (w) => (w && w.length === 1 && PM[w[0]] ? PM[w[0]].c : 'var(--season-soft)');
     const evS = (e) => lt(toMin(e.start)), evE = (e) => { const s = evS(e), en = e.end != null ? lt(toMin(e.end)) : null; return en != null && en > s ? en : s + 30; };
     const statusOf = (e) => (ymOf(e) !== OCT || e.day !== 9 ? 'upcoming' : evE(e) <= NOWL ? 'past' : evS(e) <= NOWL ? 'now' : 'upcoming');
-    const mine = (e, who) => !who || who === 'all' || (e.who || []).some((k) => who.includes(k));
+    const mine = (e, who) => !who || who === 'all' || who.length === PPL.length || (e.who || []).some((k) => who.includes(k));
     const adFor = (day, who) => S.events.filter((e) => e.allDay && ymOf(e) === OCT && e.day === day && mine(e, who)).map((e) => { const loc = [names(e.who), e.location].filter(Boolean).join(' · '); return { title: e.title, location: loc, hasLoc: !!loc, dot: fillOf(e.who), open: () => this.openEvent(e) }; });
     const timedFor = (day, who) => S.events.filter((e) => !e.allDay && ymOf(e) === OCT && e.day === day && mine(e, who)).sort((a, b) => evS(a) - evS(b));
     const todayEvents = timedFor(9), todayADl = adFor(9), todayN = todayEvents.length + todayADl.length;
@@ -1857,7 +1893,7 @@ class Component extends DCLogic {
         c.forEach((it) => { let sp = 1; while (it.col + sp < n && !c.some((z) => z.col === it.col + sp && z.top < it.bot - 0.5 && z.bot > it.top + 0.5)) sp++; it.l = (it.col / n) * 100; it.w = (sp / n) * 100; });
       });
       const items = its.map((it) => {
-        const x = it.x, s = st(it), h = it.bot - it.top - 4, rp = s === 'past' ? 0 : rainOf(it.s, it.e, o.hr), shd = (x.who || []).length > 1, px = (it.w / 100) * o.W, nar = px < 260, note = (x.notes || '').trim();
+        const x = it.x, s = st(it), h = it.bot - it.top - 4, rp = s === 'past' ? 0 : rainOf(it.s, it.e, o.hr || o.rhr), shd = (x.who || []).length > 1, px = (it.w / 100) * o.W, nar = px < 260, note = (x.notes || '').trim();
         const tl = Math.ceil(o.ts * 1.2), need1 = 16 + (s === 'now' || rp ? 24 : 18) + 4 + tl + 2, xs = h < need1;
         const clamp = h >= need1 + tl + 4 ? 2 : 1, rest = h - need1 - (clamp - 1) * tl, meta = !xs && rest >= 26, br = meta && rest >= 52 && !!note, open = x.end != null;
         return { top: it.top + 'px', h: it.bot - it.top + 'px', l: it.l + '%', w: it.w + '%', xs, xsTime: px >= 200, big: !xs, clamp, meta, bring: br,
@@ -1881,7 +1917,7 @@ class Component extends DCLogic {
     const TS = S.tl || {}, cs = TS.cal || { w: 1200, h: 640 }, ts0 = TS.tod || { w: 640, h: 640 };
     const dayTimed = timedFor(S.selDay, S.who), dayADl = adFor(S.selDay, S.who), selT = S.selDay === 9, dayGaps = S.who.length ? gapsOf(dayTimed, selT) : [];
     const spanOut = dayTimed.filter((e) => evS(e) < 300 || evE(e) > 1260).length;
-    const calT = tlBuild(dayTimed, { h0: S.span24 ? 0 : 5, h1: S.span24 ? 24 : 21, nightW: 0.5, isT: selT, day: S.selDay, hr: wxOn && !PH1 ? Component.HOURLY[S.selDay] : null, who: S.who, gaps: dayGaps, H: cs.h - 24, W: cs.w - CP[0] - CP[1], gut: CP[0], lane: CP[1], ts: CP[2], minPx: PH1 ? 40 : 44, pastW: 0.35, laneN: PH1 });
+    const calT = tlBuild(dayTimed, { h0: S.span24 ? 0 : 5, h1: S.span24 ? 24 : 21, nightW: 0.5, isT: selT, day: S.selDay, hr: null, gwx: wxOn ? Component.HOURLY[S.selDay] : null, rhr: wxOn && !PH1 ? Component.HOURLY[S.selDay] : null, who: S.who, gaps: dayGaps, H: cs.h - 24, W: cs.w - CP[0], gut: CP[0], lane: 0, ts: CP[2], minPx: PH1 ? 40 : 44, pastW: 0.35, laneN: PH1 });
     const todT = tlBuild(todayEvents, { isT: true, day: 9, hr: null, gwx: wxOn ? Component.HOURLY[9] : null, who: 'all', gaps: gapsOf(todayEvents, true), H: ts0.h - 24, W: ts0.w - DP[0] - DP[1], gut: DP[0], lane: DP[1], ts: DP[2], minPx: 40, pastW: 0.3, laneN: PH1 });
     const sdD = new Date(2026, 9, S.selDay), w0 = S.selDay - sdD.getDay(), M3 = (d) => MONTHS[d.getMonth()].slice(0, 3);
     const week = Array.from({ length: 7 }, (_, i) => { const k = w0 + i, dt = new Date(2026, 9, k), dw = S.wxLoc ? Component.DAILY[k] : null, sel = k === S.selDay;
@@ -1950,19 +1986,34 @@ class Component extends DCLogic {
     const sdayLabel = sh && sh.kind === 'event' ? (() => { const y = ymOf(sh.draft), dt = new Date(Math.floor(y / 12), y % 12, sh.draft.day); return `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()].slice(0, 3)} ${dt.getDate()}`; })() : '';
     const ev0 = sh && sh.kind === 'event' ? sh : null, dr = ev0 ? ev0.draft : null;
     const whoSel = new Set((dr && dr.who) || []), allK = PPL.map((p) => p[0]);
-    const whoChips = [['all', 'Everyone', null], ...PPL].map(([k, label, c]) => { const all = k === 'all', on = all ? whoSel.size === allK.length : whoSel.has(k); return { label, c: c || 'transparent', dot: !all, all, on: on ? 'true' : 'false', bg: on ? 'var(--action-primary)' : 'var(--surface-soft)', fg: on ? 'var(--on-action-primary)' : 'var(--text-primary)', tap: () => { if (!dr) return; if (all) { if (!on) this.patchDraft('who', allK); return; } const nx = on ? allK.filter((x) => x !== k && whoSel.has(x)) : allK.filter((x) => x === k || whoSel.has(x)); if (nx.length) this.patchDraft('who', nx); } }; });
+    const tg = (() => {
+      if (!dr) return { sel: [], sugg: [], hasSugg: false, creating: false, swatches: [], q: '', setQ: () => {}, key: () => {}, create: () => {}, ph: '', suggLabel: '', newName: '', newC: '' };
+      const q = ev0.tagQ || '', qt = q.trim(), ql = qt.toLowerCase(), exact = PPL.find((p) => p[1].toLowerCase() === ql), every = PPL.length > 0 && PPL.every(([k]) => whoSel.has(k));
+      const used = new Set(PPL.map((p) => p[2])), freeC = Component.TAG_PAL.filter(([c]) => !used.has(c)), opts = freeC.length ? freeC : Component.TAG_PAL;
+      const col = ev0.tagColor && Component.TAG_PAL.some(([c]) => c === ev0.tagColor) ? ev0.tagColor : opts[0][0];
+      const create = () => { if (!qt) return; if (exact) return this.addTag(exact[0]); this.createTag(qt, col); };
+      const sel = (dr.who || []).filter((k) => PM[k]).map((k) => ({ label: PM[k].name, c: PM[k].c, all: false, dot: false, rmLabel: 'Remove ' + PM[k].name, remove: () => this.dropTag(k) }));
+      const fold = (x) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const lev1 = (x, y) => { if (Math.abs(x.length - y.length) > 1) return false; let i = 0, j = 0, d = 0; while (i < x.length && j < y.length) { if (x[i] === y[j]) { i++; j++; continue; } if (++d > 1) return false; if (x.length > y.length) i++; else if (y.length > x.length) j++; else { i++; j++; } } return d + (x.length - i) + (y.length - j) <= 1; };
+      const score = (name) => { const n = fold(name), f = fold(qt); if (!f) return -1; if (n.startsWith(f)) return 0; if (name.toLowerCase().split(/[^a-z0-9]+/i).some((w) => fold(w).startsWith(f))) return 1; if (n.includes(f)) return 2; let i = 0; for (const ch of n) if (ch === f[i]) i++; if (i === f.length) return 3; if (f.length >= 3 && (lev1(f, n.slice(0, f.length)) || lev1(f, n))) return 4; return -1; };
+      const sugg = !qt ? [] : PPL.filter(([k]) => !whoSel.has(k)).map((p) => [p, score(p[1])]).filter(([, sc]) => sc >= 0).sort((x, y) => x[1] - y[1]).map(([[k, label, c]]) => ({ label, c, all: false, dot: true, add: () => this.addTag(k) }));
+      return { sel, sugg, hasSugg: sugg.length > 0, suggLabel: 'Suggestions', q, ph: sel.length ? 'Add someone else' : 'Add a person', creating: !!qt && !exact, newName: qt, newC: col, create,
+        setQ: (e) => this.setTagQ(e.target.value),
+        key: (e) => { if (e.key === 'Enter') { e.preventDefault(); create(); } else if (e.key === 'Backspace' && !q && sel.length) sel[sel.length - 1].remove(); },
+        swatches: Component.TAG_PAL.map(([c, label]) => ({ label, bg: c, sel: c === col ? 'true' : 'false', ring: c === col ? ring : 'none', pick: () => this.setState((s) => ({ sheet: { ...s.sheet, tagColor: c } })) })) };
+    })();
     const parts = (m) => { const hh = Math.floor(m / 60), mm = String(m % 60).padStart(2, '0'); return h12 ? { time: `${hh % 12 || 12}:${mm}`, mer: hh < 12 ? 'AM' : 'PM' } : { time: `${String(hh).padStart(2, '0')}:${mm}`, mer: '' }; };
     const spoken = (m) => { const p = parts(m); return p.time + (p.mer ? ' ' + p.mer : ''); };
     const durTxt = (n) => n < 60 ? `${n} min` : `${Math.floor(n / 60)} hr${n % 60 ? ' ' + (n % 60) + ' min' : ''}`;
     const PHN = bp === 'phone';
     const cell = (sel) => ({ bg: sel ? 'var(--action-primary)' : 'var(--surface-canvas)', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', sh: sel ? 'none' : 'inset 0 0 0 1px var(--border-hairline)', w: sel ? 540 : 340 });
     const fieldOf = (k) => {
-      const v = dr ? dr[k] : null, open = !!ev0 && ev0.pick === k, err = k === 'end' && ev0 ? ev0.endErr || '' : '';
+      const ad = !!(dr && dr.allDay), v = dr ? dr[k] : null, open = !ad && !!ev0 && ev0.pick === k, err = !ad && k === 'end' && ev0 ? ev0.endErr || '' : '';
       const p = v != null ? parts(v) : { time: 'No end time', mer: '' }, dur = k === 'end' && v != null && dr && v > dr.start ? durTxt(v - dr.start) : '';
       const label = k === 'start' ? 'Starts' : 'Ends';
-      return { label, time: p.time, mer: p.mer, weight: v != null ? 340 : 330, dur, open, chev: open ? 'chevron-up' : 'chevron-down', hasErr: !!err, err,
-        border: err ? 'var(--danger)' : open ? 'var(--black)' : 'var(--border-hairline)', ring: open ? '0 0 0 2px ' + (err ? 'var(--danger)' : 'var(--focus-ring)') : 'none',
-        aria: `${label}, ${v != null ? spoken(v) : 'no end time'}. Change`, toggle: () => this.togglePick(k) };
+      return { label, time: p.time, mer: p.mer, weight: v != null ? 340 : 330, dur: ad ? '' : dur, open, disabled: ad, ariaDis: ad ? 'true' : 'false', bg: ad ? 'transparent' : 'var(--surface-canvas)', cur: ad ? 'default' : 'pointer', press: ad ? '' : 'transform:scale(.97)', deco: ad ? 'line-through' : 'none', chev: open ? 'chevron-up' : 'chevron-down', hasErr: !!err, err,
+        border: ad ? 'var(--border-hairline)' : err ? 'var(--danger)' : open ? 'var(--black)' : 'var(--border-hairline)', ring: open ? '0 0 0 2px ' + (err ? 'var(--danger)' : 'var(--focus-ring)') : 'none',
+        aria: ad ? `${label}, off for all-day events` : `${label}, ${v != null ? spoken(v) : 'no end time'}. Change`, toggle: () => { if (!ad) this.togglePick(k); } };
     };
     const pk = ev0 && ev0.pick, pv = pk && dr ? dr[pk] : null;
     const setPv = (m) => pk === 'start' ? this.setStart(m) : this.setTimes({ end: m });
@@ -1978,12 +2029,12 @@ class Component extends DCLogic {
         eyebrow: `${pk === 'start' ? 'Starts' : 'Ends'} · ${spoken(pv)}`, aria: pk === 'start' ? 'Start time' : 'End time',
         done: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null } })), noEnd: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null, endErr: '', err: '', draft: { ...s.sheet.draft, end: null } } })) };
     }
-    const tf = { fields: [fieldOf('start'), fieldOf('end')], fs: PHN ? '19px' : '22px', show: !(dr && dr.allDay), mode: dr && dr.allDay ? 'All day' : 'Set times', modeOpts: ['Set times', 'All day'],
-      setMode: (v) => this.setState((s) => ({ sheet: { ...s.sheet, pick: null, endErr: '', discard: false, draft: { ...s.sheet.draft, allDay: v === 'All day' } } })) };
+    const tf = { fields: [fieldOf('start'), fieldOf('end')], fs: PHN ? '19px' : '22px', show: true, on: dr && dr.allDay ? 'true' : 'false', track: dr && dr.allDay ? 'var(--black)' : 'var(--surface-soft)', trackRing: dr && dr.allDay ? 'none' : 'inset 0 0 0 1px var(--border-hairline)', knobL: dr && dr.allDay ? '28px' : '4px', knobRing: dr && dr.allDay ? 'none' : 'inset 0 0 0 1px var(--border-hairline)',
+      toggleAllDay: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null, endErr: '', discard: false, draft: { ...s.sheet.draft, allDay: !s.sheet.draft.allDay } } })) };
     const famOn = !!sh && sh.kind === 'family';
     const fam = (() => {
       if (!famOn) return { rows: [], swatches: [], name: '', err: undefined, setName: () => {}, add: () => {}, addBtn: {} };
-      const PAL = ['lilac', 'sky', 'coral', 'mint', 'sun', 'pink', 'lime', 'rust', 'glacier', 'amber', 'sage', 'ice'].map((k) => ['var(--block-' + k + ')', k[0].toUpperCase() + k.slice(1)]);
+      const PAL = Component.TAG_PAL;
       const used = new Set(PPL.map((p) => p[2])), free = PAL.filter(([c]) => !used.has(c)), opts = free.length ? free : PAL;
       const col = opts.some(([c]) => c === sh.color) ? sh.color : opts[0][0], pl = (n) => `${n} plan${n === 1 ? '' : 's'}`;
       return {
@@ -2062,12 +2113,13 @@ class Component extends DCLogic {
       { inset: '0', keys: [K('Shift', { icon: 'arrow-big-up', fn: true, flex: 1.5 })].concat('zxcvbnm,.'.split('').map((c) => K(c)), K('Shift', { icon: 'arrow-big-up', fn: true, flex: 1.5 })) },
       { inset: '0', keys: [K('123', { fn: true, flex: 1.5 }), K('Dictate', { icon: 'mic', fn: true }), K('space', { flex: 7, aria: 'Space' }), K('123', { fn: true, flex: 1.5 }), K('Hide keyboard', { icon: 'keyboard', fn: true, flex: 1.5, tap: hideKb })] },
     ];
+    const codeLocked = S.codeTries >= 5;
     const st = S.signinStep, first = S.userName.trim().split(/\s+/)[0] || 'Maria';
-    const si = { form: st === 'form' || st === 'sending', sending: st === 'sending', notSending: st !== 'sending', sent: st === 'sent', name: st === 'name', location: st === 'location', phone: st === 'phone', expired: st === 'expired' && !S.linkSide, expiredLink: st === 'expired' && S.linkSide, done: st === 'done',
+    const si = { form: st === 'form' || st === 'sending', sending: st === 'sending', notSending: st !== 'sending', sent: st === 'sent', name: st === 'name', location: st === 'location', expired: st === 'expired', done: st === 'done',
       ended: S.ended, notEnded: !S.ended, demo: S.demo && !S.ended, showDemo: st !== 'sending' && !S.ended, prevEmail: S.endedEmail,
       endBody: 'Sign in again to keep the calendar, notes and photos up to date.' + (S.pendingN ? ` Changes waiting on this screen: ${S.pendingN}.` + (S.email.trim().toLowerCase() === S.endedEmail ? ' They’ll be sent after you sign in.' : '') : ''),
       switchWarn: S.ended && S.pendingN > 0 && !!S.email.trim() && S.email.trim().toLowerCase() !== S.endedEmail,
-      sendOff: off || st === 'sending', sendLabel: st === 'sending' ? 'Sending…' : 'Send sign-in link', sendIcon: st === 'sending' ? undefined : 'arrow-right', welcome: (S.acctNew ? 'Welcome, ' : 'Welcome back, ') + first };
+      sendOff: off || st === 'sending', sendLabel: st === 'sending' ? 'Sending…' : 'Send code', sendIcon: st === 'sending' ? undefined : 'arrow-right', welcome: (S.acctNew ? 'Welcome, ' : 'Welcome back, ') + first };
     const pend = S.uploads.filter((u) => u.st && u.st !== 'done');
     const ERR = { big: ['file-warning', 'Too large · 20 MB max'], type: ['file-x', 'Not a photo'], net: ['cloud-off', 'Didn’t upload'] };
     const pending = pend.map((u) => { const failed = u.st === 'err', e = ERR[u.err] || ERR.net;
@@ -2126,9 +2178,7 @@ class Component extends DCLogic {
       nameDraft: S.nameDraft, nameErr: S.nameErr || undefined,
       setNameDraft: (v) => this.setState({ nameDraft: v, nameErr: '' }),
       submitName: () => { const n = S.nameDraft.trim(); if (!n) return this.setState({ nameErr: 'Add your name' }); this.setState({ userName: n, acctNew: true, signinStep: 'location', wxLoc: '', wxDraft: '', wxErr: '', wxStep: '', wxMatches: [] }); },
-      openedLink: () => { if (S.email.trim().toLowerCase() === 'maria@example.com') { this.setState({ acctNew: false, userName: 'Maria' }); this.finishSignIn(); } else this.setState({ signinStep: 'name', nameDraft: '', nameErr: '' }); },
       guestSignIn: () => { this.setState({ userName: 'Trinh', email: 'guests@takeaglance.app', emailErr: '', wxLoc: 'Carmel, IN 46032', acctNew: false }); this.finishSignIn(); },
-      phoneDone: () => { this.setState({ acctNew: true }); this.finishSignIn(); },
       resend: () => this.sendLink(),
       ld, off, online: !off, wxFail, retry: () => this.setState({ net: 'online' }),
       savedAt, rainTitle: `Rain moving in after ${h12 ? '4 PM' : '16:00'}`, ambientHours, amb,
@@ -2142,14 +2192,22 @@ class Component extends DCLogic {
       L: FL, go, bar, barCenter, barH, sx: { ring: { style: { boxShadow: 'var(--shadow-1)' } }, ml16: { style: { marginLeft: -16 } }, ml12: { style: { marginLeft: -12 } }, ml8: { style: { marginLeft: -8 } }, pillSoft: { style: { background: 'var(--surface-soft)', flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, bar: { style: { flex: 'none', gap: 0, marginTop: 'auto', position: BM === 'docked' ? 'sticky' : 'fixed', ...(BM === 'docked' ? {} : { left: 0, right: 0 }), bottom: 0, zIndex: 5, boxShadow: BM === 'float' ? 'inset 0 1px 0 var(--border-hairline-soft), 0 -4px 16px rgba(0,0,0,.06)' : 'inset 0 1px 0 var(--border-hairline-soft)', transform: BM === 'hidden' ? 'translateY(100%)' : 'none', opacity: BM === 'hidden' ? 0 : 1, pointerEvents: BM === 'hidden' ? 'none' : 'auto', transition: 'transform 280ms cubic-bezier(0.2, 0, 0, 1), opacity 280ms ease-out' } } }, pillWrap: { style: { flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, dangerBtn: { style: { background: 'var(--danger)', color: '#fff' } },
       email: S.email, emailErr: S.emailErr || undefined, emailShown: S.email || 'maria@example.com',
       setEmail: (v) => { if (this.state.signinStep !== 'sending') this.setState({ email: v, emailErr: '' }); },
-      sendLink: () => this.sendLink(),
-      backToForm: () => this.setState({ signinStep: 'form', linkSide: false }),
-      backReady: !(S.backWait > 0), backWaiting: S.backWait > 0, backWaitLabel: '0:' + String(S.backWait || 0).padStart(2, '0'),
+      sendCode: () => this.sendLink(),
+      code: S.code, codeErr: S.codeErr, codeErrOn: !!S.codeErr, codeInputOff: codeLocked || S.codeBusy,
+      codeCells: [0, 1, 2, 3, 4, 5].map((i) => ({ d: S.code[i] || '', ring: S.codeErr ? 'inset 0 0 0 1px var(--danger)' + (S.codeFocus && i === Math.min(S.code.length, 5) ? ', 0 0 0 2px var(--danger)' : '') : S.codeFocus && i === Math.min(S.code.length, 5) ? 'inset 0 0 0 1px var(--black), 0 0 0 2px var(--focus-ring)' : 'inset 0 0 0 1px var(--border-hairline)' })),
+      setCodeEv: (e) => this.setCode(e.target.value), codeFocusOn: () => this.setState({ codeFocus: true }), codeFocusOff: () => this.setState({ codeFocus: false }),
+      submitCode: () => this.submitCode(),
+      codeBtnLabel: S.codeBusy ? 'Checking…' : 'Sign in', codeBtnIcon: S.codeBusy ? undefined : 'arrow-right', codeBtnOff: off || S.codeBusy || codeLocked || S.code.length < 6,
+      backToForm: () => this.setState({ signinStep: 'form', code: '', codeErr: '', codeTries: 0, codeBusy: false }),
+      backReady: !(S.backWait > 0) || codeLocked, backWaiting: S.backWait > 0 && !codeLocked, backWaitLabel: '0:' + String(S.backWait || 0).padStart(2, '0'),
       demoSignIn: () => { this.setState({ signinStep: 'form' }); this.go('today'); },
       signOut: () => { this.setState({ signinStep: 'form', email: '' }); this.go('signin'); },
       wake: () => this.go(S.ended ? 'signin' : 'today'),
       usePrevEmail: () => this.setState({ email: S.endedEmail, emailErr: '' }),
-      heroBlock: { style: { display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32, minHeight: bp === 'narrow' || bp === 'phone' ? 'auto' : '100%' } },
+      heroPreview: bp !== 'phone', heroTime: fmtT(10 * 60 + 41, true), heroDateShown: (() => { const d = new Date(isoT(lt(10 * 60 + 41))); return bp === 'phone' ? `${DOW[d.getDay()].slice(0, 3)}, ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}` : `${DOW[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`; })(),
+      heroNote: { style: { flex: '1 1 180px', minWidth: 0 } },
+      heroRow: { style: { gridTemplateColumns: '100px 16px minmax(0,1fr) auto', whiteSpace: 'nowrap', columnGap: 12, padding: '10px 12px' } },
+      heroBlock: { style: { display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 24, minHeight: bp === 'narrow' || bp === 'phone' ? 'auto' : '100%' } },
       heroToday: { style: { position: 'relative', overflow: 'hidden', isolation: 'isolate', gridArea: 'hero', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32, minWidth: 0, ...(LK === 'c' ? { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', gap: '24px 48px', '--type-clock-size': 'clamp(72px,11vmin,200px)' } : LK ? { minHeight: 0, containerType: 'inline-size', '--type-clock-size': 'clamp(56px,27cqi,200px)' } : {}) } },
       wxToday: { tone: 3, style: { gridArea: 'wx', padding: 'clamp(24px,2.4vw,32px)', minWidth: 0, ...(LK ? { containerType: 'inline-size', '--type-temp-size': 'clamp(56px,24cqi,160px)' } : {}) } },
       wxFull: { tone: 3, style: { justifyContent: 'space-between', padding: 'clamp(24px,2.6vw,40px)', minWidth: 0 } },
@@ -2182,8 +2240,8 @@ class Component extends DCLogic {
       addEvent: () => this.openEvent(null),
       selDay: S.selDay, week, dp, dpWk: !dpOn, dpListRef: this.dpListRef, wkLabel: M3(d0) === M3(d6) ? `${M3(d0)} ${d0.getDate()} – ${d6.getDate()}` : `${M3(d0)} ${d0.getDate()} – ${M3(d6)} ${d6.getDate()}`, monthLabel: MONTHS[d6.getMonth()] + (d6.getFullYear() !== 2026 ? ' ' + d6.getFullYear() : ''),
       wkRef: this.wkRef, wkAria: `Week of ${MONTHS[d0.getMonth()]} ${d0.getDate()}`, prevWk: () => shiftWk(-1), nextWk: () => shiftWk(1), wkBtn: PH1 ? { size: 'md', style: { width: 44, height: 44 } } : { size: 'touch' },
-      whoF: PPL.map(([k, label, c]) => { const on = !allWho && S.who.includes(k), lit = allWho || on; return { label, c, dotBg: lit ? c : 'transparent', bg: on ? 'var(--action-primary)' : 'var(--surface-soft)', fg: on ? 'var(--on-action-primary)' : 'var(--text-primary)', pressed: on ? 'true' : 'false', pick: () => this.setState((st) => { const all = PPL.map((p) => p[0]), cur = st.who.length === all.length ? [] : st.who, nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k); return { who: all.filter((x) => nx.includes(x)) }; }) }; }),
-      span: { pressed: S.span24 ? 'true' : 'false', bg: S.span24 ? 'var(--action-primary)' : 'var(--surface-soft)', fg: S.span24 ? 'var(--on-action-primary)' : 'var(--text-primary)', hasMore: !S.span24 && spanOut > 0, more: String(spanOut), aria: S.span24 ? 'Showing all 24 hours' : spanOut ? `Show all 24 hours, ${spanOut} more plan${spanOut > 1 ? 's' : ''}` : 'Show all 24 hours', toggle: () => this.setState((st) => ({ span24: !st.span24 })) },
+      whoF: PPL.map(([k, label, c]) => { const on = S.who.includes(k); return { label, c, bg: on ? c : 'var(--hairline)', fg: 'var(--text-primary)', pressed: on ? 'true' : 'false', pick: () => this.setState((st) => { const all = PPL.map((p) => p[0]), nx = st.who.includes(k) ? st.who.filter((x) => x !== k) : st.who.concat(k); return { who: all.filter((x) => nx.includes(x)) }; }) }; }),
+      span: { pressed: S.span24 ? 'true' : 'false', bg: S.span24 ? 'var(--action-primary)' : 'var(--surface-soft)', fg: S.span24 ? 'var(--on-action-primary)' : 'var(--text-primary)', hasMore: !S.span24 && spanOut > 0, more: String(spanOut), aria: S.span24 ? 'Showing all 24 hours' : spanOut ? `Show all 24 hours, ${spanOut} more plan${spanOut > 1 ? 's' : ''}` : 'Show all 24 hours', link: S.span24 ? (S.clockFmt === '24-hour' ? 'Show 05:00 – 21:00 only' : 'Show 5 AM – 9 PM only') : spanOut ? `Show all 24 hours · ${spanOut} more plan${spanOut > 1 ? 's' : ''}` : 'Show all 24 hours', icon: S.span24 ? 'chevrons-down-up' : 'chevrons-up-down', toggle: () => this.setState((st) => ({ span24: !st.span24 })) },
       addEvBtn: { style: { background: 'var(--surface-soft)', minHeight: FL.chipH, padding: '0 22px 0 18px' } },
       freeLabel: bestGap ? `${whoName ? whoName + ' free' : 'Free together'} · ${rgT(bestGap[0], bestGap[1], true)}` : whoName ? `${whoName} · no free time` : 'No time free together',
       calT, todT,
@@ -2199,7 +2257,11 @@ class Component extends DCLogic {
         enter: () => fp.id && this.setState({ full: true, fsChrome: true }), exit: () => this.setState({ full: false, fsChrome: true }),
         toggleChrome: () => this.setState((s) => ({ fsChrome: !s.fsChrome })) },
       prevPhoto: () => this.setState((s) => ({ photoIdx: s.photoIdx - 1 })), nextPhoto: () => this.setState((s) => ({ photoIdx: s.photoIdx + 1 })),
-      seasonPick: sp, barAuto: S.barAuto, clockFmt: S.clockFmt, tempUnit: S.tempUnit, idle: S.idle, noteKeep: S.noteKeep, bgMode: S.bgMode, dim: S.dim, rotate: S.rotate, set: setK,
+      seasonPick: sp, barAuto: S.barAuto, clockFmt: S.clockFmt, tempUnit: S.tempUnit, seasonR: ['Auto', 'Spring', 'Summer', 'Fall', 'Winter'].map((u) => { const on = sp === u; return { icon: { Auto: 'calendar-days', Spring: 'flower-2', Summer: 'sun', Fall: 'leaf', Winter: 'snowflake' }[u], label: u, on: on ? 'true' : 'false', dot: on ? 1 : 0, w: on ? 540 : 330, pick: () => setK.seasonPick ? setK.seasonPick(u) : this.setState({ seasonPick: u }) }; }), clockR: ['12-hour', '24-hour'].map((u) => { const on = S.clockFmt === u; return { label: u, on: on ? 'true' : 'false', dot: on ? 1 : 0, w: on ? 540 : 330, pick: () => this.setState({ clockFmt: u }) }; }), barT: (() => { const on = S.barAuto !== 'Off'; return { on: on ? 'true' : 'false', track: on ? 'var(--black)' : 'var(--surface-soft)', ring: on ? 'none' : 'inset 0 0 0 1px var(--border-hairline)', knobL: on ? '28px' : '4px', toggle: () => this.setState((st) => ({ barAuto: st.barAuto === 'Off' ? 'On' : 'Off' })) }; })(), tempT: { opts: ['Fahrenheit', 'Celsius'].map((u) => { const on = S.tempUnit === u; return { label: u, on: on ? 'true' : 'false', dot: on ? 1 : 0, w: on ? 540 : 330, pick: () => this.setState({ tempUnit: u }) }; }) }, idle: S.idle, idleS: (() => { const on = S.idle !== 'Never', n = S.idleN || parseInt(S.idle, 10) || 3; return { on: on ? 'true' : 'false', off: !on, n, value: on ? `${n} min` : `${n} min`, sub: on ? 'without a touch' : 'Off · stays on the current view', deco: on ? 'none' : 'line-through', accent: on ? 'var(--black)' : 'var(--hairline)', cur: on ? 'pointer' : 'default', track: on ? 'var(--black)' : 'var(--surface-soft)', ring: on ? 'none' : 'inset 0 0 0 1px var(--border-hairline)', knobL: on ? '28px' : '4px',
+        toggle: () => this.setState((st) => { const k = st.idleN || parseInt(st.idle, 10) || 3; return st.idle === 'Never' ? { idle: `${k} min`, idleN: k } : { idle: 'Never', idleN: k }; }),
+        set: (e) => { const v = Math.max(1, Math.min(15, parseInt(e.target.value, 10) || 3)); this.setState({ idle: `${v} min`, idleN: v }); } }; })(), noteKeep: S.noteKeep, keepS: (() => { const on = S.noteKeep !== 'Never', n = S.keepN || 7, dl = (d) => `${d} day${d === 1 ? '' : 's'}`; return { on: on ? 'true' : 'false', off: !on, n, value: dl(n), sub: on ? 'after posting' : 'Off · notes stay until deleted', deco: on ? 'none' : 'line-through', accent: on ? 'var(--black)' : 'var(--hairline)', cur: on ? 'pointer' : 'default', track: on ? 'var(--black)' : 'var(--surface-soft)', ring: on ? 'none' : 'inset 0 0 0 1px var(--border-hairline)', knobL: on ? '28px' : '4px',
+        toggle: () => this.setState((st) => { const k = st.keepN || 7; return st.noteKeep === 'Never' ? { noteKeep: dl(k), keepN: k } : { noteKeep: 'Never', keepN: k }; }),
+        set: (e) => { const v = Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 7)); this.setState({ noteKeep: dl(v), keepN: v }); } }; })(), bgMode: S.bgMode, dim: S.dim, rotate: S.rotate, set: setK,
       seasonSub: sp === 'Auto' ? `Follows the month · now ${SI[1]}` : `Fixed to ${SI[1]}`,
       opts: { barAuto: ['On', 'Off'], season: ['Auto', 'Spring', 'Summer', 'Fall', 'Winter'], clock: ['12-hour', '24-hour'], temp: ['Fahrenheit', 'Celsius'], idle: ['1 min', '3 min', '5 min', 'Never'], keep: ['1 day', '1 week', 'Never'], bgModes: ['Season color', 'Photo', 'Slideshow'], dim: ['Off', 'Light', 'Strong'], rotate: ['Hourly', 'Daily', 'Weekly'] },
       isSlideshow: S.bgMode === 'Slideshow',
@@ -2212,7 +2274,7 @@ class Component extends DCLogic {
         return { title: p.title, thumb: p.src('bg-', 480, 270), ring: sel ? ring : 'none', weight: sel ? 540 : 330, op: isSeason ? 0.5 : 1, pick: () => this.setState((s) => ({ bgId: p.id, bgMode: s.bgMode === 'Season color' ? 'Photo' : s.bgMode })) };
       }),
       sheet: {
-        open: !!sh, isEvent: !!sh && sh.kind === 'event', bg: nvOn ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', radius: nvOn ? '6px' : '32px', rot: nvOn ? `rotate(${nvRot}deg)` : 'none', isEventView: evvOn, isEventEdit: !!sh && sh.kind === 'event' && !evvOn, isNoteView: nvOn, isNoteEdit: !!sh && sh.kind === 'note' && !nvOn, viewing, canEdit: viewing && !(evvOn && evv.isPast), locked: evvOn && !!evv.isPast, showOff: !!off && !viewing, isNote: !!sh && sh.kind === 'note', isPhoto: !!sh && sh.kind === 'photo', isFamily: famOn, famFoot: famOn && !sh.discard, hasColor: !!sh && sh.kind === 'note' && !nvOn, err: (sh && sh.err) || undefined,
+        open: !!sh, wx: (() => { const dw = ev0 && wxOn && ymOf(dr) === OCT ? Component.DAILY[dr.day] : null; return dw ? { has: true, icon: dw[0], temp: T(dw[1]) + '°', aria: `Forecast high ${T(dw[1])} degrees` } : { has: false, icon: 'cloud', temp: '', aria: '' }; })(), isEvent: !!sh && sh.kind === 'event', bg: nvOn ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', bodyBg: nvOn ? toneBg(sh.draft.tone) : 'var(--surface-soft)', radius: nvOn ? '6px' : '32px', rot: nvOn ? `rotate(${nvRot}deg)` : 'none', isEventView: evvOn, isEventEdit: !!sh && sh.kind === 'event' && !evvOn, isNoteView: nvOn, isNoteEdit: !!sh && sh.kind === 'note' && !nvOn, viewing, canEdit: viewing && !(evvOn && evv.isPast), locked: evvOn && !!evv.isPast, showOff: !!off && !viewing, isNote: !!sh && sh.kind === 'note', isPhoto: !!sh && sh.kind === 'photo', isFamily: famOn, famFoot: famOn && !sh.discard, hasColor: !!sh && sh.kind === 'note' && !nvOn, err: (sh && sh.err) || undefined,
         title: !sh ? '' : famOn ? 'Family' : sh.kind === 'photo' ? 'Photo details' : sh.kind === 'event' ? (evvOn ? sh.draft.title : sh.id ? 'Edit event' : 'New event') : nvOn ? `From ${sh.draft.author || 'Guest'}` : (sh.id ? 'Edit note' : 'New note'),
         eyebrow: !sh ? '' : famOn ? `${PPL.length} member${PPL.length === 1 ? '' : 's'}` : sh.kind === 'photo' ? (sh.file || 'Family photos') : sh.kind === 'event' ? sdayLabel : (sh.id && !nvOn ? `${sh.draft.author} · ${sh.draft.time}` : 'Notice board'),
         asking: !!sh && !!sh.discard && !viewing, notAsking: (!sh || !sh.discard) && !viewing && !famOn, discardBody: !sh ? '' : famOn ? `${sh.draft.name.trim() || 'This member'} won’t be added.` : sh.kind === 'note' ? 'This note won’t be posted.' : sh.kind === 'photo' ? 'Your edits to this photo won’t be saved.' : sh.id ? 'Your edits to this event won’t be saved.' : 'This event won’t be added.',
@@ -2221,7 +2283,7 @@ class Component extends DCLogic {
         saveLabel: !sh ? 'Save' : off ? 'Save for later' : sh.id ? 'Save' : sh.kind === 'note' ? 'Post note' : 'Add event',
         offBody: sh && sh.kind === 'note' ? 'The note saves on this screen and posts when the connection is back.' : 'Changes save on this screen and sync when the connection is back.',
       },
-      draft: sh ? sh.draft : {}, edit, whoChips, fam, openFamily: () => this.openFamily(), famBtn: { style: { background: 'var(--surface-soft)', minHeight: FL.chipH, padding: '0 20px 0 16px', flex: 'none' } }, swatches, tf, tp, ps, evv, nv,
+      draft: sh ? sh.draft : {}, edit, tg, fam, openFamily: () => this.openFamily(), famBtn: { style: { background: 'var(--surface-soft)', minHeight: FL.chipH, padding: '0 20px 0 16px', flex: 'none' } }, swatches, tf, tp, ps, evv, nv,
       startEdit: () => { if (!(evvOn && evv.isPast)) this.startEdit(); },
       cancelSheet: () => { const s = this.state.sheet; if (s && s.from === 'view') { if (JSON.stringify(s.draft) !== JSON.stringify(s.orig)) return this.setState({ sheet: { ...s, discard: true, discardTo: 'view', pick: null, confirm: false } }); return this.backToView(); } out.closeSheet(); },
       closeSheet: () => { const s = this.state.sheet; if (s && !s.discard && s.orig && JSON.stringify(s.draft) !== JSON.stringify(s.orig)) return this.setState({ sheet: { ...s, discard: true, discardTo: null, pick: null, confirm: false } }); this.setState({ sheet: null }); if (S.ended) this.endNow(); },
