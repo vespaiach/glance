@@ -141,7 +141,7 @@ test("EVT-06 Delete event removes the event and closes the sheet", async () => {
   renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
-  await userEvent.click(screen.getByRole("button", { name: "Delete event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete event?" }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
   await waitFor(async () => expect((await store.db.events.get(LUNCH.id))?.deletedAt).toBeDefined());
@@ -183,7 +183,7 @@ test("EVT-07 Add event queues the new event on the request's day and closes the 
   renderSheet({ kind: "newevent", day: "2026-10-12" });
 
   await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
@@ -221,7 +221,7 @@ test("EVT-07 Save keeps the event's id and day", async () => {
 test("EVT-03 a failed Save keeps the sheet open and writes nothing", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-12" });
 
-  await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Save event" }));
 
   expect(screen.getByRole("dialog", { name: "New event" })).toBeInTheDocument();
   expect(await store.db.events.count()).toBe(0);
@@ -282,7 +282,7 @@ test("EVT-11 a new event request for some tags starts with them and saves their 
   await waitFor(() => expect(pills()).toEqual(["Remove Dad"]));
 
   await userEvent.type(screen.getByLabelText("Title"), "Haircut");
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   await waitFor(async () =>
     expect(await store.db.events.toArray()).toMatchObject([{ everyone: false, tagIds: [DAD.id] }]),
@@ -336,7 +336,7 @@ test("FAM-04 Add member writes the tag through the outbox and puts it on the eve
   expect(grandma).toMatchObject({ color: "lilac", createdAt: NOW.toISOString() });
   expect(await store.db.outbox.filter((one) => one.entity === "tags").count()).toBe(1);
 
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   await waitFor(async () =>
     expect(await store.db.events.toArray()).toMatchObject([

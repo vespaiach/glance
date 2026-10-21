@@ -65,7 +65,7 @@ export const gallery = {
     zone: "Zone states",
     today: "Today",
     calendarView: "Calendar view",
-    eventSheet: "Event sheet",
+    eventSheet: "Event page",
     weatherView: "Weather view",
     notesView: "Notes view",
     noteSheet: "Note sheet",

@@ -47,6 +47,7 @@ type Options = {
   onSave?: (draft: EventDraft) => void;
   onCreateTag?: (name: string, color: TagColor) => string;
   forecast?: SheetForecast;
+  compact?: boolean;
 };
 
 const CLOUDY: SheetForecast = { icon: "cloud-sun", label: "Partly cloudy", high: "68°" };
@@ -68,6 +69,7 @@ function renderSheet(options: Options = {}) {
       onSave={options.onSave ?? (() => {})}
       onCreateTag={options.onCreateTag ?? (() => "")}
       forecast={options.forecast}
+      compact={options.compact}
     />,
   );
 }
@@ -190,11 +192,11 @@ test("TPK-08 time=noend reads No end time on Ends", () => {
   expect(screen.getByRole("button", { name: "Ends, No end time. Change" })).toBeInTheDocument();
 });
 
-test("EVT-05 a new event offers Cancel and Add event", () => {
+test("EVT-05 a new event offers Cancel and Save event", () => {
   renderSheet({ mode: "new" });
 
   expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Add event" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Save event" })).toBeInTheDocument();
 });
 
 test("EVT-05 an edit saves with Save", () => {
@@ -219,7 +221,7 @@ test("EVT-06 a new event has no Delete", () => {
   expect(screen.queryByRole("button", { name: /Delete/ })).not.toBeInTheDocument();
 });
 
-test("EVT-06 Delete turns into Delete event, which deletes", async () => {
+test("EVT-06 Delete turns into Delete event?, which deletes", async () => {
   const onDelete = vi.fn();
 
   renderSheet({ onDelete });
@@ -228,29 +230,63 @@ test("EVT-06 Delete turns into Delete event, which deletes", async () => {
 
   expect(onDelete).not.toHaveBeenCalled();
 
-  await userEvent.click(screen.getByRole("button", { name: "Delete event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete event?" }));
 
   expect(onDelete).toHaveBeenCalledTimes(1);
 });
 
-test("SHEET Cancel and Close discard the sheet", async () => {
+test("EVT-05 Escape closes an unchanged page at once", async () => {
   const onClose = vi.fn();
 
   renderSheet({ onClose });
 
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.keyboard("{Escape}");
 
-  expect(onClose).toHaveBeenCalledTimes(2);
+  expect(onClose).toHaveBeenCalledTimes(1);
 });
 
-test("EVT-05 Add event saves the draft", async () => {
+test("EVT-05 Save event is marked with a check icon", () => {
+  renderSheet({ mode: "new" });
+
+  expect(
+    screen.getByRole("button", { name: "Save event" }).querySelector("svg.lucide-check"),
+  ).not.toBeNull();
+});
+
+test("EVT-01 on phone the actions move to the bottom bar", () => {
+  renderSheet({ compact: true });
+
+  const save = screen.getByRole("button", { name: "Save" });
+
+  expect(save.closest("[data-page-header]")).toBeNull();
+  expect(save.closest("[data-page-bar]")).not.toBeNull();
+});
+
+test("EVT-06 Delete event? sits in the header with the page's other actions", () => {
+  renderSheet();
+
+  expect(
+    screen.getByRole("button", { name: "Delete" }).closest("[data-page-header]"),
+  ).not.toBeNull();
+});
+
+test.each(["Cancel", "Back"])("EVT-05 %s closes an unchanged page at once", async (name) => {
+  const onClose = vi.fn();
+
+  renderSheet({ onClose });
+
+  await userEvent.click(screen.getByRole("button", { name }));
+
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test("EVT-05 Save event saves the draft", async () => {
   const onSave = vi.fn();
 
   renderSheet({ mode: "new", onSave });
 
   await userEvent.type(screen.getByLabelText("Title"), "Picnic");
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   expect(onSave).toHaveBeenCalledWith({ ...BLANK, title: "Picnic" });
 });
@@ -260,7 +296,7 @@ test("EVT-03 Save with an empty title shows Add a title and saves nothing", asyn
 
   renderSheet({ mode: "new", onSave });
 
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   expect(screen.getByText("Add a title")).toBeInTheDocument();
   expect(onSave).not.toHaveBeenCalled();
@@ -269,7 +305,7 @@ test("EVT-03 Save with an empty title shows Add a title and saves nothing", asyn
 test("EVT-03 the title error clears on the next change", async () => {
   renderSheet({ mode: "new" });
 
-  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
   await userEvent.type(screen.getByLabelText("Title"), "P");
 
   expect(screen.queryByText("Add a title")).not.toBeInTheDocument();
@@ -311,11 +347,14 @@ async function tabOrder(count: number) {
   return visited;
 }
 
-test("A11Y-04 Tab moves through Close, the fields in visual order, then the actions, and wraps", async () => {
+test("A11Y-04 Tab moves through Back, the header actions, the fields in visual order, and wraps", async () => {
   renderSheet();
 
   expect(await tabOrder(14)).toEqual([
-    screen.getByRole("button", { name: "Close" }),
+    screen.getByRole("button", { name: "Back" }),
+    screen.getByRole("button", { name: "Delete" }),
+    screen.getByRole("button", { name: "Cancel" }),
+    screen.getByRole("button", { name: "Save" }),
     screen.getByLabelText("Title"),
     screen.getByRole("button", { name: /^Starts/ }),
     screen.getByRole("button", { name: /^Ends/ }),
@@ -325,19 +364,12 @@ test("A11Y-04 Tab moves through Close, the fields in visual order, then the acti
     screen.getByLabelText("Who"),
     screen.getByLabelText("Where"),
     screen.getByLabelText("Notes"),
-    screen.getByRole("button", { name: "Delete" }),
-    screen.getByRole("button", { name: "Cancel" }),
-    screen.getByRole("button", { name: "Save" }),
-    screen.getByRole("button", { name: "Close" }),
+    screen.getByRole("button", { name: "Back" }),
   ]);
 });
 
 async function changeTitle() {
   await userEvent.type(screen.getByRole("textbox", { name: "Title" }), "!");
-}
-
-function scrim() {
-  return screen.getByRole("dialog").previousElementSibling as HTMLElement;
 }
 
 test("§8.9 Cancel on a changed event asks Discard changes? in place of the footer", async () => {
@@ -362,17 +394,17 @@ test("§8.9 a changed new event says it won’t be added", async () => {
   renderSheet({ mode: "new" });
 
   await changeTitle();
-  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
   expect(screen.getByRole("alert")).toHaveTextContent("This event won’t be added.");
 });
 
-test("§8.9 the scrim and Escape ask too on a changed event", async () => {
+test("EVT-05 Back and Escape ask on a changed event", async () => {
   const onClose = vi.fn();
   renderSheet({ onClose });
 
   await changeTitle();
-  await userEvent.click(scrim());
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
   expect(screen.getByRole("alert")).toBeInTheDocument();
 
@@ -409,18 +441,17 @@ test("§8.9 Keep editing brings the footer back with the edit kept", async () =>
   expect(screen.getByRole("dialog")).toHaveFocus();
 });
 
-test("§8.9 while it asks, the scrim is ignored and ✕ discards", async () => {
+test("EVT-05 while it asks, Back discards", async () => {
   const onClose = vi.fn();
   renderSheet({ onClose });
 
   await changeTitle();
   await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await userEvent.click(scrim());
 
   expect(onClose).not.toHaveBeenCalled();
   expect(screen.getByRole("alert")).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
   expect(onClose).toHaveBeenCalledTimes(1);
 });
@@ -823,7 +854,7 @@ describe("Event details", () => {
     const onClose = vi.fn();
     renderSheet({ initial: details(), onClose });
 
-    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -867,7 +898,7 @@ describe("Event details", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Edit" }));
     await userEvent.type(screen.getByLabelText("Title"), "!");
-    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
     await userEvent.click(screen.getByRole("button", { name: "Discard" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -902,7 +933,7 @@ describe("Event details", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Edit" }));
     await userEvent.click(screen.getByRole("button", { name: "Delete" }));
-    await userEvent.click(screen.getByRole("button", { name: "Delete event" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete event?" }));
 
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
