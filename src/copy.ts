@@ -49,16 +49,23 @@ export const copy = {
     hero: {
       now: "Happening now",
       next: "Up next",
-      today: "Today",
       until: (end: string) => `until ${end}`,
       started: (start: string) => `started ${start}`,
       left: (length: string) => `${length} left`,
       in: (length: string) => `In ${length}`,
-      endedTitle: "Nothing else today",
-      endedBody: "Today’s events have ended.",
-      noneTitle: "Nothing scheduled",
-      noneBody: "Events show here while they happen.",
       loading: "Loading calendar",
+    },
+    open: {
+      eyebrow: "Today · Open",
+      wrapTitle: "That’s a wrap for today",
+      wrapBody: (done: number, until: string) =>
+        `${done} ${done === 1 ? "event" : "events"} done · free until ${until}`,
+      wideTitle: "The day is wide open",
+      wideBody: (until: string, left?: string) =>
+        left ? `Free until ${until} · ${left}` : `Free until ${until}`,
+      now: (time: string) => `Now ${time}`,
+      sunset: "Sunset",
+      next: "Next on the calendar",
     },
     schedule: {
       count: (count: number) => {

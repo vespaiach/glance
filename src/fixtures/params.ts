@@ -39,7 +39,7 @@ const CHOICES = {
   amb: ["same", "split", "off"],
   pick: ["all.s", "all.e", "wknd.s", "wknd.e"],
   rail: ["1", "open"],
-  events: ["many"],
+  events: ["many", "none"],
   chrome: ["0"],
   qr: ["open", "failed"],
   dp: ["open"],

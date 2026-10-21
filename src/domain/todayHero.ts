@@ -6,8 +6,10 @@ type HeroEvent = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
 export type TodayHero<T extends HeroEvent> =
   | { kind: "now"; event: T; left?: number }
   | { kind: "next"; event: T; in: number }
-  | { kind: "ended" }
+  | { kind: "ended"; done: number }
   | { kind: "none" };
+
+export type EventHero<T extends HeroEvent> = Extract<TodayHero<T>, { event: T }>;
 
 const MINUTE = 60_000;
 
@@ -30,7 +32,11 @@ export function todayHero<T extends HeroEvent>(
 
   return next
     ? { kind: "next", event: next, in: minutesUntil(next.startAt, now) }
-    : { kind: "ended" };
+    : { kind: "ended", done: ordered.length };
+}
+
+export function hasEvent<T extends HeroEvent>(hero: TodayHero<T>): hero is EventHero<T> {
+  return hero.kind === "now" || hero.kind === "next";
 }
 
 function runningHero<T extends HeroEvent>(running: readonly T[], now: Date): TodayHero<T> {

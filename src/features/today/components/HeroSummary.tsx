@@ -6,20 +6,19 @@ import { type Clock, clockAt, formatDuration, minutesOfDay, timeParts } from "@/
 import type { TodayHero } from "@/domain/todayHero";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
-import { Eyebrow } from "@/ui/Eyebrow";
 import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { CueEyebrow } from "./CueEyebrow";
 
+type EventHero = Extract<TodayHero<CalendarEvent>, { event: unknown }>;
+
 type HeroSummaryProps = {
-  hero: TodayHero<CalendarEvent>;
+  hero: EventHero;
   tags: readonly Tag[];
   clock: Clock;
   tz: string;
   onOpenEvent: (id: string) => void;
 };
-
-type EventHero = Extract<TodayHero<CalendarEvent>, { event: unknown }>;
 
 const styles = stylex.create({
   root: {
@@ -79,14 +78,6 @@ const timeAt = (iso: string, clock: Clock, tz: string) =>
   timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
 export function HeroSummary({ hero, tags, clock, tz, onOpenEvent }: HeroSummaryProps) {
-  if (hero.kind === "ended") {
-    return <HeroMessage title={copy.today.hero.endedTitle} body={copy.today.hero.endedBody} />;
-  }
-
-  if (hero.kind === "none") {
-    return <HeroMessage title={copy.today.hero.noneTitle} body={copy.today.hero.noneBody} />;
-  }
-
   const countdown = countdownText(hero);
 
   return (
@@ -136,14 +127,4 @@ function eventMeta(hero: EventHero, tags: readonly Tag[], clock: Clock, tz: stri
   const who = whoLabel(hero.event, tags, copy.events.everyone);
 
   return [hero.event.location, when, who].filter(Boolean).join(" · ");
-}
-
-function HeroMessage({ title, body }: { title: string; body: string }) {
-  return (
-    <div {...stylex.props(styles.root)}>
-      <Eyebrow>{copy.today.hero.today}</Eyebrow>
-      <span {...stylex.props(styles.title)}>{title}</span>
-      <span {...stylex.props(styles.body)}>{body}</span>
-    </div>
-  );
 }
