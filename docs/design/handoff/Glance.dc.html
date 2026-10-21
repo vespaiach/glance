@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
-<style>html,body{margin:0;height:100%;background:#fff;font-family:var(--font-sans)}a{color:#000}a:hover{color:#000}@keyframes kskPulse{from{opacity:1}to{opacity:.55}}@keyframes kskBlink{0%{opacity:1}50%{opacity:0}}</style>
+<style>html,body{margin:0;height:100%;background:#fff;font-family:var(--font-sans)}a{color:#000}a:hover{color:#000}@keyframes kskPulse{from{opacity:1}to{opacity:.55}}@keyframes kskExpand{from{opacity:0;transform:translateY(-6px);clip-path:inset(0 0 100% 0 round 24px)}to{opacity:1;transform:none;clip-path:inset(0 0 0 0 round 24px)}}@keyframes kskBlink{0%{opacity:1}50%{opacity:0}}</style>
 </helmet>
 <div data-season="{{ season }}" data-screen-label="{{ screenLabel }}" style="--type-clock-size:clamp(84px,6.8vw,128px);--type-clock-ls:-4px;--type-temp-size:clamp(76px,6.4vw,96px);--type-temp-ls:-3px;--type-display-xl-size:clamp(36px,3.6vw,52px);--type-display-xl-ls:-1px;--type-display-lg-size:clamp(28px,2.6vw,40px);--type-headline-size:20px;--type-headline-ls:-0.2px;--type-body-lg-size:18px;--type-body-size:16px;--type-body-sm-size:15px;--type-button-size:17px;--type-eyebrow-size:14px;--type-caption-size:14px;--kiosk-gutter:clamp(20px,2.6vw,40px);height:100vh;padding-bottom:{{ kbPad }};box-sizing:border-box;display:flex;flex-direction:column;background:{{ bgCss }};color:var(--text-primary);overflow:hidden;padding-left:{{ nav.padL }};padding-right:{{ nav.padR }};transition:background 600ms ease-in-out,padding 280ms cubic-bezier(0.2,0,0,1)">
 
@@ -189,10 +189,31 @@
 </button>
 </sc-if>
 <sc-if value="{{ nowEvent.none }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:20px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:12px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Today</x-import>
-<span style="font-size:var(--type-display-lg-size);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">{{ nowEvent.noneTitle }}</span>
-<span style="font-size:18px;font-weight:330;text-wrap:pretty">{{ nowEvent.noneBody }}</span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Today · Open</x-import>
+<span style="font-size:var(--type-display-lg-size);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">{{ nh.open.title }}</span>
+<span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ nh.open.body }}</span>
+</div>
+<div aria-hidden="true" style="position:relative;padding:30px 0 26px">
+<span style="position:absolute;top:0;left:{{ nh.open.nowPct }};transform:translateX(-50%);font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now {{ nh.open.nowL }}</span>
+<span title="Sunset {{ nh.open.sunL }}" style="position:absolute;top:-3px;left:{{ nh.open.sunPct }};transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span>
+<div style="position:relative;height:14px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden">
+<div style="position:absolute;left:0;top:0;bottom:0;width:{{ nh.open.nowPct }};background:var(--action-primary)"></div>
+<sc-for list="{{ nh.open.segs }}" as="g" hint-placeholder-count="0"><div style="position:absolute;top:4px;bottom:4px;left:{{ g.l }};width:{{ g.w }};border-radius:9999px;background:var(--surface-canvas)"></div></sc-for>
+</div>
+<div style="position:absolute;top:24px;left:{{ nh.open.sunPct }};width:2px;height:26px;margin-left:-1px;background:var(--action-primary)"></div>
+<div style="position:absolute;top:21px;left:{{ nh.open.nowPct }};width:32px;height:32px;margin-left:-16px;border-radius:50%;background:var(--action-primary);color:var(--on-action-primary);box-shadow:0 0 0 4px var(--surface-canvas);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" stroke-width="2" hint-size="20px,20px"></x-import></div>
+<span style="position:absolute;bottom:0;left:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">{{ nh.open.startL }}</span>
+<span style="position:absolute;bottom:0;right:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">{{ nh.open.endL }}</span>
+</div>
+<sc-if value="{{ nh.open.hasNext }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ nh.open.goNext }}" style="min-height:64px;border:0;background:var(--surface-canvas);border-radius:24px;padding:14px 20px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;gap:16px;min-width:0;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="24" stroke-width="1.5" hint-size="24px,24px"></x-import>
+<span style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;line-height:1.2">Next on the calendar</span><span style="font-size:18px;font-weight:480;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ nh.open.next }}</span></span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="20" stroke-width="2" hint-size="20px,20px"></x-import>
+</button>
+</sc-if>
 </div>
 </sc-if>
 <sc-if value="{{ ld }}" hint-placeholder-val="{{ false }}">
@@ -234,10 +255,31 @@
 </button>
 </sc-if>
 <sc-if value="{{ nowEvent.none }}" hint-placeholder-val="{{ false }}">
-<div style="flex:{{ nh.nf }};display:flex;flex-direction:column;gap:12px;min-width:0">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Today</x-import>
-<span style="font-size:var(--nh-title);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">{{ nowEvent.noneTitle }}</span>
-<span style="font-size:18px;font-weight:330;text-wrap:pretty">{{ nowEvent.noneBody }}</span>
+<div style="flex:{{ nh.nf }};display:flex;flex-direction:column;gap:20px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Today · Open</x-import>
+<span style="font-size:var(--nh-title);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">{{ nh.open.title }}</span>
+<span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ nh.open.body }}</span>
+</div>
+<div aria-hidden="true" style="position:relative;padding:30px 0 26px">
+<span style="position:absolute;top:0;left:{{ nh.open.nowPct }};transform:translateX(-50%);font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now {{ nh.open.nowL }}</span>
+<span title="Sunset {{ nh.open.sunL }}" style="position:absolute;top:-3px;left:{{ nh.open.sunPct }};transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span>
+<div style="position:relative;height:14px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden">
+<div style="position:absolute;left:0;top:0;bottom:0;width:{{ nh.open.nowPct }};background:var(--action-primary)"></div>
+<sc-for list="{{ nh.open.segs }}" as="g" hint-placeholder-count="0"><div style="position:absolute;top:4px;bottom:4px;left:{{ g.l }};width:{{ g.w }};border-radius:9999px;background:var(--surface-canvas)"></div></sc-for>
+</div>
+<div style="position:absolute;top:24px;left:{{ nh.open.sunPct }};width:2px;height:26px;margin-left:-1px;background:var(--action-primary)"></div>
+<div style="position:absolute;top:21px;left:{{ nh.open.nowPct }};width:32px;height:32px;margin-left:-16px;border-radius:50%;background:var(--action-primary);color:var(--on-action-primary);box-shadow:0 0 0 4px var(--surface-canvas);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" stroke-width="2" hint-size="20px,20px"></x-import></div>
+<span style="position:absolute;bottom:0;left:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">{{ nh.open.startL }}</span>
+<span style="position:absolute;bottom:0;right:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">{{ nh.open.endL }}</span>
+</div>
+<sc-if value="{{ nh.open.hasNext }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ nh.open.goNext }}" style="min-height:64px;border:0;background:var(--surface-canvas);border-radius:24px;padding:14px 20px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;gap:16px;min-width:0;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="24" stroke-width="1.5" hint-size="24px,24px"></x-import>
+<span style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;line-height:1.2">Next on the calendar</span><span style="font-size:18px;font-weight:480;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ nh.open.next }}</span></span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="20" stroke-width="2" hint-size="20px,20px"></x-import>
+</button>
+</sc-if>
 </div>
 </sc-if>
 </x-import>
@@ -286,16 +328,6 @@
 </sc-for>
 </div>
 </sc-if>
-<sc-if value="{{ todayNone }}" hint-placeholder-val="{{ false }}">
-<div style="flex:1;min-height:220px;background:var(--surface-soft);border-radius:24px;padding:clamp(24px,2.4vw,32px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="32" stroke-width="1.5" hint-size="32px,32px"></x-import>
-<div style="display:flex;flex-direction:column;gap:6px">
-<span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.15">No events yet</span>
-<span style="font-size:17px;font-weight:330;line-height:1.45;max-width:420px;text-wrap:pretty">Add the first one. It shows here and on the calendar.</span>
-</div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="plus" on-click="{{ addEventToday }}" hint-size="140px,44px">Add event</x-import>
-</div>
-</sc-if>
 </div>
 
 <sc-if value="{{ wxNone }}" hint-placeholder-val="{{ false }}">
@@ -337,9 +369,19 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" on-click="{{ go.notes }}" hint-size="140px,44px">All notes</x-import>
 </div>
 <sc-if value="{{ notesNone }}" hint-placeholder-val="{{ false }}">
-<div style="margin:0 8px;min-height:160px;background:var(--surface-soft);border-radius:24px;padding:24px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px">
-<span style="font-size:22px;font-weight:340;letter-spacing:-0.3px;line-height:1.2">No notes yet</span>
+<div style="margin:0 8px;min-height:160px;border:1.5px dashed var(--hairline);border-radius:24px;padding:24px 28px;box-sizing:border-box;display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+<button type="button" onClick="{{ addNote }}" aria-label="Add the first note" style="position:relative;flex:none;width:128px;height:116px;border:0;background:transparent;padding:0;cursor:pointer;font-family:inherit;color:inherit;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
+<span style="position:absolute;inset:0;border-radius:6px;background:var(--surface-highlight);transform:rotate(7deg) translate(6px,4px)"></span>
+<span style="position:absolute;inset:0;border-radius:6px;background:var(--surface-weather);transform:rotate(-5deg) translate(-4px,2px)"></span>
+<span style="position:absolute;inset:0;border-radius:6px;background:var(--surface-notes);transform:rotate(-1.5deg);box-shadow:0 4px 16px rgba(0,0,0,.06);padding:15px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+<span style="display:flex;flex-direction:column;gap:13px"><span style="height:1px;background:rgba(0,0,0,.14)"></span><span style="height:1px;background:rgba(0,0,0,.14)"></span><span style="height:1px;width:60%;background:rgba(0,0,0,.14)"></span></span>
+<span style="align-self:flex-end;width:40px;height:40px;border-radius:9999px;background:var(--surface-inverse);color:var(--text-inverse);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="plus" size="20" hint-size="20px,20px"></x-import></span>
+</span>
+</button>
+<div style="flex:1;min-width:180px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:22px;font-weight:340;letter-spacing:-0.3px;line-height:1.2">Something to share at home?</span><span style="font-size:16px;font-weight:330;line-height:1.4;text-wrap:pretty">Milk in the fridge, flowers to water. Leave a note for the family.</span></div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="plus" on-click="{{ addNote }}" dc-props="{{ sx.ring }}" hint-size="130px,44px">Add note</x-import>
+</div>
 </div>
 </sc-if>
 <sc-if value="{{ ld }}" hint-placeholder-val="{{ false }}">
@@ -362,7 +404,12 @@
 </button>
 </sc-if>
 <sc-if value="{{ potdNone }}" hint-placeholder-val="{{ false }}">
-<button type="button" onClick="{{ go.photos }}" style="flex:1;min-height:{{ L.potdMin }};border:0;border-radius:8px;background:var(--surface-soft);padding:24px;font-family:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image-plus" size="32" stroke-width="1.5" hint-size="32px,32px"></x-import><span style="font-size:18px;font-weight:480">Upload a photo</span></button>
+<button type="button" onClick="{{ go.photos }}" style="flex:1;min-height:{{ L.potdMin }};border:1.5px dashed var(--hairline);border-radius:8px;background:var(--surface-warm);padding:24px;box-sizing:border-box;font-family:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:24px;text-align:left;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image-plus" size="32" stroke-width="1.5" hint-size="32px,32px"></x-import>
+<span style="display:flex;flex-direction:column;align-items:flex-start;gap:20px"><span style="display:flex;flex-direction:column;gap:8px"><span style="font-size:clamp(22px,1.6vw,30px);font-weight:340;letter-spacing:-0.4px;line-height:1.15;text-wrap:pretty">“{{ photoTip }}”</span>
+<span style="font-size:17px;font-weight:330;line-height:1.4;text-wrap:pretty">Share a family photo and keep the memory here.</span></span>
+<span style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:9999px;background:var(--surface-inverse);color:var(--text-inverse);font-size:17px;font-weight:480"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="upload" size="18" hint-size="18px,18px"></x-import>Upload a photo</span></span>
+</button>
 </sc-if>
 </div>
 </sc-if>
@@ -373,11 +420,12 @@
 <div style="height:{{ L.calH }};min-height:{{ L.calMin }};display:flex;flex-direction:column;gap:{{ L.calGap }}">
 <sc-if value="{{ dp.on }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ dp.open }}" aria-haspopup="dialog" aria-label="{{ dp.aria }}" style="flex:none;width:100%;border:0;border-radius:24px;background:var(--surface-canvas);color:var(--text-primary);padding:12px 12px 12px 24px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16px;font-family:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.98)"><span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">{{ dp.year }}</span><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">{{ dp.month }}</span></span><span style="flex:none;height:60px;display:flex;align-items:center;gap:12px;padding:0 16px 0 22px;border-radius:9999px;background:var(--action-primary);color:var(--on-action-primary)"><span style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase">{{ dp.wd }}</span><span style="font-size:22px;font-weight:480;letter-spacing:-0.5px;line-height:1">{{ dp.num }}</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="24" hint-size="24px,24px"></x-import></span></button></sc-if>
 <sc-if value="{{ dpWk }}" hint-placeholder-val="{{ true }}">
-<div style="flex:none;background:var(--surface-canvas);border-radius:24px;padding:12px {{ L.wkPad }};box-sizing:border-box;display:flex;align-items:center;gap:{{ L.wkGap }};min-width:0">
-<sc-if value="{{ L.wkLbl }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:4px;padding:0 8px;flex:none;width:136px"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap">{{ wkLabel }}</span><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">{{ monthLabel }}</span></div></sc-if>
+<div style="flex:none;background:var(--surface-canvas);border-radius:24px;padding:0 {{ L.wkPad }};box-sizing:border-box;display:flex;align-items:center;gap:{{ L.wkGap }};min-width:0;overflow:hidden">
+<sc-if value="{{ L.wkLbl }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:4px;padding:0 8px;flex:none;width:136px"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap">{{ wkFrom }}</span><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">{{ monthLabel }}</span></div></sc-if>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="chevron-left" label="Previous week" on-click="{{ prevWk }}" dc-props="{{ wkBtn }}" hint-size="56px,56px"></x-import>
-<div ref="{{ wkRef }}" role="group" aria-label="{{ wkAria }}" style="flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:{{ L.dayGap }};min-width:0">
-<sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><button type="button" onClick="{{ d.pick }}" aria-label="{{ d.label }}" aria-current="{{ d.cur }}" style="height:{{ L.dayH }};border:0;border-radius:9999px;background:{{ d.bg }};color:{{ d.fg }};box-shadow:{{ d.ring }};display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;cursor:pointer;padding:0 14px;min-width:0;overflow:hidden;transition:transform 120ms ease-out,background 180ms ease" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;align-items:{{ L.dayAlign }};gap:3px;min-width:0"><span style="font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase">{{ d.wd }}</span><span style="font-size:{{ L.dayFs }};font-weight:480;letter-spacing:-0.5px;line-height:1">{{ d.num }}</span><span style="display:flex;gap:2px;height:6px;max-width:46px;overflow:hidden"><sc-for list="{{ d.dots }}" as="p" hint-placeholder-count="0"><span style="width:6px;height:6px;flex:none;border-radius:9999px;background:{{ p.c }}"></span></sc-for></span></span><sc-if value="{{ d.hasWx }}" hint-placeholder-val="{{ true }}"><span style="display:flex;flex-direction:column;align-items:center;gap:4px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ d.icon }}" size="24" stroke-width="1.5" hint-size="24px,24px"></x-import><span style="font-size:16px;font-weight:480">{{ d.hi }}</span></span></sc-if></button></sc-for>
+<div ref="{{ wkRef }}" role="group" aria-label="{{ wkAria }}" style="flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:{{ L.dayGap }};min-width:0;position:relative">
+<div aria-hidden="true" style="position:absolute;top:0;bottom:0;left:calc((100% - 6 * {{ L.dayGap }}) / 7 * {{ wkI }} + {{ L.dayGap }} * {{ wkI }});width:calc((100% - 6 * {{ L.dayGap }}) / 7);background:var(--action-primary);pointer-events:none;transition:left 280ms cubic-bezier(0.2,0.8,0.2,1)"></div>
+<sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><button type="button" onClick="{{ d.pick }}" aria-label="{{ d.label }}" aria-current="{{ d.cur }}" style="position:relative;z-index:1;height:calc({{ L.dayH }} + 24px);border:0;border-radius:0;background:{{ d.bg }};color:{{ d.fg }};box-shadow:{{ d.ring }};display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;cursor:pointer;padding:0 10px;min-width:0;overflow:hidden;transition:transform 120ms ease-out,background 180ms ease,color 200ms ease 60ms" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;align-items:{{ L.dayAlign }};gap:3px;min-width:0;padding-top:12px"><span style="font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase">{{ d.wd }}</span><span style="font-size:{{ L.dayFs }};font-weight:480;letter-spacing:-0.5px;line-height:1">{{ d.num }}</span><span style="display:flex;gap:3px;height:8px;max-width:50px;overflow:hidden;align-items:center;padding:0 1px"><sc-for list="{{ d.dots }}" as="p" hint-placeholder-count="0"><span style="width:6px;height:6px;flex:none;border-radius:9999px;background:{{ p.c }};box-shadow:{{ p.ol }}"></span></sc-for></span></span><sc-if value="{{ d.hasWx }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:8px;right:10px;display:flex;align-items:center;gap:3px;pointer-events:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ d.icon }}" size="14" stroke-width="1.75" hint-size="14px,14px"></x-import><span style="font-size:12px;font-weight:480;line-height:1;font-variant-numeric:tabular-nums">{{ d.hi }}</span></span></sc-if></button></sc-for>
 </div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="chevron-right" label="Next week" on-click="{{ nextWk }}" dc-props="{{ wkBtn }}" hint-size="56px,56px"></x-import>
 </div>
@@ -515,11 +563,18 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="plus" on-click="{{ addNote }}" hint-size="140px,44px">Add note</x-import>
 </div>
 <sc-if value="{{ notesNone }}" hint-placeholder-val="{{ false }}">
-<div style="min-height:340px;background:var(--surface-soft);border-radius:24px;padding:clamp(28px,3.2vw,48px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sticky-note" size="40" stroke-width="1.5" hint-size="40px,40px"></x-import>
-<div style="display:flex;flex-direction:column;gap:6px">
-<span style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">No notes yet</span>
-<span style="font-size:18px;font-weight:330;line-height:1.45;max-width:520px;text-wrap:pretty">Leave a note for the family. Notes show on Today. {{ noteKeepSentence }}</span>
+<div style="min-height:340px;border:1.5px dashed var(--hairline);border-radius:24px;padding:clamp(28px,3.2vw,48px);box-sizing:border-box;display:flex;align-items:center;gap:clamp(40px,5vw,72px);flex-wrap:wrap">
+<button type="button" onClick="{{ addNote }}" aria-label="Add the first note" style="position:relative;flex:none;width:220px;height:200px;border:0;background:transparent;padding:0;cursor:pointer;font-family:inherit;color:inherit;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">
+<span style="position:absolute;inset:0;border-radius:6px;background:var(--surface-highlight);transform:rotate(7deg) translate(6px,4px)"></span>
+<span style="position:absolute;inset:0;border-radius:6px;background:var(--surface-weather);transform:rotate(-5deg) translate(-4px,2px)"></span>
+<span style="position:absolute;inset:0;border-radius:6px;background:var(--surface-notes);transform:rotate(-1.5deg);box-shadow:0 4px 16px rgba(0,0,0,.06);padding:26px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+<span style="display:flex;flex-direction:column;gap:22px"><span style="height:1px;background:rgba(0,0,0,.14)"></span><span style="height:1px;background:rgba(0,0,0,.14)"></span><span style="height:1px;width:60%;background:rgba(0,0,0,.14)"></span></span>
+<span style="align-self:flex-end;width:56px;height:56px;border-radius:9999px;background:var(--surface-inverse);color:var(--text-inverse);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="plus" size="28" hint-size="28px,28px"></x-import></span>
+</span>
+</button>
+<div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:10px">
+<span style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">Something to share at home?</span>
+<span style="font-size:18px;font-weight:330;line-height:1.45;max-width:520px;text-wrap:pretty">Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family.</span>
 </div>
 </div>
 </sc-if>
@@ -1037,17 +1092,23 @@
 </div>
 </sc-if>
 <sc-if value="{{ sheet.open }}" hint-placeholder-val="{{ false }}">
-<div style="position:fixed;top:0;left:0;right:0;bottom:{{ kbPad }};z-index:10;display:grid;place-items:center;padding:24px;box-sizing:border-box;transition:bottom 280ms cubic-bezier(.2,.7,.2,1)">
-<div onClick="{{ scrimTap }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
-<div role="dialog" aria-label="{{ sheet.title }}" style="position:relative;width:100%;max-width:560px;max-height:100%;overflow:auto;background:{{ sheet.bodyBg }};border-radius:{{ sheet.radius }};transform:{{ sheet.rot }};transition:transform 280ms ease-out;padding:clamp(24px,3vw,40px);box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
-<div data-ds-new="SheetHeader" style="position:sticky;top:calc(-1 * clamp(24px,3vw,40px));z-index:2;background:{{ sheet.bg }};box-shadow:0 2px 8px rgba(0,0,0,.04);margin:calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px)) 0;padding:clamp(24px,3vw,40px) clamp(24px,3vw,40px) 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+<div style="position:fixed;top:0;left:0;right:0;bottom:{{ kbPad }};z-index:10;display:grid;place-items:{{ pgx.place }};padding:{{ pgx.outPad }};pointer-events:{{ pgx.pe }};box-sizing:border-box;transition:bottom 280ms cubic-bezier(.2,.7,.2,1)">
+<div onClick="{{ scrimTap }}" style="position:absolute;inset:0;background:var(--scrim);display:{{ pgx.scrimD }}"></div>
+<div role="dialog" aria-label="{{ sheet.title }}" data-page="{{ pgx.on }}" style="position:relative;width:100%;max-width:{{ pgx.maxW }};max-height:100%;height:{{ pgx.h }};overflow:{{ pgx.ov }};background:{{ sheet.bodyBg }};border-radius:{{ sheet.radius }};transform:{{ sheet.rot }};transition:{{ pgx.tr }};padding:{{ pgx.pad }};box-shadow:{{ pgx.sh }};display:{{ pgx.d }};flex-direction:column;gap:{{ pgx.gap }};grid-template-columns:{{ pgx.cols }};grid-template-rows:{{ pgx.rows }};box-sizing:border-box">
+<div data-ds-new="SheetHeader" style="grid-row:1;grid-column:1;position:{{ pgx.hdPos }};top:{{ pgx.hdTop }};z-index:2;background:{{ sheet.bg }};box-shadow:{{ pgx.hdSh }};margin:{{ pgx.hdM }};padding:{{ pgx.hdP }};display:flex;flex-direction:{{ pgx.hdDir }};justify-content:{{ pgx.hdJc }};align-items:{{ pgx.hdAi }};gap:16px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:6px">
-<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import><sc-if value="{{ sheet.wx.has }}" hint-placeholder-val="{{ false }}"><span data-ds-new="SheetWeather" aria-label="{{ sheet.wx.aria }}" style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);white-space:nowrap"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ sheet.wx.icon }}" size="16" stroke-width="1.5" hint-size="16px,16px"></x-import>{{ sheet.wx.temp }}</span></sc-if></div>
+<div style="position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:20px"><sc-if value="{{ sdp.fixed }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import></sc-if><sc-if value="{{ sdp.can }}" hint-placeholder-val="{{ false }}"><button data-ds-new="DateEyebrow" type="button" onClick="{{ sdp.toggle }}" aria-expanded="{{ sdp.expanded }}" aria-label="{{ sdp.aria }}" style="display:flex;align-items:center;min-height:44px;margin:-12px 0;padding:0;border:0;background:transparent;color:inherit;font-family:inherit;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;align-items:center;gap:8px;height:20px"><span style="display:flex;align-items:center;height:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="16" stroke-width="1.75" style="display:block" hint-size="16px,16px"></x-import></span><span style="display:flex;align-items:center;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" style="display:block;line-height:1" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import></span><span style="display:flex;align-items:center;height:16px;transform:{{ sdp.chevRot }};transition:transform 180ms"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="16" stroke-width="1.75" style="display:block" hint-size="16px,16px"></x-import></span></span></button></sc-if><sc-if value="{{ sdp.open }}" hint-placeholder-val="{{ false }}"><button type="button" aria-label="Close date picker" onClick="{{ sdp.close }}" style="position:fixed;inset:0;z-index:4;border:0;padding:0;margin:0;background:transparent;cursor:default"></button><div data-ds-new="QuickDatePicker" role="dialog" aria-label="Change date" style="position:absolute;top:calc(100% + 16px);left:-10px;z-index:5;width:352px;max-width:calc(100vw - 32px);box-sizing:border-box;background:var(--surface-canvas);border-radius:24px;padding:16px;box-shadow:0 12px 32px rgba(0,0,0,.14),inset 0 0 0 1px var(--border-hairline-soft);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ sdp.quick }}" as="q" hint-placeholder-count="3"><button type="button" onClick="{{ q.tap }}" aria-pressed="{{ q.sel }}" style="min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:{{ q.bg }};color:{{ q.fg }};font-family:inherit;font-size:16px;font-weight:{{ q.w }};cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ q.label }}</button></sc-for></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><button type="button" onClick="{{ sdp.prev }}" aria-label="Previous month" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;border-radius:9999px;background:transparent;color:inherit;cursor:pointer" style-hover="background:var(--surface-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-left" size="20" hint-size="20px,20px"></x-import></button><span aria-live="polite" style="font-size:17px;font-weight:540">{{ sdp.month }}</span><button type="button" onClick="{{ sdp.next }}" aria-label="Next month" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;border-radius:9999px;background:transparent;color:inherit;cursor:pointer" style-hover="background:var(--surface-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="20" hint-size="20px,20px"></x-import></button></div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px"><sc-for list="{{ sdp.wds }}" as="w" hint-placeholder-count="7"><span aria-hidden="true" style="text-align:center;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;padding-bottom:4px">{{ w }}</span></sc-for><sc-for list="{{ sdp.cells }}" as="c" hint-placeholder-count="35"><button type="button" onClick="{{ c.tap }}" disabled="{{ c.blank }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:44px;min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.ring }};visibility:{{ c.vis }};font-family:inherit;font-size:16px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.95)">{{ c.label }}</button></sc-for></div>
+</div></sc-if><sc-if value="{{ sheet.wx.has }}" hint-placeholder-val="{{ false }}"><span data-ds-new="SheetWeather" aria-label="{{ sheet.wx.aria }}" style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);white-space:nowrap"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ sheet.wx.icon }}" size="16" stroke-width="1.5" hint-size="16px,16px"></x-import>{{ sheet.wx.temp }}</span></sc-if></div>
 <div style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">{{ sheet.title }}</div>
 </div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" label="Close" size="touch" on-click="{{ closeSheet }}" hint-size="56px,56px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="{{ pgx.closeIcon }}" label="{{ pgx.closeLabel }}" size="touch" on-click="{{ closeSheet }}" hint-size="56px,56px"></x-import>
 </div>
-<sc-if value="{{ sheet.showOff }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="{{ sheet.offBody }}" tone="soft" hint-size="100%,80px"></x-import></sc-if>
+<sc-if value="{{ sheet.showOff }}" hint-placeholder-val="{{ false }}"><div style="grid-row:2;grid-column:1 / -1;padding:{{ pgx.offP }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="{{ sheet.offBody }}" tone="soft" hint-size="100%,80px"></x-import></div></sc-if>
+<div data-ds-new="EventPageBody" data-sheet-scroll="1" style="grid-row:3;grid-column:1 / -1;display:{{ pgx.bodyD }};grid-template-columns:{{ pgx.bodyCols }};align-items:stretch;position:relative">
+<div style="display:{{ pgx.fcD }};flex-direction:column;gap:20px;padding:{{ pgx.fcP }};box-sizing:border-box">
 <sc-if value="{{ sheet.isEventView }}" hint-placeholder-val="{{ false }}">
 <div data-ds-new="EventDetails" style="display:flex;flex-direction:column">
 <div style="background:{{ evv.fill }};border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px;margin-bottom:8px">
@@ -1085,30 +1146,29 @@
 </div>
 </sc-for>
 </div>
-<button data-ds-new="AllDayToggle" type="button" role="switch" aria-checked="{{ tf.on }}" onClick="{{ tf.toggleAllDay }}" style="min-height:56px;align-self:flex-start;display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:0;background:transparent;border:0;font-family:inherit;color:var(--text-primary);cursor:pointer;text-align:left"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">All day</span><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ tf.track }};box-shadow:{{ tf.trackRing }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ tf.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ tf.knobRing }};transition:left 180ms ease"></span></span></button>
 <sc-if value="{{ tp.open }}" hint-placeholder-val="{{ false }}">
-<div data-ds-new="TimePicker" data-time-panel="1" role="group" aria-label="{{ tp.aria }}" style="background:var(--surface-canvas);border-radius:24px;padding:{{ tp.pad }};display:flex;flex-direction:column;gap:16px">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:56px">
+<div data-ds-new="TimePicker" data-time-panel="1" role="group" aria-label="{{ tp.aria }}" style="animation:kskExpand 260ms cubic-bezier(0.2,0.8,0.2,1) both;transform-origin:top;background:var(--surface-soft);border-radius:24px;padding:{{ tp.pad }};display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;min-height:44px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="140px,20px">{{ tp.eyebrow }}</x-import>
-<sc-if value="{{ tp.h12 }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ tp.merOpts }}" value="{{ tp.mer }}" on-change="{{ tp.setMer }}" hint-size="180px,64px"></x-import></sc-if>
+<sc-if value="{{ tp.h12 }}" hint-placeholder-val="{{ true }}"><div data-ds-new="MeridiemToggle" role="radiogroup" aria-label="AM or PM" style="position:relative;display:grid;grid-template-columns:1fr 1fr;width:144px;height:44px;padding:4px;box-sizing:border-box;border-radius:9999px;background:var(--surface-canvas);box-shadow:inset 0 0 0 1px var(--border-hairline)"><span aria-hidden="true" style="position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:9999px;background:var(--action-primary);transform:{{ tp.merX }};transition:transform 220ms cubic-bezier(.3,.7,.2,1)"></span><button type="button" role="radio" aria-checked="{{ tp.isAm }}" onClick="{{ tp.toAm }}" style="position:relative;border:0;background:transparent;padding:0;font-family:var(--font-mono);font-size:14px;letter-spacing:0.5px;color:{{ tp.amFg }};cursor:pointer;transition:color 220ms">AM</button><button type="button" role="radio" aria-checked="{{ tp.isPm }}" onClick="{{ tp.toPm }}" style="position:relative;border:0;background:transparent;padding:0;font-family:var(--font-mono);font-size:14px;letter-spacing:0.5px;color:{{ tp.pmFg }};cursor:pointer;transition:color 220ms">PM</button></div></sc-if>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Hour</span>
 <div style="display:grid;grid-template-columns:{{ tp.cols }};gap:6px">
-<sc-for list="{{ tp.hours }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ tp.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:20px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for>
+<sc-for list="{{ tp.hours }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ tp.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:17px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for>
 </div>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Minutes</span>
 <div style="display:grid;grid-template-columns:{{ tp.cols }};gap:6px">
-<sc-for list="{{ tp.mins }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ tp.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:20px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for>
+<sc-for list="{{ tp.mins }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ tp.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:17px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for>
 </div>
 </div>
 <sc-if value="{{ tp.isEnd }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:8px">
 <span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Length</span>
 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
-<sc-for list="{{ tp.lens }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="height:{{ tp.cellH }};min-width:0;padding:0 4px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:17px;font-weight:{{ c.w }};white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for>
+<sc-for list="{{ tp.lens }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="height:{{ tp.cellH }};min-width:0;padding:0 4px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};font-family:inherit;font-size:15px;font-weight:{{ c.w }};white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for>
 </div>
 </div>
 </sc-if>
@@ -1118,6 +1178,7 @@
 </div>
 </div>
 </sc-if>
+<button data-ds-new="AllDayToggle" type="button" role="switch" aria-checked="{{ tf.on }}" onClick="{{ tf.toggleAllDay }}" style="min-height:56px;align-self:flex-start;display:flex;align-items:center;justify-content:flex-start;gap:16px;padding:0;background:transparent;border:0;font-family:inherit;color:var(--text-primary);cursor:pointer;text-align:left"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">All day</span><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ tf.track }};box-shadow:{{ tf.trackRing }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ tf.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ tf.knobRing }};transition:left 180ms ease"></span></span></button>
 </div>
 </sc-if>
 <div data-ds-new="WhoInput" style="display:flex;flex-direction:column;gap:12px">
@@ -1182,7 +1243,32 @@
 </div>
 </div>
 </sc-if>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;bottom:calc(-1 * clamp(24px,3vw,40px));z-index:2;margin:0 calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px));padding:16px clamp(24px,3vw,40px) clamp(24px,3vw,40px);background:{{ sheet.bg }};box-shadow:0 -2px 8px rgba(0,0,0,.04)">
+</div>
+<sc-if value="{{ pv.show }}" hint-placeholder-val="{{ false }}">
+<aside data-ds-new="DayPreview" aria-label="{{ pv.eyebrow }}" style="margin:40px 0;background:transparent;border-left:1px solid var(--border-hairline);padding:0 48px 0 40px;display:flex;flex-direction:column;gap:40px;min-height:0;box-sizing:border-box">
+<sc-if value="{{ pv.wx.has }}" hint-placeholder-val="{{ false }}">
+<div style="background:var(--surface-soft);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ pv.wx.icon }}" size="40" stroke-width="1.25" hint-size="40px,40px"></x-import>
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:40px;font-weight:300;letter-spacing:-1px;line-height:1">{{ pv.wx.temp }}</span><span style="font-size:17px;font-weight:330;line-height:1.35">{{ pv.wx.cond }}</span></div>
+</div>
+<sc-if value="{{ pv.wx.multi }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;border-top:1px solid var(--border-hairline);padding-top:16px">
+<sc-for list="{{ pv.wx.hours }}" as="w" hint-placeholder-count="3"><div aria-label="{{ w.aria }}" style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;white-space:nowrap">{{ w.t }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ w.icon }}" size="20" stroke-width="1.5" hint-size="20px,20px"></x-import><span style="font-size:16px;font-weight:400">{{ w.temp }}</span></div></sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ pv.wx.none }}" hint-placeholder-val="{{ false }}"><span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">No forecast for this date yet.</span></sc-if>
+<div style="display:flex;flex-direction:column;gap:20px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ pv.also }}</x-import>
+<sc-if value="{{ pv.has }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:24px"><sc-for list="{{ pv.rows }}" as="r" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ r.time }}</span><span style="font-size:17px;line-height:1.35;text-wrap:pretty"><span style="font-weight:540">{{ r.title }}</span> <span style="font-weight:330">{{ r.who }}</span></span></div></sc-for></div></sc-if>
+<sc-if value="{{ pv.empty }}" hint-placeholder-val="{{ false }}"><span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">Nothing else at this time.</span></sc-if>
+</div>
+</aside>
+</sc-if>
+</div>
+<div style="grid-row:{{ pgx.ftRow }};grid-column:{{ pgx.ftCol }};display:flex;justify-content:{{ pgx.ftJc }};align-items:center;gap:12px;flex-wrap:wrap;position:{{ pgx.ftPos }};top:{{ pgx.ftTop }};bottom:{{ pgx.ftBot }};z-index:2;margin:{{ pgx.ftM }};padding:{{ pgx.ftP }};background:{{ sheet.bg }};box-shadow:{{ pgx.ftSh }}">
 <sc-if value="{{ sheet.notAsking }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex">
 <sc-if value="{{ sheet.canDelete }}" hint-placeholder-val="{{ false }}">
@@ -1192,7 +1278,7 @@
 </div>
 <div style="display:flex;gap:8px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" on-click="{{ cancelSheet }}" dc-props="{{ sx.ring }}" hint-size="100px,44px">Cancel</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" on-click="{{ saveSheet }}" hint-size="100px,44px">{{ sheet.saveLabel }}</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="check" on-click="{{ saveSheet }}" hint-size="140px,44px">{{ sheet.saveLabel }}</x-import>
 </div>
 </sc-if>
 <sc-if value="{{ sheet.famFoot }}" hint-placeholder-val="{{ false }}">
@@ -1293,6 +1379,7 @@ class Component extends DCLogic {
     ];
     const empty = q.get('empty') === '1';
     if (empty) { events.length = 0; notes.length = 0; }
+    if (q.get('events') === 'none') events.length = 0;
     let sheet = null;
     const sq = q.get('sheet'), tq = q.get('time');
     const evDraft = (ev) => ({ ...ev, notes: ev.notes || '' });
@@ -1433,9 +1520,11 @@ class Component extends DCLogic {
   }
   static BAR_IDLE = 20000;
   static DRAWER_IDLE = 15000;
+  static PHOTO_TIPS = ['Remember the day we camped by the lake?', 'The first snow in the backyard', 'Grandma’s birthday cake', 'Our summer at the beach', 'The first day of school', 'Sunday pancakes, all of us', 'Pizza night on Friday'];
   state = Component.init();
   componentDidMount() {
     this._lastView = this.state.view; this._lastSheet = this.state.sheet;
+    this.setState({ tipI: Math.floor(Math.random() * Component.PHOTO_TIPS.length) });
     setTimeout(() => this.syncTl(), 0);
     { const q = new URLSearchParams(location.search); this._backHold = q.get('hold') === '1'; if (this.state.signinStep === 'sent') this.startBackWait(q.has('backin') ? +q.get('backin') : 10); }
     this.onResize = () => this.setState({ vw: window.innerWidth, vh: window.innerHeight });
@@ -1493,7 +1582,7 @@ class Component extends DCLogic {
       }
     }, 600);
     const sh0 = this.state.sheet;
-    if (sh0 && (sh0.pick || sh0.endErr)) { this.queueReveal(); setTimeout(() => this.revealTimes(), 1200); }
+    if (sh0 && sh0.endErr) { this.queueReveal(); setTimeout(() => this.revealTimes(), 1200); }
   }
   pageIn(from, to) {
     const root = document.querySelector('[data-season]'); if (!root) return;
@@ -1526,6 +1615,11 @@ class Component extends DCLogic {
     if (n > 0 && !this._backHold) this.backTimer = setInterval(() => this.setState((s) => { const v = Math.max(0, (s.backWait || 0) - 1); if (!v) clearInterval(this.backTimer); return { backWait: v }; }), 1000);
   }
   componentDidUpdate(pp, ps) {
+    {
+      const isE = (x) => !!x && x.kind === 'event', b = this.state.sheet, a = '_pgPrev' in this ? this._pgPrev : b; this._pgPrev = b; const raf2 = (f) => setTimeout(() => { const d = document.querySelector('[role=dialog]'); if (d) d.getBoundingClientRect(); f(); }, 20);
+      if (!isE(a) && isE(b)) { clearTimeout(this.pgT); this.setState({ pg: 'enter', pgGhost: null }); raf2(() => this.setState({ pg: 'in' })); }
+      else if (isE(a) && !b) { clearTimeout(this.pgT); this.setState({ pg: 'in', pgGhost: a }); raf2(() => { if (!this.state.sheet) this.setState({ pg: 'exit' }); }); this.pgT = setTimeout(() => { if (!this.state.sheet) this.setState({ pgGhost: null, pg: 'in' }); }, 320); }
+    }
     if (ps && ps.signinStep !== 'sent' && this.state.signinStep === 'sent') this.startBackWait(10);
     if (ps && ps.signinStep === 'sent' && this.state.signinStep !== 'sent') clearInterval(this.backTimer);
     this.syncTl();
@@ -1535,7 +1629,7 @@ class Component extends DCLogic {
     if (pv !== undefined && pv !== v) { this.pageIn(pv, v); if (v !== 'today' && this.state.railHidden) { this.lastTouch = Date.now(); this.setState({ railHidden: false }); } if (this.state.full) this.setState({ full: false, fsChrome: true }); if (this.state.barMode === 'float') this.setState({ barMode: 'docked' }); if (this.state.drawerOpen) this.setState({ drawerOpen: false }); }
     const a = this._lastSheet, b = this.state.sheet;
     this._lastSheet = b;
-    if (b && b.kind === 'event' && ((b.pick && (!a || a.pick !== b.pick)) || (b.endErr && (!a || !a.endErr)))) this.queueReveal();
+    if (b && b.kind === 'event' && b.endErr && (!a || !a.endErr)) this.queueReveal();
   }
   componentWillUnmount() { clearInterval(this.drawerTimer); clearInterval(this.backTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
   later(ms, fn) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
@@ -1650,7 +1744,6 @@ class Component extends DCLogic {
     const pick = s.pick === k ? null : k;
     const draft = pick === 'end' && s.draft.end == null ? { ...s.draft, end: Math.min(s.draft.start + 60, 1435) } : s.draft;
     this.setState({ sheet: { ...s, pick, draft } });
-    if (pick) this.queueReveal();
   }
   openNote(n) { const draft = n ? { ...n } : { text: '', author: '', tone: 1 }; this.setState({ sheet: { kind: 'note', id: n ? n.id : null, mode: n ? 'view' : 'edit', draft, orig: { ...draft }, confirm: false, err: '' } }); }
   openFamily() { this.setState({ sheet: { kind: 'family', draft: { name: '' }, orig: { name: '' }, err: '', rm: null, color: null } }); }
@@ -1778,7 +1871,7 @@ class Component extends DCLogic {
         : M && this.state.vw > this.state.vh ? { cols: 'minmax(0,0.9fr) minmax(0,1.3fr) minmax(0,1fr)', areas: '"hero sched wx" "hero sched notes"', rows: 'auto minmax(0,1fr)', minH: '100%' }
         : M ? { cols: 'minmax(0,1fr) minmax(0,1.3fr)', areas: '"hero sched" "wx notes"', rows: 'auto auto', minH: '0' }
         : { cols: 'minmax(0,1fr) minmax(0,1fr)', areas: '"hero wx" "sched sched" "notes notes"', rows: 'auto', minH: '0' };
-      case 'calendar': return { freeFlex: 'none', freeWs: 'nowrap', calH: '100%', calMin: '0', calGap: W ? '24px' : '16px', wkPad: '16px', wkGap: '12px', wkLbl: true, wkWx: true, dayH: W ? '80px' : '72px', dayFs: '28px', dayGap: '6px', dayAlign: 'flex-start', chipH: '48px', cardPad: W ? '20px 24px 20px 20px' : '16px 20px 16px 16px', tlMin: '320px' };
+      case 'calendar': return { freeFlex: 'none', freeWs: 'nowrap', calH: '100%', calMin: '0', calGap: W ? '24px' : '16px', wkPad: '12px', wkGap: '8px', wkLbl: true, wkWx: true, dayH: W ? '80px' : '72px', dayFs: '28px', dayGap: '2px', dayAlign: 'flex-start', chipH: '48px', cardPad: W ? '20px 24px 20px 20px' : '16px 20px 16px 16px', tlMin: '320px' };
       case 'weather': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : W ? 'minmax(380px,0.85fr) minmax(0,1.4fr)' : 'minmax(340px,0.8fr) minmax(0,1.2fr)', minH: bp === 'narrow' ? '0' : '100%' };
       case 'photos': return { cols: bp === 'narrow' ? 'minmax(0,1fr)' : 'minmax(0,1.6fr) minmax(300px,1fr)', minH: bp === 'narrow' ? '0' : '100%', photoH: bp === 'narrow' ? '440px' : '320px', thumbCols: bp === 'narrow' ? 'repeat(3,minmax(0,1fr))' : 'repeat(2,minmax(0,1fr))', thumbH: bp === 'narrow' ? 'auto' : '0', thumbMinH: bp === 'narrow' ? '0' : '100%' };
       case 'location':
@@ -1813,7 +1906,7 @@ class Component extends DCLogic {
     const BM = view === 'signin' || view === 'ambient' ? 'docked' : S.barMode || 'docked', barLay = BM === 'docked' && NAVP === 'bottom' ? barH : 0;
     const dOpen = NAVP !== 'bottom' && !!S.drawerOpen, isL = NAVP === 'left', closeD = () => this.setState({ drawerOpen: false });
     const HS = (() => { const v = new URLSearchParams(location.search).get('handle') || this.props.handleStyle || 'rail'; return ['tab', 'grip', 'corner', 'rail'].includes(v) ? v : 'rail'; })();
-    const RAIL = HS === 'rail' && !S.railHidden;
+    const RAIL = HS === 'rail' && !S.railHidden && !PH1;
     const dItem = (k, label, icon, active, tap) => ({ label, icon, active: !!active, cur: active ? 'page' : undefined, bg: active ? 'var(--action-primary)' : 'transparent', fg: active ? 'var(--on-action-primary)' : 'var(--text-primary)', tap: () => { tap(); this.setState({ drawerOpen: false }); } });
     const noSide = view === 'ambient' || view === 'signin';
     const nav = { bottom: NAVP === 'bottom', side: NAVP !== 'bottom' && !noSide, expanded: dOpen ? 'true' : 'false', hidden: dOpen ? 'false' : 'true', pe: dOpen ? 'auto' : 'none', op: dOpen ? 1 : 0,
@@ -1821,10 +1914,10 @@ class Component extends DCLogic {
       hl: isL ? '0' : 'auto', hr: isL ? 'auto' : '0', hRad: isL ? '0 24px 24px 0' : '24px 0 0 24px', hIcon: isL ? 'chevron-right' : 'chevron-left', hOp: dOpen || S.full ? 0 : 1,
       padL: isL && !noSide ? (dOpen && !PH1 ? '332px' : RAIL ? (PH1 ? '56px' : '80px') : '0px') : '0px', padR: !isL && !noSide ? (dOpen && !PH1 ? '332px' : RAIL ? (PH1 ? '56px' : '80px') : '0px') : '0px',
       scrim: dOpen && PH1 && !noSide,
-      hTab: HS === 'tab', hGrip: HS === 'grip' || (HS === 'rail' && !!S.railHidden),
-      gripLabel: HS === 'rail' ? 'Show sidebar' : 'Open menu', notRail: HS !== 'rail', gripTap: HS === 'rail' ? () => this.setState({ railHidden: false }) : () => this.setState({ drawerOpen: true }),
-      railTf: S.railHidden ? (isL ? 'translateX(-100%)' : 'translateX(100%)') : 'none', hideIcon: isL ? 'panel-left-close' : 'panel-right-close',
-      hideRail: () => this.setState({ drawerOpen: false, railHidden: true }), hCorner: HS === 'corner', hRail: HS === 'rail', railOn: RAIL, xLabel: HS === 'rail' ? 'Close sidebar' : 'Close menu', xTap: HS === 'rail' ? () => this.setState({ drawerOpen: false, railHidden: true }) : closeD, railOp: dOpen ? 0 : 1, el: isL ? (PH1 ? '44px' : '52px') : 'auto', er: isL ? 'auto' : (PH1 ? '44px' : '52px'),
+      hTab: HS === 'tab', hGrip: HS === 'grip' || (HS === 'rail' && (!!S.railHidden || PH1)),
+      gripLabel: HS === 'rail' && !PH1 ? 'Show sidebar' : 'Open menu', notRail: HS !== 'rail', gripTap: HS === 'rail' && !PH1 ? () => this.setState({ railHidden: false }) : () => this.setState({ drawerOpen: true }),
+      railTf: !RAIL ? (isL ? 'translateX(-100%)' : 'translateX(100%)') : 'none', hideIcon: isL ? 'panel-left-close' : 'panel-right-close',
+      hideRail: () => this.setState({ drawerOpen: false, railHidden: true }), hCorner: HS === 'corner', hRail: HS === 'rail', railOn: RAIL, xLabel: HS === 'rail' && !PH1 ? 'Close sidebar' : 'Close menu', xTap: HS === 'rail' ? () => this.setState({ drawerOpen: false, railHidden: true }) : closeD, railOp: dOpen ? 0 : 1, el: isL ? (PH1 ? '44px' : '52px') : 'auto', er: isL ? 'auto' : (PH1 ? '44px' : '52px'),
       rw: PH1 ? '56px' : '80px', rp: PH1 ? '12px' : '16px', rbs: PH1 ? 'md' : 'touch', rbProps: PH1 ? { style: { width: 44, height: 44 } } : {}, ew: PH1 ? '40px' : '56px', gw: PH1 ? '4px' : '5px', gh: PH1 ? '56px' : '72px',
       dw: PH1 ? '248px' : '320px', dp: PH1 ? '16px 12px 12px' : '20px 16px 16px', ih: PH1 ? '48px' : '64px', ip: PH1 ? '16px' : '24px', ig: PH1 ? '12px' : '16px', fs: PH1 ? '16px' : '20px', isz: PH1 ? 20 : 24, wm: PH1 ? '20px' : '24px', ePe: dOpen || S.full ? 'none' : 'auto', cl: isL ? 'var(--kiosk-gutter)' : 'auto', cr: isL ? 'auto' : 'var(--kiosk-gutter)',
       curLabel: (VIEWS.find(([k]) => k === view) || [0, 'Settings'])[1], railIcon: isL ? 'panel-left-open' : 'panel-right-open', railEdge: isL ? 'inset -1px 0 0 var(--border-hairline)' : 'inset 1px 0 0 var(--border-hairline)', pl: isL ? '12px' : 'auto', pr: isL ? 'auto' : '12px', tf: dOpen ? 'none' : isL ? 'translateX(calc(-100% - 24px))' : 'translateX(calc(100% + 24px))',
@@ -1918,12 +2011,12 @@ class Component extends DCLogic {
     const dayTimed = timedFor(S.selDay, S.who), dayADl = adFor(S.selDay, S.who), selT = S.selDay === 9, dayGaps = S.who.length ? gapsOf(dayTimed, selT) : [];
     const spanOut = dayTimed.filter((e) => evS(e) < 300 || evE(e) > 1260).length;
     const calT = tlBuild(dayTimed, { h0: S.span24 ? 0 : 5, h1: S.span24 ? 24 : 21, nightW: 0.5, isT: selT, day: S.selDay, hr: null, gwx: wxOn ? Component.HOURLY[S.selDay] : null, rhr: wxOn && !PH1 ? Component.HOURLY[S.selDay] : null, who: S.who, gaps: dayGaps, H: cs.h - 24, W: cs.w - CP[0], gut: CP[0], lane: 0, ts: CP[2], minPx: PH1 ? 40 : 44, pastW: 0.35, laneN: PH1 });
-    const todT = tlBuild(todayEvents, { isT: true, day: 9, hr: null, gwx: wxOn ? Component.HOURLY[9] : null, who: 'all', gaps: gapsOf(todayEvents, true), H: ts0.h - 24, W: ts0.w - DP[0] - DP[1], gut: DP[0], lane: DP[1], ts: DP[2], minPx: 40, pastW: 0.3, laneN: PH1 });
+    const todE0 = todayEvents.length === 0, todT = tlBuild(todayEvents, { isT: true, day: 9, hr: todE0 && wxOn ? Component.HOURLY[9] : null, gwx: wxOn && !todE0 ? Component.HOURLY[9] : null, who: 'all', gaps: gapsOf(todayEvents, true), H: ts0.h - 24, W: ts0.w - DP[0] - DP[1], gut: DP[0], lane: DP[1], ts: DP[2], minPx: 40, pastW: 0.3, laneN: PH1 });
     const sdD = new Date(2026, 9, S.selDay), w0 = S.selDay - sdD.getDay(), M3 = (d) => MONTHS[d.getMonth()].slice(0, 3);
     const week = Array.from({ length: 7 }, (_, i) => { const k = w0 + i, dt = new Date(2026, 9, k), dw = S.wxLoc ? Component.DAILY[k] : null, sel = k === S.selDay;
-      return { wd: PH1 ? DOW[dt.getDay()][0] : DOW[dt.getDay()].slice(0, 3), num: dt.getDate(), hasWx: !!dw && !!FL.wkWx && (S.wkW || 0) / 7 >= 124, icon: dw ? dw[0] : 'cloud', hi: dw ? T(dw[1]) + '°' : '',
-        bg: sel ? 'var(--action-primary)' : 'transparent', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', ring: k === 9 && !sel ? 'inset 0 0 0 2px var(--black)' : 'none', cur: sel ? 'date' : undefined,
-        dots: PPL.filter(([pk]) => S.events.some((e) => ymOf(e) === OCT && e.day === k && (e.who || []).includes(pk))).map(([, , c]) => ({ c })),
+      return { wd: PH1 ? DOW[dt.getDay()][0] : DOW[dt.getDay()].slice(0, 3), num: dt.getDate(), hasWx: !!dw && !!FL.wkWx && (S.wkW || 0) / 7 >= 80, icon: dw ? dw[0] : 'cloud', hi: dw ? T(dw[1]) + '°' : '',
+        bg: sel ? 'transparent' : k === 9 ? 'var(--surface-soft)' : 'transparent', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', ring: 'none', cur: sel ? 'date' : undefined,
+        dots: PPL.filter(([pk]) => S.events.some((e) => ymOf(e) === OCT && e.day === k && (e.who || []).includes(pk))).map(([, , c]) => ({ c, ol: sel ? '0 0 0 1px var(--white)' : 'none' })),
         label: `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}${k === 9 ? ', today' : ''}`, pick: () => this.setState({ selDay: k }) }; });
     const d0 = new Date(2026, 9, w0), d6 = new Date(2026, 9, w0 + 6);
     const shiftWk = (n) => { const tg = w0 + 7 * n; this.setState({ selDay: tg <= 9 && 9 < tg + 7 ? 9 : tg }); };
@@ -1978,7 +2071,7 @@ class Component extends DCLogic {
     const d = { Off: 0, Light: 0.2, Strong: 0.4 }[S.dim] ?? 0.2;
     const layer = (a, fb) => isSeason ? fb : `linear-gradient(rgba(0,0,0,${a}),rgba(0,0,0,${a})), url(${src}) center / cover no-repeat`;
 
-    const sh = S.sheet;
+    const sh = S.sheet || S.pgGhost;
     const SWN = { spring: ['Lime', 'Pink', 'Mint', 'Lilac', 'Cream'], summer: ['Sun', 'Coral', 'Sky', 'Lime', 'Cream'], fall: ['Amber', 'Rust', 'Sage', 'Coral', 'Cream'], winter: ['Ice', 'Lilac', 'Glacier', 'Mint', 'Frost'] }[season] || ['Color 1', 'Color 2', 'Color 3', 'Color 4', 'Soft'];
     const ring = '0 0 0 3px var(--white), 0 0 0 5px var(--black)';
     const swatches = [[1, SWN[0]], [2, SWN[1]], [3, SWN[2]], [4, SWN[3]], ['soft', SWN[4]]].concat(sh && sh.kind === 'event' ? [['accent', 'Alert']] : []).map(([t, label]) => ({ label, bg: toneBg(t), sel: !!sh && sh.draft.tone === t, ring: sh && sh.draft.tone === t ? ring : 'inset 0 0 0 1px var(--border-hairline)', pick: () => this.patchDraft('tone', t) }));
@@ -2025,7 +2118,9 @@ class Component extends DCLogic {
       const mins = Array.from({ length: 12 }, (_, i) => i * 5).map((mm) => ({ label: String(mm).padStart(2, '0'), aria: mm + ' minutes', sel: mm === M, ...cell(mm === M), tap: () => setPv(H * 60 + mm) }));
       const lens = [[30, '30 min'], [60, '1 hr'], [90, '1.5 hr'], [120, '2 hr']].map(([n, label]) => ({ label, sel: dr.end === dr.start + n, ...cell(dr.end === dr.start + n), tap: () => this.setTimes({ end: Math.min(dr.start + n, 1435) }) }));
       tp = { open: true, isEnd: pk === 'end', h12, mer: pm ? 'PM' : 'AM', merOpts: ['AM', 'PM'], setMer: (x) => setPv((pv % 720) + (x === 'PM' ? 720 : 0)),
-        hours, mins, lens, cols: PHN ? 'repeat(4,minmax(0,1fr))' : 'repeat(6,minmax(0,1fr))', cellH: PHN ? '48px' : '56px', pad: PHN ? '12px' : '16px',
+        isAm: !pm, isPm: pm, merX: pm ? 'translateX(100%)' : 'translateX(0)', amFg: pm ? 'var(--text-primary)' : 'var(--on-action-primary)', pmFg: pm ? 'var(--on-action-primary)' : 'var(--text-primary)',
+        toAm: () => pm && setPv(pv - 720), toPm: () => !pm && setPv(pv + 720),
+        hours, mins, lens, cols: PHN ? 'repeat(4,minmax(0,1fr))' : 'repeat(6,minmax(0,1fr))', cellH: '44px', pad: PHN ? '12px' : '16px',
         eyebrow: `${pk === 'start' ? 'Starts' : 'Ends'} · ${spoken(pv)}`, aria: pk === 'start' ? 'Start time' : 'End time',
         done: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null } })), noEnd: () => this.setState((s) => ({ sheet: { ...s.sheet, pick: null, endErr: '', err: '', draft: { ...s.sheet.draft, end: null } } })) };
     }
@@ -2049,6 +2144,63 @@ class Component extends DCLogic {
       };
     })();
     const evvOn = !!ev0 && ev0.mode === 'view', nvOn = !!sh && sh.kind === 'note' && sh.mode === 'view', viewing = evvOn || nvOn;
+    const PG = !!ev0, PGP = PG && bp === 'phone', pgS = S.pg || 'in';
+    const pgx = {
+      on: PG ? 'true' : 'false', place: PG ? 'stretch' : 'center', outPad: PG ? '0' : '24px', pe: PG && pgS === 'exit' ? 'none' : 'auto', scrimD: PG ? 'none' : 'block',
+      maxW: PG ? 'none' : '560px', h: PG ? '100%' : 'auto', ov: 'auto', pad: PG ? '0' : 'clamp(24px,3vw,40px)', sh: PG ? 'none' : 'var(--shadow-3)', d: PG ? 'grid' : 'flex', gap: PG ? '0' : '20px',
+      tr: !PG ? 'transform 280ms ease-out' : pgS === 'enter' ? 'none' : pgS === 'exit' ? 'transform 280ms cubic-bezier(.6,0,.8,.3)' : 'transform 280ms cubic-bezier(.2,.7,.2,1)',
+      cols: PG && !PGP ? 'minmax(0,1fr) auto' : 'minmax(0,1fr)', rows: PGP ? 'auto auto 1fr auto' : 'auto auto 1fr',
+      hdPos: 'sticky', hdTop: PG ? '0' : 'calc(-1 * clamp(24px,3vw,40px))', hdM: PG ? '0' : 'calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px)) 0', hdP: !PG ? 'clamp(24px,3vw,40px) clamp(24px,3vw,40px) 12px' : PGP ? '12px 16px' : '20px 48px',
+      hdSh: PG ? 'inset 0 -1px 0 var(--border-hairline-soft)' : sh && sh.kind === 'note' ? 'none' : '0 2px 8px rgba(0,0,0,.04)', hdDir: PG ? 'row-reverse' : 'row', hdJc: PG ? 'flex-end' : 'space-between', hdAi: PG ? 'center' : 'flex-start',
+      closeIcon: PG ? 'arrow-left' : 'x', closeLabel: PG ? 'Back' : 'Close', offP: PG ? (PGP ? '12px 16px 0' : '16px 48px 0') : '0',
+      bodyD: PG ? 'grid' : 'contents', bodyCols: PGP || S.vw < 1180 ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(380px,34%)', fcD: PG ? 'flex' : 'contents', fcP: PGP ? '20px 16px 32px' : '40px max(48px, calc((100% - 720px) / 2)) 64px',
+      ftRow: PGP ? '4' : '1', ftCol: PGP ? '1' : '2', ftJc: PG && !PGP ? 'flex-end' : 'space-between', ftPos: 'sticky', ftTop: PG && !PGP ? '0' : 'auto', ftBot: PGP ? '0' : PG ? 'auto' : 'calc(-1 * clamp(24px,3vw,40px))',
+      ftM: PG ? '0' : '0 calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px))', ftP: !PG ? '16px clamp(24px,3vw,40px) clamp(24px,3vw,40px)' : PGP ? '12px 16px' : '20px 48px 20px 0',
+      ftSh: !PG ? (sh && sh.kind === 'note' ? 'none' : '0 -2px 8px rgba(0,0,0,.04)') : PGP ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'inset 0 -1px 0 var(--border-hairline-soft)',
+    };
+    const sdp = (() => {
+      const can = !!ev0 && !evvOn, base = { can, fixed: !can, open: false, expanded: 'false', quick: [], cells: [], wds: [], ebBg: 'transparent', chevRot: 'none' };
+      if (!can) return base;
+      const open = !!ev0.dateOpen, cy = ymOf(dr), vy = ev0.dateYm ?? cy, Y = Math.floor(vy / 12), Mo = vy % 12;
+      const setOpen = (o, ym) => this.setState((s) => ({ sheet: { ...s.sheet, dateOpen: o, dateYm: ym, pick: null } }));
+      const setDate = (dt) => this.setState((s) => ({ sheet: { ...s.sheet, dateOpen: false, dateYm: null, discard: false, err: '', draft: { ...s.sheet.draft, day: dt.getDate(), ym: dt.getFullYear() * 12 + dt.getMonth() } } }));
+      const curD = new Date(Math.floor(cy / 12), cy % 12, dr.day), same = (dt) => dt.getFullYear() === curD.getFullYear() && dt.getMonth() === curD.getMonth() && dt.getDate() === curD.getDate();
+      const quick = [['Today', new Date(2026, 9, 9)], ['Tomorrow', new Date(2026, 9, 10)], ['Next week', new Date(curD.getFullYear(), curD.getMonth(), curD.getDate() + 7)]].map(([label, dt]) => { const sel = label !== 'Next week' && same(dt); return { label, sel: sel ? 'true' : 'false', bg: sel ? 'var(--action-primary)' : 'var(--surface-soft)', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', w: sel ? 540 : 400, tap: () => setDate(dt) }; });
+      const lead = new Date(Y, Mo, 1).getDay(), nD = new Date(Y, Mo + 1, 0).getDate();
+      const cells = Array.from({ length: lead }, () => ({ label: '', blank: true, vis: 'hidden', sel: 'false', aria: '', bg: 'transparent', fg: 'inherit', ring: 'none', w: 400, tap: null }))
+        .concat(Array.from({ length: nD }, (_, i) => { const dt = new Date(Y, Mo, i + 1), sel = same(dt), td = vy === OCT && i + 1 === 9;
+          return { label: String(i + 1), blank: false, vis: 'visible', sel: sel ? 'true' : 'false', aria: `${DOW[dt.getDay()]}, ${MONTHS[Mo]} ${i + 1}${td ? ', today' : ''}`, bg: sel ? 'var(--action-primary)' : 'transparent', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', ring: td && !sel ? 'inset 0 0 0 2px var(--black)' : 'none', w: sel || td ? 540 : 400, tap: () => setDate(dt) }; }));
+      return { ...base, open, expanded: open ? 'true' : 'false', aria: `${sdayLabel}. Change date`, ebBg: open ? 'var(--hairline)' : 'var(--surface-soft)', chevRot: open ? 'rotate(180deg)' : 'none',
+        toggle: () => setOpen(!open, null), close: () => setOpen(false, null), prev: () => setOpen(true, vy - 1), next: () => setOpen(true, vy + 1),
+        month: `${MONTHS[Mo]} ${Y}`, wds: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], quick, cells };
+    })();
+    const dpv = (() => {
+      if (!PG || PGP || S.vw < 1180) return { show: false, rows: [], eyebrow: '', also: '', empty: false, wx: { has: false, none: false, multi: false, hours: [] } };
+      const y = ymOf(dr), s0 = dr.allDay ? 0 : evS(dr), e0 = dr.allDay ? 1440 : Math.max(evE(dr), s0 + 30);
+      const others = S.events.filter((e) => e.id !== ev0.id && ymOf(e) === y && e.day === dr.day && (dr.allDay || e.allDay || (evS(e) < e0 && Math.max(evE(e), evS(e) + 1) > s0)))
+        .sort((a, b) => (b.allDay ? 1 : 0) - (a.allDay ? 1 : 0) || (a.allDay ? 0 : evS(a) - evS(b)));
+      const rows = others.map((e) => {
+        const en = e.allDay || e.end == null ? null : lt(toMin(e.end)), loc = [names(e.who), e.location].filter(Boolean).join(' · '), f = fillOf(e.who);
+        return { time: e.allDay ? 'All day' : en != null ? `${fmtT(evS(e), true)} – ${fmtT(en, true)}` : fmtT(evS(e), true), who: names(e.who) ? `· ${names(e.who)}` : '', start: e.allDay ? 'All day' : fmtT(evS(e), true), end: en != null ? fmtT(en, true) : undefined, title: e.title, location: loc || undefined, dot: f === 'var(--season-soft)' ? 'var(--season-block-4)' : f,
+          status: statusOf(e), props: { style: { gridTemplateColumns: '112px 12px minmax(0,1fr)', columnGap: 16, padding: '14px 16px' } } };
+      });
+      const COND = { sun: 'Sunny', moon: 'Clear', 'cloud-sun': 'Partly cloudy', 'cloud-moon': 'Partly cloudy', cloud: 'Cloudy', 'cloud-drizzle': 'Drizzle', 'cloud-rain': 'Rain', 'cloud-lightning': 'Storms' };
+      const ngt = (x, ic) => (x < 6 || x >= 19) && NGT[ic] ? NGT[ic] : ic;
+      const HR = wxOn && y === OCT ? Component.HOURLY[dr.day] : null, DW = wxOn && y === OCT ? Component.DAILY[dr.day] : null;
+      let wx = { has: false, none: wxOn, multi: false, hours: [] };
+      if (HR && !dr.allDay) {
+        const h0 = Math.floor(s0 / 60), h1 = Math.max(h0 + 1, Math.ceil(e0 / 60)), n = h1 - h0, st = Math.ceil(n / 6);
+        const list = []; for (let x = h0; x < h1; x += st) { const r = hrAt(HR, x); if (r) list.push({ x, r }); }
+        const a = list[0].r, rain = Math.max(0, ...list.map((l) => l.r[2] || 0)), ic = ngt(h0, a[0]);
+        wx = { has: true, none: false, icon: ic, temp: T(a[1]) + '°', cond: (COND[ic] || '') + (rain >= 30 ? ` · ${rain}% rain` : ''), multi: list.length > 1,
+          hours: list.map(({ x, r }) => ({ t: fmtT(x * 60, true), icon: ngt(x, r[0]), temp: T(r[1]) + '°', aria: `${fmtT(x * 60, true)}, ${COND[r[0]] || ''}, ${T(r[1])} degrees` })) };
+      } else if (DW) wx = { has: true, none: false, icon: DW[0], temp: T(DW[1]) + '°', cond: `${COND[DW[0]] || ''} · High for the day`, multi: false, hours: [] };
+      const when = dr.allDay ? 'All day' : `${fmtT(s0, true)} – ${fmtT(e0, true)}`;
+      const bits = others.slice(0, 3).map((e) => { const n = names(e.who); return n ? `${e.title} (${n})` : e.title; });
+      if (others.length > 3) bits.push(`${others.length - 3} more`);
+      const summary = !bits.length ? '' : `Overlaps with ${bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0]}.`;
+      return { show: true, rows, summary, has: !!others.length, empty: !others.length, wx, eyebrow: `${sdayLabel} · ${when}`, also: others.length ? `Also at this time · ${others.length}` : 'Also at this time' };
+    })();
     const nvRot = nvOn ? Math.max(-1.5, Math.min(1.5, sh.draft.rotate || -1)) : 0;
     const nv = nvOn ? { fill: toneBg(sh.draft.tone), text: sh.draft.text, time: sh.draft.time || '' } : { fill: 'var(--season-soft)', text: '', time: '' };
     let evv = { rows: [], fill: 'var(--season-soft)' };
@@ -2215,13 +2367,14 @@ class Component extends DCLogic {
       forecastGrid: { style: { display: 'grid', gridTemplateColumns: bp === 'phone' ? 'repeat(7, 64px)' : 'repeat(7, minmax(0,1fr))', gap: 4, height: '100%', overflowX: 'auto' } },
       nav, barHandle: { show: NAVP === 'bottom' && view !== 'signin' && view !== 'ambient' && BM === 'hidden' && !(S.full && view === 'photos'), tap: () => this.setState({ barMode: 'float' }) },
       pillBottom: NAVP !== 'bottom' ? (HS === 'corner' && isL ? '96px' : '24px') : bp === 'phone' ? (BM === 'hidden' ? '68px' : '84px') : LBL ? '24px' : '12px',
-      nowEvent: { none: !heroEv, has: !!heroEv, eyebrow: nowEv ? 'Happening now' : 'Up next', title: heroEv ? heroEv.title : '', meta: [nowEv ? (nowEv.end != null ? `${nowEv.location} · until ${fmtT(lt(toMin(nowEv.end)))}` : `${nowEv.location} · started ${fmtT(lt(toMin(nowEv.start)), true)}`) : nextEv ? `${nextEv.location} · ${fmtT(lt(toMin(nextEv.start)), true)}` : '', heroEv ? names(heroEv.who) : ''].filter(Boolean).join(' · '), open: () => heroEv && this.openEvent(heroEv), noneTitle: todayEvents.length ? 'Nothing else today' : 'Nothing scheduled', noneBody: todayEvents.length ? 'Today’s events have ended.' : 'Events show here while they happen.' },
+      nowEvent: { none: !heroEv, has: !!heroEv, eyebrow: nowEv ? 'Happening now' : 'Up next', title: heroEv ? heroEv.title : '', meta: [nowEv ? (nowEv.end != null ? `${nowEv.location} · until ${fmtT(lt(toMin(nowEv.end)))}` : `${nowEv.location} · started ${fmtT(lt(toMin(nowEv.start)), true)}`) : nextEv ? `${nextEv.location} · ${fmtT(lt(toMin(nextEv.start)), true)}` : '', heroEv ? names(heroEv.who) : ''].filter(Boolean).join(' · '), open: () => heroEv && this.openEvent(heroEv) },
       todayEvents, todayAD: { has: todayADl.length > 0, list: todayADl }, todayLabel: todayN ? `Today · ${todayN} event${todayN > 1 ? 's' : ''}` : 'Today · No events',
-      todayHas: S.events.length > 0, todayNone: S.events.length === 0, todayTl: S.events.length > 0, hasEvents: S.events.length > 0,
+      todayHas: true, todayNone: false, todayTl: true, hasEvents: S.events.length > 0,
       calFirst: S.events.length === 0, calTl: S.events.length > 0, dayAD: { has: dayADl.length > 0, list: dayADl },
       notesHas: notes.length > 0, notesNone: notes.length === 0,
+      photoTip: Component.PHOTO_TIPS[(S.tipI || 0) % Component.PHOTO_TIPS.length],
       schedBtn: { text: S.vw >= 1440, icon: S.vw < 1440 },
-      hasPhotos: ALL.length > 0 && isSeason, noPhotos: ALL.length === 0,
+      hasPhotos: ALL.length > 0 && isSeason, noPhotos: (this._noPhotos = ALL.length === 0),
       photosOn: view === 'photos' && (ALL.length > 0 || pend.length > 0), photosEmpty: view === 'photos' && ALL.length === 0 && pend.length === 0, hasFeatured: ALL.length > 0, noFeatured: ALL.length === 0,
       uploadDemo: pickFiles, pickFiles, photoCountLabel: `Family photos · ${ALL.length}`,
       potd: { src: potdP.src('potd-', 900, 600), title: potdP.title, meta: potdP.meta, open: () => { const i = ALL.indexOf(potdP); this.setState({ photoIdx: i < 0 ? 0 : i, playing: false }); this.go('photos'); } },
@@ -2236,9 +2389,10 @@ class Component extends DCLogic {
       wxSetupBlock: { style: { width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 28, boxSizing: 'border-box' } },
       wxEmptyToday: { style: { gridArea: 'wx', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24 } },
       ambientNext: (() => { const key = (e) => ymOf(e) * 100 + e.day; const nx = S.events.filter((e) => key(e) > OCT * 100 + 9).sort((a, b) => key(a) - key(b) || (a.allDay ? -1 : toMin(a.start)) - (b.allDay ? -1 : toMin(b.start)))[0]; if (!nx) return 'Nothing scheduled'; const ny = ymOf(nx); const dn = key(nx) === OCT * 100 + 10 ? 'Tomorrow' : `${DOW[new Date(Math.floor(ny / 12), ny % 12, nx.day).getDay()].slice(0, 3)}, ${MONTHS[ny % 12].slice(0, 3)} ${nx.day}`; return `${dn} · ${nx.allDay ? 'All day' : fmtT(lt(toMin(nx.start)), true)} · ${nx.title}${nx.location ? ', ' + nx.location : ''}`; })(),
+      sdp,
       addEventToday: () => this.openEvent(null, { day: 9, who: PPL.map((p) => p[0]) }),
       addEvent: () => this.openEvent(null),
-      selDay: S.selDay, week, dp, dpWk: !dpOn, dpListRef: this.dpListRef, wkLabel: M3(d0) === M3(d6) ? `${M3(d0)} ${d0.getDate()} – ${d6.getDate()}` : `${M3(d0)} ${d0.getDate()} – ${M3(d6)} ${d6.getDate()}`, monthLabel: MONTHS[d6.getMonth()] + (d6.getFullYear() !== 2026 ? ' ' + d6.getFullYear() : ''),
+      selDay: S.selDay, week, wkI: S.selDay - w0, wkFrom: String(d6.getFullYear()), dp, dpWk: !dpOn, dpListRef: this.dpListRef, wkLabel: M3(d0) === M3(d6) ? `${M3(d0)} ${d0.getDate()} – ${d6.getDate()}` : `${M3(d0)} ${d0.getDate()} – ${M3(d6)} ${d6.getDate()}`, monthLabel: MONTHS[d6.getMonth()],
       wkRef: this.wkRef, wkAria: `Week of ${MONTHS[d0.getMonth()]} ${d0.getDate()}`, prevWk: () => shiftWk(-1), nextWk: () => shiftWk(1), wkBtn: PH1 ? { size: 'md', style: { width: 44, height: 44 } } : { size: 'touch' },
       whoF: PPL.map(([k, label, c]) => { const on = S.who.includes(k); return { label, c, bg: on ? c : 'var(--hairline)', fg: 'var(--text-primary)', pressed: on ? 'true' : 'false', pick: () => this.setState((st) => { const all = PPL.map((p) => p[0]), nx = st.who.includes(k) ? st.who.filter((x) => x !== k) : st.who.concat(k); return { who: all.filter((x) => nx.includes(x)) }; }) }; }),
       span: { pressed: S.span24 ? 'true' : 'false', bg: S.span24 ? 'var(--action-primary)' : 'var(--surface-soft)', fg: S.span24 ? 'var(--on-action-primary)' : 'var(--text-primary)', hasMore: !S.span24 && spanOut > 0, more: String(spanOut), aria: S.span24 ? 'Showing all 24 hours' : spanOut ? `Show all 24 hours, ${spanOut} more plan${spanOut > 1 ? 's' : ''}` : 'Show all 24 hours', link: S.span24 ? (S.clockFmt === '24-hour' ? 'Show 05:00 – 21:00 only' : 'Show 5 AM – 9 PM only') : spanOut ? `Show all 24 hours · ${spanOut} more plan${spanOut > 1 ? 's' : ''}` : 'Show all 24 hours', icon: S.span24 ? 'chevrons-down-up' : 'chevrons-up-down', toggle: () => this.setState((st) => ({ span24: !st.span24 })) },
@@ -2274,16 +2428,16 @@ class Component extends DCLogic {
         return { title: p.title, thumb: p.src('bg-', 480, 270), ring: sel ? ring : 'none', weight: sel ? 540 : 330, op: isSeason ? 0.5 : 1, pick: () => this.setState((s) => ({ bgId: p.id, bgMode: s.bgMode === 'Season color' ? 'Photo' : s.bgMode })) };
       }),
       sheet: {
-        open: !!sh, wx: (() => { const dw = ev0 && wxOn && ymOf(dr) === OCT ? Component.DAILY[dr.day] : null; return dw ? { has: true, icon: dw[0], temp: T(dw[1]) + '°', aria: `Forecast high ${T(dw[1])} degrees` } : { has: false, icon: 'cloud', temp: '', aria: '' }; })(), isEvent: !!sh && sh.kind === 'event', bg: nvOn ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', bodyBg: nvOn ? toneBg(sh.draft.tone) : 'var(--surface-soft)', radius: nvOn ? '6px' : '32px', rot: nvOn ? `rotate(${nvRot}deg)` : 'none', isEventView: evvOn, isEventEdit: !!sh && sh.kind === 'event' && !evvOn, isNoteView: nvOn, isNoteEdit: !!sh && sh.kind === 'note' && !nvOn, viewing, canEdit: viewing && !(evvOn && evv.isPast), locked: evvOn && !!evv.isPast, showOff: !!off && !viewing, isNote: !!sh && sh.kind === 'note', isPhoto: !!sh && sh.kind === 'photo', isFamily: famOn, famFoot: famOn && !sh.discard, hasColor: !!sh && sh.kind === 'note' && !nvOn, err: (sh && sh.err) || undefined,
+        open: !!sh, wx: (() => { const dw = ev0 && wxOn && ymOf(dr) === OCT ? Component.DAILY[dr.day] : null; return dw ? { has: true, icon: dw[0], temp: T(dw[1]) + '°', aria: `Forecast high ${T(dw[1])} degrees` } : { has: false, icon: 'cloud', temp: '', aria: '' }; })(), isEvent: !!sh && sh.kind === 'event', bg: nvOn ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', bodyBg: nvOn ? toneBg(sh.draft.tone) : PG ? 'var(--surface-canvas)' : 'var(--surface-soft)', radius: nvOn ? '6px' : PG ? '0' : '32px', rot: nvOn ? `rotate(${nvRot}deg)` : PG && pgS !== 'in' ? 'translateX(100%)' : 'none', isEventView: evvOn, isEventEdit: !!sh && sh.kind === 'event' && !evvOn, isNoteView: nvOn, isNoteEdit: !!sh && sh.kind === 'note' && !nvOn, viewing, canEdit: viewing && !(evvOn && evv.isPast), locked: evvOn && !!evv.isPast, showOff: !!off && !viewing, isNote: !!sh && sh.kind === 'note', isPhoto: !!sh && sh.kind === 'photo', isFamily: famOn, famFoot: famOn && !sh.discard, hasColor: !!sh && sh.kind === 'note' && !nvOn, err: (sh && sh.err) || undefined,
         title: !sh ? '' : famOn ? 'Family' : sh.kind === 'photo' ? 'Photo details' : sh.kind === 'event' ? (evvOn ? sh.draft.title : sh.id ? 'Edit event' : 'New event') : nvOn ? `From ${sh.draft.author || 'Guest'}` : (sh.id ? 'Edit note' : 'New note'),
         eyebrow: !sh ? '' : famOn ? `${PPL.length} member${PPL.length === 1 ? '' : 's'}` : sh.kind === 'photo' ? (sh.file || 'Family photos') : sh.kind === 'event' ? sdayLabel : (sh.id && !nvOn ? `${sh.draft.author} · ${sh.draft.time}` : 'Notice board'),
         asking: !!sh && !!sh.discard && !viewing, notAsking: (!sh || !sh.discard) && !viewing && !famOn, discardBody: !sh ? '' : famOn ? `${sh.draft.name.trim() || 'This member'} won’t be added.` : sh.kind === 'note' ? 'This note won’t be posted.' : sh.kind === 'photo' ? 'Your edits to this photo won’t be saved.' : sh.id ? 'Your edits to this event won’t be saved.' : 'This event won’t be added.',
         canDelete: !!sh && !!sh.id, confirming: !!sh && sh.confirm, notConfirming: !sh || !sh.confirm,
-        confirmLabel: sh && sh.kind === 'note' ? 'Delete note' : sh && sh.kind === 'photo' ? 'Delete photo' : 'Delete event',
-        saveLabel: !sh ? 'Save' : off ? 'Save for later' : sh.id ? 'Save' : sh.kind === 'note' ? 'Post note' : 'Add event',
+        confirmLabel: sh && sh.kind === 'note' ? 'Delete note' : sh && sh.kind === 'photo' ? 'Delete photo' : 'Delete event?',
+        saveLabel: !sh ? 'Save' : off ? 'Save for later' : sh.id ? 'Save' : sh.kind === 'note' ? 'Post note' : 'Save event',
         offBody: sh && sh.kind === 'note' ? 'The note saves on this screen and posts when the connection is back.' : 'Changes save on this screen and sync when the connection is back.',
       },
-      draft: sh ? sh.draft : {}, edit, tg, fam, openFamily: () => this.openFamily(), famBtn: { style: { background: 'var(--surface-soft)', minHeight: FL.chipH, padding: '0 20px 0 16px', flex: 'none' } }, swatches, tf, tp, ps, evv, nv,
+      draft: sh ? sh.draft : {}, edit, tg, fam, openFamily: () => this.openFamily(), famBtn: { style: { background: 'var(--surface-soft)', minHeight: FL.chipH, padding: '0 20px 0 16px', flex: 'none' } }, swatches, tf, tp, ps, evv, nv, pgx, pv: dpv,
       startEdit: () => { if (!(evvOn && evv.isPast)) this.startEdit(); },
       cancelSheet: () => { const s = this.state.sheet; if (s && s.from === 'view') { if (JSON.stringify(s.draft) !== JSON.stringify(s.orig)) return this.setState({ sheet: { ...s, discard: true, discardTo: 'view', pick: null, confirm: false } }); return this.backToView(); } out.closeSheet(); },
       closeSheet: () => { const s = this.state.sheet; if (s && !s.discard && s.orig && JSON.stringify(s.draft) !== JSON.stringify(s.orig)) return this.setState({ sheet: { ...s, discard: true, discardTo: null, pick: null, confirm: false } }); this.setState({ sheet: null }); if (S.ended) this.endNow(); },
@@ -2303,6 +2457,17 @@ class Component extends DCLogic {
       nh: { on: NH, wx: !!S.wxLoc && !ld && !wxFail, wxNone: !S.wxLoc && !ld, wxFail: !!S.wxLoc && wxFail, icon: NHs ? 72 : 64, nf: NHs ? '1 1 320px' : '0 0 auto',
         temp: out.wx.temp + '°', cond: `Partly cloudy · High ${out.wx.high}° · Low ${out.wx.low}°`, hasRain: !!rainHr, rain: rainHr ? `Rain from ${rainHr.t}` : '',
         cd: nowEv ? `${dur(evE(nowEv) - NOWL)} left` : nextEv ? `In ${dur(evS(nextEv) - NOWL)}` : '',
+        open: (() => {
+          const D0 = 360, D1 = 1320, P = (m) => (Math.max(0, Math.min(1, (m - D0) / (D1 - D0))) * 100).toFixed(2) + '%';
+          const done = todayEvents.filter((e) => !e.allDay), n = todayEvents.length, left = Math.max(0, D1 - NOWL), SUN = 18 * 60 + 42;
+          return {
+            title: n ? 'That’s a wrap for today' : 'The day is wide open',
+            body: n ? `${n} event${n > 1 ? 's' : ''} done · free until ${fmtT(lt(D1), true)}` : `Free until ${fmtT(lt(D1), true)} · ${dur(left)}`,
+            nowPct: P(NOWL), nowL: fmtT(NOWL, true), sunPct: P(SUN), sunL: fmtT(lt(SUN), true), startL: fmtT(lt(D0), true), endL: fmtT(lt(D1), true),
+            segs: done.map((e) => ({ l: P(evS(e)), w: `calc(${P(Math.max(evE(e), evS(e) + 20))} - ${P(evS(e))})` })),
+            hasNext: out.ambientNext !== 'Nothing scheduled', next: out.ambientNext, goNext: go.calendar,
+          };
+        })(),
         block: { style: NHs
           ? { gridArea: 'hero', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end', gap: '24px 64px', minWidth: 0, '--type-clock-size': 'clamp(72px,11vmin,168px)', '--nh-temp': 'clamp(56px,8vmin,120px)', '--nh-title': 'clamp(28px,3.6vmin,44px)' }
           : { gridArea: 'hero', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32, minWidth: 0, minHeight: 0, overflow: 'hidden', containerType: 'inline-size', '--type-clock-size': 'clamp(56px,27cqi,200px)', '--nh-temp': 'clamp(48px,17cqi,128px)', '--nh-title': 'clamp(28px,8cqi,48px)' } } },

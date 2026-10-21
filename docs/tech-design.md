@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v2.42 |
+| Status | v2.43 |
 | Date | 2026-10-21 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.71) · [`design/handoff/`](design/handoff/README.md) (v10) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.72) · [`design/handoff/`](design/handoff/README.md) (v11) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
