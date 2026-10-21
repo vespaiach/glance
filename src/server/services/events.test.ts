@@ -1,7 +1,7 @@
-import type { CalendarEvent, Member } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { deleteEvent, putEvent } from "./events";
-import { deleteMember, putMember } from "./members";
 import { putNote } from "./notes";
+import { putTag } from "./tags";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
 const harness = serviceHarnessPerTest();
@@ -13,19 +13,19 @@ const EVENT: CalendarEvent = {
   endAt: "2026-10-09T22:00:00.000Z",
   location: "Rec center",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
-const member = (n: number, name: string): Member => ({
+const tag = (n: number, name: string): Tag => ({
   id: `0192f3a0-3333-7000-8000-00000000000${n}`,
   name,
   color: "sky",
   createdAt: "2026-10-01T15:00:00.000Z",
 });
 
-const MOM = member(1, "Mom");
+const MOM = tag(1, "Mom");
 
-const DAD = member(2, "Dad");
+const DAD = tag(2, "Dad");
 
 describe("putEvent", () => {
   it("SYNC-01 saves a new event stamped with the server time and the next version", async () => {
@@ -108,11 +108,11 @@ describe("putEvent", () => {
   });
 });
 
-describe("putEvent members", () => {
-  it("D24 saves a plan for some members with its notes", async () => {
-    await putMember(harness.deps(), MARIA, MOM);
-    await putMember(harness.deps(), MARIA, DAD);
-    const plan = { ...EVENT, everyone: false, memberIds: [DAD.id, MOM.id], notes: "Bring towels" };
+describe("putEvent tags", () => {
+  it("D24 saves a plan for some tags with its notes", async () => {
+    await putTag(harness.deps(), MARIA, MOM);
+    await putTag(harness.deps(), MARIA, DAD);
+    const plan = { ...EVENT, everyone: false, tagIds: [DAD.id, MOM.id], notes: "Bring towels" };
 
     const saved = await putEvent(harness.deps(), MARIA, plan);
 
@@ -122,30 +122,28 @@ describe("putEvent members", () => {
     });
   });
 
-  it("D24 drops member ids that aren't live members of the account", async () => {
-    await putMember(harness.deps(), MARIA, MOM);
-    await putMember(harness.deps(), MARIA, DAD);
-    await deleteMember(harness.deps(), MARIA, DAD.id);
-    const omars = member(3, "Omar");
-    await putMember(harness.deps(), OMAR, omars);
+  it("D24 drops tag ids that aren't live tags of the account", async () => {
+    await putTag(harness.deps(), MARIA, MOM);
+    const omars = tag(3, "Omar");
+    await putTag(harness.deps(), OMAR, omars);
 
     const saved = await putEvent(harness.deps(), MARIA, {
       ...EVENT,
       everyone: false,
-      memberIds: [omars.id, DAD.id, MOM.id, member(4, "Unknown").id],
+      tagIds: [omars.id, MOM.id, tag(4, "Unknown").id],
     });
 
-    expect(saved.ok && saved.value.memberIds).toEqual([MOM.id]);
+    expect(saved.ok && saved.value.tagIds).toEqual([MOM.id]);
   });
 
-  it("D24 stores a plan left with no members as a tombstone", async () => {
-    await putMember(harness.deps(), MARIA, DAD);
-    await deleteMember(harness.deps(), MARIA, DAD.id);
+  it("D24 stores a plan left with no live tags as nobody", async () => {
+    const omars = tag(3, "Omar");
+    await putTag(harness.deps(), OMAR, omars);
 
     const saved = await putEvent(harness.deps(), MARIA, {
       ...EVENT,
       everyone: false,
-      memberIds: [DAD.id],
+      tagIds: [omars.id],
     });
 
     expect(saved).toEqual({
@@ -153,13 +151,22 @@ describe("putEvent members", () => {
       value: {
         ...EVENT,
         everyone: false,
-        memberIds: [],
+        tagIds: [],
         updatedAt: "2026-10-09T14:00:00.000Z",
-        deletedAt: "2026-10-09T14:00:00.000Z",
-        version: 3,
+        version: 2,
       },
     });
-    expect(await putEvent(harness.deps(), MARIA, EVENT)).toEqual(saved);
+  });
+
+  it("EVT-11 saves a plan for nobody", async () => {
+    const nobody = { ...EVENT, everyone: false, tagIds: [] };
+
+    const saved = await putEvent(harness.deps(), MARIA, nobody);
+
+    expect(saved).toEqual({
+      ok: true,
+      value: { ...nobody, updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
+    });
   });
 });
 

@@ -1,17 +1,17 @@
-import Dexie, { type EntityTable } from "dexie";
+import Dexie, { type EntityTable, type Transaction } from "dexie";
 import type {
   AccountSettings,
   CalendarEvent,
-  Member,
   Note,
   Photo,
   Synced,
+  Tag,
   Weather,
 } from "@/domain/schemas";
 
 export type StoredEvent = Synced<CalendarEvent>;
 
-export type StoredMember = Synced<Member>;
+export type StoredTag = Synced<Tag>;
 
 export type StoredNote = Synced<Note>;
 
@@ -21,7 +21,7 @@ export type StoredSettings = Synced<AccountSettings> & { accountId: string };
 
 export type StoredWeather = Weather & { accountId: string };
 
-export type SyncedEntity = "members" | "events" | "notes" | "photos" | "settings";
+export type SyncedEntity = "tags" | "events" | "notes" | "photos" | "settings";
 
 export type OutboxEntry = {
   seq: number;
@@ -32,11 +32,13 @@ export type OutboxEntry = {
   attempts: number;
 };
 
+type MemberEntry = Omit<OutboxEntry, "entity"> & { entity: "members" };
+
 export type MetaEntry = { key: string; value: unknown };
 
 export type GlanceDb = Dexie & {
   events: EntityTable<StoredEvent, "id">;
-  members: EntityTable<StoredMember, "id">;
+  tags: EntityTable<StoredTag, "id">;
   notes: EntityTable<StoredNote, "id">;
   photos: EntityTable<StoredPhoto, "id">;
   settings: EntityTable<StoredSettings, "accountId">;
@@ -79,9 +81,58 @@ export function openGlanceDb(name: string): GlanceDb {
         }),
     );
 
+  db.version(3)
+    .stores({ tags: "id, createdAt, deletedAt", members: null })
+    .upgrade(async (tx) => {
+      await copyLiveMembers(tx);
+
+      await renameEventTags(tx);
+
+      await moveMemberOutbox(tx);
+    });
+
   return db;
 }
 
 export function deleteGlanceDb(name: string): Promise<void> {
   return Dexie.delete(name);
+}
+
+async function copyLiveMembers(tx: Transaction): Promise<void> {
+  const members = await tx.table("members").toArray();
+
+  await tx.table("tags").bulkPut(members.filter((member) => member.deletedAt === undefined));
+}
+
+async function renameEventTags(tx: Transaction): Promise<void> {
+  await tx.table("events").toCollection().modify(withTagIds);
+}
+
+async function moveMemberOutbox(tx: Transaction): Promise<void> {
+  const outbox = tx.table<OutboxEntry | MemberEntry, number>("outbox");
+
+  await outbox
+    .where("entity")
+    .equals("members")
+    .and((entry) => entry.op === "delete")
+    .delete();
+
+  await outbox.where("entity").equals("members").modify({ entity: "tags" });
+
+  await outbox
+    .where("entity")
+    .equals("events")
+    .modify((entry) => {
+      if (isRecord(entry.payload)) withTagIds(entry.payload);
+    });
+}
+
+function withTagIds(event: Record<string, unknown>): void {
+  event.tagIds = event.memberIds ?? [];
+
+  delete event.memberIds;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

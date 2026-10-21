@@ -6,8 +6,8 @@ import {
   endsAfterStart,
   moveStart,
 } from "@/domain/eventTimes";
-import { EVERYONE, type EventWho, toggleWho, whoFromFilter } from "@/domain/members";
 import type { CalendarEvent } from "@/domain/schemas";
+import { EVERYONE, type EventWho, toggleWho } from "@/domain/tags";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
 
@@ -17,7 +17,7 @@ export type EventDraft = EventTimes & {
   title: string;
   location: string;
   everyone: boolean;
-  memberIds: string[];
+  tagIds: string[];
   notes: string;
   allDay?: true;
 };
@@ -42,7 +42,7 @@ export type EventEditState = Exclude<EventSheetState, { step: "details" }>;
 
 export type EventSheetAction =
   | { type: "title" | "location" | "notes"; value: string }
-  | { type: "member"; id: string; family: readonly string[] }
+  | { type: "tag"; id: string; family: readonly string[] }
   | { type: "everyone" }
   | { type: "start" | "end"; value: number }
   | { type: "allDay"; value: boolean }
@@ -63,7 +63,7 @@ export function draftFromEvent(event: CalendarEvent, tz: string, now: Date): Eve
     ...eventTimes(event, tz, now),
     location: event.location ?? "",
     everyone: event.everyone,
-    memberIds: event.memberIds,
+    tagIds: event.tagIds,
     notes: event.notes ?? "",
   };
 }
@@ -84,7 +84,7 @@ export function eventFromDraft(
     ...eventSpan(draft, dayKey, tz),
     ...(location === "" ? {} : { location }),
     everyone: draft.everyone,
-    memberIds: draft.memberIds,
+    tagIds: draft.tagIds,
     ...(notes === "" ? {} : { notes }),
   };
 }
@@ -92,14 +92,14 @@ export function eventFromDraft(
 export function newEventDraft(
   now: Date,
   tz: string,
-  memberIds?: readonly string[],
+  who: EventWho = EVERYONE,
   times: EventTimes = defaultTimes(now, tz),
 ): EventDraft {
   return {
     title: "",
     ...times,
     location: "",
-    ...draftWho(whoFromFilter(memberIds)),
+    ...draftWho(who),
     notes: "",
   };
 }
@@ -163,7 +163,7 @@ function editReducer(state: EventEditState, action: EventSheetAction): EventShee
     case "location":
     case "notes":
       return edited(state, { ...draft, [action.type]: action.value });
-    case "member":
+    case "tag":
       return withWho(state, toggleWho(draft, action.id, action.family));
     case "everyone":
       return withWho(state, EVERYONE);
@@ -246,16 +246,16 @@ function withWho(state: EventEditState, who: EventWho): EventEditState {
   return edited(state, { ...state.draft, ...draftWho(who) });
 }
 
-function draftWho({ everyone, memberIds }: EventWho) {
-  return { everyone, memberIds: [...memberIds] };
+function draftWho({ everyone, tagIds }: EventWho) {
+  return { everyone, tagIds: [...tagIds] };
 }
 
 function sameWho(draft: EventWho, opened: EventWho): boolean {
   if (draft.everyone || opened.everyone) return draft.everyone === opened.everyone;
 
   return (
-    draft.memberIds.length === opened.memberIds.length &&
-    draft.memberIds.every((id) => opened.memberIds.includes(id))
+    draft.tagIds.length === opened.tagIds.length &&
+    draft.tagIds.every((id) => opened.tagIds.includes(id))
   );
 }
 

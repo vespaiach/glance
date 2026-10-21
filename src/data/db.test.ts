@@ -10,10 +10,21 @@ const EVENT = {
   startAt: "2026-10-09T15:00:00.000Z",
   title: "Soccer practice",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
   updatedAt: "2026-10-09T10:00:00.000Z",
   version: 1,
 };
+
+const MOM = {
+  id: "0195f0a0-0000-7000-8000-000000000201",
+  name: "Mom",
+  color: "coral",
+  createdAt: "2026-10-01T09:00:00.000Z",
+  updatedAt: "2026-10-01T09:00:00.000Z",
+  version: 2,
+};
+
+const GONE = { ...MOM, id: "0195f0a0-0000-7000-8000-000000000202", name: "Gone" };
 
 afterEach(async () => {
   await Promise.all([ACCOUNT_A, ACCOUNT_B].map((id) => deleteGlanceDb(accountDbName(id))));
@@ -32,17 +43,17 @@ describe("account database", () => {
 
     expect(db.tables.map((table) => table.name).sort()).toEqual([
       "events",
-      "members",
       "meta",
       "notes",
       "outbox",
       "photos",
       "settings",
+      "tags",
       "weather",
     ]);
     expect(db.events.schema.idxByName).toHaveProperty("startAt");
     expect(db.notes.schema.idxByName).toHaveProperty("createdAt");
-    expect(db.members.schema.idxByName).toHaveProperty("createdAt");
+    expect(db.tags.schema.idxByName).toHaveProperty("createdAt");
     expect(db.outbox.schema.primKey.auto).toBe(true);
     db.close();
   });
@@ -75,7 +86,7 @@ describe("account database", () => {
     const db = openGlanceDb(name);
     await db.events.put(EVENT);
     const upgraded = new Dexie(name);
-    upgraded.version(3).stores({ events: "id, startAt, deletedAt, title" });
+    upgraded.version(4).stores({ events: "id, startAt, deletedAt, title" });
 
     await upgraded.open();
 
@@ -88,13 +99,56 @@ describe("account database", () => {
     const name = accountDbName(ACCOUNT_A);
     const old = new Dexie(name);
     old.version(1).stores({ events: "id, startAt, deletedAt" });
-    const { everyone: _, memberIds: __, ...v1Event } = EVENT;
+    const { everyone: _, tagIds: __, ...v1Event } = EVENT;
     await old.table("events").put({ ...v1Event, tone: "accent" });
     old.close();
 
     const db = openGlanceDb(name);
 
     expect(await db.events.get(EVENT.id)).toEqual(EVENT);
+    db.close();
+  });
+
+  it("tech§4.1 the v3 upgrade copies live members into tags and renames memberIds to tagIds", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = v2Dexie(name);
+    const { tagIds: _, ...shared } = EVENT;
+    const v2Event = { ...shared, everyone: false, memberIds: [MOM.id] };
+    await old.table("members").bulkPut([MOM, { ...GONE, deletedAt: "2026-10-09T11:00:00.000Z" }]);
+    await old.table("events").put(v2Event);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.tags.toArray()).toEqual([MOM]);
+    expect(await db.events.get(EVENT.id)).toEqual({ ...EVENT, everyone: false, tagIds: [MOM.id] });
+    expect(db.tables.map((table) => table.name)).not.toContain("members");
+    db.close();
+  });
+
+  it("tech§4.1 the v3 upgrade moves waiting member puts to tags and drops member deletes", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = v2Dexie(name);
+    const { tagIds: _, ...shared } = EVENT;
+    await old.table("outbox").bulkAdd([
+      { entity: "members", entityId: MOM.id, op: "put", payload: MOM, attempts: 1 },
+      { entity: "members", entityId: GONE.id, op: "delete", attempts: 0 },
+      {
+        entity: "events",
+        entityId: EVENT.id,
+        op: "put",
+        payload: { ...shared, memberIds: [] },
+        attempts: 0,
+      },
+    ]);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.outbox.toArray()).toMatchObject([
+      { entity: "tags", entityId: MOM.id, op: "put", payload: MOM, attempts: 1 },
+      { entity: "events", entityId: EVENT.id, op: "put", payload: EVENT },
+    ]);
     db.close();
   });
 
@@ -111,3 +165,20 @@ describe("account database", () => {
     b.close();
   });
 });
+
+function v2Dexie(name: string): Dexie {
+  const old = new Dexie(name);
+
+  old.version(2).stores({
+    events: "id, startAt, deletedAt",
+    members: "id, createdAt, deletedAt",
+    notes: "id, createdAt, deletedAt",
+    photos: "id, createdAt",
+    settings: "accountId",
+    weather: "accountId",
+    outbox: "++seq, entity, entityId",
+    meta: "key",
+  });
+
+  return old;
+}

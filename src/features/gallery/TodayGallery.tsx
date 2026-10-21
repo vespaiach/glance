@@ -116,7 +116,7 @@ const styles = stylex.create({
 });
 
 const schedule = {
-  members: GALLERY_FAMILY,
+  tags: GALLERY_FAMILY,
   day: "2026-10-09",
   now: NOW,
   clock: "12h",
@@ -176,7 +176,7 @@ export function TodayGallery({ season }: { season: Season }) {
           <HeroSummary
             tz={GALLERY_TZ}
             hero={hero}
-            members={GALLERY_FAMILY}
+            tags={GALLERY_FAMILY}
             clock="12h"
             onOpenEvent={ignore}
           />
@@ -198,7 +198,7 @@ export function TodayGallery({ season }: { season: Season }) {
             <HeroSummary
               tz={GALLERY_TZ}
               hero={NOW_HERO}
-              members={GALLERY_FAMILY}
+              tags={GALLERY_FAMILY}
               clock="24h"
               onOpenEvent={ignore}
             />

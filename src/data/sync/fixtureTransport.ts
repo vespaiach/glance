@@ -265,7 +265,7 @@ function hasUploadedPhotos(params: FixtureParams): boolean {
 async function writeSeed(db: GlanceDb, seed: Seed, params: FixtureParams): Promise<void> {
   const accountId = FIXTURE_ACCOUNT.id;
 
-  await db.members.bulkPut(FIXTURE_FAMILY.map(seeded));
+  await db.tags.bulkPut(FIXTURE_FAMILY.map(seeded));
 
   if (seed.withRows) {
     await db.events.bulkPut(fixtureEvents(params).map(seeded));

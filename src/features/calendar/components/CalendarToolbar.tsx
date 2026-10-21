@@ -1,23 +1,20 @@
 import * as stylex from "@stylexjs/stylex";
-import { Clock, Pencil, Plus } from "lucide-react";
+import { Clock, Plus } from "lucide-react";
 import { copy } from "@/copy";
-import type { MemberFilter } from "@/domain/members";
-import type { Member } from "@/domain/schemas";
+import type { Tag } from "@/domain/schemas";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Icon } from "@/ui/Icon";
-import { PersonDot } from "@/ui/PersonDot";
 import { press } from "@/ui/press";
 
 type CalendarToolbarProps = {
-  members: readonly Member[];
-  filter: MemberFilter;
+  tags: readonly Tag[];
+  filter: ReadonlySet<string>;
   span24: boolean;
   outside: number;
   phone: boolean;
-  onToggleMember: (id: string) => void;
-  onEditFamily: () => void;
+  onToggleTag: (id: string) => void;
   onToggleSpan: () => void;
   onAddEvent: () => void;
 };
@@ -86,6 +83,11 @@ const styles = stylex.create({
     transitionDuration: `${motion.durPress}, ${motion.durFast}, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
   }),
+  tag: {
+    paddingInlineStart: 18,
+    paddingInlineEnd: 18,
+    backgroundColor: colors.borderHairline,
+  },
   span: {
     paddingInlineStart: 14,
     paddingInlineEnd: 18,
@@ -114,26 +116,36 @@ const styles = stylex.create({
     minHeight: height,
     backgroundColor: colors.surfaceSoft,
   }),
-  edit: {
-    paddingInlineStart: 16,
-    paddingInlineEnd: 20,
-  },
   add: {
     paddingInlineStart: 18,
     paddingInlineEnd: 22,
   },
 });
 
+const fills = stylex.create({
+  lilac: { backgroundColor: colors.blockLilac },
+  sky: { backgroundColor: colors.blockSky },
+  coral: { backgroundColor: colors.blockCoral },
+  mint: { backgroundColor: colors.blockMint },
+  sun: { backgroundColor: colors.blockSun },
+  pink: { backgroundColor: colors.blockPink },
+  lime: { backgroundColor: colors.blockLime },
+  rust: { backgroundColor: colors.blockRust },
+  glacier: { backgroundColor: colors.blockGlacier },
+  amber: { backgroundColor: colors.blockAmber },
+  sage: { backgroundColor: colors.blockSage },
+  ice: { backgroundColor: colors.blockIce },
+});
+
 const PILL_HEIGHT = { phone: 44, other: 48 } as const;
 
 export function CalendarToolbar({
-  members,
+  tags,
   filter,
   span24,
   outside,
   phone,
-  onToggleMember,
-  onEditFamily,
+  onToggleTag,
   onToggleSpan,
   onAddEvent,
 }: CalendarToolbarProps) {
@@ -145,25 +157,16 @@ export function CalendarToolbar({
     <div {...stylex.props(styles.row)}>
       <div {...stylex.props(styles.people)}>
         <fieldset aria-label={words.showPlansFor} {...stylex.props(styles.pills)}>
-          {members.map((member) => (
-            <MemberPill
-              key={member.id}
-              member={member}
-              filter={filter}
+          {tags.map((tag) => (
+            <TagPill
+              key={tag.id}
+              tag={tag}
+              selected={filter.has(tag.id)}
               height={height}
-              onClick={() => onToggleMember(member.id)}
+              onClick={() => onToggleTag(tag.id)}
             />
           ))}
         </fieldset>
-        <Button
-          variant="ghost"
-          icon={Pencil}
-          aria-label={words.editFamily}
-          onClick={onEditFamily}
-          xstyle={[styles.soft(height), styles.edit]}
-        >
-          {words.edit}
-        </Button>
       </div>
       <div {...stylex.props(styles.actions, phone && styles.actionsPhone)}>
         <button
@@ -190,27 +193,22 @@ export function CalendarToolbar({
   );
 }
 
-type MemberPillProps = {
-  member: Member;
-  filter: MemberFilter;
+type TagPillProps = {
+  tag: Tag;
+  selected: boolean;
   height: number;
   onClick: () => void;
 };
 
-function MemberPill({ member, filter, height, onClick }: MemberPillProps) {
-  const selected = filter !== "everyone" && filter.has(member.id);
-
-  const lit = filter === "everyone" || selected;
-
+function TagPill({ tag, selected, height, onClick }: TagPillProps) {
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      {...stylex.props(styles.pill(height), selected && styles.on, press.scale)}
+      {...stylex.props(styles.pill(height), styles.tag, selected && fills[tag.color], press.scale)}
     >
-      <PersonDot color={member.color} hollow={!lit} />
-      {member.name}
+      {tag.name}
     </button>
   );
 }

@@ -104,9 +104,9 @@ describe("seedFixtureDb", () => {
   it("§7 seeds the Appendix A family, also with empty=1", async () => {
     await seedFixtureDb(db, {});
 
-    expect(await db.members.orderBy("createdAt").toArray()).toEqual(
-      FIXTURE_FAMILY.map((member) => ({
-        ...member,
+    expect(await db.tags.orderBy("createdAt").toArray()).toEqual(
+      FIXTURE_FAMILY.map((tag) => ({
+        ...tag,
         updatedAt: FIXTURE_NOW.toISOString(),
         version: 1,
       })),
@@ -114,7 +114,7 @@ describe("seedFixtureDb", () => {
 
     await seedFixtureDb(db, { empty: true });
 
-    expect(await db.members.count()).toBe(FIXTURE_FAMILY.length);
+    expect(await db.tags.count()).toBe(FIXTURE_FAMILY.length);
   });
 
   it("TODAY-11 events=many adds four plans, so Oct 9 has 22", async () => {

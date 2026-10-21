@@ -35,7 +35,7 @@ const CALL: CalendarEvent = {
   startAt: iso(10, 30),
   endAt: iso(11, 15),
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const COAST: Photo = {
@@ -63,7 +63,7 @@ const GRANDPA: CalendarEvent = {
   startAt: "2026-10-09T00:00:00.000Z",
   allDay: true,
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const WEATHER: Weather = {

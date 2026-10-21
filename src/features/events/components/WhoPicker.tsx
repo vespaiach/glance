@@ -1,8 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 import { Users } from "lucide-react";
 import type { ReactNode } from "react";
-import type { EventWho } from "@/domain/members";
-import type { Member } from "@/domain/schemas";
+import type { Tag } from "@/domain/schemas";
+import type { EventWho } from "@/domain/tags";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Icon } from "@/ui/Icon";
@@ -12,10 +12,10 @@ import { press } from "@/ui/press";
 type WhoPickerProps = {
   label: string;
   everyoneLabel: string;
-  members: readonly Member[];
+  tags: readonly Tag[];
   who: EventWho;
   onEveryone: () => void;
-  onMember: (id: string) => void;
+  onTag: (id: string) => void;
 };
 
 type WhoPillProps = {
@@ -69,14 +69,7 @@ const styles = stylex.create({
   },
 });
 
-export function WhoPicker({
-  label,
-  everyoneLabel,
-  members,
-  who,
-  onEveryone,
-  onMember,
-}: WhoPickerProps) {
+export function WhoPicker({ label, everyoneLabel, tags, who, onEveryone, onTag }: WhoPickerProps) {
   return (
     <div {...stylex.props(styles.root)}>
       <span aria-hidden="true" {...stylex.props(styles.label)}>
@@ -87,14 +80,14 @@ export function WhoPicker({
           <Icon icon={Users} size={16} />
           {everyoneLabel}
         </WhoPill>
-        {members.map((member) => (
+        {tags.map((tag) => (
           <WhoPill
-            key={member.id}
-            selected={who.everyone || who.memberIds.includes(member.id)}
-            onClick={() => onMember(member.id)}
+            key={tag.id}
+            selected={who.everyone || who.tagIds.includes(tag.id)}
+            onClick={() => onTag(tag.id)}
           >
-            <PersonDot color={member.color} />
-            {member.name}
+            <PersonDot color={tag.color} />
+            {tag.name}
           </WhoPill>
         ))}
       </fieldset>

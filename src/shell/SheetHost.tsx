@@ -5,6 +5,7 @@ import { createContext, type ReactNode, useContext, useMemo, useState } from "re
 import type { FixtureParams } from "@/data/repos";
 import type { EventTimes } from "@/domain/eventTimes";
 import type { NoteTone } from "@/domain/schemas";
+import type { EventWho } from "@/domain/tags";
 
 export type TimeFixture = NonNullable<FixtureParams["time"]>;
 
@@ -13,13 +14,12 @@ export type SheetRequest = (
   | {
       kind: "newevent";
       day: string;
-      memberIds?: readonly string[];
+      who?: EventWho;
       times?: EventTimes;
       time?: TimeFixture;
     }
   | { kind: "note"; id: string; edit?: true }
   | { kind: "newnote"; draft?: { text: string; tone: NoteTone } }
-  | { kind: "family"; removing?: string; name?: string; error?: true }
   | { kind: "photo"; id: string }
 ) & { discard?: true };
 

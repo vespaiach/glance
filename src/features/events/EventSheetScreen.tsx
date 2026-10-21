@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useEvent, useEventsRepo, useMembers } from "@/data/repos";
+import { useEvent, useEventsRepo, useTags } from "@/data/repos";
 import { eventDayKey } from "@/domain/allDay";
 import { type DetailsStatus, detailsStatus } from "@/domain/eventStatus";
 import type { EventTimes } from "@/domain/eventTimes";
 import { uuidv7 } from "@/domain/id";
 import type { CalendarEvent } from "@/domain/schemas";
+import type { EventWho } from "@/domain/tags";
 import { formatDayTitle } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
 import { useBreakpoint } from "@/shell/breakpoint";
@@ -37,7 +38,7 @@ type SheetFrameProps = {
 
 type Fixtures = { time?: TimeFixture; discard?: true; edit?: true };
 
-type NewProps = Fixtures & { day: string; memberIds?: readonly string[]; times?: EventTimes };
+type NewProps = Fixtures & { day: string; who?: EventWho; times?: EventTimes };
 
 type EditProps = Fixtures & { event: CalendarEvent };
 
@@ -60,7 +61,7 @@ export function EventSheetScreen() {
       <NewEventSheet
         key={sheet.day}
         day={sheet.day}
-        memberIds={sheet.memberIds}
+        who={sheet.who}
         times={sheet.times}
         time={sheet.time}
         discard={sheet.discard}
@@ -83,7 +84,7 @@ function SheetFrame({ mode, day, id, initial, status, onDelete }: SheetFrameProp
 
   const breakpoint = useBreakpoint();
 
-  const members = useMembers() ?? [];
+  const tags = useTags() ?? [];
 
   const onSave = (draft: EventDraft) => {
     void events.put(eventFromDraft(draft, day, id, tz));
@@ -95,7 +96,7 @@ function SheetFrame({ mode, day, id, initial, status, onDelete }: SheetFrameProp
       eyebrow={formatDayTitle(parseDateKey(day), "UTC")}
       initial={initial}
       clock={clock}
-      members={members}
+      tags={tags}
       offline={!online}
       status={status}
       compact={breakpoint === "phone"}
@@ -148,7 +149,7 @@ function LoadedEventSheet({ id, ...fixtures }: Fixtures & { id: string }) {
   return event ? <EditEventSheet event={event} {...fixtures} /> : null;
 }
 
-function NewEventSheet({ day, memberIds, times, time, discard }: NewProps) {
+function NewEventSheet({ day, who, times, time, discard }: NewProps) {
   const now = useNow("minute");
 
   const tz = useTimeZone();
@@ -160,7 +161,7 @@ function NewEventSheet({ day, memberIds, times, time, discard }: NewProps) {
       mode="new"
       day={day}
       id={id}
-      initial={initialEventSheet(newEventDraft(now, tz, memberIds, times), time, discard)}
+      initial={initialEventSheet(newEventDraft(now, tz, who, times), time, discard)}
       onDelete={() => {}}
     />
   );

@@ -4,10 +4,10 @@ import type {
   Account,
   AccountSettings,
   CalendarEvent,
-  Member,
-  MemberColor,
   Note,
   Photo,
+  Tag,
+  TagColor,
   Weather,
   WeatherIcon,
   WeatherLocation,
@@ -62,25 +62,23 @@ const FAMILY = [
   ["nghe", "Nghe", "lime"],
   ["an2", "An", "rust"],
   ["nga", "Nga", "glacier"],
-] as const satisfies readonly (readonly [string, string, MemberColor])[];
+] as const satisfies readonly (readonly [string, string, TagColor])[];
 
 type FamilyKey = (typeof FAMILY)[number][0];
 
 type Who = readonly FamilyKey[] | "everyone";
 
-export const FIXTURE_FAMILY: Member[] = FAMILY.map(([, name, color], index) => ({
+export const FIXTURE_FAMILY: Tag[] = FAMILY.map(([, name, color], index) => ({
   id: fixtureId(5, index + 1),
   name,
   color,
   createdAt: at(1, 9, index),
 }));
 
-const memberId = (key: FamilyKey) => fixtureId(5, FAMILY.findIndex(([k]) => k === key) + 1);
+const tagId = (key: FamilyKey) => fixtureId(5, FAMILY.findIndex(([k]) => k === key) + 1);
 
 const whoOf = (who: Who) =>
-  who === "everyone"
-    ? { everyone: true, memberIds: [] }
-    : { everyone: false, memberIds: who.map(memberId) };
+  who === "everyone" ? { everyone: true, tagIds: [] } : { everyone: false, tagIds: who.map(tagId) };
 
 const bringNotes = (bring: readonly string[]) =>
   bring.length === 0
@@ -494,6 +492,6 @@ export function fixturePhotoImage(photoId: string): string | undefined {
   return slug && imagePath(slug);
 }
 
-export function fixtureMemberId(key: string): string | undefined {
-  return FAMILY.some(([known]) => known === key) ? memberId(key as FamilyKey) : undefined;
+export function fixtureTagId(key: string): string | undefined {
+  return FAMILY.some(([known]) => known === key) ? tagId(key as FamilyKey) : undefined;
 }

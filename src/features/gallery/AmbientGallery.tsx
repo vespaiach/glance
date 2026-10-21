@@ -26,7 +26,7 @@ const CONFERENCE: CalendarEvent = {
   location: "Lincoln Elementary",
   startAt: octoberAt(14, 16).toISOString(),
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const AMBIENT_WEATHER = {

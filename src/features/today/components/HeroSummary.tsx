@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { copy } from "@/copy";
-import { whoLabel } from "@/domain/members";
-import type { CalendarEvent, Member } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
+import { whoLabel } from "@/domain/tags";
 import { type Clock, clockAt, formatDuration, minutesOfDay, timeParts } from "@/domain/time";
 import type { TodayHero } from "@/domain/todayHero";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -13,7 +13,7 @@ import { CueEyebrow } from "./CueEyebrow";
 
 type HeroSummaryProps = {
   hero: TodayHero<CalendarEvent>;
-  members: readonly Member[];
+  tags: readonly Tag[];
   clock: Clock;
   tz: string;
   onOpenEvent: (id: string) => void;
@@ -78,7 +78,7 @@ const styles = stylex.create({
 const timeAt = (iso: string, clock: Clock, tz: string) =>
   timeParts(minutesOfDay(new Date(iso), tz), clock).time;
 
-export function HeroSummary({ hero, members, clock, tz, onOpenEvent }: HeroSummaryProps) {
+export function HeroSummary({ hero, tags, clock, tz, onOpenEvent }: HeroSummaryProps) {
   if (hero.kind === "ended") {
     return <HeroMessage title={copy.today.hero.endedTitle} body={copy.today.hero.endedBody} />;
   }
@@ -100,7 +100,7 @@ export function HeroSummary({ hero, members, clock, tz, onOpenEvent }: HeroSumma
         {countdown && <span {...stylex.props(styles.pill)}>{countdown}</span>}
       </span>
       <span {...stylex.props(styles.title)}>{hero.event.title}</span>
-      <span {...stylex.props(styles.body)}>{eventMeta(hero, members, clock, tz)}</span>
+      <span {...stylex.props(styles.body)}>{eventMeta(hero, tags, clock, tz)}</span>
     </button>
   );
 }
@@ -127,13 +127,13 @@ function runningMeta({ startAt, endAt }: CalendarEvent, clock: Clock, tz: string
   return copy.today.hero.until(timeAt(endAt, clock, tz));
 }
 
-function eventMeta(hero: EventHero, members: readonly Member[], clock: Clock, tz: string) {
+function eventMeta(hero: EventHero, tags: readonly Tag[], clock: Clock, tz: string) {
   const when =
     hero.kind === "now"
       ? runningMeta(hero.event, clock, tz)
       : clockAt(hero.event.startAt, clock, tz);
 
-  const who = whoLabel(hero.event, members, copy.events.everyone);
+  const who = whoLabel(hero.event, tags, copy.events.everyone);
 
   return [hero.event.location, when, who].filter(Boolean).join(" · ");
 }

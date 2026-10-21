@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { DetailsStatus } from "@/domain/eventStatus";
-import type { Member } from "@/domain/schemas";
+import type { Tag } from "@/domain/schemas";
 import {
   type EventDraft,
   type EventSheetState,
@@ -10,18 +10,18 @@ import {
 } from "../eventSheet";
 import { EventSheet } from "./EventSheet";
 
-const WHO = { everyone: true, memberIds: [], notes: "" };
+const WHO = { everyone: true, tagIds: [], notes: "" };
 
-const member = (n: number, name: string, color: Member["color"]): Member => ({
+const tag = (n: number, name: string, color: Tag["color"]): Tag => ({
   id: `0195f0a0-0000-7000-8000-00000000050${n}`,
   name,
   color,
   createdAt: `2026-10-0${n}T15:00:00.000Z`,
 });
 
-const MOM = member(1, "Mom", "coral");
+const MOM = tag(1, "Mom", "coral");
 
-const DAD = member(2, "Dad", "mint");
+const DAD = tag(2, "Dad", "mint");
 
 const FAMILY = [MOM, DAD];
 
@@ -40,7 +40,7 @@ type Options = {
   time?: TimeFixture;
   offline?: boolean;
   initial?: EventSheetState;
-  members?: Member[];
+  tags?: Tag[];
   status?: DetailsStatus;
   onClose?: () => void;
   onDelete?: () => void;
@@ -56,7 +56,7 @@ function renderSheet(options: Options = {}) {
       eyebrow="Friday, Oct 9"
       initial={options.initial ?? initialEventSheet(mode === "new" ? BLANK : DRAFT, options.time)}
       clock="12h"
-      members={options.members ?? FAMILY}
+      tags={options.tags ?? FAMILY}
       offline={options.offline ?? false}
       status={options.status ?? null}
       onClose={options.onClose ?? (() => {})}
@@ -484,19 +484,19 @@ function pressed() {
   );
 }
 
-test("EVT-11 Who offers Everyone and each member, all selected for an everyone plan", () => {
+test("EVT-11 Who offers Everyone and each tag, all selected for an everyone plan", () => {
   renderSheet();
 
   expect(pressed()).toEqual(["Everyone", "Mom", "Dad"]);
 });
 
-test("EVT-11 a plan for some members selects only them", () => {
-  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, memberIds: [DAD.id] }) });
+test("EVT-11 a plan for some tags selects only them", () => {
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, tagIds: [DAD.id] }) });
 
   expect(pressed()).toEqual(["Dad"]);
 });
 
-test("EVT-11 tapping a member while everyone is on keeps the others", async () => {
+test("EVT-11 tapping a tag while everyone is on keeps the others", async () => {
   renderSheet();
 
   await userEvent.click(whoPill("Mom"));
@@ -512,23 +512,23 @@ test("EVT-11 tapping Everyone when it is selected does nothing", async () => {
   expect(pressed()).toEqual(["Everyone", "Mom", "Dad"]);
 });
 
-test("EVT-11 the last selected member can't be turned off", async () => {
-  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, memberIds: [DAD.id] }) });
+test("EVT-11 turning the last tag off leaves nobody", async () => {
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, tagIds: [DAD.id] }) });
 
   await userEvent.click(whoPill("Dad"));
 
-  expect(pressed()).toEqual(["Dad"]);
+  expect(pressed()).toEqual([]);
 });
 
-test("EVT-11 selecting every member one by one means everyone", async () => {
-  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, memberIds: [DAD.id] }) });
+test("EVT-11 selecting every tag one by one means everyone", async () => {
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, everyone: false, tagIds: [DAD.id] }) });
 
   await userEvent.click(whoPill("Mom"));
 
   expect(pressed()).toEqual(["Everyone", "Mom", "Dad"]);
 });
 
-test("EVT-11 Save sends member ids for some members and everyone for all", async () => {
+test("EVT-11 Save sends tag ids for some tags and everyone for all", async () => {
   const onSave = vi.fn();
 
   renderSheet({ onSave });
@@ -538,7 +538,7 @@ test("EVT-11 Save sends member ids for some members and everyone for all", async
   await userEvent.click(whoPill("Everyone"));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-  expect(onSave).toHaveBeenNthCalledWith(1, { ...DRAFT, everyone: false, memberIds: [DAD.id] });
+  expect(onSave).toHaveBeenNthCalledWith(1, { ...DRAFT, everyone: false, tagIds: [DAD.id] });
   expect(onSave).toHaveBeenNthCalledWith(2, DRAFT);
 });
 
@@ -570,7 +570,7 @@ describe("Event details", () => {
   const LUNCH: EventDraft = {
     ...DRAFT,
     everyone: false,
-    memberIds: [MOM.id, DAD.id],
+    tagIds: [MOM.id, DAD.id],
     notes: "Bring a gift\nAnd the card",
   };
 
@@ -609,7 +609,7 @@ describe("Event details", () => {
     expect(screen.getByText("All day")).toBeInTheDocument();
   });
 
-  test("EVT-09 Who lists the members by name, Where and Notes keep their text", () => {
+  test("EVT-09 Who lists the tags by name, Where and Notes keep their text", () => {
     renderSheet({ initial: details() });
 
     const who = screen.getByRole("list", { name: "Who" });

@@ -1,10 +1,10 @@
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import type { CalendarEvent, Member, Note } from "@/domain/schemas";
+import type { CalendarEvent, Note, Tag } from "@/domain/schemas";
 import { deleteEvent, putEvent } from "./events";
-import { putMember } from "./members";
 import { putNote } from "./notes";
 import { putSettings } from "./settings";
 import { pullChanges } from "./sync";
+import { putTag } from "./tags";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
 const harness = serviceHarnessPerTest();
@@ -16,10 +16,10 @@ const EVENT: CalendarEvent = {
   title: "Swim lesson",
   startAt: "2026-10-09T21:00:00.000Z",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
-const MEMBER: Member = {
+const MEMBER: Tag = {
   id: "0192f3a0-4444-7000-8000-000000000001",
   name: "Mom",
   color: "coral",
@@ -139,21 +139,21 @@ describe("pullChanges", () => {
     });
   });
 
-  it("SYNC-01 returns members and plans for some members", async () => {
-    await putMember(harness.deps(), MARIA, MEMBER);
-    const plan = { ...EVENT, everyone: false, memberIds: [MEMBER.id], notes: "Bring towels" };
+  it("SYNC-01 returns tags and plans for some tags", async () => {
+    await putTag(harness.deps(), MARIA, MEMBER);
+    const plan = { ...EVENT, everyone: false, tagIds: [MEMBER.id], notes: "Bring towels" };
     await putEvent(harness.deps(), MARIA, plan);
 
     expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
       cursor: "2",
       changes: [
-        { entity: "members", row: { ...MEMBER, updatedAt: STAMP, version: 1 } },
+        { entity: "tags", row: { ...MEMBER, updatedAt: STAMP, version: 1 } },
         { entity: "events", row: { ...plan, updatedAt: STAMP, version: 2 } },
       ],
     });
   });
 
-  it("D24 an event saved before members pulls as an everyone event", async () => {
+  it("D24 an event saved before tags pulls as an everyone event", async () => {
     await harness
       .deps()
       .db.run(
@@ -167,7 +167,7 @@ describe("pullChanges", () => {
   });
 
   it("tech§5 never returns another account's rows", async () => {
-    await putMember(harness.deps(), OMAR, MEMBER);
+    await putTag(harness.deps(), OMAR, MEMBER);
     await putEvent(harness.deps(), OMAR, EVENT);
     await putNote(harness.deps(), OMAR, NOTE);
     await putSettings(harness.deps(), OMAR, OMAR, DEFAULT_SETTINGS);

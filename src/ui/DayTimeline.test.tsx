@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
-import type { CalendarEvent, Member, Weather } from "@/domain/schemas";
+import type { CalendarEvent, Tag, Weather } from "@/domain/schemas";
 import { zonedInstant } from "@/domain/zone";
 import { DayTimeline, type DayTimelineLabels } from "./DayTimeline";
 
@@ -12,14 +12,14 @@ const october = (day: number, minutes: number) =>
 
 const NOW = october(9, 10 * 60 + 41);
 
-const MOM: Member = {
+const MOM: Tag = {
   id: "0195f0a0-0000-7000-8000-000000000501",
   name: "Mom",
   color: "coral",
   createdAt: "2026-10-01T15:00:00.000Z",
 };
 
-const DAD: Member = { ...MOM, id: "0195f0a0-0000-7000-8000-000000000502", name: "Dad" };
+const DAD: Tag = { ...MOM, id: "0195f0a0-0000-7000-8000-000000000502", name: "Dad" };
 
 const plan = (
   n: number,
@@ -31,7 +31,7 @@ const plan = (
   startAt: october(day, start).toISOString(),
   ...(end !== undefined && { endAt: october(day, end).toISOString() }),
   everyone: false,
-  memberIds: [MOM.id],
+  tagIds: [MOM.id],
 });
 
 const hourly = (day: number, rows: [hour: number, temp: number, precip: number][]) =>
@@ -71,7 +71,7 @@ type Props = ComponentProps<typeof DayTimeline>;
 
 const base: Props = {
   plans: [],
-  members: [MOM, DAD],
+  tags: [MOM, DAD],
   day: "2026-10-10",
   now: NOW,
   tz,

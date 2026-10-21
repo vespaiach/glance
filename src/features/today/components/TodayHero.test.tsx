@@ -16,7 +16,7 @@ const call = {
   startAt: iso(10, 30),
   endAt: iso(11, 15),
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
 const MOM = { id: "mom", name: "Mom", color: "coral", createdAt: iso(8, 0) } as const;
@@ -30,12 +30,12 @@ const lunch = {
   startAt: iso(12, 0),
   endAt: iso(13, 0),
   everyone: false,
-  memberIds: ["mom", "leo"],
+  tagIds: ["mom", "leo"],
 };
 
 const ignore = () => {};
 
-const summary = { tz, clock: "12h", members: [MOM, LEO], onOpenEvent: ignore } as const;
+const summary = { tz, clock: "12h", tags: [MOM, LEO], onOpenEvent: ignore } as const;
 
 test("TODAY-01 the Now panel shows the date, the season icon and the clock, with no season label", () => {
   const { container } = render(

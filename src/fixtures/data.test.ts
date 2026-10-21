@@ -3,19 +3,19 @@ import path from "node:path";
 import * as v from "valibot";
 import { eventDayKey } from "@/domain/allDay";
 import { eventStatus } from "@/domain/eventStatus";
-import { type EventWho, whoLabel } from "@/domain/members";
 import { noteExpired, noteStamp } from "@/domain/notes";
 import { pictureOfDay } from "@/domain/pictureOfDay";
 import {
   AccountSchema,
   AccountSettingsSchema,
   CalendarEventSchema,
-  MemberSchema,
   NoteSchema,
   PhotoSchema,
+  TagSchema,
   WeatherSchema,
 } from "@/domain/schemas";
 import { isTimeZone } from "@/domain/signIn";
+import { type EventWho, whoLabel } from "@/domain/tags";
 import { formatClock, minutesOfDay } from "@/domain/time";
 import { rainStart } from "@/domain/weather";
 import { dateKey, wallTime } from "@/domain/zone";
@@ -64,7 +64,7 @@ describe("Appendix A fixtures", () => {
       ...Object.values(FIXTURE_ALL_DAY),
     ])
       v.parse(CalendarEventSchema, event);
-    for (const member of FIXTURE_FAMILY) v.parse(MemberSchema, member);
+    for (const tag of FIXTURE_FAMILY) v.parse(TagSchema, tag);
     for (const note of FIXTURE_NOTES) v.parse(NoteSchema, note);
     for (const photo of FIXTURE_PHOTOS) v.parse(PhotoSchema, photo);
     v.parse(WeatherSchema, FIXTURE_WEATHER);
@@ -96,8 +96,8 @@ describe("Appendix A fixtures", () => {
     expect(FIXTURE_AMBIENT_NOW).toEqual(new Date("2026-10-10T02:12:00Z"));
   });
 
-  it("Appendix A the family is nine members in order, each with their block color", () => {
-    expect(FIXTURE_FAMILY.map((member) => [member.name, member.color])).toEqual([
+  it("Appendix A the family is nine tags in order, each with their block color", () => {
+    expect(FIXTURE_FAMILY.map((tag) => [tag.name, tag.color])).toEqual([
       ["Minh-An", "lilac"],
       ["Minh-Hy", "sky"],
       ["Mom", "coral"],
@@ -108,8 +108,8 @@ describe("Appendix A fixtures", () => {
       ["An", "rust"],
       ["Nga", "glacier"],
     ]);
-    expect(FIXTURE_FAMILY.map((member) => member.createdAt)).toEqual(
-      FIXTURE_FAMILY.map((member) => member.createdAt).sort(),
+    expect(FIXTURE_FAMILY.map((tag) => tag.createdAt)).toEqual(
+      FIXTURE_FAMILY.map((tag) => tag.createdAt).sort(),
     );
   });
 

@@ -73,8 +73,8 @@ export function signOut(sessionToken: string | undefined): Promise<void> {
 export async function saveName(accountId: string, name: string) {
   const saved = await account.saveName(deps(), accountId, name);
 
-  if (saved.ok && saved.value.firstMember) {
-    syncBus().publish(accountId, saved.value.firstMember.version);
+  if (saved.ok && saved.value.firstTag) {
+    syncBus().publish(accountId, saved.value.firstTag.version);
   }
 
   return saved.ok ? ok(saved.value.account) : saved;

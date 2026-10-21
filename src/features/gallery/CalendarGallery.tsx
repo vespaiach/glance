@@ -133,20 +133,21 @@ const PICKER_MONTHS: PickerMonthView[] = pickerMonths(TODAY).map((month) => ({
 
 const TODAY_DATE = parseDateKey(TODAY);
 
+const EVERY_TAG = new Set(TIMELINE_FAMILY.map((one) => one.id));
+
 const toolbar = {
-  members: TIMELINE_FAMILY,
+  tags: TIMELINE_FAMILY,
   span24: false,
   outside: 0,
   phone: false,
-  onToggleMember: ignore,
-  onEditFamily: ignore,
+  onToggleTag: ignore,
   onToggleSpan: ignore,
   onAddEvent: ignore,
 } as const;
 
 const day: Omit<DayProps, "toolbar" | "state"> = {
-  members: TIMELINE_FAMILY,
-  filter: "everyone",
+  tags: TIMELINE_FAMILY,
+  filter: EVERY_TAG,
   calendarEmpty: false,
   day: TODAY,
   now: NOW,
@@ -168,7 +169,7 @@ const ALL_DAY = {
   allDay: true,
   location: "No school",
   everyone: false,
-  memberIds: TIMELINE_FAMILY.slice(0, 2).map((one) => one.id),
+  tagIds: TIMELINE_FAMILY.slice(0, 2).map((one) => one.id),
 } as const;
 
 const words = gallery.calendarView;
@@ -265,7 +266,7 @@ export function CalendarGallery() {
               toolbar={
                 <CalendarToolbar
                   {...toolbar}
-                  filter={demo.props.filter ?? "everyone"}
+                  filter={demo.props.filter ?? EVERY_TAG}
                   span24={demo.props.span24 ?? false}
                   outside={demo.props.day === "2026-10-10" ? 2 : 0}
                   phone={demo.props.breakpoint === "phone"}

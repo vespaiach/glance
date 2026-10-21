@@ -7,9 +7,9 @@ import {
   type OutboxEntry,
   openGlanceDb,
   type StoredEvent,
-  type StoredMember,
   type StoredPhoto,
   type StoredSettings,
+  type StoredTag,
 } from "../db";
 import { createSyncEngine } from "./engine";
 import { STATUS_KEY, type SyncStatus } from "./status";
@@ -28,12 +28,12 @@ const EVENT: StoredEvent = {
   startAt: "2026-10-09T15:00:00.000Z",
   title: "Soccer practice",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
   updatedAt: "2026-10-09T10:00:00.000Z",
   version: 1,
 };
 
-const MEMBER: StoredMember = {
+const MEMBER: StoredTag = {
   id: "0195f0a0-0000-7000-8000-000000000301",
   name: "Mom",
   color: "coral",
@@ -352,14 +352,14 @@ describe("pull", () => {
     expect(await status()).toMatchObject({ online: true, lastSyncedAt: NOW.toISOString() });
   });
 
-  it("SYNC-01 applies pulled members", async () => {
+  it("SYNC-01 applies pulled tags", async () => {
     const transport = fakeTransport();
 
-    transport.pull.mockImplementation(async () => ok(pulled([{ entity: "members", row: MEMBER }])));
+    transport.pull.mockImplementation(async () => ok(pulled([{ entity: "tags", row: MEMBER }])));
 
     await engine(transport).nudge();
 
-    expect(await db.members.get(MEMBER.id)).toEqual(MEMBER);
+    expect(await db.tags.get(MEMBER.id)).toEqual(MEMBER);
   });
 
   it("SYNC-02 a pull never overwrites a row that still has an outbox entry", async () => {

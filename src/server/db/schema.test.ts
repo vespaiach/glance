@@ -1,3 +1,4 @@
+import { pullChanges } from "../services/sync";
 import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
 import { openPglite, pgliteDb } from "./pglite";
 import { migratedDbPerTest } from "./testDb";
@@ -38,7 +39,6 @@ describe("001_init", () => {
       "displays",
       "events",
       "magic_links",
-      "members",
       "notes",
       "photos",
       "schema_migrations",
@@ -46,6 +46,7 @@ describe("001_init", () => {
       "settings",
       "sign_in_codes",
       "sync_state",
+      "tags",
       "weather_cache",
     ]);
   });
@@ -361,61 +362,127 @@ describe("008_sign_in_codes", () => {
   });
 });
 
-async function insertMember(id: string, name: string, color = "lilac"): Promise<void> {
+async function insertTag(id: string, name: string, color = "lilac"): Promise<void> {
   await db().run(
-    "INSERT INTO members (id, account_id, name, color, created_at, updated_at, version) VALUES ($1, 'a1', $2, $3, $4, $4, 1)",
+    "INSERT INTO tags (id, account_id, name, color, created_at, updated_at, version) VALUES ($1, 'a1', $2, $3, $4, $4, 1)",
     [id, name, color, NOW],
   );
 }
 
-describe("007_members", () => {
-  it("D24 an event is for everyone with no members, no notes and no tone", async () => {
+describe("009_tags", () => {
+  it("D24 an event is for everyone with no tags, no notes and no tone", async () => {
     await insertAccount("a1");
     await insertEvent(NOW, null);
 
     expect(await db().one("SELECT * FROM events")).toMatchObject({
       everyone: true,
-      member_ids: [],
+      tag_ids: [],
       notes: null,
     });
     expect(await db().one("SELECT * FROM events")).not.toHaveProperty("tone");
   });
 
-  it("D24 stores an event's member ids as an array", async () => {
+  it("D24 stores an event's tag ids as an array", async () => {
     await insertAccount("a1");
     await insertEvent(NOW, null);
 
-    await db().run("UPDATE events SET everyone = false, member_ids = $1", [["m1", "m2"]]);
+    await db().run("UPDATE events SET everyone = false, tag_ids = $1", [["m1", "m2"]]);
 
-    expect(await db().one("SELECT member_ids FROM events")).toEqual({ member_ids: ["m1", "m2"] });
+    expect(await db().one("SELECT tag_ids FROM events")).toEqual({ tag_ids: ["m1", "m2"] });
   });
 
-  it("D24 rejects an everyone event that also names members", async () => {
+  it("D24 rejects an everyone event that also names tags", async () => {
     await insertAccount("a1");
     await insertEvent(NOW, null);
 
-    await expect(db().run("UPDATE events SET member_ids = $1", [["m1"]])).rejects.toThrow(
+    await expect(db().run("UPDATE events SET tag_ids = $1", [["m1"]])).rejects.toThrow(
       /check constraint/,
     );
   });
 
-  it("§7 rejects a member color outside the 12 block colors", async () => {
+  it("§7 rejects a tag color outside the 12 block colors", async () => {
     await insertAccount("a1");
 
-    await expect(insertMember("m1", "Mom", "navy")).rejects.toThrow(/check constraint/);
+    await expect(insertTag("m1", "Mom", "navy")).rejects.toThrow(/check constraint/);
   });
 
-  it("FAM-04 rejects a second live member with the same name in another case", async () => {
+  it("FAM-04 rejects a second tag with the same name in another case", async () => {
     await insertAccount("a1");
-    await insertMember("m1", "Mom");
+    await insertTag("m1", "Mom");
 
-    await expect(insertMember("m2", "MOM")).rejects.toThrow(/unique constraint/);
-
-    await db().run("UPDATE members SET deleted_at = $1", [NOW]);
-
-    await expect(insertMember("m2", "MOM")).resolves.toBeUndefined();
+    await expect(insertTag("m2", "MOM")).rejects.toThrow(/unique constraint/);
   });
 
+  it("D24 renames members to tags, drops removed ones and bumps one version per family", async () => {
+    const { client, old } = await migratedTo(9);
+    await old.run(
+      `INSERT INTO accounts (id, email, time_zone, created_at) VALUES
+         ('a1', 'a1@example.com', 'America/New_York', $1),
+         ('a2', 'a2@example.com', 'America/New_York', $1)`,
+      [NOW],
+    );
+    await old.run("UPDATE sync_state SET version = 10");
+    await old.run(
+      `INSERT INTO members (id, account_id, name, color, created_at, updated_at, deleted_at, version) VALUES
+         ('m1', 'a1', 'Mom', 'lilac', $1, $1, NULL, 3),
+         ('m2', 'a1', 'Dad', 'sky', $1, $1, NULL, 4),
+         ('m3', 'a1', 'Gone', 'mint', $1, $1, $1, 5),
+         ('m4', 'a2', 'Omar', 'coral', $1, $1, NULL, 6)`,
+      [NOW],
+    );
+
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    expect(await old.all("SELECT id, account_id, version FROM tags ORDER BY id")).toEqual([
+      { id: "m1", account_id: "a1", version: 11 },
+      { id: "m2", account_id: "a1", version: 11 },
+      { id: "m4", account_id: "a2", version: 12 },
+    ]);
+    expect(await old.one("SELECT version FROM sync_state")).toEqual({ version: 12 });
+    await client.close();
+  });
+
+  it("D24 an old event pulls with tagIds", async () => {
+    const { client, old } = await migratedTo(9);
+    await old.run(
+      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+      [NOW],
+    );
+    await old.run(
+      "INSERT INTO members (id, account_id, name, color, created_at, updated_at, version) VALUES ('m1', 'a1', 'Mom', 'lilac', $1, $1, 1)",
+      [NOW],
+    );
+    await old.run(
+      "INSERT INTO events (id, account_id, title, start_at, everyone, member_ids, updated_at, version) VALUES ('e1', 'a1', 'Swim', $1, false, '{m1}', $1, 2)",
+      [NOW],
+    );
+
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    const pulled = await pullChanges({ db: old, now: () => new Date(NOW) }, "a1", undefined);
+    expect(pulled.changes.find((change) => change.entity === "events")?.row).toMatchObject({
+      id: "e1",
+      everyone: false,
+      tagIds: ["m1"],
+    });
+    expect(pulled.changes.find((change) => change.entity === "tags")?.row).toMatchObject({
+      id: "m1",
+      name: "Mom",
+    });
+    await client.close();
+  });
+
+  it("D24 an event that names tags can't be for everyone", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    await expect(
+      db().run("UPDATE events SET everyone = true, tag_ids = $1", [["m1"]]),
+    ).rejects.toThrow(/events_everyone_no_tags/);
+  });
+});
+
+describe("007_members", () => {
   it("D24 gives each named account one lilac member and turns old events into everyone events", async () => {
     const client = await openPglite();
     const old = pgliteDb(client);
@@ -436,7 +503,10 @@ describe("007_members", () => {
       [NOW],
     );
 
-    await migrate(old, migrations);
+    await migrate(
+      old,
+      migrations.filter((migration) => migration.version < 9),
+    );
 
     const members = await old.all<Record<string, unknown>>(
       "SELECT id, account_id, name, color, created_at, deleted_at, version FROM members",
@@ -461,3 +531,16 @@ describe("007_members", () => {
     await client.close();
   });
 });
+
+async function migratedTo(version: number) {
+  const client = await openPglite();
+
+  const old = pgliteDb(client);
+
+  await migrate(
+    old,
+    readMigrations(MIGRATIONS_DIR).filter((migration) => migration.version < version),
+  );
+
+  return { client, old };
+}

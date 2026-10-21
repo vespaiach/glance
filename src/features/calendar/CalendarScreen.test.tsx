@@ -8,7 +8,7 @@ import {
   putSyncStatus,
   synced,
 } from "@/data/repos/testHarness";
-import type { CalendarEvent, Member } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -29,18 +29,18 @@ const NOW = new Date(2026, 9, 9, 10, 41);
 const at = (month: number, day: number, h: number, m = 0) =>
   new Date(2026, month, day, h, m).toISOString();
 
-const member = (n: number, name: string, color: Member["color"]): Member => ({
+const tag = (n: number, name: string, color: Tag["color"]): Tag => ({
   id: `0192f1a0-0000-7000-8000-${String(n).padStart(12, "0")}`,
   name,
   color,
   createdAt: `2026-10-0${n}T15:00:00.000Z`,
 });
 
-const AN = member(1, "Minh-An", "lilac");
+const AN = tag(1, "Minh-An", "lilac");
 
-const MOM = member(2, "Mom", "coral");
+const MOM = tag(2, "Mom", "coral");
 
-const DAD = member(3, "Dad", "sky");
+const DAD = tag(3, "Dad", "sky");
 
 const FAMILY = [AN, MOM, DAD];
 
@@ -48,7 +48,7 @@ function event(
   n: number,
   title: string,
   startAt: string,
-  who: Member[] | "everyone" = "everyone",
+  who: Tag[] | "everyone" = "everyone",
   extra: Partial<CalendarEvent> = {},
 ): CalendarEvent {
   return {
@@ -57,7 +57,7 @@ function event(
     startAt,
     endAt: new Date(new Date(startAt).getTime() + 3_600_000).toISOString(),
     everyone: who === "everyone",
-    memberIds: who === "everyone" ? [] : who.map((one) => one.id),
+    tagIds: who === "everyone" ? [] : who.map((one) => one.id),
     ...extra,
   };
 }
@@ -75,6 +75,8 @@ const LATE_SHOW = event(5, "Late show", at(9, 9, 22), [DAD]);
 const PICNIC_DAY = event(6, "Field trip", "2026-10-09T00:00:00.000Z", [AN], { allDay: true });
 
 const NEXT_YEAR = event(7, "New Year brunch", at(12, 1, 11));
+
+const NOBODY_PLAN = event(8, "Water the plants", at(9, 9, 11), []);
 
 let store: Harness;
 
@@ -124,7 +126,7 @@ function renderCalendar() {
 
 async function seed(...events: CalendarEvent[]) {
   await markSynced(store);
-  await store.db.members.bulkPut(FAMILY.map((one) => synced(one)));
+  await store.db.tags.bulkPut(FAMILY.map((one) => synced(one)));
   await store.db.events.bulkPut(events.map((one) => synced(one)));
 }
 
@@ -225,43 +227,55 @@ test("CAL-04 an invalid ?date= selects today", async () => {
   );
 });
 
-test("CAL-05 everyone shows by default: every plan, no member pressed", async () => {
-  await seed(CALL, SOCCER, DINNER);
+test("CAL-05 every tag is selected by default and every plan shows", async () => {
+  await seed(CALL, SOCCER, DINNER, NOBODY_PLAN);
 
   renderCalendar();
 
   expect(await screen.findByRole("button", { name: /^Soccer, / })).toBeInTheDocument();
   expect(plan("Grandma’s video call")).toBeInTheDocument();
   expect(plan("Family dinner")).toBeInTheDocument();
-  for (const one of FAMILY) expect(pill(one.name)).toHaveAttribute("aria-pressed", "false");
+  expect(plan("Water the plants")).toBeInTheDocument();
+  for (const one of FAMILY) expect(pill(one.name)).toHaveAttribute("aria-pressed", "true");
 });
 
-test("CAL-05 tapping a member shows only their plans and everyone plans", async () => {
+test("CAL-05 tapping a tag turns it off: their plans hide, everyone plans stay", async () => {
   await seed(CALL, SOCCER, DINNER);
 
   renderCalendar();
 
   await screen.findByRole("button", { name: /^Soccer, / });
-  await userEvent.click(screen.getByRole("button", { name: "Mom" }));
+  await userEvent.click(pill("Minh-An"));
 
-  expect(pill("Mom")).toHaveAttribute("aria-pressed", "true");
+  expect(pill("Minh-An")).toHaveAttribute("aria-pressed", "false");
+  expect(plan("Soccer")).not.toBeInTheDocument();
   expect(plan("Grandma’s video call")).toBeInTheDocument();
   expect(plan("Family dinner")).toBeInTheDocument();
-  expect(plan("Soccer")).not.toBeInTheDocument();
 
   await userEvent.click(pill("Minh-An"));
 
   expect(plan("Soccer")).toBeInTheDocument();
 });
 
-test("CAL-05 removing the last member shows nobody: no plans, tiles or free slots", async () => {
+test("CAL-05 nobody plans show only while every tag is selected", async () => {
+  await seed(NOBODY_PLAN);
+
+  renderCalendar();
+
+  expect(await screen.findByRole("button", { name: /^Water the plants, / })).toBeInTheDocument();
+
+  await userEvent.click(pill("Dad"));
+
+  expect(plan("Water the plants")).not.toBeInTheDocument();
+});
+
+test("CAL-05 turning every tag off shows no plans, tiles or free slots", async () => {
   await seed(CALL, DINNER, PICNIC_DAY);
 
   renderCalendar();
 
   await screen.findByRole("button", { name: /^Family dinner, / });
-  await userEvent.click(screen.getByRole("button", { name: "Mom" }));
-  await userEvent.click(pill("Mom"));
+  for (const one of FAMILY) await userEvent.click(pill(one.name));
 
   expect(pill("Mom")).toHaveAttribute("aria-pressed", "false");
   expect(plan("Grandma’s video call")).not.toBeInTheDocument();
@@ -270,40 +284,42 @@ test("CAL-05 removing the last member shows nobody: no plans, tiles or free slot
   expect(screen.queryByRole("button", { name: /^Free / })).not.toBeInTheDocument();
 });
 
-test("CAL-05 selecting every member returns to everyone", async () => {
+test("FAM-07 the filter row has no Edit button", async () => {
   await seed(CALL);
 
   renderCalendar();
 
-  for (const one of FAMILY)
-    await userEvent.click(await screen.findByRole("button", { name: one.name }));
+  await screen.findByRole("button", { name: /^Grandma’s video call, / });
 
-  for (const one of FAMILY) expect(pill(one.name)).toHaveAttribute("aria-pressed", "false");
+  expect(screen.queryByRole("button", { name: /Edit/ })).not.toBeInTheDocument();
 });
 
-test("CAL-05 Edit opens the Family sheet", async () => {
-  await seed();
+test("FAM-05 a new tag joins a filter that shows everyone, selected", async () => {
+  await seed(CALL);
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Edit family members" }));
+  await screen.findByRole("button", { name: /^Grandma’s video call, / });
+  await store.db.tags.put(synced(tag(4, "Tin", "mint")));
 
-  expect(openSheet()).toHaveTextContent(JSON.stringify({ kind: "family" }));
+  expect(await screen.findByRole("button", { name: "Tin" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
-test("FAM-03 a filter showing only a removed member returns to everyone", async () => {
-  await seed(CALL, SOCCER);
+test("FAM-05 a new tag stays off when some tags are off", async () => {
+  await seed(CALL);
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Minh-An" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Dad" }));
+  await store.db.tags.put(synced(tag(4, "Tin", "mint")));
 
-  expect(plan("Grandma’s video call")).not.toBeInTheDocument();
-
-  await store.db.members.delete(AN.id);
-
-  expect(await screen.findByRole("button", { name: /^Grandma’s video call, / })).toBeVisible();
-  expect(pill("Mom")).toHaveAttribute("aria-pressed", "false");
+  expect(await screen.findByRole("button", { name: "Tin" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
 });
 
 test("CAL-06 24 hours counts the plans outside 5 AM to 9 PM and shows them when on", async () => {
@@ -343,20 +359,39 @@ test("CAL-07 Add event opens New event on the selected day for everyone", async 
   await userEvent.click(await screen.findByRole("button", { name: "Wednesday, October 7" }));
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
-  expect(openSheet()).toHaveTextContent(JSON.stringify({ kind: "newevent", day: "2026-10-07" }));
+  expect(openSheet()).toHaveTextContent(
+    JSON.stringify({ kind: "newevent", day: "2026-10-07", who: { everyone: true, tagIds: [] } }),
+  );
 });
 
-test("CAL-07 Add event starts with the filter's members", async () => {
+test("CAL-07 Add event starts with the selected tags in tag order", async () => {
   await seed();
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Dad" }));
-  await userEvent.click(pill("Minh-An"));
+  await userEvent.click(await screen.findByRole("button", { name: "Mom" }));
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   expect(openSheet()).toHaveTextContent(
-    JSON.stringify({ kind: "newevent", day: "2026-10-09", memberIds: [AN.id, DAD.id] }),
+    JSON.stringify({
+      kind: "newevent",
+      day: "2026-10-09",
+      who: { everyone: false, tagIds: [AN.id, DAD.id] },
+    }),
+  );
+});
+
+test("CAL-07 Add event with every tag off starts for nobody", async () => {
+  await seed();
+
+  renderCalendar();
+
+  for (const one of FAMILY)
+    await userEvent.click(await screen.findByRole("button", { name: one.name }));
+  await userEvent.click(screen.getByRole("button", { name: "Add event" }));
+
+  expect(openSheet()).toHaveTextContent(
+    JSON.stringify({ kind: "newevent", day: "2026-10-09", who: { everyone: false, tagIds: [] } }),
   );
 });
 
@@ -402,7 +437,7 @@ test("CAL-09 all-day tiles show above the timeline and follow the filter", async
 
   expect(await screen.findByRole("button", { name: /Field trip/ })).toBeInTheDocument();
 
-  await userEvent.click(pill("Mom"));
+  await userEvent.click(pill("Minh-An"));
 
   expect(screen.queryByRole("button", { name: /Field trip/ })).not.toBeInTheDocument();
 });
@@ -523,7 +558,7 @@ test("CAL-03 picking a day selects it, closes the picker and shows its plans", a
   expect(await screen.findByRole("button", { name: /^Dentist, / })).toBeInTheDocument();
 });
 
-test("CAL-03 picker days carry a dot per member with a plan", async () => {
+test("CAL-03 picker days carry a dot per tag with a plan", async () => {
   onPhone();
   await seed(CALL, SOCCER, DENTIST);
 

@@ -1,10 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
-import type { MemberColor } from "@/domain/schemas";
+import type { TagColor } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 
 type PersonDotProps = {
-  color: MemberColor | "soft";
+  color: TagColor | "soft";
   size?: "xs" | "xsm" | "sm" | "md" | "lg";
   hollow?: boolean;
 };

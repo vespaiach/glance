@@ -5,15 +5,15 @@ import {
   CalendarEventSchema,
   CodeRequestSchema,
   CodeVerifySchema,
-  MemberColorSchema,
-  MemberSchema,
   NameRequestSchema,
   NoteSchema,
   PhotoSchema,
   QrVoidRequestSchema,
   type Synced,
   SyncedEventSchema,
-  SyncedMemberSchema,
+  SyncedTagSchema,
+  TagColorSchema,
+  TagSchema,
   WeatherSchema,
 } from "./schemas";
 
@@ -26,13 +26,13 @@ const event = {
   title: "Grandma's video call",
   location: "Living room",
   everyone: true,
-  memberIds: [],
+  tagIds: [],
 };
 
-const memberId = "0192f1a0-7c2e-7a3b-9c4d-1e2f3a4b5c6e";
+const tagId = "0192f1a0-7c2e-7a3b-9c4d-1e2f3a4b5c6e";
 
-const member = {
-  id: memberId,
+const tag = {
+  id: tagId,
   name: "Minh-An",
   color: "lilac",
   createdAt: "2026-10-01T15:00:00.000Z",
@@ -116,22 +116,22 @@ describe("CalendarEventSchema", () => {
     );
   });
 
-  it("D24 accepts an event for some members with its notes", () => {
-    const some = { ...event, everyone: false, memberIds: [memberId], notes: "Bring snacks" };
+  it("D24 accepts an event for some tags with its notes", () => {
+    const some = { ...event, everyone: false, tagIds: [tagId], notes: "Bring snacks" };
 
     expect(v.parse(CalendarEventSchema, some)).toEqual(some);
   });
 
-  it("D24 rejects an event for everyone that also names members", () => {
-    expect(accepts(CalendarEventSchema, { ...event, memberIds: [memberId] })).toBe(false);
+  it("D24 rejects an event for everyone that also names tags", () => {
+    expect(accepts(CalendarEventSchema, { ...event, tagIds: [tagId] })).toBe(false);
   });
 
-  it("D24 rejects an event for nobody", () => {
-    expect(accepts(CalendarEventSchema, { ...event, everyone: false })).toBe(false);
+  it("EVT-11 accepts an event for nobody", () => {
+    expect(accepts(CalendarEventSchema, { ...event, everyone: false })).toBe(true);
   });
 
-  it("D24 rejects a member id that isn't a UUID", () => {
-    expect(accepts(CalendarEventSchema, { ...event, everyone: false, memberIds: ["dad"] })).toBe(
+  it("D24 rejects a tag id that isn't a UUID", () => {
+    expect(accepts(CalendarEventSchema, { ...event, everyone: false, tagIds: ["dad"] })).toBe(
       false,
     );
   });
@@ -181,19 +181,6 @@ describe("SyncedEventSchema", () => {
     expect(accepts(SyncedEventSchema, row)).toBe(false);
   });
 
-  it("D24 accepts a tombstone left with no members", () => {
-    const row = {
-      ...event,
-      everyone: false,
-      updatedAt: "2026-10-09T17:00:00.000Z",
-      version: 7,
-      deletedAt: "2026-10-09T17:00:00.000Z",
-    };
-
-    expect(accepts(SyncedEventSchema, row)).toBe(true);
-    expect(accepts(SyncedEventSchema, { ...row, deletedAt: undefined })).toBe(false);
-  });
-
   it("D10 rejects a row without a version", () => {
     expect(accepts(SyncedEventSchema, { ...event, updatedAt: "2026-10-09T17:00:00.000Z" })).toBe(
       false,
@@ -207,17 +194,17 @@ describe("SyncedEventSchema", () => {
   });
 });
 
-describe("MemberSchema", () => {
-  it("§7 accepts a member with a name, a block color and a created time", () => {
-    expect(v.parse(MemberSchema, member)).toEqual(member);
+describe("TagSchema", () => {
+  it("§7 accepts a tag with a name, a block color and a created time", () => {
+    expect(v.parse(TagSchema, tag)).toEqual(tag);
   });
 
   it("FAM-04 rejects a blank name", () => {
-    expect(accepts(MemberSchema, { ...member, name: "  " })).toBe(false);
+    expect(accepts(TagSchema, { ...tag, name: "  " })).toBe(false);
   });
 
   it("§7 accepts each of the 12 block colors and nothing else", () => {
-    expect(MemberColorSchema.options).toEqual([
+    expect(TagColorSchema.options).toEqual([
       "lilac",
       "sky",
       "coral",
@@ -231,13 +218,13 @@ describe("MemberSchema", () => {
       "sage",
       "ice",
     ]);
-    expect(accepts(MemberSchema, { ...member, color: "navy" })).toBe(false);
+    expect(accepts(TagSchema, { ...tag, color: "navy" })).toBe(false);
   });
 
-  it("D10 a synced member adds the server fields", () => {
-    const row = { ...member, updatedAt: "2026-10-09T17:00:00.000Z", version: 3 };
+  it("D10 a synced tag adds the server fields", () => {
+    const row = { ...tag, updatedAt: "2026-10-09T17:00:00.000Z", version: 3 };
 
-    expect(v.parse(SyncedMemberSchema, row)).toEqual(row);
+    expect(v.parse(SyncedTagSchema, row)).toEqual(row);
   });
 });
 

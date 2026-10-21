@@ -27,7 +27,7 @@ test("spec§4.2 ColorSwatchPicker reports the tone of the tapped swatch", async 
   expect(onChange).toHaveBeenCalledWith("accent");
 });
 
-test("FAM-04 ColorSwatchPicker offers member colors too", async () => {
+test("FAM-04 ColorSwatchPicker offers tag colors too", async () => {
   const onChange = vi.fn();
   render(
     <ColorSwatchPicker
