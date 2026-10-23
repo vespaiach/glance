@@ -25,7 +25,7 @@ async function insertEvent(startAt: string, endAt: string | null): Promise<void>
 
 async function insertNote(): Promise<void> {
   await db().run(
-    "INSERT INTO notes (id, account_id, text, tone, rotation, created_at, updated_at, version) VALUES ('n1', 'a1', 'Hi', 'yellow', 1.5, $1, $1, 1)",
+    "INSERT INTO notes (id, account_id, text, rotation, created_at, updated_at, version) VALUES ('n1', 'a1', 'Hi', 1.5, $1, $1, 1)",
     [NOW],
   );
 }
@@ -547,6 +547,27 @@ describe("010_settings_values", () => {
         }),
       },
     ]);
+    await client.close();
+  });
+});
+
+describe("011_note_tone", () => {
+  it("D27 drops the tone from notes and keeps the notes", async () => {
+    const { client, old } = await migratedTo(11);
+    await old.run(
+      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+      [NOW],
+    );
+    await old.run(
+      "INSERT INTO notes (id, account_id, text, author, tone, rotation, created_at, updated_at, version) VALUES ('n1', 'a1', 'Hi', 'Mia', 'soft', 1.5, $1, $1, 1)",
+      [NOW],
+    );
+
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    const note = await old.one("SELECT * FROM notes");
+    expect(note).toMatchObject({ id: "n1", text: "Hi", author: "Mia", version: 1 });
+    expect(note).not.toHaveProperty("tone");
     await client.close();
   });
 });

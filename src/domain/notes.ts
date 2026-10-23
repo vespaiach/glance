@@ -51,5 +51,7 @@ function stampText(created: Date, now: Date, clock: Clock, tz: string): string {
 
   if (daysAgo === 0) return formatClock(minutesOfDay(created, tz), clock);
 
-  return daysAgo < 7 ? formatWeekday(created, tz) : formatMonthDay(created, tz);
+  if (daysAgo >= 7) return formatMonthDay(created, tz);
+
+  return `${formatWeekday(created, tz)} ${formatClock(minutesOfDay(created, tz), clock)}`;
 }

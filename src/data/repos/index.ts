@@ -22,6 +22,7 @@ export {
   createNotesRepo,
   type NotesRepo,
   type ShownNote,
+  useLastAuthor,
   useNote,
   useNotes,
   useNotesRepo,

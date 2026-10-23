@@ -150,7 +150,6 @@ export function SignInPreview() {
           <span {...stylex.props(styles.rain)}>{preview.rain}</span>
         </div>
         <StickyNote
-          tone={2}
           rotate={2}
           width="auto"
           minHeight={0}

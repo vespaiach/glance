@@ -17,9 +17,6 @@ const RequiredTextSchema = v.pipe(
 export const ToneSchema = v.picklist([1, 2, 3, 4, "soft", "accent"]);
 export type Tone = v.InferOutput<typeof ToneSchema>;
 
-export const NoteToneSchema = v.picklist([1, 2, 3, 4, "soft"]);
-export type NoteTone = v.InferOutput<typeof NoteToneSchema>;
-
 export const TagColorSchema = v.picklist([
   "lilac",
   "sky",
@@ -91,12 +88,16 @@ export type Tag = v.InferOutput<typeof TagSchema>;
 
 export const SyncedTagSchema = v.object({ ...TagSchema.entries, ...serverEntries });
 
+export const NOTE_LIMITS = { text: 280, author: 32 } as const;
+
 export const NoteSchema = v.object({
   id: IdSchema,
-  text: RequiredTextSchema,
-  author: RequiredTextSchema,
+  text: v.pipe(
+    RequiredTextSchema,
+    v.check((text) => text.trim().length <= NOTE_LIMITS.text),
+  ),
+  author: v.pipe(v.string(), v.maxLength(NOTE_LIMITS.author)),
   createdAt: IsoTimestampSchema,
-  tone: NoteToneSchema,
   rotation: v.pipe(v.number(), v.finite()),
 });
 export type Note = v.InferOutput<typeof NoteSchema>;

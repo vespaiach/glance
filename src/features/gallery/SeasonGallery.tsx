@@ -142,7 +142,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <TimelineGallery />
       <EventSheetGallery />
       <WeatherGallery />
-      <NotesGallery season={season} />
+      <NotesGallery />
       <PhotosGallery />
       <SettingsGallery season={season} />
       <AmbientGallery season={season} />
@@ -381,7 +381,6 @@ function NotesGroup() {
           key={note.text}
           author={note.author}
           time={note.time}
-          tone={note.tone}
           rotate={note.rotate}
           width={220}
           onClick={ignore}

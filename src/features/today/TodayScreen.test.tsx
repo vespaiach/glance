@@ -82,7 +82,6 @@ const WIFI: Note = {
   text: "Wi-Fi password is on the fridge!",
   author: "Dad",
   createdAt: iso(8, 12),
-  tone: 1,
   rotation: -2,
 };
 

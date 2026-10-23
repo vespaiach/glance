@@ -22,7 +22,6 @@ const WIFI: Note = {
   text: "Wi-Fi password is on the fridge!",
   author: "Dad",
   createdAt: new Date(2026, 9, 9, 8, 12).toISOString(),
-  tone: 1,
   rotation: -2,
 };
 
@@ -31,7 +30,6 @@ const PACKAGE: Note = {
   text: "Package for Mia at the front door.",
   author: "Mom",
   createdAt: new Date(2026, 9, 9, 9, 5).toISOString(),
-  tone: 2,
   rotation: 1.5,
 };
 

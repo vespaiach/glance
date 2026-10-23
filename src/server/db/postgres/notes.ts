@@ -1,7 +1,6 @@
 import "server-only";
-import type { NoteTone } from "@/domain/schemas";
 import type { Owned, Repos, StoredNote } from "../database";
-import { type ServerColumns, serverFields, toneFromColumn } from "./rows";
+import { type ServerColumns, serverFields } from "./rows";
 import type { Sql } from "./sql";
 
 type NoteRow = ServerColumns & {
@@ -9,7 +8,6 @@ type NoteRow = ServerColumns & {
   account_id: string;
   text: string;
   author: string;
-  tone: string;
   rotation: number;
   created_at: string;
 };
@@ -50,7 +48,6 @@ function toNote(row: NoteRow): StoredNote {
     text: row.text,
     author: row.author,
     createdAt: row.created_at,
-    tone: toneFromColumn<NoteTone>(row.tone),
     rotation: row.rotation,
     ...serverFields(row),
   };
@@ -58,11 +55,11 @@ function toNote(row: NoteRow): StoredNote {
 
 async function saveNote(sql: Sql, accountId: string, note: StoredNote): Promise<void> {
   await sql.run(
-    `INSERT INTO notes (id, account_id, text, author, tone, rotation, created_at, updated_at,
+    `INSERT INTO notes (id, account_id, text, author, rotation, created_at, updated_at,
        deleted_at, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (id) DO UPDATE SET text = excluded.text, author = excluded.author,
-       tone = excluded.tone, rotation = excluded.rotation, created_at = excluded.created_at,
+       rotation = excluded.rotation, created_at = excluded.created_at,
        updated_at = excluded.updated_at, deleted_at = excluded.deleted_at,
        version = excluded.version`,
     [
@@ -70,7 +67,6 @@ async function saveNote(sql: Sql, accountId: string, note: StoredNote): Promise<
       accountId,
       note.text,
       note.author,
-      String(note.tone),
       note.rotation,
       note.createdAt,
       note.updatedAt,

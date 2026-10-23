@@ -43,7 +43,6 @@ const note = {
   text: "Wi-Fi password is on the fridge!",
   author: "Dad",
   createdAt: "2026-10-09T15:12:00.000Z",
-  tone: 1,
   rotation: -2,
 };
 
@@ -234,8 +233,25 @@ describe("NoteSchema", () => {
     expect(accepts(NoteSchema, note)).toBe(true);
   });
 
-  it("NOTE-02 rejects the accent tone", () => {
-    expect(accepts(NoteSchema, { ...note, tone: "accent" })).toBe(false);
+  it("D27 drops the tone an older client still sends", () => {
+    expect(v.parse(NoteSchema, { ...note, tone: 3 })).toEqual(note);
+  });
+
+  it("NOTE-02 accepts a message of 280 characters after trimming", () => {
+    expect(accepts(NoteSchema, { ...note, text: ` ${"a".repeat(280)}\n` })).toBe(true);
+  });
+
+  it("NOTE-02 rejects a message of 281 characters", () => {
+    expect(accepts(NoteSchema, { ...note, text: "a".repeat(281) })).toBe(false);
+  });
+
+  it("NOTE-02 accepts an author of 32 characters and rejects 33", () => {
+    expect(accepts(NoteSchema, { ...note, author: "a".repeat(32) })).toBe(true);
+    expect(accepts(NoteSchema, { ...note, author: "a".repeat(33) })).toBe(false);
+  });
+
+  it("NOTE-03 accepts a blank author as unsigned", () => {
+    expect(accepts(NoteSchema, { ...note, author: "" })).toBe(true);
   });
 
   it("NOTE-03 rejects an empty message", () => {

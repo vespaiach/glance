@@ -19,7 +19,6 @@ const WIFI: Note = {
   text: "Wi-Fi password is on the fridge!",
   author: "Dad",
   createdAt: new Date(2026, 9, 9, 8, 12).toISOString(),
-  tone: 1,
   rotation: -2,
 };
 
@@ -97,13 +96,13 @@ test("NOTE-01 a new note request opens a blank New note on the Notice board", as
 });
 
 test("tech§6 a new note request can carry the fixture draft", async () => {
-  renderSheet({ kind: "newnote", draft: { text: "Has anyone seen my blue umbr", tone: 2 } });
+  renderSheet({ kind: "newnote", draft: { text: "Has anyone seen my blue umbr" } });
 
   expect(await screen.findByLabelText("Message")).toHaveValue("Has anyone seen my blue umbr");
 });
 
 test("§8.9 the fixture draft counts as typed, so Cancel asks", async () => {
-  renderSheet({ kind: "newnote", draft: { text: "Has anyone seen my blue umbr", tone: 2 } });
+  renderSheet({ kind: "newnote", draft: { text: "Has anyone seen my blue umbr" } });
 
   await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
 
@@ -143,7 +142,7 @@ test("tech§4.3 an event request renders no note sheet", () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
-test("NOTE-03 Post note queues a Guest note stamped now with the first tilt and closes", async () => {
+test("NOTE-03 Post note queues an unsigned note stamped now with the first tilt and closes", async () => {
   renderSheet({ kind: "newnote" });
 
   await userEvent.type(await screen.findByLabelText("Message"), "Back at 6");
@@ -156,12 +155,29 @@ test("NOTE-03 Post note queues a Guest note stamped now with the first tilt and 
 
   expect(saved).toMatchObject({
     text: "Back at 6",
-    author: "Guest",
-    tone: 1,
+    author: "",
     rotation: -2,
     createdAt: NOW.toISOString(),
   });
   expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
+});
+
+test("NOTE-02 New note prefills the last author posted from this screen", async () => {
+  await createNotesRepo(store).post({ ...WIFI, author: "Mia" });
+
+  renderSheet({ kind: "newnote" });
+
+  await waitFor(() => expect(screen.getByLabelText("Your name")).toHaveValue("Mia"));
+});
+
+test("NOTE-02 posting a signed note makes its author the next prefill", async () => {
+  renderSheet({ kind: "newnote" });
+
+  await userEvent.type(await screen.findByLabelText("Message"), "Back at 6");
+  await userEvent.type(screen.getByLabelText("Your name"), "Leo");
+  await userEvent.click(screen.getByRole("button", { name: "Post note" }));
+
+  await waitFor(async () => expect((await store.db.meta.get("lastAuthor"))?.value).toBe("Leo"));
 });
 
 test("NOTE-04 a new note's tilt follows the number of notes on the board", async () => {
@@ -191,7 +207,7 @@ test("NOTE-09 Save keeps the note's id, time and tilt", async () => {
   await waitFor(async () =>
     expect(await store.db.notes.get(WIFI.id)).toMatchObject({
       ...WIFI,
-      author: "Guest",
+      author: "",
       version: 1,
     }),
   );

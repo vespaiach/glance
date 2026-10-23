@@ -6,7 +6,6 @@ import { type RefObject, useLayoutEffect, useRef, useState } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { BoardNote } from "@/domain/notes";
-import type { NoteTone } from "@/domain/schemas";
 import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { noteStampText } from "@/features/notes";
@@ -178,12 +177,8 @@ const styles = stylex.create({
     borderRadius: radii.full,
     boxShadow: `0 0 0 2px ${colors.surfaceCanvas}`,
     marginInlineStart: { default: -8, ":first-child": 0 },
+    backgroundColor: season.soft,
   },
-  tone1: { backgroundColor: season.block1 },
-  tone2: { backgroundColor: season.block2 },
-  tone3: { backgroundColor: season.block3 },
-  tone4: { backgroundColor: season.block4 },
-  soft: { backgroundColor: season.soft },
   moreLabel: {
     flexGrow: 1,
     minWidth: 0,
@@ -384,7 +379,6 @@ function NoteButton({ note, hidden, time, onOpen }: NoteButtonProps) {
       {...stylex.props(styles.note, press.scale, hidden && styles.hidden)}
     >
       <StickyNote
-        tone={note.tone}
         rotate={note.rotation}
         author={note.author}
         time={time}
@@ -410,7 +404,7 @@ function MoreRow({ notes, count, onOpenNotes }: MoreRowProps) {
       >
         <span aria-hidden="true" {...stylex.props(styles.dots)}>
           {notes.map((note) => (
-            <span key={note.id} {...stylex.props(styles.dot, toneStyle(note.tone))} />
+            <span key={note.id} {...stylex.props(styles.dot)} />
           ))}
         </span>
         <span {...stylex.props(styles.moreLabel)}>{label}</span>
@@ -542,8 +536,4 @@ function sameRoom(previous: NotesRoom | null, next: NotesRoom | null): NotesRoom
   if (previous === null || next === null) return next;
 
   return previous.room === next.room && previous.need === next.need ? previous : next;
-}
-
-function toneStyle(tone: NoteTone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

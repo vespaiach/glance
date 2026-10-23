@@ -6,11 +6,10 @@ import {
   type NoteDraft,
   type NoteSheetState,
   newNoteDraft,
-  noteSwatches,
 } from "../noteSheet";
 import { NoteSheet } from "./NoteSheet";
 
-const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad", tone: 1 } as const;
+const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad" } as const;
 
 type Options = {
   mode?: "new" | "edit";
@@ -31,7 +30,6 @@ function renderSheet(options: Options = {}) {
       initial={
         options.initial ?? initialNoteSheet(mode === "new" ? newNoteDraft() : draftFromNote(WIFI))
       }
-      swatches={noteSwatches("fall")}
       offline={options.offline ?? false}
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
@@ -78,24 +76,17 @@ test("NOTE-02 Your name is optional and shows the author", () => {
   expect(name).toHaveValue("Dad");
 });
 
-test("NOTE-02 Color offers the five season swatches and no Alert", async () => {
+test("D27 a note has one paper tone, so the sheet has no color picker", () => {
   renderSheet();
 
-  const color = screen.getByRole("group", { name: "Color" });
+  expect(screen.queryByRole("group", { name: "Color" })).not.toBeInTheDocument();
+});
 
-  expect(within(color).getAllByRole("button")).toHaveLength(5);
-  expect(within(color).queryByRole("button", { name: "Alert" })).not.toBeInTheDocument();
-  expect(within(color).getByRole("button", { name: "Amber" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+test("NOTE-02 the message takes at most 280 characters and the name 32", () => {
+  renderSheet();
 
-  await userEvent.click(within(color).getByRole("button", { name: "Sage" }));
-
-  expect(within(color).getByRole("button", { name: "Sage" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  expect(screen.getByLabelText("Message")).toHaveAttribute("maxlength", "280");
+  expect(screen.getByLabelText("Your name")).toHaveAttribute("maxlength", "32");
 });
 
 test("NOTE-02 typing edits the message and name", async () => {
@@ -171,10 +162,10 @@ test("NOTE-05 Save hands the edited draft over", async () => {
 
   renderSheet({ onSave });
 
-  await userEvent.click(screen.getByRole("button", { name: "Rust" }));
+  await userEvent.type(screen.getByLabelText("Your name"), "dy");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-  expect(onSave).toHaveBeenCalledWith({ ...WIFI, tone: 2 });
+  expect(onSave).toHaveBeenCalledWith({ ...WIFI, author: "Daddy" });
 });
 
 async function tabOrder(count: number) {
@@ -188,16 +179,13 @@ async function tabOrder(count: number) {
   return visited;
 }
 
-test("A11Y-04 Tab moves through Close, Message, Your name, the swatches, then the actions, and wraps", async () => {
+test("A11Y-04 Tab moves through Close, Message, Your name, then the actions, and wraps", async () => {
   renderSheet();
 
-  const swatches = within(screen.getByRole("group", { name: "Color" })).getAllByRole("button");
-
-  expect(await tabOrder(12)).toEqual([
+  expect(await tabOrder(7)).toEqual([
     screen.getByRole("button", { name: "Close" }),
     screen.getByLabelText("Message"),
     screen.getByLabelText("Your name"),
-    ...swatches,
     screen.getByRole("button", { name: "Delete" }),
     screen.getByRole("button", { name: "Cancel" }),
     screen.getByRole("button", { name: "Save" }),
@@ -219,7 +207,7 @@ test("§8.9 Cancel on a changed note asks Discard changes? and says it won’t b
 
 test("§8.9 a new note opened with text asks on the scrim, ignores it while asking, and Discard closes", async () => {
   const onClose = vi.fn();
-  const typed = initialNoteSheet(newNoteDraft({ text: "Has anyone seen", tone: 2 }), {
+  const typed = initialNoteSheet(newNoteDraft({ text: "Has anyone seen" }), {
     opened: newNoteDraft(),
   });
   renderSheet({ mode: "new", initial: typed, onClose });

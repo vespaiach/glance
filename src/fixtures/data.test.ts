@@ -192,20 +192,19 @@ describe("Appendix A fixtures", () => {
     expect(FIXTURE_SHEET_TARGETS.allDay).toBe(FIXTURE_ALL_DAY.noSchool.id);
   });
 
-  it("NOTE-04 notes are stamped 8:12 AM, 9:05 AM, Mon, Tue and Tue with their tilts", () => {
+  it("NOTE-04 notes are stamped 8:12 AM, 9:05 AM, Mon 6:30 PM, Tue 4:45 PM and Tue 7:50 AM with their tilts", () => {
     const rows = FIXTURE_NOTES.map((note) => [
       note.author,
       noteStamp(note.createdAt, FIXTURE_NOW, "12h", tz),
-      note.tone,
       note.rotation,
     ]);
 
     expect(rows).toEqual([
-      ["Dad", { kind: "at", text: "8:12 AM" }, 1, -2],
-      ["Mom", { kind: "at", text: "9:05 AM" }, 2, 1.5],
-      ["Mom", { kind: "at", text: "Mon" }, 3, -1],
-      ["Minh-Hy", { kind: "at", text: "Tue" }, 4, 2.5],
-      ["Dad", { kind: "at", text: "Tue" }, "soft", -1.5],
+      ["Dad", { kind: "at", text: "8:12 AM" }, -2],
+      ["Mom", { kind: "at", text: "9:05 AM" }, 1.5],
+      ["Mom", { kind: "at", text: "Mon 6:30 PM" }, -1],
+      ["Minh-Hy", { kind: "at", text: "Tue 4:45 PM" }, 2.5],
+      ["Dad", { kind: "at", text: "Tue 7:50 AM" }, -1.5],
     ]);
   });
 

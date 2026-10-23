@@ -383,7 +383,6 @@ export const copy = {
       writeMessage: "Write a message",
       name: "Your name",
       namePlaceholder: "Optional",
-      color: "Color",
       post: "Post note",
       save: "Save",
       saveOffline: "Save for later",

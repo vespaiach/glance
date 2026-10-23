@@ -47,7 +47,7 @@ export type { FixtureParams, FixtureUpload };
 
 export const fixtureSheetTargets = {
   ...FIXTURE_SHEET_TARGETS,
-  noteDraft: { text: FIXTURE_NEW_NOTE_DRAFT, tone: 2 },
+  noteDraft: { text: FIXTURE_NEW_NOTE_DRAFT },
 } as const;
 
 export const fixtureWeatherSearch = {

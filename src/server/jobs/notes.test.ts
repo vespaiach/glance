@@ -19,7 +19,6 @@ function note(id: number, ageMs: number): Note {
     text: `Note ${id}`,
     author: "Maria",
     createdAt: new Date(START.getTime() - ageMs).toISOString(),
-    tone: 1,
     rotation: -2,
   };
 }

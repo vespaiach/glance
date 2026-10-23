@@ -75,7 +75,6 @@ describe("putEvent", () => {
       text: "Milk",
       author: "Maria",
       createdAt: "2026-10-09T13:00:00.000Z",
-      tone: 1,
       rotation: -1.5,
     });
 
