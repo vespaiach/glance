@@ -18,6 +18,7 @@ import {
 import { GalleryGroup } from "./GalleryGroup";
 import {
   ALL_DAY_EVENTS,
+  BOARD_NOTES,
   COMING_UP_EVENTS,
   FULL_WEATHER,
   GALLERY_FAMILY,
@@ -163,8 +164,7 @@ const notes = {
   onOpenNote: ignore,
   onAddNote: ignore,
   onOpenNotes: ignore,
-  columns: 2,
-  limit: 2,
+  breakpoint: "normal",
   ...failure,
   xstyle: styles.side,
 } as const;
@@ -351,13 +351,7 @@ export function TodayGallery({ season }: { season: Season }) {
         {...schedule}
       />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_NOTES }} {...notes} />
-      <TodayNotes
-        tz={GALLERY_TZ}
-        state={{ kind: "ready", data: TODAY_NOTES }}
-        {...notes}
-        columns={1}
-        limit={1}
-      />
+      <TodayNotes tz={GALLERY_TZ} state={{ kind: "ready", data: BOARD_NOTES }} {...notes} />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "empty" }} {...notes} />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "loading" }} {...notes} />
       <TodayNotes tz={GALLERY_TZ} state={{ kind: "failed" }} {...notes} />

@@ -5,6 +5,8 @@ import { type } from "@/theme/type.stylex";
 
 export type TodayGrid = "stacked" | "twoColumn" | "threeColumn";
 
+export type NotesRoom = { room: number; need: number };
+
 const GRIDS: Record<Breakpoint, TodayGrid> = {
   large: "threeColumn",
   normal: "twoColumn",
@@ -55,4 +57,10 @@ export const todayType = stylex.createTheme(type, {
 
 export function todayLayout(breakpoint: Breakpoint): TodayGrid {
   return GRIDS[breakpoint];
+}
+
+export function fitNotes(breakpoint: Breakpoint, measured: NotesRoom | null): 1 | 2 {
+  if (breakpoint !== "large" || measured === null) return 2;
+
+  return measured.need <= measured.room ? 2 : 1;
 }
