@@ -18,6 +18,7 @@ import { filterScope, matchesFilter, type TagFilter } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
 import { earlierFold, scheduleCount } from "@/domain/todaySchedule";
 import type { ZoneState } from "@/domain/zoneState";
+import { DayList } from "@/features/calendar";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { AllDayTiles } from "@/ui/AllDayTile";
 import { Button } from "@/ui/Button";
@@ -80,7 +81,12 @@ type ScheduleProps = Pick<
   | "onOpenEvent"
   | "onAddSlot"
   | "onOpenCalendar"
-> & { events: readonly CalendarEvent[]; nowDot: boolean };
+> & {
+  events: readonly CalendarEvent[];
+  nowDot: boolean;
+  showEarlier: boolean;
+  onToggleEarlier: () => void;
+};
 
 const LABELS: DayTimelineLabels = {
   ...copy.timeline,
@@ -182,6 +188,8 @@ export function TodaySchedule({
 }: TodayScheduleProps) {
   const ref = useRef<HTMLElement>(null);
 
+  const [showEarlier, setShowEarlier] = useState(false);
+
   const width = useBoxSize(ref)?.width ?? Number.POSITIVE_INFINITY;
 
   const narrow = width < NARROW_CARD;
@@ -244,7 +252,15 @@ export function TodaySchedule({
           />
         }
       >
-        {(events) => <Schedule events={shown(events)} nowDot={width < TINY_CARD} {...schedule} />}
+        {(events) => (
+          <Schedule
+            events={shown(events)}
+            nowDot={width < TINY_CARD}
+            showEarlier={showEarlier}
+            onToggleEarlier={() => setShowEarlier((open) => !open)}
+            {...schedule}
+          />
+        )}
       </Zone>
     </section>
   );
@@ -347,11 +363,35 @@ function Schedule({
   breakpoint,
   weather,
   nowDot,
+  showEarlier,
+  onToggleEarlier,
   onOpenEvent,
   onAddSlot,
   onOpenCalendar,
 }: ScheduleProps) {
-  const [showEarlier, setShowEarlier] = useState(false);
+  const free = filterScope(
+    selected,
+    tags.map((tag) => tag.id),
+  );
+
+  if (breakpoint === "small") {
+    return (
+      <DayList
+        events={events}
+        tags={tags}
+        day={day}
+        now={now}
+        tz={tz}
+        clock={clock}
+        free={free}
+        weather={weather}
+        earlierOpen={showEarlier}
+        onToggleEarlier={onToggleEarlier}
+        onOpenEvent={onOpenEvent}
+        onAddEvent={onAddSlot}
+      />
+    );
+  }
 
   const timed = events.filter((event) => !event.allDay);
 
@@ -374,7 +414,7 @@ function Schedule({
         <button
           type="button"
           aria-expanded={showEarlier}
-          onClick={() => setShowEarlier((shown) => !shown)}
+          onClick={onToggleEarlier}
           {...stylex.props(styles.earlier, press.scale)}
         >
           <Icon icon={showEarlier ? ChevronUp : ChevronDown} size={18} strokeWidth={2} />
@@ -390,10 +430,7 @@ function Schedule({
         clock={clock}
         variant="today"
         breakpoint={breakpoint}
-        free={filterScope(
-          selected,
-          tags.map((tag) => tag.id),
-        )}
+        free={free}
         weather={weather}
         firstHour={showEarlier ? undefined : fold.fromHour}
         grow={breakpoint !== "large"}

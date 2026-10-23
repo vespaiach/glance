@@ -611,21 +611,51 @@ function onSmall() {
 
 const picker = () => screen.queryByRole("dialog", { name: "Pick a date" });
 
-test("CAL-02 on small the date control replaces the week strip and opens the picker", async () => {
+test("CAL-02 on small the header card replaces the week strip and its month opens the picker", async () => {
   onSmall();
   await seed(CALL);
 
   renderCalendar();
 
   const control = await screen.findByRole("button", { name: "Friday, October 9. Pick a date" });
-  expect(screen.queryByRole("group", { name: "Week of October 4" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Next week" })).not.toBeInTheDocument();
+  expect(control).toHaveTextContent("October");
+  expect(screen.getByRole("group", { name: "Week of October 4" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Next week" })).toBeInTheDocument();
   expect(picker()).not.toBeInTheDocument();
 
   await userEvent.click(control);
 
   expect(picker()).toBeInTheDocument();
   expect(within(picker() as HTMLElement).getByText("October 2026")).toBeInTheDocument();
+});
+
+test("CAL-10 on small the day list replaces the timeline", async () => {
+  onSmall();
+  await seed(CALL);
+
+  renderCalendar();
+
+  expect(await screen.findByText("Later today · 1")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Grandma’s video call, / })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Show all 24 hours/ })).not.toBeInTheDocument();
+});
+
+test("CAL-10 on small Go to today shows on another day and selects today", async () => {
+  onSmall();
+  await seed(CALL);
+
+  renderCalendar();
+
+  expect(await screen.findByText("Later today · 1")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Go to today" })).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Next week" }));
+  await userEvent.click(screen.getByRole("button", { name: "Go to today" }));
+
+  expect(
+    screen.getByRole("button", { name: "Friday, October 9. Pick a date" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Go to today" })).not.toBeInTheDocument();
 });
 
 test("CAL-03 picking a day selects it, closes the picker and shows its plans", async () => {
@@ -635,7 +665,9 @@ test("CAL-03 picking a day selects it, closes the picker and shows its plans", a
   renderCalendar();
 
   await userEvent.click(await screen.findByRole("button", { name: /Pick a date$/ }));
-  await userEvent.click(screen.getByRole("button", { name: "Wednesday, October 7" }));
+  await userEvent.click(
+    within(picker() as HTMLElement).getByRole("button", { name: "Wednesday, October 7" }),
+  );
 
   expect(picker()).not.toBeInTheDocument();
   expect(

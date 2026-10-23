@@ -54,13 +54,13 @@ export type MoreTile<T> = {
 
 export type HourSky = { icon: string; precip?: number };
 
-export type FreeSlot = {
+export type FreeGap = {
   start: number;
   end: number;
-  top: number;
-  height: number;
   newEvent: { start: number; end: number };
 };
+
+export type FreeSlot = FreeGap & { top: number; height: number };
 
 export type TimelineLayout<T> = {
   rows: TimelineRow[];
@@ -252,6 +252,15 @@ export function grownHeight<T extends TimelinePlan>(
     .map((item) => roomFactor(item, scale, [first, last]));
 
   return Math.round(options.height * Math.min(MAX_GROWTH, Math.max(1, ...factors)));
+}
+
+export function freeGaps(
+  plans: readonly TimelinePlan[],
+  { day, now, tz }: TimelineContext,
+): FreeGap[] {
+  const intervals = plans.map((plan) => intervalOf(plan, tz));
+
+  return freeSlots(intervals, minutesToday(day, now, tz)).map(gapOf);
 }
 
 export function outsideDay(plans: readonly TimelinePlan[], tz: string): number {
@@ -694,16 +703,20 @@ function freeSlots<T>(intervals: readonly Interval<T>[], nowMinutes: number | nu
     .filter(([start, end]) => end - start >= MIN_FREE);
 }
 
-function placeSlot([start, end]: readonly [number, number], scale: Scale): FreeSlot {
-  const top = scale.y(start);
+function placeSlot(slot: readonly [number, number], scale: Scale): FreeSlot {
+  const gap = gapOf(slot);
 
+  const top = scale.y(gap.start);
+
+  return { ...gap, top, height: scale.y(gap.end) - top };
+}
+
+function gapOf([start, end]: readonly [number, number]): FreeGap {
   const eventStart = Math.min(Math.ceil(start / SLOT_STEP) * SLOT_STEP, end - SLOT_STEP);
 
   return {
     start,
     end,
-    top,
-    height: scale.y(end) - top,
     newEvent: { start: eventStart, end: Math.min(eventStart + NEW_EVENT_LENGTH, end) },
   };
 }

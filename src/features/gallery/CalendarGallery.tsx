@@ -2,13 +2,13 @@ import * as stylex from "@stylexjs/stylex";
 import { type ComponentProps, useState } from "react";
 import { copy } from "@/copy";
 import type { WeatherIcon } from "@/domain/schemas";
-import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
+import { formatLongDate, formatWeekday } from "@/domain/time";
 import { type Dot, pickerMonths, weekDays, weekHeading } from "@/domain/week";
 import { parseDateKey } from "@/domain/zone";
 import {
   CalendarDay,
+  CalendarHeader,
   CalendarToolbar,
-  DateControl,
   DatePicker,
   type PickerMonthView,
   pickerCell,
@@ -141,8 +141,6 @@ const PICKER_MONTHS: PickerMonthView[] = pickerMonths(TODAY).map((month) => ({
   }),
 }));
 
-const TODAY_DATE = parseDateKey(TODAY);
-
 const EVERY_TAG = new Set(TIMELINE_FAMILY.map((one) => one.id));
 
 const toolbar = {
@@ -254,7 +252,38 @@ const DAYS: readonly {
       state: { kind: "ready", data: OCT_9_PLANS, updatedAt: octoberAt(9, 9, 32).toISOString() },
     },
   },
-  { label: words.small, height: 900, props: { breakpoint: "small" } },
+];
+
+const SMALL_DAYS: readonly { label: string; today?: boolean; props: Partial<DayProps> }[] = [
+  { label: words.small, props: {} },
+  {
+    label: words.smallOtherDay,
+    today: true,
+    props: {
+      day: "2026-10-10",
+      weather: { hourly: hourlyOn(10), unit: "F" },
+      state: { kind: "ready", data: OCT_10_PLANS },
+    },
+  },
+  {
+    label: words.smallFiltered,
+    props: { filter: MOM_AND_DAD, state: { kind: "ready", data: [ALL_DAY, ...OCT_9_PLANS] } },
+  },
+  {
+    label: words.smallEmptyDay,
+    today: true,
+    props: { day: "2026-10-11", state: { kind: "empty" }, weather: undefined },
+  },
+  { label: words.smallNobody, props: { filter: new Set() } },
+  {
+    label: words.smallEmptyCalendar,
+    props: { state: { kind: "empty" }, calendarEmpty: true },
+  },
+];
+
+const HEADERS: readonly { label: string; day: string }[] = [
+  { label: words.headerToday, day: TODAY },
+  { label: words.headerOtherDay, day: "2026-10-07" },
 ];
 
 export function CalendarGallery() {
@@ -274,17 +303,19 @@ export function CalendarGallery() {
           />
         </div>
       ))}
-      <div {...stylex.props(styles.frame(358), styles.backdrop)}>
-        <Eyebrow>{words.dateControl}</Eyebrow>
-        <DateControl
-          year={String(TODAY_DATE.getUTCFullYear())}
-          month={formatMonth(TODAY_DATE, "UTC")}
-          weekday={formatWeekday(TODAY_DATE, "UTC")}
-          date={TODAY_DATE.getUTCDate()}
-          name={formatLongDate(TODAY_DATE, "UTC")}
-          onOpen={() => setPicked(TODAY)}
-        />
-      </div>
+      {HEADERS.map((demo) => (
+        <div key={demo.label} {...stylex.props(styles.frame(390), styles.backdrop)}>
+          <Eyebrow>{demo.label}</Eyebrow>
+          <CalendarHeader
+            {...strip}
+            {...stripRange(demo.day)}
+            days={week(demo.day)}
+            selected={demo.day}
+            pickLabel={copy.calendar.pickDateFor(formatLongDate(parseDateKey(demo.day), "UTC"))}
+            onOpenPicker={() => setPicked(demo.day)}
+          />
+        </div>
+      ))}
       <Button variant="secondary" onClick={() => setPicked(TODAY)}>
         {words.pickerToday}
       </Button>
@@ -314,8 +345,6 @@ export function CalendarGallery() {
                 <CalendarToolbar
                   {...toolbar}
                   filter={demo.props.filter ?? EVERY_TAG}
-                  small={demo.props.breakpoint === "small"}
-                  {...(demo.props.breakpoint === "small" && { onAddEvent: ignore })}
                   {...(demo.today && { onToday: ignore })}
                 />
               }
@@ -329,6 +358,26 @@ export function CalendarGallery() {
               }
             />
           </div>
+        </div>
+      ))}
+      {SMALL_DAYS.map((demo) => (
+        <div key={demo.label} {...stylex.props(styles.frame(390), styles.backdrop)}>
+          <Eyebrow>{demo.label}</Eyebrow>
+          <CalendarDay
+            state={{ kind: "ready", data: OCT_9_PLANS }}
+            {...day}
+            breakpoint="small"
+            {...demo.props}
+            toolbar={
+              <CalendarToolbar
+                {...toolbar}
+                small
+                filter={demo.props.filter ?? EVERY_TAG}
+                {...(demo.today && { onToday: ignore })}
+              />
+            }
+            spanLink={null}
+          />
         </div>
       ))}
     </GalleryGroup>
