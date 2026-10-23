@@ -16,6 +16,7 @@ type IconButtonProps = {
   active?: boolean;
   current?: "page";
   expanded?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
   ref?: Ref<HTMLButtonElement>;
   xstyle?: stylex.StyleXStyles;
@@ -57,6 +58,10 @@ const styles = stylex.create({
     backgroundColor: colors.onInverseSoft,
     color: colors.textInverse,
   },
+  disabled: {
+    opacity: 0.4,
+    cursor: "default",
+  },
 });
 
 export function IconButton({
@@ -67,6 +72,7 @@ export function IconButton({
   active,
   current,
   expanded,
+  disabled,
   onClick,
   ref,
   xstyle,
@@ -79,12 +85,14 @@ export function IconButton({
       aria-current={current}
       aria-pressed={active}
       aria-expanded={expanded}
+      disabled={disabled}
       onClick={onClick}
       {...stylex.props(
         styles.base,
         styles[size],
         styles[active ? "solid" : variant],
         press.scale,
+        disabled && styles.disabled,
         xstyle,
       )}
     >

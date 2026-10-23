@@ -162,7 +162,7 @@ test("CAL-01 the week strip runs Sunday to Saturday with today selected and ring
 
   renderCalendar();
 
-  expect(await screen.findByText("2026")).toBeInTheDocument();
+  expect(await screen.findByText("Oct 4 – 10")).toBeInTheDocument();
   expect(screen.getByText("October")).toBeInTheDocument();
   const week = within(screen.getByRole("group", { name: "Week of October 4" }));
   expect(week.getAllByRole("button").map((button) => button.getAttribute("aria-label"))).toEqual([
@@ -193,6 +193,35 @@ test("CAL-01 tapping a day shows its plans and today keeps its ring", async () =
   const today = day("Friday, October 9");
   expect(today).toHaveAttribute("aria-pressed", "false");
   expect(today).toHaveAttribute("aria-current", "date");
+});
+
+test("CAL-01 the week strip counts every plan on a day, whatever the filter", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1000);
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(800);
+  await seed(CALL, SOCCER, DINNER, DENTIST);
+
+  renderCalendar();
+
+  await toggleWho("Mom");
+
+  expect(await within(day("Friday, October 9")).findByText("3 events")).toBeInTheDocument();
+  expect(within(day("Wednesday, October 7")).getByText("1 event")).toBeInTheDocument();
+  expect(within(day("Thursday, October 8")).queryByText(/event/)).not.toBeInTheDocument();
+});
+
+test("CAL-02 the Today button shows only with another day selected and selects today", async () => {
+  await seed();
+
+  renderCalendar();
+
+  await screen.findByRole("button", { name: "Wednesday, October 7" });
+  expect(screen.queryByRole("button", { name: "Today" })).not.toBeInTheDocument();
+
+  await userEvent.click(day("Wednesday, October 7"));
+  await userEvent.click(screen.getByRole("button", { name: "Today" }));
+
+  expect(day("Friday, October 9")).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByRole("button", { name: "Today" })).not.toBeInTheDocument();
 });
 
 test("CAL-02 the next chevron steps a week and selects its Sunday", async () => {
@@ -228,7 +257,7 @@ test("CAL-04 ?date= selects that day, in another year too", async () => {
 
   renderCalendar();
 
-  expect(await screen.findByText("2027")).toBeInTheDocument();
+  expect(await screen.findByText("Dec 27 – Jan 2, 2027")).toBeInTheDocument();
   expect(screen.getByText("January")).toBeInTheDocument();
   expect(day("Friday, January 1")).toHaveAttribute("aria-pressed", "true");
   expect(await screen.findByRole("button", { name: /^New Year brunch, / })).toBeInTheDocument();
@@ -596,8 +625,7 @@ test("CAL-02 on small the date control replaces the week strip and opens the pic
   await userEvent.click(control);
 
   expect(picker()).toBeInTheDocument();
-  expect(within(picker() as HTMLElement).getByText("August 2026")).toBeInTheDocument();
-  expect(within(picker() as HTMLElement).getByText("January 2027")).toBeInTheDocument();
+  expect(within(picker() as HTMLElement).getByText("October 2026")).toBeInTheDocument();
 });
 
 test("CAL-03 picking a day selects it, closes the picker and shows its plans", async () => {
@@ -616,7 +644,7 @@ test("CAL-03 picking a day selects it, closes the picker and shows its plans", a
   expect(await screen.findByRole("button", { name: /^Dentist, / })).toBeInTheDocument();
 });
 
-test("CAL-03 picker days carry a dot per tag with a plan", async () => {
+test("CAL-03 picker days with plans carry a dot", async () => {
   onSmall();
   await seed(CALL, SOCCER, DENTIST);
 
@@ -624,8 +652,13 @@ test("CAL-03 picker days carry a dot per tag with a plan", async () => {
 
   await userEvent.click(await screen.findByRole("button", { name: /Pick a date$/ }));
 
-  const today = within(picker() as HTMLElement).getByRole("button", { name: "Friday, October 9" });
-  await waitFor(() => expect(today.querySelectorAll("[aria-hidden='true']")).toHaveLength(2));
+  const marked = (name: string) =>
+    within(picker() as HTMLElement)
+      .getByRole("button", { name })
+      .querySelector("[data-marked]");
+  await waitFor(() => expect(marked("Friday, October 9")).not.toBeNull());
+  expect(marked("Wednesday, October 7")).not.toBeNull();
+  expect(marked("Thursday, October 8")).toBeNull();
 });
 
 test("CAL-03 Today selects today and closes; Close keeps the day", async () => {
