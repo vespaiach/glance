@@ -125,12 +125,16 @@ const styles = stylex.create({
   body: {
     flexGrow: 1,
     minWidth: 0,
+    paddingTop: 40,
+    paddingBottom: 64,
+    paddingInline: 48,
+  },
+  form: {
+    maxWidth: 720,
+    marginInline: "auto",
     display: "flex",
     flexDirection: "column",
     gap: 20,
-    paddingTop: 40,
-    paddingBottom: 64,
-    paddingInline: "max(48px, calc((100% - 720px) / 2))",
   },
   bodyCompact: {
     paddingTop: 20,
@@ -218,7 +222,9 @@ export function Page({
           <div {...stylex.props(styles.banner, compact && styles.bannerCompact)}>{banner}</div>
         )}
         <div {...stylex.props(styles.main)}>
-          <div {...stylex.props(styles.body, compact && styles.bodyCompact)}>{children}</div>
+          <div {...stylex.props(styles.body, compact && styles.bodyCompact)}>
+            <div {...stylex.props(styles.form)}>{children}</div>
+          </div>
           {aside}
         </div>
         {compact && (

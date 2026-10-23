@@ -295,7 +295,7 @@ function pills() {
     .map((button) => button.getAttribute("aria-label"));
 }
 
-test("EVT-11 an everyone event opens with every tag as a pill", async () => {
+test("EVT-11 an everyone event opens with one Everyone chip", async () => {
   await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
   await store.db.events.put(synced(LUNCH));
 
@@ -303,7 +303,7 @@ test("EVT-11 an everyone event opens with every tag as a pill", async () => {
 
   await screen.findByRole("dialog", { name: "Edit event" });
 
-  expect(pills()).toEqual(["Remove Mom", "Remove Dad"]);
+  expect(pills()).toEqual(["Remove everyone"]);
 });
 
 test("EVT-11 saving with every tag on it stores everyone", async () => {
@@ -423,6 +423,7 @@ const FORECAST = {
   location: "Portland, OR",
   fetchedAt: new Date(2026, 9, 9, 10, 0).toISOString(),
   daily: [{ date: "2026-10-09", icon: "cloud-sun", high: 68, low: 51 }],
+  hourly: [] as Weather["hourly"],
 } as Weather;
 
 const PORTLAND = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
@@ -433,8 +434,11 @@ test("EVT-01 a located screen shows the day's forecast after the eyebrow in the 
 
   renderSheet({ kind: "newevent", day: "2026-10-09" }, { tempUnit: "C" });
 
-  expect(await screen.findByRole("img", { name: "Partly cloudy" })).toBeInTheDocument();
-  expect(screen.getByText("20°")).toBeInTheDocument();
+  const title = await screen.findByRole("heading", { name: "New event" });
+  const header = within(title.closest<HTMLElement>("[data-page-header]") ?? document.body);
+
+  expect(await header.findByRole("img", { name: "Partly cloudy" })).toBeInTheDocument();
+  expect(header.getByText("20°")).toBeInTheDocument();
 });
 
 test("EVT-01 with no location the sheet shows no forecast", async () => {
@@ -505,6 +509,11 @@ describe("day preview", () => {
 
   const setWidth = (width: number) => {
     vi.stubGlobal("innerWidth", width);
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: width >= Number(query.match(/\d+/)?.[0]),
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
   };
 
   async function openLunch(width = 1280, weather = WITH_HOURS) {
@@ -566,8 +575,14 @@ describe("day preview", () => {
     expect(within(preview).getByText("Also at this time · 3")).toBeInTheDocument();
   });
 
-  test("EVT-13 is hidden below 1180 px", async () => {
-    await openLunch(1179);
+  test("EVT-13 shows the day preview at 769 px, the narrowest normal width", async () => {
+    await openLunch(769);
+
+    expect(await screen.findByRole("complementary")).toBeInTheDocument();
+  });
+
+  test("EVT-13 is hidden on small at 768 px", async () => {
+    await openLunch(768);
 
     expect(await screen.findByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();

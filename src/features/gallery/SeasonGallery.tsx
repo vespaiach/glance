@@ -97,6 +97,10 @@ const styles = stylex.create({
     width: "100%",
     maxWidth: 720,
   },
+  small: {
+    width: "100%",
+    maxWidth: 358,
+  },
   tile: {
     width: 280,
   },
@@ -358,6 +362,13 @@ function WeatherGroup() {
         tone="deep"
         details={undefined}
         xstyle={styles.wide}
+      />
+      <WeatherNow
+        {...WEATHER}
+        condition={condition}
+        labels={copy.weather.range}
+        compact
+        xstyle={styles.small}
       />
       <div {...stylex.props(styles.forecast)}>
         {FORECAST.map((forecast) => (
