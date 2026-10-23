@@ -1,7 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { type ComponentProps, useState } from "react";
 import { copy } from "@/copy";
-import type { Breakpoint } from "@/domain/breakpoint";
 import type { WeatherIcon } from "@/domain/schemas";
 import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
 import { type Dot, pickerMonths, weekDays, weekHeading } from "@/domain/week";
@@ -12,6 +11,7 @@ import {
   DateControl,
   DatePicker,
   type PickerMonthView,
+  pickerCell,
   SpanLink,
   WeekStrip,
 } from "@/features/calendar";
@@ -62,8 +62,10 @@ const HIGHS = [66, 68, 64, 58, 61, 67, 70];
 
 const TODAY = "2026-10-09";
 
+const DOTS_MAX = 3;
+
 const colorsOf = (indexes: readonly number[]): Dot[] =>
-  indexes.flatMap((index) => TIMELINE_FAMILY[index] ?? []);
+  indexes.slice(0, DOTS_MAX).flatMap((index) => TIMELINE_FAMILY[index] ?? []);
 
 const DOTS: readonly Dot[][] = [
   [],
@@ -75,10 +77,12 @@ const DOTS: readonly Dot[][] = [
   colorsOf([3, 4]),
 ];
 
+const COUNTS = [0, 3, 1, 0, 9, 6, 2];
+
 const ignore = () => {};
 
-const week = () =>
-  weekDays(TODAY).map((key, index) => {
+const week = (day = TODAY) =>
+  weekDays(day).map((key, index) => {
     const date = parseDateKey(key);
 
     const weekday = formatWeekday(date, "UTC");
@@ -90,27 +94,36 @@ const week = () =>
       weekday,
       date: date.getUTCDate(),
       name: formatLongDate(date, "UTC"),
+      count: COUNTS[index] ? copy.calendar.eventCount(COUNTS[index]) : undefined,
       dots: DOTS[index] ?? [],
       forecast: { icon, label: copy.weather.icon[icon], high: `${HIGHS[index]}°` },
     };
   });
 
 const strip = {
-  heading: weekHeading(TODAY),
   label: copy.calendar.week("October", 4),
-  selected: TODAY,
   today: TODAY,
   previousLabel: copy.calendar.previousWeek,
   nextLabel: copy.calendar.nextWeek,
   onPrevious: ignore,
   onNext: ignore,
   onSelect: ignore,
+  onAddEvent: ignore,
 } as const;
 
-const STRIPS: readonly [Exclude<Breakpoint, "small">, number][] = [
-  ["large", 1600],
-  ["normal", 900],
+const STRIPS: readonly { label: string; width: number; day: string; wide: boolean }[] = [
+  { label: gallery.calendarView.stripLarge, width: 1840, day: TODAY, wide: true },
+  { label: gallery.calendarView.stripNormal, width: 940, day: TODAY, wide: false },
+  { label: gallery.calendarView.stripNarrow, width: 760, day: TODAY, wide: false },
+  { label: gallery.calendarView.stripOtherDay, width: 1240, day: "2026-10-07", wide: false },
+  { label: gallery.calendarView.stripNextYear, width: 1240, day: "2026-12-31", wide: false },
 ];
+
+function stripRange(day: string) {
+  const heading = weekHeading(day, TODAY);
+
+  return { range: copy.calendar.weekRange(heading), month: heading.month };
+}
 
 const WEEK_KEYS = weekDays(TODAY);
 
@@ -119,14 +132,11 @@ const PICKER_MONTHS: PickerMonthView[] = pickerMonths(TODAY).map((month) => ({
   days: month.days.map((key) => {
     const date = parseDateKey(key);
 
-    const index = WEEK_KEYS.indexOf(key);
-
     return {
       key,
-      weekday: formatWeekday(date, "UTC"),
       date: date.getUTCDate(),
       name: formatLongDate(date, "UTC"),
-      dots: DOTS[index] ?? [],
+      marked: (COUNTS[WEEK_KEYS.indexOf(key)] ?? 0) > 0,
     };
   }),
 }));
@@ -140,7 +150,6 @@ const toolbar = {
   small: false,
   whoSheet: false,
   onFilter: ignore,
-  onAddEvent: ignore,
 } as const;
 
 const day: Omit<DayProps, "toolbar" | "spanLink" | "state"> = {
@@ -176,9 +185,16 @@ const DAYS: readonly {
   label: string;
   height: number;
   outside?: number;
+  today?: boolean;
   props: Partial<DayProps>;
 }[] = [
   { label: words.today, height: 760, props: {} },
+  {
+    label: words.otherDay,
+    height: 560,
+    today: true,
+    props: { day: "2026-10-07", state: { kind: "empty" } },
+  },
   {
     label: words.filtered,
     height: 760,
@@ -246,10 +262,16 @@ export function CalendarGallery() {
 
   return (
     <GalleryGroup title={gallery.groups.calendarView}>
-      {STRIPS.map(([breakpoint, width]) => (
-        <div key={breakpoint} {...stylex.props(styles.frame(width), styles.backdrop)}>
-          <Eyebrow>{breakpoint}</Eyebrow>
-          <WeekStrip {...strip} days={week()} />
+      {STRIPS.map((demo) => (
+        <div key={demo.label} {...stylex.props(styles.frame(demo.width), styles.backdrop)}>
+          <Eyebrow>{demo.label}</Eyebrow>
+          <WeekStrip
+            {...strip}
+            {...stripRange(demo.day)}
+            days={week(demo.day)}
+            selected={demo.day}
+            wide={demo.wide}
+          />
         </div>
       ))}
       <div {...stylex.props(styles.frame(358), styles.backdrop)}>
@@ -274,6 +296,7 @@ export function CalendarGallery() {
           months={PICKER_MONTHS}
           selected={picked}
           today={TODAY}
+          cell={pickerCell(390)}
           onSelect={() => setPicked(null)}
           onToday={() => setPicked(null)}
           onClose={() => setPicked(null)}
@@ -292,6 +315,8 @@ export function CalendarGallery() {
                   {...toolbar}
                   filter={demo.props.filter ?? EVERY_TAG}
                   small={demo.props.breakpoint === "small"}
+                  {...(demo.props.breakpoint === "small" && { onAddEvent: ignore })}
+                  {...(demo.today && { onToday: ignore })}
                 />
               }
               spanLink={

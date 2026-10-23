@@ -20,7 +20,7 @@ import { formatLongDate, formatMonth, formatWeekday } from "@/domain/time";
 import { outsideDay } from "@/domain/timeline";
 import { hourlyByHour } from "@/domain/weather";
 import {
-  type Dot,
+  dayCounts,
   type PickerMonth,
   pickerMonths,
   readDateParam,
@@ -29,7 +29,7 @@ import {
   weekHeading,
 } from "@/domain/week";
 import { addDays, dateKey, parseDateKey } from "@/domain/zone";
-import { useBreakpoint } from "@/shell/breakpoint";
+import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
 import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -45,7 +45,7 @@ import { DateControl } from "./components/DateControl";
 import { DatePicker, type PickerMonthView } from "./components/DatePicker";
 import { SpanLink } from "./components/SpanLink";
 import { type WeekDay, WeekStrip } from "./components/WeekStrip";
-import { calendarLayout } from "./layout";
+import { addEventPill, calendarLayout, pickerCell } from "./layout";
 
 const NO_MEMBERS: Tag[] = [];
 
@@ -53,6 +53,8 @@ export function CalendarScreen() {
   const sheets = useSheetHost();
 
   const breakpoint = useBreakpoint();
+
+  const windowWidth = useViewportWidth();
 
   const settings = useAccountSettings();
 
@@ -100,22 +102,31 @@ export function CalendarScreen() {
     (event) => !event.allDay && matchesFilter(event, filter, allIds),
   );
 
+  const heading = weekHeading(day, today);
+
+  const addEvent = () => sheets.open(newEvent(day, filterTagIds(filter, allIds)));
+
+  const small = breakpoint === "small";
+
   return (
     <div {...stylex.props(calendarLayout(breakpoint, view.span24))}>
-      {breakpoint === "small" ? (
+      {small ? (
         <DateControl {...dateControl(day)} onOpen={() => dispatch({ type: "openPicker" })} />
       ) : (
         <WeekStrip
-          heading={weekHeading(day)}
+          range={copy.calendar.weekRange(heading)}
+          month={heading.month}
           label={weekLabel(week[0] ?? day)}
           days={weekPills(week, weekEvents ?? [], tags, { tz, forecast, settings })}
           selected={day}
           today={today}
+          wide={addEventPill(windowWidth)}
           previousLabel={copy.calendar.previousWeek}
           nextLabel={copy.calendar.nextWeek}
           onPrevious={() => dispatch({ type: "step", delta: -1, today })}
           onNext={() => dispatch({ type: "step", delta: 1, today })}
           onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
+          onAddEvent={addEvent}
         />
       )}
       <CalendarDay
@@ -143,10 +154,12 @@ export function CalendarScreen() {
           <CalendarToolbar
             tags={tags}
             filter={filter}
-            small={breakpoint === "small"}
+            small={small}
             whoSheet={fixture.whosheet === true}
             onFilter={who.setFilter}
-            onAddEvent={() => sheets.open(newEvent(day, filterTagIds(filter, allIds)))}
+            {...(small
+              ? { onAddEvent: addEvent }
+              : day !== today && { onToday: () => dispatch({ type: "select", day: today }) })}
           />
         }
         spanLink={
@@ -158,12 +171,12 @@ export function CalendarScreen() {
           />
         }
       />
-      {breakpoint === "small" && view.picker && (
+      {small && view.picker && (
         <PhoneDatePicker
-          tags={tags}
           selected={day}
           today={today}
           tz={tz}
+          cell={pickerCell(windowWidth)}
           onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
           onClose={() => dispatch({ type: "closePicker" })}
         />
@@ -173,15 +186,15 @@ export function CalendarScreen() {
 }
 
 type PhoneDatePickerProps = {
-  tags: readonly Tag[];
   selected: string;
   today: string;
   tz: string;
+  cell: number;
   onSelect: (day: string) => void;
   onClose: () => void;
 };
 
-function PhoneDatePicker({ tags, selected, today, tz, onSelect, onClose }: PhoneDatePickerProps) {
+function PhoneDatePicker({ selected, today, tz, cell, onSelect, onClose }: PhoneDatePickerProps) {
   const months = pickerMonths(today);
 
   const first = months[0]?.days[0] ?? today;
@@ -192,9 +205,10 @@ function PhoneDatePicker({ tags, selected, today, tz, onSelect, onClose }: Phone
 
   return (
     <DatePicker
-      months={pickerViews(months, weekDots(events ?? [], tags, tz))}
+      months={pickerViews(months, dayCounts(events ?? [], tz))}
       selected={selected}
       today={today}
+      cell={cell}
       onSelect={onSelect}
       onToday={() => onSelect(today)}
       onClose={onClose}
@@ -232,7 +246,7 @@ function dateControl(day: string) {
 
 function pickerViews(
   months: readonly PickerMonth[],
-  dots: ReadonlyMap<string, Dot[]>,
+  counts: ReadonlyMap<string, number>,
 ): PickerMonthView[] {
   return months.map((month) => ({
     ...month,
@@ -241,10 +255,9 @@ function pickerViews(
 
       return {
         key,
-        weekday: formatWeekday(date, "UTC"),
         date: date.getUTCDate(),
         name: formatLongDate(date, "UTC"),
-        dots: dots.get(key) ?? [],
+        marked: counts.has(key),
       };
     }),
   }));
@@ -258,6 +271,8 @@ function weekPills(
 ): WeekDay[] {
   const dots = weekDots(events, tags, tz);
 
+  const counts = dayCounts(events, tz);
+
   return week.map((key) => {
     const date = parseDateKey(key);
 
@@ -270,6 +285,7 @@ function weekPills(
       weekday,
       date: date.getUTCDate(),
       name: formatLongDate(date, "UTC"),
+      count: dayCount(counts.get(key)),
       dots: dots.get(key) ?? [],
       ...(daily && {
         forecast: {
@@ -280,6 +296,10 @@ function weekPills(
       }),
     };
   });
+}
+
+function dayCount(count: number | undefined): string | undefined {
+  return count ? copy.calendar.eventCount(count) : undefined;
 }
 
 function timelineWeather(

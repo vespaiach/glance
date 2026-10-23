@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { Plus } from "lucide-react";
+import { Plus, Undo2 } from "lucide-react";
 import { copy } from "@/copy";
 import type { Tag } from "@/domain/schemas";
 import type { TagFilter } from "@/domain/tags";
@@ -13,7 +13,8 @@ type CalendarToolbarProps = {
   small: boolean;
   whoSheet: boolean;
   onFilter: (filter: TagFilter) => void;
-  onAddEvent: () => void;
+  onAddEvent?: () => void;
+  onToday?: () => void;
 };
 
 const styles = stylex.create({
@@ -68,6 +69,7 @@ export function CalendarToolbar({
   whoSheet,
   onFilter,
   onAddEvent,
+  onToday,
 }: CalendarToolbarProps) {
   const size = small ? "small" : "large";
 
@@ -85,14 +87,26 @@ export function CalendarToolbar({
         />
       </div>
       <div {...stylex.props(styles.actions, small && styles.actionsSmall)}>
-        <Button
-          variant="ghost"
-          icon={Plus}
-          onClick={onAddEvent}
-          xstyle={[styles.soft(HEIGHT[size]), styles.add]}
-        >
-          {copy.calendar.addEvent}
-        </Button>
+        {onToday && (
+          <Button
+            variant="ghost"
+            icon={Undo2}
+            onClick={onToday}
+            xstyle={[styles.soft(HEIGHT[size]), styles.add]}
+          >
+            {copy.calendar.today}
+          </Button>
+        )}
+        {onAddEvent && (
+          <Button
+            variant="ghost"
+            icon={Plus}
+            onClick={onAddEvent}
+            xstyle={[styles.soft(HEIGHT[size]), styles.add]}
+          >
+            {copy.calendar.addEvent}
+          </Button>
+        )}
       </div>
     </div>
   );

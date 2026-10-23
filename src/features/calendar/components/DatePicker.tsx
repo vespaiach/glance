@@ -1,36 +1,34 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { X } from "lucide-react";
-import { type RefObject, useId, useLayoutEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useId, useRef, useState } from "react";
 import { copy } from "@/copy";
-import type { Dot } from "@/domain/week";
-import { colors, motion, radii, shadows } from "@/theme/tokens.stylex";
-import { type } from "@/theme/type.stylex";
+import { pickerMonthIndex } from "@/domain/week";
+import { colors, radii, shadows } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { dialogKeyDown, useFocusOnOpen } from "@/ui/dialogFocus";
 import { IconButton } from "@/ui/IconButton";
-import { PersonDot } from "@/ui/PersonDot";
-import { press } from "@/ui/press";
+import { MonthGrid, type MonthGridDay } from "@/ui/MonthGrid";
 
-export type PickerDayView = {
+export type PickerMonthView = {
   key: string;
-  weekday: string;
-  date: number;
-  name: string;
-  dots: readonly Dot[];
+  label: string;
+  leading: number;
+  days: readonly MonthGridDay[];
 };
-
-export type PickerMonthView = { key: string; label: string; days: readonly PickerDayView[] };
 
 type DatePickerProps = {
   months: readonly PickerMonthView[];
   selected: string;
   today: string;
+  cell: number;
   onSelect: (day: string) => void;
   onToday: () => void;
   onClose: () => void;
 };
+
+const MONTH_BUTTON = 44;
 
 const styles = stylex.create({
   overlay: {
@@ -39,7 +37,7 @@ const styles = stylex.create({
     zIndex: 10,
     display: "grid",
     placeItems: "center",
-    padding: 16,
+    padding: 8,
     boxSizing: "border-box",
   },
   scrim: {
@@ -53,27 +51,28 @@ const styles = stylex.create({
     position: "relative",
     width: "100%",
     maxWidth: 480,
-    height: "min(760px, 100%)",
+    maxHeight: "100%",
     display: "flex",
     flexDirection: "column",
-    overflow: "hidden",
+    gap: 16,
+    overflowY: "auto",
     boxSizing: "border-box",
-    borderRadius: radii.lg,
+    paddingTop: 20,
+    paddingInline: 8,
+    paddingBottom: 24,
+    borderRadius: radii.xl,
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
     boxShadow: shadows.shadow3,
     outline: "none",
   },
   header: {
-    flexShrink: 0,
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 12,
-    paddingTop: 20,
-    paddingInlineEnd: 20,
-    paddingBottom: 8,
-    paddingInlineStart: 28,
+    paddingInlineStart: 20,
+    paddingInlineEnd: 12,
   },
   title: {
     margin: 0,
@@ -87,93 +86,29 @@ const styles = stylex.create({
     alignItems: "center",
     gap: 8,
   },
-  list: {
-    flexGrow: 1,
-    minHeight: 0,
-    overflowY: "auto",
-    overscrollBehavior: "contain",
-    position: "relative",
-    boxSizing: "border-box",
-    paddingTop: 0,
-    paddingInline: 16,
-    paddingBottom: 24,
-  },
-  month: {
-    position: "sticky",
-    top: 0,
-    zIndex: 1,
-    margin: 0,
-    paddingTop: 16,
-    paddingInline: 12,
-    paddingBottom: 8,
-    backgroundColor: colors.surfaceCanvas,
-    fontFamily: type.fontMono,
-    fontSize: 14,
-    fontWeight: 400,
-    letterSpacing: "0.54px",
-    textTransform: "uppercase",
-  },
-  days: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-  },
-  day: {
-    width: "100%",
-    minHeight: 56,
+  monthRow: {
     display: "flex",
     alignItems: "center",
-    gap: 16,
-    boxSizing: "border-box",
-    paddingBlock: 0,
-    paddingInline: 20,
-    borderWidth: 0,
-    borderRadius: radii.full,
-    backgroundColor: "transparent",
-    color: colors.textPrimary,
-    font: "inherit",
-    textAlign: "start",
-    cursor: "pointer",
-    transitionProperty: "transform, background-color",
-    transitionDuration: `${motion.durPress}, ${motion.durFast}`,
-    transitionTimingFunction: motion.easeOut,
+    gap: 8,
+    paddingInlineStart: 20,
+    paddingInlineEnd: 12,
   },
-  selected: {
-    backgroundColor: colors.actionPrimary,
-    color: colors.onActionPrimary,
-  },
-  today: {
-    boxShadow: `inset 0 0 0 2px ${colors.black}`,
-  },
-  weekday: {
-    flexShrink: 0,
-    width: 40,
-    fontFamily: type.fontMono,
-    fontSize: 13,
-    letterSpacing: "0.54px",
-    textTransform: "uppercase",
-  },
-  date: {
-    flexShrink: 0,
-    width: 36,
-    fontSize: 22,
-    fontWeight: 480,
-    letterSpacing: "-0.5px",
-    lineHeight: 1,
-  },
-  dots: {
+  month: {
     flexGrow: 1,
-    display: "flex",
-    gap: 3,
     minWidth: 0,
-    overflow: "hidden",
+    margin: 0,
+    fontSize: 22,
+    fontWeight: 540,
+    letterSpacing: "-0.3px",
+    lineHeight: 1.2,
   },
-  tag: {
-    flexShrink: 0,
-    fontFamily: type.fontMono,
-    fontSize: 13,
-    letterSpacing: "0.54px",
-    textTransform: "uppercase",
+  monthButton: {
+    width: MONTH_BUTTON,
+    height: MONTH_BUTTON,
+  },
+  grid: {
+    display: "flex",
+    justifyContent: "center",
   },
 });
 
@@ -181,6 +116,7 @@ export function DatePicker({
   months,
   selected,
   today,
+  cell,
   onSelect,
   onToday,
   onClose,
@@ -189,11 +125,11 @@ export function DatePicker({
 
   const dialog = useRef<HTMLDivElement>(null);
 
-  const list = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(() => pickerMonthIndex(months, selected));
+
+  const month = months[index];
 
   useFocusOnOpen(dialog);
-
-  useCenterOnOpen(list);
 
   return (
     <div {...stylex.props(styles.overlay)}>
@@ -224,73 +160,39 @@ export function DatePicker({
             <IconButton icon={X} label={copy.calendar.close} onClick={onClose} />
           </div>
         </div>
-        <div ref={list} {...stylex.props(styles.list)}>
-          {months.map((month) => (
-            <section key={month.key} aria-label={month.label}>
-              <h3 {...stylex.props(styles.month)}>{month.label}</h3>
-              <div {...stylex.props(styles.days)}>
-                {month.days.map((day) => (
-                  <PickerDay
-                    key={day.key}
-                    day={day}
-                    selected={day.key === selected}
-                    today={day.key === today}
-                    onClick={() => onSelect(day.key)}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+        <div {...stylex.props(styles.monthRow)}>
+          <h3 aria-live="polite" {...stylex.props(styles.month)}>
+            {month?.label}
+          </h3>
+          <IconButton
+            icon={ChevronLeft}
+            label={copy.calendar.previousMonth}
+            disabled={index === 0}
+            onClick={() => setIndex(index - 1)}
+            xstyle={styles.monthButton}
+          />
+          <IconButton
+            icon={ChevronRight}
+            label={copy.calendar.nextMonth}
+            disabled={index === months.length - 1}
+            onClick={() => setIndex(index + 1)}
+            xstyle={styles.monthButton}
+          />
         </div>
+        {month && (
+          <div {...stylex.props(styles.grid)}>
+            <MonthGrid
+              days={month.days}
+              leading={month.leading}
+              weekdays={copy.calendar.weekdayLetters}
+              selected={selected}
+              today={today}
+              cell={cell}
+              onSelect={onSelect}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
-}
-
-type PickerDayProps = {
-  day: PickerDayView;
-  selected: boolean;
-  today: boolean;
-  onClick: () => void;
-};
-
-function PickerDay({ day, selected, today, onClick }: PickerDayProps) {
-  return (
-    <button
-      type="button"
-      aria-label={day.name}
-      aria-pressed={selected}
-      aria-current={today ? "date" : undefined}
-      onClick={onClick}
-      {...stylex.props(
-        styles.day,
-        selected && styles.selected,
-        today && !selected && styles.today,
-        press.scale,
-      )}
-    >
-      <span {...stylex.props(styles.weekday)}>{day.weekday}</span>
-      <span {...stylex.props(styles.date)}>{day.date}</span>
-      <span {...stylex.props(styles.dots)}>
-        {day.dots.map((dot) => (
-          <PersonDot key={dot.id} color={dot.color} size="xsm" />
-        ))}
-      </span>
-      {today && <span {...stylex.props(styles.tag)}>{copy.calendar.today}</span>}
-    </button>
-  );
-}
-
-function useCenterOnOpen(list: RefObject<HTMLDivElement | null>) {
-  useLayoutEffect(() => {
-    const box = list.current;
-
-    const row =
-      box?.querySelector<HTMLElement>('[aria-pressed="true"]') ??
-      box?.querySelector<HTMLElement>('[aria-current="date"]');
-
-    if (!box || !row) return;
-
-    box.scrollTop = row.offsetTop - (box.clientHeight - row.offsetHeight) / 2;
-  }, [list]);
 }

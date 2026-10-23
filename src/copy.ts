@@ -153,6 +153,9 @@ export const copy = {
     previousWeek: "Previous week",
     nextWeek: "Next week",
     week: (month: string, day: number) => `Week of ${month} ${day}`,
+    weekRange: ({ from, to, year }: { from: string; to: string; year: string | undefined }) =>
+      year ? `${from} – ${to}, ${year}` : `${from} – ${to}`,
+    eventCount: (count: number) => `${count} ${count === 1 ? "event" : "events"}`,
     showAllHours: (outside: number) => {
       if (outside === 0) return "Show all 24 hours";
 
@@ -168,6 +171,9 @@ export const copy = {
     unavailable: "Calendar unavailable",
     pickDate: "Pick a date",
     pickDateFor: (day: string) => `${day}. Pick a date`,
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    weekdayLetters: ["S", "M", "T", "W", "T", "F", "S"],
     today: "Today",
     close: "Close",
   },

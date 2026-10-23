@@ -128,6 +128,12 @@ export const gallery = {
     dateControl: "Small date control",
     pickerToday: "Date picker · today",
     pickerOther: "Date picker · Oct 14",
+    stripLarge: "Week strip · large · Add event pill",
+    stripNormal: "Week strip · normal",
+    stripNarrow: "Week strip · narrow cells",
+    stripOtherDay: "Week strip · another day",
+    stripNextYear: "Week strip · next year",
+    otherDay: "Another day · Today button",
   },
   personFilter: {
     everyone: "Large · everyone (9)",
