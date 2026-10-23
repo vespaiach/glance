@@ -1,4 +1,4 @@
-import { type PhotoRow, pictureOfDay } from "./pictureOfDay";
+import { dailyMoments, type PhotoRow, titleSource, todaysPhoto } from "./todaysPhoto";
 import { addDays, calendarDate, zonedInstant } from "./zone";
 
 const tz = "America/Los_Angeles";
@@ -21,17 +21,17 @@ const photo = (
   ...extra,
 });
 
-const pickOn = (photos: readonly PhotoRow[], key: string, seed = SEED) =>
-  pictureOfDay(photos, key, tz, seed)?.photo.id;
+const pickOn = (photos: readonly PhotoRow[], key: string, seed = SEED, skip?: string) =>
+  todaysPhoto(photos, key, tz, seed, skip)?.photo.id;
 
 const daysFrom = (first: string, count: number) =>
   Array.from({ length: count }, (_, n) => addDays(first, n));
 
 const five = ["a", "b", "c", "d", "e"].map((id) => photo(id, "2026-09-01"));
 
-describe("pictureOfDay", () => {
+describe("todaysPhoto", () => {
   it("TODAY-07 no photos means no picture", () => {
-    expect(pictureOfDay([], "2026-10-09", tz, SEED)).toBeUndefined();
+    expect(todaysPhoto([], "2026-10-09", tz, SEED)).toBeUndefined();
   });
 
   it("TODAY-07 the first upload shows on its own day", () => {
@@ -115,7 +115,7 @@ describe("pictureOfDay", () => {
   it("TODAY-07 On this day picks a photo taken on today's date in an earlier year", () => {
     const old = photo("old", "2026-09-01", { takenOn: "2024-09-04" });
 
-    expect(pictureOfDay([...five, old], "2026-09-04", tz, SEED)).toEqual({
+    expect(todaysPhoto([...five, old], "2026-09-04", tz, SEED)).toEqual({
       photo: old,
       onThisDay: 2024,
     });
@@ -124,7 +124,7 @@ describe("pictureOfDay", () => {
   it("PHOTO-11 a photo with no date is never On this day and still takes its turn in the cycle", () => {
     const { takenOn: _takenOn, ...undated } = photo("undated", "2026-10-09");
 
-    expect(pictureOfDay([undated], "2026-10-09", tz, SEED)).toEqual({ photo: undated });
+    expect(todaysPhoto([undated], "2026-10-09", tz, SEED)).toEqual({ photo: undated });
   });
 
   it("TODAY-07 On this day prefers the oldest year, then the oldest upload", () => {
@@ -140,7 +140,7 @@ describe("pictureOfDay", () => {
   it("TODAY-07 a photo taken earlier this year isn't On this day", () => {
     const thisYear = photo("now", "2026-09-01", { takenOn: "2026-09-04" });
 
-    expect(pictureOfDay([thisYear], "2026-09-04", tz, SEED)?.onThisDay).toBeUndefined();
+    expect(todaysPhoto([thisYear], "2026-09-04", tz, SEED)?.onThisDay).toBeUndefined();
   });
 
   it("TODAY-07 a deleted photo isn't On this day", () => {
@@ -149,7 +149,7 @@ describe("pictureOfDay", () => {
       deletedAt: noon("2026-09-03"),
     });
 
-    expect(pictureOfDay([...five, old], "2026-09-04", tz, SEED)?.onThisDay).toBeUndefined();
+    expect(todaysPhoto([...five, old], "2026-09-04", tz, SEED)?.onThisDay).toBeUndefined();
   });
 
   it("TODAY-07 an On this day day doesn't use up a cycle turn", () => {
@@ -168,7 +168,88 @@ describe("pictureOfDay", () => {
   it("LOC-06 the day is the date in the location's zone", () => {
     const lateEvening = five.map((row) => ({ ...row, createdAt: "2026-09-02T06:30:00.000Z" }));
 
-    expect(pictureOfDay(lateEvening, "2026-09-01", tz, SEED)?.photo.id).toBe("a");
-    expect(pictureOfDay(lateEvening, "2026-09-01", "UTC", SEED)).toBeUndefined();
+    expect(todaysPhoto(lateEvening, "2026-09-01", tz, SEED)?.photo.id).toBe("a");
+    expect(todaysPhoto(lateEvening, "2026-09-01", "UTC", SEED)).toBeUndefined();
+  });
+
+  it("TODAY-07 the background photo is skipped for the next one in the cycle", () => {
+    const days = daysFrom("2026-09-06", 3);
+
+    const order = days.map((key) => pickOn(five, key));
+
+    expect(pickOn(five, days[1] ?? "", SEED, order[1])).toBe(order[2]);
+  });
+
+  it("TODAY-07 skipping the background photo doesn't change the other days' picks", () => {
+    const days = daysFrom("2026-09-06", 5);
+
+    const order = days.map((key) => pickOn(five, key));
+
+    expect(days.map((key) => pickOn(five, key, SEED, order[1]))).toEqual(
+      order.map((id, n) => (n === 1 ? order[2] : id)),
+    );
+  });
+
+  it("TODAY-07 a background photo last in its cycle gives way to another photo", () => {
+    const last = pickOn(five, "2026-09-10");
+
+    const pick = pickOn(five, "2026-09-10", SEED, last);
+
+    expect(pick).toBeDefined();
+    expect(pick).not.toBe(last);
+  });
+
+  it("TODAY-07 an On this day photo that is the background gives way to the cycle", () => {
+    const old = photo("old", "2026-09-01", { takenOn: "2024-09-04" });
+
+    const pick = todaysPhoto([...five, old], "2026-09-04", tz, SEED, "old");
+
+    expect(pick?.photo.id).not.toBe("old");
+    expect(pick?.onThisDay).toBeUndefined();
+  });
+
+  it("TODAY-07 the only photo still shows when it is the background", () => {
+    expect(pickOn([photo("a", "2026-10-09")], "2026-10-09", SEED, "a")).toBe("a");
+  });
+});
+
+describe("titleSource", () => {
+  it("TODAY-07 a real title shows as is", () => {
+    expect(titleSource(photo("a", "2026-09-01", { title: "Cannon Beach" }))).toBe("title");
+  });
+
+  it.each(["IMG_4410", "DSC01234", "PXL_20260906_101500", "MVIMG_20260906", "IMG 4410"])(
+    "TODAY-07 the camera file name %s falls back to the place",
+    (title) => {
+      expect(titleSource(photo("a", "2026-09-01", { title, place: "Summer trip" }))).toBe("place");
+    },
+  );
+
+  it("TODAY-07 a title that is the file name falls back to the place", () => {
+    const row = photo("a", "2026-09-01", {
+      title: "halloween-2025",
+      fileName: "halloween-2025.jpg",
+      place: "Home",
+    });
+
+    expect(titleSource(row)).toBe("place");
+  });
+
+  it("TODAY-07 an empty title with no place falls back to the date", () => {
+    const { place: _place, ...row } = photo("a", "2026-09-01", { title: "  " });
+
+    expect(titleSource(row)).toBe("date");
+  });
+});
+
+describe("dailyMoments", () => {
+  const moments = ["a", "b", "c", "d", "e", "f", "g"];
+
+  it("TODAY-07 three moments in a row start at the day of the year", () => {
+    expect(dailyMoments(moments, "2026-10-09")).toEqual(["c", "d", "e"]);
+  });
+
+  it("TODAY-07 the moments wrap around the list", () => {
+    expect(dailyMoments(moments, "2026-01-05")).toEqual(["f", "g", "a"]);
   });
 });

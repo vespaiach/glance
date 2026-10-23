@@ -40,9 +40,8 @@ export const todayAreas = stylex.create({
   clipped: { minHeight: 0, overflow: "hidden" },
 });
 
-export const todayPotdHeights = stylex.create({
-  capped: { height: "calc(25vh - 24px)", minHeight: 0, flexGrow: 0 },
-  tall: { minHeight: 240 },
+export const todayPhotoFrames = stylex.create({
+  capped: { maxHeight: "calc(25dvh - 24px)" },
 });
 
 export const todayType = stylex.createTheme(type, {

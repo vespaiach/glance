@@ -1,4 +1,4 @@
-import { FIXTURE_FAMILY } from "./data";
+import { FIXTURE_FAMILY, FIXTURE_PHOTOS } from "./data";
 import { parseFixtureParams } from "./params";
 
 describe("parseFixtureParams", () => {
@@ -208,6 +208,18 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("qr=open")).toEqual({ qr: "open" });
     expect(parseFixtureParams("qr=failed")).toEqual({ qr: "failed" });
     expect(parseFixtureParams("qr=done")).toEqual({});
+  });
+
+  it("TODAY-07 reads potd=qr, potd=error and potdlong=1", () => {
+    expect(parseFixtureParams("?potd=qr&potdlong=1")).toEqual({ potd: "qr", potdlong: true });
+    expect(parseFixtureParams("?potd=error")).toEqual({ potd: "error" });
+  });
+
+  it("TODAY-07 reads potd= a fixture photo's slug as that photo's id", () => {
+    const coast = FIXTURE_PHOTOS.find((photo) => photo.title === "Cannon Beach");
+
+    expect(parseFixtureParams("?potd=coast")).toEqual({ potdPhoto: coast?.id });
+    expect(parseFixtureParams("?potd=nowhere")).toEqual({});
   });
 
   it("§6 ignores params that are not fixture params", () => {

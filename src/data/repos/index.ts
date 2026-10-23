@@ -34,7 +34,7 @@ export {
   usePhotoSrc,
   usePhotos,
   usePhotosRepo,
-  usePictureOfDay,
+  useTodaysPhoto,
 } from "./photos";
 export {
   type DevicePosition,
@@ -47,6 +47,7 @@ export {
   type DisplayBoot,
   type FixtureParams,
   type FixtureUpload,
+  fixtureLongPhotoTitle,
   fixtureOtherEmail,
   fixtureParamsFor,
   fixtureSheetTargets,

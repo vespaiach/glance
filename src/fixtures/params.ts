@@ -1,6 +1,6 @@
 import { codeDigits } from "@/domain/signIn";
 import { zonedInstant } from "@/domain/zone";
-import { FIXTURE_TIME_ZONE, fixtureTagId } from "./data";
+import { FIXTURE_TIME_ZONE, fixturePhotoId, fixtureTagId } from "./data";
 
 const CHOICES = {
   sheet: ["event", "newevent", "note", "newnote", "allday", "past", "photo", "photometa"],
@@ -43,6 +43,7 @@ const CHOICES = {
   chrome: ["0"],
   qr: ["open", "failed"],
   dp: ["open"],
+  potd: ["qr", "error"],
 } as const;
 
 type Choices = typeof CHOICES;
@@ -66,6 +67,8 @@ export type FixtureParams = ChoiceParams & {
   keepPlace?: true;
   now?: Date;
   pending?: number;
+  potdPhoto?: string;
+  potdlong?: true;
   span24?: true;
   switch?: true;
   who?: string[];
@@ -102,6 +105,8 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
 
   const code = codeDigits(query.get("code") ?? "");
 
+  const potdPhoto = fixturePhotoId(query.get("potd") ?? "");
+
   return {
     ...readChoices(query),
     ...readFlags(query),
@@ -112,6 +117,7 @@ export function parseFixtureParams(search: string | URLSearchParams, pathname = 
     ...(who && { who }),
     ...(backin !== undefined && { backin }),
     ...(code && { code }),
+    ...(potdPhoto && { potdPhoto }),
   };
 }
 
@@ -161,6 +167,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("full") === "1" && { full: true }),
     ...(query.get("hold") === "1" && { hold: true }),
     ...(query.get("kb") === "1" && { kb: true }),
+    ...(query.get("potdlong") === "1" && { potdlong: true }),
     ...(query.get("span") === "24" && { span24: true }),
     ...(query.get("switch") === "1" && { switch: true }),
     ...(query.get("whosheet") === "1" && { whosheet: true }),

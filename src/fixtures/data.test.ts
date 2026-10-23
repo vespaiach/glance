@@ -5,7 +5,6 @@ import { eventDayKey } from "@/domain/allDay";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { eventStatus } from "@/domain/eventStatus";
 import { noteExpired, noteStamp } from "@/domain/notes";
-import { pictureOfDay } from "@/domain/pictureOfDay";
 import {
   AccountSchema,
   AccountSettingsSchema,
@@ -18,6 +17,7 @@ import {
 import { isTimeZone } from "@/domain/signIn";
 import { type EventWho, whoLabel } from "@/domain/tags";
 import { formatClock, minutesOfDay } from "@/domain/time";
+import { todaysPhoto } from "@/domain/todaysPhoto";
 import { rainStart } from "@/domain/weather";
 import { dateKey, wallTime } from "@/domain/zone";
 import {
@@ -215,8 +215,8 @@ describe("Appendix A fixtures", () => {
     ).toBe(false);
   });
 
-  it("TODAY-07 Cannon Beach is the picture of the day on Oct 9", () => {
-    const pick = pictureOfDay(FIXTURE_PHOTOS, dateKey(FIXTURE_NOW, tz), tz, FIXTURE_ACCOUNT.id);
+  it("TODAY-07 Cannon Beach is today’s photo on Oct 9", () => {
+    const pick = todaysPhoto(FIXTURE_PHOTOS, dateKey(FIXTURE_NOW, tz), tz, FIXTURE_ACCOUNT.id);
 
     expect(pick).toEqual({ photo: expect.objectContaining({ title: "Cannon Beach" }) });
   });
