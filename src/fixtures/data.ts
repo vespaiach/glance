@@ -420,6 +420,9 @@ export const FIXTURE_PLACES: Readonly<Record<string, readonly WeatherLocation[]>
 
 export const FIXTURE_UNKNOWN_PLACE = "Pordland";
 
+export const FIXTURE_LONG_PHOTO_TITLE =
+  "Kindergarten graduation with the whole class at Lincoln Elementary";
+
 export interface FixtureUpload {
   title: string;
   status: "uploading" | "paused" | "failed";
@@ -490,6 +493,10 @@ export function fixturePhotoImage(photoId: string): string | undefined {
   const slug = PHOTO_IMAGES.get(photoId);
 
   return slug && imagePath(slug);
+}
+
+export function fixturePhotoId(slug: string): string | undefined {
+  return [...PHOTO_IMAGES].find(([, each]) => each === slug)?.[0];
 }
 
 export function fixtureTagId(key: string): string | undefined {

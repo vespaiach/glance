@@ -4,6 +4,7 @@ import type { Account, AccountSettings } from "@/domain/schemas";
 import {
   FIXTURE_ACCOUNT,
   FIXTURE_LOCATED_PLACE,
+  FIXTURE_LONG_PHOTO_TITLE,
   FIXTURE_NEW_NOTE_DRAFT,
   FIXTURE_OTHER_EMAIL,
   FIXTURE_OTHER_ZONE_PLACE,
@@ -58,6 +59,8 @@ export const fixtureWeatherSearch = {
 };
 
 export const fixtureUploads = FIXTURE_UPLOADS;
+
+export const fixtureLongPhotoTitle = FIXTURE_LONG_PHOTO_TITLE;
 
 export const fixtureTimeZone = FIXTURE_TIME_ZONE;
 

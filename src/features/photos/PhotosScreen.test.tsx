@@ -141,7 +141,7 @@ test("PHOTO-01 tapping a thumb features it and the chevrons wrap at both ends", 
   expect(featuredTitle()).toBe("Forest Park trail");
 });
 
-test("PHOTO-01 opened from the picture of the day, that photo is featured and the slideshow paused", async () => {
+test("PHOTO-01 opened from Today’s photo, that photo is featured and the slideshow paused", async () => {
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
   search = `photo=${APPLES.id}`;
 

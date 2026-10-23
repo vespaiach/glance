@@ -5,15 +5,15 @@ import { type EventHero, hasEvent, todayHero } from "@/domain/todayHero";
 import {
   HeroSkeleton,
   HeroSummary,
+  momentsLine,
   NowWeather,
   OpenDay,
-  PictureOfDay,
-  PictureOfDayEmpty,
-  PictureOfDayPanel,
-  PictureOfDaySkeleton,
+  photoText,
+  type ShownPhoto,
   TodayHero,
   TodayNotes,
   TodaySchedule,
+  TodaysPhoto,
 } from "@/features/today";
 import { GalleryGroup } from "./GalleryGroup";
 import {
@@ -22,10 +22,13 @@ import {
   COMING_UP_EVENTS,
   FULL_WEATHER,
   GALLERY_FAMILY,
+  GALLERY_PHOTOS,
   GALLERY_TZ,
   gallery,
+  galleryPhotoSrc,
   NOW,
   octoberAt,
+  PORTRAIT_PHOTO,
   TODAY_EVENTS,
   TODAY_MANY,
   TODAY_NOTES,
@@ -63,48 +66,88 @@ const OPEN_DAYS = [
   { key: "after-sunset", hero: WIDE, now: octoberAt(9, 20, 30), events: [] },
 ] as const;
 
+const OTHER_THUMBS = GALLERY_PHOTOS.slice(1).map((photo) => ({
+  id: photo.id,
+  src: galleryPhotoSrc(photo.id),
+}));
+
+const shownPhoto = (
+  photo: typeof TODAY_PHOTO,
+  others: ShownPhoto["others"],
+  onThisDay?: number,
+): ShownPhoto => ({
+  photo,
+  src: photo === PORTRAIT_PHOTO ? galleryPhotoSrc(photo.id) : TODAY_PHOTO_SRC,
+  text: photoText(photo, onThisDay, 2026),
+  others,
+});
+
+const ready = (shown: ShownPhoto) => ({ kind: "ready", data: [shown] }) as const;
+
+const LONG_TITLE = {
+  ...TODAY_PHOTO,
+  title: "Kindergarten graduation with the whole class at Lincoln Elementary",
+};
+
+const photoProps = {
+  online: true,
+  fromPhone: true,
+  moments: momentsLine("2026-10-09"),
+  onAdd: ignore,
+  onChooseFiles: ignore,
+  onCloseQr: ignore,
+  onOpen: ignore,
+  onOpenPhotos: ignore,
+} as const;
+
 const PICTURES = [
-  {
-    key: "photo",
-    picture: (
-      <PictureOfDayPanel onOpenPhotos={ignore}>
-        <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} onOpen={ignore} />
-      </PictureOfDayPanel>
-    ),
-  },
+  { key: "photo", props: { state: ready(shownPhoto(TODAY_PHOTO, OTHER_THUMBS)) } },
   {
     key: "on-this-day",
-    picture: (
-      <PictureOfDayPanel onThisDay={2025} onOpenPhotos={ignore}>
-        <PictureOfDay photo={TODAY_PHOTO} src={TODAY_PHOTO_SRC} onOpen={ignore} />
-      </PictureOfDayPanel>
-    ),
+    props: {
+      state: ready(shownPhoto({ ...TODAY_PHOTO, takenOn: "2024-10-09" }, OTHER_THUMBS, 2024)),
+    },
+  },
+  { key: "only-photo", props: { state: ready(shownPhoto(TODAY_PHOTO, [])) } },
+  { key: "portrait", props: { state: ready(shownPhoto(PORTRAIT_PHOTO, OTHER_THUMBS)) } },
+  {
+    key: "camera-name",
+    props: {
+      state: ready(shownPhoto({ ...TODAY_PHOTO, title: "IMG_4410" }, OTHER_THUMBS.slice(0, 1))),
+    },
   },
   {
-    key: "empty",
-    picture: (
-      <PictureOfDayPanel onOpenPhotos={ignore}>
-        <PictureOfDayEmpty onOpenPhotos={ignore} canUpload />
-      </PictureOfDayPanel>
-    ),
+    key: "long-title",
+    narrow: true,
+    props: { state: ready(shownPhoto(LONG_TITLE, OTHER_THUMBS)) },
   },
   {
-    key: "small-empty",
-    picture: (
-      <PictureOfDayPanel onOpenPhotos={ignore}>
-        <PictureOfDayEmpty onOpenPhotos={ignore} canUpload={false} />
-      </PictureOfDayPanel>
-    ),
+    key: "didnt-load",
+    props: { state: ready(shownPhoto(TODAY_PHOTO, OTHER_THUMBS)), defaultFailed: true },
   },
   {
-    key: "loading",
-    picture: (
-      <PictureOfDayPanel onOpenPhotos={ignore}>
-        <PictureOfDaySkeleton />
-      </PictureOfDayPanel>
-    ),
+    key: "offline",
+    props: {
+      state: ready(shownPhoto(TODAY_PHOTO, OTHER_THUMBS)),
+      defaultFailed: true,
+      online: false,
+    },
   },
-];
+  { key: "loading", props: { state: { kind: "loading" } } },
+  { key: "empty-phone", props: { state: { kind: "empty" } } },
+  { key: "empty-files", narrow: true, props: { state: { kind: "empty" }, fromPhone: false } },
+  {
+    key: "first-upload",
+    props: {
+      state: { kind: "empty" },
+      upload: { preview: "/fixtures/photos/orchard.svg", percent: 64, status: "Uploading · 64%" },
+    },
+  },
+  {
+    key: "qr",
+    props: { state: { kind: "empty" }, qr: { url: "https://glance.example/qr/sample" } },
+  },
+] as const;
 
 const styles = stylex.create({
   hero: {
@@ -112,9 +155,12 @@ const styles = stylex.create({
     minHeight: 640,
   },
   picture: {
-    width: 400,
-    height: 360,
+    width: 480,
     display: "flex",
+    flexDirection: "column",
+  },
+  pictureNarrow: {
+    width: 300,
   },
   zone: {
     width: 560,
@@ -287,9 +333,9 @@ export function TodayGallery({ season }: { season: Season }) {
           tz={GALLERY_TZ}
         />
       </TodayHero>
-      {PICTURES.map(({ key, picture }) => (
-        <div key={key} {...stylex.props(styles.picture)}>
-          {picture}
+      {PICTURES.map(({ key, props, ...size }) => (
+        <div key={key} {...stylex.props(styles.picture, "narrow" in size && styles.pictureNarrow)}>
+          <TodaysPhoto {...photoProps} {...props} />
         </div>
       ))}
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "ready", data: TODAY_EVENTS }} {...schedule} />

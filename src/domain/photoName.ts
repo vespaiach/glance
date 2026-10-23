@@ -31,6 +31,10 @@ export function nameFromFile(fileName: string): string | undefined {
   return REAL_WORD.test(name) ? capitalized(name) : undefined;
 }
 
+export function isCameraName(title: string): boolean {
+  return CAMERA_PREFIX.test(title);
+}
+
 export function dateFromFile(fileName: string): string | undefined {
   const [, year = "", , month = "", day = ""] = FILE_DATE.exec(fileName) ?? [];
 

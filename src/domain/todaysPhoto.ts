@@ -1,9 +1,12 @@
+import { isCameraName } from "./photoName";
 import type { Photo } from "./schemas";
-import { addDays, dateKey } from "./zone";
+import { addDays, dateKey, parseDateKey } from "./zone";
 
 export type PhotoRow = Photo & { deletedAt?: string };
 
-export type PictureOfDayPick = { photo: PhotoRow; onThisDay?: number };
+export type TodaysPhotoPick = { photo: PhotoRow; onThisDay?: number };
+
+export type TitleSource = "title" | "place" | "date";
 
 type Entry = { row: PhotoRow; uploaded: string; deleted?: string };
 
@@ -18,18 +21,25 @@ const yearOf = (key: string) => Number(key.slice(0, 4));
 
 const monthDay = (key: string) => key.slice(5);
 
+const DAY_MS = 86_400_000;
+
+const MOMENTS_SHOWN = 3;
+
 type Index = {
   entries: readonly Entry[];
   byDay: Map<string, Entry[]>;
   byDate: Map<string, Dated[]>;
 };
 
-export function pictureOfDay(
+type Day = { index: Index; key: string; seed: string; skip?: string };
+
+export function todaysPhoto(
   photos: readonly PhotoRow[],
   dayKey: string,
   tz: string,
   seed: string,
-): PictureOfDayPick | undefined {
+  skip?: string,
+): TodaysPhotoPick | undefined {
   const entries = photos.map((row) => entryOf(row, tz)).sort(byUpload);
 
   const first = entries[0]?.uploaded;
@@ -40,11 +50,38 @@ export function pictureOfDay(
 
   let replay: Replay = { cycle: -1, queue: [] };
 
-  for (let key = first; key <= dayKey; key = addDays(key, 1)) {
-    replay = replayDay(replay, index, key, seed);
+  for (let key = first; key < dayKey; key = addDays(key, 1)) {
+    replay = replayDay(replay, { index, key, seed });
   }
 
-  return pickOf(replay);
+  return pickOf(replayDay(replay, { index, key: dayKey, seed, skip }));
+}
+
+export function titleSource(photo: Photo): TitleSource {
+  if (!isFileTitle(photo)) return "title";
+
+  return photo.place ? "place" : "date";
+}
+
+export function dailyMoments<T>(items: readonly T[], dayKey: string): T[] {
+  const start = dayOfYear(dayKey);
+
+  return Array.from(
+    { length: Math.min(MOMENTS_SHOWN, items.length) },
+    (_, n) => items[(start + n) % items.length] as T,
+  );
+}
+
+function isFileTitle({ title, fileName }: Photo): boolean {
+  const trimmed = title.trim();
+
+  return trimmed === "" || isCameraName(trimmed) || trimmed === fileName?.replace(/\.[^.]+$/, "");
+}
+
+function dayOfYear(dayKey: string): number {
+  const date = parseDateKey(dayKey);
+
+  return (date.getTime() - Date.UTC(date.getUTCFullYear(), 0, 0)) / DAY_MS;
 }
 
 function entryOf(row: PhotoRow, tz: string): Entry {
@@ -100,17 +137,20 @@ function datedOf(entry: Entry): Dated[] {
   return entry.row.takenOn === undefined ? [] : [{ entry, taken: entry.row.takenOn }];
 }
 
-function onThisDay(index: Index, key: string): Dated | undefined {
+function onThisDay(index: Index, key: string, skip?: string): Dated | undefined {
   const matches = (index.byDate.get(monthDay(key)) ?? []).filter(
     ({ entry, taken }) =>
-      entry.uploaded < key && aliveOn(entry, key) && yearOf(taken) < yearOf(key),
+      entry.uploaded < key &&
+      aliveOn(entry, key) &&
+      yearOf(taken) < yearOf(key) &&
+      entry.row.id !== skip,
   );
 
   return matches.sort((a, b) => yearOf(a.taken) - yearOf(b.taken) || byUpload(a.entry, b.entry))[0];
 }
 
-function cycleStart(replay: Replay, entries: readonly Entry[], key: string, seed: string): Replay {
-  const tags = entries.filter((entry) => entry.uploaded < key && aliveOn(entry, key));
+function cycleStart(replay: Replay, { index, key, seed }: Day): Replay {
+  const tags = index.entries.filter((entry) => entry.uploaded < key && aliveOn(entry, key));
 
   return { cycle: replay.cycle + 1, queue: shuffled(tags, seed, replay.cycle + 1) };
 }
@@ -121,24 +161,44 @@ function fromNextAlive(queue: readonly Entry[], key: string): Entry[] {
   return next === -1 ? [] : queue.slice(next);
 }
 
-function replayDay(replay: Replay, index: Index, key: string, seed: string): Replay {
-  const special = onThisDay(index, key);
+function replayDay(replay: Replay, day: Day): Replay {
+  const { index, key, skip } = day;
+
+  const special = onThisDay(index, key, skip);
 
   const live = { ...replay, queue: fromNextAlive(replay.queue, key) };
 
-  const started =
-    special || live.queue.length > 0 ? live : cycleStart(live, index.entries, key, seed);
+  const started = special || live.queue.length > 0 ? live : cycleStart(live, day);
 
   const queue = [...started.queue, ...(index.byDay.get(key) ?? [])];
 
   if (special) return { ...started, queue, pick: special.entry, year: yearOf(special.taken) };
 
-  const { year: _year, ...rest } = started;
+  const { year: _year, ...rest } = { ...started, queue };
 
-  return { ...rest, queue: queue.slice(1), pick: queue[0] };
+  return takeTurn(rest, day);
 }
 
-function pickOf({ pick, year }: Replay): PictureOfDayPick | undefined {
+function takeTurn(replay: Replay, day: Day): Replay {
+  const ahead = [...replay.queue, ...nextCycle(replay, day)];
+
+  const turn = Math.max(
+    0,
+    ahead.findIndex((entry) => entry.row.id !== day.skip),
+  );
+
+  return { ...replay, queue: ahead.toSpliced(turn, 1), pick: ahead[turn] };
+}
+
+function nextCycle(replay: Replay, day: Day): Entry[] {
+  const { skip } = day;
+
+  if (skip === undefined || replay.queue.some((entry) => entry.row.id !== skip)) return [];
+
+  return cycleStart(replay, day).queue;
+}
+
+function pickOf({ pick, year }: Replay): TodaysPhotoPick | undefined {
   if (pick === undefined) return undefined;
 
   return year === undefined ? { photo: pick.row } : { photo: pick.row, onThisDay: year };

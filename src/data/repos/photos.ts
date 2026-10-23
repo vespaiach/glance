@@ -1,8 +1,8 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
-import { type PictureOfDayPick, pictureOfDay } from "@/domain/pictureOfDay";
 import type { Result } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
+import { type TodaysPhotoPick, todaysPhoto } from "@/domain/todaysPhoto";
 import type { StoredPhoto } from "../db";
 import { photoFileUrl } from "../sw/rules";
 import type { UploadError } from "../sync/transport";
@@ -59,14 +59,18 @@ export function usePhoto(id: string): StoredPhoto | null | undefined {
   }, [db, id]);
 }
 
-export function usePictureOfDay(dayKey: string, tz: string): PictureOfDayPick | null | undefined {
+export function useTodaysPhoto(
+  dayKey: string,
+  tz: string,
+  skip: string | undefined,
+): TodaysPhotoPick | null | undefined {
   const { db, accountId } = useRepoStore();
 
   const rows = useLiveQuery(() => db.photos.toArray(), [db]);
 
   return useMemo(
-    () => rows && (pictureOfDay(rows, dayKey, tz, accountId) ?? null),
-    [rows, dayKey, tz, accountId],
+    () => rows && (todaysPhoto(rows, dayKey, tz, accountId, skip) ?? null),
+    [rows, dayKey, tz, accountId, skip],
   );
 }
 

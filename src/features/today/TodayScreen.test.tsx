@@ -66,6 +66,17 @@ const COAST: Photo = {
   createdAt: "2026-10-05T19:05:00.000Z",
 };
 
+const COAST_NAME = "Today’s photo: Cannon Beach, Sep 6, Summer trip";
+
+const SWING: Photo = {
+  ...COAST,
+  id: "0195f0a0-0000-7000-8000-000000000012",
+  title: "Mia on the swing",
+  takenOn: "2026-07-12",
+  place: "Laurelhurst Park",
+  createdAt: "2026-10-04T19:05:00.000Z",
+};
+
 const WIFI: Note = {
   id: "0195f0a0-0000-7000-8000-000000000003",
   text: "Wi-Fi password is on the fridge!",
@@ -149,7 +160,9 @@ function renderToday({ who }: { who?: string[] } = {}) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
       <SeasonProvider>
-        <SheetHost>{children}</SheetHost>
+        <NetworkProvider>
+          <SheetHost>{children}</SheetHost>
+        </NetworkProvider>
       </SeasonProvider>
     </Shell>
   );
@@ -356,14 +369,12 @@ test("TODAY-11 each hour label shows that hour's weather", async () => {
   expect(await screen.findByText("63°")).toBeInTheDocument();
 });
 
-test("TODAY-07 tapping the picture of the day opens Photos on that photo", async () => {
+test("TODAY-07 tapping today's photo opens Photos on that photo", async () => {
   await store.db.photos.put(synced(COAST));
 
   renderToday();
 
-  await userEvent.click(
-    await screen.findByRole("button", { name: "Picture of the day: Cannon Beach" }),
-  );
+  await userEvent.click(await screen.findByRole("button", { name: COAST_NAME }));
 
   expect(navigation.push).toHaveBeenCalledWith(`/photos?photo=${COAST.id}`);
 });
@@ -376,47 +387,56 @@ test("TODAY-07 a photo taken on this date in an earlier year shows as On this da
   expect(await screen.findByText("On this day · 2025")).toBeInTheDocument();
 });
 
-test("TODAY-07 with no photos Upload a photo goes to Photos", async () => {
+test("TODAY-07 the more row and All photos go to Photos", async () => {
+  await store.db.photos.put(synced(COAST));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "All photos" }));
+
+  await store.db.photos.put(synced(SWING));
+
+  await userEvent.click(await screen.findByRole("button", { name: "1 more photo, open Photos" }));
+
+  expect(navigation.push).toHaveBeenNthCalledWith(1, "/photos");
+  expect(navigation.push).toHaveBeenNthCalledWith(2, "/photos");
+});
+
+test("TODAY-07 on large the empty tile opens Add from your phone inside the panel", async () => {
   await markSynced(store);
 
   renderToday();
 
-  await userEvent.click(await screen.findByRole("button", { name: /Upload a photo/ }));
+  await userEvent.click(await screen.findByRole("button", { name: "Add photos from your phone" }));
 
-  expect(navigation.push).toHaveBeenCalledWith("/photos");
+  expect(screen.getByRole("group", { name: "Add photos from your phone" })).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+  expect(screen.getByText("A memory to share?")).toBeInTheDocument();
 });
 
-test("TODAY-07 on small the empty tile has no Upload a photo pill and still goes to Photos", async () => {
+test("TODAY-07 on small the empty tile opens the file picker", async () => {
   await markSynced(store);
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: () => {},
     removeEventListener: () => {},
   }));
+  const click = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
 
   renderToday();
 
-  await screen.findByText("Share a family photo and keep the memory here.");
+  await userEvent.click(await screen.findByRole("button", { name: "Add photos" }));
 
-  expect(screen.queryByText("Upload a photo")).not.toBeInTheDocument();
-
-  await userEvent.click(screen.getByText("Share a family photo and keep the memory here."));
-
-  expect(navigation.push).toHaveBeenCalledWith("/photos");
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(
+    screen.queryByRole("group", { name: "Add photos from your phone" }),
+  ).not.toBeInTheDocument();
 });
 
-test("TODAY-07 All photos goes to Photos", async () => {
-  await markSynced(store);
-
-  renderToday();
-
-  await userEvent.click(await screen.findByRole("button", { name: "All photos" }));
-
-  expect(navigation.push).toHaveBeenCalledWith("/photos");
-});
-
-test("TODAY-07 TODAY-10 the picture of the day stays on a photo background", async () => {
-  await store.db.photos.put(synced(COAST));
+test("TODAY-07 TODAY-10 on a photo background today's photo is a different photo", async () => {
+  await store.db.photos.bulkPut([synced(COAST), synced(SWING)]);
   await createSettingsRepo(store).update({
     background: { mode: "photo", photoId: COAST.id, dim: 0.2, rotate: "daily" },
   });
@@ -424,11 +444,12 @@ test("TODAY-07 TODAY-10 the picture of the day stays on a photo background", asy
   renderToday();
 
   expect(
-    await screen.findByRole("button", { name: "Picture of the day: Cannon Beach" }),
+    await screen.findByRole("button", { name: /^Today’s photo: Mia on the swing/ }),
   ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: COAST_NAME })).not.toBeInTheDocument();
 });
 
-test("TODAY-10 a photo background with no photos keeps the Upload a photo slot", async () => {
+test("TODAY-10 a photo background with no photos keeps the add tile", async () => {
   await markSynced(store);
   await createSettingsRepo(store).update({
     background: { mode: "photo", photoId: COAST.id, dim: 0.2, rotate: "daily" },
@@ -436,7 +457,7 @@ test("TODAY-10 a photo background with no photos keeps the Upload a photo slot",
 
   renderToday();
 
-  expect(await screen.findByRole("button", { name: /Upload a photo/ })).toBeInTheDocument();
+  expect(await screen.findByText("A memory to share?")).toBeInTheDocument();
 });
 
 test("TODAY-08 with no location the Now panel asks for one", async () => {
