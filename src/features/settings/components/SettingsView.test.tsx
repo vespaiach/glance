@@ -212,6 +212,14 @@ test("SET-05 the Hide sidebar when idle switch shows and saves the setting", asy
   expect(props.onChange).toHaveBeenCalledWith({ hideSidebarWhenIdle: false });
 });
 
+test("SET-05 the Hide sidebar when idle switch says it hides after 15 seconds", () => {
+  renderView();
+
+  expect(
+    screen.getByRole("switch", { name: "Hide sidebar when idle" }),
+  ).toHaveAccessibleDescription("After 15 seconds without a touch. Any tap brings it back.");
+});
+
 test("SET-06 the Ambient tile shows the hours in the clock format and opens the Ambient screen page", async () => {
   const props = renderView();
 

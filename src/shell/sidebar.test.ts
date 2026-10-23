@@ -77,11 +77,14 @@ test.each([
 });
 
 test.each([
-  ["hidden", 0],
-  ["rail", 80],
-  ["expanded", 332],
-] as const)("SHELL-10 a %s sidebar insets the page by %i px", (mode, inset) => {
-  expect(sidebarInset(mode, false)).toBe(inset);
+  ["hidden", "calendar", 36],
+  ["hidden", "today", 0],
+  ["rail", "calendar", 80],
+  ["rail", "today", 80],
+  ["expanded", "calendar", 332],
+  ["expanded", "today", 332],
+] as const)("SHELL-10 a %s sidebar on %s insets the page by %i px", (mode, view, inset) => {
+  expect(sidebarInset(mode, view, false)).toBe(inset);
 });
 
 const SMALL = { small: true } as const;
@@ -122,9 +125,14 @@ test.each([
   expect(initialSidebar(rail, view, true)).toEqual({ mode });
 });
 
-test.each(["hidden", "rail", "expanded"] as const)(
-  "SHELL-10 on small a %s sidebar insets the page by 0 px",
-  (mode) => {
-    expect(sidebarInset(mode, true)).toBe(0);
+test.each([
+  ["hidden", "calendar", 24],
+  ["hidden", "today", 0],
+  ["expanded", "calendar", 24],
+  ["expanded", "today", 0],
+] as const)(
+  "SHELL-10 on small a %s sidebar on %s insets the page by %i px",
+  (mode, view, inset) => {
+    expect(sidebarInset(mode, view, true)).toBe(inset);
   },
 );

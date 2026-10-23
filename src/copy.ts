@@ -465,7 +465,7 @@ export const copy = {
     },
     hideSidebar: {
       title: "Hide sidebar when idle",
-      body: "After 20 seconds without a touch. Any tap brings it back.",
+      body: "After 15 seconds without a touch. Any tap brings it back.",
     },
     idle: {
       title: "Back to Today after",

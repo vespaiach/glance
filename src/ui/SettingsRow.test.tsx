@@ -37,7 +37,7 @@ test("SET-05 SettingsRow with a switch is one switch named by its title and desc
   render(
     <SettingsRow
       title="Hide sidebar when idle"
-      description="After 20 seconds without a touch. Any tap brings it back."
+      description="After 15 seconds without a touch. Any tap brings it back."
       checked
       onCheckedChange={() => {}}
     />,
@@ -47,7 +47,7 @@ test("SET-05 SettingsRow with a switch is one switch named by its title and desc
 
   expect(toggle).toHaveAttribute("aria-checked", "true");
   expect(toggle).toHaveAccessibleDescription(
-    "After 20 seconds without a touch. Any tap brings it back.",
+    "After 15 seconds without a touch. Any tap brings it back.",
   );
 });
 
@@ -56,14 +56,14 @@ test("SET-05 tapping anywhere on a switch row flips it", async () => {
   render(
     <SettingsRow
       title="Hide sidebar when idle"
-      description="After 20 seconds without a touch. Any tap brings it back."
+      description="After 15 seconds without a touch. Any tap brings it back."
       checked={false}
       onCheckedChange={onCheckedChange}
     />,
   );
 
   await userEvent.click(
-    screen.getByText("After 20 seconds without a touch. Any tap brings it back."),
+    screen.getByText("After 15 seconds without a touch. Any tap brings it back."),
   );
 
   expect(onCheckedChange).toHaveBeenCalledWith(true);

@@ -460,10 +460,10 @@ async function renderIdleShell(params: FixtureParams = {}, sheet: SheetRequest |
 
 const seconds = (n: number) => act(() => vi.advanceTimersByTime(n * 1000));
 
-test("SHELL-11 after 20 s without a touch the rail hides", async () => {
+test("SHELL-11 after 15 s without a touch the rail hides", async () => {
   await renderIdleShell();
 
-  seconds(19);
+  seconds(14);
 
   expect(sidebarMode()).toBe("rail");
 
@@ -472,22 +472,22 @@ test("SHELL-11 after 20 s without a touch the rail hides", async () => {
   expect(sidebarMode()).toBe("hidden");
 });
 
-test("SHELL-11 after 20 s without a touch the open drawer closes to Hidden", async () => {
+test("SHELL-11 after 15 s without a touch the open drawer closes to Hidden", async () => {
   await renderIdleShell({ rail: "open" });
 
-  seconds(20);
+  seconds(15);
 
   expect(sidebarMode()).toBe("hidden");
 });
 
-test("SHELL-11 a touch or a key press restarts the 20 s", async () => {
+test("SHELL-11 a touch or a key press restarts the 15 s", async () => {
   await renderIdleShell();
 
-  seconds(10);
+  seconds(8);
   fireEvent.pointerDown(screen.getByRole("main"));
-  seconds(10);
+  seconds(8);
   fireEvent.keyDown(document.body, { key: "a" });
-  seconds(19);
+  seconds(14);
 
   expect(sidebarMode()).toBe("rail");
 
@@ -499,7 +499,7 @@ test("SHELL-11 a touch or a key press restarts the 20 s", async () => {
 test("SHELL-11 hiding when idle moves no focus", async () => {
   await renderIdleShell();
 
-  seconds(20);
+  seconds(15);
 
   expect(document.activeElement).toBe(document.body);
 });
@@ -520,7 +520,7 @@ test("SHELL-11 the rail stays while the keyboard is up", async () => {
   expect(sidebarMode()).toBe("rail");
 });
 
-test("SHELL-11 the rail stays while a text field is focused and leaving it restarts the 20 s", async () => {
+test("SHELL-11 the rail stays while a text field is focused and leaving it restarts the 15 s", async () => {
   vi.useFakeTimers({ now: new Date("2026-10-09T10:41:00"), shouldAdvanceTime: true });
 
   navigation.pathname = "/calendar";
@@ -535,7 +535,7 @@ test("SHELL-11 the rail stays while a text field is focused and leaving it resta
   expect(sidebarMode()).toBe("rail");
 
   act(() => screen.getByRole("textbox", { name: "Search" }).blur());
-  seconds(19);
+  seconds(14);
 
   expect(sidebarMode()).toBe("rail");
 
@@ -544,16 +544,16 @@ test("SHELL-11 the rail stays while a text field is focused and leaving it resta
   expect(sidebarMode()).toBe("hidden");
 });
 
-test("SHELL-11 tapping the grip shows the Rail and restarts the 20 s", async () => {
+test("SHELL-11 tapping the grip shows the Rail and restarts the 15 s", async () => {
   await renderIdleShell();
 
-  seconds(20);
+  seconds(15);
   seconds(40);
   act(() => grip()?.click());
 
   expect(sidebarMode()).toBe("rail");
 
-  seconds(19);
+  seconds(14);
 
   expect(sidebarMode()).toBe("rail");
 

@@ -93,7 +93,7 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
     <div {...stylex.props(styles.demo)}>
       <Eyebrow>{caption}</Eyebrow>
       <div {...stylex.props(styles.stage, styles[size])}>
-        <div {...stylex.props(styles.page, styles.inset(sidebarInset(state.mode, small)))}>
+        <div {...stylex.props(styles.page, styles.inset(sidebarInset(state.mode, "today", small)))}>
           <div {...stylex.props(styles.panel)}>
             <Eyebrow>{gallery.groups.today}</Eyebrow>
           </div>
