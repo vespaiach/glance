@@ -1,17 +1,17 @@
 import * as stylex from "@stylexjs/stylex";
-import { LogOut, WifiOff } from "lucide-react";
+import { LogOut, MapPin, WifiOff } from "lucide-react";
 import type { Ref } from "react";
 import { copy } from "@/copy";
+import { type AmbientStatus, ambientStatus, driftOffset, driftStep } from "@/domain/ambient";
 import { nextNotableDay } from "@/domain/nextNotableDay";
 import type { AccountSettings, CalendarEvent, Season, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
-import { type Clock as ClockSetting, formatMonth, formatWeekday } from "@/domain/time";
-import { parseDateKey } from "@/domain/zone";
+import { type Clock as ClockSetting, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { conditionText } from "@/features/weather";
 import { season as seasonVars } from "@/theme/seasons.stylex";
 import { ambientType } from "@/theme/themes";
-import { space } from "@/theme/tokens.stylex";
+import { colors, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Clock } from "@/ui/Clock";
 import { Icon } from "@/ui/Icon";
@@ -21,9 +21,11 @@ import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { seasonIcons } from "@/ui/seasonIcons";
 import { weatherIcons } from "@/ui/weatherIcons";
 import { Zone } from "@/ui/Zone";
-import { eventLine } from "../eventLine";
+import { type NextEventLines, nextEventLines, rainDay } from "../nextEvent";
 
 type Unit = AccountSettings["tempUnit"];
+
+type Brightness = AccountSettings["ambientBrightness"];
 
 type AmbientViewProps = {
   season: Season;
@@ -32,15 +34,35 @@ type AmbientViewProps = {
   tz: string;
   offline: boolean;
   signedOut: boolean;
+  place?: string | undefined;
   weather: ZoneState<Weather>;
   unit: Unit;
   nextEvent: ZoneState<CalendarEvent>;
   photoSrc?: string;
   dim: number;
+  brightness: Brightness;
   onWake: () => void;
   wakeRef?: Ref<HTMLButtonElement>;
   xstyle?: stylex.StyleXStyles;
 };
+
+const STATUS = {
+  signedOut: { icon: LogOut, text: copy.ambient.signedOut },
+  offline: { icon: WifiOff, text: copy.ambient.offline },
+} as const;
+
+const HINT_DELAY = "10s";
+
+const fadeOut = stylex.keyframes({
+  from: { opacity: 1 },
+  to: { opacity: 0 },
+});
+
+const ink = stylex.create({
+  full: { color: colors.white },
+  medium: { color: colors.ambientInkMedium },
+  low: { color: colors.ambientInkLow },
+});
 
 const styles = stylex.create({
   root: {
@@ -59,21 +81,26 @@ const styles = stylex.create({
     textAlign: "left",
     cursor: "pointer",
     fontFamily: "inherit",
+    overflow: "hidden",
     backgroundColor: seasonVars.deep,
-    color: seasonVars.onDeep,
   },
+  row: {
+    transitionProperty: "translate",
+    transitionDuration: {
+      default: "2s",
+      "@media (prefers-reduced-motion: reduce)": "0s",
+    },
+    transitionTimingFunction: "ease-in-out",
+  },
+  drift: (x: number, y: number) => ({
+    translate: `${x}px ${y}px`,
+  }),
   top: {
     display: "flex",
     flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: space.md,
-  },
-  topEnd: {
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: space.lg,
+    gap: "12px 24px",
   },
   label: {
     display: "flex",
@@ -84,13 +111,16 @@ const styles = stylex.create({
     letterSpacing: "0.54px",
     textTransform: "uppercase",
   },
-  offline: {
+  place: {
+    minWidth: 0,
+  },
+  status: {
     gap: space.xs,
   },
   bottom: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: space.lg,
+    gap: "24px 48px",
     borderTopWidth: 1,
     borderTopStyle: "solid",
     borderTopColor: "rgba(255, 255, 255, 0.2)",
@@ -99,7 +129,7 @@ const styles = stylex.create({
   weather: {
     display: "flex",
     alignItems: "center",
-    gap: 24,
+    gap: 20,
   },
   column: {
     display: "flex",
@@ -115,12 +145,20 @@ const styles = stylex.create({
   low: {
     fontSize: 17,
     fontWeight: 330,
+    textWrap: "pretty",
+  },
+  updated: {
+    fontFamily: type.fontMono,
+    fontSize: 14,
+    letterSpacing: "0.54px",
+    textTransform: "uppercase",
   },
   event: {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     gap: space.xs,
+    minWidth: 0,
   },
   eyebrow: {
     fontFamily: type.fontMono,
@@ -128,24 +166,44 @@ const styles = stylex.create({
     letterSpacing: "0.54px",
     textTransform: "uppercase",
   },
-  next: {
-    fontSize: "clamp(22px, 2.2vw, 32px)",
+  title: {
+    fontSize: "clamp(24px, 2.6vw, 40px)",
     fontWeight: 340,
-    letterSpacing: "-0.4px",
-    lineHeight: 1.2,
+    letterSpacing: "-0.5px",
+    lineHeight: 1.15,
+    textWrap: "balance",
   },
-  caption: {
+  sub: {
+    fontSize: 17,
+    fontWeight: 330,
+    textWrap: "pretty",
+  },
+  hint: {
     fontFamily: type.fontMono,
     fontSize: type.captionSize,
     letterSpacing: "0.6px",
     textTransform: "uppercase",
+  },
+  hintFade: {
+    animationName: fadeOut,
+    animationDuration: "1.2s",
+    animationDelay: HINT_DELAY,
+    animationTimingFunction: "ease",
+    animationFillMode: "forwards",
   },
   skeleton: {
     opacity: 0.4,
   },
 });
 
-type AmbientWeatherProps = { weather: Weather; now: Date; tz: string; unit: Unit };
+type AmbientWeatherProps = {
+  weather: Weather;
+  now: Date;
+  clock: ClockSetting;
+  tz: string;
+  unit: Unit;
+  offline: boolean;
+};
 
 export function AmbientView({
   season,
@@ -154,47 +212,43 @@ export function AmbientView({
   tz,
   offline,
   signedOut,
+  place,
   weather,
   unit,
   nextEvent,
   photoSrc,
   dim,
+  brightness,
   onWake,
   wakeRef,
   xstyle,
 }: AmbientViewProps) {
+  const { x, y } = driftOffset(driftStep(time));
+
+  const row = [styles.row, styles.drift(x, y)];
+
+  const status = ambientStatus({ signedOut, offline });
+
   return (
     <button
       ref={wakeRef}
       type="button"
       aria-label={copy.ambient.wake}
       onClick={onWake}
-      {...stylex.props(ambientType, styles.root, xstyle)}
+      {...stylex.props(ambientType, styles.root, ink[brightness], xstyle)}
     >
       <PhotoBackdrop image={photoSrc && photoLayer(dim, photoSrc)} />
-      <div {...stylex.props(styles.top)}>
-        <span {...stylex.props(styles.label)}>
-          <Icon icon={seasonIcons[season]} size={24} strokeWidth={1.5} />
-          {copy.today.seasonMonth(copy.season[season], formatMonth(time, tz))}
+      <div {...stylex.props(styles.top, row)}>
+        <span {...stylex.props(styles.label, styles.place)}>
+          <Icon icon={place ? MapPin : seasonIcons[season]} size={24} strokeWidth={1.5} />
+          {place ?? copy.season[season]}
         </span>
-        <div {...stylex.props(styles.topEnd)}>
-          {offline && (
-            <span {...stylex.props(styles.label, styles.offline)}>
-              <Icon icon={WifiOff} size={20} />
-              {copy.ambient.offline}
-            </span>
-          )}
-          {signedOut && (
-            <span {...stylex.props(styles.label, styles.offline)}>
-              <Icon icon={LogOut} size={20} />
-              {copy.ambient.signedOut}
-            </span>
-          )}
-          <span {...stylex.props(styles.label)}>{copy.appName}</span>
-        </div>
+        {status && <Status status={status} />}
       </div>
-      <Clock time={time} tz={tz} hour12={clock === "12h"} />
-      <div {...stylex.props(styles.bottom)}>
+      <div {...stylex.props(row)}>
+        <Clock time={time} tz={tz} hour12={clock === "12h"} />
+      </div>
+      <div {...stylex.props(styles.bottom, row)}>
         <Zone
           state={weather}
           loading={<LineSkeleton label={copy.ambient.loadingWeather} />}
@@ -202,22 +256,30 @@ export function AmbientView({
           failed={null}
         >
           {([current]) =>
-            current && <AmbientWeather weather={current} now={time} tz={tz} unit={unit} />
+            current && (
+              <AmbientWeather
+                weather={current}
+                now={time}
+                clock={clock}
+                tz={tz}
+                unit={unit}
+                offline={offline}
+              />
+            )
           }
         </Zone>
-        <div {...stylex.props(styles.event)}>
-          <span {...stylex.props(styles.eyebrow)}>{copy.ambient.nextEvent}</span>
-          <Zone
-            state={nextEvent}
-            loading={<LineSkeleton label={copy.ambient.loadingEvent} />}
-            empty={<NextEvent>{copy.ambient.nothing}</NextEvent>}
-            failed={null}
-          >
-            {([event]) => event && <NextEvent>{eventLine(event, time, clock, tz)}</NextEvent>}
-          </Zone>
-        </div>
+        <Zone
+          state={nextEvent}
+          loading={<LineSkeleton label={copy.ambient.loadingEvent} />}
+          empty={<NextEvent lines={nothingLines(place !== undefined)} />}
+          failed={null}
+        >
+          {([event]) => event && <NextEvent lines={nextEventLines(event, time, clock, tz)} />}
+        </Zone>
       </div>
-      <span {...stylex.props(styles.caption)}>{copy.ambient.caption}</span>
+      <span {...stylex.props(styles.hint, styles.hintFade, row)}>
+        {signedOut ? copy.ambient.hintSignedOut : copy.ambient.hint}
+      </span>
     </button>
   );
 }
@@ -229,7 +291,26 @@ function lowLine(weather: Weather, now: Date, tz: string, unit: Unit): string {
 
   if (rainy === undefined) return low;
 
-  return `${low} · ${copy.ambient.rain(formatWeekday(parseDateKey(rainy.date), "UTC"), rainy.precip ?? 0)}`;
+  return `${low} · ${copy.ambient.rain(rainDay(rainy.date, now, tz), rainy.precip ?? 0)}`;
+}
+
+function nothingLines(located: boolean): NextEventLines {
+  return {
+    eyebrow: copy.ambient.nextEvent,
+    title: copy.ambient.nothing,
+    place: located ? copy.ambient.addEvents : copy.ambient.addEventsAndLocation,
+  };
+}
+
+function Status({ status }: { status: AmbientStatus }) {
+  const { icon, text } = STATUS[status];
+
+  return (
+    <span {...stylex.props(styles.label, styles.status)}>
+      <Icon icon={icon} size={20} />
+      {text}
+    </span>
+  );
 }
 
 function LineSkeleton({ label }: { label: string }) {
@@ -240,7 +321,7 @@ function LineSkeleton({ label }: { label: string }) {
   );
 }
 
-function AmbientWeather({ weather, now, tz, unit }: AmbientWeatherProps) {
+function AmbientWeather({ weather, now, clock, tz, unit, offline }: AmbientWeatherProps) {
   return (
     <div {...stylex.props(styles.weather)}>
       <Icon icon={weatherIcons[weather.current.icon]} size={56} strokeWidth={1.25} />
@@ -252,11 +333,22 @@ function AmbientWeather({ weather, now, tz, unit }: AmbientWeatherProps) {
           )}
         </span>
         <span {...stylex.props(styles.low)}>{lowLine(weather, now, tz, unit)}</span>
+        {offline && (
+          <span {...stylex.props(styles.updated)}>
+            {copy.ambient.updated(clockAt(weather.fetchedAt, clock, tz))}
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-function NextEvent({ children }: { children: string }) {
-  return <span {...stylex.props(styles.next)}>{children}</span>;
+function NextEvent({ lines }: { lines: NextEventLines }) {
+  return (
+    <div {...stylex.props(styles.event)}>
+      <span {...stylex.props(styles.eyebrow)}>{lines.eyebrow}</span>
+      <span {...stylex.props(styles.title)}>{lines.title}</span>
+      {lines.place && <span {...stylex.props(styles.sub)}>{lines.place}</span>}
+    </div>
+  );
 }

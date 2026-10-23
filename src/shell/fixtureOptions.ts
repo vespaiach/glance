@@ -44,6 +44,7 @@ export function shellOptions(params: FixtureParams, openedAt: Date): ShellOption
     overrides: {
       ...(params.clock && { clock: params.clock }),
       ...(params.season && { season: params.season }),
+      ...(params.bright && { ambientBrightness: params.bright }),
     },
     ...(startsOffline(params) && { pillDelayMs: 0 }),
   };

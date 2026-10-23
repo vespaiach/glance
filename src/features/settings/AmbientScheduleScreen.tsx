@@ -28,11 +28,13 @@ export function AmbientScheduleScreen() {
   return (
     <AmbientScheduleView
       ambient={settings.ambient}
+      brightness={settings.ambientBrightness}
       clock={settings.clock}
       idleTimeout={settings.idleTimeout}
       breakpoint={breakpoint}
       initialPick={pick}
       onChange={(ambient) => void repo.update({ ambient })}
+      onBrightness={(ambientBrightness) => void repo.update({ ambientBrightness })}
       onBack={() => router.push(SETTINGS_PATH)}
       onPreview={() => navigate(AMBIENT_PATH)}
     />

@@ -40,7 +40,7 @@ export const winter = stylex.createTheme(season, {
 });
 
 export const ambientType = stylex.createTheme(type, {
-  clockSize: "clamp(84px, 19vw, 300px)",
+  clockSize: "clamp(84px, min(19vw, 30vh), 300px)",
   clockLs: "-8px",
   eyebrowSize: "clamp(14px, 1.4vw, 20px)",
   captionSize: "16px",

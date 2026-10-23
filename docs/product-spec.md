@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.81 |
+| Status | v0.82 |
 | Date | 2026-10-23 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html) and the side pages (§2) |
@@ -539,7 +539,7 @@ One full-screen button, text on deep. No sidebar and no wordmark; the rows sprea
 | AMB-07 | Signed out during Ambient: it stays, with the signed-out status (AMB-01) and hint (AMB-04), the clock and saved weather; the next tap or the end of hours opens the signed-out form. |
 | AMB-08 | The sidebar's Ambient item and SET-10 "Preview" open Ambient at once, outside the schedule too. |
 | AMB-10 | **Transitions** (every way in and out, replacing the 280 ms fade). Entering: the current view dims to 25% brightness and scales to 98.5% (420 ms ease-in), then Ambient brightens in from 30% (700 ms ease-out) while its rows rise 16 px and fade in one after another (600 ms each, 120 ms apart, from 200 ms). Leaving: Ambient's rows fade out and lift 12 px (240 ms, 40 ms apart), then the next view brightens from 25% and 98.5% to full (520 ms). Taps during either transition are ignored. Reduced motion: switches at once. |
-| AMB-11 | **Burn-in drift:** the four rows move together to the next of 8 offsets (each at most 6 px from the rest position) every 2 min, over 2 s ease-in-out; with reduced motion they jump at once. |
+| AMB-11 | **Burn-in drift:** the four rows move together to the next of 8 offsets (each at most 6 px from the rest position on either axis) every 2 min, over 2 s ease-in-out; with reduced motion they jump at once. |
 
 ### 8.9 Sheets — `SHEET`
 - Modal over a 60% scrim (also over the sidebar). Card radius 32, max width 560, padding `clamp(24px,3vw,40px)`, shadow-3, 56 px close button. Note sheets have their own shape (NOTE-02, NOTE-10).

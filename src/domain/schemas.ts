@@ -181,6 +181,7 @@ export const AccountSettingsSchema = v.object({
     days: v.pipe(v.number(), v.integer(), v.minValue(NOTE_DAYS.min), v.maxValue(NOTE_DAYS.max)),
   }),
   hideSidebarWhenIdle: v.optional(v.boolean(), true),
+  ambientBrightness: v.optional(v.picklist(["full", "medium", "low"]), "medium"),
   ambient: v.optional(AmbientSchema, DEFAULT_AMBIENT),
   weatherLocation: v.optional(WeatherLocationSchema),
 });

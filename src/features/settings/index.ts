@@ -4,5 +4,6 @@ export { LocationView } from "./components/LocationView";
 export { SettingsView } from "./components/SettingsView";
 export { LocationScreen } from "./LocationScreen";
 export { settingsLayout } from "./layout";
+export { placeLabel } from "./location";
 export { SettingsScreen } from "./SettingsScreen";
 export { useQrTile } from "./useQrTile";

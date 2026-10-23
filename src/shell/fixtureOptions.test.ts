@@ -24,6 +24,10 @@ test("SET-02 clock= and season= override the saved settings", () => {
   });
 });
 
+test("AMB-06 bright= overrides the saved Ambient brightness", () => {
+  expect(shellOptions({ bright: "low" }, NOW).overrides).toEqual({ ambientBrightness: "low" });
+});
+
 test("OFF-01 net=offline shows the offline pill at once", () => {
   expect(shellOptions({ net: "offline" }, NOW).pillDelayMs).toBe(0);
   expect(shellOptions({ net: "loading" }, NOW).pillDelayMs).toBeUndefined();

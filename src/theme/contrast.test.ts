@@ -3,7 +3,9 @@ import path from "node:path";
 
 const AA = 4.5;
 
-const AMBIENT_DIM = 0.55;
+const AMBIENT_DIM = 0.6;
+
+const AMBIENT_INKS = ["white", "ambientInkMedium", "ambientInkLow"];
 
 const source = (file: string) => readFileSync(path.join(import.meta.dirname, file), "utf8");
 
@@ -107,4 +109,10 @@ test("A11Y-05 black text on white panels and soft surfaces, and the danger capti
 
 test("AMB-06 white text over the brightest photo under the Ambient dim reads at AA", () => {
   expect(contrast(hexOf("white"), gray(255 * (1 - AMBIENT_DIM)))).toBeGreaterThanOrEqual(AA);
+});
+
+test.each(SEASONS)("AMB-06 every Brightness ink reads at AA on the %s deep color", (season) => {
+  for (const ink of AMBIENT_INKS) {
+    expect(contrast(hexOf(ink), seasonColor(season, "deep"))).toBeGreaterThanOrEqual(AA);
+  }
 });

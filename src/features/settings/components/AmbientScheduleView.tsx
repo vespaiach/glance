@@ -29,14 +29,18 @@ export type AmbientPick = `${SetKey}.${Edge}`;
 
 type AmbientScheduleViewProps = {
   ambient: Ambient;
+  brightness: Brightness;
   clock: Clock;
   idleTimeout: AccountSettings["idleTimeout"];
   breakpoint: Breakpoint;
   initialPick?: AmbientPick | undefined;
   onChange: (ambient: Ambient) => void;
+  onBrightness: (brightness: Brightness) => void;
   onBack: () => void;
   onPreview: () => void;
 };
+
+type Brightness = AccountSettings["ambientBrightness"];
 
 type ShownSet = { key: SetKey; title: string; heading: boolean };
 
@@ -117,6 +121,12 @@ const styles = stylex.create({
   },
   body: {
     fontSize: 17,
+    fontWeight: 330,
+    lineHeight: 1.45,
+    textWrap: "pretty",
+  },
+  note: {
+    fontSize: 16,
     fontWeight: 330,
     lineHeight: 1.45,
     textWrap: "pretty",
@@ -204,11 +214,13 @@ type OverDayProps = Pick<
 
 export function AmbientScheduleView({
   ambient,
+  brightness,
   clock,
   idleTimeout,
   breakpoint,
   initialPick,
   onChange,
+  onBrightness,
   onBack,
   onPreview,
 }: AmbientScheduleViewProps) {
@@ -236,6 +248,7 @@ export function AmbientScheduleView({
             />
           </div>
         </div>
+        <BrightnessField value={brightness} onChange={onBrightness} />
         {shownSets(ambient.mode).map((shown) => (
           <SetFields
             key={shown.key}
@@ -341,6 +354,30 @@ function SetFields({ shown, set, clock, pick, compact, onPick, onChange }: SetFi
         />
       )}
     </fieldset>
+  );
+}
+
+function BrightnessField({
+  value,
+  onChange,
+}: {
+  value: Brightness;
+  onChange: (brightness: Brightness) => void;
+}) {
+  return (
+    <div {...stylex.props(styles.group)}>
+      <Eyebrow>{text.brightness}</Eyebrow>
+      <div {...stylex.props(styles.tabs)}>
+        <PillTabs
+          label={text.brightness}
+          options={text.brightnessLevels}
+          value={value}
+          onChange={onChange}
+          size="lg"
+        />
+      </div>
+      <span {...stylex.props(styles.note)}>{text.brightnessBody}</span>
+    </div>
   );
 }
 
