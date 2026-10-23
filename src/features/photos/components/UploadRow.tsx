@@ -1,18 +1,27 @@
 import * as stylex from "@stylexjs/stylex";
-import { AlertCircle, type LucideIcon, Upload, WifiOff } from "lucide-react";
+import { AlertCircle, type LucideIcon, RotateCw, Upload, WifiOff } from "lucide-react";
 import { copy } from "@/copy";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { Button } from "@/ui/Button";
 import { Icon } from "@/ui/Icon";
 import type { UploadSummary } from "../uploads";
 
 type ShownSummary = Exclude<UploadSummary, { kind: "none" }>;
 
+type UploadRowProps = {
+  summary: ShownSummary;
+  onRetryAll: () => void;
+  onClear: () => void;
+};
+
 const styles = stylex.create({
   root: {
     display: "flex",
+    flexWrap: "wrap",
     alignItems: "center",
-    gap: space.sm,
+    columnGap: space.sm,
+    rowGap: space.xxs,
     minHeight: 48,
     paddingBlock: 10,
     paddingInline: "16px 20px",
@@ -37,6 +46,13 @@ const styles = stylex.create({
   offlineText: {
     fontWeight: 480,
   },
+  actions: {
+    display: "flex",
+    gap: space.xxs,
+    marginBlock: -6,
+    marginLeft: "auto",
+    marginRight: -12,
+  },
   meta: {
     fontFamily: type.fontMono,
     fontSize: type.captionSize,
@@ -52,7 +68,7 @@ const ICONS: Record<ShownSummary["kind"], LucideIcon> = {
   uploading: Upload,
 };
 
-export function UploadRow({ summary }: { summary: ShownSummary }) {
+export function UploadRow({ summary, onRetryAll, onClear }: UploadRowProps) {
   const offline = summary.kind === "offline";
 
   return (
@@ -61,6 +77,18 @@ export function UploadRow({ summary }: { summary: ShownSummary }) {
       <span {...stylex.props(styles.text, offline && styles.offlineText)}>{rowText(summary)}</span>
       {summary.kind === "uploading" && (
         <span {...stylex.props(styles.meta)}>{copy.photos.tile.percent(summary.percent)}</span>
+      )}
+      {summary.kind === "failed" && (
+        <div {...stylex.props(styles.actions)}>
+          {summary.retryable && (
+            <Button variant="ghost" icon={RotateCw} onClick={onRetryAll}>
+              {copy.photos.row.retryAll}
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onClear}>
+            {copy.photos.row.clear}
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -199,6 +199,14 @@ test("PHOTO-01 opened with no photo, the slideshow plays as usual", () => {
   expect(openSlideshow(AT, null)).toEqual(startSlideshow(AT));
 });
 
+test("PHOTO-01 play=0 opens the slideshow paused on the first photo", () => {
+  expect(openSlideshow(AT, null, false)).toEqual({ kind: "paused", index: 0 });
+});
+
+test("PHOTO-01 a photo id opens pinned on it whether or not the slideshow plays", () => {
+  expect(openSlideshow(AT, "apples", false)).toEqual(openSlideshow(AT, "apples"));
+});
+
 test("PHOTO-01 the pinned photo is found once the photos load", () => {
   const show = openSlideshow(AT, "apples");
 

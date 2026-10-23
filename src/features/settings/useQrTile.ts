@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { useQrCodes } from "@/data/repos";
-import { QR_CODE_TTL_MS, qrSecondsLeft } from "@/domain/qrSignIn";
+import { QR_CODE_TTL_MS, type QrOpens, qrSecondsLeft } from "@/domain/qrSignIn";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { initialQrTile, type QrFixture, type QrTile, qrTile } from "./qrTile";
 
@@ -15,7 +15,7 @@ export type QrSignIn = {
 
 const TTL_S = QR_CODE_TTL_MS / 1000;
 
-export function useQrTile(fixture: QrFixture | undefined): QrSignIn {
+export function useQrTile(fixture: QrFixture | undefined, opens?: QrOpens): QrSignIn {
   const { issueQr, voidQr } = useQrCodes();
 
   const clock = useNowStore();
@@ -37,7 +37,7 @@ export function useQrTile(fixture: QrFixture | undefined): QrSignIn {
 
     const asked = request.current;
 
-    const answer = await issueQr();
+    const answer = await issueQr(opens);
 
     if (asked !== request.current) {
       if (answer.ok) void voidQr(answer.value.url);

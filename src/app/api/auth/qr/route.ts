@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { QrVoidRequestSchema } from "@/domain/schemas";
+import { QrIssueRequestSchema, QrVoidRequestSchema } from "@/domain/schemas";
 import { issueQrLink, voidQrLink } from "@/server/auth";
 import { errorJson, readBody, syncWriter } from "@/server/http";
 
@@ -10,7 +10,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!display.ok) return display.error;
 
-  const issued = await issueQrLink(display.value);
+  const body = await readBody(request, QrIssueRequestSchema);
+
+  if (!body.ok) return errorJson(body.error, 400);
+
+  const issued = await issueQrLink(display.value, body.value.opens);
 
   return issued.ok ? NextResponse.json(issued.value) : errorJson(issued.error, 429);
 }

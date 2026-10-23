@@ -20,14 +20,15 @@ export type UploadAction =
   | { type: "pause" }
   | { type: "resume"; id: string }
   | { type: "restart"; id: string }
-  | { type: "remove"; id: string };
+  | { type: "remove"; id: string }
+  | { type: "clear" };
 
 type ChosenFile = { name: string; type: string; size: number };
 
 export type UploadSummary =
   | { kind: "none" }
   | { kind: "offline"; paused: number }
-  | { kind: "failed"; failed: number }
+  | { kind: "failed"; failed: number; retryable: boolean }
   | { kind: "uploading"; one?: string; count: number; percent: number; failed: number };
 
 type UploadFixture = NonNullable<FixtureParams["upload"]>;
@@ -49,7 +50,10 @@ export function uploadSummary(tiles: readonly UploadTile[], online: boolean): Up
 
   const failed = tiles.filter((tile) => tile.state === "failed").length;
 
-  if (running.length === 0) return failed > 0 ? { kind: "failed", failed } : { kind: "none" };
+  if (running.length === 0)
+    return failed > 0
+      ? { kind: "failed", failed, retryable: tiles.some(canRetry) }
+      : { kind: "none" };
 
   return {
     kind: "uploading",
@@ -58,6 +62,10 @@ export function uploadSummary(tiles: readonly UploadTile[], online: boolean): Up
     percent: averagePercent(running),
     failed,
   };
+}
+
+export function canRetry(tile: UploadTile): boolean {
+  return tile.state === "failed" && tile.reason === "network";
 }
 
 export function initialUploads(
@@ -90,6 +98,8 @@ export function uploads(tiles: readonly UploadTile[], action: UploadAction): Upl
     return tiles.filter((tile) => tile.id !== action.id);
 
   if (action.type === "pause") return tiles.map(paused);
+
+  if (action.type === "clear") return tiles.filter((tile) => tile.state !== "failed");
 
   return tiles.map((tile) => (tile.id === action.id ? changed(tile, action) : tile));
 }

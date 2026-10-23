@@ -1,5 +1,5 @@
 import "server-only";
-import { QR_CODE_TTL_MS } from "@/domain/qrSignIn";
+import { QR_CODE_TTL_MS, type QrOpens } from "@/domain/qrSignIn";
 import { err, ok, type Result } from "@/domain/result";
 import type { Database, MagicLinkRecord } from "../db";
 import type { AuthDeps, Clocked } from "./deps";
@@ -13,6 +13,7 @@ export type QrVerifyInput = { token: string; userAgent?: string };
 export async function issueQrLink(
   deps: AuthDeps,
   display: SignedInDisplay,
+  opens?: QrOpens,
 ): Promise<Result<QrCode, "rate-limited">> {
   if (!deps.limits.qr.allow(display.displayId, deps.now())) return err("rate-limited");
 
@@ -20,7 +21,7 @@ export async function issueQrLink(
 
   await storeQrLink(deps, display, token);
 
-  return ok({ url: verifyUrl(deps.appUrl, token) });
+  return ok({ url: verifyUrl(deps.appUrl, token, opens) });
 }
 
 export async function verifyQrLink(
@@ -85,10 +86,12 @@ function isUnusedLinkOf(link: MagicLinkRecord, display: SignedInDisplay): boolea
   );
 }
 
-function verifyUrl(appUrl: string, token: string): string {
+function verifyUrl(appUrl: string, token: string, opens: QrOpens | undefined): string {
   const url = new URL("/api/auth/verify", appUrl);
 
   url.searchParams.set("t", token);
+
+  if (opens) url.searchParams.set("to", opens);
 
   return url.toString();
 }

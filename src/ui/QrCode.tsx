@@ -5,6 +5,7 @@ import { colors, radii } from "@/theme/tokens.stylex";
 type QrCodeProps = {
   value?: string;
   label: string;
+  size?: number;
 };
 
 const CODE_PX = 150;
@@ -17,16 +18,16 @@ const styles = stylex.create({
     backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.md,
   },
-  code: {
-    width: CODE_PX,
-    height: CODE_PX,
-  },
+  code: (size: number) => ({
+    width: size,
+    height: size,
+  }),
   dark: {
     fill: colors.textPrimary,
   },
 });
 
-export function QrCode({ value, label }: QrCodeProps) {
+export function QrCode({ value, label, size = CODE_PX }: QrCodeProps) {
   const code = value === undefined ? undefined : encode(value, { ecc: "M", border: 1 });
 
   return (
@@ -36,7 +37,7 @@ export function QrCode({ value, label }: QrCodeProps) {
         aria-label={label}
         viewBox={`0 0 ${code?.size ?? 1} ${code?.size ?? 1}`}
         shapeRendering="crispEdges"
-        {...stylex.props(styles.code)}
+        {...stylex.props(styles.code(size))}
       >
         {code && <path d={modulesPath(code.data)} {...stylex.props(styles.dark)} />}
       </svg>

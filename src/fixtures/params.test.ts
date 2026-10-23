@@ -165,6 +165,18 @@ describe("parseFixtureParams", () => {
     expect(parseFixtureParams("sheet=family&rm=an&famname=Bao&famerr=1")).toEqual({});
   });
 
+  it("PHOTO-13 reads phdel=1, PHOTO-03 phqr=1 and PHOTO-01 play=0", () => {
+    expect(parseFixtureParams("phdel=1&phqr=1&play=0")).toEqual({
+      phdel: true,
+      phqr: true,
+      play: "0",
+    });
+  });
+
+  it.each(["phdel=yes", "phqr=0", "play=1"])("PHOTO-01 ignores %s", (query) => {
+    expect(parseFixtureParams(query)).toEqual({});
+  });
+
   it("§8.9 reads discard=1", () => {
     expect(parseFixtureParams("sheet=newnote&discard=1")).toEqual({
       sheet: "newnote",

@@ -1,4 +1,5 @@
 import "server-only";
+import type { QrOpens } from "@/domain/qrSignIn";
 import { ok } from "@/domain/result";
 import { syncBus } from "../bus";
 import { database } from "../db";
@@ -42,8 +43,8 @@ export function verifyQrLink(input: qr.QrVerifyInput) {
   return qr.verifyQrLink(deps(), input);
 }
 
-export function issueQrLink(display: SignedInDisplay) {
-  return qr.issueQrLink(deps(), display);
+export function issueQrLink(display: SignedInDisplay, opens?: QrOpens) {
+  return qr.issueQrLink(deps(), display, opens);
 }
 
 export function voidQrLink(display: SignedInDisplay, url: string): Promise<void> {

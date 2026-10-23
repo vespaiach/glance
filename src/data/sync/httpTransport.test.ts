@@ -223,6 +223,14 @@ describe("HttpTransport", () => {
     expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
   });
 
+  it("PHOTO-03 issueQr for Photos sends what the code opens", async () => {
+    const { calls, fetch } = fakeFetch(json({ url: "https://glance.example.com/x" }));
+
+    await transport(fetch).issueQr("photos");
+
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ opens: "photos" }));
+  });
+
   it("SIGNIN-15 voidQr deletes the code by its link and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
     const url = "https://glance.example.com/api/auth/verify?t=abc";

@@ -1,4 +1,5 @@
 import type { UploadProblem } from "@/domain/photoUpload";
+import type { QrOpens } from "@/domain/qrSignIn";
 import type { Result } from "@/domain/result";
 import type { Account, LocationRequest, Weather, WeatherLocation } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
@@ -54,7 +55,7 @@ export interface Transport {
   places(query: string): Answer<WeatherLocation[]>;
   locate(position: Coordinates): Answer<WeatherLocation, LocateError>;
   displays(): Answer<SignedInScreen[]>;
-  issueQr(): Answer<QrCode>;
+  issueQr(opens?: QrOpens): Answer<QrCode>;
   voidQr(url: string): Answer<void>;
   auth: {
     sendCode(request: CodeRequest): Answer<void>;

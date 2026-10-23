@@ -51,6 +51,16 @@ describe("issueQrLink", () => {
     ).toBeDefined();
   });
 
+  it("PHOTO-03 a code for Photos asks the verify link to open Photos", async () => {
+    const maria = await signIn("maria@example.com");
+
+    const issued = await issueQrLink(harness.deps(), maria, "photos");
+
+    const url = new URL(issued.ok ? issued.value.url : "");
+    expect(url.pathname).toBe("/api/auth/verify");
+    expect(url.searchParams.get("to")).toBe("photos");
+  });
+
   it("SIGNIN-15 stores the account, the display and a 5-minute expiry", async () => {
     const maria = await signIn("maria@example.com");
 

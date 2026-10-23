@@ -44,6 +44,7 @@ const CHOICES = {
   qr: ["open", "failed"],
   dp: ["open"],
   potd: ["qr", "error"],
+  play: ["0"],
 } as const;
 
 type Choices = typeof CHOICES;
@@ -67,6 +68,8 @@ export type FixtureParams = ChoiceParams & {
   keepPlace?: true;
   now?: Date;
   pending?: number;
+  phdel?: true;
+  phqr?: true;
   potdPhoto?: string;
   potdlong?: true;
   span24?: true;
@@ -167,6 +170,8 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("full") === "1" && { full: true }),
     ...(query.get("hold") === "1" && { hold: true }),
     ...(query.get("kb") === "1" && { kb: true }),
+    ...(query.get("phdel") === "1" && { phdel: true }),
+    ...(query.get("phqr") === "1" && { phqr: true }),
     ...(query.get("potdlong") === "1" && { potdlong: true }),
     ...(query.get("span") === "24" && { span24: true }),
     ...(query.get("switch") === "1" && { switch: true }),

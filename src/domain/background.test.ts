@@ -1,4 +1,10 @@
-import { changeBackground, pickPhoto, rotationStep, shownBackground } from "./background";
+import {
+  backgroundAfterDelete,
+  changeBackground,
+  pickPhoto,
+  rotationStep,
+  shownBackground,
+} from "./background";
 import { DEFAULT_SETTINGS } from "./defaults";
 import type { AccountSettings, Photo } from "./schemas";
 import { deviceTimeZone } from "./zone";
@@ -86,6 +92,21 @@ test("PHOTO-13 deleting the background photo falls back to the oldest upload in 
   expect(shownTitle(slideshow("daily", TRAIL.id), left, NOW)).toBe(
     shownTitle(slideshow("daily", APPLES.id), left, NOW),
   );
+});
+
+test("PHOTO-13 deleting the Photo-mode background photo turns the background back to Season color", () => {
+  const chosen = background({ mode: "photo", photoId: APPLES.id, dim: 0.4 });
+
+  expect(backgroundAfterDelete(chosen, APPLES.id)).toEqual({ ...chosen, mode: "season" });
+});
+
+test("PHOTO-13 deleting another photo, or a photo in Slideshow, keeps the background", () => {
+  const chosen = background({ mode: "photo", photoId: APPLES.id });
+
+  const rotating = slideshow("daily", APPLES.id);
+
+  expect(backgroundAfterDelete(chosen, COAST.id)).toBe(chosen);
+  expect(backgroundAfterDelete(rotating, APPLES.id)).toBe(rotating);
 });
 
 test("BG-06 rotationStep counts local hours, days and Sunday-start weeks", () => {

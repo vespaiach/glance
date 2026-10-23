@@ -401,7 +401,7 @@ test("TODAY-07 the more row and All photos go to Photos", async () => {
   expect(navigation.push).toHaveBeenNthCalledWith(2, "/photos");
 });
 
-test("TODAY-07 on large the empty tile opens Add from your phone inside the panel", async () => {
+test("TODAY-07 PHOTO-03 on large the empty tile opens Add from your phone with a code that opens Photos", async () => {
   await markSynced(store);
 
   renderToday();
@@ -409,6 +409,7 @@ test("TODAY-07 on large the empty tile opens Add from your phone inside the pane
   await userEvent.click(await screen.findByRole("button", { name: "Add photos from your phone" }));
 
   expect(screen.getByRole("group", { name: "Add photos from your phone" })).toBeInTheDocument();
+  expect(store.issueQr).toHaveBeenCalledWith("photos");
 
   await userEvent.click(screen.getByRole("button", { name: "Done" }));
 
