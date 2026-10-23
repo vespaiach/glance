@@ -3,6 +3,7 @@ import {
   draftFromNote,
   initialNoteSheet,
   isDirty,
+  isViewing,
   type NoteDraft,
   type NoteEditState,
   type NoteSheetAction,
@@ -16,7 +17,7 @@ import {
 const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad" } as const;
 
 function editing(state: NoteSheetState): NoteEditState {
-  if (state.step === "details") throw new Error("expected an edit step");
+  if (isViewing(state)) throw new Error("expected an edit step");
 
   return state;
 }
@@ -53,7 +54,7 @@ describe("note sheet drafts", () => {
 describe("note sheet reducer", () => {
   const start = opening(draftFromNote(WIFI));
 
-  it("NOTE-05 opens without the delete confirm", () => {
+  it("NOTE-02 an existing note opens straight to editing", () => {
     expect(start.step).toBe("editing");
   });
 
@@ -64,8 +65,8 @@ describe("note sheet reducer", () => {
     expect(author.draft).toEqual({ text: "Back at 6", author: "Mom" });
   });
 
-  it("NOTE-05 Delete asks for the inline confirm", () => {
-    expect(reduce(start, { type: "askDelete" }).step).toBe("deleting");
+  it("NOTE-10 Delete is not part of the edit", () => {
+    expect(reduce(start, { type: "askDelete" })).toBe(start);
   });
 });
 
@@ -171,12 +172,6 @@ describe("note sheet discard", () => {
     expect(opening(draft, { discard: true }).step).toBe("discarding");
   });
 
-  it("§8.9 asking to discard replaces a waiting delete confirm", () => {
-    const deleting = reduce(start, { type: "askDelete" });
-
-    expect(reduce(deleting, { type: "askDiscard" }).step).toBe("discarding");
-  });
-
   it("§8.9 Keep editing brings the footer back with the draft kept", () => {
     expect(reduce(asking, { type: "keepEditing" })).toMatchObject({
       step: "editing",
@@ -209,7 +204,20 @@ describe("note details", () => {
     expect(details).toEqual({ step: "details", opened: draft });
   });
 
-  it("NOTE-10 details ignore every action but Edit", () => {
+  it("NOTE-10 Delete in details asks for the inline confirm", () => {
+    expect(noteSheetReducer(details, { type: "askDelete" })).toEqual({
+      step: "deleting",
+      opened: draft,
+    });
+  });
+
+  it("NOTE-10 Edit from the delete confirm opens Edit note", () => {
+    const deleting = noteSheetReducer(details, { type: "askDelete" });
+
+    expect(reduce(deleting, { type: "edit" })).toMatchObject({ step: "editing", draft });
+  });
+
+  it("NOTE-10 details ignore every action but Delete and Edit", () => {
     expect(noteSheetReducer(details, { type: "text", value: "Back at 6" })).toBe(details);
   });
 
@@ -228,14 +236,14 @@ describe("note details", () => {
     expect(reduce(back, { type: "edit" }).textError).toBe(false);
   });
 
-  it("NOTE-10 Cancel asks to discard and remembers to return to details", () => {
+  it("NOTE-10 the close button asks to discard and remembers to return to details", () => {
     expect(reduce(changed, { type: "askDiscard", to: "details" })).toMatchObject({
       step: "discarding",
       discardTo: "details",
     });
   });
 
-  it("NOTE-10 the close button asks to discard and closes afterwards", () => {
+  it("NOTE-10 the scrim asks to discard and closes afterwards", () => {
     const asking = reduce(changed, { type: "askDiscard", to: "details" });
 
     const kept = reduce(asking, { type: "keepEditing" });
@@ -243,7 +251,7 @@ describe("note details", () => {
     expect(reduce(kept, { type: "askDiscard" })).toMatchObject({ discardTo: null });
   });
 
-  it("NOTE-10 Discard from Cancel returns to details", () => {
+  it("NOTE-10 Discard from the close button returns to details", () => {
     const asking = reduce(changed, { type: "askDiscard", to: "details" });
 
     expect(noteSheetReducer(asking, { type: "back" })).toEqual({ step: "details", opened: draft });

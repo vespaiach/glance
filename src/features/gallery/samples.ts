@@ -171,6 +171,11 @@ export const gallery = {
     draft: "New note · draft",
     offline: "Offline",
     discard: "Discard changes?",
+    long: "New note · past 120",
+    deleting: "Note details · Delete note",
+    small: "New note · small",
+    longText:
+      "Soccer practice moved to Thursday this week because the field is being reseeded. Bring water, shin guards and the orange cones from the garage.",
   },
   eventSheet: {
     edit: "Edit event",

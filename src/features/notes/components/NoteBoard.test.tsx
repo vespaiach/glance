@@ -43,23 +43,30 @@ function renderBoard(options: Options = {}) {
       expiry={options.expiry ?? { on: true, days: 7 }}
       now={NOW}
       clock="12h"
+      breakpoint="large"
       onOpenNote={options.onOpenNote ?? (() => {})}
       onAddNote={options.onAddNote ?? (() => {})}
     />,
   );
 }
 
-test("NOTE-06 the count reads {n} notes over the Notice board title", () => {
+test("NOTE-06 the count reads {n} notes with the expiry over the Notice board title", () => {
   renderBoard();
 
-  expect(screen.getByText("2 notes")).toBeInTheDocument();
+  expect(screen.getByText("2 notes · cleared after 7 days")).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Notice board" })).toBeInTheDocument();
 });
 
-test("NOTE-06 one note reads 1 note", () => {
-  renderBoard({ state: { kind: "ready", data: [WIFI] } });
+test("NOTE-06 one note cleared after one day reads 1 note · cleared after 1 day", () => {
+  renderBoard({ state: { kind: "ready", data: [WIFI] }, expiry: { on: true, days: 1 } });
 
-  expect(screen.getByText("1 note")).toBeInTheDocument();
+  expect(screen.getByText("1 note · cleared after 1 day")).toBeInTheDocument();
+});
+
+test("NOTE-06 with expiry off the count says notes are kept until deleted", () => {
+  renderBoard({ expiry: { on: false, days: 7 } });
+
+  expect(screen.getByText("2 notes · kept until deleted")).toBeInTheDocument();
 });
 
 test("NOTE-06 an empty board reads No notes", () => {
@@ -71,12 +78,41 @@ test("NOTE-06 an empty board reads No notes", () => {
 test("NOTE-04 notes show in the given order with their author and stamp", () => {
   renderBoard();
 
-  const notes = screen.getAllByRole("button", { name: /Back at 6|Wi-Fi/ });
+  const notes = screen.getAllByRole("button", { name: /^Note/ });
 
   expect(notes.map((note) => note.textContent)).toEqual([
     "Back at 6MomJust now",
     "Wi-Fi password is on the fridge!Dad8:12 AM",
   ]);
+});
+
+test("NOTE-01 each board note is a button named with its author, time and full text", () => {
+  renderBoard();
+
+  expect(
+    screen.getByRole("button", {
+      name: "Note from Dad, 8:12 AM: Wi-Fi password is on the fridge!",
+    }),
+  ).toBeInTheDocument();
+});
+
+test("NOTE-03 an unsigned board note is named with its time only", () => {
+  renderBoard({ state: { kind: "ready", data: [{ ...WIFI, author: "" }] } });
+
+  expect(
+    screen.getByRole("button", { name: "Note, 8:12 AM: Wi-Fi password is on the fridge!" }),
+  ).toBeInTheDocument();
+});
+
+test("NOTE-01 a long note shows its first 120 characters cut at a word", () => {
+  const text = `${"a".repeat(110)} bcdefghijk lmnop`;
+
+  renderBoard({ state: { kind: "ready", data: [{ ...WIFI, text }] } });
+
+  const note = screen.getByRole("button", { name: `Note from Dad, 8:12 AM: ${text}` });
+
+  expect(note).toHaveTextContent(`${"a".repeat(110)}…`);
+  expect(note).not.toHaveTextContent("bcdefghijk");
 });
 
 test("OFF-04 a new note waiting to post says so instead of its stamp", () => {
@@ -87,58 +123,19 @@ test("OFF-04 a new note waiting to post says so instead of its stamp", () => {
   expect(screen.getByText("8:12 AM")).toBeInTheDocument();
 });
 
-test("NOTE-06 the caption names the expiry setting", () => {
-  const { rerender } = renderBoard({ expiry: { on: true, days: 1 } });
+test("NOTE-06 there is no caption under the board", () => {
+  renderBoard();
 
-  expect(
-    screen.getByText("Select a note to edit or delete it · Notes are removed after 1 day"),
-  ).toBeInTheDocument();
-
-  rerender(
-    <NoteBoard
-      tz={tz}
-      retryIn={1}
-      onRetry={() => {}}
-      state={{ kind: "ready", data: [WIFI] }}
-      expiry={{ on: true, days: 30 }}
-      now={NOW}
-      clock="12h"
-      onOpenNote={() => {}}
-      onAddNote={() => {}}
-    />,
-  );
-
-  expect(
-    screen.getByText("Select a note to edit or delete it · Notes are removed after 30 days"),
-  ).toBeInTheDocument();
+  expect(screen.queryByText(/Select a note/)).not.toBeInTheDocument();
 });
 
-test("NOTE-06 with expiry off the caption says notes stay", () => {
-  renderBoard({ expiry: { on: false, days: 7 } });
-
-  expect(
-    screen.getByText("Select a note to edit or delete it · Notes stay until deleted"),
-  ).toBeInTheDocument();
-});
-
-test("NOTE-07 the empty board invites a note and says how long notes stay", () => {
+test("NOTE-07 the empty board invites a note", () => {
   renderBoard({ state: { kind: "empty" }, expiry: { on: true, days: 7 } });
 
   expect(screen.getByText("Something to share at home?")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. They’re removed after 7 days.",
-    ),
-  ).toBeInTheDocument();
-  expect(screen.queryByText(/Select a note/)).not.toBeInTheDocument();
-});
-
-test("NOTE-07 with expiry off the empty board says notes stay", () => {
-  renderBoard({ state: { kind: "empty" }, expiry: { on: false, days: 1 } });
-
-  expect(
-    screen.getByText(
-      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. They stay until someone deletes them.",
+      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family.",
     ),
   ).toBeInTheDocument();
 });
@@ -160,7 +157,7 @@ test("NOTE-01 Add note and tapping a note open the sheets", async () => {
   renderBoard({ onAddNote, onOpenNote });
 
   await userEvent.click(screen.getByRole("button", { name: "Add note" }));
-  await userEvent.click(screen.getByRole("button", { name: /Wi-Fi/ }));
+  await userEvent.click(screen.getByRole("button", { name: /^Note from Dad/ }));
 
   expect(onAddNote).toHaveBeenCalledOnce();
   expect(onOpenNote).toHaveBeenCalledWith(WIFI.id);

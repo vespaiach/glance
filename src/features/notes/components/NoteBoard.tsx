@@ -1,7 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
-import { Plus, StickyNote as StickyNoteGlyph } from "lucide-react";
+import { SquarePen, StickyNote as StickyNoteGlyph } from "lucide-react";
 import { copy } from "@/copy";
-import type { BoardNote } from "@/domain/notes";
+import type { Breakpoint } from "@/domain/breakpoint";
+import { type BoardNote, boardText } from "@/domain/notes";
 import type { AccountSettings } from "@/domain/schemas";
 import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
@@ -10,6 +11,7 @@ import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { NotePad } from "@/ui/NotePad";
+import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { StickyNote } from "@/ui/StickyNote";
@@ -26,6 +28,7 @@ type NoteBoardProps = {
   now: Date;
   clock: Clock;
   tz: string;
+  breakpoint: Breakpoint;
   onOpenNote: (id: string) => void;
   onAddNote: () => void;
   xstyle?: stylex.StyleXStyles;
@@ -66,13 +69,32 @@ const styles = stylex.create({
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gap: 32,
+    gridTemplateColumns: "repeat(auto-fill, minmax(clamp(220px, 17vw, 340px), 1fr))",
+    gap: "clamp(36px, 2.5vw, 48px)",
     paddingTop: space.xs,
-    paddingInline: space.sm,
+    paddingInline: 12,
     paddingBottom: space.lg,
   },
+  note: {
+    display: "block",
+    width: "100%",
+    margin: 0,
+    padding: 0,
+    borderWidth: 0,
+    backgroundColor: "transparent",
+    font: "inherit",
+    color: "inherit",
+    textAlign: "start",
+    cursor: "pointer",
+    borderRadius: radii.sm,
+  },
+  noteText: {
+    fontSize: "clamp(24px, 1.6vw, 32px)",
+    lineHeight: 1.3,
+    overflowWrap: "anywhere",
+  },
   emptyTile: {
+    flexGrow: 1,
     minHeight: 340,
     borderWidth: 1.5,
     borderStyle: "dashed",
@@ -83,11 +105,15 @@ const styles = stylex.create({
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
+    alignContent: "center",
+    justifyContent: "center",
     gap: "clamp(40px, 5vw, 72px)",
   },
   emptyText: {
-    flexGrow: 1,
-    flexBasis: 260,
+    flexGrow: 0,
+    flexShrink: 1,
+    flexBasis: 600,
+    minWidth: 260,
     display: "flex",
     flexDirection: "column",
     gap: 10,
@@ -99,14 +125,11 @@ const styles = stylex.create({
     lineHeight: 1.1,
   },
   emptyBody: {
-    fontSize: 18,
+    fontSize: "clamp(18px, 1.25vw, 24px)",
     fontWeight: 330,
     lineHeight: 1.45,
-    maxWidth: 520,
+    maxWidth: 560,
     textWrap: "pretty",
-  },
-  caption: {
-    lineHeight: "normal",
   },
 });
 
@@ -118,25 +141,28 @@ export function NoteBoard({
   now,
   clock,
   tz,
+  breakpoint,
   onOpenNote,
   onAddNote,
   xstyle,
 }: NoteBoardProps) {
+  const large = breakpoint === "large";
+
   return (
     <section {...stylex.props(styles.root, xstyle)}>
       <div {...stylex.props(styles.header)}>
         <div {...stylex.props(styles.heading)}>
-          <Eyebrow>{countFor(state, clock, tz)}</Eyebrow>
+          <Eyebrow>{countFor(state, expiry, clock, tz)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{copy.notes.board}</h2>
         </div>
-        <Button icon={Plus} onClick={onAddNote}>
+        <Button icon={SquarePen} size={large ? "lg" : "md"} onClick={onAddNote}>
           {copy.notes.addNote}
         </Button>
       </div>
       <Zone
         state={state}
         loading={<BoardSkeleton />}
-        empty={<EmptyBoard expiry={expiry} onAddNote={onAddNote} />}
+        empty={<EmptyBoard onAddNote={onAddNote} />}
         failed={
           <SourceFailure
             icon={StickyNoteGlyph}
@@ -148,40 +174,45 @@ export function NoteBoard({
         }
       >
         {(notes) => (
-          <>
-            <div {...stylex.props(styles.grid)}>
-              {notes.map((note) => (
-                <StickyNote
+          <div {...stylex.props(styles.grid)}>
+            {notes.map((note) => {
+              const time = noteStampText(note, now, clock, tz);
+
+              return (
+                <button
                   key={note.id}
-                  rotate={note.rotation}
-                  author={note.author}
-                  time={noteStampText(note, now, clock, tz)}
-                  width="100%"
-                  minHeight={200}
+                  type="button"
+                  aria-label={copy.notes.noteName(note.author, time, note.text)}
                   onClick={() => onOpenNote(note.id)}
+                  {...stylex.props(styles.note, press.scale)}
                 >
-                  {note.text}
-                </StickyNote>
-              ))}
-            </div>
-            <Eyebrow size="caption" xstyle={styles.caption}>
-              {copy.notes.caption(copy.notes.keep(expiry))}
-            </Eyebrow>
-          </>
+                  <StickyNote
+                    rotate={note.rotation}
+                    author={note.author}
+                    time={time}
+                    width="100%"
+                    minHeight={large ? 280 : 200}
+                  >
+                    <span {...stylex.props(styles.noteText)}>{boardText(note.text)}</span>
+                  </StickyNote>
+                </button>
+              );
+            })}
+          </div>
         )}
       </Zone>
     </section>
   );
 }
 
-function countFor(state: ZoneState<BoardNote>, clock: Clock, tz: string): string {
+function countFor(state: ZoneState<BoardNote>, expiry: Expiry, clock: Clock, tz: string): string {
   if (state.kind === "loading") return copy.notes.loadingCount;
 
   if (state.kind === "failed") return copy.notes.failedCount;
 
-  if (state.kind === "empty") return copy.notes.count(0);
+  if (state.kind === "empty") return copy.notes.count(0, expiry);
 
-  const count = copy.notes.count(state.data.length);
+  const count = copy.notes.count(state.data.length, expiry);
 
   if (state.updatedAt === undefined) return count;
 
@@ -198,15 +229,13 @@ function BoardSkeleton() {
   );
 }
 
-function EmptyBoard({ expiry, onAddNote }: { expiry: Expiry; onAddNote: () => void }) {
+function EmptyBoard({ onAddNote }: { onAddNote: () => void }) {
   return (
     <div {...stylex.props(styles.emptyTile)}>
       <NotePad size="lg" label={copy.notes.addFirst} onClick={onAddNote} />
       <div {...stylex.props(styles.emptyText)}>
         <span {...stylex.props(styles.emptyTitle)}>{copy.notes.emptyTitle}</span>
-        <span {...stylex.props(styles.emptyBody)}>
-          {copy.notes.emptyBody(copy.notes.emptyKeep(expiry))}
-        </span>
+        <span {...stylex.props(styles.emptyBody)}>{copy.notes.emptyBody}</span>
       </div>
     </div>
   );

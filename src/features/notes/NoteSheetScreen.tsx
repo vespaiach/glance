@@ -1,7 +1,7 @@
 "use client";
 
-import { copy } from "@/copy";
 import { type ShownNote, useLastAuthor, useNote, useNotes, useNotesRepo } from "@/data/repos";
+import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
@@ -23,11 +23,9 @@ import { noteStampText } from "./stamp";
 
 type SheetFrameProps = {
   mode: "new" | "edit";
-  eyebrow: string;
   initial: NoteSheetState;
   base: () => NoteBase;
   time?: string;
-  rotation?: number;
   onDelete: () => void;
 };
 
@@ -49,7 +47,7 @@ export function NoteSheetScreen() {
   return null;
 }
 
-function SheetFrame({ mode, eyebrow, initial, base, time, rotation, onDelete }: SheetFrameProps) {
+function SheetFrame({ mode, initial, base, time, onDelete }: SheetFrameProps) {
   const { close } = useSheetHost();
 
   const notes = useNotesRepo();
@@ -65,14 +63,13 @@ function SheetFrame({ mode, eyebrow, initial, base, time, rotation, onDelete }: 
   return (
     <NoteSheet
       mode={mode}
-      eyebrow={eyebrow}
       initial={initial}
       offline={!online}
+      breakpoint={useBreakpoint()}
       onClose={close}
       onDelete={onDelete}
       onSave={onSave}
       time={time}
-      rotation={rotation}
       keyboardInset={useKeyboardInset()}
     />
   );
@@ -99,11 +96,9 @@ function EditNoteSheet({ note, discard, edit }: { note: ShownNote } & Omit<Loade
   return (
     <SheetFrame
       mode="edit"
-      eyebrow={copy.notes.sheet.eyebrow(note.author, time)}
       initial={initialNoteSheet(draftFromNote(note), { discard, details: !edit })}
       base={() => note}
       time={time}
-      rotation={note.rotation}
       onDelete={onDelete}
     />
   );
@@ -129,7 +124,6 @@ function NewNoteSheet({ draft, discard }: NewNoteProps) {
   return (
     <SheetFrame
       mode="new"
-      eyebrow={copy.notes.board}
       initial={initialNoteSheet({ ...opened, ...draft }, { opened, discard })}
       base={() => newNoteBase(nowStore.get(), shown?.length ?? 0)}
       onDelete={() => {}}

@@ -10,7 +10,7 @@ const TILTS = [-2, 1.5, -1, 2.5] as const;
 
 type TiltIndex = 0 | 1 | 2 | 3;
 
-const DETAILS_TILT_MAX = 1.5;
+export const BOARD_TEXT_MAX = 120;
 
 const JUST_NOW_MS = 5 * 60 * 1000;
 
@@ -20,8 +20,16 @@ export function noteTilt(noteCount: number): number {
   return TILTS[(noteCount % TILTS.length) as TiltIndex];
 }
 
-export function noteDetailsTilt(rotation: number): number {
-  return Math.max(-DETAILS_TILT_MAX, Math.min(DETAILS_TILT_MAX, rotation));
+export function passesBoardLimit(text: string): boolean {
+  return text.length > BOARD_TEXT_MAX;
+}
+
+export function boardText(text: string): string {
+  if (!passesBoardLimit(text)) return text;
+
+  const head = text.slice(0, BOARD_TEXT_MAX);
+
+  return `${atWord(head, text[BOARD_TEXT_MAX] ?? "")}…`;
 }
 
 export function noteStamp(createdAt: string, now: Date, clock: Clock, tz: string): NoteStamp {
@@ -54,4 +62,12 @@ function stampText(created: Date, now: Date, clock: Clock, tz: string): string {
   if (daysAgo >= 7) return formatMonthDay(created, tz);
 
   return `${formatWeekday(created, tz)} ${formatClock(minutesOfDay(created, tz), clock)}`;
+}
+
+function atWord(head: string, next: string): string {
+  if (/\s/.test(next)) return head.trimEnd();
+
+  const cut = head.replace(/\s+\S*$/, "");
+
+  return cut === head ? head : cut.trimEnd();
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { type ShownNote, useNotes } from "@/data/repos";
+import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
@@ -26,6 +27,7 @@ export function NotesScreen() {
       now={now}
       clock={settings.clock}
       tz={useTimeZone()}
+      breakpoint={useBreakpoint()}
       onOpenNote={(id) => sheets.open({ kind: "note", id })}
       onAddNote={() => sheets.open({ kind: "newnote" })}
     />

@@ -19,8 +19,12 @@ type SheetProps = {
   endActions?: ReactNode;
   keyboardInset?: number;
   uniform?: boolean;
+  hideTitle?: boolean;
+  placement?: SheetPlacement;
   xstyle?: stylex.StyleXStyles;
 };
+
+export type SheetPlacement = "center" | "top" | "full";
 
 const PAD = "clamp(24px, 3vw, 40px)";
 
@@ -38,6 +42,14 @@ const styles = stylex.create({
     transitionTimingFunction: motion.easeOut,
   },
   aboveKeyboard: (inset: number) => ({ bottom: inset }),
+  overlayTop: {
+    placeItems: "start center",
+    paddingTop: "clamp(16px, 6vh, 64px)",
+  },
+  overlayFull: {
+    placeItems: "stretch",
+    padding: 0,
+  },
   scrim: {
     position: "absolute",
     inset: 0,
@@ -73,6 +85,28 @@ const styles = stylex.create({
     paddingBottom: 12,
     backgroundColor: colors.surfaceCanvas,
     boxShadow: shadows.sheetHeader,
+  },
+  headerCentered: {
+    alignItems: "center",
+  },
+  hiddenTitle: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    overflow: "hidden",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
+  },
+  cardTop: {
+    maxWidth: 640,
+  },
+  cardFull: {
+    maxWidth: "none",
+    height: "100%",
+    borderRadius: 0,
+  },
+  bodyFitted: {
+    flexGrow: 0,
   },
   heading: {
     display: "flex",
@@ -126,6 +160,9 @@ const styles = stylex.create({
     display: "flex",
     gap: space.xs,
   },
+  endGroup: {
+    marginLeft: "auto",
+  },
 });
 
 export function Sheet({
@@ -139,6 +176,8 @@ export function Sheet({
   endActions,
   keyboardInset = 0,
   uniform = false,
+  hideTitle = false,
+  placement = "center",
   xstyle,
 }: SheetProps) {
   const titleId = useId();
@@ -152,7 +191,14 @@ export function Sheet({
   useFieldInView(body, keyboardInset);
 
   return (
-    <div {...stylex.props(styles.overlay, styles.aboveKeyboard(keyboardInset))}>
+    <div
+      {...stylex.props(
+        styles.overlay,
+        styles.aboveKeyboard(keyboardInset),
+        placement === "top" && styles.overlayTop,
+        placement === "full" && styles.overlayFull,
+      )}
+    >
       <button
         type="button"
         tabIndex={-1}
@@ -167,24 +213,39 @@ export function Sheet({
         aria-labelledby={titleId}
         tabIndex={-1}
         onKeyDown={dialogKeyDown(onClose)}
-        {...stylex.props(styles.card, xstyle)}
+        {...stylex.props(
+          styles.card,
+          xstyle,
+          placement === "top" && styles.cardTop,
+          placement === "full" && styles.cardFull,
+        )}
       >
-        <div {...stylex.props(styles.header, uniform && styles.cardFill)}>
+        <div
+          {...stylex.props(
+            styles.header,
+            uniform && styles.cardFill,
+            hideTitle && styles.headerCentered,
+          )}
+        >
           <div {...stylex.props(styles.heading)}>
             {eyebrow && <Eyebrow xstyle={styles.eyebrow}>{eyebrow}</Eyebrow>}
-            <h2 id={titleId} {...stylex.props(styles.title)}>
+            <h2 id={titleId} {...stylex.props(styles.title, hideTitle && styles.hiddenTitle)}>
               {title}
             </h2>
           </div>
           <IconButton icon={X} label={closeLabel} size="touch" onClick={onClose} />
         </div>
-        <div ref={body} data-sheet-body {...stylex.props(styles.body)}>
+        <div
+          ref={body}
+          data-sheet-body
+          {...stylex.props(styles.body, placement === "full" && styles.bodyFitted)}
+        >
           {children}
         </div>
         {(startActions || endActions) && (
           <div {...stylex.props(styles.actions, uniform && styles.cardFill)}>
             <div {...stylex.props(styles.group)}>{startActions}</div>
-            <div {...stylex.props(styles.group)}>{endActions}</div>
+            <div {...stylex.props(styles.group, styles.endGroup)}>{endActions}</div>
           </div>
         )}
       </div>

@@ -4,36 +4,51 @@ import * as stylex from "@stylexjs/stylex";
 import { Pencil, Trash2, WifiOff } from "lucide-react";
 import { useReducer } from "react";
 import { copy } from "@/copy";
-import { noteDetailsTilt } from "@/domain/notes";
-import { NOTE_LIMITS } from "@/domain/schemas";
+import type { Breakpoint } from "@/domain/breakpoint";
+import { passesBoardLimit } from "@/domain/notes";
 import { season } from "@/theme/seasons.stylex";
-import { motion, radii, shadows } from "@/theme/tokens.stylex";
+import { radii } from "@/theme/tokens.stylex";
+import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
-import { type CloseFrom, closeStep } from "@/ui/discard";
+import { closeStep } from "@/ui/discard";
 import { Sheet } from "@/ui/Sheet";
-import { TextInput } from "@/ui/TextInput";
 import {
   canSave,
   isDirty,
+  isViewing,
   type NoteDraft,
   type NoteSheetState,
+  type NoteViewState,
   noteSheetReducer,
 } from "../noteSheet";
+import { NoteComposer } from "./NoteComposer";
 import { NoteDetails } from "./NoteDetails";
 
 type NoteSheetProps = {
   mode: "new" | "edit";
-  eyebrow: string;
   initial: NoteSheetState;
   offline: boolean;
+  breakpoint: Breakpoint;
   keyboardInset?: number;
   onClose: () => void;
   onDelete: () => void;
   onSave: (draft: NoteDraft) => void;
   time?: string;
-  rotation?: number;
+};
+
+type DetailsProps = Pick<NoteSheetProps, "keyboardInset" | "onClose" | "onDelete"> & {
+  state: NoteViewState;
+  time: string;
+  onAskDelete: () => void;
+  onEdit: () => void;
+};
+
+type DeleteActionProps = {
+  confirming: boolean;
+  onAsk: () => void;
+  onDelete: () => void;
 };
 
 const words = copy.notes.sheet;
@@ -43,67 +58,58 @@ const details = copy.notes.details;
 const discard = copy.discard;
 
 const styles = stylex.create({
+  paper: {
+    backgroundColor: season.soft,
+    borderRadius: radii.sm,
+  },
   delete: {
     marginLeft: -12,
   },
-  cancel: {
-    boxShadow: shadows.shadow1,
+  caption: {
+    alignSelf: "center",
+    whiteSpace: "nowrap",
+    fontFamily: type.fontMono,
+    fontSize: type.captionSize,
+    letterSpacing: type.captionLs,
+    textTransform: "uppercase",
+    fontVariantNumeric: "tabular-nums",
   },
-  morph: {
-    transitionProperty: "transform, border-radius, background-color",
-    transitionDuration: motion.durBase,
-    transitionTimingFunction: motion.easeOut,
+  counter: {
+    paddingRight: 8,
   },
-  sticky: {
-    borderRadius: radii.sm,
-  },
-  tilt: (degrees: number) => ({ transform: `rotate(${degrees}deg)` }),
-  paper: { backgroundColor: season.soft },
 });
-
-type DeleteActionProps = {
-  confirming: boolean;
-  onAsk: () => void;
-  onDelete: () => void;
-};
 
 export function NoteSheet({
   mode,
-  eyebrow,
   initial,
   offline,
+  breakpoint,
   onClose,
   onDelete,
   onSave,
   keyboardInset,
   time = "",
-  rotation = 0,
 }: NoteSheetProps) {
   const [state, dispatch] = useReducer(noteSheetReducer, initial);
 
-  if (state.step === "details")
+  if (isViewing(state))
     return (
-      <Sheet
-        title={details.title(authorName(state.opened.author))}
-        eyebrow={copy.notes.board}
-        closeLabel={words.close}
-        onClose={onClose}
-        endActions={
-          <Button icon={Pencil} onClick={() => dispatch({ type: "edit" })}>
-            {details.edit}
-          </Button>
-        }
+      <NoteDetailsSheet
+        state={state}
+        time={time}
         keyboardInset={keyboardInset}
-        uniform
-        xstyle={[styles.morph, styles.sticky, styles.paper, styles.tilt(noteDetailsTilt(rotation))]}
-      >
-        <NoteDetails text={state.opened.text.trim()} time={time} />
-      </Sheet>
+        onClose={onClose}
+        onDelete={onDelete}
+        onAskDelete={() => dispatch({ type: "askDelete" })}
+        onEdit={() => dispatch({ type: "edit" })}
+      />
     );
 
   const { draft, opened } = state;
 
   const asking = state.step === "discarding";
+
+  const title = mode === "new" ? words.newTitle : words.editTitle;
 
   const save = () => {
     if (!canSave(draft)) return dispatch({ type: "save" });
@@ -114,93 +120,120 @@ export function NoteSheet({
     else onClose();
   };
 
-  const requestClose = (from: CloseFrom) => () => {
-    const step = closeStep(asking, isDirty(draft, opened), from);
+  const leave = () => {
+    const toDetails = asking ? state.discardTo === "details" : state.fromDetails;
+
+    if (toDetails) dispatch({ type: "back" });
+    else onClose();
+  };
+
+  const closeButton = () => {
+    const step = closeStep(asking, isDirty(draft, opened), "button");
+
+    if (step !== "ask") return leave();
+
+    dispatch({ type: "askDiscard", to: state.fromDetails ? "details" : undefined });
+  };
+
+  const scrimTap = () => {
+    const step = closeStep(asking, isDirty(draft, opened), "scrim");
 
     if (step === "close") return onClose();
 
     if (step === "ask") dispatch({ type: "askDiscard" });
   };
 
-  const cancel = () => {
-    if (!state.fromDetails) return requestClose("button")();
-
-    const step = closeStep(asking, isDirty(draft, opened), "button");
-
-    dispatch(step === "ask" ? { type: "askDiscard", to: "details" } : { type: "back" });
-  };
-
-  const discardChanges = () =>
-    asking && state.discardTo === "details" ? dispatch({ type: "back" }) : onClose();
-
   const endActions = (
     <>
-      <Button variant="secondary" onClick={cancel} xstyle={styles.cancel}>
-        {words.cancel}
-      </Button>
+      {passesBoardLimit(draft.text.trim()) && (
+        <span aria-live="polite" {...stylex.props(styles.caption, styles.counter)}>
+          {words.boardShows}
+        </span>
+      )}
       <Button onClick={save}>{primaryLabel(mode, offline)}</Button>
     </>
   );
 
-  const startActions = mode === "edit" && (
-    <DeleteAction
-      confirming={state.step === "deleting"}
-      onAsk={() => dispatch({ type: "askDelete" })}
-      onDelete={onDelete}
-    />
+  const byline = mode === "edit" && (
+    <span {...stylex.props(styles.caption)}>{copy.notes.byline(opened.author.trim(), time)}</span>
   );
 
   return (
     <Sheet
-      title={mode === "new" ? words.newTitle : words.editTitle}
-      eyebrow={eyebrow}
+      title={title}
+      eyebrow={title}
+      hideTitle
+      uniform
+      placement={breakpoint === "small" ? "full" : "top"}
       closeLabel={words.close}
-      onClose={requestClose("button")}
-      onScrimTap={requestClose("scrim")}
-      startActions={
-        asking ? <DiscardMessage title={discard.title} body={discard.note} /> : startActions
-      }
+      onClose={closeButton}
+      onScrimTap={scrimTap}
+      startActions={asking ? <DiscardMessage title={discard.title} body={discard.note} /> : byline}
       endActions={
         asking ? (
           <DiscardButtons
             keepLabel={discard.keepEditing}
             discardLabel={discard.discard}
             onKeep={() => dispatch({ type: "keepEditing" })}
-            onDiscard={discardChanges}
+            onDiscard={leave}
           />
         ) : (
           endActions
         )
       }
       keyboardInset={keyboardInset}
-      xstyle={styles.morph}
+      xstyle={styles.paper}
     >
       {offline && (
         <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />
       )}
-      <TextInput
-        label={words.message}
-        placeholder={words.messagePlaceholder}
-        value={draft.text}
-        onChange={(value) => dispatch({ type: "text", value })}
-        error={state.textError ? words.writeMessage : undefined}
-        maxLength={NOTE_LIMITS.text}
-        multiline
-        rows={3}
-      />
-      <TextInput
-        label={words.name}
-        placeholder={words.namePlaceholder}
-        value={draft.author}
-        maxLength={NOTE_LIMITS.author}
-        onChange={(value) => dispatch({ type: "author", value })}
+      <NoteComposer
+        draft={draft}
+        textError={state.textError}
+        onText={(value) => dispatch({ type: "text", value })}
+        onAuthor={(value) => dispatch({ type: "author", value })}
       />
     </Sheet>
   );
 }
 
-function authorName(author: string): string {
-  return author.trim() === "" ? copy.notes.guestAuthor : author.trim();
+function NoteDetailsSheet({
+  state,
+  time,
+  keyboardInset,
+  onClose,
+  onDelete,
+  onAskDelete,
+  onEdit,
+}: DetailsProps) {
+  const author = state.opened.author.trim();
+
+  return (
+    <Sheet
+      title={details.title(author)}
+      eyebrow={copy.notes.byline(author, time)}
+      hideTitle
+      uniform
+      closeLabel={words.close}
+      onClose={onClose}
+      startActions={
+        <DeleteAction
+          confirming={state.step === "deleting"}
+          onAsk={onAskDelete}
+          onDelete={onDelete}
+        />
+      }
+      endActions={
+        <Button icon={Pencil} onClick={onEdit}>
+          {details.edit}
+        </Button>
+      }
+      keyboardInset={keyboardInset}
+      xstyle={styles.paper}
+    >
+      <NoteDetails text={state.opened.text.trim()} />
+    </Sheet>
+  );
 }
 
 function primaryLabel(mode: NoteSheetProps["mode"], offline: boolean): string {

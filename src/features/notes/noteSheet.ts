@@ -14,12 +14,14 @@ export type NoteEditFields = {
   fromDetails: boolean;
 };
 
+export type NoteViewState = { step: "details" | "deleting"; opened: NoteDraft };
+
 export type NoteSheetState =
-  | { step: "details"; opened: NoteDraft }
-  | (NoteEditFields & { step: "editing" | "deleting" })
+  | NoteViewState
+  | (NoteEditFields & { step: "editing" })
   | (NoteEditFields & { step: "discarding"; discardTo: "details" | null });
 
-export type NoteEditState = Exclude<NoteSheetState, { step: "details" }>;
+export type NoteEditState = Exclude<NoteSheetState, NoteViewState>;
 
 export type NoteSheetOptions = {
   opened?: NoteDraft;
@@ -78,10 +80,22 @@ export function isDirty(draft: NoteDraft, opened: NoteDraft): boolean {
   return draft.text.trim() !== opened.text.trim() || draft.author.trim() !== opened.author.trim();
 }
 
+export function isViewing(state: NoteSheetState): state is NoteViewState {
+  return state.step === "details" || state.step === "deleting";
+}
+
 export function noteSheetReducer(state: NoteSheetState, action: NoteSheetAction): NoteSheetState {
-  if (state.step === "details") return action.type === "edit" ? editFromDetails(state) : state;
+  if (isViewing(state)) return viewReducer(state, action);
 
   return editReducer(state, action);
+}
+
+function viewReducer(state: NoteViewState, action: NoteSheetAction): NoteSheetState {
+  if (action.type === "edit") return editFromDetails(state);
+
+  if (action.type === "askDelete") return { step: "deleting", opened: state.opened };
+
+  return state;
 }
 
 function editReducer(state: NoteEditState, action: NoteSheetAction): NoteSheetState {
@@ -94,12 +108,11 @@ function editReducer(state: NoteEditState, action: NoteSheetAction): NoteSheetSt
       };
     case "save":
       return { ...state, textError: !canSave(state.draft) };
-    case "askDelete":
-      return { ...editFields(state), step: "deleting" };
     case "askDiscard":
       return { ...editFields(state), step: "discarding", discardTo: action.to ?? null };
     case "keepEditing":
       return { ...editFields(state), step: "editing" };
+    case "askDelete":
     case "edit":
       return state;
     case "back":
@@ -118,7 +131,5 @@ function editFields({ draft, opened, textError, fromDetails }: NoteEditState): N
 }
 
 function edited(state: NoteEditState, draft: NoteDraft): NoteEditState {
-  const step = state.step === "deleting" ? "deleting" : "editing";
-
-  return { ...editFields(state), draft, step };
+  return { ...editFields(state), draft, step: "editing" };
 }

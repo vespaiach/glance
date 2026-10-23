@@ -37,10 +37,17 @@ let store: Harness;
 
 beforeEach(() => {
   store = openHarness("glance-notes-screen-test");
+
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
 });
 
 afterEach(async () => {
   cleanup();
+  vi.unstubAllGlobals();
 
   await store.close();
 });
@@ -74,23 +81,21 @@ test("NOTE-04 the board lists the saved notes newest first", async () => {
 
   renderNotes();
 
-  expect(await screen.findByText("2 notes")).toBeInTheDocument();
+  expect(await screen.findByText("2 notes · cleared after 7 days")).toBeInTheDocument();
   expect(
-    screen.getAllByRole("button", { name: /Dad|Mom/ }).map((note) => note.textContent),
+    screen.getAllByRole("button", { name: /^Note from/ }).map((note) => note.textContent),
   ).toEqual([
     "Package for Mia at the front door.Mom9:05 AM",
     "Wi-Fi password is on the fridge!Dad8:12 AM",
   ]);
 });
 
-test("NOTE-06 the caption follows the note expiry setting", async () => {
+test("NOTE-06 the count follows the note expiry setting", async () => {
   await store.db.notes.put(synced(WIFI));
 
   renderNotes({ noteExpiry: { on: true, days: 1 } });
 
-  expect(
-    await screen.findByText("Select a note to edit or delete it · Notes are removed after 1 day"),
-  ).toBeInTheDocument();
+  expect(await screen.findByText("1 note · cleared after 1 day")).toBeInTheDocument();
 });
 
 test("NOTE-07 with no notes the board shows the empty state", async () => {
@@ -101,7 +106,7 @@ test("NOTE-07 with no notes the board shows the empty state", async () => {
   expect(await screen.findByText("Something to share at home?")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. They stay until someone deletes them.",
+      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family.",
     ),
   ).toBeInTheDocument();
 });
@@ -111,7 +116,7 @@ test("NOTE-01 tapping a note opens Note details for it", async () => {
 
   renderNotes();
 
-  await userEvent.click(await screen.findByRole("button", { name: /Wi-Fi/ }));
+  await userEvent.click(await screen.findByRole("button", { name: /^Note from Dad/ }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
     JSON.stringify({ kind: "note", id: WIFI.id }),

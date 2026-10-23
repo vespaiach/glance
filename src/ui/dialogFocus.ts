@@ -7,7 +7,9 @@ export function useFocusOnOpen(dialog: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const opener = document.activeElement;
 
-    dialog.current?.focus();
+    const first = dialog.current?.querySelector<HTMLElement>("[data-autofocus]");
+
+    (first ?? dialog.current)?.focus();
 
     return () => {
       if (opener instanceof HTMLElement) opener.focus();
