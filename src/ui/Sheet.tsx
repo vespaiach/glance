@@ -105,6 +105,9 @@ const styles = stylex.create({
     height: "100%",
     borderRadius: 0,
   },
+  bodyFitted: {
+    flexGrow: 0,
+  },
   heading: {
     display: "flex",
     flexDirection: "column",
@@ -156,6 +159,9 @@ const styles = stylex.create({
   group: {
     display: "flex",
     gap: space.xs,
+  },
+  endGroup: {
+    marginLeft: "auto",
   },
 });
 
@@ -229,13 +235,17 @@ export function Sheet({
           </div>
           <IconButton icon={X} label={closeLabel} size="touch" onClick={onClose} />
         </div>
-        <div ref={body} data-sheet-body {...stylex.props(styles.body)}>
+        <div
+          ref={body}
+          data-sheet-body
+          {...stylex.props(styles.body, placement === "full" && styles.bodyFitted)}
+        >
           {children}
         </div>
         {(startActions || endActions) && (
           <div {...stylex.props(styles.actions, uniform && styles.cardFill)}>
             <div {...stylex.props(styles.group)}>{startActions}</div>
-            <div {...stylex.props(styles.group)}>{endActions}</div>
+            <div {...stylex.props(styles.group, styles.endGroup)}>{endActions}</div>
           </div>
         )}
       </div>

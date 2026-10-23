@@ -110,6 +110,10 @@ const styles = stylex.create({
     gap: "clamp(40px, 5vw, 72px)",
   },
   emptyText: {
+    flexGrow: 0,
+    flexShrink: 1,
+    flexBasis: 600,
+    minWidth: 260,
     display: "flex",
     flexDirection: "column",
     gap: 10,
