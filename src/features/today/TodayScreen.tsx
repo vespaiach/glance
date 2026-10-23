@@ -208,8 +208,7 @@ export function TodayScreen() {
         onOpenNote={(id) => sheets.open({ kind: "note", id })}
         onAddNote={() => sheets.open({ kind: "newnote" })}
         onOpenNotes={() => go("notes")}
-        columns={1}
-        limit={2}
+        breakpoint={breakpoint}
         xstyle={[todayAreas.notes, columns && todayAreas.clipped]}
       />
       <Picture

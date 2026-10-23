@@ -8,8 +8,8 @@ import { press } from "./press";
 type NotePadSize = "sm" | "lg";
 
 type NotePadProps = {
-  label: string;
-  onClick: () => void;
+  label?: string;
+  onClick?: () => void;
   size?: NotePadSize;
   xstyle?: stylex.StyleXStyles;
 };
@@ -31,6 +31,7 @@ const DIMENSIONS: Record<NotePadSize, Dimensions> = {
 const styles = stylex.create({
   root: {
     position: "relative",
+    display: "inline-block",
     flexShrink: 0,
     borderWidth: 0,
     backgroundColor: "transparent",
@@ -95,13 +96,8 @@ const styles = stylex.create({
 export function NotePad({ label, onClick, size = "sm", xstyle }: NotePadProps) {
   const { width, height, padding, ruleGap, button, glyph } = DIMENSIONS[size];
 
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      {...stylex.props(styles.root, styles.size(width, height), press.scale, xstyle)}
-    >
+  const sheets = (
+    <>
       <span {...stylex.props(styles.sheet, styles.back)} />
       <span {...stylex.props(styles.sheet, styles.middle)} />
       <span {...stylex.props(styles.sheet, styles.top, styles.padding(padding))}>
@@ -110,10 +106,31 @@ export function NotePad({ label, onClick, size = "sm", xstyle }: NotePadProps) {
           <span {...stylex.props(styles.rule)} />
           <span {...stylex.props(styles.rule, styles.short)} />
         </span>
-        <span {...stylex.props(styles.plus(button))}>
-          <Icon icon={Plus} size={glyph} />
-        </span>
+        {onClick && (
+          <span {...stylex.props(styles.plus(button))}>
+            <Icon icon={Plus} size={glyph} />
+          </span>
+        )}
       </span>
+    </>
+  );
+
+  if (onClick === undefined) {
+    return (
+      <span aria-hidden="true" {...stylex.props(styles.root, styles.size(width, height), xstyle)}>
+        {sheets}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      {...stylex.props(styles.root, styles.size(width, height), press.scale, xstyle)}
+    >
+      {sheets}
     </button>
   );
 }

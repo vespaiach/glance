@@ -123,8 +123,12 @@ export const copy = {
     },
     notes: {
       count: (count: number) => `Notes · ${count}`,
-      loadingCount: "Notes",
+      eyebrow: "Notes",
       allNotes: "All notes",
+      more: (count: number) => (count === 1 ? "1 more note" : `${count} more notes`),
+      moreName: (more: string) => `${more}, open Notes`,
+      noteName: (author: string, text: string) =>
+        author ? `Note from ${author}: ${text}` : `Note: ${text}`,
       emptyTitle: "Something to share at home?",
       emptyBody: "Milk in the fridge, flowers to water. Leave a note for the family.",
       addNote: "Add note",
