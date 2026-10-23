@@ -176,6 +176,13 @@ export const copy = {
     weekdayLetters: ["S", "M", "T", "W", "T", "F", "S"],
     today: "Today",
     close: "Close",
+    goToday: "Go to today",
+    showEarlier: (count: number) => `Show ${count} earlier`,
+    hideEarlier: "Hide earlier",
+    happeningNow: "Happening now",
+    laterToday: (count: number) => (count > 0 ? `Later today · ${count}` : "Later today"),
+    nothingScheduled: "Nothing scheduled.",
+    nobodySelected: "No one selected, so no plans show.",
   },
   personFilter: {
     everyone: "Everyone",

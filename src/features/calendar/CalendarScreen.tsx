@@ -40,8 +40,8 @@ import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import type { TimelineWeather } from "@/ui/DayTimeline";
 import { calendarView, initialCalendarView } from "./calendarView";
 import { CalendarDay } from "./components/CalendarDay";
+import { CalendarHeader } from "./components/CalendarHeader";
 import { CalendarToolbar } from "./components/CalendarToolbar";
-import { DateControl } from "./components/DateControl";
 import { DatePicker, type PickerMonthView } from "./components/DatePicker";
 import { SpanLink } from "./components/SpanLink";
 import { type WeekDay, WeekStrip } from "./components/WeekStrip";
@@ -108,25 +108,33 @@ export function CalendarScreen() {
 
   const small = breakpoint === "small";
 
+  const strip = {
+    range: copy.calendar.weekRange(heading),
+    month: heading.month,
+    label: weekLabel(week[0] ?? day),
+    days: weekPills(week, weekEvents ?? [], tags, { tz, forecast, settings }),
+    selected: day,
+    today,
+    onPrevious: () => dispatch({ type: "step", delta: -1, today }),
+    onNext: () => dispatch({ type: "step", delta: 1, today }),
+    onSelect: (chosen: string) => dispatch({ type: "select", day: chosen }),
+    onAddEvent: addEvent,
+  };
+
   return (
     <div {...stylex.props(calendarLayout(breakpoint, view.span24))}>
       {small ? (
-        <DateControl {...dateControl(day)} onOpen={() => dispatch({ type: "openPicker" })} />
+        <CalendarHeader
+          {...strip}
+          pickLabel={copy.calendar.pickDateFor(formatLongDate(parseDateKey(day), "UTC"))}
+          onOpenPicker={() => dispatch({ type: "openPicker" })}
+        />
       ) : (
         <WeekStrip
-          range={copy.calendar.weekRange(heading)}
-          month={heading.month}
-          label={weekLabel(week[0] ?? day)}
-          days={weekPills(week, weekEvents ?? [], tags, { tz, forecast, settings })}
-          selected={day}
-          today={today}
+          {...strip}
           wide={addEventPill(windowWidth)}
           previousLabel={copy.calendar.previousWeek}
           nextLabel={copy.calendar.nextWeek}
-          onPrevious={() => dispatch({ type: "step", delta: -1, today })}
-          onNext={() => dispatch({ type: "step", delta: 1, today })}
-          onSelect={(chosen) => dispatch({ type: "select", day: chosen })}
-          onAddEvent={addEvent}
         />
       )}
       <CalendarDay
@@ -157,9 +165,7 @@ export function CalendarScreen() {
             small={small}
             whoSheet={fixture.whosheet === true}
             onFilter={who.setFilter}
-            {...(small
-              ? { onAddEvent: addEvent }
-              : day !== today && { onToday: () => dispatch({ type: "select", day: today }) })}
+            {...(day !== today && { onToday: () => dispatch({ type: "select", day: today }) })}
           />
         }
         spanLink={
@@ -230,18 +236,6 @@ function weekLabel(sunday: string): string {
   const date = parseDateKey(sunday);
 
   return copy.calendar.week(formatMonth(date, "UTC"), date.getUTCDate());
-}
-
-function dateControl(day: string) {
-  const date = parseDateKey(day);
-
-  return {
-    year: String(date.getUTCFullYear()),
-    month: formatMonth(date, "UTC"),
-    weekday: formatWeekday(date, "UTC"),
-    date: date.getUTCDate(),
-    name: formatLongDate(date, "UTC"),
-  };
 }
 
 function pickerViews(

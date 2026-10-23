@@ -250,6 +250,24 @@ test("TODAY-11 Earlier shows the ended plans and Hide earlier folds them again",
   expect(screen.queryByRole("button", { name: /^School drop-off, / })).not.toBeInTheDocument();
 });
 
+test("TODAY-11 on small the schedule is the day list, whose Show earlier shares the fold", async () => {
+  const { rerender } = renderSchedule(ready, { breakpoint: "small" });
+
+  expect(screen.getByText("Happening now")).toBeInTheDocument();
+  expect(screen.getByText("Later today · 1")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Show 1 earlier" }));
+
+  expect(screen.getByRole("button", { name: /^School drop-off, / })).toBeInTheDocument();
+
+  rerender(<TodaySchedule {...rendered(ready)} breakpoint="large" />);
+
+  expect(screen.getByRole("button", { name: "Hide earlier" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+});
+
 test("TODAY-11 the Earlier pill is hidden when nothing has ended", () => {
   renderSchedule({ kind: "ready", data: EVENTS.slice(1) });
 

@@ -1,8 +1,8 @@
 import * as stylex from "@stylexjs/stylex";
 import { CalendarDays, CalendarX2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { copy } from "@/copy";
-import { type Breakpoint, type LayoutSize, layoutSize } from "@/domain/breakpoint";
+import { type Breakpoint, layoutSize } from "@/domain/breakpoint";
 import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { filterScope, matchesFilter } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
@@ -15,6 +15,7 @@ import { Icon } from "@/ui/Icon";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
+import { DayList } from "./DayList";
 
 type CalendarDayProps = {
   state: ZoneState<CalendarEvent>;
@@ -51,10 +52,7 @@ const LABELS: DayTimelineLabels = {
 
 const SKELETON_ROWS = [0, 1, 2];
 
-const TIMELINE_MIN: Record<LayoutSize, { day: number; full: number }> = {
-  large: { day: 320, full: 760 },
-  small: { day: 720, full: 1000 },
-};
+const TIMELINE_MIN = { day: 320, full: 760 } as const;
 
 const styles = stylex.create({
   panel: {
@@ -76,9 +74,10 @@ const styles = stylex.create({
     paddingInlineEnd: 24,
   },
   small: {
-    paddingBlock: 12,
-    paddingInlineStart: 8,
-    paddingInlineEnd: 12,
+    gap: space.lg,
+    paddingTop: 12,
+    paddingInline: 12,
+    paddingBottom: 24,
   },
   timeline: (minHeight: number) => ({
     minHeight,
@@ -98,6 +97,14 @@ const styles = stylex.create({
     alignItems: "flex-start",
     gap: space.md,
   },
+  emptySmall: {
+    minHeight: 0,
+    backgroundColor: "transparent",
+    paddingTop: space.xs,
+    paddingBottom: 0,
+    paddingInline: 0,
+    gap: space.sm,
+  },
   emptyText: {
     display: "flex",
     flexDirection: "column",
@@ -108,6 +115,10 @@ const styles = stylex.create({
     fontWeight: 340,
     letterSpacing: "-0.4px",
     lineHeight: 1.15,
+  },
+  emptyTitleSmall: {
+    fontSize: 24,
+    letterSpacing: "-0.3px",
   },
   emptyBody: {
     fontSize: 17,
@@ -135,13 +146,17 @@ export function CalendarDay({
   onRetry,
   ...timeline
 }: CalendarDayProps) {
+  const small = layoutSize(timeline.breakpoint) === "small";
+
   return (
     <section {...stylex.props(styles.panel, styles[layoutSize(timeline.breakpoint)])}>
       {toolbar}
       <Zone
         state={state}
         loading={<DaySkeleton />}
-        empty={calendarEmpty ? <EmptyCalendar /> : <Timeline events={[]} {...timeline} />}
+        empty={
+          calendarEmpty ? <EmptyCalendar small={small} /> : <DayPlans events={[]} {...timeline} />
+        }
         failed={
           <SourceFailure
             icon={CalendarX2}
@@ -154,7 +169,7 @@ export function CalendarDay({
       >
         {(events, updatedAt) => (
           <>
-            <Timeline events={events} {...timeline} />
+            <DayPlans events={events} {...timeline} />
             {updatedAt && (
               <Eyebrow size="caption" xstyle={styles.caption}>
                 {copy.calendar.updated(clockAt(updatedAt, timeline.clock, timeline.tz))}
@@ -164,6 +179,48 @@ export function CalendarDay({
         )}
       </Zone>
     </section>
+  );
+}
+
+function DayPlans(props: TimelineProps) {
+  return layoutSize(props.breakpoint) === "small" ? (
+    <SmallDay {...props} />
+  ) : (
+    <Timeline {...props} />
+  );
+}
+
+function SmallDay({
+  events,
+  tags,
+  filter,
+  day,
+  now,
+  tz,
+  clock,
+  weather,
+  onOpenEvent,
+  onAddEvent,
+}: TimelineProps) {
+  const [earlierOpen, setEarlierOpen] = useState(false);
+
+  const allIds = tags.map((tag) => tag.id);
+
+  return (
+    <DayList
+      events={events.filter((event) => matchesFilter(event, filter, allIds))}
+      tags={tags}
+      day={day}
+      now={now}
+      tz={tz}
+      clock={clock}
+      free={filterScope(filter, allIds)}
+      weather={weather}
+      earlierOpen={earlierOpen}
+      onToggleEarlier={() => setEarlierOpen((open) => !open)}
+      onOpenEvent={onOpenEvent}
+      onAddEvent={onAddEvent}
+    />
   );
 }
 
@@ -186,7 +243,7 @@ function Timeline({
 
   const shown = events.filter((event) => matchesFilter(event, filter, allIds));
 
-  const minHeight = TIMELINE_MIN[layoutSize(breakpoint)][span24 ? "full" : "day"];
+  const minHeight = TIMELINE_MIN[span24 ? "full" : "day"];
 
   return (
     <>
@@ -230,12 +287,14 @@ function DaySkeleton() {
   );
 }
 
-function EmptyCalendar() {
+function EmptyCalendar({ small }: { small: boolean }) {
   return (
-    <div {...stylex.props(styles.emptyTile)}>
-      <Icon icon={CalendarDays} size={32} strokeWidth={1.5} />
+    <div {...stylex.props(styles.emptyTile, small && styles.emptySmall)}>
+      <Icon icon={CalendarDays} size={small ? 28 : 32} strokeWidth={1.5} />
       <div {...stylex.props(styles.emptyText)}>
-        <span {...stylex.props(styles.emptyTitle)}>{copy.calendar.emptyTitle}</span>
+        <span {...stylex.props(styles.emptyTitle, small && styles.emptyTitleSmall)}>
+          {copy.calendar.emptyTitle}
+        </span>
         <span {...stylex.props(styles.emptyBody)}>{copy.calendar.emptyBody}</span>
       </div>
     </div>
