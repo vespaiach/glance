@@ -1,7 +1,10 @@
 import * as stylex from "@stylexjs/stylex";
+import { ChevronRight } from "lucide-react";
 import type { Ref } from "react";
 import { copy } from "@/copy";
-import { colors, radii } from "@/theme/tokens.stylex";
+import { colors, motion, radii, shadows } from "@/theme/tokens.stylex";
+import { Icon } from "@/ui/Icon";
+import { press } from "@/ui/press";
 
 const styles = stylex.create({
   grip: {
@@ -17,25 +20,30 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     cursor: "pointer",
-  },
-  smallGrip: {
-    width: 40,
+    transitionProperty: "transform",
+    transitionDuration: motion.durPress,
+    transitionTimingFunction: motion.easeOut,
   },
   off: {
     display: "none",
   },
-  pill: {
-    display: "block",
-    width: 5,
-    height: 72,
-    borderRadius: radii.full,
-    backgroundColor: colors.textPrimary,
+  tab: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 36,
+    height: 112,
+    borderTopRightRadius: radii.lg,
+    borderBottomRightRadius: radii.lg,
+    backgroundColor: colors.surfaceCanvas,
+    color: colors.textPrimary,
+    boxShadow: `${shadows.shadow1}, ${shadows.shadow2}`,
   },
-  smallPill: {
-    width: 4,
-    height: 56,
+  smallTab: {
+    width: 24,
+    height: 96,
   },
 });
 
@@ -55,9 +63,11 @@ export function SidebarGrip({ shown, small = false, onShow, ref }: SidebarGripPr
       aria-label={small ? copy.nav.openMenu : copy.nav.showSidebar}
       aria-expanded={false}
       onClick={onShow}
-      {...stylex.props(styles.grip, small && styles.smallGrip, !shown && styles.off)}
+      {...stylex.props(styles.grip, press.scale, !shown && styles.off)}
     >
-      <span {...stylex.props(styles.pill, small && styles.smallPill)} />
+      <span {...stylex.props(styles.tab, small && styles.smallTab)}>
+        <Icon icon={ChevronRight} size={22} strokeWidth={2} />
+      </span>
     </button>
   );
 }

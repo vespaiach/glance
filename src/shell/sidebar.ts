@@ -14,9 +14,11 @@ export type SidebarAction =
   | { type: "idle" }
   | { type: "viewChanged"; view: View | undefined; small?: boolean };
 
-export const SIDEBAR_IDLE_SECONDS = 20;
+export const SIDEBAR_IDLE_SECONDS = 15;
 
-const INSET: Record<SidebarMode, number> = { hidden: 0, rail: 80, expanded: 332 };
+const INSET: Record<Exclude<SidebarMode, "hidden">, number> = { rail: 80, expanded: 332 };
+
+const GRIP_PAD = { large: 36, small: 24 } as const;
 
 const TRANSITIONS: Record<
   Exclude<SidebarAction["type"], "viewChanged">,
@@ -51,8 +53,10 @@ export function initialSidebar(
   }
 }
 
-export function sidebarInset(mode: SidebarMode, small: boolean): number {
-  return small ? 0 : INSET[mode];
+export function sidebarInset(mode: SidebarMode, view: View | undefined, small: boolean): number {
+  if (small || mode === "hidden") return gripPad(view, small);
+
+  return INSET[mode];
 }
 
 function nextMode(mode: SidebarMode, action: SidebarAction): SidebarMode | undefined {
@@ -71,4 +75,10 @@ function afterViewChange(mode: SidebarMode, view: View | undefined, small = fals
   if (mode === "hidden" && view === "today") return mode;
 
   return "rail";
+}
+
+function gripPad(view: View | undefined, small: boolean): number {
+  if (view === "today") return 0;
+
+  return small ? GRIP_PAD.small : GRIP_PAD.large;
 }
