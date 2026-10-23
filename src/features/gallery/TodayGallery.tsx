@@ -50,18 +50,15 @@ const NEXT_HERO = eventHero(LATER);
 
 const SUNSET = TODAY_WEATHER.current.sunset;
 
-const NEXT_LINE = "Tomorrow · 9:00 AM · Soccer game, Laurelhurst Park";
-
 const WRAPPED = { kind: "ended", done: TODAY_EVENTS.length } as const;
 
 const WIDE = { kind: "none" } as const;
 
 const OPEN_DAYS = [
-  { key: "wrap", hero: WRAPPED, now: EVENING, events: TODAY_EVENTS, nextLine: NEXT_LINE },
-  { key: "wide", hero: WIDE, now: NOW, events: [], nextLine: NEXT_LINE },
-  { key: "morning", hero: WIDE, now: octoberAt(9, 6, 0), events: [], nextLine: NEXT_LINE },
-  { key: "after-sunset", hero: WIDE, now: octoberAt(9, 20, 30), events: [], nextLine: NEXT_LINE },
-  { key: "no-next", hero: WIDE, now: NOW, events: [], nextLine: undefined },
+  { key: "wrap", hero: WRAPPED, now: EVENING, events: TODAY_EVENTS },
+  { key: "wide", hero: WIDE, now: NOW, events: [] },
+  { key: "morning", hero: WIDE, now: octoberAt(9, 6, 0), events: [] },
+  { key: "after-sunset", hero: WIDE, now: octoberAt(9, 20, 30), events: [] },
 ] as const;
 
 const PICTURES = [
@@ -187,6 +184,7 @@ export function TodayGallery({ season }: { season: Season }) {
           season={season}
           time={NOW}
           clock="12h"
+          breakpoint="large"
           weather={<NowWeather tz={GALLERY_TZ} state={WEATHERS[0].state} {...weather} />}
           xstyle={styles.hero}
         >
@@ -199,13 +197,14 @@ export function TodayGallery({ season }: { season: Season }) {
           />
         </TodayHero>
       ))}
-      {OPEN_DAYS.map(({ key, hero, now, events, nextLine }) => (
+      {OPEN_DAYS.map(({ key, hero, now, events }) => (
         <TodayHero
           tz={GALLERY_TZ}
           key={key}
           season={season}
           time={now}
           clock="12h"
+          breakpoint="large"
           weather={<NowWeather tz={GALLERY_TZ} state={WEATHERS[0].state} {...weather} />}
           xstyle={styles.hero}
         >
@@ -215,8 +214,6 @@ export function TodayGallery({ season }: { season: Season }) {
             now={now}
             clock="12h"
             tz={GALLERY_TZ}
-            nextLine={nextLine}
-            onOpenCalendar={ignore}
           />
         </TodayHero>
       ))}
@@ -227,6 +224,7 @@ export function TodayGallery({ season }: { season: Season }) {
           season={season}
           time={NOW}
           clock="24h"
+          breakpoint="large"
           weather={<NowWeather tz={GALLERY_TZ} state={state} {...weather} />}
           xstyle={styles.hero}
         >
@@ -243,6 +241,40 @@ export function TodayGallery({ season }: { season: Season }) {
           )}
         </TodayHero>
       ))}
+      <TodayHero
+        tz={GALLERY_TZ}
+        season={season}
+        time={NOW}
+        clock="12h"
+        breakpoint="small"
+        weather={<NowWeather tz={GALLERY_TZ} state={WEATHERS[0].state} {...weather} small />}
+        xstyle={styles.small}
+      >
+        <HeroSummary
+          tz={GALLERY_TZ}
+          hero={NOW_HERO}
+          tags={GALLERY_FAMILY}
+          clock="12h"
+          onOpenEvent={ignore}
+        />
+      </TodayHero>
+      <TodayHero
+        tz={GALLERY_TZ}
+        season={season}
+        time={NOW}
+        clock="12h"
+        breakpoint="small"
+        weather={<NowWeather tz={GALLERY_TZ} state={WEATHERS[0].state} {...weather} small />}
+        xstyle={styles.small}
+      >
+        <OpenDay
+          hero={WIDE}
+          ribbon={dayRibbon([], NOW, new Date(SUNSET), GALLERY_TZ)}
+          now={NOW}
+          clock="12h"
+          tz={GALLERY_TZ}
+        />
+      </TodayHero>
       {PICTURES.map(({ key, picture }) => (
         <div key={key} {...stylex.props(styles.picture)}>
           {picture}

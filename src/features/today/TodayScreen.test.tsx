@@ -156,7 +156,7 @@ test("TODAY-02 the hero shows the event running now", async () => {
   expect(screen.getByText("Today · 1 event")).toBeInTheDocument();
 });
 
-test("TODAY-13 a day with no events is wide open, with the next event in a tile", async () => {
+test("TODAY-13 a day with no events is wide open until 9 PM, with no Next on the calendar tile", async () => {
   await store.db.events.put(synced(TOMORROW));
 
   await markSynced(store);
@@ -164,23 +164,9 @@ test("TODAY-13 a day with no events is wide open, with the next event in a tile"
   renderToday();
 
   expect(await screen.findByText("The day is wide open")).toBeInTheDocument();
-  expect(screen.getByText("Free until 10 PM · 11 h 19 min")).toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole("button", { name: /Next on the calendar/ }));
-
-  expect(screen.getByRole("button", { name: /Next on the calendar/ })).toHaveTextContent(
-    "Tomorrow · 9:00 AM · Soccer game, Park",
-  );
-  expect(navigation.push).toHaveBeenCalledWith("/calendar");
-});
-
-test("TODAY-13 with nothing upcoming the open day has no tile", async () => {
-  await markSynced(store);
-
-  renderToday();
-
-  expect(await screen.findByText("The day is wide open")).toBeInTheDocument();
+  expect(screen.getByText("Free until 9 PM · 10 h 19 min")).toBeInTheDocument();
   expect(screen.queryByText("Next on the calendar")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Soccer game/)).not.toBeInTheDocument();
 });
 
 test("TODAY-02 once every event ended the day is a wrap", async () => {
@@ -191,7 +177,7 @@ test("TODAY-02 once every event ended the day is a wrap", async () => {
   renderToday();
 
   expect(await screen.findByText("That’s a wrap for today")).toBeInTheDocument();
-  expect(screen.getByText("1 event done · free until 10 PM")).toBeInTheDocument();
+  expect(screen.getByText("1 event done · free until 9 PM")).toBeInTheDocument();
 });
 
 test("TODAY-13 the open day ribbon marks the sunset from the forecast", async () => {
@@ -207,7 +193,7 @@ test("TODAY-13 the open day ribbon marks the sunset from the forecast", async ()
   expect(container.querySelector(".lucide-sunset")).toBeInTheDocument();
 });
 
-test("TODAY-03 tapping the hero event opens Edit event", async () => {
+test("TODAY-02 tapping the hero event opens Event details", async () => {
   await store.db.events.put(synced(CALL));
 
   renderToday();

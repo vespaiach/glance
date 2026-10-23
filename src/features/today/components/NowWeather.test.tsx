@@ -64,6 +64,25 @@ test("TODAY-08 shows the city now, the temperature, the condition with high and 
   expect(screen.getByText("Rain from 3 PM")).toBeInTheDocument();
 });
 
+test("TODAY-01 on small the weather is one row with the temperature, high and low, and rain", () => {
+  renderWeather({ small: true });
+
+  expect(screen.getByText("64°")).toBeInTheDocument();
+  expect(screen.getByText("High 68° · Low 51°")).toBeInTheDocument();
+  expect(screen.getByText("Rain from 3 PM")).toBeInTheDocument();
+  expect(screen.queryByText("Portland, OR · Now")).not.toBeInTheDocument();
+});
+
+test("TODAY-01 on small tapping the weather row opens Weather", async () => {
+  const onOpenWeather = vi.fn<() => void>();
+
+  renderWeather({ small: true, onOpenWeather });
+
+  await userEvent.click(screen.getByRole("button", { name: /Weather now/ }));
+
+  expect(onOpenWeather).toHaveBeenCalledTimes(1);
+});
+
 test("TODAY-08 with no drizzle or rain hour there is no rain line", () => {
   renderWeather({ state: { kind: "ready", data: [DRY] } });
 

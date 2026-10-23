@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { CalendarDays, ChevronRight, Clock, Sunset } from "lucide-react";
+import { Clock, Sunset } from "lucide-react";
 import { copy } from "@/copy";
 import { type DayRibbon, RIBBON_END, RIBBON_START } from "@/domain/dayRibbon";
 import {
@@ -10,11 +10,10 @@ import {
   minutesOfDay,
 } from "@/domain/time";
 import type { TodayHero } from "@/domain/todayHero";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
-import { press } from "@/ui/press";
 
 type OpenDayProps = {
   hero: Extract<TodayHero<never>, { kind: "none" | "ended" }>;
@@ -22,8 +21,6 @@ type OpenDayProps = {
   now: Date;
   clock: ClockSetting;
   tz: string;
-  nextLine?: string;
-  onOpenCalendar: () => void;
 };
 
 const MARKER = 32;
@@ -48,11 +45,15 @@ const styles = stylex.create({
     gap: 12,
   },
   title: {
-    fontSize: "clamp(28px, 8cqi, 48px)",
+    fontSize: "clamp(32px, 12cqi, 64px)",
     fontWeight: 340,
     lineHeight: 1.05,
     letterSpacing: "-0.8px",
     textWrap: "pretty",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
   body: {
     fontSize: type.bodyLgSize,
@@ -139,45 +140,9 @@ const styles = stylex.create({
   end: {
     insetInlineEnd: 0,
   },
-  tile: {
-    display: "flex",
-    alignItems: "center",
-    gap: space.md,
-    minHeight: 64,
-    minWidth: 0,
-    borderWidth: 0,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceCanvas,
-    paddingBlock: 14,
-    paddingInline: 20,
-    font: "inherit",
-    color: "inherit",
-    textAlign: "start",
-    cursor: "pointer",
-  },
-  tileText: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-    flex: 1,
-    minWidth: 0,
-  },
-  tileEyebrow: {
-    ...mono,
-    fontSize: 14,
-    lineHeight: 1.2,
-  },
-  tileLine: {
-    fontSize: 18,
-    fontWeight: 480,
-    lineHeight: 1.3,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
 });
 
-export function OpenDay({ hero, ribbon, now, clock, tz, nextLine, onOpenCalendar }: OpenDayProps) {
+export function OpenDay({ hero, ribbon, now, clock, tz }: OpenDayProps) {
   const until = formatHour(RIBBON_END, clock);
 
   const wrapped = hero.kind === "ended";
@@ -196,7 +161,6 @@ export function OpenDay({ hero, ribbon, now, clock, tz, nextLine, onOpenCalendar
         </span>
       </div>
       <Ribbon ribbon={ribbon} now={now} clock={clock} tz={tz} />
-      {nextLine !== undefined && <NextTile line={nextLine} onOpen={onOpenCalendar} />}
     </div>
   );
 }
@@ -232,19 +196,6 @@ function Ribbon({ ribbon, now, clock, tz }: Pick<OpenDayProps, "ribbon" | "now" 
       <span {...stylex.props(styles.edge, styles.start)}>{formatHour(RIBBON_START, clock)}</span>
       <span {...stylex.props(styles.edge, styles.end)}>{formatHour(RIBBON_END, clock)}</span>
     </div>
-  );
-}
-
-function NextTile({ line, onOpen }: { line: string; onOpen: () => void }) {
-  return (
-    <button type="button" onClick={onOpen} {...stylex.props(styles.tile, press.scale)}>
-      <Icon icon={CalendarDays} size={24} strokeWidth={1.5} />
-      <span {...stylex.props(styles.tileText)}>
-        <span {...stylex.props(styles.tileEyebrow)}>{copy.today.open.next}</span>
-        <span {...stylex.props(styles.tileLine)}>{line}</span>
-      </span>
-      <Icon icon={ChevronRight} size={20} strokeWidth={2} />
-    </button>
   );
 }
 
