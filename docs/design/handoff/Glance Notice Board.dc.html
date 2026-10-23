@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html?view=notes">Clickable mockup →</a><a href="Glance%20Today%20Notes.dc.html">Today notes →</a><a href="Glance%20States.dc.html">States →</a><a href="Glance%20Notes.dc.html">Notes →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Notice board</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Notice board view at each screen size: large 1920×1080, normal 1024×768 and small 390×844. Each frame is the live mockup opened on the Notes view, so it matches Glance.dc.html exactly.</p>
+</section>
+<sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
+<section id="{{ s.id }}" data-screen-label="{{ s.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:40px 48px;align-items:flex-start">
+<sc-for list="{{ s.vars }}" as="v" hint-placeholder-count="4">
+<div id="{{ v.id }}" style="display:flex;flex-direction:column;gap:12px;width:{{ v.boxW }};max-width:100%">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">{{ v.id }}</span><span style="font:500 14px/1.3 var(--font-sans)">{{ v.label }}</span><a href="{{ v.src }}" target="_blank" style="margin-left:auto;font:500 12px ui-monospace,Menlo,monospace">Open ↗</a></div>
+<div style="width:{{ v.boxW }};height:{{ v.boxH }};overflow:hidden;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.06);background:#fff">
+<iframe title="{{ v.title }}" src="{{ v.src }}" scrolling="no" tabindex="-1" loading="lazy" style="border:0;display:block;pointer-events:none;width:{{ v.w }};height:{{ v.h }};transform:{{ v.tf }};transform-origin:0 0"></iframe>
+</div>
+<span style="font:13px/1.45 var(--font-sans);text-wrap:pretty">{{ v.note }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.5,&quot;max&quot;:1.5,&quot;step&quot;:0.1,&quot;default&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const season = this.props.season ?? 'fall';
+    const k = this.props.frameScale ?? 1;
+    const S = [
+      ['large', 'Large screen', '1920×1080', 1920, 1080, 0.4],
+      ['normal', 'Normal screen', '1024×768', 1024, 768, 0.55],
+      ['small', 'Small screen', '390×844', 390, 844, 0.7],
+    ];
+    const V = [
+      ['Notes', '', 'Default: “5 notes · cleared after 7 days” eyebrow, “Notice board” title, “Add note” button (64 px on large) and every note as a sticky note, newest first, in a wrapping grid. Long notes are cut at a word with “…”. Tap a note → Note details.'],
+      ['No notes', '&empty=1', 'Empty board: dashed card filling the board, with the blank note stack, “Something to share at home?” and one line of copy, centred. Tap the pad → New note.'],
+      ['Note details', '&sheet=note&details=1', 'Tap a note: read-only sheet, straight. “{author} · {time}” eyebrow, the full message as the largest text, then Delete (with inline confirm) and Edit.'],
+      ['New note', '&sheet=newnote', 'Add note: the sheet is the sticky note itself. “New note” + X, the message typed straight on the paper (starts one line tall and grows), then a free-text “From” field (prefilled with the last name used on this screen; blank posts unsigned), then Post note. A “Board shows the first 120” caption appears only past 120 characters. Pinned to the top on large and normal; full screen on small.'],
+    ];
+    const sizes = S.map(([id, name, meta, w, h, sc0]) => {
+      const sc = sc0 * k;
+      return {
+        id, name, meta: `${meta} · drawn at ${Math.round(sc * 100)}%`,
+        vars: V.map(([label, q, note], vi) => {
+          const vid = `${name[0]}${vi + 1}`;
+          return {
+            id: vid, label, note, title: `${name} · ${label}`,
+            src: `Glance.dc.html?view=notes&season=${season}${q}`,
+            w: w + 'px', h: h + 'px', boxW: Math.round(w * sc) + 'px', boxH: Math.round(h * sc) + 'px',
+            tf: `scale(${sc})`,
+          };
+        }),
+      };
+    });
+    return { sizes };
+  }
+}
+</script>
+</body>
+</html>

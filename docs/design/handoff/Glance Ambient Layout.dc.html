@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<style>body{margin:0;background:#f0eee9;font-family:'Geist',system-ui,sans-serif;color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html?view=ambient">Clickable mockup →</a><a href="Glance%20States.dc.html#ambient">States →</a><a href="Glance%20Notes.dc.html#ambient">Notes · Ambient →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Ambient layout</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The full Ambient screen at each screen size, side by side: large 1920×1080, normal 1024×768 and small 390×844. Frames are the live mockup, all at the same scale by default so text sizes compare directly (switch to same height in Tweaks). The URL under each name opens that state full size.</p>
+</section>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+<section id="{{ r.id }}" data-screen-label="{{ r.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><a href="#{{ r.id }}" style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px;text-decoration:none">{{ r.id }}</a><span style="font:600 24px/1.2 var(--font-sans)">{{ r.name }}</span><a href="{{ r.href }}" target="_blank" style="font:500 13px ui-monospace,Menlo,monospace">{{ r.q }}</a></div>
+<p style="margin:0;font:15px/1.45 var(--font-sans);max-width:900px;text-wrap:pretty">{{ r.note }}</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<sc-for list="{{ r.frames }}" as="fr" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#2b2b2b;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06);position:relative">
+<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;font:500 13px/1.4 ui-monospace,Menlo,monospace;color:#fff">Loading {{ fr.screenLabel }}</span>
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block;position:relative"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;scaleMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Same scale&quot;,&quot;Same height&quot;],&quot;default&quot;:&quot;Same scale&quot;,&quot;tsType&quot;:&quot;'Same scale'|'Same height'&quot;},&quot;frameHeight&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:360,&quot;max&quot;:1080,&quot;step&quot;:20,&quot;default&quot;:540,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;}}">
+class Component extends DCLogic {
+  static SIZES = [['Large', 1920, 1080], ['Normal', 1024, 768], ['Small', 390, 844]];
+  static ROWS = [
+    ['A', 'Ambient', 'view=ambient', 'Season deep color. Top row: location (the season when no location is set) and one status on the right when there is one. Then the clock (up to 300 px, capped at 30% of the screen height), a divider, current weather and the next event side by side (stacked when narrower than two 300 px columns), and “Tap anywhere to wake”, which fades out after 10 s. No bar. Content drifts up to 6 px every 2 min against burn-in. Any tap → Today.'],
+    ['B', 'Photo background', 'view=ambient&bg=photo', 'Same layout over the background photo, dimmed to at least 0.6 so the text reads on bright photos.'],
+    ['C', 'Offline', 'view=ambient&net=offline', '“Offline · showing saved data” on the right of the top row. The weather adds “Updated 9:32 AM” so the age of the saved forecast is clear.'],
+    ['D', 'Signed out', 'view=ambient&signin=ended', '“Signed out · tap to sign in” on the right of the top row, and the bottom line reads “Tap anywhere to sign in”. The wake tap opens the signed-out email form instead of Today.'],
+    ['E', 'Offline and signed out', 'view=ambient&net=offline&signin=ended', 'Only one status shows. Signed out wins because it changes what a tap does; the “Updated” time under the weather still marks the data as saved.'],
+    ['F', 'First use, empty', 'view=ambient&empty=1', 'No location and no events: the weather block is gone, the top row shows the season, and the next event reads “Nothing scheduled” with “Add events and a location from Today”.'],
+    ['G', 'Low brightness', 'view=ambient&bright=low', 'Settings › Ambient screen › Brightness: Full, Medium (default) or Low. Text steps from white to solid softer grays, never opacity. On screens that allow it, the backlight dims too.'],
+    ['H', '24-hour clock', 'view=ambient&clock=24', 'Clock format from Settings. No AM/PM; event times in 24-hour.']
+  ];
+  renderVals() {
+    const H = this.props.frameHeight ?? 540, season = this.props.season ?? 'fall', same = (this.props.scaleMode ?? 'Same scale') === 'Same scale';
+    const rows = Component.ROWS.map(([id, name, q, note]) => ({
+      id, name, note, q: '?' + q, href: 'Glance.dc.html?' + q + '&season=' + season,
+      frames: Component.SIZES.map(([l, w, h]) => {
+        const sc = same ? H / 1080 : H / h;
+        return { label: l + ' · ' + w + '×' + h + ' · ' + Math.round(sc * 100) + '%', src: 'Glance.dc.html?' + q + '&season=' + season, screenLabel: 'Ambient ' + id + ' · ' + l, w: w + 'px', h: h + 'px', boxW: Math.round(w * sc) + 'px', boxH: Math.round(h * sc) + 'px', tf: 'scale(' + sc + ')' };
+      })
+    }));
+    return { rows };
+  }
+}
+</script>
+</body>
+</html>

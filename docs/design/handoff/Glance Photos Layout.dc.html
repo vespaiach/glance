@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<style>body{margin:0;background:#f0eee9;font-family:'Geist',system-ui,sans-serif;color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html?view=photos">Clickable mockup →</a><a href="Glance%20States.dc.html#photos">States →</a><a href="Glance%20Notes.dc.html#photos">Notes · Photos →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Photos layout</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The full Photos screen at each screen size, side by side: large 1920×1080, normal 1024×768 and small 390×844. Frames are the live mockup, all at the same scale by default so text sizes compare directly (switch to same height in Tweaks); the small frames scroll. Slideshows are paused in the frames so every size shows the same photo. The URL under each name opens that state full size.</p>
+</section>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+<section id="{{ r.id }}" data-screen-label="{{ r.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><a href="#{{ r.id }}" style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px;text-decoration:none">{{ r.id }}</a><span style="font:600 24px/1.2 var(--font-sans)">{{ r.name }}</span><a href="{{ r.href }}" target="_blank" style="font:500 13px ui-monospace,Menlo,monospace">{{ r.q }}</a></div>
+<p style="margin:0;font:15px/1.45 var(--font-sans);max-width:900px;text-wrap:pretty">{{ r.note }}</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<sc-for list="{{ r.frames }}" as="fr" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;scaleMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Same scale&quot;,&quot;Same height&quot;],&quot;default&quot;:&quot;Same scale&quot;,&quot;tsType&quot;:&quot;'Same scale'|'Same height'&quot;},&quot;frameHeight&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:360,&quot;max&quot;:1080,&quot;step&quot;:20,&quot;default&quot;:540,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;},&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;}}">
+class Component extends DCLogic {
+  static SIZES = [['Large', 1920, 1080], ['Normal', 1024, 768], ['Small', 390, 844]];
+  static ROWS = [
+    ['A', 'Photos', 'view=photos', 'Featured photo with date and place, name, then two action groups: Set as background and Edit details on the left, Previous, Play/Pause (black) and Next and Full screen on the right. Thumbnails show the name over the date. Large and normal: the screen fits the display with no page scroll; the grid scrolls inside its panel and follows the slideshow so the current photo stays in view. Small: the grid runs full length in the page scroll.'],
+    ['B', 'Full screen', 'view=photos&full=1', 'Black screen above everything, bar included. The whole photo shows uncropped. Top row: count and Exit full screen; bottom row: name, date and place, Previous, Play/Pause, Next.'],
+    ['C', 'Full screen, rows hidden', 'view=photos&full=1&chrome=0', 'Tapping the photo hides both rows so the photo takes the full screen.'],
+    ['D', 'Photo details', 'view=photos&sheet=photo', 'Sheet over a 60% scrim: eyebrow Family photos, a 2:1 preview (160 px max) with the file name under it, then Name, Date taken and Place, each with its source caption. Here the name and date are guessed from the file name.'],
+    ['E', 'Uploading', 'view=photos&upload=progress', 'New photos go first in the grid with a progress bar and percentage. A soft row above the grid shows the overall progress.'],
+    ['F', 'Upload failed', 'view=photos&upload=error', 'Only the failed tiles change: the preview fades to 40%, a white pill names the reason and the buttons sit on the tile, so the caption keeps the full name. Network failures get Try again and Remove; too large and not a photo get Remove only. The summary row offers Try again (network failures) and Clear.'],
+    ['G', 'Offline', 'view=photos&upload=offline', 'Upload is disabled with the offline pill. Uploads in progress pause until the screen is back online.'],
+    ['H', 'No photos', 'view=photos&empty=1', 'Nothing uploaded yet: “No photos yet”. Large and normal show a QR code to add photos from a phone, plus Choose files here. Small shows Upload photos.'],
+    ['I', 'Add from phone', 'view=photos&phqr=1', 'Upload on large and normal opens a QR panel above the grid: Scan to add photos, Choose files here and Done. On small, Upload opens the file picker.'],
+    ['J', 'Delete photo', 'view=photos&phdel=1', 'Delete in the featured actions swaps in place for a red Delete photo button and Cancel, and pauses the slideshow. Deleting shows the next photo.']
+  ];
+  renderVals() {
+    const H = this.props.frameHeight ?? 540, season = this.props.season ?? 'fall', same = (this.props.scaleMode ?? 'Same scale') === 'Same scale';
+    const rows = Component.ROWS.map(([id, name, q, note]) => ({
+      id, name, note, q: '?' + q, href: 'Glance.dc.html?' + q + '&season=' + season,
+      frames: Component.SIZES.map(([l, w, h]) => {
+        const sc = same ? H / 1080 : H / h;
+        return { label: l + ' · ' + w + '×' + h + ' · ' + Math.round(sc * 100) + '%', src: 'Glance.dc.html?' + q + '&play=0&season=' + season, screenLabel: 'Photos ' + id + ' · ' + l, w: w + 'px', h: h + 'px', boxW: Math.round(w * sc) + 'px', boxH: Math.round(h * sc) + 'px', tf: 'scale(' + sc + ')' };
+      })
+    }));
+    return { rows };
+  }
+}
+</script>
+</body>
+</html>

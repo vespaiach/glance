@@ -8,6 +8,7 @@
 <body>
 <x-dc>
 <helmet>
+<meta name="design_doc_mode" content="canvas">
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
@@ -17,8 +18,268 @@
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
 <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 <script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
-<style>body{margin:0;background:#fff;color:#000;font-family:var(--font-sans)} a{color:#000;text-decoration:underline;text-underline-offset:3px} a:hover{text-decoration-thickness:2px}</style>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:20px;max-width:1400px">
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · states and variants</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">States the <a href="Glance.dc.html">clickable mockup</a> can’t reach by tapping, every screen size (large: wider than 1200 px; normal: 769–1200 px, same layout as large; small: 768 px and below), the sign-in email and the component library. Frames are the live app, opened by URL. Logic and behavior: <a href="Glance%20Notes.dc.html">Notes</a>. Letters are stable references; gaps mark removed duplicates.</p>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">Screen size</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ sizeOpts }}" as="o" hint-placeholder-count="7">
+<button onClick="{{ o.pick }}" style="font:500 15px var(--font-sans);padding:8px 14px;border-radius:9999px;border:0;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">Jump to</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><a href="#account" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Sign in and account</a><a href="#today" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Today</a><a href="#calendar" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Calendar and events</a><a href="#weather" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Weather</a><a href="#notes" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Notes</a><a href="#photos" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Photos</a><a href="#settings" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Settings and background</a><a href="#ambient" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Ambient · quiet hours</a><a href="#empty" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Empty states</a><a href="#system" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Loading, offline and keyboard</a><a href="#drawer" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Small-screen drawer</a><a href="#email" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Email</a><a href="#components" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Components</a></div>
+</div>
+</section>
+<section id="account" data-screen-label="Sign in and account" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Sign in and account</span><a href="Glance%20Notes.dc.html#account" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Location step states (locating, matches, location off) match <a href="#weather-D">Weather D</a>, I–M. The account card and Sign out are on <a href="#settings-A">Settings A</a>. Signed out with a note sheet open, or during quiet hours, nothing changes on screen until the sheet closes or the wake tap.</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.account }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="today" data-screen-label="Today" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Today</span><a href="Glance%20Notes.dc.html#today" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Large: three columns that fit the viewport with no scroll (Now panel, schedule, notes over Today’s photo). Small: one scrolling column (Now panel, schedule, notes, Today’s photo).</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.today }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="calendar" data-screen-label="Calendar and events" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Calendar and events</span><a href="Glance%20Notes.dc.html#calendar" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Large screen only, whatever the size picker says. Small-screen calendar and events: <a href="Glance%20Phone%20Calendar%20%26%20Events.dc.html">Glance Phone Calendar &amp; Events</a>. Other calendar states are reached by tapping in the clickable mockup or by URL (day=, who=, span=24, sheet=).</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.calendar }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="weather" data-screen-label="Weather" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Weather</span><a href="Glance%20Notes.dc.html#weather" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.weather }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="notes" data-screen-label="Notes" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Notes</span><a href="Glance%20Notes.dc.html#notes" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.notes }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="photos" data-screen-label="Photos" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Photos</span><a href="Glance%20Notes.dc.html#photos" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Background upload failures and offline match D–E.</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.photos }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="settings" data-screen-label="Settings and background" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Settings and background</span><a href="Glance%20Notes.dc.html#settings" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Location search, matches, Use my location and its errors are the same component as the Weather setup card: see <a href="#weather-B">Weather B</a>–M.</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.settings }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="ambient" data-screen-label="Ambient · quiet hours" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Ambient · quiet hours</span><a href="Glance%20Notes.dc.html#ambient" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.ambient }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="empty" data-screen-label="Empty states" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Empty states</span><a href="Glance%20Notes.dc.html#first-use" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Today with no events, notes or photos and no weather location set. Each zone shows its own empty state and clears once it has data. Weather before a location is set: <a href="#weather-E">Weather E</a>.</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.empty }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="system" data-screen-label="Loading, offline and keyboard" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Loading, offline and keyboard</span><a href="Glance%20Notes.dc.html#system" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">A–D, H–I: data sources loading, failing and offline. E–G: the on-screen keyboard and how sheets and forms move above it.</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.system }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="drawer" data-screen-label="Small-screen drawer" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Small-screen drawer</span><a href="Glance%20Notes.dc.html#global" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Small screen 390×844, left navigation, at full size whatever the size picker says. On small screens there is no icon rail: the edge grip opens the full menu drawer in one tap, and closing it returns to the grip. The drawer slides over the page instead of pushing it; a scrim covers the page and tapping it closes the drawer. The drawer is the same on every view; only the current row changes. Event pages (B) open full screen over the drawer and nav, sliding in from the right; actions sit in a bar at the bottom.</p>
+<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
+<sc-for list="{{ g.drawer }}" as="s" hint-placeholder-count="3">
+<div id="{{ s.anchor }}" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;gap:10px;max-width:{{ s.maxW }}"><a href="#{{ s.anchor }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ s.badge }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ s.name }}</span></div>
+<div style="display:flex;gap:32px;align-items:flex-start">
+<sc-for list="{{ s.frames }}" as="fr" hint-placeholder-count="1">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section id="email" data-screen-label="Email" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">Email · sign-in code</span><a href="Glance%20Notes.dc.html#emails" style="font:500 13px ui-monospace,Menlo,monospace">Notes →</a></div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);color:#1a1a1a;max-width:1000px;text-wrap:pretty">Sent when someone taps “Send code”. Same email for new and known addresses. Source: <a href="emails/sign-in-code.html">emails/sign-in-code.html</a> (send-ready; placeholders <code>{{ ph1 }}</code> and <code>{{ ph2 }}</code>). Season follows the <strong>season</strong> tweak.</p>
+<div style="display:flex;flex-direction:column;gap:4px;padding:16px 20px;background:#fff;border:1px solid #e6e6e6;border-radius:8px;max-width:600px">
+<div style="display:flex;justify-content:space-between;gap:16px;font-size:15px"><strong style="font-weight:540">Glance</strong><span style="font-family:var(--font-mono);font-size:13px">10:41 AM</span></div>
+<div style="font-size:15px;font-weight:540">Your Glance sign-in code</div>
+<div style="font-size:15px;font-weight:330">482913 is your Glance code. It works once, for 10 minutes.</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:12px;width:648px;max-width:100%"><span style="font:500 13px/1.2 ui-monospace,Menlo,monospace">Desktop · 600 px</span><iframe title="Email desktop" srcdoc="{{ doc }}" onLoad="{{ fit }}" style="width:100%;height:900px;border:0;border-radius:8px;background:#fff"></iframe></div>
+<div style="display:flex;flex-direction:column;gap:12px;width:375px;max-width:100%"><span style="font:500 13px/1.2 ui-monospace,Menlo,monospace">Phone · 375 px</span><iframe title="Email phone" srcdoc="{{ doc }}" onLoad="{{ fit }}" style="width:100%;height:900px;border:0;border-radius:8px;background:#fff"></iframe></div>
+</div>
+</section>
+<section id="components" data-screen-label="Components" style="border-top:1px solid rgba(0,0,0,.08);background:#fff;color:#000">
 <div data-season="{{ season }}" style="max-width:1440px;margin:0 auto;padding:clamp(24px,4vw,48px);box-sizing:border-box;display:flex;flex-direction:column;gap:64px">
 
 <header style="display:flex;flex-direction:column;gap:16px;max-width:820px">
@@ -195,11 +456,11 @@
 <div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Notes</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">1 component</x-import></div>
 <div style="display:flex;flex-direction:column;gap:16px">
 <div style="background:var(--surface-soft);border-radius:24px;padding:40px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:32px;justify-content:center">
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="-2" author="Maya" time="9:12 AM" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">Soccer moved to 5 PM. Bring the orange cones.</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="4" rotate="1.5" author="Dad" time="Yesterday" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">Plumber coming Thursday morning.</x-import>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="1" rotate="-1" author="Leo" time="7:40 AM" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">We’re out of milk.</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="-2" author="Maya" time="9:12 AM" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">Soccer moved to 5 PM. Bring the orange cones.</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="1.5" author="Dad" time="Yesterday" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">Plumber coming Thursday morning.</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="-1" author="Leo" time="7:40 AM" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">We’re out of milk.</x-import>
 </div>
-<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">StickyNote</span><span style="font-size:16px;font-weight:330;line-height:1.45">Pastel note with small rotation and level-2 shadow. Any block tone; author and time footer.</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">StickyNote</span><span style="font-size:16px;font-weight:330;line-height:1.45">Paper note in the season soft tone (cream; frost in winter) with small rotation and level-2 shadow; author and time footer. Glance notes use this one tone only.</span></div>
 </div>
 </section>
 
@@ -208,10 +469,13 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
 
 <div style="display:flex;flex-direction:column;gap:16px">
-<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:8px;align-content:center">
-<sc-for list="{{ people }}" as="c" hint-placeholder-count="5"><button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.on }}" style="min-height:48px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;gap:8px;padding:0 18px 0 14px;font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease" style-active="transform:scale(0.97)"><span style="width:12px;height:12px;box-sizing:border-box;border-radius:9999px;background:{{ c.dotBg }};border:3px solid {{ c.c }};flex:none"></span>{{ c.label }}</button></sc-for>
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;align-items:center">
+<div style="flex:1;background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:16px;align-items:flex-start">
+<span style="height:44px;border-radius:9999px;background:var(--surface-soft);display:flex;align-items:center;gap:10px;padding:0 14px;font-size:16px;font-weight:480"><span style="display:flex;align-items:center"><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-lilac);box-shadow:0 0 0 2px var(--surface-soft)"></span><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-sky);margin-left:-4px;box-shadow:0 0 0 2px var(--surface-soft)"></span><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-coral);margin-left:-4px;box-shadow:0 0 0 2px var(--surface-soft)"></span><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-mint);margin-left:-4px;box-shadow:0 0 0 2px var(--surface-soft)"></span></span>Everyone<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="18" stroke-width="2" hint-size="18px,18px"></x-import></span>
+<span style="min-height:48px;display:flex;align-items:center;gap:12px;font-size:17px;font-weight:480"><span style="display:flex;align-items:center;padding-left:2px;isolation:isolate"><span style="position:relative;z-index:1;width:44px;height:44px;border-radius:9999px;background:var(--block-coral);box-shadow:0 0 0 2px var(--surface-canvas)"></span><span style="position:relative;z-index:2;width:44px;height:44px;border-radius:9999px;background:var(--block-pink);margin-left:-12px;box-shadow:0 0 0 2px var(--surface-canvas)"></span></span>Mom, Tin<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="18" stroke-width="2" hint-size="18px,18px"></x-import></span>
 </div>
-<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Person filter chip</span><span style="font-size:16px;font-weight:330;line-height:1.45">Toggle chip with the person’s color ring. Filters the calendar and picks “Who” in the event sheet.</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Person filter</span><span style="font-size:16px;font-weight:330;line-height:1.45">Opens the “Show plans for” list. Small screens: summary pill with up to 4 color dots. Large screens: avatar stack, color only, “+N” after 7. The label reads Everyone, one or two names, or “3 people”.</span></div>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:16px">
@@ -234,7 +498,7 @@
 <span style="font-size:18px;font-weight:330">Color</span>
 <div style="display:flex;gap:12px;flex-wrap:wrap"><sc-for list="{{ swatches }}" as="s" hint-placeholder-count="5"><button type="button" onClick="{{ s.pick }}" aria-label="{{ s.label }}" aria-pressed="{{ s.sel }}" style="width:44px;height:44px;border:0;padding:0;cursor:pointer;border-radius:9999px;background:{{ s.bg }};box-shadow:{{ s.ring }}"></button></sc-for></div>
 </div>
-<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Color swatch picker</span><span style="font-size:16px;font-weight:330;line-height:1.45">44px circles; selected gets a white gap and black ring. Used for people and notes.</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Color swatch picker</span><span style="font-size:16px;font-weight:330;line-height:1.45">44px circles; selected gets a white gap and black ring. Used for people.</span></div>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:16px">
@@ -319,11 +583,12 @@
 </section>
 
 </div>
+</section>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;},&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.25,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;default&quot;:0.5,&quot;tsType&quot;:&quot;number&quot;}}">
 class Component extends DCLogic {
-  state = { tab: 'today', tabLg: 'fall', email: '', day: 22, fc: 1, people: { all: false, maya: true, leo: true, sam: false, dad: false }, span: true, hour: 4, sw: 1, fieldOpen: false };
-  renderVals() {
+  state = { size: 0, raw: '', tab: 'today', tabLg: 'fall', email: '', day: 22, fc: 1, people: { all: false, maya: true, leo: true, sam: false, dad: false }, span: true, hour: 4, sw: 1, fieldOpen: false };
+  invVals() {
     const NS = window.KioskDisplayDesignSystem_21b0bf || {};
     const h = React.createElement;
     const s = this.state;
@@ -354,6 +619,43 @@ class Component extends DCLogic {
       flex1: { style: { flex: 1 } }, ringBtn: { style: { boxShadow: 'inset 0 0 0 1px var(--border-hairline)' } },
       fieldOpen: s.fieldOpen, toggleField: () => this.setState(st => ({ fieldOpen: !st.fieldOpen })),
       field: { border: s.fieldOpen ? 'var(--black)' : 'var(--border-hairline)', ring: s.fieldOpen ? '0 0 0 2px var(--focus-ring)' : 'none', chev: s.fieldOpen ? 'chevron-up' : 'chevron-down' }
+    };
+  }
+
+  static SIZES = [['Large screen', 1920, 1080], ['Small screen', 390, 844], ['Normal screen', 1024, 768]];
+  static FEATURES = [{"slug":"account","name":"Sign in and account","pre":"","fixed":false,"screens":[["A","Email form · new or returning","signin=form"],["X","Demo site · Sign-in as guests (demo.takeaglance.app)","signin=form&demo=1"],["B","Sending code","signin=sending"],["C","Offline · code can’t be sent","signin=offline"],["D","Enter the code · same for new and known emails · Send a new code and Use a different email appear after a 10 s countdown","signin=sent&backin=8&hold=1"],["L","Enter the code · 3 digits typed · countdown done","signin=sent&backin=0&code=482"],["N","Enter the code · checking","signin=checking&backin=0"],["O","Enter the code · wrong code","signin=wrong&backin=0"],["P","Enter the code · 5 wrong tries · locked","signin=locked"],["E","First sign-in · What’s your name? · then Where is this screen? (M)","signin=name"],["F","First sign-in · name with keyboard","signin=name&kb=1"],["H","Code expired","signin=expired"],["J","Signed in · new account","signin=done"],["K","Signed in · returning · also Welcome back after a server sign-out (SIGNIN-09): waiting changes then sync","signin=done&acct=returning"],["M","First sign-in · Where is this screen?","signin=location"],["Q","First sign-in · location · couldn’t save","signin=location&wx=savefail"],["R","First sign-in · location with keyboard","signin=location&kb=1"],["S","Signed out by the server · nothing waiting (SIGNIN-01)","signin=ended"],["T","Signed out by the server · 3 changes waiting to sync","signin=ended&pending=3"],["U","Signed out by the server · different email entered while changes wait","signin=ended&pending=3&switch=1"],["Y","Couldn’t send · request failed while online","signin=sendfail"]]},{"slug":"today","name":"Today","pre":"","fixed":false,"screens":[["A","Today","view=today"],["B","Today · open day (no events)","view=today&events=none"]]},{"slug":"calendar","name":"Calendar and events","pre":"","fixed":false,"sizes":[0],"screens":[["A","Calendar · today, everyone","view=calendar"],["B","Calendar · date picker open","view=calendar&dp=open",[1]],["C","New event · Who field","view=calendar&sheet=newevent"]]},{"slug":"weather","name":"Weather","pre":"","fixed":false,"screens":[["A","Weather","view=weather"],["B","Location · searching","view=weather&wx=searching"],["C","Location · unknown place","view=weather&wx=unknown"],["D","Location · several matches","view=weather&wx=choose"],["E","Setup card · Use my location · Fall","view=weather&empty=1"],["I","Use my location · locating","view=weather&wx=locating"],["J","Use my location · location is off (button hides)","view=weather&wx=denied"],["K","Use my location · couldn’t find the screen (no position or timed out)","view=weather&wx=unavailable"],["L","Use my location · outside the US","view=weather&wx=outside"],["M","Use my location · lookup failed","view=weather&wx=lookup"]]},{"slug":"notes","name":"Notes","pre":"","fixed":false,"screens":[["A","Notes","view=notes"],["D","Note details · tap a note, Edit to change","view=notes&sheet=note&details=1"],["B","Notes · edit note","view=notes&sheet=note"],["C","Discard changes? · new note with text","view=notes&sheet=newnote&discard=1"]]},{"slug":"photos","name":"Photos","pre":"","fixed":false,"screens":[["A","Photos","view=photos"],["B","Uploading · one photo","view=photos&upload=one"],["C","Uploading · several photos","view=photos&upload=progress"],["D","Upload failed · too large, not a photo, network","view=photos&upload=error"],["E","Offline · upload off, upload paused","view=photos&upload=offline"],["F","Background · uploading","view=background&upload=progress"],["I","Uploaded · name and date guessed from file","view=photos&upload=done"],["J","Photo details · guessed from file name","view=photos&sheet=photo"],["K","Photo details · date and place from photo","view=photos&sheet=photometa"],["L","Full screen · controls shown","view=photos&full=1"],["M","Full screen · controls hidden","view=photos&full=1&chrome=0"]]},{"slug":"settings","name":"Settings and background","pre":"","fixed":false,"screens":[["A","Settings · Location row first","view=settings"],["B","Background picker (photo)","view=background&bg=photo"],["C","Location page · Fall","view=settings&sub=location"],["G","Location page · not set","view=settings&sub=location&empty=1"],["M","Location page · new time zone, confirm","view=settings&sub=location&wx=tz"],["N","Ambient screen · every night","sub=ambient"],["O","Ambient screen · picking the dim time","sub=ambient&pick=all.s"],["P","Ambient screen · weekends differ","sub=ambient&amb=split&pick=wknd.e"],["Q","Ambient screen · same start and end","sub=ambient&amb=same"],["R","Ambient screen · off","sub=ambient&amb=off"]]},{"slug":"ambient","name":"Ambient · quiet hours","pre":"","fixed":false,"screens":[["A","Ambient","view=ambient"],["B","Ambient · on photo background","view=ambient&bg=photo"],["C","Ambient · offline and signed out","view=ambient&net=offline&signin=ended"],["D","Ambient · low brightness","view=ambient&bright=low"]]},{"slug":"empty","name":"Empty states","pre":"empty=1&","fixed":false,"screens":[["A","Today · empty","view=today"]]},{"slug":"system","name":"Loading, offline and keyboard","pre":"","fixed":false,"screens":[["A","Today · loading every source","view=today&net=loading"],["B","Today · weather source failed","view=today&net=wxerror"],["C","Today · offline, showing saved data","view=today&net=offline"],["D","Weather · offline, stale forecast","view=weather&net=offline"],["E","Notes · new note, typing","view=notes&sheet=newnote&kb=1"],["F","Calendar · edit event, typing","view=calendar&sheet=event&kb=1"],["G","Notes · new note while offline","view=notes&sheet=newnote&net=offline"],["H","Weather · loading","view=weather&net=loading"],["I","Weather · source failed","view=weather&net=wxerror"]]},{"slug":"drawer","name":"Small-screen drawer","pre":"","fixed":true,"screens":[["A","Opening the drawer",[["1 · Closed","view=today"],["2 · Drawer open","view=today&drawer=1"]]],["B","Event page (full screen)",[["1 · New event","view=calendar&sheet=newevent"],["2 · Event details","view=calendar&sheet=event&details=1"],["3 · Edit event","view=calendar&sheet=event"]]]]}];
+  componentDidMount() {
+    fetch('emails/sign-in-code.html').then(r => r.text()).then(raw => this.setState({ raw }));
+  }
+  renderVals() {
+    const S = Component.SIZES, size = this.state.size, k = this.props.frameScale ?? 0.5;
+    const frame = (label, w, h, src, screenLabel, sc) => ({ label, src, screenLabel, w: w + 'px', h: h + 'px', boxW: w * sc + 'px', boxH: h * sc + 'px', tf: 'scale(' + sc + ')' });
+    const g = {};
+    Component.FEATURES.forEach(f => {
+      g[f.slug] = f.screens.filter(([, , , only]) => !f.sizes || (only || (size === 2 ? [0, 1, 2] : [0, 1])).some(i => f.sizes.includes(i))).map(([id, name, q, only]) => {
+        let frames;
+        if (f.fixed) {
+          const sc = Math.min(1, k * 2);
+          frames = q.map(([l, qq]) => frame(l, 390, 844, 'Glance.dc.html?nav=left&' + qq, f.name + ' ' + id + ' · ' + l, sc));
+        } else {
+          const avail = (only || (size === 2 ? [0, 1, 2] : [0, 1])).filter(i => !f.sizes || f.sizes.includes(i));
+          const pick = size < 0 ? avail : [avail.includes(size) ? size : avail.reduce((a, b) => Math.abs(S[b][1] - S[size][1]) < Math.abs(S[a][1] - S[size][1]) ? b : a)];
+          frames = pick.map(i => { const [l, w, h] = S[i]; return frame(l + ' · ' + w + '×' + h, w, h, 'Glance.dc.html?' + f.pre + q, f.name + ' ' + id + ' · ' + w + '×' + h, k); });
+        }
+        const total = frames.reduce((a, fr) => a + parseFloat(fr.boxW), 0) + 32 * (frames.length - 1);
+        return { anchor: f.slug + '-' + id, badge: id, name, frames, maxW: Math.max(total, 280) + 'px' };
+      });
+    });
+    const opts = [['Both sizes', -1], ...S.map(([l, w, h], i) => [l + ' · ' + w + '×' + h, i])];
+    const seasons = { spring: ['#dceeb1', '#f4ecd6'], summer: ['#f6e3a1', '#f4ecd6'], fall: ['#f0c987', '#f4ecd6'], winter: ['#d5e4f1', '#e9edf3'] };
+    const [hero, page] = seasons[this.props.season ?? 'fall'] || seasons.fall;
+    const doc = this.state.raw.split('#dceeb1').join(hero).split('#f4ecd6').join(page).split('{{code}}').join('482913').split('{{email}}').join('maria@example.com');
+    return {
+      ...this.invVals(),
+      g,
+      sizeOpts: opts.map(([label, v]) => ({ label, bg: v === size ? '#1a1a1a' : 'rgba(0,0,0,.06)', fg: v === size ? '#fff' : '#1a1a1a', pick: () => this.setState({ size: v }) })),
+      doc, ph1: '{{email}}', ph2: '{{code}}',
+      fit: e => { const fr = e.target; try { fr.style.height = '0px'; fr.style.height = fr.contentDocument.body.scrollHeight + 'px'; } catch (_) {} },
     };
   }
 }

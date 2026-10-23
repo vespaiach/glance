@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Today event</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today events box at each screen size: large 1920×1080, normal 1024×768 (plus its 300 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. The box is never narrower than 300 px or shorter than 500 px. Large: viewport height minus the top and bottom gaps, no page scrollbar. Normal: capped at viewport height minus the top gap and 3 × the bottom gap; the box scrolls when events need more room. Small: no cap; the box grows to fit its events, shown at full height. Clock reads 10:41 AM.</p>
+</section>
+<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px">
+<div style="background:#fff;border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
+<span style="font:600 24px/1.2 var(--font-sans)">Behaviour</span>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px 40px;font:15px/1.5 var(--font-sans)">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout and size</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Never narrower than 300 px. Large and normal: middle column of the Today grid (min 300 px). Small: below the Now panel in the scrolling column; windows under 340 px scroll sideways.</li>
+<li>Min height 500 px on every size.</li>
+<li>Large: height = viewport height minus the top and bottom gaps (2 × gutter), so the page never shows a vertical scrollbar. The timeline fits the box.</li>
+<li>Normal and small: the timeline starts at 536 px and grows (up to 3×) until every current and upcoming plan has room for its full card (92 px for 30 min or more, 66 px for shorter).</li>
+<li>Normal: max height = viewport height minus the top gap and 3 × the bottom gap (4 × gutter). Past it the box shows a vertical scrollbar, hinting that more of the day is below.</li>
+<li>Small: no max height. The box grows to fit its timeline and the page scrolls; it sits below the Now panel, so no hint is needed.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Header</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Eyebrow “Today · {left} of {n} left” (plans not yet ended plus all-day), “Today · All done” or “Today · No events”. Below 450 px box width (any screen size): “{left} left today” / “All done” / “No events”.</li>
+<li>“Add event” → New event on today. “Full calendar” → Calendar.</li>
+<li>Below 1440 px both are 56 px white IconButtons (calendar-plus, calendar-days) with the labels as aria-label. Box narrower than 450 px (any screen size): always 44 px icon buttons, one-line header. From 1440 px they are text buttons.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Timeline</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Same day timeline as Calendar, always today. Runs 5 AM to 9 PM.</li><li>Person filter: avatar stack under the header (40 px color circles, no initials, up to 5 or 4 + “+N”; under 450 px box width up to 3 or 2 + “+N”, then the label and a chevron). Opens “Show plans for”; shared with Calendar. Filters plans, all-day tiles, free slots and the count.</li>
+<li>Elastic hours: passed hours shrink (weight × 0.3) so the rest of the day gets the room. Overlapping plans sit side by side, each column at least 120 px; extra overlaps (long plans first) fold into a 52 px “+{n} MORE” tile on the right. Tap → Calendar on today.</li>
+<li>Gutter 80 px on large and normal, 52 px on small. Hour weather under each label: 20 px icon + 17 px temperature (small: 16 / 15 px).</li>
+<li>Now line at the current time; it moves with the clock. The time pill sits in the gutter; below 400 px box width it becomes a 14 px black circle on the line.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Plans and taps</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Past: white with a hairline, title struck through. Now: 2 px black ring. Upcoming: the person’s color, or the season soft color with person dots when shared.</li>
+<li>Tap a plan → Event details (Edit inside opens Edit event).</li>
+<li>Tap a dashed free slot → New event at that time.</li>
+<li>Plans move past → now → upcoming in real time as start and end times pass.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Variants</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li><strong>Busy day</strong>: no “See all” row. Elastic hours and columns make room; overlaps beyond the column cap fold into “+{n} MORE” tiles.</li>
+<li><strong>All-day</strong>: soft tiles (56 px min, radius 8) above the timeline: “ALL DAY”, person dot, title, “{who} · {place}”. Tap → Event details. Never struck through.</li>
+<li><strong>Open day</strong>: no timeline. “Coming up” lists the next 5 plans after today (mono day and time, title, who · place; tap → Event details), or “Nothing else on the calendar yet.” The free time shows only on the Now panel’s day ribbon.</li><li><strong>Earlier fold</strong> (large and normal): the timeline starts at the current hour without ended plans; the “Earlier · {n} done” pill expands the full day. <strong>Small</strong>: the box shows the phone day list instead of a timeline.</li>
+<li><strong>Weather unavailable or no location</strong>: no weather lane; plans take the full width.</li>
+</ul></div>
+</div>
+</div>
+</section>
+<sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
+<section id="{{ s.id }}" data-screen-label="{{ s.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:40px 48px;align-items:flex-start">
+<sc-for list="{{ s.vars }}" as="v" hint-placeholder-count="5">
+<div id="{{ v.id }}" style="display:flex;flex-direction:column;gap:12px;width:{{ v.boxW }};max-width:100%">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">{{ v.id }}</span><span style="font:500 14px/1.3 var(--font-sans)">{{ v.label }}</span><a href="{{ v.src }}" target="_blank" style="margin-left:auto;font:500 12px ui-monospace,Menlo,monospace">Open ↗</a></div>
+<div style="width:{{ v.boxW }};height:{{ v.boxH }};overflow:hidden;border-radius:24px">
+<iframe title="{{ v.title }}" src="{{ v.src }}" onLoad="{{ v.load }}" scrolling="no" tabindex="-1" style="border:0;display:block;pointer-events:none;width:{{ v.w }};height:{{ v.h }};transform:{{ v.tf }};transform-origin:0 0"></iframe>
+</div>
+<span style="font:13px/1.45 var(--font-sans);text-wrap:pretty">{{ v.note }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.5,&quot;max&quot;:1.5,&quot;step&quot;:0.1,&quot;default&quot;:1,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { crop: {} };
+  findBox(fr, key) {
+    let n = 0;
+    const t = () => {
+      try {
+        const d = fr.contentDocument, w = fr.contentWindow, tl = d.querySelector('[data-tl="tod"]');
+        if (!tl) { if (n++ < 40) setTimeout(t, 250); return; }
+        let box = tl.parentElement;
+        while (box && box !== d.body) { const cs = w.getComputedStyle(box); if (parseFloat(cs.borderTopLeftRadius) >= 16 && cs.backgroundColor !== 'rgba(0, 0, 0, 0)') break; box = box.parentElement; }
+        if (!box || box === d.body) box = tl.parentElement;
+        let sc = box.parentElement;
+        while (sc && sc !== d.body) { if (sc.scrollHeight > sc.clientHeight + 4 && /auto|scroll/.test(w.getComputedStyle(sc).overflowY)) break; sc = sc.parentElement; }
+        if (sc && sc !== d.body) sc.scrollTop += box.getBoundingClientRect().top - sc.getBoundingClientRect().top - 8;
+        else d.scrollingElement.scrollTop += box.getBoundingClientRect().top - 8;
+        const save = (fh) => { const r = box.getBoundingClientRect(), y = Math.max(0, r.top); this.setState((s) => ({ crop: { ...s.crop, [key]: { x: r.left, y, w: r.width, h: fh ? r.height : Math.min(r.height, w.innerHeight - y), fh } } })); };
+        setTimeout(() => {
+          d.documentElement.style.overflow = 'hidden'; d.body.style.overflow = 'hidden';
+          if (sc && sc !== d.body) sc.style.overflow = 'hidden';
+          if (w.innerWidth >= 600) return save();
+          box.style.minHeight = w.getComputedStyle(box).minHeight;
+          const grow = (k) => { const r = box.getBoundingClientRect(), need = Math.ceil(r.top + r.height + 8); if (need > w.innerHeight + 1 && k < 4) { fr.style.height = need + 'px'; setTimeout(() => grow(k + 1), 400); } else save(Math.round(w.innerHeight)); };
+          grow(0);
+        }, 150);
+      } catch (_) {}
+    };
+    setTimeout(t, 500);
+  }
+  renderVals() {
+    const season = this.props.season ?? 'fall';
+    const k = this.props.frameScale ?? 1;
+    const S = [
+      ['large', 'Large screen', '1920×1080 · Today box in the middle column, hour weather in the gutter · drawn at 60%', 1920, 1080, 0.6],
+      ['normal', 'Normal screen', '1024×768 · Today box in the middle column · drawn at 80%', 1024, 768, 0.8],
+      ['small', 'Small screen', '390×844 · Today box below the hero in the scrolling column, shown at full height · drawn at 100%', 390, 844, 1],
+    ];
+    const V = [
+      ['Today', '', 'Default day: past events above, the one running now, later events and free gaps below. Now line at 10:41 AM.'],
+      ['Busy day', '&events=many', 'Extra evening and lunchtime events added to the same day.'],
+      ['All-day event', '&allday=1', 'All-day items sit above the timeline as full-width bars.'],
+      ['Open day', '&events=none', 'No events: no timeline; Coming up lists the next plans after today.'],
+      ['Weather unavailable', '&net=wxerror', 'Weather fetch failed: no hour weather in the gutter.'],
+    ];
+    const X = { normal: [['300 px wide', '', 'Narrowest normal screen (769×768): the middle column sits at its 300 px minimum. The timeline grows and the box scrolls.', 769]] };
+    const sizes = S.map(([id, name, meta, w0, h, sc0]) => {
+      const sc = sc0 * k;
+      return {
+        id, name, meta,
+        vars: V.concat(X[id] || []).map(([label, q, note, wv], vi) => {
+          const w = wv || w0, vid = `${name[0]}${vi + 1}`, src = `Glance.dc.html?view=today&season=${season}${q}${wv ? '&_w=' + wv : ''}`;
+          const c = this.state.crop[vid + src] || { x: 0, y: 0, w: w * 0.4, h: h * 0.8 };
+          return {
+            id: vid, label, note, title: `${name} · ${label}`, src,
+            w: w + 'px', h: (c.fh || h) + 'px', boxW: Math.round(c.w * sc) + 'px', boxH: Math.round(c.h * sc) + 'px',
+            tf: `scale(${sc}) translate(${-c.x}px,${-c.y}px)`,
+            load: (e) => this.findBox(e.target, vid + src),
+          };
+        }),
+      };
+    });
+    return { sizes };
+  }
+}
+</script>
+</body>
+</html>
