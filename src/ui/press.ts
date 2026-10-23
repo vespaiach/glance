@@ -8,4 +8,10 @@ export const press = stylex.create({
       ":active:not(:disabled)": `scale(${motion.pressScale})`,
     },
   },
+  row: {
+    transform: {
+      default: "none",
+      ":active:not(:disabled)": `scale(${motion.pressScaleRow})`,
+    },
+  },
 });

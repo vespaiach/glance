@@ -2,6 +2,7 @@ import type { AmbientRange, AmbientSummary } from "@/domain/idle";
 import type { AccountSettings, Season, TagColor, WeatherIcon } from "@/domain/schemas";
 import type { ActiveStamp, Device, DeviceKind } from "@/domain/screens";
 import type { Clock } from "@/domain/time";
+import type { ScheduleCount } from "@/domain/todaySchedule";
 import type { WmoCondition } from "@/domain/wmo";
 
 type NoteExpiry = AccountSettings["noteExpiry"];
@@ -68,11 +69,22 @@ export const copy = {
       sunset: "Sunset",
     },
     schedule: {
-      count: (count: number) => {
-        if (count === 0) return "Today · No events";
+      count: ({ left, total }: ScheduleCount, short: boolean) => {
+        if (total === 0) return short ? "No events" : "Today · No events";
 
-        return count === 1 ? "Today · 1 event" : `Today · ${count} events`;
+        if (left === 0) return short ? "All done" : "Today · All done";
+
+        return short ? `${left} left today` : `Today · ${left} of ${total} left`;
       },
+      earlier: (done: number) => `Earlier · ${done} done`,
+      hideEarlier: "Hide earlier",
+      comingUp: "Coming up",
+      nothingAhead: "Nothing else on the calendar yet.",
+      tomorrow: "Tomorrow",
+      day: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,
+      allDay: "All day",
+      upcomingName: (title: string, day: string, time: string, who: string) =>
+        `${title}, ${day}, ${time}, ${who}`,
       loadingCount: "Today · Loading",
       failedCount: "Today",
       addEvent: "Add event",

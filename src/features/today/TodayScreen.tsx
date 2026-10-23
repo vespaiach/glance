@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import {
   type ShownNote,
+  useEventsAfter,
   useEventsOnDay,
   useNotes,
   usePhotoSrc,
@@ -18,6 +19,7 @@ import { dayRibbon } from "@/domain/dayRibbon";
 import { slotTimes } from "@/domain/eventTimes";
 import type { AccountSettings, CalendarEvent, Photo, Tag, Weather } from "@/domain/schemas";
 import { hasEvent, todayHero } from "@/domain/todayHero";
+import { comingUp } from "@/domain/todaySchedule";
 import { hourlyByHour } from "@/domain/weather";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
@@ -54,6 +56,8 @@ import {
 } from "./layout";
 
 const TEXT_ACTIONS_MIN_WIDTH = 1440;
+
+const COMING_UP_READ = 5;
 
 const styles = stylex.create({
   grid: {
@@ -113,6 +117,8 @@ export function TodayScreen() {
 
   const events = useSyncedZone(useEventsOnDay(day, tz));
 
+  const later = useEventsAfter(day, tz, COMING_UP_READ);
+
   const tags = useTags() ?? [];
 
   const notes = useSyncedZone<ShownNote>(useNotes(now));
@@ -163,9 +169,9 @@ export function TodayScreen() {
         clock={settings.clock}
         tz={tz}
         breakpoint={breakpoint}
-        oneColumn={!columns}
         iconActions={width < TEXT_ACTIONS_MIN_WIDTH}
         weather={gutterWeather(weather.state, day, tz, settings.tempUnit)}
+        upcoming={later && comingUp(later, now, tz)}
         onOpenEvent={openEvent}
         onAddEvent={() => sheets.open({ kind: "newevent", day })}
         onAddSlot={(slot) => sheets.open({ kind: "newevent", day, times: slotTimes(slot, tz) })}

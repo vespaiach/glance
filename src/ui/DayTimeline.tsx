@@ -26,6 +26,7 @@ import {
 } from "@/domain/time";
 import {
   type FreeSlot,
+  grownHeight,
   hourWeather,
   type MoreTile,
   type PlacedPlan,
@@ -79,6 +80,9 @@ type DayTimelineProps = {
   span?: "day" | "24h";
   free: TimelineFree;
   weather?: TimelineWeather;
+  firstHour?: number;
+  grow?: boolean;
+  nowDot?: boolean;
   labels: DayTimelineLabels;
   onOpenEvent: (id: string) => void;
   onOpenMore: (earliestId: string) => void;
@@ -86,7 +90,14 @@ type DayTimelineProps = {
   xstyle?: stylex.StyleXStyles;
 };
 
-type Dimensions = { gutter: number; titleSize: number };
+type TypeScale = {
+  title: number;
+  time: number;
+  timeLine: number;
+  detail: number;
+  hour: number;
+  oneLine: number;
+};
 
 type Variant = DayTimelineProps["variant"];
 
@@ -100,6 +111,7 @@ type Shared = {
   tz: string;
   clock: Clock;
   labels: DayTimelineLabels;
+  scale: TypeScale;
 };
 
 const FALLBACK_SIZE: BoxSize = { width: 640, height: 640 };
@@ -121,16 +133,34 @@ const RULES: Record<Variant, Record<LayoutSize, Rules>> = {
   },
 };
 
-const DIMENSIONS: Record<"calendar" | "today", Record<LayoutSize, Dimensions>> = {
+const GUTTERS: Record<Variant, Record<LayoutSize, number>> = {
+  calendar: { large: 96, small: 52 },
+  today: { large: 80, small: 52 },
+};
+
+const BASE_TYPE: TypeScale = {
+  title: 16,
+  time: 14,
+  timeLine: 18,
+  detail: 15,
+  hour: 14,
+  oneLine: 17,
+};
+
+const TYPE: Record<Variant, Record<Breakpoint, TypeScale>> = {
   calendar: {
-    large: { gutter: 96, titleSize: 22 },
-    small: { gutter: 52, titleSize: 16 },
+    large: { ...BASE_TYPE, title: 22 },
+    normal: { ...BASE_TYPE, title: 22 },
+    small: BASE_TYPE,
   },
   today: {
-    large: { gutter: 80, titleSize: 18 },
-    small: { gutter: 52, titleSize: 16 },
+    large: { title: 20, time: 16, timeLine: 20, detail: 16, hour: 16, oneLine: 18 },
+    normal: { ...BASE_TYPE, title: 18 },
+    small: BASE_TYPE,
   },
 };
+
+const GROW_START = 536;
 
 const SLOT_INSET = 2;
 
@@ -141,6 +171,8 @@ const STRIP_WIDTH = 44;
 const SLOT_LABEL = 28;
 
 const styles = stylex.create({
+  fontSize: (size: number) => ({ fontSize: size }),
+  grown: (height: number) => ({ minHeight: height }),
   root: {
     position: "relative",
     flexGrow: 1,
@@ -478,6 +510,13 @@ const styles = stylex.create({
     backgroundColor: colors.actionPrimary,
     color: colors.onActionPrimary,
   },
+  nowDot: {
+    width: 14,
+    height: 14,
+    borderRadius: radii.full,
+    backgroundColor: colors.black,
+    marginInlineEnd: -7,
+  },
   nowLine: {
     flexGrow: 1,
     height: 2,
@@ -497,6 +536,9 @@ export function DayTimeline({
   span = "day",
   free,
   weather,
+  firstHour,
+  grow = false,
+  nowDot = false,
   labels,
   onOpenEvent,
   onOpenMore,
@@ -509,41 +551,49 @@ export function DayTimeline({
 
   const record = layoutSize(breakpoint);
 
-  const dimensions = DIMENSIONS[variant][record];
+  const gutter = GUTTERS[variant][record];
+
+  const scale = TYPE[variant][breakpoint];
 
   const hours = weather ? hourlyByHour(weather.hourly, day, tz) : new Map<number, HourlyPoint>();
 
   const chips = variant === "calendar" && record === "large";
 
-  const height = Math.max(0, size.height - 2 * INSET);
+  const context = { day, now, tz };
 
-  const width = Math.max(0, size.width - dimensions.gutter);
+  const options: TimelineOptions = {
+    span,
+    height: GROW_START,
+    width: Math.max(0, size.width - gutter),
+    passedFactor: PASSED_FACTOR[variant],
+    minPlanHeight: MIN_PLAN_HEIGHT[record],
+    firstHour,
+    nowDot,
+    ...RULES[variant][record],
+  };
 
-  const layout = timelineLayout(
-    plans,
-    { day, now, tz },
-    {
-      span,
-      height,
-      width,
-      passedFactor: PASSED_FACTOR[variant],
-      minPlanHeight: MIN_PLAN_HEIGHT[record],
-      ...RULES[variant][record],
-    },
-  );
+  const minHeight = grow ? grownHeight(plans, context, options) : 0;
 
-  const shared: Shared = { tags, now, tz, clock, labels };
+  const height = Math.max(minHeight, size.height - 2 * INSET);
 
-  const columnsWidth = width - layout.stripsWidth;
+  const layout = timelineLayout(plans, context, { ...options, height });
+
+  const shared: Shared = { tags, now, tz, clock, labels, scale };
+
+  const columnsWidth = options.width - layout.stripsWidth;
 
   const rain = chips ? rainByHour(hours) : new Map<number, number>();
 
   return (
-    <div ref={ref} {...stylex.props(styles.root, xstyle)}>
+    <div
+      ref={ref}
+      {...stylex.props(styles.root, xstyle, grow && styles.grown(minHeight + 2 * INSET))}
+    >
       <div {...stylex.props(styles.inner(height))}>
         <HourMarks
           layout={layout}
-          gutter={dimensions.gutter}
+          gutter={gutter}
+          hourSize={scale.hour}
           hours={hours}
           weather={weather}
           sparse={variant === "today"}
@@ -552,10 +602,18 @@ export function DayTimeline({
         />
         {layout.now && (
           <div {...stylex.props(styles.nowMarker(layout.now.top))}>
-            <span {...stylex.props(styles.nowGutter(dimensions.gutter))}>
-              <span {...stylex.props(styles.nowPill)}>
-                {timeParts(layout.now.minutes, clock).time}
-              </span>
+            <span {...stylex.props(styles.nowGutter(gutter))}>
+              {nowDot ? (
+                <span
+                  role="img"
+                  aria-label={timeParts(layout.now.minutes, clock).time}
+                  {...stylex.props(styles.nowDot)}
+                />
+              ) : (
+                <span {...stylex.props(styles.nowPill)}>
+                  {timeParts(layout.now.minutes, clock).time}
+                </span>
+              )}
             </span>
             <span {...stylex.props(styles.nowLine)} />
           </div>
@@ -563,7 +621,7 @@ export function DayTimeline({
         {layout.strips.length > 0 && (
           <fieldset
             aria-label={labels.longPlans}
-            {...stylex.props(styles.area(dimensions.gutter), styles.strips)}
+            {...stylex.props(styles.area(gutter), styles.strips)}
           >
             {layout.strips.map((strip) => (
               <StripTile
@@ -575,7 +633,7 @@ export function DayTimeline({
             ))}
           </fieldset>
         )}
-        <div {...stylex.props(styles.area(dimensions.gutter + layout.stripsWidth))}>
+        <div {...stylex.props(styles.area(gutter + layout.stripsWidth))}>
           {free !== "none" &&
             layout.freeSlots.map((slot) => (
               <FreeSlotTile
@@ -593,7 +651,6 @@ export function DayTimeline({
               placed={placed}
               shared={shared}
               width={placed.width * columnsWidth}
-              titleSize={dimensions.titleSize}
               rain={planRain(placed.start, placed.end, rain, placed.width * columnsWidth)}
               onClick={() => onOpenEvent(placed.plan.id)}
             />
@@ -617,6 +674,7 @@ export function DayTimeline({
 function HourMarks({
   layout,
   gutter,
+  hourSize,
   hours,
   weather,
   sparse,
@@ -625,6 +683,7 @@ function HourMarks({
 }: {
   layout: TimelineLayout<CalendarEvent>;
   gutter: number;
+  hourSize: number;
   hours: ReadonlyMap<number, HourlyPoint>;
   weather: TimelineWeather | undefined;
   sparse: boolean;
@@ -639,7 +698,7 @@ function HourMarks({
     return (
       <div key={mark.hour} {...stylex.props(styles.mark(mark.top), styles.reflow)}>
         <div {...stylex.props(styles.gutter(gutter), !mark.label && styles.hidden)}>
-          <span {...stylex.props(styles.hourLabel)}>
+          <span {...stylex.props(styles.hourLabel, styles.fontSize(hourSize))}>
             {formatHour((mark.hour % 24) * 60, clock)}
           </span>
           {showWeather && point && weather && (
@@ -700,14 +759,12 @@ function PlanTile({
   placed,
   shared,
   width,
-  titleSize,
   rain,
   onClick,
 }: {
   placed: PlacedPlan<CalendarEvent>;
   shared: Shared;
   width: number;
-  titleSize: number;
   rain: number;
   onClick: () => void;
 }) {
@@ -719,10 +776,13 @@ function PlanTile({
 
   const note = firstLine(event.notes);
 
+  const { scale } = shared;
+
   const card = planCard({
     width,
     height: placed.height,
-    titleSize,
+    titleSize: scale.title,
+    timeLine: scale.timeLine,
     badge: chip > 0,
     note: note !== "",
   });
@@ -732,7 +792,9 @@ function PlanTile({
   const title = (
     <span
       {...stylex.props(
-        card.oneLine ? [styles.ellipsis, styles.oneLineTitle] : styles.title(titleSize),
+        card.oneLine
+          ? [styles.ellipsis, styles.oneLineTitle, styles.fontSize(scale.oneLine)]
+          : styles.title(scale.title),
         !card.oneLine && (card.titleLines === 2 ? styles.twoLines : styles.ellipsis),
         status === "past" ? styles.pastTitle : styles.titleWeight,
       )}
@@ -763,7 +825,9 @@ function PlanTile({
         {card.oneLine ? (
           <span {...stylex.props(styles.line, styles.oneLine)}>
             {card.time !== "none" && (
-              <span {...stylex.props(styles.time)}>{timeText(placed, card, shared, end)}</span>
+              <span {...stylex.props(styles.time, styles.fontSize(scale.time))}>
+                {timeText(placed, card, shared, end)}
+              </span>
             )}
             {title}
             <PersonDots event={event} tags={shared.tags} />
@@ -771,7 +835,7 @@ function PlanTile({
         ) : (
           <>
             <span {...stylex.props(styles.line, styles.firstLine)}>
-              <span {...stylex.props(styles.time, styles.rangeTime)}>
+              <span {...stylex.props(styles.time, styles.rangeTime, styles.fontSize(scale.time))}>
                 {timeText(placed, card, shared, end)}
               </span>
               {chip > 0 && (
@@ -783,13 +847,13 @@ function PlanTile({
             </span>
             {title}
             {card.meta && (
-              <span {...stylex.props(styles.line, styles.meta)}>
+              <span {...stylex.props(styles.line, styles.meta, styles.fontSize(scale.detail))}>
                 <PersonDots event={event} tags={shared.tags} />
                 <span {...stylex.props(styles.ellipsis)}>{metaText(event, shared)}</span>
               </span>
             )}
             {card.note && (
-              <span {...stylex.props(styles.line, styles.note)}>
+              <span {...stylex.props(styles.line, styles.note, styles.fontSize(scale.detail))}>
                 <span {...stylex.props(styles.icon)}>
                   <Icon icon={FileText} size={18} />
                 </span>
