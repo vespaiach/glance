@@ -139,6 +139,9 @@ const styles = stylex.create({
 
 const schedule = {
   tags: GALLERY_FAMILY,
+  selected: new Set(GALLERY_FAMILY.map((one) => one.id)),
+  whoSheet: false,
+  onFilter: ignore,
   day: "2026-10-09",
   now: NOW,
   clock: "12h",

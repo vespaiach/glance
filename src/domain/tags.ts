@@ -4,7 +4,21 @@ export type EventWho = { everyone: boolean; tagIds: readonly string[] };
 
 export type TagFilter = "all" | ReadonlySet<string>;
 
+export type FilterLabels = {
+  everyone: string;
+  nobody: string;
+  people: (count: number) => string;
+};
+
+export type StackCircles = { shown: readonly Tag[]; more: number };
+
 export const EVERYONE: EventWho = { everyone: true, tagIds: [] };
+
+const WORD_BREAK = /[\s-]+/;
+
+const SHORT_NAME = 3;
+
+const NAMED_PEOPLE = 2;
 
 export function whoLabel(event: EventWho, tags: readonly Tag[], everyoneLabel: string) {
   if (event.everyone) return everyoneLabel;
@@ -56,6 +70,47 @@ export function toggleFilter(
   return allIds.every((id) => next.has(id)) ? "all" : next;
 }
 
+export function toggleEveryone(
+  selected: ReadonlySet<string>,
+  allIds: readonly string[],
+): TagFilter {
+  return allIds.every((id) => selected.has(id)) ? new Set() : "all";
+}
+
+export function filterLabel(
+  selected: ReadonlySet<string>,
+  tags: readonly Tag[],
+  labels: FilterLabels,
+): string {
+  const shown = tags.filter((tag) => selected.has(tag.id));
+
+  if (shown.length === 0) return labels.nobody;
+
+  if (shown.length === tags.length) return labels.everyone;
+
+  if (shown.length > NAMED_PEOPLE) return labels.people(shown.length);
+
+  return shown.map((tag) => tag.name).join(", ");
+}
+
+export function initials(name: string): string {
+  const letters = Array.from(name.trim());
+
+  if (letters.length <= SHORT_NAME) return letters.join("");
+
+  const [first, second] = name.trim().split(WORD_BREAK);
+
+  if (first && second) return `${firstLetter(first)}${firstLetter(second)}`.toUpperCase();
+
+  return letters.slice(0, 2).join("");
+}
+
+export function stackCircles(shown: readonly Tag[], max: number): StackCircles {
+  if (shown.length <= max) return { shown, more: 0 };
+
+  return { shown: shown.slice(0, max - 1), more: shown.length - (max - 1) };
+}
+
 export function liveFilter(filter: TagFilter, allIds: readonly string[]): ReadonlySet<string> {
   if (filter === "all") return new Set(allIds);
 
@@ -66,6 +121,17 @@ export function filterTagIds(selected: ReadonlySet<string>, allIds: readonly str
   if (allIds.every((id) => selected.has(id))) return EVERYONE;
 
   return { everyone: false, tagIds: allIds.filter((id) => selected.has(id)) };
+}
+
+export function filterScope(
+  selected: ReadonlySet<string>,
+  allIds: readonly string[],
+): "everyone" | "some" | "none" {
+  const who = filterTagIds(selected, allIds);
+
+  if (who.everyone) return "everyone";
+
+  return who.tagIds.length === 0 ? "none" : "some";
 }
 
 export function whoValue(ids: readonly string[], allIds: readonly string[]): EventWho {
@@ -82,4 +148,8 @@ export function exactTag(tags: readonly Tag[], input: string): Tag | undefined {
   const name = input.trim().toLowerCase();
 
   return tags.find((tag) => tag.name.toLowerCase() === name);
+}
+
+function firstLetter(word: string): string {
+  return Array.from(word)[0] ?? "";
 }

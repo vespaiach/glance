@@ -17,6 +17,7 @@ import { NowProvider, useNowStore } from "./providers/now";
 import { SeasonProvider } from "./providers/season";
 import { SettingsProvider } from "./providers/settings";
 import { TimeZoneProvider, useTimeZone } from "./providers/timeZone";
+import { WhoFilterProvider } from "./providers/whoFilter";
 import { SessionGuard } from "./SessionGuard";
 import { SheetHost } from "./SheetHost";
 
@@ -80,9 +81,11 @@ function DisplaySession({ demo, params, options, children }: SessionProps) {
             <NetworkProvider pillDelayMs={options.pillDelayMs}>
               <FixtureSheetHost params={params}>
                 <FixtureParamsProvider params={params}>
-                  <IdleProvider>
-                    <SessionGuard>{children}</SessionGuard>
-                  </IdleProvider>
+                  <WhoFilterProvider initial={params.who}>
+                    <IdleProvider>
+                      <SessionGuard>{children}</SessionGuard>
+                    </IdleProvider>
+                  </WhoFilterProvider>
                 </FixtureParamsProvider>
               </FixtureSheetHost>
             </NetworkProvider>

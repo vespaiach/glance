@@ -153,7 +153,6 @@ export const copy = {
     previousWeek: "Previous week",
     nextWeek: "Next week",
     week: (month: string, day: number) => `Week of ${month} ${day}`,
-    showPlansFor: "Show plans for",
     showAllHours: (outside: number) => {
       if (outside === 0) return "Show all 24 hours";
 
@@ -171,6 +170,17 @@ export const copy = {
     pickDateFor: (day: string) => `${day}. Pick a date`,
     today: "Today",
     close: "Close",
+  },
+  personFilter: {
+    everyone: "Everyone",
+    nobody: "No one",
+    people: (count: number) => `${count} people`,
+    members: (count: number) => `${count} ${count === 1 ? "member" : "members"}`,
+    title: "Show plans for",
+    change: (label: string) => `Show plans for: ${label}. Change`,
+    more: (count: number) => `+${count}`,
+    close: "Close",
+    done: "Done",
   },
   discard: {
     title: "Discard changes?",

@@ -14,6 +14,7 @@ import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { eventStatus } from "@/domain/eventStatus";
 import type { CalendarEvent, Tag } from "@/domain/schemas";
+import { filterScope, matchesFilter, type TagFilter } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
 import { earlierFold, scheduleCount } from "@/domain/todaySchedule";
 import type { ZoneState } from "@/domain/zoneState";
@@ -28,6 +29,7 @@ import { press } from "@/ui/press";
 import { Skeleton, SkeletonBlock } from "@/ui/Skeleton";
 import { SourceFailure } from "@/ui/SourceFailure";
 import { useBoxSize } from "@/ui/useBoxSize";
+import { WhoFilter } from "@/ui/WhoFilter";
 import { Zone } from "@/ui/Zone";
 import { ComingUp } from "./ComingUp";
 
@@ -36,6 +38,9 @@ type Slot = { start: Date; end: Date };
 type TodayScheduleProps = {
   state: ZoneState<CalendarEvent>;
   tags: readonly Tag[];
+  selected: ReadonlySet<string>;
+  whoSheet: boolean;
+  onFilter: (filter: TagFilter) => void;
   retryIn: number;
   onRetry: () => void;
   day: string;
@@ -65,6 +70,7 @@ type ActionsProps = {
 type ScheduleProps = Pick<
   TodayScheduleProps,
   | "tags"
+  | "selected"
   | "day"
   | "now"
   | "clock"
@@ -87,6 +93,8 @@ const SKELETON_ROWS = [0, 1, 2, 3, 4];
 const NARROW_CARD = 450;
 
 const TINY_CARD = 400;
+
+const STACK_MAX = { wide: 5, narrow: 3 } as const;
 
 const styles = stylex.create({
   root: {
@@ -166,6 +174,8 @@ export function TodaySchedule({
   onRetry,
   iconActions,
   upcoming,
+  whoSheet,
+  onFilter,
   onAddEvent,
   xstyle,
   ...schedule
@@ -178,9 +188,11 @@ export function TodaySchedule({
 
   const buttons = headerButtons(narrow, iconActions);
 
+  const shown = shownBy(schedule.selected, schedule.tags);
+
   const comingUp = upcoming && (
     <ComingUp
-      events={upcoming}
+      events={shown(upcoming)}
       tags={schedule.tags}
       now={schedule.now}
       clock={schedule.clock}
@@ -196,7 +208,7 @@ export function TodaySchedule({
       {...stylex.props(styles.root, buttons === "touch" && styles.touchTop, xstyle)}
     >
       <div {...stylex.props(styles.header, narrow && styles.oneLine)}>
-        <Eyebrow>{eyebrowFor(state, schedule, narrow)}</Eyebrow>
+        <Eyebrow>{eyebrowFor(state, shown, schedule, narrow)}</Eyebrow>
         <div {...stylex.props(styles.actions)}>
           <Actions
             buttons={buttons}
@@ -206,6 +218,17 @@ export function TodaySchedule({
           />
         </div>
       </div>
+      {schedule.tags.length > 1 && (
+        <WhoFilter
+          tags={schedule.tags}
+          selected={schedule.selected}
+          size="today"
+          max={narrow ? STACK_MAX.narrow : STACK_MAX.wide}
+          labels={copy.personFilter}
+          defaultOpen={whoSheet}
+          onChange={onFilter}
+        />
+      )}
       <Zone
         state={state}
         loading={<ScheduleSkeleton />}
@@ -221,7 +244,7 @@ export function TodaySchedule({
           />
         }
       >
-        {(events) => <Schedule events={events} nowDot={width < TINY_CARD} {...schedule} />}
+        {(events) => <Schedule events={shown(events)} nowDot={width < TINY_CARD} {...schedule} />}
       </Zone>
     </section>
   );
@@ -277,8 +300,16 @@ function Actions({ buttons, canAdd, onAddEvent, onOpenCalendar }: ActionsProps) 
   );
 }
 
+function shownBy(selected: ReadonlySet<string>, tags: readonly Tag[]) {
+  const allIds = tags.map((tag) => tag.id);
+
+  return (events: readonly CalendarEvent[]) =>
+    events.filter((event) => matchesFilter(event, selected, allIds));
+}
+
 function eyebrowFor(
   state: ZoneState<CalendarEvent>,
+  shown: (events: readonly CalendarEvent[]) => readonly CalendarEvent[],
   { now, clock, tz }: Pick<TodayScheduleProps, "now" | "clock" | "tz">,
   short: boolean,
 ): string {
@@ -286,7 +317,7 @@ function eyebrowFor(
 
   if (state.kind === "failed") return copy.today.schedule.failedCount;
 
-  const events = state.kind === "ready" ? state.data : [];
+  const events = state.kind === "ready" ? shown(state.data) : [];
 
   const count = copy.today.schedule.count(scheduleCount(events, now, tz), short);
 
@@ -308,6 +339,7 @@ function ScheduleSkeleton() {
 function Schedule({
   events,
   tags,
+  selected,
   day,
   now,
   clock,
@@ -358,7 +390,10 @@ function Schedule({
         clock={clock}
         variant="today"
         breakpoint={breakpoint}
-        free="everyone"
+        free={filterScope(
+          selected,
+          tags.map((tag) => tag.id),
+        )}
         weather={weather}
         firstHour={showEarlier ? undefined : fold.fromHour}
         grow={breakpoint !== "large"}
