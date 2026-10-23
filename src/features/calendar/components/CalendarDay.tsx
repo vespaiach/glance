@@ -2,7 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 import { CalendarDays, CalendarX2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { copy } from "@/copy";
-import type { Breakpoint } from "@/domain/breakpoint";
+import { type Breakpoint, type LayoutSize, layoutSize } from "@/domain/breakpoint";
 import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { filterTagIds, matchesFilter } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
@@ -52,11 +52,9 @@ const LABELS: DayTimelineLabels = {
 
 const SKELETON_ROWS = [0, 1, 2];
 
-const TIMELINE_MIN: Record<Breakpoint, { day: number; full: number }> = {
-  wide: { day: 320, full: 760 },
-  mid: { day: 320, full: 720 },
-  narrow: { day: 320, full: 760 },
-  phone: { day: 720, full: 1000 },
+const TIMELINE_MIN: Record<LayoutSize, { day: number; full: number }> = {
+  large: { day: 320, full: 760 },
+  small: { day: 720, full: 1000 },
 };
 
 const styles = stylex.create({
@@ -72,23 +70,13 @@ const styles = stylex.create({
     backgroundColor: colors.surfaceCanvas,
     color: colors.textPrimary,
   },
-  wide: {
+  large: {
     paddingTop: 20,
     paddingBottom: 20,
     paddingInlineStart: 20,
     paddingInlineEnd: 24,
   },
-  mid: {
-    paddingBlock: 16,
-    paddingInlineStart: 16,
-    paddingInlineEnd: 20,
-  },
-  narrow: {
-    paddingBlock: 16,
-    paddingInlineStart: 16,
-    paddingInlineEnd: 20,
-  },
-  phone: {
+  small: {
     paddingBlock: 12,
     paddingInlineStart: 8,
     paddingInlineEnd: 12,
@@ -149,7 +137,7 @@ export function CalendarDay({
   ...timeline
 }: CalendarDayProps) {
   return (
-    <section {...stylex.props(styles.panel, styles[timeline.breakpoint])}>
+    <section {...stylex.props(styles.panel, styles[layoutSize(timeline.breakpoint)])}>
       {toolbar}
       <Zone
         state={state}
@@ -199,7 +187,7 @@ function Timeline({
 
   const shown = events.filter((event) => matchesFilter(event, filter, allIds));
 
-  const minHeight = TIMELINE_MIN[breakpoint][span24 ? "full" : "day"];
+  const minHeight = TIMELINE_MIN[layoutSize(breakpoint)][span24 ? "full" : "day"];
 
   return (
     <>

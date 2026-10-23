@@ -107,10 +107,9 @@ const strip = {
   onSelect: ignore,
 } as const;
 
-const STRIPS: readonly [Exclude<Breakpoint, "phone">, number][] = [
-  ["wide", 1600],
-  ["mid", 1080],
-  ["narrow", 760],
+const STRIPS: readonly [Exclude<Breakpoint, "small">, number][] = [
+  ["large", 1600],
+  ["normal", 900],
 ];
 
 const WEEK_KEYS = weekDays(TODAY);
@@ -138,7 +137,7 @@ const EVERY_TAG = new Set(TIMELINE_FAMILY.map((one) => one.id));
 
 const toolbar = {
   tags: TIMELINE_FAMILY,
-  phone: false,
+  small: false,
   onToggleTag: ignore,
   onAddEvent: ignore,
 } as const;
@@ -151,7 +150,7 @@ const day: Omit<DayProps, "toolbar" | "spanLink" | "state"> = {
   now: NOW,
   tz: GALLERY_TZ,
   clock: "12h",
-  breakpoint: "wide",
+  breakpoint: "large",
   span24: false,
   weather: { hourly: hourlyOn(9), unit: "F" },
   retryIn: 2,
@@ -238,7 +237,7 @@ const DAYS: readonly {
       state: { kind: "ready", data: OCT_9_PLANS, updatedAt: octoberAt(9, 9, 32).toISOString() },
     },
   },
-  { label: words.phone, height: 900, props: { breakpoint: "phone" } },
+  { label: words.small, height: 900, props: { breakpoint: "small" } },
 ];
 
 export function CalendarGallery() {
@@ -249,7 +248,7 @@ export function CalendarGallery() {
       {STRIPS.map(([breakpoint, width]) => (
         <div key={breakpoint} {...stylex.props(styles.frame(width), styles.backdrop)}>
           <Eyebrow>{breakpoint}</Eyebrow>
-          <WeekStrip {...strip} days={week()} breakpoint={breakpoint} />
+          <WeekStrip {...strip} days={week()} />
         </div>
       ))}
       <div {...stylex.props(styles.frame(358), styles.backdrop)}>
@@ -291,7 +290,7 @@ export function CalendarGallery() {
                 <CalendarToolbar
                   {...toolbar}
                   filter={demo.props.filter ?? EVERY_TAG}
-                  phone={demo.props.breakpoint === "phone"}
+                  small={demo.props.breakpoint === "small"}
                 />
               }
               spanLink={

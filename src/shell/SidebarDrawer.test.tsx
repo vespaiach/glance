@@ -92,13 +92,13 @@ function scrim(): Element | null {
   return screen.getByRole("navigation", { name: "Main" }).previousElementSibling;
 }
 
-test("SHELL-08 on a phone tapping the scrim asks to go back to the rail", async () => {
+test("SHELL-08 on small tapping the scrim asks to go back to the rail", async () => {
   const onScrimTap = vi.fn();
 
   render(
     <SidebarDrawer
       open
-      phone
+      small
       active="today"
       onClose={vi.fn()}
       onScrimTap={onScrimTap}
@@ -111,7 +111,7 @@ test("SHELL-08 on a phone tapping the scrim asks to go back to the rail", async 
   expect(onScrimTap).toHaveBeenCalledOnce();
 });
 
-test("SHELL-08 the drawer has no scrim off the phone or while closed", () => {
+test("SHELL-08 the drawer has no scrim off small or while closed", () => {
   const { rerender } = render(
     <SidebarDrawer open active="today" onClose={vi.fn()} onNavigate={vi.fn()} />,
   );
@@ -119,7 +119,7 @@ test("SHELL-08 the drawer has no scrim off the phone or while closed", () => {
   expect(scrim()).toBeNull();
 
   rerender(
-    <SidebarDrawer open={false} phone active="today" onClose={vi.fn()} onNavigate={vi.fn()} />,
+    <SidebarDrawer open={false} small active="today" onClose={vi.fn()} onNavigate={vi.fn()} />,
   );
 
   expect(scrim()).toBeNull();

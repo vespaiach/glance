@@ -54,7 +54,7 @@ const styles = stylex.create({
   view: {
     width: 1200,
   },
-  phone: {
+  small: {
     width: 350,
   },
 });
@@ -102,7 +102,7 @@ export function NotesGallery({ season }: { season: Season }) {
         <div {...stylex.props(styles.view)}>
           <NoteBoard tz={GALLERY_TZ} state={{ kind: "failed" }} expiry={WEEK} {...board} />
         </div>
-        <div {...stylex.props(styles.phone)}>
+        <div {...stylex.props(styles.small)}>
           <NoteBoard
             tz={GALLERY_TZ}
             state={{ kind: "ready", data: BOARD_NOTES }}

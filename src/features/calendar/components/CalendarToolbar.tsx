@@ -10,7 +10,7 @@ import { press } from "@/ui/press";
 type CalendarToolbarProps = {
   tags: readonly Tag[];
   filter: ReadonlySet<string>;
-  phone: boolean;
+  small: boolean;
   onToggleTag: (id: string) => void;
   onAddEvent: () => void;
 };
@@ -54,7 +54,7 @@ const styles = stylex.create({
     flexShrink: 0,
     minWidth: 0,
   },
-  actionsPhone: {
+  actionsSmall: {
     flexShrink: 1,
   },
   pill: (height: number) => ({
@@ -110,16 +110,16 @@ const fills = stylex.create({
   ice: { backgroundColor: colors.blockIce },
 });
 
-const PILL_HEIGHT = { phone: 44, other: 48 } as const;
+const PILL_HEIGHT = { small: 44, large: 48 } as const;
 
 export function CalendarToolbar({
   tags,
   filter,
-  phone,
+  small,
   onToggleTag,
   onAddEvent,
 }: CalendarToolbarProps) {
-  const height = phone ? PILL_HEIGHT.phone : PILL_HEIGHT.other;
+  const height = small ? PILL_HEIGHT.small : PILL_HEIGHT.large;
 
   const words = copy.calendar;
 
@@ -138,7 +138,7 @@ export function CalendarToolbar({
           ))}
         </fieldset>
       </div>
-      <div {...stylex.props(styles.actions, phone && styles.actionsPhone)}>
+      <div {...stylex.props(styles.actions, small && styles.actionsSmall)}>
         <Button
           variant="ghost"
           icon={Plus}

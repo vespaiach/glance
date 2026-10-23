@@ -36,19 +36,23 @@ describe("useBreakpoint", () => {
   it("spec§5.1 follows the window width live", () => {
     const { result } = renderHook(() => useBreakpoint());
 
-    expect(result.current).toBe("wide");
+    expect(result.current).toBe("large");
 
-    act(() => resizeTo(1180));
+    act(() => resizeTo(1201));
 
-    expect(result.current).toBe("mid");
+    expect(result.current).toBe("large");
 
-    act(() => resizeTo(820));
+    act(() => resizeTo(1200));
 
-    expect(result.current).toBe("narrow");
+    expect(result.current).toBe("normal");
 
-    act(() => resizeTo(390));
+    act(() => resizeTo(769));
 
-    expect(result.current).toBe("phone");
+    expect(result.current).toBe("normal");
+
+    act(() => resizeTo(768));
+
+    expect(result.current).toBe("small");
   });
 });
 

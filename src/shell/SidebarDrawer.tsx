@@ -11,7 +11,7 @@ import { SIDEBAR_PINNED, SIDEBAR_VIEWS, type SidebarItem } from "./sidebarItems"
 
 type SidebarDrawerProps = {
   open: boolean;
-  phone?: boolean;
+  small?: boolean;
   active?: View;
   onClose: () => void;
   onScrimTap?: () => void;
@@ -55,7 +55,7 @@ const styles = stylex.create({
     transitionDuration: motion.durBase,
     transitionTimingFunction: motion.easeSlide,
   },
-  phoneDrawer: {
+  smallDrawer: {
     width: 248,
     paddingTop: space.md,
     paddingInline: space.sm,
@@ -106,13 +106,13 @@ const styles = stylex.create({
     transitionDuration: `${motion.durPress}, ${motion.durFast}`,
     transitionTimingFunction: motion.easeOut,
   },
-  phoneRow: {
+  smallRow: {
     height: 48,
     gap: space.sm,
     paddingInline: space.md,
     fontSize: 16,
   },
-  phoneTitle: {
+  smallTitle: {
     paddingBottom: space.xs,
     paddingLeft: space.md,
     fontSize: 20,
@@ -134,14 +134,14 @@ const styles = stylex.create({
     marginBottom: space.xs,
     backgroundColor: colors.borderHairline,
   },
-  phoneDivider: {
+  smallDivider: {
     marginInline: space.md,
   },
 });
 
 export function SidebarDrawer({
   open,
-  phone = false,
+  small = false,
   active,
   onClose,
   onScrimTap,
@@ -149,7 +149,7 @@ export function SidebarDrawer({
 }: SidebarDrawerProps) {
   const currentRow = useRef<HTMLButtonElement>(null);
 
-  const iconSize = phone ? 20 : 24;
+  const iconSize = small ? 20 : 24;
 
   useFocusWhenShown(open, currentRow);
 
@@ -166,7 +166,7 @@ export function SidebarDrawer({
         onClick={() => onNavigate(item.path)}
         {...stylex.props(
           styles.row,
-          phone && styles.phoneRow,
+          small && styles.smallRow,
           current && styles.current,
           press.scale,
         )}
@@ -179,7 +179,7 @@ export function SidebarDrawer({
 
   return (
     <div {...stylex.props(styles.layer)}>
-      {phone && open && (
+      {small && open && (
         <button
           type="button"
           tabIndex={-1}
@@ -191,15 +191,15 @@ export function SidebarDrawer({
       <nav
         aria-label={copy.nav.main}
         inert={!open}
-        {...stylex.props(styles.drawer, phone && styles.phoneDrawer, !open && styles.closed)}
+        {...stylex.props(styles.drawer, small && styles.smallDrawer, !open && styles.closed)}
       >
         <div {...stylex.props(styles.list)}>
-          <span {...stylex.props(styles.title, phone && styles.phoneTitle)}>{copy.appName}</span>
+          <span {...stylex.props(styles.title, small && styles.smallTitle)}>{copy.appName}</span>
           {SIDEBAR_VIEWS.map(row)}
           <span aria-hidden="true" {...stylex.props(styles.gap)} />
           <span
             aria-hidden="true"
-            {...stylex.props(styles.divider, phone && styles.phoneDivider)}
+            {...stylex.props(styles.divider, small && styles.smallDivider)}
           />
           {SIDEBAR_PINNED.map(row)}
         </div>
@@ -207,7 +207,7 @@ export function SidebarDrawer({
           type="button"
           aria-label={copy.nav.closeSidebar}
           onClick={onClose}
-          {...stylex.props(styles.row, phone && styles.phoneRow, press.scale)}
+          {...stylex.props(styles.row, small && styles.smallRow, press.scale)}
         >
           <Icon icon={X} size={iconSize} />
           <span>{copy.nav.close}</span>

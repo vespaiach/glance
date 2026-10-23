@@ -21,7 +21,7 @@ type SignInHeroProps = {
   time: Date;
   clock: ClockSetting;
   tz: string;
-  phone: boolean;
+  small: boolean;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -81,13 +81,13 @@ const styles = stylex.create({
   },
 });
 
-export function SignInHero({ season, time, clock, tz, phone, xstyle }: SignInHeroProps) {
+export function SignInHero({ season, time, clock, tz, small, xstyle }: SignInHeroProps) {
   return (
     <ColorBlock tone={1} padding="clamp(24px, 3.2vw, 48px)" xstyle={[styles.root, xstyle]}>
       <div {...stylex.props(styles.top)}>
         <span {...stylex.props(styles.wordmark)}>{copy.appName}</span>
         <span {...stylex.props(styles.now)}>
-          <span>{heroDate(time, tz, phone)}</span>
+          <span>{heroDate(time, tz, small)}</span>
           <span aria-hidden>·</span>
           <span>{formatClock(minutesOfDay(time, tz), clock)}</span>
           <Icon icon={seasonIcons[season]} size={20} />
@@ -97,13 +97,13 @@ export function SignInHero({ season, time, clock, tz, phone, xstyle }: SignInHer
         <p {...stylex.props(styles.headline)}>{copy.signIn.headline}</p>
         <div {...stylex.props(styles.tagline)}>{copy.signIn.tagline}</div>
       </div>
-      {!phone && <SignInPreview />}
+      {!small && <SignInPreview />}
     </ColorBlock>
   );
 }
 
-function heroDate(time: Date, tz: string, phone: boolean): string {
-  if (!phone) return formatLongDate(time, tz);
+function heroDate(time: Date, tz: string, small: boolean): string {
+  if (!small) return formatLongDate(time, tz);
 
   return copy.signIn.shortDate(formatWeekday(time, tz), formatMonthDay(time, tz));
 }

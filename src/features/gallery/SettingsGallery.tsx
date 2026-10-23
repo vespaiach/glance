@@ -29,7 +29,7 @@ type LocationProps = ComponentProps<typeof LocationView>;
 
 type AmbientProps = ComponentProps<typeof AmbientScheduleView>;
 
-type Demo<T> = { key: string; phone?: boolean } & Partial<T>;
+type Demo<T> = { key: string; small?: boolean } & Partial<T>;
 
 const ignore = () => {};
 
@@ -56,7 +56,7 @@ const styles = stylex.create({
   view: {
     width: 1200,
   },
-  phone: {
+  small: {
     width: 350,
   },
 });
@@ -71,7 +71,7 @@ const BACKGROUND_DEMOS: readonly Demo<BackgroundProps>[] = [
   { key: "empty", state: { kind: "empty" } },
   { key: "loading", state: { kind: "loading" } },
   { key: "failed-zone", state: { kind: "failed" } },
-  { key: "phone", phone: true, breakpoint: "phone", canUpload: false, background: PHOTO },
+  { key: "small", small: true, breakpoint: "small", canUpload: false, background: PHOTO },
 ];
 
 const [PORTLAND, MAINE] = PLACES;
@@ -94,8 +94,8 @@ const LOCATION_DEMOS: readonly Demo<LocationProps>[] = [
   { key: "denied", setup: gallerySetup({ step: "editing", draft: "", notice: "denied" }, false) },
   { key: "outside", setup: gallerySetup({ step: "editing", draft: "", notice: "outside" }) },
   { key: "confirm", setup: gallerySetup(CONFIRM) },
-  { key: "phone", phone: true, breakpoint: "phone" },
-  { key: "phone-confirm", phone: true, breakpoint: "phone", setup: gallerySetup(CONFIRM) },
+  { key: "small", small: true, breakpoint: "small" },
+  { key: "small-confirm", small: true, breakpoint: "small", setup: gallerySetup(CONFIRM) },
 ];
 
 const LOCATION_BASE: LocationProps = {
@@ -104,7 +104,7 @@ const LOCATION_BASE: LocationProps = {
   clock: "12h",
   setup: gallerySetup({ step: "editing", draft: "" }),
   example: SOCCER,
-  breakpoint: "wide",
+  breakpoint: "large",
   onBack: ignore,
 };
 
@@ -117,14 +117,14 @@ const AMBIENT_DEMOS: readonly Demo<AmbientProps>[] = [
   { key: "same", ambient: { ...DEFAULT_AMBIENT, all: { start: "18:00", end: "18:00" } } },
   { key: "off", ambient: { ...DEFAULT_AMBIENT, mode: "off" } },
   { key: "clock-24", clock: "24h", idleTimeout: { on: false, minutes: 3 }, initialPick: "all.e" },
-  { key: "phone", phone: true, breakpoint: "phone", initialPick: "all.s" },
+  { key: "small", small: true, breakpoint: "small", initialPick: "all.s" },
 ];
 
 const AMBIENT_BASE: AmbientProps = {
   ambient: DEFAULT_AMBIENT,
   clock: "12h",
   idleTimeout: { on: true, minutes: 3 },
-  breakpoint: "wide",
+  breakpoint: "large",
   onChange: ignore,
   onBack: ignore,
   onPreview: ignore,
@@ -140,7 +140,7 @@ const BACKGROUND_BASE: BackgroundProps = {
   uploads: [],
   online: true,
   canUpload: true,
-  breakpoint: "wide",
+  breakpoint: "large",
   photoSrc: galleryPhotoSrc,
   onChange: ignore,
   onBack: ignore,
@@ -153,29 +153,29 @@ export function SettingsGallery({ season }: { season: Season }) {
   return (
     <>
       <GalleryGroup title={gallery.groups.settingsView}>
-        {settingsDemos(season).map(({ key, phone, ...demo }) => (
-          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+        {settingsDemos(season).map(({ key, small, ...demo }) => (
+          <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
             <SettingsView {...settingsBase(season)} {...demo} />
           </div>
         ))}
       </GalleryGroup>
       <GalleryGroup title={gallery.groups.locationView}>
-        {LOCATION_DEMOS.map(({ key, phone, ...demo }) => (
-          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+        {LOCATION_DEMOS.map(({ key, small, ...demo }) => (
+          <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
             <LocationView {...LOCATION_BASE} {...demo} />
           </div>
         ))}
       </GalleryGroup>
       <GalleryGroup title={gallery.groups.ambientScheduleView}>
-        {AMBIENT_DEMOS.map(({ key, phone, ...demo }) => (
-          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+        {AMBIENT_DEMOS.map(({ key, small, ...demo }) => (
+          <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
             <AmbientScheduleView {...AMBIENT_BASE} {...demo} />
           </div>
         ))}
       </GalleryGroup>
       <GalleryGroup title={gallery.groups.backgroundView}>
-        {BACKGROUND_DEMOS.map(({ key, phone, ...demo }) => (
-          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+        {BACKGROUND_DEMOS.map(({ key, small, ...demo }) => (
+          <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
             <BackgroundView {...BACKGROUND_BASE} {...demo} />
           </div>
         ))}
@@ -213,8 +213,8 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 300 } },
     { key: "qr-failed", qr: { tile: { kind: "failed" }, secondsLeft: 300 } },
     { key: "offline", online: false },
-    { key: "phone", phone: true, breakpoint: "phone" },
-    { key: "phone-qr-open", phone: true, breakpoint: "phone", qr: QR_OPEN },
+    { key: "small", small: true, breakpoint: "small" },
+    { key: "small-qr-open", small: true, breakpoint: "small", qr: QR_OPEN },
   ];
 }
 
@@ -227,7 +227,7 @@ function settingsBase(season: Season): SettingsProps {
     settings: { ...DEFAULT_SETTINGS, ...(PORTLAND && { weatherLocation: PORTLAND }) },
     season,
     background: { mode: "season" },
-    breakpoint: "wide",
+    breakpoint: "large",
     online: true,
     qr: { tile: { kind: "closed" }, secondsLeft: 300 },
     onShowQr: ignore,

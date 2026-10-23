@@ -7,7 +7,7 @@ import { GALLERY_TZ, gallery, gallerySetup, NOW, PLACES } from "./samples";
 
 type SignInProps = ComponentProps<typeof SignInView>;
 
-type Demo = { key: string; phone?: boolean; narrow?: boolean } & Partial<SignInProps>;
+type Demo = { key: string; small?: boolean; normal?: boolean } & Partial<SignInProps>;
 
 const ignore = () => {};
 
@@ -34,11 +34,11 @@ const styles = stylex.create({
     width: 1280,
     height: 720,
   },
-  narrow: {
-    width: 820,
-    height: 1180,
+  normal: {
+    width: 1024,
+    height: 768,
   },
-  phone: {
+  small: {
     width: 390,
     height: 1100,
   },
@@ -55,14 +55,14 @@ const DEMOS: readonly Demo[] = [
   { key: "guest-failed", guest: true, state: { step: "form", email: "", error: "guest" } },
   { key: "guest-sending", guest: true, state: { step: "sending", email: EMAIL } },
   { key: "guest-offline", guest: true, online: false },
-  { key: "guest-phone", guest: true, phone: true, breakpoint: "phone" },
+  { key: "guest-small", guest: true, small: true, breakpoint: "small" },
   { key: "code", state: { ...CODE, sentAt: secondsBefore(2) } },
   { key: "code-typed", state: { ...CODE, code: "482" } },
   { key: "code-checking", state: { ...CODE, step: "checking", code: "482913" } },
   { key: "code-wrong", state: { ...CODE, wrong: true } },
   { key: "code-locked", state: { step: "locked", email: EMAIL, sentAt: secondsBefore(2) } },
   { key: "code-offline", state: { ...CODE, code: "482913" }, online: false },
-  { key: "code-phone", phone: true, breakpoint: "phone", state: { ...CODE, code: "482" } },
+  { key: "code-small", small: true, breakpoint: "small", state: { ...CODE, code: "482" } },
   { key: "name", state: { step: "name", email: EMAIL, draft: "" } },
   { key: "name-empty", state: { step: "name", email: EMAIL, draft: "", error: "empty" } },
   { key: "location", state: LOCATION },
@@ -91,20 +91,20 @@ const DEMOS: readonly Demo[] = [
       ...(PORTLAND && { place: PORTLAND }),
     }),
   },
-  { key: "location-phone", phone: true, breakpoint: "phone", state: LOCATION },
+  { key: "location-small", small: true, breakpoint: "small", state: LOCATION },
   { key: "expired", state: { step: "expired", email: EMAIL } },
   { key: "done", state: { step: "done", name: "Maria", returning: false } },
   { key: "done-returning", state: { step: "done", name: "Maria", returning: true } },
-  { key: "narrow", narrow: true, breakpoint: "narrow" },
-  { key: "phone", phone: true, breakpoint: "phone" },
+  { key: "normal", normal: true, breakpoint: "normal" },
+  { key: "small", small: true, breakpoint: "small" },
   { key: "ended", state: ENDED, signedOut: SIGNED_OUT },
   { key: "ended-pending", state: ENDED, signedOut: WAITING },
   { key: "ended-switch", state: { step: "form", email: OTHER_EMAIL }, signedOut: WAITING },
   { key: "ended-sending", state: { step: "sending", email: EMAIL }, signedOut: WAITING },
   {
-    key: "ended-switch-phone",
-    phone: true,
-    breakpoint: "phone",
+    key: "ended-switch-small",
+    small: true,
+    breakpoint: "small",
     state: { step: "form", email: OTHER_EMAIL },
     signedOut: WAITING,
   },
@@ -113,8 +113,8 @@ const DEMOS: readonly Demo[] = [
 export function SignInGallery({ season }: { season: Season }) {
   return (
     <GalleryGroup title={gallery.groups.signInView}>
-      {DEMOS.map(({ key, phone, narrow, ...demo }) => (
-        <SignInView key={key} {...signInBase(season)} {...demo} xstyle={demoSize(phone, narrow)} />
+      {DEMOS.map(({ key, small, normal, ...demo }) => (
+        <SignInView key={key} {...signInBase(season)} {...demo} xstyle={demoSize(small, normal)} />
       ))}
     </GalleryGroup>
   );
@@ -128,16 +128,16 @@ function signInBase(season: Season): SignInProps {
     time: NOW,
     clock: "12h",
     tz: GALLERY_TZ,
-    breakpoint: "wide",
+    breakpoint: "large",
     online: true,
     onAction: ignore,
   };
 }
 
-function demoSize(phone?: boolean, narrow?: boolean): stylex.StyleXStyles {
-  if (phone) return styles.phone;
+function demoSize(small?: boolean, normal?: boolean): stylex.StyleXStyles {
+  if (small) return styles.small;
 
-  return narrow ? styles.narrow : styles.view;
+  return normal ? styles.normal : styles.view;
 }
 
 function secondsBefore(seconds: number): Date {

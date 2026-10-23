@@ -30,7 +30,7 @@ const styles = stylex.create({
   view: {
     width: 1200,
   },
-  phone: {
+  small: {
     width: 350,
   },
   setup: {
@@ -43,7 +43,7 @@ const forecast = {
   clock: "12h",
   today: NOW,
   stale: false,
-  breakpoint: "wide",
+  breakpoint: "large",
 } as const;
 
 export function WeatherGallery() {
@@ -58,11 +58,11 @@ export function WeatherGallery() {
       <div {...stylex.props(styles.view)}>
         <WeatherForecast tz={GALLERY_TZ} weather={FULL_WEATHER} {...forecast} stale />
       </div>
-      <div {...stylex.props(styles.phone)}>
-        <WeatherForecast tz={GALLERY_TZ} weather={FULL_WEATHER} {...forecast} breakpoint="phone" />
+      <div {...stylex.props(styles.small)}>
+        <WeatherForecast tz={GALLERY_TZ} weather={FULL_WEATHER} {...forecast} breakpoint="small" />
       </div>
       <div {...stylex.props(styles.view)}>
-        <WeatherSkeleton breakpoint="wide" />
+        <WeatherSkeleton breakpoint="large" />
       </div>
       {SETUPS.map((setup) => (
         <div key={setupKey(setup)} {...stylex.props(styles.setup)}>

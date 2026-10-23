@@ -3,7 +3,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { CloudRain, FileText } from "lucide-react";
 import { useRef } from "react";
-import type { Breakpoint } from "@/domain/breakpoint";
+import { type Breakpoint, type LayoutSize, layoutSize } from "@/domain/breakpoint";
 import { type EventStatus, eventStatus } from "@/domain/eventStatus";
 import type {
   AccountSettings,
@@ -102,24 +102,20 @@ const INSET = 12;
 
 const PASSED_FACTOR = { calendar: 0.35, today: 0.3 } as const;
 
-const MIN_PLAN_HEIGHT = { phone: 40, other: 44 } as const;
+const MIN_PLAN_HEIGHT: Record<LayoutSize, number> = { large: 44, small: 40 };
 
-const DIMENSIONS: Record<"calendar" | "today", Record<Breakpoint, Dimensions>> = {
+const DIMENSIONS: Record<"calendar" | "today", Record<LayoutSize, Dimensions>> = {
   calendar: {
-    wide: { gutter: 96, titleSize: 22 },
-    mid: { gutter: 88, titleSize: 20 },
-    narrow: { gutter: 80, titleSize: 20 },
-    phone: { gutter: 52, titleSize: 16 },
+    large: { gutter: 96, titleSize: 22 },
+    small: { gutter: 52, titleSize: 16 },
   },
   today: {
-    wide: { gutter: 80, titleSize: 18 },
-    mid: { gutter: 76, titleSize: 18 },
-    narrow: { gutter: 76, titleSize: 18 },
-    phone: { gutter: 52, titleSize: 16 },
+    large: { gutter: 80, titleSize: 18 },
+    small: { gutter: 52, titleSize: 16 },
   },
 };
 
-const LANE_WIDTH: Record<Breakpoint, number> = { wide: 112, mid: 96, narrow: 96, phone: 48 };
+const LANE_WIDTH: Record<LayoutSize, number> = { large: 112, small: 48 };
 
 const SLOT_INSET = 2;
 
@@ -500,11 +496,13 @@ export function DayTimeline({
 
   const size = useBoxSize(ref) ?? FALLBACK_SIZE;
 
-  const dimensions = DIMENSIONS[variant][breakpoint];
+  const record = layoutSize(breakpoint);
+
+  const dimensions = DIMENSIONS[variant][record];
 
   const hours = weather ? hourlyByHour(weather.hourly, day, tz) : new Map<number, HourlyPoint>();
 
-  const chips = variant === "calendar" && breakpoint !== "phone";
+  const chips = variant === "calendar" && record === "large";
 
   const height = Math.max(0, size.height - 2 * INSET);
 
@@ -515,13 +513,13 @@ export function DayTimeline({
       span,
       height,
       passedFactor: PASSED_FACTOR[variant],
-      minPlanHeight: breakpoint === "phone" ? MIN_PLAN_HEIGHT.phone : MIN_PLAN_HEIGHT.other,
+      minPlanHeight: MIN_PLAN_HEIGHT[record],
     },
   );
 
   const shared: Shared = { tags, now, tz, clock, labels };
 
-  const lane = weather && weatherAt === "lane" && hours.size > 0 ? LANE_WIDTH[breakpoint] : 0;
+  const lane = weather && weatherAt === "lane" && hours.size > 0 ? LANE_WIDTH[record] : 0;
 
   const areaWidth = size.width - dimensions.gutter - lane;
 
@@ -568,7 +566,7 @@ export function DayTimeline({
             rows={layout.rows}
             hours={hours}
             unit={weather.unit}
-            compact={breakpoint === "phone"}
+            compact={record === "small"}
             labels={labels}
           />
         )}

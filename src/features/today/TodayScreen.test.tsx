@@ -355,7 +355,7 @@ test("TODAY-07 with no photos Upload a photo goes to Photos", async () => {
   expect(navigation.push).toHaveBeenCalledWith("/photos");
 });
 
-test("TODAY-07 on phone the empty tile has no Upload a photo pill and still goes to Photos", async () => {
+test("TODAY-07 on small the empty tile has no Upload a photo pill and still goes to Photos", async () => {
   await markSynced(store);
   vi.stubGlobal("matchMedia", () => ({
     matches: false,

@@ -99,7 +99,7 @@ export function CalendarScreen() {
 
   return (
     <div {...stylex.props(calendarLayout(breakpoint, view.span24))}>
-      {breakpoint === "phone" ? (
+      {breakpoint === "small" ? (
         <DateControl {...dateControl(day)} onOpen={() => dispatch({ type: "openPicker" })} />
       ) : (
         <WeekStrip
@@ -108,7 +108,6 @@ export function CalendarScreen() {
           days={weekPills(week, weekEvents ?? [], tags, { tz, forecast, settings })}
           selected={day}
           today={today}
-          breakpoint={breakpoint}
           previousLabel={copy.calendar.previousWeek}
           nextLabel={copy.calendar.nextWeek}
           onPrevious={() => dispatch({ type: "step", delta: -1, today })}
@@ -141,7 +140,7 @@ export function CalendarScreen() {
           <CalendarToolbar
             tags={tags}
             filter={filter}
-            phone={breakpoint === "phone"}
+            small={breakpoint === "small"}
             onToggleTag={(id) => dispatch({ type: "toggleTag", id, allIds })}
             onAddEvent={() => sheets.open(newEvent(day, filterTagIds(filter, allIds)))}
           />
@@ -155,7 +154,7 @@ export function CalendarScreen() {
           />
         }
       />
-      {breakpoint === "phone" && view.picker && (
+      {breakpoint === "small" && view.picker && (
         <PhoneDatePicker
           tags={tags}
           selected={day}

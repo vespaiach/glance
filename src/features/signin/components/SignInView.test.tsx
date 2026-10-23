@@ -43,7 +43,7 @@ function renderView(state: SignInState, props: Partial<Props> = {}) {
       time={NOW}
       clock="12h"
       tz={tz}
-      breakpoint="wide"
+      breakpoint="large"
       online
       {...handlers}
       {...props}
@@ -70,8 +70,8 @@ test("SIGNIN-01 the hero shows the wordmark, the date and time, the headline and
   expect(screen.getByText("Soccer cleats are by the door")).toBeInTheDocument();
 });
 
-test("SIGNIN-01 on a phone the hero shows the short date and no preview", () => {
-  renderView({ step: "form", email: "" }, { breakpoint: "phone" });
+test("SIGNIN-01 on small the hero shows the short date and no preview", () => {
+  renderView({ step: "form", email: "" }, { breakpoint: "small" });
 
   expect(screen.getByText("Fri, Oct 9")).toBeInTheDocument();
   expect(screen.queryByText("Today · 3 events")).not.toBeInTheDocument();

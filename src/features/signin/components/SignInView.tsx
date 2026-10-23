@@ -140,7 +140,7 @@ export function SignInView({
   xstyle,
   ...step
 }: SignInViewProps) {
-  const tall = breakpoint === "wide" || breakpoint === "mid";
+  const tall = breakpoint !== "small";
 
   const main = useRef<HTMLElement>(null);
 
@@ -154,7 +154,7 @@ export function SignInView({
           time={time}
           clock={clock}
           tz={tz}
-          phone={breakpoint === "phone"}
+          small={breakpoint === "small"}
           xstyle={tall && styles.heroTall}
         />
         <div {...stylex.props(styles.panel)}>

@@ -3,7 +3,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef } from "react";
-import type { Breakpoint } from "@/domain/breakpoint";
 import type { Tag, WeatherIcon } from "@/domain/schemas";
 import type { WeekHeading } from "@/domain/week";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
@@ -24,15 +23,12 @@ export type WeekDay = {
   forecast?: { icon: WeatherIcon; label: string; high: string };
 };
 
-type StripBreakpoint = Exclude<Breakpoint, "phone">;
-
 type WeekStripProps = {
   heading: WeekHeading;
   label: string;
   days: readonly WeekDay[];
   selected: string;
   today: string;
-  breakpoint: StripBreakpoint;
   previousLabel: string;
   nextLabel: string;
   onPrevious: () => void;
@@ -46,7 +42,7 @@ const DAYS = 7;
 
 const GAP = 2;
 
-const CELL_HEIGHT = { wide: 104, mid: 96, narrow: 96 } as const;
+const CELL_HEIGHT = 104;
 
 const styles = stylex.create({
   root: {
@@ -190,7 +186,6 @@ export function WeekStrip({
   days,
   selected,
   today,
-  breakpoint,
   previousLabel,
   nextLabel,
   onPrevious,
@@ -201,9 +196,7 @@ export function WeekStrip({
 
   const width = useBoxSize(grid)?.width ?? 0;
 
-  const roomy = breakpoint === "wide" || breakpoint === "mid";
-
-  const weather = roomy && (width - (DAYS - 1) * GAP) / DAYS >= WEATHER_CELL;
+  const weather = (width - (DAYS - 1) * GAP) / DAYS >= WEATHER_CELL;
 
   const index = Math.max(
     0,
@@ -212,12 +205,10 @@ export function WeekStrip({
 
   return (
     <div {...stylex.props(styles.root)}>
-      {roomy && (
-        <div {...stylex.props(styles.heading)}>
-          <span {...stylex.props(styles.year)}>{heading.year}</span>
-          <span {...stylex.props(styles.month)}>{heading.month}</span>
-        </div>
-      )}
+      <div {...stylex.props(styles.heading)}>
+        <span {...stylex.props(styles.year)}>{heading.year}</span>
+        <span {...stylex.props(styles.month)}>{heading.month}</span>
+      </div>
       <IconButton icon={ChevronLeft} label={previousLabel} size="touch" onClick={onPrevious} />
       <fieldset ref={grid} aria-label={label} {...stylex.props(styles.days)}>
         <span
@@ -233,7 +224,7 @@ export function WeekStrip({
             selected={day.key === selected}
             today={day.key === today}
             weather={weather}
-            height={CELL_HEIGHT[breakpoint]}
+            height={CELL_HEIGHT}
             onClick={() => onSelect(day.key)}
           />
         ))}

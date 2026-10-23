@@ -60,7 +60,7 @@ export function BackgroundScreen() {
         tz={tz}
         uploads={uploads.tiles}
         online={online}
-        canUpload={breakpoint !== "phone"}
+        canUpload={breakpoint !== "small"}
         breakpoint={breakpoint}
         photoSrc={photoSrc}
         onChange={change}

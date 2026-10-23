@@ -57,13 +57,13 @@ test("EVT-01 there is no scrim to tap", () => {
   expect(screen.getAllByRole("button", { hidden: true })).toHaveLength(3);
 });
 
-test("EVT-01 the actions sit in the header, and in the bottom bar on phone", () => {
+test("EVT-01 the actions sit in the header, and in the bottom bar on small", () => {
   renderPage();
 
   expect(screen.getByRole("button", { name: "Save" }).closest("[data-page-header]")).not.toBeNull();
 });
 
-test("EVT-01 on phone the header holds only Back and the title", () => {
+test("EVT-01 on small the header holds only Back and the title", () => {
   renderPage({ compact: true });
 
   const save = screen.getByRole("button", { name: "Save" });

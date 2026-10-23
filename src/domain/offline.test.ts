@@ -31,11 +31,10 @@ describe("forecastStale", () => {
 
 describe("savedTimeShown", () => {
   it.each([
-    ["wide", false, true],
-    ["mid", false, true],
-    ["narrow", false, false],
-    ["phone", false, false],
-    ["wide", true, false],
+    ["large", false, true],
+    ["normal", false, true],
+    ["small", false, false],
+    ["large", true, false],
   ] as const)(
     "OFF-01 on %s (Weather: %s) the saved time shows: %s",
     (breakpoint, onWeather, shown) => {

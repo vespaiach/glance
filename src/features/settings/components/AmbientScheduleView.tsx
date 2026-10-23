@@ -243,7 +243,7 @@ export function AmbientScheduleView({
             set={ambient[shown.key]}
             clock={clock}
             pick={pick}
-            compact={breakpoint === "phone"}
+            compact={breakpoint === "small"}
             onPick={setPick}
             onChange={(set) => onChange({ ...ambient, [shown.key]: set })}
           />

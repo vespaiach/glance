@@ -60,7 +60,7 @@ function renderView(overrides: Partial<Props> = {}) {
     settings: DEFAULT_SETTINGS,
     season: "fall",
     background: { mode: "season" },
-    breakpoint: "wide",
+    breakpoint: "large",
     onChange: vi.fn(),
     onOpenBackground: vi.fn(),
     onOpenLocation: vi.fn(),

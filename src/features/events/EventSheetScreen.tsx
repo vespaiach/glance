@@ -137,7 +137,7 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
       tags={tags}
       offline={!online}
       status={status}
-      compact={breakpoint === "phone"}
+      compact={breakpoint === "small"}
       onClose={close}
       onDelete={onDelete}
       onSave={onSave}

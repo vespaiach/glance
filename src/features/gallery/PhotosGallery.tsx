@@ -23,7 +23,7 @@ import {
 
 type ViewProps = ComponentProps<typeof PhotosView>;
 
-type Demo = { key: string; phone?: boolean } & Partial<ViewProps>;
+type Demo = { key: string; small?: boolean } & Partial<ViewProps>;
 
 const ignore = () => {};
 
@@ -55,8 +55,8 @@ const DEMOS: readonly Demo[] = [
   { key: "empty-offline", state: EMPTY, online: false },
   { key: "loading", state: { kind: "loading" } },
   { key: "failed-zone", state: { kind: "failed" } },
-  { key: "phone", phone: true, breakpoint: "phone", canUpload: false },
-  { key: "phone-empty", phone: true, breakpoint: "phone", canUpload: false, state: EMPTY },
+  { key: "small", small: true, breakpoint: "small", canUpload: false },
+  { key: "small-empty", small: true, breakpoint: "small", canUpload: false, state: EMPTY },
 ];
 
 const styles = stylex.create({
@@ -64,7 +64,7 @@ const styles = stylex.create({
     width: 1200,
     minHeight: 760,
   },
-  phone: {
+  small: {
     width: 350,
   },
 });
@@ -81,7 +81,7 @@ const base: ViewProps = {
   uploads: [],
   online: true,
   canUpload: true,
-  breakpoint: "wide",
+  breakpoint: "large",
   backgroundId: undefined,
   photoSrc: galleryPhotoSrc,
   onSelect: ignore,
@@ -137,8 +137,8 @@ export function PhotosGallery() {
   return (
     <>
       <GalleryGroup title={gallery.groups.photosView}>
-        {DEMOS.map(({ key, phone, ...demo }) => (
-          <div key={key} {...stylex.props(phone ? styles.phone : styles.view)}>
+        {DEMOS.map(({ key, small, ...demo }) => (
+          <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
             <PhotosView {...base} {...demo} />
           </div>
         ))}

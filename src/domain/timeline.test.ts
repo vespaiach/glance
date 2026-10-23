@@ -240,10 +240,10 @@ describe("timelineLayout", () => {
 
   it("TL-03 every plan is at least the minimum height", () => {
     const calendar = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
-    const phone = timelineLayout(OCT_9_PLANS, onOct9, { ...CALENDAR, minPlanHeight: 40 });
+    const small = timelineLayout(OCT_9_PLANS, onOct9, { ...CALENDAR, minPlanHeight: 40 });
 
     expect(placed(calendar, "pickup").height).toBe(44);
-    expect(placed(phone, "pickup").height).toBe(40);
+    expect(placed(small, "pickup").height).toBe(40);
   });
 
   it("TL-03 overlapping plans share the width in columns", () => {
@@ -482,7 +482,7 @@ describe("laneTile", () => {
     expect(laneTile(21, false, 0)).toMatchObject({ content: false });
   });
 
-  it("TL-11 on phone every tile stacks small from 46 px", () => {
+  it("TL-11 on small every tile stacks small from 46 px", () => {
     expect(laneTile(46, true, 0)).toMatchObject({ content: true, stacked: true, large: false });
     expect(laneTile(45, true, 0)).toMatchObject({ content: false });
   });

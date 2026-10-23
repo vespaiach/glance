@@ -14,7 +14,7 @@ import {
 
 type AmbientProps = ComponentProps<typeof AmbientView>;
 
-type Demo = { key: string; phone?: boolean } & Partial<AmbientProps>;
+type Demo = { key: string; small?: boolean } & Partial<AmbientProps>;
 
 const ignore = () => {};
 
@@ -41,7 +41,7 @@ const styles = stylex.create({
     width: 960,
     minHeight: 540,
   },
-  phone: {
+  small: {
     width: 390,
     minHeight: 844,
   },
@@ -55,18 +55,18 @@ const DEMOS: readonly Demo[] = [
   { key: "celsius", clock: "24h", unit: "C" },
   { key: "nothing", weather: { kind: "empty" }, nextEvent: { kind: "empty" } },
   { key: "loading", weather: { kind: "loading" }, nextEvent: { kind: "loading" } },
-  { key: "phone", phone: true },
+  { key: "small", small: true },
 ];
 
 export function AmbientGallery({ season }: { season: Season }) {
   return (
     <GalleryGroup title={gallery.groups.ambientView}>
-      {DEMOS.map(({ key, phone, ...demo }) => (
+      {DEMOS.map(({ key, small, ...demo }) => (
         <AmbientView
           key={key}
           {...ambientBase(season)}
           {...demo}
-          xstyle={phone ? styles.phone : styles.view}
+          xstyle={small ? styles.small : styles.view}
         />
       ))}
     </GalleryGroup>

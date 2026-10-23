@@ -290,7 +290,7 @@ test("EVT-05 Save event is marked with a check icon", () => {
   ).not.toBeNull();
 });
 
-test("EVT-01 on phone the actions move to the bottom bar", () => {
+test("EVT-01 on small the actions move to the bottom bar", () => {
   renderSheet({ compact: true });
 
   const save = screen.getByRole("button", { name: "Save" });

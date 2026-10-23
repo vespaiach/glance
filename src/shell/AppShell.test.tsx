@@ -281,7 +281,7 @@ test("SHELL-09 the rail's ✕ moves focus to the grip", async () => {
   expect(screen.getByRole("button", { name: "Show sidebar" })).toHaveFocus();
 });
 
-function onPhone() {
+function onSmall() {
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: () => {},
@@ -289,58 +289,58 @@ function onPhone() {
   }));
 }
 
-function phoneGrip() {
+function smallGrip() {
   return screen.getByRole("button", { name: "Open menu" });
 }
 
-test("SHELL-08 on a phone there is no Rail: only the Open menu grip shows", async () => {
-  onPhone();
+test("SHELL-08 on small there is no Rail: only the Open menu grip shows", async () => {
+  onSmall();
 
   await renderShell("Calendar view");
 
   expect(screen.queryByRole("button", { name: "Hide sidebar" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Expand menu" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Show sidebar" })).toBeNull();
-  expect(phoneGrip()).toBeVisible();
+  expect(smallGrip()).toBeVisible();
   expect(drawer()).toHaveAttribute("inert");
 });
 
-test("SHELL-08 on a phone the grip opens the drawer directly and focuses the current row", async () => {
-  onPhone();
+test("SHELL-08 on small the grip opens the drawer directly and focuses the current row", async () => {
+  onSmall();
 
   await renderShell("Today view");
 
-  await userEvent.click(phoneGrip());
+  await userEvent.click(smallGrip());
 
   expect(drawer()).not.toHaveAttribute("inert");
   expect(within(drawer()).getByRole("button", { name: "Today" })).toHaveFocus();
   expect(screen.queryByRole("button", { name: "Hide sidebar" })).toBeNull();
 });
 
-test("SHELL-08 on a phone Close returns to the grip and focuses it", async () => {
-  onPhone();
+test("SHELL-08 on small Close returns to the grip and focuses it", async () => {
+  onSmall();
 
   await renderShell("Today view", { rail: "open" });
 
   await userEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
 
   expect(drawer()).toHaveAttribute("inert");
-  expect(phoneGrip()).toHaveFocus();
+  expect(smallGrip()).toHaveFocus();
 });
 
-test("SHELL-08 on a phone a scrim tap returns to the grip and focuses it", async () => {
-  onPhone();
+test("SHELL-08 on small a scrim tap returns to the grip and focuses it", async () => {
+  onSmall();
 
   await renderShell("Today view", { rail: "open" });
 
   await userEvent.click(drawer().previousElementSibling as HTMLElement);
 
   expect(drawer()).toHaveAttribute("inert");
-  expect(phoneGrip()).toHaveFocus();
+  expect(smallGrip()).toHaveFocus();
 });
 
-test("SHELL-08 on a phone picking a view returns to the grip", async () => {
-  onPhone();
+test("SHELL-08 on small picking a view returns to the grip", async () => {
+  onSmall();
 
   await renderShell("Today view", { rail: "open" });
 
@@ -348,29 +348,29 @@ test("SHELL-08 on a phone picking a view returns to the grip", async () => {
 
   expect(navigation.push).toHaveBeenCalledWith("/calendar");
   expect(drawer()).toHaveAttribute("inert");
-  expect(phoneGrip()).toHaveFocus();
+  expect(smallGrip()).toHaveFocus();
 });
 
-test("SHELL-08 on a phone a view change returns the drawer to the grip", async () => {
-  onPhone();
+test("SHELL-08 on small a view change returns the drawer to the grip", async () => {
+  onSmall();
 
   const { rerender } = await renderShell("Today view", { rail: "open" });
 
   changeView(rerender, "/calendar");
 
   expect(drawer()).toHaveAttribute("inert");
-  expect(phoneGrip()).toBeVisible();
+  expect(smallGrip()).toBeVisible();
 });
 
-test("SHELL-09 on a phone Escape closes the drawer and focuses the grip", async () => {
-  onPhone();
+test("SHELL-09 on small Escape closes the drawer and focuses the grip", async () => {
+  onSmall();
 
   await renderShell("Today view", { rail: "open" });
 
   await userEvent.keyboard("{Escape}");
 
   expect(drawer()).toHaveAttribute("inert");
-  expect(phoneGrip()).toHaveFocus();
+  expect(smallGrip()).toHaveFocus();
 });
 
 test("SHELL-09 the grip's tap moves focus to Expand menu", async () => {
@@ -617,7 +617,7 @@ test("OFF-01 on Weather the pill leaves out the saved time", async () => {
   expect(pill).not.toHaveTextContent("Saved");
 });
 
-test("OFF-01 on a phone the pill leaves out the saved time", async () => {
+test("OFF-01 on small the pill leaves out the saved time", async () => {
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: () => {},
