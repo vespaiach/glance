@@ -5,6 +5,7 @@ import { useNextEventAfter, useSignedOut, useWeather } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
 import type { CalendarEvent } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
+import { placeLabel } from "@/features/settings";
 import { useBackgroundPhoto } from "@/shell/background";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
@@ -54,11 +55,13 @@ export function AmbientScreen() {
       tz={tz}
       offline={showOfflinePill}
       signedOut={signedOut}
+      place={settings.weatherLocation && placeLabel(settings.weatherLocation)}
       weather={weather.state}
       unit={settings.tempUnit}
       nextEvent={nextEvent.state}
       photoSrc={photo?.src}
       dim={ambientDim(settings.background.dim)}
+      brightness={settings.ambientBrightness}
       onWake={() => navigate(signedOut ? SIGN_IN : viewPath("today"))}
       wakeRef={wakeRef}
     />

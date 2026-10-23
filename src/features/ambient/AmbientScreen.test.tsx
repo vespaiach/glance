@@ -153,12 +153,10 @@ test("AMB-03 shows the current weather, the overnight low with the next rainy da
   renderAmbient();
 
   expect(await screen.findByText("56° · Light rain")).toBeInTheDocument();
-  expect(screen.getByText("Low 51° overnight · Sat 80% rain")).toBeInTheDocument();
-  expect(
-    await screen.findByText(
-      "Wed, Oct 14 · 4:00 PM · Parent-teacher conference, Lincoln Elementary",
-    ),
-  ).toBeInTheDocument();
+  expect(screen.getByText("Low 51° overnight · Tomorrow 80% rain")).toBeInTheDocument();
+  expect(await screen.findByText("Next · Wed, Oct 14 · 4:00 PM")).toBeInTheDocument();
+  expect(screen.getByText("Parent-teacher conference")).toBeInTheDocument();
+  expect(screen.getByText("Portland, OR")).toBeInTheDocument();
 });
 
 test("AMB-03 an event on the next day reads Tomorrow and one with no place ends at its title", async () => {
@@ -166,7 +164,8 @@ test("AMB-03 an event on the next day reads Tomorrow and one with no place ends 
 
   renderAmbient();
 
-  expect(await screen.findByText("Tomorrow · 9:00 AM · Farmers market")).toBeInTheDocument();
+  expect(await screen.findByText("Next · Tomorrow · 9:00 AM")).toBeInTheDocument();
+  expect(screen.getByText("Farmers market")).toBeInTheDocument();
 });
 
 test("AMB-03 with no upcoming event and no weather location it says Nothing scheduled and hides the weather", async () => {
@@ -176,6 +175,7 @@ test("AMB-03 with no upcoming event and no weather location it says Nothing sche
   renderAmbient();
 
   expect(await screen.findByText("Nothing scheduled")).toBeInTheDocument();
+  expect(screen.getByText("Add events and a location from Today")).toBeInTheDocument();
   expect(screen.queryByText(/overnight/)).not.toBeInTheDocument();
 });
 

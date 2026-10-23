@@ -54,6 +54,7 @@ const settings = {
   idleTimeout: { on: true, minutes: 3 },
   noteExpiry: { on: true, days: 7 },
   hideSidebarWhenIdle: true,
+  ambientBrightness: "medium",
   ambient: {
     mode: "same",
     all: { start: "18:00", end: "07:30" },
@@ -316,6 +317,20 @@ describe("AccountSettingsSchema", () => {
     const saved = { ...rest, ambientHours: { start: "18:00", end: "07:30" } };
 
     expect(v.parse(AccountSettingsSchema, saved)).toEqual({ ...rest, ambient: settings.ambient });
+  });
+
+  it("D28 stored settings without ambientBrightness read as Medium", () => {
+    const { ambientBrightness: _, ...stored } = settings;
+
+    expect(v.parse(AccountSettingsSchema, stored).ambientBrightness).toBe("medium");
+  });
+
+  it.each(["full", "medium", "low"])("SET-10 accepts the %s brightness", (ambientBrightness) => {
+    expect(accepts(AccountSettingsSchema, { ...settings, ambientBrightness })).toBe(true);
+  });
+
+  it("SET-10 rejects an unknown brightness", () => {
+    expect(accepts(AccountSettingsSchema, { ...settings, ambientBrightness: "dim" })).toBe(false);
   });
 
   it("tech§4.5 a settings row that still holds hideBarWhenIdle parses and drops it", () => {

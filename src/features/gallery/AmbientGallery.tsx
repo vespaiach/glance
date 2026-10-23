@@ -51,9 +51,17 @@ const DEMOS: readonly Demo[] = [
   { key: "evening" },
   { key: "offline", offline: true },
   { key: "signed-out", signedOut: true },
+  { key: "offline-signed-out", offline: true, signedOut: true },
   { key: "photo", ...(COAST && { photoSrc: galleryPhotoSrc(COAST.id) }) },
+  { key: "bright-full", brightness: "full" },
+  { key: "bright-low", brightness: "low" },
   { key: "celsius", clock: "24h", unit: "C" },
-  { key: "nothing", weather: { kind: "empty" }, nextEvent: { kind: "empty" } },
+  {
+    key: "nothing",
+    place: undefined,
+    weather: { kind: "empty" },
+    nextEvent: { kind: "empty" },
+  },
   { key: "loading", weather: { kind: "loading" }, nextEvent: { kind: "loading" } },
   { key: "small", small: true },
 ];
@@ -81,10 +89,12 @@ function ambientBase(season: Season): AmbientProps {
     tz: GALLERY_TZ,
     offline: false,
     signedOut: false,
+    place: "Portland, OR",
     weather: { kind: "ready", data: [AMBIENT_WEATHER] },
     unit: "F",
     nextEvent: { kind: "ready", data: [CONFERENCE] },
-    dim: 0.5,
+    dim: 0.6,
+    brightness: "medium",
     onWake: ignore,
   };
 }

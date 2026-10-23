@@ -51,6 +51,7 @@ describe("parseFixtureParams", () => {
     ["upload", ["one", "progress", "error", "offline", "done"]],
     ["wx", ["searching", "unknown", "choose"]],
     ["events", ["many", "none"]],
+    ["bright", ["full", "low"]],
   ] as const)("§6 accepts each %s value", (name, values) => {
     for (const value of values) {
       expect(parseFixtureParams(`${name}=${value}`)).toEqual({ [name]: value });
@@ -73,6 +74,7 @@ describe("parseFixtureParams", () => {
     "acct=new",
     "upload=finished",
     "wx=found",
+    "bright=medium",
     "now=yesterday",
     "now=2026-10-09",
     "now=2026-13-40T10:41",

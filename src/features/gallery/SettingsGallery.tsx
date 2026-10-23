@@ -115,17 +115,19 @@ const AMBIENT_DEMOS: readonly Demo<AmbientProps>[] = [
   { key: "pick-dim", initialPick: "all.s" },
   { key: "split", ambient: SPLIT, initialPick: "wknd.e" },
   { key: "same", ambient: { ...DEFAULT_AMBIENT, all: { start: "18:00", end: "18:00" } } },
-  { key: "off", ambient: { ...DEFAULT_AMBIENT, mode: "off" } },
+  { key: "off", ambient: { ...DEFAULT_AMBIENT, mode: "off" }, brightness: "low" },
   { key: "clock-24", clock: "24h", idleTimeout: { on: false, minutes: 3 }, initialPick: "all.e" },
   { key: "small", small: true, breakpoint: "small", initialPick: "all.s" },
 ];
 
 const AMBIENT_BASE: AmbientProps = {
   ambient: DEFAULT_AMBIENT,
+  brightness: "medium",
   clock: "12h",
   idleTimeout: { on: true, minutes: 3 },
   breakpoint: "large",
   onChange: ignore,
+  onBrightness: ignore,
   onBack: ignore,
   onPreview: ignore,
 };

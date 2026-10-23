@@ -45,6 +45,7 @@ const CHOICES = {
   dp: ["open"],
   potd: ["qr", "error"],
   play: ["0"],
+  bright: ["full", "low"],
 } as const;
 
 type Choices = typeof CHOICES;

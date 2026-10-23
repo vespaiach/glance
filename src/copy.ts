@@ -620,6 +620,14 @@ export const copy = {
         ? `After a touch it dims again when nobody has touched it for ${minutes} min.`
         : "After a touch it stays awake until the next ambient start.",
     wakeLineOff: "Touch-to-wake and the idle timer work as usual.",
+    brightness: "Brightness",
+    brightnessLevels: [
+      { value: "full", label: "Full" },
+      { value: "medium", label: "Medium" },
+      { value: "low", label: "Low" },
+    ],
+    brightnessBody:
+      "How bright the text is while dimmed. On screens that allow it, the backlight dims too.",
     preview: "Preview",
   },
   location: {
@@ -805,19 +813,22 @@ export const copy = {
   },
   ambient: {
     wake: "Wake screen",
-    caption: "Click or tap anywhere to wake",
+    hint: "Tap anywhere to wake",
+    hintSignedOut: "Tap anywhere to sign in",
     offline: "Offline · showing saved data",
     signedOut: "Signed out · tap to sign in",
     now: (temp: number, condition: string) => `${temp}° · ${condition}`,
     low: (low: number) => `Low ${low}° overnight`,
-    rain: (weekday: string, precip: number) => `${weekday} ${precip}% rain`,
+    rain: (day: string, precip: number) => `${day} ${precip}% rain`,
+    updated: (time: string) => `Updated ${time}`,
     nextEvent: "Next event",
     nothing: "Nothing scheduled",
+    addEvents: "Add events from Today",
+    addEventsAndLocation: "Add events and a location from Today",
     tomorrow: "Tomorrow",
     allDay: "All day",
     day: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,
-    event: (day: string, start: string, title: string, where?: string) =>
-      `${day} · ${start} · ${where ? `${title}, ${where}` : title}`,
+    next: (day: string, start: string) => `Next · ${day} · ${start}`,
     loadingWeather: "Loading weather",
     loadingEvent: "Loading next event",
   },

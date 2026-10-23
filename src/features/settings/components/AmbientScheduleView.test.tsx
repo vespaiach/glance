@@ -11,10 +11,12 @@ const SPLIT = { ...DEFAULT_AMBIENT, mode: "split" } as const;
 function renderView(overrides: Partial<Props> = {}) {
   const props: Props = {
     ambient: DEFAULT_AMBIENT,
+    brightness: "medium",
     clock: "12h",
     idleTimeout: { on: true, minutes: 3 },
     breakpoint: "large",
     onChange: vi.fn(),
+    onBrightness: vi.fn(),
     onBack: vi.fn(),
     onPreview: vi.fn(),
     ...overrides,
@@ -181,4 +183,38 @@ test("SET-10 Preview opens Ambient and ‹ Settings goes back", async () => {
 
   expect(props.onPreview).toHaveBeenCalled();
   expect(props.onBack).toHaveBeenCalled();
+});
+
+function selectedBrightness() {
+  const tabs = within(screen.getByRole("group", { name: "Brightness" })).getAllByRole("button");
+
+  return tabs.find((tab) => tab.getAttribute("aria-pressed") === "true")?.textContent;
+}
+
+test("SET-10 Brightness offers Full, Medium and Low with the saved level selected", () => {
+  renderView({ brightness: "low" });
+
+  const tabs = within(screen.getByRole("group", { name: "Brightness" })).getAllByRole("button");
+
+  expect(tabs.map((tab) => tab.textContent)).toEqual(["Full", "Medium", "Low"]);
+  expect(selectedBrightness()).toBe("Low");
+  expect(
+    screen.getByText(
+      "How bright the text is while dimmed. On screens that allow it, the backlight dims too.",
+    ),
+  ).toBeInTheDocument();
+});
+
+test("SET-10 choosing a Brightness saves it", async () => {
+  const props = renderView();
+
+  await userEvent.click(screen.getByRole("button", { name: "Full" }));
+
+  expect(props.onBrightness).toHaveBeenCalledWith("full");
+});
+
+test("SET-10 Brightness shows when the schedule is Off", () => {
+  renderView({ ambient: { ...DEFAULT_AMBIENT, mode: "off" } });
+
+  expect(selectedBrightness()).toBe("Medium");
 });

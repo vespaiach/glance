@@ -34,6 +34,8 @@ export const colors = stylex.defineVars({
   blockGlacier: "#b9cde6",
   blockMidnight: "#16213d",
   accentCobalt: "#3d63ff",
+  ambientInkMedium: "#dcdcdc",
+  ambientInkLow: "#a3a3a3",
   success: "#1ea64a",
   danger: "#d92d20",
   scrim: "rgba(0,0,0,.6)",

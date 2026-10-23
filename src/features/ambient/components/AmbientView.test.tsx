@@ -16,15 +16,52 @@ const BASE: ComponentProps<typeof AmbientView> = {
   unit: "F",
   nextEvent: { kind: "empty" },
   dim: 0.5,
+  brightness: "medium",
   onWake: () => {},
 };
 
-test("AMB-01 the top row shows the season and month and the screen label", () => {
+const CONFERENCE = {
+  id: "0195f0a0-0000-7000-8000-000000000003",
+  startAt: new Date(2026, 9, 14, 16).toISOString(),
+  title: "Parent-teacher conference",
+  location: "Lincoln Elementary",
+  everyone: true,
+  tagIds: [],
+};
+
+const WEATHER = {
+  location: "Portland, OR",
+  fetchedAt: new Date(2026, 9, 9, 18, 32).toISOString(),
+  current: {
+    temp: 56,
+    condition: "lightRain",
+    icon: "cloud-rain" as const,
+    high: 68,
+    low: 51,
+    feelsLike: 54,
+    windMph: 8,
+    windDir: "NW",
+    humidity: 80,
+    uv: 0,
+    sunset: new Date(2026, 9, 9, 18).toISOString(),
+  },
+  hourly: [],
+  daily: [{ date: "2026-10-10", icon: "cloud-rain" as const, high: 60, low: 48, precip: 80 }],
+};
+
+test("AMB-01 with no location the top row shows the season and no wordmark", () => {
   render(<AmbientView {...BASE} />);
 
-  expect(screen.getByText("Fall · October")).toBeInTheDocument();
-  expect(screen.getByText("Glance")).toBeInTheDocument();
+  expect(screen.getByText("Fall")).toBeInTheDocument();
+  expect(screen.queryByText("Glance")).not.toBeInTheDocument();
   expect(screen.queryByText("Offline · showing saved data")).not.toBeInTheDocument();
+});
+
+test("AMB-01 with a location the top row shows its place", () => {
+  render(<AmbientView {...BASE} place="Portland, OR" />);
+
+  expect(screen.getByText("Portland, OR")).toBeInTheDocument();
+  expect(screen.queryByText("Fall")).not.toBeInTheDocument();
 });
 
 test("AMB-01 the top row shows the offline notice while offline", () => {
@@ -33,23 +70,73 @@ test("AMB-01 the top row shows the offline notice while offline", () => {
   expect(screen.getByText("Offline · showing saved data")).toBeInTheDocument();
 });
 
-test("AMB-04 the caption invites a wake tap", () => {
-  render(<AmbientView {...BASE} />);
-
-  expect(screen.getByText("Click or tap anywhere to wake")).toBeInTheDocument();
-});
-
-test("AMB-07 signed out by the server shows the notice in the top row", () => {
-  render(<AmbientView {...BASE} signedOut />);
+test("AMB-01 signed out shows only the signed-out status, even offline", () => {
+  render(<AmbientView {...BASE} signedOut offline />);
 
   expect(screen.getByText("Signed out · tap to sign in")).toBeInTheDocument();
-  expect(screen.getByText("Glance")).toBeInTheDocument();
+  expect(screen.queryByText("Offline · showing saved data")).not.toBeInTheDocument();
+});
+
+test("AMB-04 the hint invites a wake tap", () => {
+  render(<AmbientView {...BASE} />);
+
+  expect(screen.getByText("Tap anywhere to wake")).toBeInTheDocument();
+});
+
+test("AMB-04 signed out, the hint invites a sign-in tap", () => {
+  render(<AmbientView {...BASE} signedOut />);
+
+  expect(screen.getByText("Tap anywhere to sign in")).toBeInTheDocument();
 });
 
 test("AMB-07 a signed-in screen has no signed-out notice", () => {
   render(<AmbientView {...BASE} />);
 
   expect(screen.queryByText("Signed out · tap to sign in")).not.toBeInTheDocument();
+});
+
+test("AMB-03 the next rainy day tomorrow reads Tomorrow", () => {
+  render(
+    <AmbientView {...BASE} place="Portland, OR" weather={{ kind: "ready", data: [WEATHER] }} />,
+  );
+
+  expect(screen.getByText("Low 51° overnight · Tomorrow 80% rain")).toBeInTheDocument();
+  expect(screen.queryByText(/^Updated/)).not.toBeInTheDocument();
+});
+
+test("AMB-03 offline, the weather adds when it was updated", () => {
+  render(
+    <AmbientView
+      {...BASE}
+      offline
+      place="Portland, OR"
+      weather={{ kind: "ready", data: [WEATHER] }}
+    />,
+  );
+
+  expect(screen.getByText("Updated 6:32 PM")).toBeInTheDocument();
+});
+
+test("AMB-03 the next event has an eyebrow with its day and start, the title and the place", () => {
+  render(<AmbientView {...BASE} nextEvent={{ kind: "ready", data: [CONFERENCE] }} />);
+
+  expect(screen.getByText("Next · Wed, Oct 14 · 4:00 PM")).toBeInTheDocument();
+  expect(screen.getByText("Parent-teacher conference")).toBeInTheDocument();
+  expect(screen.getByText("Lincoln Elementary")).toBeInTheDocument();
+});
+
+test("AMB-03 no next event with a location suggests adding events", () => {
+  render(<AmbientView {...BASE} place="Portland, OR" />);
+
+  expect(screen.getByText("Next event")).toBeInTheDocument();
+  expect(screen.getByText("Nothing scheduled")).toBeInTheDocument();
+  expect(screen.getByText("Add events from Today")).toBeInTheDocument();
+});
+
+test("AMB-03 no next event and no location suggests adding both", () => {
+  render(<AmbientView {...BASE} />);
+
+  expect(screen.getByText("Add events and a location from Today")).toBeInTheDocument();
 });
 
 test("AMB-03 an all-day event reads All day on its own date in any zone", () => {
@@ -72,9 +159,7 @@ test("AMB-03 an all-day event reads All day on its own date in any zone", () => 
     />,
   );
 
-  expect(
-    screen.getByText("Fri, Oct 16 · All day · No school, Lincoln Elementary"),
-  ).toBeInTheDocument();
+  expect(screen.getByText("Next · Fri, Oct 16 · All day")).toBeInTheDocument();
 });
 
 function photoBackdrop(container: HTMLElement): Element | null {
