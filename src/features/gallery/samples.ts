@@ -107,6 +107,7 @@ export const gallery = {
     empty: "Calendar · empty day",
     nobody: "Calendar · nobody selected · normal",
     small: "Calendar · small",
+    folded: "Calendar · busy · folded columns",
     schedule: "Today · gutter weather",
     scheduleSmall: "Today · small",
   },

@@ -150,11 +150,11 @@ test("TODAY-03 tapping a free slot adds an event at that slot", async () => {
 
   renderSchedule(ready, { onAddSlot });
 
-  await userEvent.click(screen.getAllByRole("button", { name: /^Free / })[0] as HTMLElement);
+  await userEvent.click(screen.getByRole("button", { name: /^Free 1:00/ }));
 
   expect(onAddSlot).toHaveBeenCalledWith({
-    start: new Date(2026, 9, 9, 11, 15),
-    end: new Date(2026, 9, 9, 12, 0),
+    start: new Date(2026, 9, 9, 13, 0),
+    end: new Date(2026, 9, 9, 14, 0),
   });
 });
 
@@ -178,22 +178,11 @@ test("TODAY-06 an empty day keeps Add event in the header", async () => {
   expect(onAddEvent).toHaveBeenCalledTimes(1);
 });
 
-test("TODAY-06 with a forecast, a day with no timed plans shows the weather lane", () => {
-  renderSchedule({ kind: "empty" }, {}, false, WEATHER);
-
-  expect(screen.getByRole("list", { name: "Hourly weather" })).toBeInTheDocument();
-});
-
-test("TODAY-06 a day with only all-day events also shows the weather lane", () => {
+test("TL-07 a day with no timed plans shows the hour weather in the gutter, no lane", () => {
   renderSchedule({ kind: "ready", data: [GRANDPA] }, {}, false, WEATHER);
 
-  expect(screen.getByRole("list", { name: "Hourly weather" })).toBeInTheDocument();
-});
-
-test("TODAY-06 without a forecast an empty day has no weather lane", () => {
-  renderSchedule({ kind: "empty" });
-
   expect(screen.queryByRole("list", { name: "Hourly weather" })).not.toBeInTheDocument();
+  expect(screen.getByText("66°")).toBeInTheDocument();
 });
 
 test("TODAY-11 a day with timed plans keeps the hour weather in the gutter", () => {
