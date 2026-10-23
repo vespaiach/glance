@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { CloudOff, CloudSun, type LucideIcon, Umbrella } from "lucide-react";
+import { ChevronRight, CloudOff, CloudSun, type LucideIcon, Umbrella } from "lucide-react";
 import { copy } from "@/copy";
 import type { AccountSettings, Weather } from "@/domain/schemas";
 import { displayTemp } from "@/domain/temperature";
@@ -24,6 +24,7 @@ type NowWeatherProps = {
   tz: string;
   onOpenWeather: () => void;
   onSetLocation: () => void;
+  small?: boolean;
 };
 
 type ReadingProps = {
@@ -79,6 +80,38 @@ const styles = stylex.create({
     fontWeight: 330,
     lineHeight: 1.3,
   },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    minWidth: 0,
+    minHeight: 60,
+  },
+  rowTemp: {
+    fontSize: 44,
+    fontWeight: 300,
+    lineHeight: 1,
+    letterSpacing: "-0.04em",
+    fontVariantNumeric: "tabular-nums",
+  },
+  rowLines: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 2,
+    flexGrow: 1,
+    minWidth: 0,
+  },
+  rowLine: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 15,
+    fontWeight: 330,
+    lineHeight: 1.3,
+  },
+  rowRain: {
+    fontWeight: 480,
+  },
   rain: {
     display: "flex",
     alignItems: "center",
@@ -122,7 +155,10 @@ export function NowWeather({
   tz,
   onOpenWeather,
   onSetLocation,
+  small = false,
 }: NowWeatherProps) {
+  const Shown = small ? Row : Reading;
+
   return (
     <Zone
       state={state}
@@ -152,7 +188,7 @@ export function NowWeather({
     >
       {([weather], updatedAt) =>
         weather && (
-          <Reading
+          <Shown
             weather={weather}
             updatedAt={updatedAt}
             unit={unit}
@@ -198,6 +234,36 @@ function Reading({ weather, updatedAt, unit, clock, tz, onOpen }: ReadingProps) 
           </span>
         )}
       </span>
+    </button>
+  );
+}
+
+function Row({ weather, unit, clock, tz, onOpen }: ReadingProps) {
+  const temp = (fahrenheit: number) => displayTemp(fahrenheit, unit);
+
+  const rain = rainHour(weather.hourly);
+
+  return (
+    <button
+      type="button"
+      aria-label={copy.today.weather.name}
+      onClick={onOpen}
+      {...stylex.props(styles.button, styles.row, press.scale)}
+    >
+      <Icon icon={weatherIcons[weather.current.icon]} size={40} strokeWidth={1.25} />
+      <span {...stylex.props(styles.rowTemp)}>{`${temp(weather.current.temp)}°`}</span>
+      <span {...stylex.props(styles.rowLines)}>
+        <span {...stylex.props(styles.rowLine)}>
+          {copy.today.weather.highLow(temp(weather.current.high), temp(weather.current.low))}
+        </span>
+        {rain && (
+          <span {...stylex.props(styles.rowLine, styles.rowRain)}>
+            <Icon icon={Umbrella} size={16} />
+            {copy.today.weather.rainFrom(formatHour(minutesOfDay(new Date(rain), tz), clock))}
+          </span>
+        )}
+      </span>
+      <Icon icon={ChevronRight} size={18} strokeWidth={2} />
     </button>
   );
 }

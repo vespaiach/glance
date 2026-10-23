@@ -55,11 +55,15 @@ const styles = stylex.create({
     whiteSpace: "nowrap",
   },
   title: {
-    fontSize: "clamp(28px, 8cqi, 48px)",
+    fontSize: "clamp(32px, 12cqi, 64px)",
     fontWeight: 340,
     lineHeight: 1.05,
     letterSpacing: "-0.8px",
     textWrap: "pretty",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
   skeleton: {
     display: "flex",

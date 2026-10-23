@@ -1,8 +1,9 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ReactNode } from "react";
+import type { Breakpoint } from "@/domain/breakpoint";
 import type { Season } from "@/domain/schemas";
 import { type Clock as ClockSetting, formatLongDate } from "@/domain/time";
-import { space } from "@/theme/tokens.stylex";
+import { colors, sizes, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Clock } from "@/ui/Clock";
 import { ColorBlock } from "@/ui/ColorBlock";
@@ -14,23 +15,34 @@ type TodayHeroProps = {
   time: Date;
   clock: ClockSetting;
   tz: string;
+  breakpoint: Breakpoint;
   weather: ReactNode;
   children: ReactNode;
   xstyle?: stylex.StyleXStyles;
 };
 
 const nowPanelType = stylex.createTheme(type, {
-  clockSize: "clamp(56px, 27cqi, 200px)",
+  clockSize: "clamp(56px, 31cqi, 200px)",
 });
 
 const styles = stylex.create({
   root: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
-    gap: 32,
     minWidth: 0,
+    minHeight: 0,
+    overflow: "clip",
     containerType: "inline-size",
+  },
+  content: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 24,
+    minWidth: 0,
+  },
+  sticky: {
+    position: "sticky",
+    top: sizes.kioskGutter,
   },
   top: {
     display: "flex",
@@ -47,20 +59,43 @@ const styles = stylex.create({
     lineHeight: 1.3,
     textTransform: "uppercase",
   },
+  group: {
+    display: "flex",
+    flexDirection: "column",
+    minWidth: 0,
+    paddingTop: 24,
+    boxShadow: `inset 0 1px 0 ${colors.surfaceCanvas}`,
+  },
+  smallGroup: {
+    paddingTop: space.md,
+  },
 });
 
-export function TodayHero({ season, time, clock, tz, weather, children, xstyle }: TodayHeroProps) {
+export function TodayHero({
+  season,
+  time,
+  clock,
+  tz,
+  breakpoint,
+  weather,
+  children,
+  xstyle,
+}: TodayHeroProps) {
+  const small = breakpoint === "small";
+
   return (
     <ColorBlock tone={1} padding="clamp(24px, 2.6vw, 40px)" xstyle={[styles.root, xstyle]}>
-      <div {...stylex.props(nowPanelType, styles.top)}>
-        <span {...stylex.props(styles.date)}>
-          <span>{formatLongDate(time, tz)}</span>
-          <Icon icon={seasonIcons[season]} size={18} />
-        </span>
-        <Clock time={time} tz={tz} hour12={clock === "12h"} showDate={false} />
+      <div {...stylex.props(styles.content, breakpoint === "normal" && styles.sticky)}>
+        <div {...stylex.props(nowPanelType, styles.top)}>
+          <span {...stylex.props(styles.date)}>
+            <span>{formatLongDate(time, tz)}</span>
+            <Icon icon={seasonIcons[season]} size={18} />
+          </span>
+          {!small && <Clock time={time} tz={tz} hour12={clock === "12h"} showDate={false} />}
+        </div>
+        <div {...stylex.props(styles.group, small && styles.smallGroup)}>{weather}</div>
+        <div {...stylex.props(styles.group)}>{children}</div>
       </div>
-      {weather}
-      {children}
     </ColorBlock>
   );
 }

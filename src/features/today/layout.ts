@@ -1,32 +1,32 @@
 import * as stylex from "@stylexjs/stylex";
+import type { Breakpoint } from "@/domain/breakpoint";
+import { sizes } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 
-export type TodayGrid = "stacked" | "portrait" | "twoColumn" | "threeColumn";
+export type TodayGrid = "stacked" | "twoColumn" | "threeColumn";
 
-export type TodayLayout = { grid: TodayGrid; noteColumns: 1 | 2; noteLimit: 1 | 2 };
+const GRIDS: Record<Breakpoint, TodayGrid> = {
+  large: "threeColumn",
+  normal: "twoColumn",
+  small: "stacked",
+};
 
 export const todayGrids = stylex.create({
   stacked: {
-    gridTemplateColumns: "minmax(0, 1fr)",
+    gridTemplateColumns: "minmax(280px, 1fr)",
     gridTemplateAreas: '"hero" "sched" "notes" "potd"',
     gridTemplateRows: "auto",
   },
-  portrait: {
-    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-    gridTemplateAreas: '"hero notes" "hero potd" "sched sched"',
-    gridTemplateRows: "auto auto minmax(0, 1fr)",
-    height: "100%",
-  },
   twoColumn: {
-    gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.3fr)",
+    gridTemplateColumns: "minmax(280px, 0.8fr) minmax(300px, 1.2fr)",
     gridTemplateAreas: '"hero sched" "notes potd"',
-    gridTemplateRows: "max(660px, 100vh - 160px) auto",
+    gridTemplateRows: `minmax(max(500px, calc(100vh - ${sizes.kioskGutter} - 90px)), auto) auto`,
   },
   threeColumn: {
-    gridTemplateColumns: "minmax(0, 0.95fr) minmax(0, 1.5fr) minmax(0, 1fr)",
+    gridTemplateColumns: "minmax(280px, 0.8fr) minmax(300px, 1.8fr) minmax(280px, 0.95fr)",
     gridTemplateAreas: '"hero sched notes" "hero sched potd"',
-    gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
-    height: "100%",
+    gridTemplateRows: "minmax(0, 1fr) auto",
+    height: `calc(100vh - 2 * ${sizes.kioskGutter})`,
   },
 });
 
@@ -39,7 +39,7 @@ export const todayAreas = stylex.create({
 });
 
 export const todayPotdHeights = stylex.create({
-  fill: { minHeight: 0 },
+  capped: { height: "calc(25vh - 24px)", minHeight: 0, flexGrow: 0 },
   tall: { minHeight: 240 },
 });
 
@@ -53,32 +53,6 @@ export const todayType = stylex.createTheme(type, {
   buttonSize: "clamp(17px, min(0.8854vw, 1.5741vh), 25.5px)",
 });
 
-const COLUMNS_MIN_WIDTH = 1024;
-
-const TWO_COLUMN_MAX_WIDTH = 1180;
-
-const WIDE_NOTES_MIN_WIDTH = 1600;
-
-const TWO_NOTES_MIN_HEIGHT = 880;
-
-const TWO_NOTE_COLUMNS_MIN_WIDTH = 600;
-
-export function todayLayout(width: number, height: number): TodayLayout {
-  if (width < COLUMNS_MIN_WIDTH) {
-    return {
-      grid: "stacked",
-      noteColumns: width < TWO_NOTE_COLUMNS_MIN_WIDTH ? 1 : 2,
-      noteLimit: 2,
-    };
-  }
-
-  if (height > width) return { grid: "portrait", noteColumns: 1, noteLimit: 2 };
-
-  if (width <= TWO_COLUMN_MAX_WIDTH) return { grid: "twoColumn", noteColumns: 2, noteLimit: 2 };
-
-  return {
-    grid: "threeColumn",
-    noteColumns: width < WIDE_NOTES_MIN_WIDTH ? 1 : 2,
-    noteLimit: height < TWO_NOTES_MIN_HEIGHT ? 1 : 2,
-  };
+export function todayLayout(breakpoint: Breakpoint): TodayGrid {
+  return GRIDS[breakpoint];
 }

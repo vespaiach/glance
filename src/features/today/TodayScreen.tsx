@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import {
   type ShownNote,
   useEventsOnDay,
-  useNextEventAfter,
   useNotes,
   usePhotoSrc,
   usePhotos,
@@ -14,6 +13,7 @@ import {
   useTags,
   useWeather,
 } from "@/data/repos";
+import type { Breakpoint } from "@/domain/breakpoint";
 import { dayRibbon } from "@/domain/dayRibbon";
 import { slotTimes } from "@/domain/eventTimes";
 import type { AccountSettings, CalendarEvent, Photo, Tag, Weather } from "@/domain/schemas";
@@ -21,8 +21,7 @@ import { hasEvent, todayHero } from "@/domain/todayHero";
 import { hourlyByHour } from "@/domain/weather";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
-import { eventLine } from "@/features/ambient";
-import { useBreakpoint, useViewportHeight, useViewportWidth } from "@/shell/breakpoint";
+import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -30,7 +29,7 @@ import { useTimeZone } from "@/shell/providers/timeZone";
 import { type View, viewPath } from "@/shell/routes";
 import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
-import { space } from "@/theme/tokens.stylex";
+import { sizes, space } from "@/theme/tokens.stylex";
 import type { TimelineWeather } from "@/ui/DayTimeline";
 import { Zone } from "@/ui/Zone";
 import { HeroSkeleton, HeroSummary } from "./components/HeroSummary";
@@ -60,22 +59,22 @@ const styles = stylex.create({
   grid: {
     display: "grid",
     gap: space.lg,
+    marginBottom: `calc(${sizes.kioskGutter} - ${space.md})`,
   },
 });
 
 type HeroProps = {
   state: ZoneState<CalendarEvent>;
-  next: ZoneState<CalendarEvent>;
   sunset: Date | undefined;
   tags: readonly Tag[];
   clock: AccountSettings["clock"];
   now: Date;
   tz: string;
   onOpenEvent: (id: string) => void;
-  onOpenCalendar: () => void;
 };
 
 type NowPanelProps = {
+  breakpoint: Breakpoint;
   weather: ReactNode;
   children: ReactNode;
   xstyle: stylex.StyleXStyles;
@@ -100,9 +99,9 @@ export function TodayScreen() {
 
   const width = useViewportWidth();
 
-  const layout = todayLayout(width, useViewportHeight());
+  const grid = todayLayout(breakpoint);
 
-  const columns = layout.grid !== "stacked";
+  const columns = grid !== "stacked";
 
   const settings = useAccountSettings();
 
@@ -113,8 +112,6 @@ export function TodayScreen() {
   const day = dateKey(now, tz);
 
   const events = useSyncedZone(useEventsOnDay(day, tz));
-
-  const next = useSyncedZone(eventRows(useNextEventAfter(day, tz)));
 
   const tags = useTags() ?? [];
 
@@ -129,9 +126,10 @@ export function TodayScreen() {
   const openEvent = (id: string) => sheets.open({ kind: "event", id });
 
   return (
-    <div {...stylex.props(todayType, styles.grid, todayGrids[layout.grid])}>
+    <div {...stylex.props(todayType, styles.grid, todayGrids[grid])}>
       <NowPanel
-        xstyle={[todayAreas.hero, columns && todayAreas.clipped]}
+        breakpoint={breakpoint}
+        xstyle={todayAreas.hero}
         weather={
           <NowWeather
             state={weather.state}
@@ -139,6 +137,7 @@ export function TodayScreen() {
             unit={settings.tempUnit}
             clock={settings.clock}
             tz={tz}
+            small={breakpoint === "small"}
             onOpenWeather={() => go("weather")}
             onSetLocation={() => go("weather")}
           />
@@ -146,14 +145,12 @@ export function TodayScreen() {
       >
         <Hero
           state={events.state}
-          next={next.state}
           sunset={sunsetOf(weather.state)}
           tags={tags}
           clock={settings.clock}
           now={now}
           tz={tz}
           onOpenEvent={openEvent}
-          onOpenCalendar={() => go("calendar")}
         />
       </NowPanel>
       <TodaySchedule
@@ -185,15 +182,15 @@ export function TodayScreen() {
         onOpenNote={(id) => sheets.open({ kind: "note", id })}
         onAddNote={() => sheets.open({ kind: "newnote" })}
         onOpenNotes={() => go("notes")}
-        columns={layout.noteColumns}
-        limit={layout.noteLimit}
+        columns={1}
+        limit={2}
         xstyle={[todayAreas.notes, columns && todayAreas.clipped]}
       />
       <Picture
         state={photos.state}
         day={day}
         tz={tz}
-        grid={layout.grid}
+        grid={grid}
         canUpload={breakpoint !== "small"}
         onOpen={(id) => router.push(`${viewPath("photos")}?photo=${id}`)}
         onOpenPhotos={() => go("photos")}
@@ -202,7 +199,7 @@ export function TodayScreen() {
   );
 }
 
-function NowPanel({ weather, children, xstyle }: NowPanelProps) {
+function NowPanel({ breakpoint, weather, children, xstyle }: NowPanelProps) {
   const season = useSeason();
 
   const settings = useAccountSettings();
@@ -217,6 +214,7 @@ function NowPanel({ weather, children, xstyle }: NowPanelProps) {
       time={time}
       clock={settings.clock}
       tz={tz}
+      breakpoint={breakpoint}
       weather={weather}
       xstyle={xstyle}
     >
@@ -230,7 +228,7 @@ function Picture({ state, day, tz, grid, canUpload, onOpen, onOpenPhotos }: Pict
 
   const pick = usePictureOfDay(day, tz);
 
-  const height = grid === "threeColumn" ? todayPotdHeights.fill : todayPotdHeights.tall;
+  const height = grid === "threeColumn" ? todayPotdHeights.capped : todayPotdHeights.tall;
 
   const empty = (
     <PictureOfDayEmpty onOpenPhotos={onOpenPhotos} canUpload={canUpload} xstyle={height} />
@@ -264,17 +262,7 @@ function Picture({ state, day, tz, grid, canUpload, onOpen, onOpenPhotos }: Pict
   );
 }
 
-function Hero({
-  state,
-  next,
-  sunset,
-  tags,
-  clock,
-  now,
-  tz,
-  onOpenEvent,
-  onOpenCalendar,
-}: HeroProps) {
+function Hero({ state, sunset, tags, clock, now, tz, onOpenEvent }: HeroProps) {
   if (state.kind === "loading") return <HeroSkeleton />;
 
   if (state.kind === "failed") return null;
@@ -294,33 +282,14 @@ function Hero({
       now={now}
       clock={clock}
       tz={tz}
-      nextLine={nextLine(next, now, clock, tz)}
-      onOpenCalendar={onOpenCalendar}
     />
   );
-}
-
-function nextLine(
-  state: ZoneState<CalendarEvent>,
-  now: Date,
-  clock: AccountSettings["clock"],
-  tz: string,
-): string | undefined {
-  const event = state.kind === "ready" ? state.data[0] : undefined;
-
-  return event && eventLine(event, now, clock, tz);
 }
 
 function sunsetOf(state: ZoneState<Weather>): Date | undefined {
   return state.kind === "ready" && state.data[0]
     ? new Date(state.data[0].current.sunset)
     : undefined;
-}
-
-function eventRows(event: CalendarEvent | null | undefined): CalendarEvent[] | undefined {
-  if (event === undefined) return undefined;
-
-  return event ? [event] : [];
 }
 
 function gutterWeather(

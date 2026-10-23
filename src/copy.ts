@@ -66,7 +66,6 @@ export const copy = {
         left ? `Free until ${until} · ${left}` : `Free until ${until}`,
       now: (time: string) => `Now ${time}`,
       sunset: "Sunset",
-      next: "Next on the calendar",
     },
     schedule: {
       count: (count: number) => {
@@ -103,6 +102,7 @@ export const copy = {
       now: (city: string) => `${city} · Now`,
       summary: (condition: string, high: number, low: number) =>
         `${condition} · High ${high}° · Low ${low}°`,
+      highLow: (high: number, low: number) => `High ${high}° · Low ${low}°`,
       rainFrom: (time: string) => `Rain from ${time}`,
       setTitle: "Set weather location",
       setBody: "The forecast and the clock follow it.",

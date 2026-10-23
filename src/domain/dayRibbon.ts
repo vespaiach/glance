@@ -13,9 +13,9 @@ export type DayRibbon = {
   ended: RibbonSegment[];
 };
 
-export const RIBBON_START = 6 * 60;
+export const RIBBON_START = 5 * 60;
 
-export const RIBBON_END = 22 * 60;
+export const RIBBON_END = 21 * 60;
 
 const MIN_SEGMENT = 20;
 

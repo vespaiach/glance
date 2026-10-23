@@ -44,6 +44,7 @@ test("TODAY-01 the Now panel shows the date, the season icon and the clock, with
       season="fall"
       time={new Date(2026, 9, 9, 10, 41)}
       clock="12h"
+      breakpoint="large"
       weather={<span>weather</span>}
     >
       <span>summary</span>
@@ -64,6 +65,7 @@ test("TODAY-01 the weather now sits between the clock and the event summary", ()
       season="fall"
       time={new Date(2026, 9, 9, 10, 41)}
       clock="12h"
+      breakpoint="large"
       weather={<span>weather</span>}
     >
       <span>summary</span>
@@ -78,6 +80,27 @@ test("TODAY-01 the weather now sits between the clock and the event summary", ()
 
   expect(clock.compareDocumentPosition(weather) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(weather.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+test("TODAY-01 on small the Now panel has no clock but keeps the date and season icon", () => {
+  const { container } = render(
+    <TodayHero
+      tz={tz}
+      season="fall"
+      time={new Date(2026, 9, 9, 10, 41)}
+      clock="12h"
+      breakpoint="small"
+      weather={<span>weather</span>}
+    >
+      <span>summary</span>
+    </TodayHero>,
+  );
+
+  expect(screen.getByText("Friday, October 9")).toBeInTheDocument();
+  expect(container.querySelector(".lucide-leaf")).toBeInTheDocument();
+  expect(screen.queryByText(clockTime("10:41"))).not.toBeInTheDocument();
+  expect(screen.getByText("weather")).toBeInTheDocument();
+  expect(screen.getByText("summary")).toBeInTheDocument();
 });
 
 test("TODAY-02 a running event is happening now, with its place and end", () => {
@@ -120,7 +143,7 @@ test("TODAY-02 an event with no place shows only its time", () => {
   expect(screen.getByText("12:00 PM · Mom, Leo")).toBeInTheDocument();
 });
 
-test("TODAY-03 tapping the hero event opens it", async () => {
+test("TODAY-02 tapping the hero event opens it", async () => {
   const onOpenEvent = vi.fn<(id: string) => void>();
 
   render(
