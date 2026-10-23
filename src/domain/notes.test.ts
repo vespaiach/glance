@@ -1,4 +1,11 @@
-import { noteDetailsTilt, noteExpired, noteStamp, noteTilt, noteWaitingToPost } from "./notes";
+import {
+  boardText,
+  noteExpired,
+  noteStamp,
+  noteTilt,
+  noteWaitingToPost,
+  passesBoardLimit,
+} from "./notes";
 import { deviceTimeZone } from "./zone";
 
 const tz = deviceTimeZone();
@@ -18,13 +25,33 @@ describe("notes", () => {
     expect(noteTilt(count)).toBe(expected);
   });
 
+  it("NOTE-01 a note of 120 characters shows whole on the board", () => {
+    const text = `${"a".repeat(115)} bcde`;
+
+    expect(boardText(text)).toBe(text);
+  });
+
+  it("NOTE-01 a longer note is cut at the last word within 120 characters with …", () => {
+    const text = `${"a".repeat(110)} bcdefghijk lmnop`;
+
+    expect(boardText(text)).toBe(`${"a".repeat(110)}…`);
+  });
+
+  it("NOTE-01 a word ending exactly at 120 characters stays whole", () => {
+    const text = `${"a".repeat(110)} bcdefghij kl`;
+
+    expect(boardText(text)).toBe(`${"a".repeat(110)} bcdefghij…`);
+  });
+
+  it("NOTE-01 a single word over 120 characters is cut at 120", () => {
+    expect(boardText("a".repeat(130))).toBe(`${"a".repeat(120)}…`);
+  });
+
   it.each([
-    [-2, -1.5],
-    [2.5, 1.5],
-    [-1, -1],
-    [0, 0],
-  ])("NOTE-10 Note details tilt a note of %f° by %f°", (rotation, expected) => {
-    expect(noteDetailsTilt(rotation)).toBe(expected);
+    [120, false],
+    [121, true],
+  ])("NOTE-05 a message of %i characters passes the board limit: %s", (length, expected) => {
+    expect(passesBoardLimit("a".repeat(length))).toBe(expected);
   });
 
   it.each([

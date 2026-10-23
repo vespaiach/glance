@@ -344,49 +344,45 @@ export const copy = {
     },
   },
   notes: {
-    guestAuthor: "Guest",
     justNow: "Just now",
     waitingToPost: "Waiting to post",
     board: "Notice board",
-    count: (count: number) => {
+    count: (count: number, expiry: NoteExpiry) => {
       if (count === 0) return "No notes";
 
-      return count === 1 ? "1 note" : `${count} notes`;
+      const notes = count === 1 ? "1 note" : `${count} notes`;
+
+      return `${notes} · ${expiry.on ? `cleared after ${dayCount(expiry.days)}` : "kept until deleted"}`;
     },
     loadingCount: "Loading",
     failedCount: "Notes",
     addNote: "Add note",
     loading: "Loading notes",
     unavailable: "Notes unavailable",
-    caption: (keep: string) => `Select a note to edit or delete it · ${keep}`,
-    keep: (expiry: NoteExpiry) =>
-      expiry.on ? `Notes are removed after ${dayCount(expiry.days)}` : "Notes stay until deleted",
+    noteName: (author: string, time: string, text: string) =>
+      author ? `Note from ${author}, ${time}: ${text}` : `Note, ${time}: ${text}`,
     addFirst: "Add the first note",
     emptyTitle: "Something to share at home?",
-    emptyBody: (keep: string) =>
-      `Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family. ${keep}`,
-    emptyKeep: (expiry: NoteExpiry) =>
-      expiry.on
-        ? `They’re removed after ${dayCount(expiry.days)}.`
-        : "They stay until someone deletes them.",
+    emptyBody:
+      "Fresh milk in the fridge, flowers to water, a pickup at 5. Tap the pad and leave a note for the family.",
+    byline: (author: string, time: string) => (author ? `${author} · ${time}` : time),
     details: {
-      title: (author: string) => `From ${author}`,
+      title: (author: string) => (author ? `Note from ${author}` : "Note"),
       edit: "Edit",
     },
     sheet: {
       newTitle: "New note",
       editTitle: "Edit note",
-      eyebrow: (author: string, time: string) => `${author} · ${time}`,
       close: "Close",
       message: "Message",
       messagePlaceholder: "Leave a note for the family",
       writeMessage: "Write a message",
-      name: "Your name",
-      namePlaceholder: "Optional",
+      name: "From",
+      namePlaceholder: "Your name",
       post: "Post note",
       save: "Save",
       saveOffline: "Save for later",
-      cancel: "Cancel",
+      boardShows: "Board shows the first 120",
       delete: "Delete",
       confirmDelete: "Delete note",
       offlineTitle: "You’re offline",

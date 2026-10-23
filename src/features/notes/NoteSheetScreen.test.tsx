@@ -69,7 +69,7 @@ function renderSheet(initial: SheetRequest, overrides: Partial<AccountSettings> 
   );
 }
 
-test("NOTE-01 a note request with edit opens Edit note under its author and time", async () => {
+test("NOTE-02 a note request with edit opens Edit note with its author and time in the footer", async () => {
   await store.db.notes.put(synced(WIFI));
 
   renderSheet({ kind: "note", id: WIFI.id, edit: true });
@@ -79,7 +79,7 @@ test("NOTE-01 a note request with edit opens Edit note under its author and time
   expect(screen.getByLabelText("Message")).toHaveValue("Wi-Fi password is on the fridge!");
 });
 
-test("NOTE-04 the eyebrow time follows the Clock setting", async () => {
+test("NOTE-04 the note time follows the Clock setting", async () => {
   await store.db.notes.put(synced(WIFI));
 
   renderSheet({ kind: "note", id: WIFI.id, edit: true }, { clock: "24h" });
@@ -87,11 +87,10 @@ test("NOTE-04 the eyebrow time follows the Clock setting", async () => {
   expect(await screen.findByText("Dad · 08:12")).toBeInTheDocument();
 });
 
-test("NOTE-01 a new note request opens a blank New note on the Notice board", async () => {
+test("NOTE-01 a new note request opens a blank New note", async () => {
   renderSheet({ kind: "newnote" });
 
   expect(await screen.findByRole("dialog", { name: "New note" })).toBeInTheDocument();
-  expect(screen.getByText("Notice board")).toBeInTheDocument();
   expect(screen.getByLabelText("Message")).toHaveValue("");
 });
 
@@ -101,10 +100,10 @@ test("tech§6 a new note request can carry the fixture draft", async () => {
   expect(await screen.findByLabelText("Message")).toHaveValue("Has anyone seen my blue umbr");
 });
 
-test("§8.9 the fixture draft counts as typed, so Cancel asks", async () => {
+test("§8.9 the fixture draft counts as typed, so the close button asks", async () => {
   renderSheet({ kind: "newnote", draft: { text: "Has anyone seen my blue umbr" } });
 
-  await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Close" }));
 
   expect(screen.getByRole("alert")).toHaveTextContent("This note won’t be posted.");
 });
@@ -124,10 +123,10 @@ test("NOTE-05 offline the sheet saves for later", async () => {
   expect(await screen.findByRole("button", { name: "Save for later" })).toBeInTheDocument();
 });
 
-test("NOTE-05 Delete note removes the note and closes the sheet", async () => {
+test("NOTE-10 Delete note in details removes the note and closes the sheet", async () => {
   await store.db.notes.put(synced(WIFI));
 
-  renderSheet({ kind: "note", id: WIFI.id, edit: true });
+  renderSheet({ kind: "note", id: WIFI.id });
 
   await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
   await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
@@ -167,14 +166,14 @@ test("NOTE-02 New note prefills the last author posted from this screen", async 
 
   renderSheet({ kind: "newnote" });
 
-  await waitFor(() => expect(screen.getByLabelText("Your name")).toHaveValue("Mia"));
+  await waitFor(() => expect(screen.getByLabelText("From")).toHaveValue("Mia"));
 });
 
 test("NOTE-02 posting a signed note makes its author the next prefill", async () => {
   renderSheet({ kind: "newnote" });
 
   await userEvent.type(await screen.findByLabelText("Message"), "Back at 6");
-  await userEvent.type(screen.getByLabelText("Your name"), "Leo");
+  await userEvent.type(screen.getByLabelText("From"), "Leo");
   await userEvent.click(screen.getByRole("button", { name: "Post note" }));
 
   await waitFor(async () => expect((await store.db.meta.get("lastAuthor"))?.value).toBe("Leo"));
@@ -200,7 +199,7 @@ test("NOTE-09 Save keeps the note's id, time and tilt", async () => {
 
   renderSheet({ kind: "note", id: WIFI.id, edit: true });
 
-  await userEvent.clear(await screen.findByLabelText("Your name"));
+  await userEvent.clear(await screen.findByLabelText("From"));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -227,9 +226,9 @@ test("NOTE-10 a note request opens Note details with the note's text and post ti
 
   renderSheet({ kind: "note", id: WIFI.id });
 
-  const dialog = await screen.findByRole("dialog", { name: "From Dad" });
+  const dialog = await screen.findByRole("dialog", { name: "Note from Dad" });
 
-  expect(dialog).toHaveTextContent("Notice board");
+  expect(dialog).toHaveTextContent("Dad · 8:12 AM");
   expect(dialog).toHaveTextContent("Wi-Fi password is on the fridge!");
   expect(dialog).toHaveTextContent("8:12 AM");
 });
@@ -239,7 +238,7 @@ test("NOTE-10 a note that never synced shows Waiting to post", async () => {
 
   renderSheet({ kind: "note", id: WIFI.id });
 
-  expect(await screen.findByText("Waiting to post")).toBeInTheDocument();
+  expect(await screen.findByText("Dad · Waiting to post")).toBeInTheDocument();
 });
 
 test("NOTE-10 Save from details writes the note and stays open on details", async () => {
@@ -248,24 +247,12 @@ test("NOTE-10 Save from details writes the note and stays open on details", asyn
   renderSheet({ kind: "note", id: WIFI.id });
 
   await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
-  await userEvent.clear(screen.getByLabelText("Your name"));
-  await userEvent.type(screen.getByLabelText("Your name"), "Mom");
+  await userEvent.clear(screen.getByLabelText("From"));
+  await userEvent.type(screen.getByLabelText("From"), "Mom");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-  expect(await screen.findByRole("dialog", { name: "From Mom" })).toBeInTheDocument();
+  expect(await screen.findByRole("dialog", { name: "Note from Mom" })).toBeInTheDocument();
   await waitFor(async () =>
     expect(await store.db.notes.get(WIFI.id)).toMatchObject({ author: "Mom", version: 1 }),
   );
-});
-
-test("NOTE-10 Delete from an edit opened in details closes the sheet", async () => {
-  await store.db.notes.put(synced(WIFI));
-
-  renderSheet({ kind: "note", id: WIFI.id });
-
-  await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
-  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
-  await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
-
-  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
 });

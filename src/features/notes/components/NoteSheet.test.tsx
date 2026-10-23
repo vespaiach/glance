@@ -26,29 +26,32 @@ function renderSheet(options: Options = {}) {
   return render(
     <NoteSheet
       mode={mode}
-      eyebrow={mode === "new" ? "Notice board" : "Dad · 8:12 AM"}
       initial={
         options.initial ?? initialNoteSheet(mode === "new" ? newNoteDraft() : draftFromNote(WIFI))
       }
       offline={options.offline ?? false}
+      breakpoint="large"
       onClose={options.onClose ?? (() => {})}
       onDelete={options.onDelete ?? (() => {})}
       onSave={options.onSave ?? (() => {})}
       time="8:12 AM"
-      rotation={-2}
     />,
   );
 }
 
-test("NOTE-01 a new note sheet is titled New note under the Notice board eyebrow", () => {
+test("NOTE-02 a new note sheet is named New note with a New note eyebrow and no visible title", () => {
   renderSheet({ mode: "new" });
 
   const dialog = screen.getByRole("dialog", { name: "New note" });
 
-  expect(within(dialog).getByText("Notice board")).toBeInTheDocument();
+  expect(
+    within(dialog)
+      .getAllByText("New note")
+      .map((node) => node.tagName),
+  ).toEqual(["DIV", "H2"]);
 });
 
-test("NOTE-01 an existing note opens as Edit note under its author and time", () => {
+test("NOTE-02 an existing note opens as Edit note with its author and time in the footer", () => {
   renderSheet();
 
   const dialog = screen.getByRole("dialog", { name: "Edit note" });
@@ -56,24 +59,24 @@ test("NOTE-01 an existing note opens as Edit note under its author and time", ()
   expect(within(dialog).getByText("Dad · 8:12 AM")).toBeInTheDocument();
 });
 
-test("NOTE-02 Message is a 3-row multiline field with the family placeholder", () => {
-  renderSheet();
+test("NOTE-02 the message is a one-line textarea on the paper, focused on open", () => {
+  renderSheet({ mode: "new" });
 
-  const message = screen.getByLabelText("Message");
+  const message = screen.getByRole("textbox", { name: "Message" });
 
   expect(message.tagName).toBe("TEXTAREA");
-  expect(message).toHaveAttribute("rows", "3");
+  expect(message).toHaveAttribute("rows", "1");
   expect(message).toHaveAttribute("placeholder", "Leave a note for the family");
-  expect(message).toHaveValue("Wi-Fi password is on the fridge!");
+  expect(message).toHaveFocus();
 });
 
-test("NOTE-02 Your name is optional and shows the author", () => {
+test("NOTE-02 From shows the author with the Your name placeholder", () => {
   renderSheet();
 
-  const name = screen.getByLabelText("Your name");
+  const from = screen.getByLabelText("From");
 
-  expect(name).toHaveAttribute("placeholder", "Optional");
-  expect(name).toHaveValue("Dad");
+  expect(from).toHaveAttribute("placeholder", "Your name");
+  expect(from).toHaveValue("Dad");
 });
 
 test("D27 a note has one paper tone, so the sheet has no color picker", () => {
@@ -86,30 +89,33 @@ test("NOTE-02 the message takes at most 280 characters and the name 32", () => {
   renderSheet();
 
   expect(screen.getByLabelText("Message")).toHaveAttribute("maxlength", "280");
-  expect(screen.getByLabelText("Your name")).toHaveAttribute("maxlength", "32");
+  expect(screen.getByLabelText("From")).toHaveAttribute("maxlength", "32");
 });
 
 test("NOTE-02 typing edits the message and name", async () => {
   renderSheet({ mode: "new" });
 
   await userEvent.type(screen.getByLabelText("Message"), "Back at 6");
-  await userEvent.type(screen.getByLabelText("Your name"), "Mom");
+  await userEvent.type(screen.getByLabelText("From"), "Mom");
 
   expect(screen.getByLabelText("Message")).toHaveValue("Back at 6");
-  expect(screen.getByLabelText("Your name")).toHaveValue("Mom");
+  expect(screen.getByLabelText("From")).toHaveValue("Mom");
 });
 
-test("NOTE-05 a new note posts with Post note and has no Delete", () => {
+test("NOTE-05 a new note has only Close and Post note: no Cancel and no Delete", () => {
   renderSheet({ mode: "new" });
 
-  expect(screen.getByRole("button", { name: "Post note" })).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+    "",
+    "Post note",
+  ]);
 });
 
-test("NOTE-05 an existing note saves with Save", () => {
+test("NOTE-05 an existing note saves with Save and has no Cancel", () => {
   renderSheet();
 
   expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
 });
 
 test("NOTE-05 offline the sheet shows the note banner and Save for later", () => {
@@ -122,26 +128,41 @@ test("NOTE-05 offline the sheet shows the note banner and Save for later", () =>
   expect(screen.getByRole("button", { name: "Save for later" })).toBeInTheDocument();
 });
 
-test("NOTE-05 Delete turns into Delete note, which deletes", async () => {
-  const onDelete = vi.fn();
+test("NOTE-05 Board shows the first 120 appears only past 120 characters", async () => {
+  renderSheet({
+    mode: "new",
+    initial: initialNoteSheet(newNoteDraft({ text: "a".repeat(120) })),
+  });
 
-  renderSheet({ onDelete });
+  expect(screen.queryByText("Board shows the first 120")).not.toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+  await userEvent.type(screen.getByLabelText("Message"), "b");
 
-  expect(onDelete).not.toHaveBeenCalled();
-
-  await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
-
-  expect(onDelete).toHaveBeenCalledOnce();
+  expect(screen.getByText("Board shows the first 120")).toBeInTheDocument();
 });
 
-test("SHEET Cancel closes the sheet", async () => {
+test("NOTE-05 the close button on an unchanged note closes at once", async () => {
   const onClose = vi.fn();
 
-  renderSheet({ onClose });
+  renderSheet({ mode: "new", onClose });
 
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+test("NOTE-05 the close button on a written note asks Discard changes?, and Discard closes", async () => {
+  const onClose = vi.fn();
+
+  renderSheet({ mode: "new", onClose });
+
+  await userEvent.type(screen.getByLabelText("Message"), "Back at 6");
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Discard changes?This note won’t be posted.");
+  expect(onClose).not.toHaveBeenCalled();
+
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
 
   expect(onClose).toHaveBeenCalledOnce();
 });
@@ -162,7 +183,7 @@ test("NOTE-05 Save hands the edited draft over", async () => {
 
   renderSheet({ onSave });
 
-  await userEvent.type(screen.getByLabelText("Your name"), "dy");
+  await userEvent.type(screen.getByLabelText("From"), "dy");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   expect(onSave).toHaveBeenCalledWith({ ...WIFI, author: "Daddy" });
@@ -179,30 +200,15 @@ async function tabOrder(count: number) {
   return visited;
 }
 
-test("A11Y-04 Tab moves through Close, Message, Your name, then the actions, and wraps", async () => {
+test("A11Y-04 Tab moves from the message through From, Save and Close, and wraps", async () => {
   renderSheet();
 
-  expect(await tabOrder(7)).toEqual([
-    screen.getByRole("button", { name: "Close" }),
-    screen.getByLabelText("Message"),
-    screen.getByLabelText("Your name"),
-    screen.getByRole("button", { name: "Delete" }),
-    screen.getByRole("button", { name: "Cancel" }),
+  expect(await tabOrder(4)).toEqual([
+    screen.getByLabelText("From"),
     screen.getByRole("button", { name: "Save" }),
     screen.getByRole("button", { name: "Close" }),
+    screen.getByLabelText("Message"),
   ]);
-});
-
-test("§8.9 Cancel on a changed note asks Discard changes? and says it won’t be posted", async () => {
-  const onClose = vi.fn();
-  renderSheet({ onClose });
-
-  await userEvent.type(screen.getByLabelText("Your name"), "dy");
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-
-  expect(screen.getByRole("alert")).toHaveTextContent("Discard changes?This note won’t be posted.");
-  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
-  expect(onClose).not.toHaveBeenCalled();
 });
 
 test("§8.9 a new note opened with text asks on the scrim, ignores it while asking, and Discard closes", async () => {
@@ -240,31 +246,51 @@ function renderDetails(options: Options = {}) {
   });
 }
 
-test("NOTE-10 a tapped note opens Note details: From its author on the Notice board", () => {
+test("NOTE-10 a tapped note opens Note details named Note from its author under {author} · {time}", () => {
   renderDetails();
 
-  const dialog = screen.getByRole("dialog", { name: "From Dad" });
+  const dialog = screen.getByRole("dialog", { name: "Note from Dad" });
 
-  expect(within(dialog).getByText("Notice board")).toBeInTheDocument();
+  expect(within(dialog).getByText("Dad · 8:12 AM")).toBeInTheDocument();
   expect(within(dialog).getByText("Wi-Fi password is on the fridge!")).toBeInTheDocument();
+});
+
+test("NOTE-10 an unsigned note's details show the time alone", () => {
+  renderDetails({ initial: initialNoteSheet({ ...WIFI, author: " " }, { details: true }) });
+
+  const dialog = screen.getByRole("dialog", { name: "Note" });
+
   expect(within(dialog).getByText("8:12 AM")).toBeInTheDocument();
 });
 
-test("NOTE-10 a note with a blank author is From Guest", () => {
-  renderDetails({ initial: initialNoteSheet({ ...WIFI, author: " " }, { details: true }) });
-
-  expect(screen.getByRole("dialog", { name: "From Guest" })).toBeInTheDocument();
-});
-
-test("NOTE-10 Note details are read-only with a single Edit, no color picker and no offline banner", () => {
+test("NOTE-10 Note details are read-only with Delete and Edit, no color picker and no offline banner", () => {
   renderDetails({ offline: true });
 
-  expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["", "Edit"]);
-  expect(screen.queryByRole("group", { name: "Color" })).not.toBeInTheDocument();
+  expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+    "",
+    "Delete",
+    "Edit",
+  ]);
+  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   expect(screen.queryByText("You’re offline")).not.toBeInTheDocument();
 });
 
-test("NOTE-10 Edit turns the sheet into Edit note, and Cancel with no change returns to details", async () => {
+test("NOTE-10 Delete in details turns into Delete note inline, which deletes", async () => {
+  const onDelete = vi.fn();
+
+  renderDetails({ onDelete });
+
+  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+  expect(onDelete).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
+
+  expect(onDelete).toHaveBeenCalledOnce();
+});
+
+test("NOTE-10 Edit turns the sheet into Edit note, and the close button with no change returns to details", async () => {
   const onClose = vi.fn();
 
   renderDetails({ onClose });
@@ -272,40 +298,40 @@ test("NOTE-10 Edit turns the sheet into Edit note, and Cancel with no change ret
   await userEvent.click(screen.getByRole("button", { name: "Edit" }));
 
   expect(screen.getByRole("dialog", { name: "Edit note" })).toBeInTheDocument();
-  expect(screen.getByText("Dad · 8:12 AM")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
 
-  expect(screen.getByRole("dialog", { name: "From Dad" })).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "Note from Dad" })).toBeInTheDocument();
   expect(onClose).not.toHaveBeenCalled();
 });
 
-test("NOTE-10 Cancel after a change asks Discard changes?, and Discard returns to details unchanged", async () => {
+test("NOTE-10 the close button after a change asks Discard changes?, and Discard returns to details unchanged", async () => {
   const onClose = vi.fn();
 
   renderDetails({ onClose });
 
   await userEvent.click(screen.getByRole("button", { name: "Edit" }));
   await userEvent.type(screen.getByLabelText("Message"), " Ask Mom.");
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
 
   expect(screen.getByRole("alert")).toHaveTextContent("Discard changes?");
 
   await userEvent.click(screen.getByRole("button", { name: "Discard" }));
 
-  expect(screen.getByRole("dialog", { name: "From Dad" })).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "Note from Dad" })).toBeInTheDocument();
   expect(screen.getByText("Wi-Fi password is on the fridge!")).toBeInTheDocument();
   expect(onClose).not.toHaveBeenCalled();
 });
 
-test("NOTE-10 the close button after a change asks, and Discard closes the sheet", async () => {
+test("NOTE-10 the scrim after a change asks, and Discard closes the sheet", async () => {
   const onClose = vi.fn();
 
   renderDetails({ onClose });
 
   await userEvent.click(screen.getByRole("button", { name: "Edit" }));
   await userEvent.type(screen.getByLabelText("Message"), "!");
-  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("dialog").previousElementSibling as HTMLElement);
   await userEvent.click(screen.getByRole("button", { name: "Discard" }));
 
   expect(onClose).toHaveBeenCalledOnce();
@@ -324,20 +350,8 @@ test("NOTE-10 Save from details hands the draft over and returns to details with
 
   expect(onSave).toHaveBeenCalledWith({ ...WIFI, text: "Back at 6\nDinner in the oven" });
   expect(onClose).not.toHaveBeenCalled();
-  expect(screen.getByRole("dialog", { name: "From Dad" })).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "Note from Dad" })).toBeInTheDocument();
   expect(
-    screen.getByText((_, element) => element?.textContent === "Back at 6\nDinner in the oven"),
+    screen.getByText("Back at 6\nDinner in the oven", { normalizer: (text) => text }),
   ).toBeInTheDocument();
-});
-
-test("NOTE-10 Delete from an edit opened in details deletes", async () => {
-  const onDelete = vi.fn();
-
-  renderDetails({ onDelete });
-
-  await userEvent.click(screen.getByRole("button", { name: "Edit" }));
-  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
-  await userEvent.click(screen.getByRole("button", { name: "Delete note" }));
-
-  expect(onDelete).toHaveBeenCalledOnce();
 });

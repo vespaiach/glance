@@ -1,11 +1,12 @@
 import * as stylex from "@stylexjs/stylex";
 import { useState } from "react";
-import { copy } from "@/copy";
+import type { Breakpoint } from "@/domain/breakpoint";
 import {
   draftFromNote,
   initialNoteSheet,
   NoteBoard,
   NoteSheet,
+  type NoteSheetState,
   newNoteDraft,
   noteStampText,
 } from "@/features/notes";
@@ -20,21 +21,31 @@ type Demo = {
   offline?: boolean;
   discard?: boolean;
   details?: "posted" | "waiting";
+  deleting?: boolean;
+  long?: boolean;
+  breakpoint?: Breakpoint;
 };
 
 const words = gallery.noteSheet;
 
 const DEMOS: readonly Demo[] = [
   { label: words.details, mode: "edit", details: "posted" },
+  { label: words.deleting, mode: "edit", details: "posted", deleting: true },
   { label: words.detailsWaiting, mode: "edit", details: "waiting" },
   { label: words.edit, mode: "edit" },
   { label: words.new, mode: "new" },
   { label: words.draft, mode: "new", draft: true },
   { label: words.offline, mode: "new", offline: true },
   { label: words.discard, mode: "new", draft: true, discard: true },
+  { label: words.long, mode: "new", long: true },
+  { label: words.small, mode: "new", draft: true, breakpoint: "small" },
 ];
 
 const WIFI = BOARD_NOTES[1];
+
+const LONG_NOTES = BOARD_NOTES.map((note, index) =>
+  index === 2 ? { ...note, text: words.longText, author: "" } : note,
+);
 
 const WAITING_NOTES = BOARD_NOTES.map((note, index) =>
   index === 0 ? { ...note, waiting: true } : note,
@@ -64,6 +75,7 @@ const board = {
   onRetry: ignore,
   onOpenNote: ignore,
   onAddNote: ignore,
+  breakpoint: "large",
 } as const;
 
 export function NotesGallery() {
@@ -75,7 +87,7 @@ export function NotesGallery() {
         <div {...stylex.props(styles.view)}>
           <NoteBoard
             tz={GALLERY_TZ}
-            state={{ kind: "ready", data: BOARD_NOTES }}
+            state={{ kind: "ready", data: LONG_NOTES }}
             expiry={WEEK}
             {...board}
           />
@@ -106,6 +118,7 @@ export function NotesGallery() {
             state={{ kind: "ready", data: BOARD_NOTES }}
             expiry={DAY}
             {...board}
+            breakpoint="small"
           />
         </div>
       </GalleryGroup>
@@ -122,8 +135,6 @@ export function NotesGallery() {
 }
 
 function NoteSheetDemo({ demo, onClose }: { demo: Demo; onClose: () => void }) {
-  const draft = demo.draft ? newNoteDraft({ text: gallery.input.notesValue }) : newNoteDraft();
-
   const edit = demo.mode === "edit" && (demo.details === "waiting" ? WAITING_NOTES[0] : WIFI);
 
   const time = edit ? noteStampText(edit, NOW, "12h", GALLERY_TZ) : "";
@@ -131,18 +142,31 @@ function NoteSheetDemo({ demo, onClose }: { demo: Demo; onClose: () => void }) {
   return (
     <NoteSheet
       mode={demo.mode}
-      eyebrow={edit ? copy.notes.sheet.eyebrow(edit.author, time) : copy.notes.board}
-      initial={initialNoteSheet(edit ? draftFromNote(edit) : draft, {
-        opened: edit ? draftFromNote(edit) : newNoteDraft(),
-        discard: demo.discard,
-        details: demo.details !== undefined,
-      })}
+      initial={demoState(demo)}
       time={time}
-      rotation={edit ? edit.rotation : 0}
       offline={demo.offline ?? false}
+      breakpoint={demo.breakpoint ?? "large"}
       onClose={onClose}
       onDelete={onClose}
       onSave={onClose}
     />
   );
+}
+
+function demoState(demo: Demo): NoteSheetState {
+  const edit = demo.mode === "edit" && (demo.details === "waiting" ? WAITING_NOTES[0] : WIFI);
+
+  if (edit && demo.deleting) return { step: "deleting", opened: draftFromNote(edit) };
+
+  return initialNoteSheet(edit ? draftFromNote(edit) : demoDraft(demo), {
+    opened: edit ? draftFromNote(edit) : newNoteDraft(),
+    discard: demo.discard,
+    details: demo.details !== undefined,
+  });
+}
+
+function demoDraft(demo: Demo) {
+  if (demo.long) return newNoteDraft({ text: words.longText });
+
+  return demo.draft ? newNoteDraft({ text: gallery.input.notesValue }) : newNoteDraft();
 }
