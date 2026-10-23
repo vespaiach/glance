@@ -390,7 +390,7 @@ export const copy = {
     },
   },
   photos: {
-    count: (count: number) => `Family photos · ${count}`,
+    count: (count: number) => `Photos · ${count}`,
     list: "Family photos",
     upload: "Upload",
     uploadPhotos: "Upload photos",
@@ -408,7 +408,20 @@ export const copy = {
     show: (title: string) => `Show ${title}`,
     noDate: "No date",
     datedInYear: (monthDay: string, year: number) => `${monthDay}, ${year}`,
-    edit: "Edit photo details",
+    edit: "Edit details",
+    delete: "Delete",
+    confirmDelete: "Delete photo",
+    cancelDelete: "Cancel",
+    deleteName: "Delete this photo?",
+    slideshow: "Slideshow",
+    qr: {
+      name: "Add photos from your phone",
+      code: "Code to add photos from your phone",
+      title: "Scan to add photos",
+      body: "Point your phone’s camera at the code and pick photos. They show here as they finish uploading.",
+      chooseFiles: "Choose files here",
+      done: "Done",
+    },
     fullScreen: "Full screen",
     exitFullScreen: "Exit full screen",
     fullScreenName: (title: string) => `${title} · full screen`,
@@ -427,6 +440,7 @@ export const copy = {
     },
     sheet: {
       title: "Photo details",
+      file: (name: string) => `File: ${name}`,
       close: "Close",
       name: "Name",
       namePlaceholder: "What’s in the photo",
@@ -462,6 +476,13 @@ export const copy = {
       percent: (percent: number) => `${percent}%`,
       retry: "Try again",
       remove: "Remove",
+      notUploaded: "Not uploaded",
+      failedName: (title: string, reason: string) => `${title}: ${reason}`,
+      short: {
+        "too-large": "Over 20 MB",
+        "not-a-photo": "Not a photo",
+        network: "Failed",
+      },
       failed: {
         "too-large": "Too large · 20 MB max",
         "not-a-photo": "Not a photo",
@@ -473,6 +494,8 @@ export const copy = {
       uploadingMany: (count: number) => `Uploading ${count} photos`,
       failed: (count: number) =>
         count === 1 ? "1 photo didn’t upload" : `${count} photos didn’t upload`,
+      retryAll: "Try again",
+      clear: "Clear",
       offline: "Offline · upload when back online",
       offlinePaused: (count: number) =>
         count === 1
@@ -906,6 +929,7 @@ export const copy = {
       welcome: (firstName: string) => `Welcome, ${firstName}`,
       welcomeBack: (firstName: string) => `Welcome back, ${firstName}`,
       body: "Opening Today…",
+      bodyPhotos: "Opening Photos…",
     },
   },
 } as const;

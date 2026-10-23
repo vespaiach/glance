@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { QR_OPENS } from "./qrSignIn";
 import { isTimeZone, isValidEmail } from "./signIn";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -260,6 +261,12 @@ export const CodeVerifySchema = v.object({
   code: v.pipe(v.string(), v.regex(/^\d{6}$/)),
 });
 export type CodeVerify = v.InferOutput<typeof CodeVerifySchema>;
+
+export const QrIssueRequestSchema = v.optional(
+  v.object({ opens: v.optional(v.picklist(QR_OPENS)) }),
+  {},
+);
+export type QrIssueRequest = v.InferOutput<typeof QrIssueRequestSchema>;
 
 export const QrVoidRequestSchema = v.object({
   url: v.pipe(v.string(), v.url()),

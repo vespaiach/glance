@@ -68,8 +68,22 @@ describe("uploadSummary", () => {
     });
   });
 
-  it("PHOTO-08 failures alone give the failed count", () => {
-    expect(uploadSummary([failed("a"), failed("b")], true)).toEqual({ kind: "failed", failed: 2 });
+  it("PHOTO-08 failures alone give the failed count and offer Try again for a network failure", () => {
+    expect(uploadSummary([failed("a"), failed("b")], true)).toEqual({
+      kind: "failed",
+      failed: 2,
+      retryable: true,
+    });
+  });
+
+  it("PHOTO-08 only too large and not a photo failures offer no Try again", () => {
+    const tooLarge: UploadTile = { id: "a", title: "a", state: "failed", reason: "too-large" };
+
+    expect(uploadSummary([tooLarge], true)).toEqual({
+      kind: "failed",
+      failed: 1,
+      retryable: false,
+    });
   });
 
   it("PHOTO-08 failures next to running uploads are added to the uploading row", () => {
@@ -209,6 +223,12 @@ describe("uploads", () => {
     const tooLarge: UploadTile = { id: "a", title: "a", state: "failed", reason: "too-large" };
 
     expect(uploads([tooLarge], { type: "retry", id: "a" })).toEqual([tooLarge]);
+  });
+
+  it("PHOTO-08 Clear removes every failed tile and keeps the rest", () => {
+    const tooLarge: UploadTile = { id: "c", title: "c", state: "failed", reason: "too-large" };
+
+    expect(uploads([running, failed("b"), tooLarge], { type: "clear" })).toEqual([running]);
   });
 
   it("PHOTO-08 Remove drops the tile", () => {

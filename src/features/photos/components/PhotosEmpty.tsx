@@ -7,11 +7,13 @@ import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { OfflinePill } from "@/ui/OfflinePill";
+import { AddFromPhoneCard, type QrShown } from "./AddFromPhone";
 
 type PhotosEmptyProps = {
   online: boolean;
-  canUpload: boolean;
+  qr?: QrShown;
   onUpload: () => void;
+  onChooseFiles: () => void;
 };
 
 const styles = stylex.create({
@@ -51,7 +53,7 @@ const styles = stylex.create({
   },
 });
 
-export function PhotosEmpty({ online, canUpload, onUpload }: PhotosEmptyProps) {
+export function PhotosEmpty({ online, qr, onUpload, onChooseFiles }: PhotosEmptyProps) {
   return (
     <div {...stylex.props(styles.root)}>
       <ColorBlock tone="soft" padding="clamp(28px, 3.2vw, 48px)" xstyle={styles.block}>
@@ -61,12 +63,14 @@ export function PhotosEmpty({ online, canUpload, onUpload }: PhotosEmptyProps) {
           <h2 {...stylex.props(styles.title)}>{copy.photos.emptyTitle}</h2>
           <span {...stylex.props(styles.body)}>{copy.photos.emptyBody}</span>
         </div>
-        {canUpload && (
+        {qr ? (
+          <AddFromPhoneCard qr={qr} onChooseFiles={onChooseFiles} />
+        ) : (
           <Button icon={Upload} disabled={!online} onClick={onUpload}>
             {copy.photos.uploadPhotos}
           </Button>
         )}
-        {canUpload && !online && <OfflinePill label={copy.photos.row.offline} />}
+        {!online && <OfflinePill label={copy.photos.row.offline} />}
       </ColorBlock>
     </div>
   );

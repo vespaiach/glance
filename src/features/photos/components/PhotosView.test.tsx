@@ -68,8 +68,8 @@ function renderView(overrides: Partial<Props> = {}) {
     playing: true,
     uploads: [],
     online: true,
-    canUpload: true,
     breakpoint: "large",
+    deleting: false,
     backgroundId: undefined,
     photoSrc: (id, variant) => `/photos/${id}/${variant}`,
     onSelect: vi.fn<(index: number) => void>(),
@@ -78,8 +78,15 @@ function renderView(overrides: Partial<Props> = {}) {
     onTogglePlay: vi.fn<() => void>(),
     onFullScreen: vi.fn<() => void>(),
     onUpload: vi.fn<() => void>(),
+    onChooseFiles: vi.fn<() => void>(),
+    onCloseQr: vi.fn<() => void>(),
     onRetry: vi.fn<(id: string) => void>(),
+    onRetryAll: vi.fn<() => void>(),
     onRemove: vi.fn<(id: string) => void>(),
+    onClear: vi.fn<() => void>(),
+    onAskDelete: vi.fn<() => void>(),
+    onCancelDelete: vi.fn<() => void>(),
+    onDelete: vi.fn<(photoId: string) => void>(),
     onSetBackground: vi.fn<(photoId: string) => void>(),
     onOpenBackground: vi.fn<() => void>(),
     ...overrides,
@@ -103,10 +110,67 @@ test("spec§8.6 the featured photo shows its image, date · place and title", ()
 test("spec§8.6 the panel counts the photos and lists a thumb per photo with its date", () => {
   renderView();
 
-  expect(screen.getByText("Family photos · 3")).toBeInTheDocument();
+  expect(screen.getByText("Photos · 3")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Show Cannon Beach" })).toHaveTextContent(
     "Cannon BeachSep 6",
   );
+});
+
+test("PHOTO-11 the featured actions are Set as background, Edit details and Delete, then the slideshow buttons", () => {
+  renderView();
+
+  const names = screen
+    .getAllByRole("button")
+    .filter((button) => !button.getAttribute("aria-label")?.startsWith("Show "))
+    .map((button) => button.textContent || button.getAttribute("aria-label"));
+
+  expect(names.slice(0, 7)).toEqual([
+    "Set as background",
+    "Edit details",
+    "Delete",
+    "Previous photo",
+    "Pause slideshow",
+    "Next photo",
+    "Full screen",
+  ]);
+});
+
+test("PHOTO-11 Edit details edits the featured photo", async () => {
+  const props = renderView({ selected: 1 });
+
+  await userEvent.click(screen.getByRole("button", { name: "Edit details" }));
+
+  expect(props.onEdit).toHaveBeenCalledWith(PUMPKINS.id);
+});
+
+test("PHOTO-13 Delete asks to confirm", async () => {
+  const props = renderView();
+
+  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+  expect(props.onAskDelete).toHaveBeenCalledTimes(1);
+  expect(props.onDelete).not.toHaveBeenCalled();
+});
+
+test("PHOTO-13 the confirm turns Delete into Delete photo and Cancel, and Delete photo deletes the featured photo", async () => {
+  const props = renderView({ selected: 1, deleting: true });
+
+  const confirm = screen.getByRole("alertdialog", { name: "Delete this photo?" });
+
+  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+
+  await userEvent.click(within(confirm).getByRole("button", { name: "Delete photo" }));
+  await userEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
+
+  expect(props.onDelete).toHaveBeenCalledWith(PUMPKINS.id);
+  expect(props.onCancelDelete).toHaveBeenCalledTimes(1);
+});
+
+test("PHOTO-13 Delete and its confirm are hidden offline", () => {
+  renderView({ online: false, deleting: true });
+
+  expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
 });
 
 test("A11Y-02 the featured photo's thumb is pressed", () => {
@@ -173,10 +237,49 @@ test("PHOTO-03 Upload asks for files", async () => {
   expect(props.onUpload).toHaveBeenCalledTimes(1);
 });
 
+test("PHOTO-03 the Add from your phone panel shows the code, Choose files here and Done above the grid", async () => {
+  const props = renderView({ qr: { url: "https://glance.example.com/api/auth/verify?t=a" } });
+
+  const panel = screen.getByRole("group", { name: "Add photos from your phone" });
+
+  expect(
+    within(panel).getByRole("img", { name: "Code to add photos from your phone" }),
+  ).toBeInTheDocument();
+  expect(within(panel).getByText("Scan to add photos")).toBeInTheDocument();
+  expect(
+    within(panel).getByText(
+      "Point your phone’s camera at the code and pick photos. They show here as they finish uploading.",
+    ),
+  ).toBeInTheDocument();
+
+  await userEvent.click(within(panel).getByRole("button", { name: "Choose files here" }));
+  await userEvent.click(within(panel).getByRole("button", { name: "Done" }));
+
+  expect(props.onChooseFiles).toHaveBeenCalledTimes(1);
+  expect(props.onCloseQr).toHaveBeenCalledTimes(1);
+});
+
+test("PHOTO-05 with no photos on large and normal the card shows the code and Choose files here", async () => {
+  const props = renderView({
+    state: { kind: "empty" },
+    qr: { url: "https://glance.example.com/x" },
+  });
+
+  const card = screen.getByRole("group", { name: "Add photos from your phone" });
+
+  expect(within(card).getByText("Scan to add photos")).toBeInTheDocument();
+  expect(within(card).queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Upload photos" })).not.toBeInTheDocument();
+
+  await userEvent.click(within(card).getByRole("button", { name: "Choose files here" }));
+
+  expect(props.onChooseFiles).toHaveBeenCalledTimes(1);
+});
+
 test("PHOTO-05 with no photos the view explains and offers Upload photos", async () => {
   const props = renderView({ state: { kind: "empty" } });
 
-  expect(screen.getByText("Family photos · 0")).toBeInTheDocument();
+  expect(screen.getByText("Photos · 0")).toBeInTheDocument();
   expect(screen.getByText("No photos yet")).toBeInTheDocument();
   expect(
     screen.getByText(
@@ -211,24 +314,55 @@ test("PHOTO-07 a first upload leaves the featured frame waiting for finished pho
 
   expect(screen.getByText("Your photos show here once they finish uploading.")).toBeInTheDocument();
   expect(screen.queryByText("No photos yet")).not.toBeInTheDocument();
-  expect(screen.getByText("Family photos · 0")).toBeInTheDocument();
+  expect(screen.getByText("Photos · 0")).toBeInTheDocument();
 });
 
 test("PHOTO-08 each failure names its reason and only network failures can be retried", async () => {
   const props = renderView({ uploads: [TOO_LARGE, NOT_A_PHOTO, NETWORK] });
 
-  const alerts = screen.getAllByRole("alert").map((alert) => alert.textContent);
+  const alerts = screen.getAllByRole("alert");
 
-  expect(alerts).toEqual(["Too large · 20 MB max", "Not a photo", "Didn’t upload"]);
-  expect(screen.getAllByRole("button", { name: "Try again" })).toHaveLength(1);
+  expect(alerts.map((alert) => alert.getAttribute("aria-label"))).toEqual([
+    "IMG_3307: Too large · 20 MB max",
+    "Recipe card: Not a photo",
+    "Halloween costumes: Didn’t upload",
+  ]);
+  expect(alerts.map((alert) => alert.textContent)).toEqual(["Over 20 MB", "Not a photo", "Failed"]);
+  expect(screen.getAllByText("Not uploaded")).toHaveLength(3);
+  expect(
+    within(alerts[2] as HTMLElement).getByRole("button", { name: "Try again" }),
+  ).toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: "Remove" })).toHaveLength(3);
   expect(screen.getByRole("status")).toHaveTextContent("3 photos didn’t upload");
 
-  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await userEvent.click(
+    within(alerts[2] as HTMLElement).getByRole("button", { name: "Try again" }),
+  );
   await userEvent.click(screen.getAllByRole("button", { name: "Remove" })[0] as HTMLElement);
 
   expect(props.onRetry).toHaveBeenCalledWith("u6");
   expect(props.onRemove).toHaveBeenCalledWith("u4");
+});
+
+test("PHOTO-08 the row's Try again retries the network failures and Clear removes every failed tile", async () => {
+  const props = renderView({ uploads: [TOO_LARGE, NETWORK] });
+
+  const row = screen.getByRole("status");
+
+  await userEvent.click(within(row).getByRole("button", { name: "Try again" }));
+  await userEvent.click(within(row).getByRole("button", { name: "Clear" }));
+
+  expect(props.onRetryAll).toHaveBeenCalledTimes(1);
+  expect(props.onClear).toHaveBeenCalledTimes(1);
+});
+
+test("PHOTO-08 without a network failure the row offers only Clear", () => {
+  renderView({ uploads: [TOO_LARGE, NOT_A_PHOTO] });
+
+  const row = screen.getByRole("status");
+
+  expect(within(row).queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  expect(within(row).getByRole("button", { name: "Clear" })).toBeInTheDocument();
 });
 
 test("PHOTO-08 one failure reads in the singular", () => {
@@ -252,17 +386,6 @@ test("PHOTO-09 offline with no photos disables Upload photos beside the offline 
 
   expect(screen.getByRole("button", { name: "Upload photos" })).toBeDisabled();
   expect(screen.getByRole("status")).toHaveTextContent("Offline · upload when back online");
-});
-
-test("spec§5.4 small has no Upload or Upload photos", () => {
-  renderView({ canUpload: false, online: false });
-
-  expect(screen.queryByRole("button", { name: "Upload" })).not.toBeInTheDocument();
-  expect(screen.queryByRole("status")).not.toBeInTheDocument();
-
-  renderView({ canUpload: false, state: { kind: "empty" } });
-
-  expect(screen.queryByRole("button", { name: "Upload photos" })).not.toBeInTheDocument();
 });
 
 test("LOAD-02 photos that are still loading show a skeleton", () => {

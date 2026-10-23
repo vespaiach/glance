@@ -271,7 +271,7 @@ function Picture({ state, day, tz, large, onOpen, onOpenPhotos }: PictureProps) 
 
   const picker = usePhotoPicker(uploads.choose);
 
-  const qr = useQrTile(fixture.potd === "qr" ? "open" : undefined);
+  const qr = useQrTile(fixture.potd === "qr" ? "open" : undefined, "photos");
 
   const thisYear = Number(day.slice(0, 4));
 

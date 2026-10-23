@@ -20,7 +20,7 @@ import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
 import { useAmbientRoot } from "@/shell/useAmbientNavigate";
 import { SignInView } from "./components/SignInView";
-import { initialSignIn, openedLinkFrom } from "./signIn";
+import { initialSignIn, openedLinkFrom, openedViewFrom } from "./signIn";
 import { useSignIn } from "./useSignIn";
 
 export function SignInScreen() {
@@ -29,6 +29,8 @@ export function SignInScreen() {
   const params = useFixtureParams();
 
   const [link] = useState(() => openedLinkFrom(window.location.search));
+
+  const [opens] = useState(() => openedViewFrom(window.location.search));
 
   const signedOut = useSignedOutAccount();
 
@@ -39,7 +41,7 @@ export function SignInScreen() {
     initialSetup: () => initialWeatherSetup(params.wx, fixtureWeatherSearch),
     auth: useSignInAuth(),
     clock,
-    onSignedIn: () => router.replace(viewPath("today")),
+    onSignedIn: () => router.replace(viewPath(opens)),
   });
 
   const online = useBrowserOnline() && params.signin !== "offline";
@@ -63,6 +65,7 @@ export function SignInScreen() {
       keyboardInset={useKeyboardInset()}
       online={online}
       guest={flow.guest}
+      {...(opens !== "today" && { opens })}
       onAction={flow.act}
       rootRef={root}
     />

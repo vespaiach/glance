@@ -40,22 +40,24 @@ function renderSheet(options: Options = {}) {
   );
 }
 
-test("PHOTO-12 the sheet is Photo details under the file name, with the photo and no color", () => {
+test("PHOTO-12 the sheet is Photo details under Family photos, with the photo and its File: line", () => {
   renderSheet();
 
   const dialog = screen.getByRole("dialog", { name: "Photo details" });
 
-  expect(within(dialog).getByText("halloween-costumes-2025-10-31.jpg")).toBeInTheDocument();
+  expect(within(dialog).getByText("Family photos")).toBeInTheDocument();
   expect(dialog.querySelector("img")).toHaveAttribute("src", "/photo.webp");
+  expect(within(dialog).getByText("File: halloween-costumes-2025-10-31.jpg")).toBeInTheDocument();
   expect(within(dialog).queryByText("Color")).not.toBeInTheDocument();
 });
 
-test("PHOTO-12 a photo without a file name has the Family photos eyebrow", () => {
+test("PHOTO-12 a photo without a file name has no File: line", () => {
   const { fileName: _fileName, ...noName } = HALLOWEEN;
 
   renderSheet({ photo: noName });
 
   expect(screen.getByText("Family photos")).toBeInTheDocument();
+  expect(screen.queryByText(/^File:/)).not.toBeInTheDocument();
 });
 
 test("PHOTO-12 Name, Date taken and Place show the values and where they came from", () => {

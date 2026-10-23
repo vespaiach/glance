@@ -6,7 +6,7 @@ import { uuidv7 } from "@/domain/id";
 import { dateKey } from "@/domain/zone";
 import { useNowStore } from "@/shell/providers/now";
 import { useTimeZone } from "@/shell/providers/timeZone";
-import { chosenTile, type UploadTile, uploadFailure, uploads } from "./uploads";
+import { canRetry, chosenTile, type UploadTile, uploadFailure, uploads } from "./uploads";
 
 type Chosen = { file: File; preview: string };
 
@@ -14,7 +14,9 @@ export type Uploads = {
   tiles: UploadTile[];
   choose(files: readonly File[]): void;
   retry(id: string): void;
+  retryAll(): void;
   remove(id: string): void;
+  clear(): void;
 };
 
 export function useUploads(initial: () => UploadTile[], online: boolean): Uploads {
@@ -119,9 +121,15 @@ export function useUploads(initial: () => UploadTile[], online: boolean): Upload
     dispatch({ type: "remove", id });
   };
 
-  return { tiles, choose, retry, remove };
-}
+  const retryAll = () => {
+    for (const tile of tiles.filter(canRetry)) retry(tile.id);
+  };
 
-function canRetry(tile: UploadTile): boolean {
-  return tile.state === "failed" && tile.reason === "network";
+  const clear = () => {
+    for (const tile of tiles) if (tile.state === "failed") forget(tile.id);
+
+    dispatch({ type: "clear" });
+  };
+
+  return { tiles, choose, retry, retryAll, remove, clear };
 }

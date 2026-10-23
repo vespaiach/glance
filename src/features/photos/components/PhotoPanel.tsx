@@ -1,5 +1,8 @@
+"use client";
+
 import * as stylex from "@stylexjs/stylex";
 import { Upload } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { copy } from "@/copy";
 import type { PhotoVariant } from "@/data/repos";
 import type { Photo } from "@/domain/schemas";
@@ -7,8 +10,10 @@ import { colors, motion, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
+import { revealDelta, THUMB_REVEAL_PX } from "../layout";
 import { photoDate } from "../slideshow";
 import type { UploadSummary, UploadTile } from "../uploads";
+import { AddFromPhonePanel, type QrShown } from "./AddFromPhone";
 import { PendingUpload } from "./PendingUpload";
 import { UploadRow } from "./UploadRow";
 
@@ -20,14 +25,18 @@ type PhotoPanelProps = {
   uploads: readonly UploadTile[];
   summary: UploadSummary;
   online: boolean;
-  canUpload: boolean;
+  qr?: QrShown;
   columns: stylex.StyleXStyles;
   frame: stylex.StyleXStyles;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   onSelect: (index: number) => void;
   onUpload: () => void;
+  onChooseFiles: () => void;
+  onCloseQr: () => void;
   onRetry: (id: string) => void;
+  onRetryAll: () => void;
   onRemove: (id: string) => void;
+  onClear: () => void;
 };
 
 const styles = stylex.create({
@@ -36,12 +45,12 @@ const styles = stylex.create({
     flexDirection: "column",
     gap: space.sm,
     minWidth: 0,
+    boxSizing: "border-box",
     backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.lg,
     paddingTop: space.xs,
     paddingInline: space.md,
     paddingBottom: space.md,
-    boxSizing: "border-box",
   },
   header: {
     display: "flex",
@@ -50,6 +59,12 @@ const styles = stylex.create({
     gap: space.xs,
     minHeight: 44,
     paddingLeft: space.xxs,
+  },
+  count: {
+    minWidth: 0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   scroll: {
     flexGrow: 1,
@@ -107,10 +122,10 @@ const styles = stylex.create({
   },
   caption: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: space.xs,
+    flexDirection: "column",
+    gap: 2,
     width: "100%",
+    minWidth: 0,
   },
   title: {
     fontSize: 15,
@@ -143,34 +158,45 @@ export function PhotoPanel({
   uploads,
   summary,
   online,
-  canUpload,
+  qr,
   columns,
   frame,
   photoSrc,
   onSelect,
   onUpload,
+  onChooseFiles,
+  onCloseQr,
   onRetry,
+  onRetryAll,
   onRemove,
+  onClear,
   updated,
 }: PhotoPanelProps) {
-  const row = showsRow(summary, canUpload);
+  const scroller = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selected >= 0) revealSelected(scroller.current);
+  }, [selected]);
 
   return (
     <div {...stylex.props(styles.root, frame)}>
       <div {...stylex.props(styles.header)}>
-        <Eyebrow>
-          {updated === undefined
-            ? copy.photos.count(photos.length)
-            : copy.zone.updated(copy.photos.count(photos.length), updated)}
-        </Eyebrow>
-        {canUpload && (
-          <Button variant="ghost" icon={Upload} disabled={!online} onClick={onUpload}>
-            {copy.photos.upload}
-          </Button>
-        )}
+        <span {...stylex.props(styles.count)}>
+          <Eyebrow>
+            {updated === undefined
+              ? copy.photos.count(photos.length)
+              : copy.zone.updated(copy.photos.count(photos.length), updated)}
+          </Eyebrow>
+        </span>
+        <Button variant="ghost" icon={Upload} disabled={!online} onClick={onUpload}>
+          {copy.photos.upload}
+        </Button>
       </div>
-      {row && <UploadRow summary={row} />}
-      <div {...stylex.props(styles.scroll)}>
+      {qr && <AddFromPhonePanel qr={qr} onChooseFiles={onChooseFiles} onDone={onCloseQr} />}
+      {summary.kind !== "none" && (
+        <UploadRow summary={summary} onRetryAll={onRetryAll} onClear={onClear} />
+      )}
+      <div ref={scroller} {...stylex.props(styles.scroll)}>
         <ul aria-label={copy.photos.list} {...stylex.props(styles.grid, columns)}>
           {uploads.map((tile) => (
             <li key={tile.id} {...stylex.props(styles.item)}>
@@ -213,8 +239,16 @@ function Thumb({ photo, thisYear, src, selected, onSelect }: ThumbProps) {
   );
 }
 
-function showsRow(summary: UploadSummary, canUpload: boolean) {
-  if (summary.kind === "none") return undefined;
+function revealSelected(scroller: HTMLElement | null) {
+  const thumb = scroller?.querySelector("[aria-pressed='true']");
 
-  return canUpload || summary.kind !== "offline" || summary.paused > 0 ? summary : undefined;
+  if (!scroller || !thumb || scroller.scrollHeight <= scroller.clientHeight) return;
+
+  const delta = revealDelta(
+    scroller.getBoundingClientRect(),
+    thumb.getBoundingClientRect(),
+    THUMB_REVEAL_PX,
+  );
+
+  if (delta !== 0) scroller.scrollTop += delta;
 }

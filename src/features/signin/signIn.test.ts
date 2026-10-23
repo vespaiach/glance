@@ -1,6 +1,7 @@
 import {
   initialSignIn,
   openedLinkFrom,
+  openedViewFrom,
   type SignInAction,
   type SignInState,
   signInReducer,
@@ -562,6 +563,16 @@ describe("sign-in reducer", () => {
     ["", undefined],
   ] as const)("SIGNIN-15 reads the QR link answer from %j", (search, link) => {
     expect(openedLinkFrom(search)).toBe(link);
+  });
+
+  it.each([
+    ["?link=opened&to=photos", "photos"],
+    ["?link=opened", "today"],
+    ["?link=opened&to=settings", "today"],
+    ["?link=stale&to=photos", "today"],
+    ["", "today"],
+  ] as const)("PHOTO-03 a QR link from %j opens %s", (search, view) => {
+    expect(openedViewFrom(search)).toBe(view);
   });
 
   it("SIGNIN-09 the signed-in state ignores every action", () => {

@@ -10,6 +10,7 @@ import {
   Pause,
   Pencil,
   Play,
+  Trash2,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { copy } from "@/copy";
@@ -28,7 +29,12 @@ type FeaturedPhotoProps = {
   thisYear: number;
   playing: boolean;
   isBackground: boolean;
+  online: boolean;
+  deleting: boolean;
   onEdit: () => void;
+  onAskDelete: () => void;
+  onCancelDelete: () => void;
+  onDelete: () => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
   onFullScreen: () => void;
@@ -37,12 +43,32 @@ type FeaturedPhotoProps = {
   frame: stylex.StyleXStyles;
 };
 
+type PhotoActionsProps = Pick<
+  FeaturedPhotoProps,
+  | "isBackground"
+  | "online"
+  | "deleting"
+  | "onEdit"
+  | "onAskDelete"
+  | "onCancelDelete"
+  | "onDelete"
+  | "onSetBackground"
+  | "onOpenBackground"
+>;
+
+type SlideshowButtonsProps = Pick<
+  FeaturedPhotoProps,
+  "playing" | "onStep" | "onTogglePlay" | "onFullScreen"
+>;
+
 const styles = stylex.create({
   image: {
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: 0,
     width: "100%",
+    height: 0,
+    minWidth: 0,
     objectFit: "cover",
     backgroundColor: colors.surfaceCanvas,
     borderRadius: radii.md,
@@ -52,24 +78,38 @@ const styles = stylex.create({
   portrait: {
     objectFit: "contain",
   },
-  background: {
-    display: "flex",
-    alignItems: "center",
-    height: 56,
-    marginLeft: -16,
-  },
   footer: {
     display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: space.md,
+    flexDirection: "column",
+    gap: space.sm,
+    minWidth: 0,
   },
   text: {
     display: "flex",
     flexDirection: "column",
-    gap: 8,
+    gap: 6,
     minWidth: 0,
+  },
+  actionRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+    rowGap: space.xs,
+    columnGap: space.md,
+  },
+  actions: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: space.xxs,
+    marginLeft: -16,
+  },
+  confirm: {
+    display: "flex",
+    alignItems: "center",
+    gap: space.xs,
+    marginLeft: space.sm,
   },
   title: {
     margin: 0,
@@ -118,15 +158,12 @@ export function FeaturedPhoto({
   photo,
   src,
   thisYear,
+  frame,
   playing,
-  isBackground,
-  onEdit,
   onStep,
   onTogglePlay,
   onFullScreen,
-  onSetBackground,
-  onOpenBackground,
-  frame,
+  ...actions
 }: FeaturedPhotoProps) {
   const hint = photoHint(photo);
 
@@ -157,53 +194,14 @@ export function FeaturedPhoto({
           <Eyebrow>{photoMeta(photo, thisYear)}</Eyebrow>
           <h2 {...stylex.props(styles.title)}>{photo.title}</h2>
           {hint && <span {...stylex.props(styles.hint)}>{hint}</span>}
-          <div {...stylex.props(styles.background)}>
-            {isBackground ? (
-              <Button variant="ghost" icon={Check} onClick={onOpenBackground}>
-                {copy.photos.backgroundNow}
-              </Button>
-            ) : (
-              <Button variant="ghost" icon={Image} onClick={onSetBackground}>
-                {copy.photos.setBackground}
-              </Button>
-            )}
-          </div>
         </div>
-        <div {...stylex.props(styles.controls)}>
-          <IconButton
-            icon={Pencil}
-            label={copy.photos.edit}
-            variant="canvas"
-            size="touch"
-            onClick={onEdit}
-          />
-          <IconButton
-            icon={ChevronLeft}
-            label={copy.photos.previous}
-            variant="canvas"
-            size="touch"
-            onClick={() => onStep(-1)}
-          />
-          <IconButton
-            icon={playing ? Pause : Play}
-            label={playing ? copy.photos.pause : copy.photos.play}
-            variant="canvas"
-            size="touch"
-            onClick={onTogglePlay}
-          />
-          <IconButton
-            icon={ChevronRight}
-            label={copy.photos.next}
-            variant="canvas"
-            size="touch"
-            onClick={() => onStep(1)}
-          />
-          <IconButton
-            icon={Maximize}
-            label={copy.photos.fullScreen}
-            variant="canvas"
-            size="touch"
-            onClick={onFullScreen}
+        <div {...stylex.props(styles.actionRow)}>
+          <PhotoActions {...actions} />
+          <SlideshowButtons
+            playing={playing}
+            onStep={onStep}
+            onTogglePlay={onTogglePlay}
+            onFullScreen={onFullScreen}
           />
         </div>
       </div>
@@ -216,6 +214,90 @@ export function FeaturedWaiting({ frame }: { frame: stylex.StyleXStyles }) {
     <div {...stylex.props(styles.waiting, frame)}>
       <Icon icon={Image} size={40} strokeWidth={1.5} />
       <span {...stylex.props(styles.waitingText)}>{copy.photos.waitingForUploads}</span>
+    </div>
+  );
+}
+
+function PhotoActions({
+  isBackground,
+  online,
+  deleting,
+  onEdit,
+  onAskDelete,
+  onCancelDelete,
+  onDelete,
+  onSetBackground,
+  onOpenBackground,
+}: PhotoActionsProps) {
+  return (
+    <div {...stylex.props(styles.actions)}>
+      {isBackground ? (
+        <Button variant="ghost" icon={Check} onClick={onOpenBackground}>
+          {copy.photos.backgroundNow}
+        </Button>
+      ) : (
+        <Button variant="ghost" icon={Image} onClick={onSetBackground}>
+          {copy.photos.setBackground}
+        </Button>
+      )}
+      <Button variant="ghost" icon={Pencil} onClick={onEdit}>
+        {copy.photos.edit}
+      </Button>
+      {online && !deleting && (
+        <Button variant="ghost" icon={Trash2} onClick={onAskDelete}>
+          {copy.photos.delete}
+        </Button>
+      )}
+      {online && deleting && (
+        <div
+          role="alertdialog"
+          aria-label={copy.photos.deleteName}
+          {...stylex.props(styles.confirm)}
+        >
+          <Button variant="danger" icon={Trash2} onClick={onDelete}>
+            {copy.photos.confirmDelete}
+          </Button>
+          <Button variant="ghost" onClick={onCancelDelete}>
+            {copy.photos.cancelDelete}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SlideshowButtons({ playing, onStep, onTogglePlay, onFullScreen }: SlideshowButtonsProps) {
+  return (
+    // biome-ignore lint/a11y/useSemanticElements: the slideshow buttons are a toolbar row, not a form fieldset
+    <div role="group" aria-label={copy.photos.slideshow} {...stylex.props(styles.controls)}>
+      <IconButton
+        icon={ChevronLeft}
+        label={copy.photos.previous}
+        variant="canvas"
+        size="touch"
+        onClick={() => onStep(-1)}
+      />
+      <IconButton
+        icon={playing ? Pause : Play}
+        label={playing ? copy.photos.pause : copy.photos.play}
+        variant="solid"
+        size="touch"
+        onClick={onTogglePlay}
+      />
+      <IconButton
+        icon={ChevronRight}
+        label={copy.photos.next}
+        variant="canvas"
+        size="touch"
+        onClick={() => onStep(1)}
+      />
+      <IconButton
+        icon={Maximize}
+        label={copy.photos.fullScreen}
+        variant="canvas"
+        size="touch"
+        onClick={onFullScreen}
+      />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 import { photosLayout } from "../layout";
 import { type UploadTile, uploadSummary } from "../uploads";
+import type { QrShown } from "./AddFromPhone";
 import { FeaturedPhoto, FeaturedWaiting } from "./FeaturedPhoto";
 import { PhotoPanel } from "./PhotoPanel";
 import { PhotosEmpty } from "./PhotosEmpty";
@@ -28,18 +29,26 @@ type PhotosViewProps = {
   playing: boolean;
   uploads: readonly UploadTile[];
   online: boolean;
-  canUpload: boolean;
+  qr?: QrShown;
+  deleting: boolean;
   breakpoint: Breakpoint;
   backgroundId: string | undefined;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   onSelect: (index: number) => void;
   onEdit: (photoId: string) => void;
+  onAskDelete: () => void;
+  onCancelDelete: () => void;
+  onDelete: (photoId: string) => void;
   onStep: (delta: number) => void;
   onTogglePlay: () => void;
   onFullScreen: () => void;
   onUpload: () => void;
+  onChooseFiles: () => void;
+  onCloseQr: () => void;
   onRetry: (id: string) => void;
+  onRetryAll: () => void;
   onRemove: (id: string) => void;
+  onClear: () => void;
   onSetBackground: (photoId: string) => void;
   onOpenBackground: () => void;
 };
@@ -80,8 +89,9 @@ export function PhotosView({ state, retryIn, onRetrySync, ...gallery }: PhotosVi
         ) : (
           <PhotosEmpty
             online={gallery.online}
-            canUpload={gallery.canUpload}
+            {...(gallery.qr && { qr: gallery.qr })}
             onUpload={gallery.onUpload}
+            onChooseFiles={gallery.onChooseFiles}
           />
         )
       }
@@ -143,7 +153,12 @@ function PhotoGallery({
             thisYear={rest.thisYear}
             playing={rest.playing}
             isBackground={featured.id === rest.backgroundId}
+            online={rest.online}
+            deleting={rest.deleting}
             onEdit={() => rest.onEdit(featured.id)}
+            onAskDelete={rest.onAskDelete}
+            onCancelDelete={rest.onCancelDelete}
+            onDelete={() => rest.onDelete(featured.id)}
             onStep={rest.onStep}
             onTogglePlay={rest.onTogglePlay}
             onFullScreen={rest.onFullScreen}
@@ -165,14 +180,18 @@ function PhotoGallery({
         uploads={rest.uploads}
         summary={uploadSummary(rest.uploads, rest.online)}
         online={rest.online}
-        canUpload={rest.canUpload}
+        {...(rest.qr && { qr: rest.qr })}
         columns={layout.thumbs}
         frame={layout.panel}
         photoSrc={photoSrc}
         onSelect={rest.onSelect}
         onUpload={rest.onUpload}
+        onChooseFiles={rest.onChooseFiles}
+        onCloseQr={rest.onCloseQr}
         onRetry={rest.onRetry}
+        onRetryAll={rest.onRetryAll}
         onRemove={rest.onRemove}
+        onClear={rest.onClear}
       />
     </div>
   );

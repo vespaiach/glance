@@ -16,6 +16,7 @@ import {
 import { type FormEvent, type Ref, useRef } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
+import type { QrOpens } from "@/domain/qrSignIn";
 import type { Season } from "@/domain/schemas";
 import { CODE_LENGTH, differentEmailIn, firstName, isSwitchingEmail } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
@@ -48,6 +49,7 @@ type SignInViewProps = {
   breakpoint: Breakpoint;
   online: boolean;
   guest?: boolean;
+  opens?: QrOpens;
   onAction: (action: SignInAction) => void;
   keyboardInset?: number;
   rootRef?: Ref<HTMLDivElement>;
@@ -483,7 +485,13 @@ function ExpiredStep({
   );
 }
 
-function DoneStep({ state }: { state: Extract<SignInState, { step: "done" }> }) {
+function DoneStep({
+  state,
+  opens,
+}: {
+  state: Extract<SignInState, { step: "done" }>;
+  opens?: QrOpens;
+}) {
   const { done } = copy.signIn;
 
   const welcome = state.returning ? done.welcomeBack : done.welcome;
@@ -492,7 +500,7 @@ function DoneStep({ state }: { state: Extract<SignInState, { step: "done" }> }) 
     <>
       <Icon icon={CircleCheck} size={56} strokeWidth={1.25} />
       <Heading eyebrow={done.eyebrow} title={welcome(firstName(state.name))}>
-        {done.body}
+        {opens === "photos" ? done.bodyPhotos : done.body}
       </Heading>
     </>
   );
@@ -519,6 +527,6 @@ function SignInStep({ time, ...props }: StepProps & { time: Date }) {
     case "expired":
       return <ExpiredStep {...props} state={state} />;
     case "done":
-      return <DoneStep state={state} />;
+      return <DoneStep state={state} opens={props.opens} />;
   }
 }

@@ -5,7 +5,7 @@ import { Trash2, WifiOff } from "lucide-react";
 import { useReducer } from "react";
 import { copy } from "@/copy";
 import type { Photo } from "@/domain/schemas";
-import { colors, radii, shadows } from "@/theme/tokens.stylex";
+import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
@@ -39,13 +39,27 @@ const words = copy.photos.sheet;
 const discard = copy.discard;
 
 const styles = stylex.create({
+  previewBlock: {
+    display: "flex",
+    flexDirection: "column",
+    gap: space.xs,
+  },
   preview: {
     width: "100%",
-    aspectRatio: "16 / 9",
+    aspectRatio: "2 / 1",
+    maxHeight: 160,
     objectFit: "cover",
     borderRadius: radii.md,
     display: "block",
     backgroundColor: colors.surfaceSoft,
+  },
+  file: {
+    fontSize: 15,
+    fontWeight: 330,
+    lineHeight: 1.4,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
   delete: {
     marginLeft: -12,
@@ -99,7 +113,7 @@ export function PhotoSheet({
   return (
     <Sheet
       title={words.title}
-      eyebrow={photo.fileName ?? copy.photos.list}
+      eyebrow={copy.photos.list}
       closeLabel={words.close}
       onClose={requestClose("button")}
       onScrimTap={requestClose("scrim")}
@@ -136,8 +150,11 @@ export function PhotoSheet({
       {offline && (
         <Banner icon={WifiOff} title={words.offlineTitle} body={words.offlineBody} tone="soft" />
       )}
-      {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
-      <img src={src} alt="" {...stylex.props(styles.preview)} />
+      <div {...stylex.props(styles.previewBlock)}>
+        {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
+        <img src={src} alt="" {...stylex.props(styles.preview)} />
+        {photo.fileName && <span {...stylex.props(styles.file)}>{words.file(photo.fileName)}</span>}
+      </div>
       <TextInput
         label={words.name}
         caption={caption("title")}

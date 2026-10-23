@@ -33,6 +33,8 @@ const EMPTY = { kind: "empty" } as const;
 
 const [HALLOWEEN, BEACH] = GUESSED_PHOTOS as [Photo, Photo];
 
+const QR = { url: "https://glance.example.com/api/auth/verify?t=gallery&to=photos" };
+
 const DEMOS: readonly Demo[] = [
   { key: "ready" },
   {
@@ -41,6 +43,8 @@ const DEMOS: readonly Demo[] = [
     selected: 0,
   },
   { key: "background", backgroundId: GALLERY_PHOTOS[1]?.id },
+  { key: "qr", qr: QR },
+  { key: "delete", deleting: true, playing: false },
   {
     key: "portrait",
     state: { kind: "ready", data: [PORTRAIT_PHOTO, ...GALLERY_PHOTOS] },
@@ -51,12 +55,12 @@ const DEMOS: readonly Demo[] = [
   { key: "failed", uploads: UPLOAD_SAMPLES.failed },
   { key: "paused", uploads: UPLOAD_SAMPLES.paused, online: false },
   { key: "first", state: EMPTY, uploads: UPLOAD_SAMPLES.one },
-  { key: "empty", state: EMPTY },
+  { key: "empty", state: EMPTY, qr: QR },
   { key: "empty-offline", state: EMPTY, online: false },
   { key: "loading", state: { kind: "loading" } },
   { key: "failed-zone", state: { kind: "failed" } },
-  { key: "small", small: true, breakpoint: "small", canUpload: false },
-  { key: "small-empty", small: true, breakpoint: "small", canUpload: false, state: EMPTY },
+  { key: "small", small: true, breakpoint: "small" },
+  { key: "small-empty", small: true, breakpoint: "small", state: EMPTY },
 ];
 
 const styles = stylex.create({
@@ -80,18 +84,25 @@ const base: ViewProps = {
   playing: true,
   uploads: [],
   online: true,
-  canUpload: true,
+  deleting: false,
   breakpoint: "large",
   backgroundId: undefined,
   photoSrc: galleryPhotoSrc,
   onSelect: ignore,
   onEdit: ignore,
+  onAskDelete: ignore,
+  onCancelDelete: ignore,
+  onDelete: ignore,
   onStep: ignore,
   onTogglePlay: ignore,
   onFullScreen: ignore,
   onUpload: ignore,
+  onChooseFiles: ignore,
+  onCloseQr: ignore,
   onRetry: ignore,
+  onRetryAll: ignore,
   onRemove: ignore,
+  onClear: ignore,
   onSetBackground: ignore,
   onOpenBackground: ignore,
 };

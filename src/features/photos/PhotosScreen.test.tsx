@@ -107,6 +107,22 @@ function OpenSheet() {
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
 }
 
+const ADD_FROM_PHONE = "Add photos from your phone";
+
+const QR_URL = "https://glance.example.com/api/auth/verify?t=abc&to=photos";
+
+function smallScreen() {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
+function uploadRow(): HTMLElement {
+  return screen.getByText(/didn’t upload$/).closest("[role=status]") as HTMLElement;
+}
+
 function featuredTitle() {
   return screen.getByRole("img", { name: /.+/ }).getAttribute("alt");
 }
@@ -116,7 +132,7 @@ test("PHOTO-03 the newest upload is listed and featured first", async () => {
 
   renderPhotos();
 
-  expect(await screen.findByText("Family photos · 3")).toBeInTheDocument();
+  expect(await screen.findByText("Photos · 3")).toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: /^Show / }).map((thumb) => thumb.ariaLabel)).toEqual(
     ["Show Cannon Beach", "Show Apple picking", "Show Forest Park trail"],
   );
@@ -306,7 +322,7 @@ test("PHOTO-10 the upload tile shows the name guessed from the file and sends it
 
   renderPhotos({}, "frozen", "Pacific/Kiritimati");
 
-  await screen.findByText("Family photos · 1");
+  await screen.findByText("Photos · 1");
 
   const file = new File(["x"], "halloween-costumes-2025-10-31.jpg", {
     type: "image/jpeg",
@@ -319,8 +335,9 @@ test("PHOTO-10 the upload tile shows the name guessed from the file and sends it
   expect(store.upload).toHaveBeenCalledWith(file, "2026-08-17", expect.any(Function));
 });
 
-test("PHOTO-03 Upload opens the picker for several images", async () => {
+test("spec§5.4 on small Upload opens the picker for several images, with no QR panel", async () => {
   await store.db.photos.bulkPut([synced(COAST)]);
+  smallScreen();
 
   renderPhotos();
 
@@ -333,6 +350,87 @@ test("PHOTO-03 Upload opens the picker for several images", async () => {
   expect(click).toHaveBeenCalledTimes(1);
   expect(picker).toHaveAttribute("accept", "image/*");
   expect(picker).toHaveAttribute("multiple");
+  expect(screen.queryByRole("group", { name: ADD_FROM_PHONE })).not.toBeInTheDocument();
+  expect(store.issueQr).not.toHaveBeenCalled();
+});
+
+test("PHOTO-03 on large Upload toggles Add from your phone with a code that opens Photos", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+  store.issueQr.mockResolvedValue(ok({ url: QR_URL }));
+
+  renderPhotos();
+
+  const upload = await screen.findByRole("button", { name: "Upload" });
+
+  await userEvent.click(upload);
+
+  expect(screen.getByRole("group", { name: ADD_FROM_PHONE })).toBeInTheDocument();
+  expect(store.issueQr).toHaveBeenCalledWith("photos");
+
+  await userEvent.click(upload);
+
+  expect(screen.queryByRole("group", { name: ADD_FROM_PHONE })).not.toBeInTheDocument();
+  expect(store.voidQr).toHaveBeenCalledWith(QR_URL);
+});
+
+test("PHOTO-03 Choose files here opens the picker and closes the panel, Done closes it", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos({ phqr: true });
+
+  const picker = await screen.findByLabelText("Choose photos");
+
+  const click = vi.spyOn(picker, "click");
+
+  const panel = await screen.findByRole("group", { name: ADD_FROM_PHONE });
+
+  await userEvent.click(within(panel).getByRole("button", { name: "Choose files here" }));
+
+  expect(click).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("group", { name: ADD_FROM_PHONE })).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Upload" }));
+  await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+  expect(screen.queryByRole("group", { name: ADD_FROM_PHONE })).not.toBeInTheDocument();
+});
+
+test("PHOTO-05 with no photos on large the empty card shows the code; on small Upload photos", async () => {
+  await markSynced(store);
+
+  const { unmount } = renderPhotos();
+
+  expect(await screen.findByRole("group", { name: ADD_FROM_PHONE })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Upload photos" })).not.toBeInTheDocument();
+  expect(store.issueQr).toHaveBeenCalledWith("photos");
+
+  unmount();
+  smallScreen();
+  renderPhotos();
+
+  expect(await screen.findByRole("button", { name: "Upload photos" })).toBeInTheDocument();
+  expect(screen.queryByRole("group", { name: ADD_FROM_PHONE })).not.toBeInTheDocument();
+});
+
+test("PHOTO-08 the row's Try again retries only the network failures and Clear removes every failed tile", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+  store.upload.mockResolvedValue(err("network"));
+
+  renderPhotos();
+
+  await choose(chosen("Recipe card.pdf", "application/pdf"), chosen("IMG_2041.jpg"));
+
+  await screen.findByText("2 photos didn’t upload");
+
+  await userEvent.click(within(uploadRow()).getByRole("button", { name: "Try again" }));
+
+  expect(await screen.findByText("2 photos didn’t upload")).toBeInTheDocument();
+  expect(store.upload).toHaveBeenCalledTimes(2);
+
+  await userEvent.click(within(uploadRow()).getByRole("button", { name: "Clear" }));
+
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  expect(screen.queryByText(/didn’t upload$/)).not.toBeInTheDocument();
 });
 
 test("PHOTO-06 a chosen photo shows first with its progress and becomes a photo when it finishes", async () => {
@@ -342,7 +440,7 @@ test("PHOTO-06 a chosen photo shows first with its progress and becomes a photo 
 
   renderPhotos();
 
-  await screen.findByText("Family photos · 1");
+  await screen.findByText("Photos · 1");
 
   await choose(chosen("IMG_2041.jpg"));
 
@@ -356,7 +454,7 @@ test("PHOTO-06 a chosen photo shows first with its progress and becomes a photo 
 
   await act(async () => upload.finish(ok(synced(PICNIC))));
 
-  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+  expect(await screen.findByText("Photos · 2")).toBeInTheDocument();
   expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   expect(screen.getAllByRole("button", { name: /^Show / })[0]).toHaveAccessibleName(
     "Show IMG_2041",
@@ -374,7 +472,7 @@ test("PHOTO-04 a file over 20 MB fails as too large and is never sent", async ()
 
   await choose(big);
 
-  expect(await screen.findByRole("alert")).toHaveTextContent("Too large · 20 MB max");
+  expect(await screen.findByRole("alert")).toHaveAccessibleName("IMG_3307: Too large · 20 MB max");
   expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
   expect(store.upload).not.toHaveBeenCalled();
 });
@@ -405,17 +503,19 @@ test("PHOTO-08 a network failure changes only its tile and Try again restarts it
 
   await choose(chosen("IMG_2041.jpg"));
 
-  expect(await screen.findByRole("alert")).toHaveTextContent("Didn’t upload");
+  const failure = await screen.findByRole("alert");
+
+  expect(failure).toHaveAccessibleName("IMG_2041: Didn’t upload");
   expect(screen.getByText("1 photo didn’t upload")).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await userEvent.click(within(failure).getByRole("button", { name: "Try again" }));
 
   expect(progress("IMG_2041")).toHaveAttribute("aria-valuenow", "0");
   expect(store.upload).toHaveBeenCalledTimes(2);
 
   await act(async () => upload.finish(ok(synced(PICNIC))));
 
-  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+  expect(await screen.findByText("Photos · 2")).toBeInTheDocument();
 });
 
 async function goOffline() {
@@ -454,7 +554,7 @@ test("PHOTO-09 going offline pauses an upload, and back online it is sent again 
 
   await act(async () => upload.finish(ok(synced(PICNIC))));
 
-  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+  expect(await screen.findByText("Photos · 2")).toBeInTheDocument();
 });
 
 test("PHOTO-09 an upload still running when the screen reconnects carries on without a resend", async () => {
@@ -480,7 +580,7 @@ test("PHOTO-09 an upload still running when the screen reconnects carries on wit
 
   await act(async () => upload.finish(ok(synced(PICNIC))));
 
-  expect(await screen.findByText("Family photos · 2")).toBeInTheDocument();
+  expect(await screen.findByText("Photos · 2")).toBeInTheDocument();
 });
 
 test("FAIL-01 a failed first sync shows Photos unavailable with a countdown and Try again", async () => {
@@ -503,7 +603,7 @@ test("FAIL-01 a failed first sync shows Photos unavailable with a countdown and 
   expect(store.nudge).toHaveBeenCalledTimes(1);
 });
 
-test("PHOTO-11 the pencil opens Photo details for the featured photo and pauses the slideshow", async () => {
+test("PHOTO-11 Edit details opens Photo details for the featured photo and pauses the slideshow", async () => {
   runningClock();
 
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
@@ -512,7 +612,7 @@ test("PHOTO-11 the pencil opens Photo details for the featured photo and pauses 
 
   await screen.findByRole("img", { name: "Cannon Beach" });
 
-  await userEvent.click(screen.getByRole("button", { name: "Edit photo details" }));
+  await userEvent.click(screen.getByRole("button", { name: "Edit details" }));
 
   waitSeconds(20);
 
@@ -656,4 +756,97 @@ test("PHOTO-15 Background now · Change opens the Background page", async () => 
   await userEvent.click(await screen.findByRole("button", { name: "Background now · Change" }));
 
   expect(navigation.push).toHaveBeenCalledWith("/settings/background");
+});
+
+test("PHOTO-13 Delete pauses the slideshow and asks; Delete photo removes it and the next photo takes its place", async () => {
+  runningClock();
+
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
+
+  renderPhotos({}, "running");
+
+  await screen.findByRole("img", { name: "Cannon Beach" });
+
+  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+  waitSeconds(20);
+
+  expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
+  expect(featuredTitle()).toBe("Cannon Beach");
+
+  await userEvent.click(screen.getByRole("button", { name: "Delete photo" }));
+
+  expect(await screen.findByRole("img", { name: "Apple picking" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Show Cannon Beach" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+});
+
+test("PHOTO-13 Cancel or moving to another photo ends the confirm", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+
+  renderPhotos();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Next photo" }));
+
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  expect(featuredTitle()).toBe("Forest Park trail");
+});
+
+test("PHOTO-13 deleting the Photo background turns the background back to Season color", async () => {
+  await store.db.photos.bulkPut([synced(FOREST), synced(COAST)]);
+  await store.db.settings.put(
+    synced({
+      ...DEFAULT_SETTINGS,
+      accountId: store.accountId,
+      background: { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST.id },
+    }),
+  );
+
+  renderPhotos({ phdel: true });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Delete photo" }));
+
+  await vi.waitFor(async () =>
+    expect((await store.db.settings.get(store.accountId))?.background.mode).toBe("season"),
+  );
+  expect(await store.db.photos.get(COAST.id)).toMatchObject({
+    deletedAt: expect.any(String),
+  });
+});
+
+test("PHOTO-13 offline there is no Delete", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos({ phdel: true });
+
+  await screen.findByRole("img", { name: "Cannon Beach" });
+
+  await goOffline();
+
+  expect(screen.queryByRole("button", { name: /^Delete/ })).not.toBeInTheDocument();
+});
+
+test("PHOTO-13 phdel=1 opens with the confirm and the slideshow paused", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos({ phdel: true });
+
+  expect(
+    await screen.findByRole("alertdialog", { name: "Delete this photo?" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
+});
+
+test("PHOTO-01 play=0 opens the slideshow paused", async () => {
+  await store.db.photos.bulkPut([synced(COAST)]);
+
+  renderPhotos({ play: "0" });
+
+  expect(await screen.findByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
 });

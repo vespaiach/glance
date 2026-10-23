@@ -302,6 +302,12 @@ test("SIGNIN-09 a new account is welcomed by first name", () => {
   expect(screen.getByText("Opening Today…")).toBeInTheDocument();
 });
 
+test("PHOTO-03 a Photos code says Photos is opening", () => {
+  renderView({ step: "done", name: "Maria", returning: true }, { opens: "photos" });
+
+  expect(screen.getByText("Opening Photos…")).toBeInTheDocument();
+});
+
 test("SIGNIN-09 a returning account is welcomed back", () => {
   renderView({ step: "done", name: "Maria", returning: true });
 

@@ -5,6 +5,7 @@ import {
   fixtureOtherEmail,
   type TransportError,
 } from "@/data/repos";
+import { QR_OPENS, type QrOpens } from "@/domain/qrSignIn";
 import type { Account } from "@/domain/schemas";
 import {
   CODE_LENGTH,
@@ -112,6 +113,14 @@ export function openedLinkFrom(search: string): OpenedLink | undefined {
   const link = new URLSearchParams(search).get("link");
 
   return link === "opened" || link === "stale" ? link : undefined;
+}
+
+export function openedViewFrom(search: string): "today" | QrOpens {
+  const query = new URLSearchParams(search);
+
+  const opened = query.get("link") === "opened";
+
+  return (opened && QR_OPENS.find((view) => view === query.get("to"))) || "today";
 }
 
 export function initialSignIn(

@@ -59,6 +59,12 @@ export function changeBackground(
   return { ...next, photoId: slideshowAnchor(photos, photoId, next.rotate, now, tz) ?? photoId };
 }
 
+export function backgroundAfterDelete(background: Background, photoId: string): Background {
+  const shownPhotoGone = background.mode === "photo" && background.photoId === photoId;
+
+  return shownPhotoGone ? { ...background, mode: "season" } : background;
+}
+
 export function pickPhoto(mode: Background["mode"], photoId: string): Partial<Background> {
   return { mode: mode === "season" ? "photo" : mode, photoId };
 }

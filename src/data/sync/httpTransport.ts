@@ -47,7 +47,8 @@ export function createHttpTransport({
       send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
     locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
     displays: () => send<SignedInScreen[]>("/api/displays"),
-    issueQr: () => send<QrCode>("/api/auth/qr", { method: "POST" }),
+    issueQr: (opens) =>
+      send<QrCode>("/api/auth/qr", opens ? jsonBody("POST", { opens }) : { method: "POST" }),
     voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
     auth: {
       sendCode: (request) => send<void>("/api/auth/code", jsonBody("POST", request)),

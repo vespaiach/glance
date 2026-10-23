@@ -10,6 +10,7 @@ import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSheetHost } from "@/shell/SheetHost";
 import { PhotoSheet } from "./components/PhotoSheet";
 import { draftFromPhoto, initialPhotoSheet } from "./photoSheet";
+import { useDeletePhoto } from "./useDeletePhoto";
 
 export function PhotoSheetScreen() {
   const { sheet } = useSheetHost();
@@ -29,6 +30,8 @@ function EditPhotoSheet({ photo, discard }: { photo: Photo; discard?: true }) {
 
   const photoSrc = usePhotoSrc();
 
+  const deletePhoto = useDeletePhoto();
+
   const today = dateKey(useNow("minute"), useTimeZone());
 
   const onSave = (edited: Photo) => {
@@ -38,7 +41,7 @@ function EditPhotoSheet({ photo, discard }: { photo: Photo; discard?: true }) {
 
   const onDelete = () => {
     close();
-    void photos.remove(photo.id);
+    deletePhoto(photo.id);
   };
 
   return (
