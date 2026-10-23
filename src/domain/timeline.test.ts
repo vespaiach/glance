@@ -1,4 +1,5 @@
 import {
+  grownHeight,
   gutterWeather,
   hourWeather,
   outsideDay,
@@ -607,5 +608,79 @@ describe("hourWeather", () => {
 
     expect([...hourWeather(short, sky, false)]).toEqual([]);
     expect([...hourWeather(layout, new Map(), false)]).toEqual([]);
+  });
+});
+
+describe("Today timeline", () => {
+  const TODAY: TimelineOptions = {
+    ...CALENDAR,
+    height: 536,
+    passedFactor: 0.3,
+    minPlanHeight: 48,
+    minColumn: 120,
+    longStrips: true,
+  };
+
+  it("TODAY-11 a timeline from the current hour starts its rows and marks there", () => {
+    const layout = timelineLayout([], onOct9, { ...TODAY, firstHour: 10 });
+
+    expect(layout.rows.map((row) => row.hour)).toEqual([
+      10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    ]);
+    expect(layout.marks[0]).toMatchObject({ hour: 10, top: 0 });
+    expect(layout.now?.top).toBeGreaterThan(0);
+  });
+
+  it("TODAY-11 with the now dot, hour labels hide only within 10 px of it", () => {
+    const options = { ...TODAY, height: 550, firstHour: 10 };
+
+    const pill = timelineLayout([], onOct9, options);
+
+    const dot = timelineLayout([], onOct9, { ...options, nowDot: true });
+
+    expect(pill.marks.find((mark) => mark.hour === 11)?.label).toBe(false);
+    expect(dot.marks.find((mark) => mark.hour === 11)?.label).toBe(true);
+  });
+
+  it("TODAY-11 the timeline keeps its height when every plan ahead has room", () => {
+    expect(grownHeight([plan("call", 9, 720, 840)], onOct9, TODAY)).toBe(536);
+  });
+
+  it("TODAY-11 the timeline grows until a short plan ahead has room for a 66 px card", () => {
+    const plans = [plan("quick", 9, 900, 920)];
+
+    const height = grownHeight(plans, onOct9, TODAY);
+
+    const layout = timelineLayout(plans, onOct9, { ...TODAY, height, minPlanHeight: 0 });
+
+    expect(height).toBeGreaterThan(536);
+    expect(placed(layout, "quick").height - 4).toBeGreaterThanOrEqual(65.5);
+  });
+
+  it("TODAY-11 a plan of 30 min or more needs room for a 92 px card", () => {
+    const plans = [plan("half", 9, 900, 930)];
+
+    const height = grownHeight(plans, onOct9, TODAY);
+
+    const layout = timelineLayout(plans, onOct9, { ...TODAY, height, minPlanHeight: 0 });
+
+    expect(placed(layout, "half").height - 4).toBeCloseTo(92, 0);
+  });
+
+  it("TODAY-11 the timeline grows at most 3×", () => {
+    expect(grownHeight([plan("blink", 9, 900, 902)], onOct9, TODAY)).toBe(3 * 536);
+  });
+
+  it("TODAY-11 ended plans don't grow the timeline", () => {
+    expect(grownHeight([plan("early", 9, 480, 485)], onOct9, TODAY)).toBe(536);
+  });
+});
+
+describe("planCard time line", () => {
+  it("TODAY-11 a 20 px time line needs 2 px more before the card shows the time over the title", () => {
+    const card = { width: 400, height: 68, titleSize: 20, badge: false, note: false };
+
+    expect(planCard(card)).toMatchObject({ oneLine: false });
+    expect(planCard({ ...card, timeLine: 20 })).toMatchObject({ oneLine: true });
   });
 });

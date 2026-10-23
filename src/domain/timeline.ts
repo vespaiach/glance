@@ -11,6 +11,8 @@ export type TimelineOptions = {
   minHourHeight: number;
   minColumn: number;
   longStrips: boolean;
+  firstHour?: number;
+  nowDot?: boolean;
 };
 
 export type TimelineContext = { day: string; now: Date; tz: string };
@@ -78,6 +80,7 @@ export type PlanCardInput = {
   titleSize: number;
   badge: boolean;
   note: boolean;
+  timeLine?: number;
 };
 
 export type PlanCard = {
@@ -124,6 +127,8 @@ const LABEL_GAP = 24;
 
 const NOW_LABEL_GAP = 22;
 
+const NOW_DOT_LABEL_GAP = 10;
+
 const LINE_GAP = 12;
 
 const OVERLAP_SLACK = 0.5;
@@ -168,6 +173,14 @@ const GUTTER_WEATHER = 46;
 
 const GUTTER_NOW_CLEARANCE = 4;
 
+const FULL_CARD = 92;
+
+const SHORT_CARD = 66;
+
+const SHORT_CARD_UNDER = 30;
+
+const MAX_GROWTH = 3;
+
 export function timelineLayout<T extends TimelinePlan>(
   plans: readonly T[],
   { day, now, tz }: TimelineContext,
@@ -175,9 +188,9 @@ export function timelineLayout<T extends TimelinePlan>(
 ): TimelineLayout<T> {
   const intervals = plans.map((plan) => intervalOf(plan, tz));
 
-  const [first, last] = options.span === "24h" ? [0, 24 * 60] : [DAY_START, DAY_END];
+  const [first, last] = spanOf(options);
 
-  const nowMinutes = dateKey(now, tz) === day ? minutesOfDay(now, tz) : null;
+  const nowMinutes = minutesToday(day, now, tz);
 
   const scale = scaleFor(intervals, { first, last, nowMinutes }, options);
 
@@ -205,7 +218,10 @@ export function timelineLayout<T extends TimelinePlan>(
 
   return {
     rows: scale.rows,
-    marks: hourMarks(scale, nowMarker?.top ?? null),
+    marks: hourMarks(scale, {
+      top: nowMarker?.top ?? null,
+      gap: options.nowDot ? NOW_DOT_LABEL_GAP : NOW_LABEL_GAP,
+    }),
     plans: placement.plans,
     strips,
     stripsWidth,
@@ -218,19 +234,45 @@ export function timelineLayout<T extends TimelinePlan>(
   };
 }
 
+export function grownHeight<T extends TimelinePlan>(
+  plans: readonly T[],
+  { day, now, tz }: TimelineContext,
+  options: TimelineOptions,
+): number {
+  const intervals = plans.map((plan) => intervalOf(plan, tz));
+
+  const [first, last] = spanOf(options);
+
+  const nowMinutes = minutesToday(day, now, tz);
+
+  const scale = scaleFor(intervals, { first, last, nowMinutes }, options);
+
+  const factors = intervals
+    .filter((item) => nowMinutes === null || item.end > nowMinutes)
+    .map((item) => roomFactor(item, scale, [first, last]));
+
+  return Math.round(options.height * Math.min(MAX_GROWTH, Math.max(1, ...factors)));
+}
+
 export function outsideDay(plans: readonly TimelinePlan[], tz: string): number {
   return plans
     .map((plan) => intervalOf(plan, tz))
     .filter((item) => item.start < DAY_START || item.end > DAY_END).length;
 }
 
-export function planCard({ width, height, titleSize, badge, note }: PlanCardInput): PlanCard {
+export function planCard({
+  width,
+  height,
+  titleSize,
+  badge,
+  note,
+  timeLine = TIME_LINE,
+}: PlanCardInput): PlanCard {
   const room = height - CARD_GAP;
 
   const titleLine = Math.ceil(titleSize * 1.2);
 
-  const firstLines =
-    CARD_PADDING + (badge ? BADGE_LINE : TIME_LINE) + CARD_LINE_GAP + titleLine + 2;
+  const firstLines = CARD_PADDING + (badge ? BADGE_LINE : timeLine) + CARD_LINE_GAP + titleLine + 2;
 
   if (room < firstLines) {
     return {
@@ -311,6 +353,24 @@ export function hourWeather(
   }
 
   return shown;
+}
+
+function spanOf({ span, firstHour = 0 }: TimelineOptions): [number, number] {
+  return span === "24h" ? [0, 24 * 60] : [Math.max(DAY_START, firstHour * 60), DAY_END];
+}
+
+function minutesToday(day: string, now: Date, tz: string): number | null {
+  return dateKey(now, tz) === day ? minutesOfDay(now, tz) : null;
+}
+
+function roomFactor<T>(item: Interval<T>, scale: Scale, [first, last]: [number, number]): number {
+  const [from, to] = [Math.max(item.start, first), Math.min(item.end, last)];
+
+  if (to <= from) return 1;
+
+  const card = item.end - item.start >= SHORT_CARD_UNDER ? FULL_CARD : SHORT_CARD;
+
+  return (card + CARD_GAP) / (scale.y(to) - scale.y(from));
 }
 
 function intervalOf<T extends TimelinePlan>(plan: T, tz: string): Interval<T> {
@@ -416,7 +476,7 @@ function yAt(rows: readonly TimelineRow[], first: number, minutes: number): numb
   return row.top + ((minutes - first - index * 60) / 60) * row.height;
 }
 
-function hourMarks(scale: Scale, nowTop: number | null): HourMark[] {
+function hourMarks(scale: Scale, now: { top: number | null; gap: number }): HourMark[] {
   const hours = [...scale.rows.map((row) => row.hour), (scale.rows.at(-1)?.hour ?? 0) + 1];
 
   let lastLabel = -Infinity;
@@ -425,7 +485,7 @@ function hourMarks(scale: Scale, nowTop: number | null): HourMark[] {
   return hours.map((hour) => {
     const top = scale.y(hour * 60);
     const label =
-      top - lastLabel >= LABEL_GAP && (nowTop === null || Math.abs(top - nowTop) >= NOW_LABEL_GAP);
+      top - lastLabel >= LABEL_GAP && (now.top === null || Math.abs(top - now.top) >= now.gap);
     const line = label || top - lastLine >= LINE_GAP;
     if (label) lastLabel = top;
     if (line) lastLine = top;

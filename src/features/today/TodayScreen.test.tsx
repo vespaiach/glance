@@ -153,10 +153,10 @@ test("TODAY-02 the hero shows the event running now", async () => {
   expect(await screen.findByText("Happening now")).toBeInTheDocument();
   expect(screen.getByText("34 min left")).toBeInTheDocument();
   expect(screen.getByText("Living room · until 11:15 · Everyone")).toBeInTheDocument();
-  expect(screen.getByText("Today · 1 event")).toBeInTheDocument();
+  expect(screen.getByText("Today · 1 of 1 left")).toBeInTheDocument();
 });
 
-test("TODAY-13 a day with no events is wide open until 9 PM, with no Next on the calendar tile", async () => {
+test("TODAY-13 a day with no events is wide open until 9 PM, and what comes next shows in Coming up", async () => {
   await store.db.events.put(synced(TOMORROW));
 
   await markSynced(store);
@@ -166,7 +166,7 @@ test("TODAY-13 a day with no events is wide open until 9 PM, with no Next on the
   expect(await screen.findByText("The day is wide open")).toBeInTheDocument();
   expect(screen.getByText("Free until 9 PM · 10 h 19 min")).toBeInTheDocument();
   expect(screen.queryByText("Next on the calendar")).not.toBeInTheDocument();
-  expect(screen.queryByText(/Soccer game/)).not.toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: /^Soccer game, Tomorrow, / })).toBeVisible();
 });
 
 test("TODAY-02 once every event ended the day is a wrap", async () => {
@@ -251,8 +251,8 @@ test("TODAY-11 every plan from 5 AM to 9 PM shows on the timeline, with no See a
     ...CALL,
     id: `0195f0a0-0000-7000-8000-00000000010${hour}`,
     title: `Plan ${hour}`,
-    startAt: iso(9 + hour, 30),
-    endAt: iso(9 + hour, 45),
+    startAt: iso(11 + hour, 30),
+    endAt: iso(11 + hour, 45),
   }));
 
   await store.db.events.bulkPut(day.map(synced));
@@ -466,7 +466,7 @@ test("EVT-07 an event added from Today shows in the schedule at once", async () 
   );
 
   expect(await screen.findByText("Picnic")).toBeInTheDocument();
-  expect(screen.getByText("Today · 2 events")).toBeInTheDocument();
+  expect(screen.getByText("Today · 2 of 2 left")).toBeInTheDocument();
 });
 
 test("FAIL-01 a failed first sync shows each source unavailable with a countdown", async () => {
@@ -510,7 +510,7 @@ test("FAIL-02 saved events after a failed sync show when they were updated", asy
 
   renderToday();
 
-  expect(await screen.findByText("Today · 1 event · Updated 9:32 AM")).toBeInTheDocument();
+  expect(await screen.findByText("Today · 1 of 1 left · Updated 9:32 AM")).toBeInTheDocument();
 });
 
 test("TODAY-08 a failed weather fetch counts down in the Now panel", async () => {

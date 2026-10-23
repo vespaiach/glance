@@ -18,6 +18,7 @@ import {
 import { GalleryGroup } from "./GalleryGroup";
 import {
   ALL_DAY_EVENTS,
+  COMING_UP_EVENTS,
   FULL_WEATHER,
   GALLERY_FAMILY,
   GALLERY_TZ,
@@ -124,6 +125,13 @@ const styles = stylex.create({
     width: 358,
     height: "auto",
   },
+  narrow: {
+    width: 430,
+  },
+  normal: {
+    width: 520,
+    height: "auto",
+  },
   side: {
     width: 400,
   },
@@ -137,6 +145,7 @@ const schedule = {
   breakpoint: "large",
   iconActions: false,
   weather: { hourly: hourlyOn(9), unit: "F" },
+  upcoming: COMING_UP_EVENTS,
   onOpenEvent: ignore,
   onAddEvent: ignore,
   onAddSlot: ignore,
@@ -298,12 +307,25 @@ export function TodayGallery({ season }: { season: Season }) {
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
         breakpoint="small"
-        oneColumn
         iconActions
         xstyle={[styles.zone, styles.small]}
       />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_MANY }}
+        {...schedule}
+        breakpoint="normal"
+        iconActions
+        xstyle={[styles.zone, styles.normal]}
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_EVENTS }}
+        {...schedule}
+        xstyle={[styles.zone, styles.narrow]}
+      />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} />
-      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} weather={undefined} />
+      <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} upcoming={[]} />
       <TodaySchedule
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa] }}
@@ -315,7 +337,6 @@ export function TodayGallery({ season }: { season: Season }) {
         state={{ kind: "empty" }}
         {...schedule}
         breakpoint="small"
-        oneColumn
         iconActions
         xstyle={[styles.zone, styles.small]}
       />

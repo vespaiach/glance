@@ -63,12 +63,30 @@ export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | nul
   return useLiveQuery(async () => {
     const next = addDays(dayKey, 1);
 
-    const allDay = await firstFrom(db, allDayStart(next), true);
+    const [allDay] = await firstFrom(db, allDayStart(next), true, 1);
 
-    const timed = await firstFrom(db, isoDayStart(next, tz), false);
+    const [timed] = await firstFrom(db, isoDayStart(next, tz), false, 1);
 
     return earlierDay(allDay, timed, tz);
   }, [db, dayKey, tz]);
+}
+
+export function useEventsAfter(
+  dayKey: string,
+  tz: string,
+  limit: number,
+): StoredEvent[] | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => {
+    const next = addDays(dayKey, 1);
+
+    const allDay = await firstFrom(db, allDayStart(next), true, limit);
+
+    const timed = await firstFrom(db, isoDayStart(next, tz), false, limit);
+
+    return [...allDay, ...timed];
+  }, [db, dayKey, tz, limit]);
 }
 
 export function useUpcomingEvent(now: Date): StoredEvent | null | undefined {
@@ -117,8 +135,18 @@ function isoDayStart(key: string, tz: string): string {
   return dayStart(key, tz).toISOString();
 }
 
-function firstFrom(db: GlanceDb, from: string, allDay: boolean): Promise<StoredEvent | undefined> {
-  return db.events.where("startAt").aboveOrEqual(from).filter(isKind(allDay)).first();
+function firstFrom(
+  db: GlanceDb,
+  from: string,
+  allDay: boolean,
+  limit: number,
+): Promise<StoredEvent[]> {
+  return db.events
+    .where("startAt")
+    .aboveOrEqual(from)
+    .filter(isKind(allDay))
+    .limit(limit)
+    .toArray();
 }
 
 function earlierDay(

@@ -436,6 +436,35 @@ export const TODAY_MANY: readonly CalendarEvent[] = [
   })),
 ];
 
+export const COMING_UP_EVENTS: readonly CalendarEvent[] = [
+  {
+    id: sampleId(41),
+    title: "Soccer game",
+    location: "Laurelhurst Park",
+    startAt: octoberAt(10, 9).toISOString(),
+    endAt: octoberAt(10, 10, 30).toISOString(),
+    ...forTags(0, 1),
+  },
+  {
+    id: sampleId(42),
+    title: "Farmers market",
+    location: "Shemanski Park",
+    startAt: octoberAt(10, 11).toISOString(),
+    endAt: octoberAt(10, 12).toISOString(),
+    ...EVERYONE,
+  },
+  {
+    id: sampleId(43),
+    title: "Dentist — Mia",
+    location: "Dr. Patel",
+    startAt: octoberAt(12, 15, 30).toISOString(),
+    endAt: octoberAt(12, 16).toISOString(),
+    ...forTags(1),
+  },
+  ALL_DAY_EVENTS.noSchool,
+  ALL_DAY_EVENTS.conference,
+];
+
 export const TODAY_NOTES: readonly Note[] = [
   {
     id: sampleId(11),

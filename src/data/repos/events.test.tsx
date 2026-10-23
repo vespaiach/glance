@@ -4,6 +4,7 @@ import { deviceTimeZone } from "@/domain/zone";
 import {
   createEventsRepo,
   useEvent,
+  useEventsAfter,
   useEventsBetween,
   useEventsInWeek,
   useEventsOnDay,
@@ -184,6 +185,31 @@ describe("event hooks", () => {
     });
 
     await waitFor(() => expect(result.current?.id).toBe(NEXT_DAY.id));
+  });
+
+  it("TODAY-06 useEventsAfter reads up to the limit of live timed and all-day events after the day", async () => {
+    const trip = { ...event(5, "2026-10-12T00:00:00.000Z"), allDay: true as const };
+
+    const removed = { ...synced(event(6, at(9, 10, 8))), deletedAt: TEST_NOW.toISOString() };
+
+    const later = event(7, at(9, 11, 9));
+
+    await store.db.events.bulkPut([
+      synced(SOCCER),
+      synced(NEXT_MONTH),
+      synced(NEXT_DAY),
+      synced(later),
+      synced(trip),
+      removed,
+    ]);
+
+    const { result } = renderHook(() => useEventsAfter("2026-10-09", tz, 2), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.id)).toEqual([trip.id, NEXT_DAY.id, later.id]),
+    );
   });
 
   it("AMB-03 useNextEventAfter is null with nothing after the day", async () => {
