@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section data-season="{{ season }}" style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Today hero</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Now panel on Today at each screen size, drawn at the size it gets in the layout: large 1920×1080 (left column, full height), normal 1024×768 (same three-column layout, narrow column) and small 390×844 (first block in the scrolling column, viewport height minus 90 px so the next block peeks in). Each size shows four variants: weather on or off, and a day with an event running or no events. Clock reads 10:41 AM.</p>
+</section>
+<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px">
+<div style="background:#fff;border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
+<span style="font:600 24px/1.2 var(--font-sans)">Behaviour</span>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px 40px;font:15px/1.5 var(--font-sans)">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout and size</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Height: large is the viewport height minus the 40 px top and bottom gaps. Normal is the first grid row: at least the viewport height minus the 26.5 px top gap and 90 px, and as tall as the schedule beside it; the content sticks one gutter below the top of the screen while the page scrolls and stops at the panel’s bottom. Small is at least the viewport height minus the 20 px top gap and 90 px.</li>
+<li>Never narrower than 280 px on any size. Large and normal: left column of the three-column Today grid. Small: first block of the single scrolling column, full width minus 20 px gutters (windows under 320 px scroll sideways); the schedule starts below the fold.</li>
+<li>Order top to bottom: date with season icon, clock, weather now, event. Groups stack from the top, 24 px apart; weather and event each start with a 1 px white divider and 24 px above their content. Spare height stays at the bottom of the panel.</li>
+<li>Small: no clock (the phone already shows the time). Date with season icon, then a compact 60 px weather row (40 px icon, 44 px temperature, high/low and rain at 15 px, chevron), then the event. The panel is as tall as its content.</li><li>Clock, temperature and event title scale with the panel’s width (container units): clock 31%, temperature 17%, title 12% of the panel width (title 32–64 px), with min and max caps.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Weather</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Shows “{City} · Now”, temperature, “{condition} · High {h}° · Low {l}°” and “Rain from {time}” (first drizzle or rain hour; line hidden if none).</li>
+<li>Tap anywhere on the weather block → Weather.</li>
+<li>Weather off: the block is left out; the event follows the clock.</li>
+<li>No location → “Set weather location” → Weather. Fetch failed → “Weather unavailable” · “Trying again in 1 min.”</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Event</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Running → “Happening now”, title, “{where} · until {end} · {who}”, black pill “{n} min left”. Several running → the one that started last (ties: the shorter one).</li>
+<li>Nothing running, more later → “Up next”, title, “{where} · {start}”, pill “In {n} min” (“1 h 20 min” past an hour).</li>
+<li>Event title: two lines max, then cut with an ellipsis.</li>
+<li>Tap the event block → Event details. Countdown updates every minute.</li>
+</ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">No events</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+<li>Empty day → “Today · Open”, “The day is wide open”, “Free until 10 PM · {time left}”. All ended → “That’s a wrap for today”, “{n} events done · free until 10 PM”, ended events as white bars on the ribbon.</li>
+<li>Day ribbon 6 AM – 10 PM: elapsed part black, now marker with “Now {time}”, sunset tick with icon only.</li>
+<li>No “Next on the calendar” tile. On an open day the schedule card lists what’s coming up.</li>
+</ul></div>
+</div>
+</div>
+</section>
+<sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
+<section id="{{ s.id }}" data-screen-label="{{ s.name }}" data-season="{{ season }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:40px 48px;align-items:flex-start">
+<sc-for list="{{ s.vars }}" as="v" hint-placeholder-count="4">
+<div id="{{ v.id }}" style="display:flex;flex-direction:column;gap:12px;width:{{ v.w }}">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">{{ v.id }}</span><span style="font:500 14px/1.3 var(--font-sans)">{{ v.label }}</span></div>
+<div style="box-sizing:border-box;height:{{ v.frameH }};display:flex">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="1" padding="{{ s.pad }}" dc-props="{{ v.block }}" hint-size="100%,400px">
+<div style="display:flex;flex-direction:column;gap:var(--space-md)">
+<div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:14px;letter-spacing:var(--type-eyebrow-ls);text-transform:uppercase;line-height:1.3"><span>{{ heroDate }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ seasonIcon }}" size="18" hint-size="18px,18px"></x-import></div>
+<sc-if value="{{ s.clock }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="{{ clockTime }}" hour12="{{ true }}" show-date="{{ false }}" hint-size="100%,120px"></x-import></sc-if>
+</div>
+<sc-if value="{{ v.wxSm }}" hint-placeholder-val="{{ false }}">
+<div style="box-shadow:inset 0 1px 0 var(--surface-canvas);padding-top:16px;display:flex;align-items:center;gap:12px;min-width:0;min-height:60px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="40" stroke-width="1.25" hint-size="40px,40px"></x-import><span style="font-size:44px;font-weight:300;line-height:1;letter-spacing:-0.04em;font-variant-numeric:tabular-nums">{{ wx.temp }}</span><span style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:15px;font-weight:330;line-height:1.3">{{ wx.hl }}</span><span style="display:flex;align-items:center;gap:6px;font-size:15px;font-weight:480;line-height:1.3"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="umbrella" size="16" hint-size="16px,16px"></x-import>{{ wx.rain }}</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="18" stroke-width="2" hint-size="18px,18px"></x-import></div>
+</sc-if>
+<sc-if value="{{ v.wx }}" hint-placeholder-val="{{ true }}">
+<div style="box-shadow:inset 0 1px 0 var(--surface-canvas);padding-top:24px;display:flex;flex-direction:column;gap:12px;min-width:0">
+<span style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ wx.loc }}</x-import><span style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="16" stroke-width="2" hint-size="16px,16px"></x-import></span></span>
+<span style="display:flex;align-items:center;gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="{{ s.wxIcon }}" stroke-width="1.25" hint-size="64px,64px"></x-import><span style="font-size:var(--nh-temp);font-weight:300;line-height:1;letter-spacing:-0.04em;font-variant-numeric:tabular-nums">{{ wx.temp }}</span></span>
+<span style="display:flex;flex-direction:column;gap:6px"><span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ wx.cond }}</span><span style="display:flex;align-items:center;gap:8px;font-size:18px;font-weight:480;line-height:1.3"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="umbrella" size="20" hint-size="20px,20px"></x-import>{{ wx.rain }}</span></span>
+</div>
+</sc-if>
+<sc-if value="{{ v.ev }}" hint-placeholder-val="{{ true }}">
+<div style="box-shadow:inset 0 1px 0 var(--surface-canvas);padding-top:24px;display:flex;flex-direction:column;gap:12px;min-width:0">
+<span style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span style="display:flex;align-items:center;gap:6px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Happening now</x-import><span style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="16" stroke-width="2" hint-size="16px,16px"></x-import></span></span><span style="background:var(--action-primary);color:var(--on-action-primary);border-radius:9999px;padding:4px 12px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;white-space:nowrap">{{ ev.cd }}</span></span>
+<span style="font-size:var(--nh-title);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">{{ ev.title }}</span>
+<span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ ev.meta }}</span>
+</div>
+</sc-if>
+<sc-if value="{{ v.noEv }}" hint-placeholder-val="{{ false }}">
+<div style="box-shadow:inset 0 1px 0 var(--surface-canvas);padding-top:24px;display:flex;flex-direction:column;gap:20px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Today · Open</x-import>
+<span style="font-size:var(--nh-title);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">The day is wide open</span>
+<span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ open.body }}</span>
+</div>
+<div aria-hidden="true" style="position:relative;padding:30px 0 26px">
+<span style="position:absolute;top:0;left:{{ open.nowPct }};transform:translateX(-50%);font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now {{ open.nowL }}</span>
+<span style="position:absolute;top:-3px;left:{{ open.sunPct }};transform:translateX(-50%);display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span>
+<div style="position:relative;height:14px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ open.nowPct }};background:var(--action-primary)"></div></div>
+<div style="position:absolute;top:24px;left:{{ open.sunPct }};width:2px;height:26px;margin-left:-1px;background:var(--action-primary)"></div>
+<div style="position:absolute;top:21px;left:{{ open.nowPct }};width:32px;height:32px;margin-left:-16px;border-radius:50%;background:var(--action-primary);color:var(--on-action-primary);box-shadow:0 0 0 4px var(--surface-canvas);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" stroke-width="2" hint-size="20px,20px"></x-import></div>
+<span style="position:absolute;bottom:0;left:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">6 AM</span>
+<span style="position:absolute;bottom:0;right:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">10 PM</span>
+</div>
+<sc-if value="{{ v.next }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:64px;background:var(--surface-canvas);border-radius:24px;padding:14px 20px;box-sizing:border-box;display:flex;align-items:center;gap:16px;min-width:0">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="24" stroke-width="1.5" hint-size="24px,24px"></x-import>
+<span style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;line-height:1.2">Next on the calendar</span><span style="font-size:18px;font-weight:480;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ open.next }}</span></span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="20" stroke-width="2" hint-size="20px,20px"></x-import>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</x-import>
+</div>
+<span style="font:13px/1.45 var(--font-sans);max-width:100%;text-wrap:pretty">{{ v.note }}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const season = this.props.season ?? 'fall';
+    const icon = { spring: 'flower-2', summer: 'sun', fall: 'leaf', winter: 'snowflake' }[season] || 'leaf';
+    const D0 = 360, D1 = 1320, NOW = 641, SUN = 1122, P = (m) => (((m - D0) / (D1 - D0)) * 100).toFixed(2) + '%';
+    // [id, name, meta, hero width, hero height (null = content), block padding, frame gutter, weather icon]
+    const S = [
+      ['large', 'Large screen', '1920×1080 · hero column 404 px wide (min 280), 1000 px tall (1080 minus 40 px top and bottom gaps)', 404, 1000, 'clamp(24px,2.6vw,40px)', '0', 64],
+      ['normal', 'Normal screen', '1024×768 · hero column 379 px wide (0.8 of two columns, min 280), at least 652 px tall (768 minus the 26.5 px top gap and 90 px); the panel grows with the schedule and its content sticks to the top while the page scrolls', 379, 652, '26px', '0', 48],
+      ['small', 'Small screen', '390×844 · full width minus 20 px gutters (min 280), as tall as its content; no clock (the phone shows the time), compact weather row', 350, null, '24px', '0', 56],
+    ];
+    const V = [
+      ['Weather + event', true, true, 'Clock, weather now, event running with countdown. Weather and event are separate tap targets.'],
+      ['Weather, no events', true, false, 'Open-day hero under the weather: day ribbon 6 AM – 10 PM. Upcoming plans show in the schedule card, not here.'],
+      ['No weather + event', false, true, 'Weather hidden. The event follows the clock.'],
+      ['No weather, no events', false, false, 'Clock and open-day hero only.'],
+    ];
+    const sizes = S.map(([id, name, meta, w, h, pad, gut, wxIcon], si) => ({
+      id, name, meta, pad, gut, wxIcon, frameR: '0', clock: id !== 'small',
+      vars: V.map(([label, wx, ev, note], vi) => ({
+        id: `${name[0]}${vi + 1}`, label, wx: wx && id !== 'small', wxSm: wx && id === 'small', ev, noEv: !ev, next: false, note, w: w + 'px', frameH: h ? h + 'px' : 'auto',
+        block: { style: { width: w, height: h || 'auto', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 24, minWidth: 0, overflow: 'hidden', containerType: 'inline-size', '--type-clock-size': 'clamp(56px,31cqi,200px)', '--nh-temp': 'clamp(48px,17cqi,128px)', '--nh-title': 'clamp(32px,12cqi,64px)' } },
+      })),
+    }));
+    return {
+      season, seasonIcon: icon, sizes,
+      heroDate: 'Friday, October 9', clockTime: '2026-10-09T10:41:00',
+      wx: { loc: 'Portland · Now', hl: 'High 68° · Low 51°', temp: '64°', cond: 'Partly cloudy · High 68° · Low 51°', rain: 'Rain from 4 PM' },
+      ev: { cd: '34 min left', title: 'Dentist checkup and teeth cleaning with Dr. Alvarez, then follow-up X-rays', meta: 'Hawthorne Dental · until 11:15 · Mom' },
+      open: { body: 'Free until 10 PM · 11 h 19 min', nowPct: P(NOW), nowL: '10:41 AM', sunPct: P(SUN), next: 'Tomorrow · 9:00 AM · Soccer game, Laurelhurst Park' },
+    };
+  }
+}
+</script>
+</body>
+</html>
