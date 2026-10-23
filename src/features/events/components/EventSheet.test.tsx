@@ -24,6 +24,10 @@ const DAD = tag(2, "Dad", "mint");
 
 const FAMILY = [MOM, DAD];
 
+const KID = tag(3, "Kid", "sky");
+
+const FAMILY_OF_THREE = [MOM, DAD, KID];
+
 const WHO = { tagIds: [MOM.id, DAD.id], notes: "" };
 
 const DRAFT: EventDraft = {
@@ -387,7 +391,7 @@ async function tabOrder(count: number) {
 test("A11Y-04 Tab moves through Back, the header actions, the fields in visual order, and wraps", async () => {
   renderSheet();
 
-  expect(await tabOrder(14)).toEqual([
+  expect(await tabOrder(13)).toEqual([
     screen.getByRole("button", { name: "Back" }),
     screen.getByRole("button", { name: "Delete" }),
     screen.getByRole("button", { name: "Cancel" }),
@@ -396,8 +400,7 @@ test("A11Y-04 Tab moves through Back, the header actions, the fields in visual o
     screen.getByRole("button", { name: /^Starts/ }),
     screen.getByRole("button", { name: /^Ends/ }),
     screen.getByRole("switch", { name: "All day" }),
-    screen.getByRole("button", { name: "Remove Mom" }),
-    screen.getByRole("button", { name: "Remove Dad" }),
+    screen.getByRole("button", { name: "Remove everyone" }),
     screen.getByLabelText("Who"),
     screen.getByLabelText("Where"),
     screen.getByLabelText("Notes"),
@@ -613,15 +616,47 @@ function forTags(...tags: Tag[]) {
   return initialEventSheet({ ...DRAFT, tagIds: tags.map((one) => one.id) });
 }
 
-test("EVT-11 an everyone plan shows every tag as its own pill, no Everyone pill", () => {
+test("EVT-11 an everyone plan collapses its pills into one Everyone chip", () => {
   renderSheet();
 
-  expect(pills()).toEqual(["Remove Mom", "Remove Dad"]);
-  expect(within(whoField()).queryByText("Everyone")).not.toBeInTheDocument();
+  expect(pills()).toEqual(["Remove everyone"]);
+  expect(within(whoField()).getByText("Everyone")).toBeInTheDocument();
+  expect(within(whoField()).queryByText("Mom")).not.toBeInTheDocument();
+});
+
+test("EVT-11 the Everyone chip's ✕ clears the field", async () => {
+  const onSave = vi.fn();
+
+  renderSheet({ onSave });
+
+  await userEvent.click(screen.getByRole("button", { name: "Remove everyone" }));
+
+  expect(pills()).toEqual([]);
+  expect(whoInput()).toHaveAttribute("placeholder", "Add a person");
+
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(onSave).toHaveBeenCalledWith({ ...DRAFT, tagIds: [] });
+});
+
+test("EVT-11 Backspace in an empty input clears an Everyone field", async () => {
+  renderSheet();
+
+  await userEvent.type(whoInput(), "{Backspace}");
+
+  expect(pills()).toEqual([]);
+});
+
+test("EVT-11 adding the last missing tag collapses the pills into Everyone", async () => {
+  renderSheet({ initial: forTags(MOM) });
+
+  await userEvent.type(whoInput(), "dad{Enter}");
+
+  expect(pills()).toEqual(["Remove everyone"]);
 });
 
 test("EVT-11 ✕ takes that tag off the event", async () => {
-  renderSheet();
+  renderSheet({ tags: FAMILY_OF_THREE });
 
   await userEvent.click(screen.getByRole("button", { name: "Remove Mom" }));
 
@@ -642,7 +677,7 @@ test("EVT-11 the input reads Add someone else once someone is added", () => {
 });
 
 test("EVT-11 Backspace in an empty input removes the last pill", async () => {
-  renderSheet();
+  renderSheet({ tags: FAMILY_OF_THREE });
 
   await userEvent.type(whoInput(), "{Backspace}");
 
@@ -650,7 +685,7 @@ test("EVT-11 Backspace in an empty input removes the last pill", async () => {
 });
 
 test("EVT-11 Backspace with text in the input only edits the text", async () => {
-  renderSheet();
+  renderSheet({ tags: FAMILY_OF_THREE });
 
   await userEvent.type(whoInput(), "Gr{Backspace}");
 
@@ -679,7 +714,7 @@ test("EVT-11 suggestions show only while typing and leave out tags on the event"
 });
 
 test("EVT-11 tapping a suggestion adds that tag and clears the input", async () => {
-  renderSheet({ initial: forTags(MOM) });
+  renderSheet({ initial: forTags(MOM), tags: FAMILY_OF_THREE });
 
   await userEvent.type(whoInput(), "da");
   await userEvent.click(screen.getByRole("button", { name: "Dad" }));
@@ -753,7 +788,7 @@ test("FAM-04 Enter on a new name creates the tag", async () => {
 test("EVT-11 removing every pill saves nobody", async () => {
   const onSave = vi.fn();
 
-  renderSheet({ onSave });
+  renderSheet({ onSave, tags: FAMILY_OF_THREE });
 
   await userEvent.click(screen.getByRole("button", { name: "Remove Mom" }));
   await userEvent.click(screen.getByRole("button", { name: "Remove Dad" }));
@@ -780,7 +815,7 @@ test("EVT-02 Notes is a 3-row field that edits the draft", async () => {
 test("§8.9 a Who change asks Discard changes? on Cancel", async () => {
   renderSheet();
 
-  await userEvent.click(screen.getByRole("button", { name: "Remove Mom" }));
+  await userEvent.click(screen.getByRole("button", { name: "Remove everyone" }));
   await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
   expect(screen.getByText("Discard changes?")).toBeInTheDocument();

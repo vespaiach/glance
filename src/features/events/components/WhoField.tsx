@@ -1,6 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
-import { Plus, X } from "lucide-react";
-import { type KeyboardEvent, useId } from "react";
+import { Plus, Users, X } from "lucide-react";
+import { type KeyboardEvent, type ReactNode, useId } from "react";
 import { copy } from "@/copy";
 import { type Tag, type TagColor, TagColorSchema } from "@/domain/schemas";
 import { suggestTags } from "@/domain/tagMatch";
@@ -20,6 +20,7 @@ type WhoFieldProps = {
   onInput: (value: string) => void;
   onAdd: (id: string) => void;
   onRemove: (id: string) => void;
+  onClear: () => void;
   onColor: (color: TagColor) => void;
   onCreate: () => void;
 };
@@ -29,6 +30,14 @@ type NewMemberProps = {
   color: TagColor;
   onColor: (color: TagColor) => void;
   onCreate: () => void;
+};
+
+type PillProps = {
+  name: string;
+  removeLabel: string;
+  xstyle: stylex.StyleXStyles;
+  onRemove: () => void;
+  children?: ReactNode;
 };
 
 type SuggestionsProps = {
@@ -88,6 +97,13 @@ const styles = stylex.create({
     fontSize: 16,
     fontWeight: 480,
     whiteSpace: "nowrap",
+  },
+  everyone: {
+    backgroundColor: colors.surfaceSoft,
+  },
+  everyoneIcon: {
+    display: "flex",
+    marginInlineEnd: 6,
   },
   remove: {
     width: 36,
@@ -246,6 +262,7 @@ export function WhoField({
   onInput,
   onAdd,
   onRemove,
+  onClear,
   onColor,
   onCreate,
 }: WhoFieldProps) {
@@ -253,12 +270,16 @@ export function WhoField({
 
   const selected = tagIds.flatMap((id) => tags.filter((tag) => tag.id === id));
 
+  const everyone = tags.length > 0 && selected.length === tags.length;
+
   const exact = exactTag(tags, input);
 
   const name = input.trim();
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     const last = selected.at(-1);
+
+    if (event.key === "Backspace" && input === "" && everyone) return onClear();
 
     if (event.key === "Backspace" && input === "" && last) return onRemove(last.id);
 
@@ -276,19 +297,28 @@ export function WhoField({
         {copy.events.sheet.who}
       </label>
       <fieldset aria-label={words.people} {...stylex.props(styles.field)}>
-        {selected.map((tag) => (
-          <span key={tag.id} {...stylex.props(styles.pill, fills[tag.color])}>
-            {tag.name}
-            <button
-              type="button"
-              aria-label={words.remove(tag.name)}
-              onClick={() => onRemove(tag.id)}
-              {...stylex.props(styles.remove, press.scale)}
-            >
-              <Icon icon={X} size={16} />
-            </button>
-          </span>
-        ))}
+        {everyone ? (
+          <Pill
+            name={copy.events.everyone}
+            removeLabel={words.removeEveryone}
+            xstyle={styles.everyone}
+            onRemove={onClear}
+          >
+            <span {...stylex.props(styles.everyoneIcon)}>
+              <Icon icon={Users} size={16} />
+            </span>
+          </Pill>
+        ) : (
+          selected.map((tag) => (
+            <Pill
+              key={tag.id}
+              name={tag.name}
+              removeLabel={words.remove(tag.name)}
+              xstyle={fills[tag.color]}
+              onRemove={() => onRemove(tag.id)}
+            />
+          ))
+        )}
         <input
           id={inputId}
           type="text"
@@ -306,6 +336,23 @@ export function WhoField({
       )}
       <Suggestions tags={suggestTags(tags, input, tagIds)} onAdd={onAdd} />
     </div>
+  );
+}
+
+function Pill({ name, removeLabel, xstyle, onRemove, children }: PillProps) {
+  return (
+    <span {...stylex.props(styles.pill, xstyle)}>
+      {children}
+      {name}
+      <button
+        type="button"
+        aria-label={removeLabel}
+        onClick={onRemove}
+        {...stylex.props(styles.remove, press.scale)}
+      >
+        <Icon icon={X} size={16} />
+      </button>
+    </span>
   );
 }
 

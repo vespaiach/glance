@@ -235,6 +235,10 @@ describe("event sheet reducer", () => {
     expect(reduce(forMom, { type: "removeTag", id: MOM }).draft.tagIds).toEqual([]);
   });
 
+  it("EVT-11 clearing the tags leaves nobody", () => {
+    expect(reduce(closed, { type: "clearTags" }).draft.tagIds).toEqual([]);
+  });
+
   it("EVT-11 adding a tag puts its pill last and clears the input", () => {
     const typing = reduce(opening({ ...DRAFT, tagIds: [DAD] }), { type: "whoInput", value: "mo" });
 

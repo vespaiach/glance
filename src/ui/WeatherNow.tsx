@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import type { LucideIcon } from "lucide-react";
 import type { WeatherIcon } from "@/domain/schemas";
-import { space } from "@/theme/tokens.stylex";
+import { colors, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { ColorBlock } from "./ColorBlock";
 import { Eyebrow } from "./Eyebrow";
@@ -33,6 +33,7 @@ type WeatherNowProps = {
   details?: readonly WeatherDetail[];
   labels: WeatherNowLabels;
   tone?: WeatherNowTone;
+  compact?: boolean;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -78,6 +79,14 @@ const styles = stylex.create({
     borderTopStyle: "solid",
     borderTopColor: "rgba(0,0,0,.12)",
   }),
+  detailsGrid: {
+    gridTemplateColumns: "repeat(2, minmax(0,1fr))",
+    rowGap: space.lg,
+    borderTopColor: colors.surfaceCanvas,
+  },
+  detailValueCompact: {
+    lineHeight: 1.1,
+  },
   detailsOnDeep: { borderTopColor: "rgba(255,255,255,.2)" },
   detail: {
     display: "flex",
@@ -107,6 +116,7 @@ export function WeatherNow({
   details = [],
   labels,
   tone = 3,
+  compact = false,
   xstyle,
 }: WeatherNowProps) {
   const range = rangeText({ high, low, feelsLike }, labels);
@@ -124,7 +134,11 @@ export function WeatherNow({
       </div>
       {details.length > 0 && (
         <div
-          {...stylex.props(styles.details(details.length), tone === "deep" && styles.detailsOnDeep)}
+          {...stylex.props(
+            styles.details(details.length),
+            compact && styles.detailsGrid,
+            tone === "deep" && styles.detailsOnDeep,
+          )}
         >
           {details.map((detail) => (
             <div key={detail.label} {...stylex.props(styles.detail)}>
@@ -132,7 +146,9 @@ export function WeatherNow({
                 {detail.icon && <Icon icon={detail.icon} size={16} />}
                 {detail.label}
               </Eyebrow>
-              <div {...stylex.props(styles.detailValue)}>{detail.value}</div>
+              <div {...stylex.props(styles.detailValue, compact && styles.detailValueCompact)}>
+                {detail.value}
+              </div>
             </div>
           ))}
         </div>

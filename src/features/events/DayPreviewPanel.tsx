@@ -21,7 +21,7 @@ import {
   minutesOfDay,
 } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
-import { useViewportWidth } from "@/shell/breakpoint";
+import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
@@ -45,12 +45,10 @@ type TileInput = {
   clock: Clock;
 };
 
-const MIN_WIDTH = 1180;
-
 const words = copy.events.preview;
 
 export function DayPreviewPanel(props: PanelProps) {
-  if (useViewportWidth() < MIN_WIDTH) return null;
+  if (useBreakpoint() === "small") return null;
 
   return <LoadedPanel {...props} />;
 }

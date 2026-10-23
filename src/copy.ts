@@ -291,6 +291,7 @@ export const copy = {
       addPerson: "Add a person",
       addSomeoneElse: "Add someone else",
       remove: (name: string) => `Remove ${name}`,
+      removeEveryone: "Remove everyone",
       suggestions: "Suggestions",
       newMember: "New member",
       addMember: "Add member",

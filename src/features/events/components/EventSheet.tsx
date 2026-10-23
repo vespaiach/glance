@@ -311,6 +311,7 @@ export function EventSheet({
         onInput={(value) => dispatch({ type: "whoInput", value })}
         onAdd={(id) => dispatch({ type: "addTag", id })}
         onRemove={(id) => dispatch({ type: "removeTag", id })}
+        onClear={() => dispatch({ type: "clearTags" })}
         onColor={(color) => dispatch({ type: "newColor", color })}
         onCreate={createTag}
       />

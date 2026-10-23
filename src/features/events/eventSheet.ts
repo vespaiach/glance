@@ -45,6 +45,7 @@ export type EventSheetAction =
   | { type: "title" | "location" | "notes"; value: string }
   | { type: "whoInput"; value: string }
   | { type: "addTag" | "removeTag"; id: string }
+  | { type: "clearTags" }
   | { type: "newColor"; color: TagColor }
   | { type: "start" | "end"; value: number }
   | { type: "allDay"; value: boolean }
@@ -181,6 +182,8 @@ function editReducer(state: EventEditState, action: EventSheetAction): EventShee
       return { ...withTagIds(state, withTag(draft.tagIds, action.id)), ...NO_WHO_INPUT };
     case "removeTag":
       return withTagIds(state, without(draft.tagIds, action.id));
+    case "clearTags":
+      return withTagIds(state, []);
     case "newColor":
       return { ...state, newColor: action.color };
     case "start":

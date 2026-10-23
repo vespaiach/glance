@@ -152,6 +152,7 @@ export function WeatherForecast({
         feelsLike={temp(current.feelsLike)}
         details={details(current, unit, clock, tz)}
         labels={copy.weather.range}
+        compact={breakpoint === "small"}
         xstyle={styles.now}
       />
       <div {...stylex.props(styles.panel)}>
