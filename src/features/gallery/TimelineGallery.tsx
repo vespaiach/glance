@@ -24,7 +24,6 @@ type Demo = {
 
 const LABELS: DayTimelineLabels = {
   ...copy.timeline,
-  now: copy.events.now,
   everyone: copy.events.everyone,
   icons: copy.weather.icon,
 };
@@ -79,6 +78,7 @@ const DEMOS: readonly Demo[] = [
     props: { plans: [], free: "none", breakpoint: "normal" },
   },
   { label: words.small, width: 358, height: 720, props: { breakpoint: "small" } },
+  { label: words.folded, width: 640, height: 640, props: {} },
   {
     label: words.schedule,
     width: 560,
@@ -131,6 +131,7 @@ export function TimelineGallery() {
               free="everyone"
               labels={LABELS}
               onOpenEvent={ignore}
+              onOpenMore={ignore}
               onAddEvent={ignore}
               {...demo.props}
             />

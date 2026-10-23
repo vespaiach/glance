@@ -1,6 +1,6 @@
 import {
   gutterWeather,
-  laneTile,
+  hourWeather,
   outsideDay,
   planCard,
   planRain,
@@ -60,9 +60,19 @@ const OCT_10_PLANS = [
 const CALENDAR: TimelineOptions = {
   span: "day",
   height: 640,
+  width: 1000,
   passedFactor: 0.35,
   minPlanHeight: 44,
+  minHourHeight: 0,
+  minColumn: 0,
+  longStrips: false,
 };
+
+const TALL: TimelineOptions = { ...CALENDAR, height: 3000 };
+
+const FOLDING: TimelineOptions = { ...CALENDAR, width: 600, minColumn: 200 };
+
+const FOLDED_COLUMN = 548 / 600 / 2;
 
 const onOct9 = { day: OCT_9, now: NOW, tz };
 
@@ -250,8 +260,8 @@ describe("timelineLayout", () => {
     const plans = [plan("a", 10, 540, 600), plan("b", 10, 540, 570), plan("c", 10, 570, 600)];
     const layout = timelineLayout(plans, onOct10, CALENDAR);
 
-    expect(plans.map(({ id }) => placed(layout, id).column)).toEqual([0, 1, 1]);
-    expect(plans.map(({ id }) => placed(layout, id).columns)).toEqual([2, 2, 2]);
+    expect(plans.map(({ id }) => placed(layout, id).left)).toEqual([0, 0.5, 0.5]);
+    expect(plans.map(({ id }) => placed(layout, id).width)).toEqual([0.5, 0.5, 0.5]);
   });
 
   it("TL-03 a plan widens into free columns beside it", () => {
@@ -263,22 +273,22 @@ describe("timelineLayout", () => {
     ];
     const layout = timelineLayout(plans, onOct10, CALENDAR);
 
-    expect(placed(layout, "d")).toMatchObject({ column: 1, columns: 3, columnSpan: 2 });
-    expect(placed(layout, "b")).toMatchObject({ column: 1, columns: 3, columnSpan: 1 });
+    expect(placed(layout, "d")).toMatchObject({ left: 1 / 3, width: 2 / 3 });
+    expect(placed(layout, "b")).toMatchObject({ left: 1 / 3, width: 1 / 3 });
   });
 
   it("TL-03 longer plans take the leftmost column", () => {
     const layout = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
 
-    expect(placed(layout, "school").column).toBe(0);
-    expect(placed(layout, "yoga").column).toBeGreaterThan(0);
-    expect(placed(layout, "video-call").column).toBeGreaterThan(0);
+    expect(placed(layout, "school").left).toBe(0);
+    expect(placed(layout, "yoga").left).toBeGreaterThan(0);
+    expect(placed(layout, "video-call").left).toBeGreaterThan(0);
   });
 
   it("TL-03 plans that don't overlap use the full width", () => {
     const layout = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
 
-    expect(placed(layout, "movie-night")).toMatchObject({ column: 0, columns: 1, columnSpan: 1 });
+    expect(placed(layout, "movie-night")).toMatchObject({ left: 0, width: 1 });
   });
 
   it("TL-01 leaves out plans outside the span and clips one that starts before it", () => {
@@ -296,7 +306,7 @@ describe("timelineLayout", () => {
   });
 
   it("TL-08 free slots are the gaps of 30 min or more between 5 AM and 9 PM", () => {
-    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, TALL);
 
     expect(slots(layout)).toEqual([
       [315, 420],
@@ -306,7 +316,7 @@ describe("timelineLayout", () => {
   });
 
   it("TL-08 free slots stay within 5 AM to 9 PM on 24 hours", () => {
-    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...CALENDAR, span: "24h" });
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, { ...TALL, span: "24h" });
 
     expect(slots(layout)).toEqual([
       [315, 420],
@@ -316,8 +326,8 @@ describe("timelineLayout", () => {
   });
 
   it("TL-08 on today free slots start at now", () => {
-    const today = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
-    const dayBefore = timelineLayout(OCT_9_PLANS, { ...onOct9, now: october(8, 600) }, CALENDAR);
+    const today = timelineLayout(OCT_9_PLANS, onOct9, TALL);
+    const dayBefore = timelineLayout(OCT_9_PLANS, { ...onOct9, now: october(8, 600) }, TALL);
 
     expect(slots(today)).toEqual([[1230, 1260]]);
     expect(slots(dayBefore)).toEqual([
@@ -337,7 +347,7 @@ describe("timelineLayout", () => {
   });
 
   it("TL-08 a free slot sits at its elastic place", () => {
-    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, TALL);
     const [, midday] = layout.freeSlots;
     const row12 = layout.rows.find((row) => row.hour === 12);
     const row14 = layout.rows.find((row) => row.hour === 14);
@@ -347,13 +357,112 @@ describe("timelineLayout", () => {
   });
 
   it("TL-08 a new event starts at the slot rounded up to 15 min, 1 hour or to its end", () => {
-    const layout = timelineLayout(OCT_10_PLANS, onOct10, CALENDAR);
-    const today = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
-    const fromNow = timelineLayout([], onOct9, CALENDAR);
+    const layout = timelineLayout(OCT_10_PLANS, onOct10, TALL);
+    const today = timelineLayout(OCT_9_PLANS, onOct9, TALL);
+    const fromNow = timelineLayout([], onOct9, TALL);
 
     expect(layout.freeSlots[0]?.newEvent).toEqual({ start: 315, end: 375 });
     expect(today.freeSlots[0]?.newEvent).toEqual({ start: 1230, end: 1260 });
     expect(fromNow.freeSlots[0]?.newEvent).toEqual({ start: 645, end: 705 });
+  });
+
+  it("TL-08 a free slot shorter than 44 px isn't drawn", () => {
+    const plans = [plan("a", 10, 540, 600), plan("b", 10, 630, 700)];
+
+    expect(slots(timelineLayout(plans, onOct10, TALL))).toContainEqual([600, 630]);
+    expect(slots(timelineLayout(plans, onOct10, CALENDAR))).not.toContainEqual([600, 630]);
+  });
+
+  it("TL-01 every hour row is at least the minimum hour height and the rows still fill", () => {
+    const loose = timelineLayout(OCT_9_PLANS, onOct9, CALENDAR);
+    const firm = timelineLayout(OCT_9_PLANS, onOct9, { ...CALENDAR, minHourHeight: 26 });
+
+    expect(Math.min(...loose.rows.map((row) => row.height))).toBeLessThan(26);
+    expect(Math.min(...firm.rows.map((row) => row.height))).toBeCloseTo(
+      26 + (0.35 * (640 - 16 * 26)) / firm.rows.reduce((sum, row) => sum + row.weight, 0),
+    );
+    expect(firm.rows.reduce((sum, row) => sum + row.height, 0)).toBeCloseTo(640);
+  });
+
+  it("TL-12 columns narrower than the minimum fold into a +N MORE tile on the right", () => {
+    const plans = [
+      plan("a", 10, 540, 600),
+      plan("b", 10, 540, 600),
+      plan("c", 10, 550, 600),
+      plan("d", 10, 545, 600),
+    ];
+    const layout = timelineLayout(plans, onOct10, FOLDING);
+
+    expect(layout.plans.map((item) => item.plan.id)).toEqual(["a", "b"]);
+    expect(placed(layout, "a")).toMatchObject({ left: 0, width: FOLDED_COLUMN });
+    expect(placed(layout, "b")).toMatchObject({ left: FOLDED_COLUMN, width: FOLDED_COLUMN });
+    expect(layout.more).toHaveLength(1);
+    expect(layout.more[0]).toMatchObject({
+      count: 2,
+      left: 2 * FOLDED_COLUMN,
+      start: 545,
+      end: 600,
+      top: placed(layout, "a").top + (placed(layout, "a").height * 5) / 60,
+      tall: true,
+    });
+    expect(layout.more[0]?.first.id).toBe("d");
+  });
+
+  it("TL-12 a short +N tile is at least 48 px tall and shows the count alone", () => {
+    const plans = ["a", "b", "c", "d"].map((id) => plan(id, 10, 1080, 1095));
+    const [more] = timelineLayout(plans, onOct10, FOLDING).more;
+
+    expect(more).toMatchObject({ count: 2, height: 48, tall: false });
+  });
+
+  it("TL-12 a plan with nothing folded beside it uses the full width", () => {
+    const plans = [
+      plan("a", 10, 540, 660),
+      plan("b", 10, 540, 570),
+      plan("c", 10, 540, 570),
+      plan("d", 10, 540, 570),
+      plan("e", 10, 600, 660),
+    ];
+    const layout = timelineLayout(plans, onOct10, FOLDING);
+
+    expect(placed(layout, "e")).toMatchObject({ left: FOLDED_COLUMN, width: 1 - FOLDED_COLUMN });
+    expect(placed(layout, "b").width).toBe(FOLDED_COLUMN);
+  });
+
+  it("TL-12 columns that fit their minimum width never fold", () => {
+    const plans = ["a", "b", "c", "d"].map((id) => plan(id, 10, 540, 600));
+    const layout = timelineLayout(plans, onOct10, { ...FOLDING, width: 1000 });
+
+    expect(layout.more).toEqual([]);
+    expect(layout.plans.map((item) => item.width)).toEqual([0.25, 0.25, 0.25, 0.25]);
+  });
+
+  it("TL-13 plans over 3 hours leave the columns as 44 px edge strips side by side", () => {
+    const plans = [...OCT_9_PLANS, plan("camp", 9, 480, 720)];
+    const layout = timelineLayout(plans, onOct9, { ...CALENDAR, longStrips: true });
+    const row8 = layout.rows.find((row) => row.hour === 8);
+
+    expect(layout.strips.map((strip) => [strip.plan.id, strip.left])).toEqual([
+      ["camp", 0],
+      ["school", 52],
+    ]);
+    expect(layout.stripsWidth).toBe(104);
+    expect(layout.strips[0]?.top).toBeCloseTo(row8?.top ?? -1);
+    expect(layout.plans.map((item) => item.plan.id)).not.toContain("school");
+    expect(layout.plans.map((item) => item.plan.id)).not.toContain("camp");
+  });
+
+  it("TL-13 the columns fold against the width the strips leave", () => {
+    const plans = [
+      plan("a", 10, 540, 600),
+      plan("b", 10, 540, 600),
+      plan("c", 10, 540, 600),
+      plan("d", 10, 540, 600),
+      plan("school", 10, 480, 900),
+    ];
+    const layout = timelineLayout(plans, onOct10, { ...FOLDING, width: 652, longStrips: true });
+
+    expect(layout.more[0]?.left).toBeCloseTo(2 * FOLDED_COLUMN);
   });
 
   it("CAL-06 counts plans that start before 5 AM or end after 9 PM", () => {
@@ -418,7 +527,7 @@ describe("planCard", () => {
     expect(planCard({ ...card, height: 200, note: false })).toMatchObject({ note: false });
   });
 
-  it("TL-05 a NOW pill or rain chip makes the first line taller", () => {
+  it("TL-07 a rain chip makes the first line taller", () => {
     expect(planCard({ ...card, height: 74 })).toMatchObject({ oneLine: false });
     expect(planCard({ ...card, height: 74, badge: true })).toMatchObject({ oneLine: true });
   });
@@ -432,17 +541,22 @@ describe("planRain", () => {
   ]);
 
   it("TL-07 a plan overlapping hours of 50% rain or more gets the highest chance", () => {
-    expect(planRain(540, 630, rain)).toBe(80);
-    expect(planRain(420, 600, rain)).toBe(70);
+    expect(planRain(540, 630, rain, 400)).toBe(80);
+    expect(planRain(420, 600, rain, 400)).toBe(70);
   });
 
   it("TL-07 a plan only in hours under 50% gets no chip", () => {
-    expect(planRain(660, 720, rain)).toBe(0);
-    expect(planRain(540, 630, new Map())).toBe(0);
+    expect(planRain(660, 720, rain, 400)).toBe(0);
+    expect(planRain(540, 630, new Map(), 400)).toBe(0);
   });
 
   it("TL-07 a plan ending on the hour doesn't reach the next hour", () => {
-    expect(planRain(480, 540, rain)).toBe(0);
+    expect(planRain(480, 540, rain, 400)).toBe(0);
+  });
+
+  it("TL-07 a card under 180 px wide gets no chip", () => {
+    expect(planRain(540, 630, rain, 179)).toBe(0);
+    expect(planRain(540, 630, rain, 180)).toBe(80);
   });
 });
 
@@ -465,39 +579,33 @@ describe("gutterWeather", () => {
   });
 });
 
-describe("laneTile", () => {
-  it("TL-11 a tile 64 px or taller stacks a large icon over the temperature", () => {
-    expect(laneTile(64, false, 0)).toEqual({
-      content: true,
-      stacked: true,
-      large: true,
-      rain: false,
-      wet: false,
-    });
+describe("hourWeather", () => {
+  const layout = timelineLayout([], onOct10, { ...CALENDAR, height: 1600 });
+
+  const sky = new Map(
+    Array.from({ length: 16 }, (_, i) => {
+      const hour = 5 + i;
+      return [
+        hour,
+        { icon: hour >= 17 ? "sun" : "cloud", precip: hour === 12 || hour === 13 ? 60 : 0 },
+      ];
+    }),
+  );
+
+  const shown = (sparse: boolean) => [...hourWeather(layout, sky, sparse)];
+
+  it("TL-07 Calendar shows the weather under every hour that has room", () => {
+    expect(shown(false)).toEqual([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
   });
 
-  it("TL-11 a shorter tile puts icon and temperature in a row from 22 px", () => {
-    expect(laneTile(63, false, 0)).toMatchObject({ content: true, stacked: false, large: false });
-    expect(laneTile(22, false, 0)).toMatchObject({ content: true });
-    expect(laneTile(21, false, 0)).toMatchObject({ content: false });
+  it("TL-07 Today shows the first hour, icon changes, rain starting or stopping, else every 3 hours", () => {
+    expect(shown(true)).toEqual([5, 8, 11, 12, 14, 17, 20]);
   });
 
-  it("TL-11 on small every tile stacks small from 46 px", () => {
-    expect(laneTile(46, true, 0)).toMatchObject({ content: true, stacked: true, large: false });
-    expect(laneTile(45, true, 0)).toMatchObject({ content: false });
-  });
+  it("TL-07 hours without a forecast or room show nothing", () => {
+    const short = timelineLayout([], onOct10, CALENDAR);
 
-  it("TL-11 an hour with rain of 50% or more is wet", () => {
-    expect(laneTile(20, false, 50)).toMatchObject({ wet: true, content: false });
-    expect(laneTile(100, true, 49)).toMatchObject({ wet: false });
-  });
-
-  it("TL-11 rain of 50% or more shows its chance when the tile has room", () => {
-    expect(laneTile(76, false, 70)).toMatchObject({ rain: true });
-    expect(laneTile(75, false, 70)).toMatchObject({ rain: false });
-    expect(laneTile(30, false, 70)).toMatchObject({ rain: true });
-    expect(laneTile(29, false, 70)).toMatchObject({ rain: false });
-    expect(laneTile(100, false, 40)).toMatchObject({ rain: false });
-    expect(laneTile(100, true, 80)).toMatchObject({ rain: false });
+    expect([...hourWeather(short, sky, false)]).toEqual([]);
+    expect([...hourWeather(layout, new Map(), false)]).toEqual([]);
   });
 });

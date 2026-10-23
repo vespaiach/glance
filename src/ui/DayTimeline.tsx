@@ -26,13 +26,15 @@ import {
 } from "@/domain/time";
 import {
   type FreeSlot,
-  gutterWeather,
-  laneTile,
+  hourWeather,
+  type MoreTile,
   type PlacedPlan,
+  type PlacedStrip,
   type PlanCard,
   planCard,
   planRain,
   type TimelineLayout,
+  type TimelineOptions,
   timelineLayout,
 } from "@/domain/timeline";
 import { type HourlyPoint, hourlyByHour } from "@/domain/weather";
@@ -46,15 +48,15 @@ import { type BoxSize, useBoxSize } from "./useBoxSize";
 import { weatherIcons } from "./weatherIcons";
 
 export type DayTimelineLabels = {
-  now: string;
   everyone: string;
   rain: (percent: number) => string;
   until: (time: string) => string;
   free: (everyone: boolean, length: string) => string;
   freeName: (range: string) => string;
   planName: (title: string, range: string) => string;
-  lane: string;
-  chance: (percent: number) => string;
+  more: string;
+  moreName: (count: number, range: string, opensCalendar: boolean) => string;
+  longPlans: string;
   icons: Record<WeatherIcon, string>;
 };
 
@@ -77,14 +79,18 @@ type DayTimelineProps = {
   span?: "day" | "24h";
   free: TimelineFree;
   weather?: TimelineWeather;
-  weatherAt?: "gutter" | "lane";
   labels: DayTimelineLabels;
   onOpenEvent: (id: string) => void;
+  onOpenMore: (earliestId: string) => void;
   onAddEvent: (slot: { start: Date; end: Date }) => void;
   xstyle?: stylex.StyleXStyles;
 };
 
 type Dimensions = { gutter: number; titleSize: number };
+
+type Variant = DayTimelineProps["variant"];
+
+type Rules = Pick<TimelineOptions, "minColumn" | "minHourHeight" | "longStrips">;
 
 type Fill = TagColor | "soft" | "past";
 
@@ -102,7 +108,18 @@ const INSET = 12;
 
 const PASSED_FACTOR = { calendar: 0.35, today: 0.3 } as const;
 
-const MIN_PLAN_HEIGHT: Record<LayoutSize, number> = { large: 44, small: 40 };
+const MIN_PLAN_HEIGHT: Record<LayoutSize, number> = { large: 48, small: 40 };
+
+const RULES: Record<Variant, Record<LayoutSize, Rules>> = {
+  calendar: {
+    large: { minColumn: 200, minHourHeight: 26, longStrips: true },
+    small: { minColumn: 0, minHourHeight: 0, longStrips: false },
+  },
+  today: {
+    large: { minColumn: 120, minHourHeight: 0, longStrips: true },
+    small: { minColumn: 120, minHourHeight: 0, longStrips: true },
+  },
+};
 
 const DIMENSIONS: Record<"calendar" | "today", Record<LayoutSize, Dimensions>> = {
   calendar: {
@@ -115,13 +132,11 @@ const DIMENSIONS: Record<"calendar" | "today", Record<LayoutSize, Dimensions>> =
   },
 };
 
-const LANE_WIDTH: Record<LayoutSize, number> = { large: 112, small: 48 };
-
 const SLOT_INSET = 2;
 
 const SLOT_GAP = 8;
 
-const MIN_SLOT = 10;
+const STRIP_WIDTH = 44;
 
 const SLOT_LABEL = 28;
 
@@ -182,18 +197,22 @@ const styles = stylex.create({
     fontVariantNumeric: "tabular-nums",
     whiteSpace: "nowrap",
   },
+  todayWeather: {
+    fontSize: 17,
+    lineHeight: "22px",
+  },
   hairline: {
     flexGrow: 1,
     height: 1,
     marginTop: 10,
     backgroundColor: colors.borderHairline,
   },
-  area: (left: number, right: number) => ({
+  area: (left: number) => ({
     position: "absolute",
     top: 0,
     bottom: 0,
     left,
-    right,
+    right: 0,
   }),
   slot: (top: number, height: number) => ({
     position: "absolute",
@@ -340,7 +359,6 @@ const styles = stylex.create({
   },
   pastTitle: {
     fontWeight: 340,
-    textDecoration: "line-through",
   },
   dots: {
     display: "flex",
@@ -363,22 +381,12 @@ const styles = stylex.create({
     display: "flex",
     flexShrink: 0,
   },
-  badge: {
+  rainBadge: {
     flexShrink: 0,
     borderRadius: radii.full,
     fontFamily: type.fontMono,
     fontSize: 13,
     whiteSpace: "nowrap",
-  },
-  nowBadge: {
-    paddingBlock: 3,
-    paddingInline: 12,
-    letterSpacing: "0.6px",
-    textTransform: "uppercase",
-    backgroundColor: colors.actionPrimary,
-    color: colors.onActionPrimary,
-  },
-  rainBadge: {
     display: "flex",
     alignItems: "center",
     gap: 4,
@@ -388,56 +396,60 @@ const styles = stylex.create({
     letterSpacing: "0.4px",
     backgroundColor: colors.surfaceCanvas,
   },
-  lane: (width: number) => ({
+  strip: (top: number, height: number, left: number) => ({
     position: "absolute",
-    top: 0,
-    bottom: 0,
-    right: 0,
-    width,
-    margin: 0,
-    padding: 0,
-    listStyle: "none",
-  }),
-  laneHour: (top: number, height: number) => ({
-    position: "absolute",
-    left: SLOT_GAP,
-    right: 0,
     top,
     height,
-    boxSizing: "border-box",
-    paddingBlock: SLOT_INSET,
+    left,
+    width: STRIP_WIDTH,
   }),
-  laneTile: {
-    height: "100%",
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceSoft,
+  strips: {
+    margin: 0,
+    padding: 0,
+    borderWidth: 0,
+    minWidth: 0,
+  },
+  stripButton: {
+    paddingInlineEnd: 0,
+  },
+  stripCard: {
+    paddingBlock: 12,
+    paddingInline: 0,
+    alignItems: "center",
+  },
+  stripText: {
+    writingMode: "vertical-rl",
     display: "flex",
+    alignItems: "center",
+    gap: 10,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    maxHeight: "100%",
+  },
+  stripTitle: {
+    fontSize: 17,
+    letterSpacing: "-0.2px",
+  },
+  moreCard: {
+    backgroundColor: season.soft,
+    boxShadow: `inset 0 0 0 1px ${colors.borderHairline}`,
+    paddingBlock: 6,
+    paddingInline: 0,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
-  },
-  laneWet: {
-    backgroundColor: season.block3,
-  },
-  laneContent: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    fontSize: 15,
-    fontWeight: 480,
-    fontVariantNumeric: "tabular-nums",
-  },
-  laneStacked: {
-    flexDirection: "column",
     gap: 2,
   },
-  laneLarge: {
+  moreCount: {
     fontSize: 18,
+    fontWeight: 540,
+    lineHeight: 1.2,
+    fontVariantNumeric: "tabular-nums",
   },
-  laneChance: {
+  moreWord: {
     fontFamily: type.fontMono,
-    fontSize: 13,
-    letterSpacing: "0.4px",
+    fontSize: 14,
+    letterSpacing: "0.54px",
+    textTransform: "uppercase",
   },
   nowMarker: (top: number) => ({
     position: "absolute",
@@ -447,7 +459,6 @@ const styles = stylex.create({
     display: "flex",
     alignItems: "center",
     pointerEvents: "none",
-    zIndex: 2,
   }),
   nowGutter: (width: number) => ({
     width,
@@ -486,9 +497,9 @@ export function DayTimeline({
   span = "day",
   free,
   weather,
-  weatherAt = "gutter",
   labels,
   onOpenEvent,
+  onOpenMore,
   onAddEvent,
   xstyle,
 }: DayTimelineProps) {
@@ -506,22 +517,24 @@ export function DayTimeline({
 
   const height = Math.max(0, size.height - 2 * INSET);
 
+  const width = Math.max(0, size.width - dimensions.gutter);
+
   const layout = timelineLayout(
     plans,
     { day, now, tz },
     {
       span,
       height,
+      width,
       passedFactor: PASSED_FACTOR[variant],
       minPlanHeight: MIN_PLAN_HEIGHT[record],
+      ...RULES[variant][record],
     },
   );
 
   const shared: Shared = { tags, now, tz, clock, labels };
 
-  const lane = weather && weatherAt === "lane" && hours.size > 0 ? LANE_WIDTH[record] : 0;
-
-  const areaWidth = size.width - dimensions.gutter - lane;
+  const columnsWidth = width - layout.stripsWidth;
 
   const rain = chips ? rainByHour(hours) : new Map<number, number>();
 
@@ -532,11 +545,37 @@ export function DayTimeline({
           layout={layout}
           gutter={dimensions.gutter}
           hours={hours}
-          weather={lane > 0 ? undefined : weather}
+          weather={weather}
+          sparse={variant === "today"}
           clock={clock}
           labels={labels}
         />
-        <div {...stylex.props(styles.area(dimensions.gutter, lane))}>
+        {layout.now && (
+          <div {...stylex.props(styles.nowMarker(layout.now.top))}>
+            <span {...stylex.props(styles.nowGutter(dimensions.gutter))}>
+              <span {...stylex.props(styles.nowPill)}>
+                {timeParts(layout.now.minutes, clock).time}
+              </span>
+            </span>
+            <span {...stylex.props(styles.nowLine)} />
+          </div>
+        )}
+        {layout.strips.length > 0 && (
+          <fieldset
+            aria-label={labels.longPlans}
+            {...stylex.props(styles.area(dimensions.gutter), styles.strips)}
+          >
+            {layout.strips.map((strip) => (
+              <StripTile
+                key={strip.plan.id}
+                strip={strip}
+                shared={shared}
+                onClick={() => onOpenEvent(strip.plan.id)}
+              />
+            ))}
+          </fieldset>
+        )}
+        <div {...stylex.props(styles.area(dimensions.gutter + layout.stripsWidth))}>
           {free !== "none" &&
             layout.freeSlots.map((slot) => (
               <FreeSlotTile
@@ -553,33 +592,23 @@ export function DayTimeline({
               key={placed.plan.id}
               placed={placed}
               shared={shared}
-              width={(placed.columnSpan / placed.columns) * areaWidth}
+              width={placed.width * columnsWidth}
               titleSize={dimensions.titleSize}
-              rain={planRain(placed.start, placed.end, rain)}
+              rain={planRain(placed.start, placed.end, rain, placed.width * columnsWidth)}
               onClick={() => onOpenEvent(placed.plan.id)}
             />
           ))}
+          {layout.more.map((tile) => (
+            <MoreTileButton
+              key={tile.first.id}
+              tile={tile}
+              opensCalendar={variant === "today"}
+              clock={clock}
+              labels={labels}
+              onClick={() => onOpenMore(tile.first.id)}
+            />
+          ))}
         </div>
-        {lane > 0 && weather && (
-          <WeatherLane
-            width={lane}
-            rows={layout.rows}
-            hours={hours}
-            unit={weather.unit}
-            compact={record === "small"}
-            labels={labels}
-          />
-        )}
-        {layout.now && (
-          <div {...stylex.props(styles.nowMarker(layout.now.top))}>
-            <span {...stylex.props(styles.nowGutter(dimensions.gutter))}>
-              <span {...stylex.props(styles.nowPill)}>
-                {timeParts(layout.now.minutes, clock).time}
-              </span>
-            </span>
-            <span {...stylex.props(styles.nowLine)} />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -590,6 +619,7 @@ function HourMarks({
   gutter,
   hours,
   weather,
+  sparse,
   clock,
   labels,
 }: {
@@ -597,18 +627,15 @@ function HourMarks({
   gutter: number;
   hours: ReadonlyMap<number, HourlyPoint>;
   weather: TimelineWeather | undefined;
+  sparse: boolean;
   clock: Clock;
   labels: DayTimelineLabels;
 }) {
-  const nowTop = layout.now?.top ?? null;
+  const shown = weather ? hourWeather(layout, hours, sparse) : new Set<number>();
 
   return layout.marks.map((mark) => {
-    const row = layout.rows.find((item) => item.hour === mark.hour);
     const point = hours.get(mark.hour);
-    const showWeather =
-      weather !== undefined && point !== undefined && row !== undefined
-        ? gutterWeather(mark, row.height, nowTop)
-        : false;
+    const showWeather = shown.has(mark.hour);
     return (
       <div key={mark.hour} {...stylex.props(styles.mark(mark.top), styles.reflow)}>
         <div {...stylex.props(styles.gutter(gutter), !mark.label && styles.hidden)}>
@@ -616,10 +643,10 @@ function HourMarks({
             {formatHour((mark.hour % 24) * 60, clock)}
           </span>
           {showWeather && point && weather && (
-            <span {...stylex.props(styles.gutterWeather)}>
+            <span {...stylex.props(styles.gutterWeather, sparse && styles.todayWeather)}>
               <Icon
                 icon={weatherIcons[point.icon]}
-                size={16}
+                size={sparse ? 20 : 16}
                 strokeWidth={1.5}
                 label={labels.icons[point.icon]}
               />
@@ -631,60 +658,6 @@ function HourMarks({
       </div>
     );
   });
-}
-
-function WeatherLane({
-  width,
-  rows,
-  hours,
-  unit,
-  compact,
-  labels,
-}: {
-  width: number;
-  rows: TimelineLayout<CalendarEvent>["rows"];
-  hours: ReadonlyMap<number, HourlyPoint>;
-  unit: TimelineWeather["unit"];
-  compact: boolean;
-  labels: DayTimelineLabels;
-}) {
-  return (
-    <ul aria-label={labels.lane} {...stylex.props(styles.lane(width))}>
-      {rows.map((row) => {
-        const point = hours.get(row.hour);
-        if (!point) return null;
-        const tile = laneTile(row.height, compact, point.precip ?? 0);
-        return (
-          <li key={row.hour} {...stylex.props(styles.laneHour(row.top, row.height), styles.reflow)}>
-            <div {...stylex.props(styles.laneTile, tile.wet && styles.laneWet)}>
-              {tile.content && (
-                <span
-                  {...stylex.props(
-                    styles.laneContent,
-                    tile.stacked && styles.laneStacked,
-                    tile.large && styles.laneLarge,
-                  )}
-                >
-                  <Icon
-                    icon={weatherIcons[point.icon]}
-                    size={tile.large ? 26 : 18}
-                    strokeWidth={1.5}
-                    label={labels.icons[point.icon]}
-                  />
-                  {temperature(point.temp, unit)}
-                  {tile.rain && (
-                    <span {...stylex.props(styles.laneChance)}>
-                      {labels.chance(point.precip ?? 0)}
-                    </span>
-                  )}
-                </span>
-              )}
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
 }
 
 function FreeSlotTile({
@@ -701,8 +674,6 @@ function FreeSlotTile({
   onClick: () => void;
 }) {
   const height = slot.height - SLOT_GAP;
-
-  if (height <= MIN_SLOT) return null;
 
   return (
     <button
@@ -752,7 +723,7 @@ function PlanTile({
     width,
     height: placed.height,
     titleSize,
-    badge: status === "now" || chip > 0,
+    badge: chip > 0,
     note: note !== "",
   });
 
@@ -776,12 +747,7 @@ function PlanTile({
       aria-label={shared.labels.planName(event.title, rangeText(placed.start, end, shared.clock))}
       onClick={onClick}
       {...stylex.props(
-        styles.plan(
-          placed.top,
-          placed.height,
-          percent(placed.column, placed.columns),
-          percent(placed.columnSpan, placed.columns),
-        ),
+        styles.plan(placed.top, placed.height, percent(placed.left), percent(placed.width)),
         styles.planButton,
         press.scale,
       )}
@@ -809,13 +775,10 @@ function PlanTile({
                 {timeText(placed, card, shared, end)}
               </span>
               {chip > 0 && (
-                <span {...stylex.props(styles.badge, styles.rainBadge)}>
+                <span {...stylex.props(styles.rainBadge)}>
                   <Icon icon={CloudRain} size={16} />
                   {shared.labels.rain(chip)}
                 </span>
-              )}
-              {status === "now" && (
-                <span {...stylex.props(styles.badge, styles.nowBadge)}>{shared.labels.now}</span>
               )}
             </span>
             {title}
@@ -835,6 +798,93 @@ function PlanTile({
             )}
           </>
         )}
+      </span>
+    </button>
+  );
+}
+
+function StripTile({
+  strip,
+  shared,
+  onClick,
+}: {
+  strip: PlacedStrip<CalendarEvent>;
+  shared: Shared;
+  onClick: () => void;
+}) {
+  const { plan: event } = strip;
+
+  const status = eventStatus(event, shared.now, shared.tz);
+
+  const end = event.endAt === undefined ? undefined : strip.end;
+
+  return (
+    <button
+      type="button"
+      aria-label={shared.labels.planName(event.title, rangeText(strip.start, end, shared.clock))}
+      onClick={onClick}
+      {...stylex.props(
+        styles.strip(strip.top, strip.height, strip.left),
+        styles.planButton,
+        styles.stripButton,
+        press.scale,
+      )}
+    >
+      <span
+        {...stylex.props(
+          styles.card,
+          styles.stripCard,
+          styles[fillOf(event, status, shared.tags)],
+          status === "now" && styles.now,
+        )}
+      >
+        <span {...stylex.props(styles.stripText)}>
+          <span
+            {...stylex.props(
+              styles.stripTitle,
+              status === "past" ? styles.pastTitle : styles.titleWeight,
+            )}
+          >
+            {event.title}
+          </span>
+          <span {...stylex.props(styles.time)}>
+            {rangeText(strip.start, strip.end, shared.clock)}
+          </span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function MoreTileButton({
+  tile,
+  opensCalendar,
+  clock,
+  labels,
+  onClick,
+}: {
+  tile: MoreTile<CalendarEvent>;
+  opensCalendar: boolean;
+  clock: Clock;
+  labels: DayTimelineLabels;
+  onClick: () => void;
+}) {
+  const name = labels.moreName(tile.count, rangeText(tile.start, tile.end, clock), opensCalendar);
+
+  return (
+    <button
+      type="button"
+      aria-label={name}
+      onClick={onClick}
+      {...stylex.props(
+        styles.plan(tile.top, tile.height, percent(tile.left), percent(1 - tile.left)),
+        styles.planButton,
+        press.scale,
+      )}
+    >
+      <span {...stylex.props(styles.card, styles.moreCard)}>
+        <span {...stylex.props(styles.moreCount)}>{`+${tile.count}`}</span>
+        {tile.tall && <span {...stylex.props(styles.moreWord)}>{labels.more}</span>}
       </span>
     </button>
   );
@@ -901,8 +951,8 @@ function firstLine(notes: string | undefined): string {
   return notes?.trim().split("\n")[0]?.trim() ?? "";
 }
 
-function percent(part: number, whole: number): string {
-  return `${(part / whole) * 100}%`;
+function percent(share: number): string {
+  return `${share * 100}%`;
 }
 
 function temperature(fahrenheit: number, unit: TimelineWeather["unit"]): string {

@@ -132,8 +132,10 @@ export const copy = {
       `${everyone ? "Everyone free" : "Free"} · ${length}`,
     freeName: (range: string) => `Free ${range}. Add event`,
     planName: (title: string, range: string) => `${title}, ${range}`,
-    lane: "Hourly weather",
-    chance: (percent: number) => `${percent}%`,
+    more: "More",
+    moreName: (count: number, range: string, opensCalendar: boolean) =>
+      `${count} more ${count === 1 ? "plan" : "plans"}, ${range}. ${opensCalendar ? "Open calendar" : "Show details"}`,
+    longPlans: "Long plans",
   },
   calendar: {
     previousWeek: "Previous week",

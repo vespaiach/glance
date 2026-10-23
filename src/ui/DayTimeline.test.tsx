@@ -43,15 +43,16 @@ const hourly = (day: number, rows: [hour: number, temp: number, precip: number][
   })) as Weather["hourly"];
 
 const labels: DayTimelineLabels = {
-  now: "Now",
   everyone: "Everyone",
   rain: (percent) => `${percent}% rain`,
   until: (time) => `Until ${time}`,
   free: (everyone, length) => `${everyone ? "Everyone free" : "Free"} · ${length}`,
   freeName: (range) => `Free ${range}. Add event`,
   planName: (title, range) => `${title}, ${range}`,
-  lane: "Hourly weather",
-  chance: (percent) => `${percent}%`,
+  more: "More",
+  moreName: (count, range, opensCalendar) =>
+    `${count} more ${count === 1 ? "plan" : "plans"}, ${range}. ${opensCalendar ? "Open calendar" : "Show details"}`,
+  longPlans: "Long plans",
   icons: {
     sun: "Clear",
     moon: "Clear",
@@ -82,6 +83,7 @@ const base: Props = {
   free: "everyone",
   labels,
   onOpenEvent: () => {},
+  onOpenMore: () => {},
   onAddEvent: () => {},
 };
 
@@ -144,14 +146,49 @@ test("TL-08 tapping a free slot adds an event at its start rounded up to 15 min,
   });
 });
 
-test("TL-05 the plan happening now shows a NOW pill and other days never do", () => {
-  const { rerender } = render(<DayTimeline {...base} day="2026-10-09" plans={[VIDEO_CALL]} />);
+test("TL-05 the plan happening now has no NOW pill", () => {
+  render(<DayTimeline {...base} day="2026-10-09" plans={[VIDEO_CALL]} />);
 
-  expect(screen.getByRole("button", { name: /^Grandma/ })).toHaveTextContent("Now");
+  expect(screen.getByRole("button", { name: /^Grandma/ })).not.toHaveTextContent("Now");
+});
 
-  rerender(<DayTimeline {...base} plans={[SOCCER]} />);
+test("TL-12 the +N MORE tile on Calendar opens the earliest folded plan", async () => {
+  const onOpenMore = vi.fn();
+  const plans = [
+    plan(4, "Swim", [10, 540, 600]),
+    plan(5, "Piano", [10, 540, 600]),
+    plan(6, "Chess", [10, 550, 600]),
+    plan(7, "Art", [10, 545, 600]),
+  ];
+  render(<DayTimeline {...base} plans={plans} onOpenMore={onOpenMore} />);
 
-  expect(screen.getByRole("button", { name: /^Soccer game/ })).not.toHaveTextContent("Now");
+  const more = screen.getByRole("button", {
+    name: "2 more plans, 9:05 – 10:00 AM. Show details",
+  });
+  await userEvent.click(more);
+
+  expect(more).toHaveTextContent("+2");
+  expect(screen.queryByRole("button", { name: /^Chess/ })).not.toBeInTheDocument();
+  expect(onOpenMore).toHaveBeenCalledWith(plans[3]?.id);
+});
+
+test("TL-12 on Today the +N MORE tile says it opens the calendar", () => {
+  const plans = [4, 5, 6, 7, 8, 9].map((n) => plan(n, `Plan ${n}`, [10, 540, 600]));
+  render(<DayTimeline {...base} variant="today" plans={plans} />);
+
+  expect(screen.getByRole("button", { name: /more plans, .*\. Open calendar$/ })).toBeVisible();
+});
+
+test("TL-13 a plan over 3 hours is a strip button that opens it", async () => {
+  const onOpenEvent = vi.fn();
+  const school = plan(4, "School", [10, 495, 900]);
+  render(<DayTimeline {...base} plans={[school, SOCCER]} onOpenEvent={onOpenEvent} />);
+
+  const strips = screen.getByRole("group", { name: "Long plans" });
+  await userEvent.click(within(strips).getByRole("button", { name: /^School/ }));
+
+  expect(within(strips).getByRole("button", { name: /^School/ })).toHaveTextContent("8:15");
+  expect(onOpenEvent).toHaveBeenCalledWith(school.id);
 });
 
 test("TL-09 today shows the now time in the gutter and other days don't", () => {
@@ -189,7 +226,7 @@ test("TL-07 on small Calendar keeps the gutter weather and drops the rain chips"
   expect(screen.getByRole("button", { name: /^Soccer game/ })).not.toHaveTextContent("rain");
 });
 
-test("TODAY-11 Today shows each hour's weather under its label instead of a lane", () => {
+test("TL-07 Today shows hour weather only where it says something new", () => {
   const weather = {
     hourly: hourly(9, [
       [12, 66, 10],
@@ -202,24 +239,5 @@ test("TODAY-11 Today shows each hour's weather under its label instead of a lane
   expect(screen.queryByRole("list")).not.toBeInTheDocument();
   expect(screen.getByText("66°")).toBeVisible();
   expect(screen.getAllByRole("img", { name: "Cloudy" })[0]).toBeVisible();
-});
-
-test("TL-11 with the lane, Today lists each forecast hour on the right instead of the gutter", () => {
-  const weather = {
-    hourly: hourly(9, [
-      [12, 66, 10],
-      [13, 67, 80],
-    ]),
-    unit: "F",
-  } as const;
-  render(
-    <DayTimeline {...base} variant="today" day="2026-10-09" weather={weather} weatherAt="lane" />,
-  );
-
-  const lane = screen.getByRole("list", { name: "Hourly weather" });
-
-  expect(within(lane).getAllByRole("listitem")).toHaveLength(2);
-  expect(within(lane).getByText("66°")).toBeVisible();
-  expect(within(lane).getByRole("img", { name: "Rain" })).toBeVisible();
-  expect(screen.getAllByText(/^6[67]°$/)).toHaveLength(2);
+  expect(screen.queryByText("67°")).not.toBeInTheDocument();
 });

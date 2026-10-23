@@ -39,7 +39,6 @@ type TodayScheduleProps = {
 
 const LABELS: DayTimelineLabels = {
   ...copy.timeline,
-  now: copy.events.now,
   everyone: copy.events.everyone,
   icons: copy.weather.icon,
 };
@@ -110,6 +109,7 @@ type ScheduleProps = Pick<
   | "weather"
   | "onOpenEvent"
   | "onAddSlot"
+  | "onOpenCalendar"
 > & { events: readonly CalendarEvent[] };
 
 export function TodaySchedule({
@@ -118,13 +118,12 @@ export function TodaySchedule({
   onRetry,
   iconActions,
   onAddEvent,
-  onOpenCalendar,
   xstyle,
   ...schedule
 }: TodayScheduleProps) {
   const Actions = iconActions ? IconActions : TextActions;
 
-  const { clock, tz } = schedule;
+  const { clock, tz, onOpenCalendar } = schedule;
 
   return (
     <section {...stylex.props(styles.root, xstyle)}>
@@ -233,6 +232,7 @@ function Schedule({
   weather,
   onOpenEvent,
   onAddSlot,
+  onOpenCalendar,
 }: ScheduleProps) {
   const timed = events.filter((event) => !event.allDay);
 
@@ -256,9 +256,9 @@ function Schedule({
         breakpoint={breakpoint}
         free="everyone"
         weather={weather}
-        weatherAt={timed.length === 0 ? "lane" : "gutter"}
         labels={LABELS}
         onOpenEvent={onOpenEvent}
+        onOpenMore={onOpenCalendar}
         onAddEvent={onAddSlot}
         xstyle={[styles.timeline, oneColumn && styles.oneColumn]}
       />

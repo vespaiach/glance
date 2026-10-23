@@ -45,7 +45,6 @@ type TimelineProps = Omit<
 
 const LABELS: DayTimelineLabels = {
   ...copy.timeline,
-  now: copy.events.now,
   everyone: copy.events.everyone,
   icons: copy.weather.icon,
 };
@@ -212,6 +211,7 @@ function Timeline({
         weather={weather}
         labels={LABELS}
         onOpenEvent={onOpenEvent}
+        onOpenMore={onOpenEvent}
         onAddEvent={onAddEvent}
         xstyle={styles.timeline(minHeight)}
       />

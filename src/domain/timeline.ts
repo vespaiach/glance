@@ -5,8 +5,12 @@ import { dateKey } from "./zone";
 export type TimelineOptions = {
   span: "day" | "24h";
   height: number;
+  width: number;
   passedFactor: number;
   minPlanHeight: number;
+  minHourHeight: number;
+  minColumn: number;
+  longStrips: boolean;
 };
 
 export type TimelineContext = { day: string; now: Date; tz: string };
@@ -21,11 +25,32 @@ export type PlacedPlan<T> = {
   end: number;
   top: number;
   height: number;
-  column: number;
-  columns: number;
-  columnSpan: number;
+  left: number;
+  width: number;
   startsBefore: boolean;
 };
+
+export type PlacedStrip<T> = {
+  plan: T;
+  start: number;
+  end: number;
+  top: number;
+  height: number;
+  left: number;
+};
+
+export type MoreTile<T> = {
+  first: T;
+  count: number;
+  start: number;
+  end: number;
+  top: number;
+  height: number;
+  left: number;
+  tall: boolean;
+};
+
+export type HourSky = { icon: string; precip?: number };
 
 export type FreeSlot = {
   start: number;
@@ -39,6 +64,9 @@ export type TimelineLayout<T> = {
   rows: TimelineRow[];
   marks: HourMark[];
   plans: PlacedPlan<T>[];
+  strips: PlacedStrip<T>[];
+  stripsWidth: number;
+  more: MoreTile<T>[];
   freeSlots: FreeSlot[];
   now: { minutes: number; top: number } | null;
   hiddenOutsideSpan: number;
@@ -60,19 +88,17 @@ export type PlanCard = {
   note: boolean;
 };
 
-export type LaneTile = {
-  content: boolean;
-  stacked: boolean;
-  large: boolean;
-  rain: boolean;
-  wet: boolean;
-};
-
 type TimelinePlan = Pick<CalendarEvent, "startAt" | "endAt">;
 
 type Interval<T> = { plan: T; start: number; end: number };
 
-type Box<T> = Omit<PlacedPlan<T>, "column" | "columns" | "columnSpan">;
+type Box<T> = Omit<PlacedPlan<T>, "left" | "width">;
+
+type Span = { first: number; last: number; minHeight: number };
+
+type Area = { width: number; minColumn: number };
+
+type Placement<T> = { plans: PlacedPlan<T>[]; more: MoreTile<T>[] };
 
 type Scale = { rows: TimelineRow[]; y: (minutes: number) => number };
 
@@ -120,19 +146,27 @@ const ONE_LINE_TIME_WIDTH = 200;
 
 const RAIN_CHIP = 50;
 
+const RAIN_CHIP_WIDTH = 180;
+
+const SPARSE_WEATHER_HOURS = 3;
+
+const STRIP_WIDTH = 44;
+
+const STRIP_GAP = 8;
+
+const MORE_WIDTH = 52;
+
+const MORE_MIN_HEIGHT = 48;
+
+const MORE_TALL = 60;
+
+const FREE_TILE_GAP = 8;
+
+const MIN_FREE_TILE = 44;
+
 const GUTTER_WEATHER = 46;
 
 const GUTTER_NOW_CLEARANCE = 4;
-
-const LANE_STACKED = 64;
-
-const LANE_STACKED_CONTENT = 46;
-
-const LANE_ROW_CONTENT = 22;
-
-const LANE_STACKED_RAIN = 76;
-
-const LANE_ROW_RAIN = 30;
 
 export function timelineLayout<T extends TimelinePlan>(
   plans: readonly T[],
@@ -152,11 +186,33 @@ export function timelineLayout<T extends TimelinePlan>(
       ? { minutes: nowMinutes, top: scale.y(nowMinutes) }
       : null;
 
+  const span = { first, last, minHeight: options.minPlanHeight };
+
+  const long = options.longStrips ? intervals.filter(isLong) : [];
+
+  const strips = placeStrips(long, scale, span);
+
+  const stripsWidth = strips.length * (STRIP_WIDTH + STRIP_GAP);
+
+  const area = { width: options.width - stripsWidth, minColumn: options.minColumn };
+
+  const placement = placePlans(
+    intervals.filter((item) => !long.includes(item)),
+    scale,
+    span,
+    area,
+  );
+
   return {
     rows: scale.rows,
     marks: hourMarks(scale, nowMarker?.top ?? null),
-    plans: placePlans(intervals, scale, { first, last, minHeight: options.minPlanHeight }),
-    freeSlots: freeSlots(intervals, nowMinutes).map((slot) => placeSlot(slot, scale)),
+    plans: placement.plans,
+    strips,
+    stripsWidth,
+    more: placement.more,
+    freeSlots: freeSlots(intervals, nowMinutes)
+      .map((slot) => placeSlot(slot, scale))
+      .filter((slot) => slot.height - FREE_TILE_GAP >= MIN_FREE_TILE),
     now: nowMarker,
     hiddenOutsideSpan: intervals.filter((item) => item.start < first || item.end > last).length,
   };
@@ -205,7 +261,10 @@ export function planRain(
   start: number,
   end: number,
   rainByHour: ReadonlyMap<number, number>,
+  width: number,
 ): number {
+  if (width < RAIN_CHIP_WIDTH) return 0;
+
   let chance = 0;
   for (let hour = Math.floor(start / 60); hour * 60 < end; hour++) {
     chance = Math.max(chance, rainByHour.get(hour) ?? 0);
@@ -228,20 +287,30 @@ export function gutterWeather(
   );
 }
 
-export function laneTile(height: number, compact: boolean, precip: number): LaneTile {
-  const stacked = compact || height >= LANE_STACKED;
+export function hourWeather(
+  { marks, rows, now }: Pick<TimelineLayout<unknown>, "marks" | "rows" | "now">,
+  sky: ReadonlyMap<number, HourSky>,
+  sparse: boolean,
+): Set<number> {
+  const shown = new Set<number>();
 
-  const wet = precip >= RAIN_CHIP;
+  let last: { hour: number; icon: string; wet: boolean } | null = null;
+  for (const mark of marks) {
+    const point = sky.get(mark.hour);
+    const row = rows.find((item) => item.hour === mark.hour);
+    if (!point || !row || !gutterWeather(mark, row.height, now?.top ?? null)) continue;
+    const wet = (point.precip ?? 0) >= RAIN_CHIP;
+    const news =
+      last === null ||
+      point.icon !== last.icon ||
+      wet !== last.wet ||
+      mark.hour - last.hour >= SPARSE_WEATHER_HOURS;
+    if (sparse && !news) continue;
+    shown.add(mark.hour);
+    last = { hour: mark.hour, icon: point.icon, wet };
+  }
 
-  const rainRoom = height >= (stacked ? LANE_STACKED_RAIN : LANE_ROW_RAIN);
-
-  return {
-    content: height >= (stacked ? LANE_STACKED_CONTENT : LANE_ROW_CONTENT),
-    stacked,
-    large: stacked && !compact,
-    rain: wet && !compact && rainRoom,
-    wet,
-  };
+  return shown;
 }
 
 function intervalOf<T extends TimelinePlan>(plan: T, tz: string): Interval<T> {
@@ -266,7 +335,12 @@ function scaleFor<T>(
 
   const total = weights.reduce((sum, weight) => sum + weight, 0);
 
-  const rows = stackRows(hours, weights, options.height / total);
+  const floor = Math.min(options.minHourHeight, options.height / hours.length);
+
+  const rows = stackRows(hours, weights, {
+    floor,
+    unit: (options.height - floor * hours.length) / total,
+  });
 
   return { rows, y: (minutes) => yAt(rows, span.first, minutes) };
 }
@@ -314,14 +388,19 @@ function overlaps(from: number, to: number) {
   return <T>(item: Interval<T>) => item.start < to && item.end > from;
 }
 
-function stackRows(hours: readonly number[], weights: readonly number[], unit: number) {
+function stackRows(
+  hours: readonly number[],
+  weights: readonly number[],
+  { floor, unit }: { floor: number; unit: number },
+) {
   const rows: TimelineRow[] = [];
 
   let top = 0;
   for (const [i, hour] of hours.entries()) {
     const weight = weights[i] ?? 0;
-    rows.push({ hour, weight, top, height: weight * unit });
-    top += weight * unit;
+    const height = floor + weight * unit;
+    rows.push({ hour, weight, top, height });
+    top += height;
   }
 
   return rows;
@@ -357,21 +436,41 @@ function hourMarks(scale: Scale, nowTop: number | null): HourMark[] {
 function placePlans<T>(
   intervals: readonly Interval<T>[],
   scale: Scale,
-  span: { first: number; last: number; minHeight: number },
-): PlacedPlan<T>[] {
+  span: Span,
+  area: Area,
+): Placement<T> {
   const boxes = intervals
-    .filter((item) => item.end > span.first && item.start < span.last)
+    .filter((item) => inSpan(item, span))
     .map((item) => boxOf(item, scale, span))
     .sort((a, b) => a.top - b.top || b.height - a.height);
 
-  return clusters(boxes).flatMap(assignColumns);
+  const placements = clusters(boxes).map((cluster) => placeCluster(cluster, area));
+
+  return {
+    plans: placements.flatMap((placement) => placement.plans),
+    more: placements.flatMap((placement) => placement.more),
+  };
 }
 
-function boxOf<T>(
-  { plan, start, end }: Interval<T>,
-  scale: Scale,
-  span: { first: number; last: number; minHeight: number },
-): Box<T> {
+function placeStrips<T>(long: readonly Interval<T>[], scale: Scale, span: Span): PlacedStrip<T>[] {
+  return long
+    .filter((item) => inSpan(item, span))
+    .sort((a, b) => a.start - b.start)
+    .map((item, i) => {
+      const { startsBefore: _, ...box } = boxOf(item, scale, span);
+      return { ...box, left: i * (STRIP_WIDTH + STRIP_GAP) };
+    });
+}
+
+function inSpan<T>(item: Interval<T>, span: Span): boolean {
+  return item.end > span.first && item.start < span.last;
+}
+
+function isLong<T>(item: Interval<T>): boolean {
+  return item.end - item.start > SHORT_PLAN;
+}
+
+function boxOf<T>({ plan, start, end }: Interval<T>, scale: Scale, span: Span): Box<T> {
   const top = scale.y(Math.max(start, span.first));
 
   const bottom = Math.max(scale.y(Math.min(end, span.last)), top + span.minHeight);
@@ -397,19 +496,92 @@ function clusters<T>(boxes: readonly Box<T>[]): Box<T>[][] {
   return groups;
 }
 
-function assignColumns<T>(cluster: Box<T>[]): PlacedPlan<T>[] {
+function placeCluster<T>(cluster: Box<T>[], area: Area): Placement<T> {
+  const columnOf = assignColumns(cluster);
+
+  const columns = Math.max(...columnOf.values()) + 1;
+
+  const fit = fittingColumns(columns, area);
+
+  if (fit === null) {
+    return {
+      plans: cluster.map((box) => {
+        const column = columnOf.get(box) ?? 0;
+        return {
+          ...box,
+          left: column / columns,
+          width: freeWidth(box, columnOf, columns) / columns,
+        };
+      }),
+      more: [],
+    };
+  }
+
+  return foldColumns(cluster, columnOf, {
+    fit,
+    columnWidth: (area.width - MORE_WIDTH) / area.width / fit,
+  });
+}
+
+function assignColumns<T>(cluster: readonly Box<T>[]): Columns<T> {
   const order = [...cluster].sort((a, b) => longFirst(a, b) || a.top - b.top);
 
   const columnOf: Columns<T> = new Map();
 
   for (const box of order) columnOf.set(box, firstFreeColumn(box, columnOf));
 
-  const columns = Math.max(...columnOf.values()) + 1;
+  return columnOf;
+}
 
-  return cluster.map((box) => {
-    const column = columnOf.get(box) ?? 0;
-    return { ...box, column, columns, columnSpan: freeWidth(box, columnOf, columns) };
-  });
+function fittingColumns(columns: number, { width, minColumn }: Area): number | null {
+  if (minColumn <= 0 || width <= 0) return null;
+
+  if (columns <= Math.max(1, Math.floor(width / minColumn))) return null;
+
+  return Math.max(1, Math.floor((width - MORE_WIDTH) / minColumn));
+}
+
+function foldColumns<T>(
+  cluster: readonly Box<T>[],
+  columnOf: Columns<T>,
+  { fit, columnWidth }: { fit: number; columnWidth: number },
+): Placement<T> {
+  const folded = cluster.filter((box) => (columnOf.get(box) ?? 0) >= fit);
+
+  const plans = cluster
+    .filter((box) => !folded.includes(box))
+    .map((box) => {
+      const column = columnOf.get(box) ?? 0;
+      const span = freeWidth(box, columnOf, fit);
+      const left = column * columnWidth;
+      const toEdge = column + span === fit && !folded.some((other) => collide(other, box));
+      return { ...box, left, width: toEdge ? 1 - left : span * columnWidth };
+    });
+
+  return { plans, more: foldedGroups(folded).map((group) => moreTile(group, fit * columnWidth)) };
+}
+
+function foldedGroups<T>(folded: readonly Box<T>[]): Box<T>[][] {
+  return clusters([...folded].sort((a, b) => a.top - b.top));
+}
+
+function moreTile<T>(group: readonly Box<T>[], left: number): MoreTile<T> {
+  const [first] = [...group].sort((a, b) => a.start - b.start);
+
+  const top = Math.min(...group.map((box) => box.top));
+
+  const reach = Math.max(...group.map(bottomOf)) - top;
+
+  return {
+    first: (first ?? group[0])?.plan as T,
+    count: group.length,
+    start: Math.min(...group.map((box) => box.start)),
+    end: Math.max(...group.map((box) => box.end)),
+    top,
+    height: Math.max(reach, MORE_MIN_HEIGHT),
+    left,
+    tall: reach >= MORE_TALL,
+  };
 }
 
 function firstFreeColumn<T>(box: Box<T>, columnOf: Columns<T>): number {
