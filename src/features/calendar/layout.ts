@@ -15,7 +15,7 @@ const styles = stylex.create({
     minWidth: 0,
   },
   large: { gap: 24 },
-  small: { gap: 12 },
+  small: { gap: 24 },
   fit: { height: "100%", minHeight: 0 },
   scroll: { minHeight: "100%" },
 });

@@ -26,6 +26,10 @@ const styles = stylex.create({
     rowGap: 12,
     columnGap: 16,
   },
+  oneRow: {
+    flexWrap: "nowrap",
+    columnGap: 8,
+  },
   people: {
     display: "flex",
     alignItems: "center",
@@ -78,7 +82,7 @@ export function CalendarToolbar({
   const max = small && onToday ? SMALL_STACK_BESIDE_TODAY : STACK_MAX[size];
 
   return (
-    <div {...stylex.props(styles.row)}>
+    <div {...stylex.props(styles.row, small && styles.oneRow)}>
       <div {...stylex.props(styles.people)}>
         <WhoFilter
           tags={tags}
