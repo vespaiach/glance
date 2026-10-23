@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.69 |
+| Status | v2.70 |
 | Date | 2026-10-23 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.82) · [`design/handoff/`](design/handoff/README.md) (v12) |
 
@@ -392,7 +392,7 @@ type PhotoStore = {
 
 Bad config names the variables (not their values) and exits. `next build` needs no env. `.env.development` points at a local PostgreSQL, `.data/` and a local Mailpit (`MAIL_PROVIDER=mailpit`); sign-in emails are read at `http://localhost:8025`.
 
-**Guest sign-in** (SIGNIN-16): optional `GUEST_EMAIL` names the demo site's shared family account. When that account doesn't exist, the daily job `seedGuest` (`server/jobs/guestSeed.ts`, also run at boot) creates it, set up: Trinh, Eastern time (`America/Indiana/Indianapolis`), weather in Carmel, Indiana, note expiry off, and the family from `server/jobs/guestFamily.ts` (6 tags; a school-year schedule, holidays and one-off plans from the 1st of the current month to Dec 31; 5 notes), written through the services. An existing account is never touched, so to reset the demo, delete the account and restart. When `GUEST_EMAIL` is unset, nothing is seeded, the guest routes answer 404 and the button stays hidden.
+**Guest sign-in** (SIGNIN-16): optional `GUEST_EMAIL` names the demo site's shared family account. When that account doesn't exist, the daily job `seedGuest` (`server/jobs/guestSeed.ts`, also run at boot) creates it, set up: Trinh, Eastern time (`America/Indiana/Indianapolis`), weather in Carmel, Indiana, note expiry off, and the family from `server/jobs/guestFamily.ts` (6 tags; a school-year schedule, holidays and one-off plans from the 1st of the current month to Dec 31; 5 notes) and every JPEG in `assets/guest-photos/` (read from the working directory, like `db-migrations/`; titled and dated by file name; credits in its `CREDITS.md`), written through the services and `uploadPhoto`. An existing account is never touched, so to reset the demo, delete the account and restart. When `GUEST_EMAIL` is unset, nothing is seeded, the guest routes answer 404 and the button stays hidden.
 
 **Demo build** (`NEXT_PUBLIC_DEMO=1`, `npm run dev:demo` locally): fixture URL params and the sign-in dev buttons are compiled in; the display uses `glance-fixture` + `FixtureTransport` and skips the `glance-meta` gate. Plain `next dev` is not a demo build: it signs in, syncs and sends mail through the server like production, without the service worker. Demo-only routes are `page.demo.tsx` (`/dev/gallery`), added to `pageExtensions` for `next dev` and demo builds.
 
