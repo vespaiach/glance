@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import type { FixtureParams } from "@/data/repos";
 import {
   type Harness,
   markSynced,
@@ -10,6 +11,7 @@ import {
 } from "@/data/repos/testHarness";
 import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
+import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
@@ -106,12 +108,14 @@ function OpenSheet() {
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
 }
 
-function renderCalendar() {
-  const Shell = shellWrapper(store, { frozenAt: NOW });
+function renderCalendar(params: FixtureParams = {}) {
+  const Shell = shellWrapper(store, { frozenAt: NOW, who: params.who });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <SheetHost>{children}</SheetHost>
+      <FixtureParamsProvider params={params}>
+        <SheetHost>{children}</SheetHost>
+      </FixtureParamsProvider>
     </Shell>
   );
 
@@ -136,8 +140,22 @@ const plan = (title: string) => screen.queryByRole("button", { name: new RegExp(
 
 const day = (name: string) => screen.getByRole("button", { name });
 
-const pill = (name: string) =>
-  within(screen.getByRole("group", { name: "Show plans for" })).getByRole("button", { name });
+const whoStack = (label: string) =>
+  screen.findByRole("button", { name: `Show plans for: ${label}. Change` });
+
+const whoRow = (name: string) =>
+  within(screen.getByRole("dialog", { name: "Show plans for" })).getByRole("checkbox", { name });
+
+async function openWho() {
+  await userEvent.click(await screen.findByRole("button", { name: /^Show plans for: / }));
+}
+
+async function toggleWho(...names: string[]) {
+  await openWho();
+  const sheet = within(screen.getByRole("dialog", { name: "Show plans for" }));
+  for (const name of names) await userEvent.click(await sheet.findByRole("checkbox", { name }));
+  await userEvent.click(screen.getByRole("button", { name: "Done" }));
+}
 
 test("CAL-01 the week strip runs Sunday to Saturday with today selected and ringed", async () => {
   await seed(CALL);
@@ -237,23 +255,32 @@ test("CAL-05 every tag is selected by default and every plan shows", async () =>
   expect(plan("Grandma’s video call")).toBeInTheDocument();
   expect(plan("Family dinner")).toBeInTheDocument();
   expect(plan("Water the plants")).toBeInTheDocument();
-  for (const one of FAMILY) expect(pill(one.name)).toHaveAttribute("aria-pressed", "true");
+
+  await openWho();
+
+  expect(whoRow("Everyone")).toHaveAttribute("aria-checked", "true");
+  for (const one of FAMILY) expect(whoRow(one.name)).toHaveAttribute("aria-checked", "true");
 });
 
-test("CAL-05 tapping a tag turns it off: their plans hide, everyone plans stay", async () => {
+test("CAL-05 turning a tag off hides their plans, everyone plans stay, and the stack names the rest", async () => {
   await seed(CALL, SOCCER, DINNER);
 
   renderCalendar();
 
   await screen.findByRole("button", { name: /^Soccer, / });
-  await userEvent.click(pill("Minh-An"));
+  await openWho();
+  await userEvent.click(whoRow("Minh-An"));
 
-  expect(pill("Minh-An")).toHaveAttribute("aria-pressed", "false");
+  expect(whoRow("Minh-An")).toHaveAttribute("aria-checked", "false");
   expect(plan("Soccer")).not.toBeInTheDocument();
   expect(plan("Grandma’s video call")).toBeInTheDocument();
   expect(plan("Family dinner")).toBeInTheDocument();
 
-  await userEvent.click(pill("Minh-An"));
+  await userEvent.keyboard("{Escape}");
+
+  expect(await whoStack("Mom, Dad")).toHaveFocus();
+
+  await toggleWho("Minh-An");
 
   expect(plan("Soccer")).toBeInTheDocument();
 });
@@ -265,7 +292,7 @@ test("CAL-05 nobody plans show only while every tag is selected", async () => {
 
   expect(await screen.findByRole("button", { name: /^Water the plants, / })).toBeInTheDocument();
 
-  await userEvent.click(pill("Dad"));
+  await toggleWho("Dad");
 
   expect(plan("Water the plants")).not.toBeInTheDocument();
 });
@@ -276,21 +303,33 @@ test("CAL-05 turning every tag off shows no plans, tiles or free slots", async (
   renderCalendar();
 
   await screen.findByRole("button", { name: /^Family dinner, / });
-  for (const one of FAMILY) await userEvent.click(pill(one.name));
+  await toggleWho("Everyone");
 
-  expect(pill("Mom")).toHaveAttribute("aria-pressed", "false");
+  expect(await whoStack("No one")).toBeInTheDocument();
   expect(plan("Grandma’s video call")).not.toBeInTheDocument();
   expect(plan("Family dinner")).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /Field trip/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: /^Free / })).not.toBeInTheDocument();
 });
 
-test("FAM-07 the filter row has no Edit button", async () => {
+test("CAL-05 the chip row is gone: the filter is one stack button", async () => {
   await seed(CALL);
 
   renderCalendar();
 
   await screen.findByRole("button", { name: /^Grandma’s video call, / });
+
+  expect(screen.queryByRole("group", { name: "Show plans for" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Mom" })).not.toBeInTheDocument();
+});
+
+test("FAM-07 the filter has no Edit button", async () => {
+  await seed(CALL);
+
+  renderCalendar();
+
+  await screen.findByRole("button", { name: /^Grandma’s video call, / });
+  await openWho();
 
   expect(screen.queryByRole("button", { name: /Edit/ })).not.toBeInTheDocument();
 });
@@ -302,9 +341,10 @@ test("FAM-05 a new tag joins a filter that shows everyone, selected", async () =
 
   await screen.findByRole("button", { name: /^Grandma’s video call, / });
   await store.db.tags.put(synced(tag(4, "Tin", "mint")));
+  await openWho();
 
-  expect(await screen.findByRole("button", { name: "Tin" })).toHaveAttribute(
-    "aria-pressed",
+  expect(await screen.findByRole("checkbox", { name: "Tin" })).toHaveAttribute(
+    "aria-checked",
     "true",
   );
 });
@@ -314,13 +354,29 @@ test("FAM-05 a new tag stays off when some tags are off", async () => {
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Dad" }));
+  await screen.findByRole("button", { name: /^Grandma’s video call, / });
+  await toggleWho("Dad");
   await store.db.tags.put(synced(tag(4, "Tin", "mint")));
+  await openWho();
 
-  expect(await screen.findByRole("button", { name: "Tin" })).toHaveAttribute(
-    "aria-pressed",
+  expect(await screen.findByRole("checkbox", { name: "Tin" })).toHaveAttribute(
+    "aria-checked",
     "false",
   );
+});
+
+test("CAL-05 who= starts the filter and whosheet=1 opens the list", async () => {
+  await seed(CALL, SOCCER);
+
+  renderCalendar({ who: [MOM.id], whosheet: true });
+
+  expect(await screen.findByRole("dialog", { name: "Show plans for" })).toBeInTheDocument();
+  expect(await screen.findByRole("checkbox", { name: "Mom" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+  expect(whoRow("Minh-An")).toHaveAttribute("aria-checked", "false");
+  expect(plan("Soccer")).not.toBeInTheDocument();
 });
 
 test("CAL-06 the 24 hours link counts the plans outside 5 AM to 9 PM and shows them when on", async () => {
@@ -372,7 +428,7 @@ test("CAL-07 Add event starts with the selected tags in tag order", async () => 
 
   renderCalendar();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Mom" }));
+  await toggleWho("Mom");
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   expect(openSheet()).toHaveTextContent(
@@ -389,8 +445,7 @@ test("CAL-07 Add event with every tag off starts for nobody", async () => {
 
   renderCalendar();
 
-  for (const one of FAMILY)
-    await userEvent.click(await screen.findByRole("button", { name: one.name }));
+  await toggleWho("Everyone");
   await userEvent.click(screen.getByRole("button", { name: "Add event" }));
 
   expect(openSheet()).toHaveTextContent(
@@ -416,7 +471,7 @@ test("CAL-08 a filtered empty day says Free", async () => {
 
   await userEvent.click(await screen.findByRole("button", { name: "Sunday, October 4" }));
   await screen.findByText("Everyone free · 16 h");
-  await userEvent.click(pill("Mom"));
+  await toggleWho("Mom");
 
   expect(await screen.findByText("Free · 16 h")).toBeInTheDocument();
 });
@@ -440,7 +495,7 @@ test("CAL-09 all-day tiles show above the timeline and follow the filter", async
 
   expect(await screen.findByRole("button", { name: /Field trip/ })).toBeInTheDocument();
 
-  await userEvent.click(pill("Minh-An"));
+  await toggleWho("Minh-An");
 
   expect(screen.queryByRole("button", { name: /Field trip/ })).not.toBeInTheDocument();
 });

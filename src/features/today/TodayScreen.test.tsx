@@ -9,7 +9,7 @@ import {
   putSyncStatus,
   synced,
 } from "@/data/repos/testHarness";
-import type { CalendarEvent, Note, Photo, Weather, WeatherLocation } from "@/domain/schemas";
+import type { CalendarEvent, Note, Photo, Tag, Weather, WeatherLocation } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -26,6 +26,15 @@ vi.mock("next/navigation", () => ({
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
+const MOM: Tag = {
+  id: "0192f1a0-0000-7000-8000-000000000001",
+  name: "Mom",
+  color: "coral",
+  createdAt: "2026-10-01T15:00:00.000Z",
+};
+
+const DAD: Tag = { ...MOM, id: "0192f1a0-0000-7000-8000-000000000002", name: "Dad", color: "sky" };
+
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 
 const CALL: CalendarEvent = {
@@ -36,6 +45,15 @@ const CALL: CalendarEvent = {
   endAt: iso(11, 15),
   everyone: true,
   tagIds: [],
+};
+
+const DAD_RUN: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000009",
+  title: "Dad’s run",
+  startAt: iso(15, 0),
+  endAt: iso(16, 0),
+  everyone: false,
+  tagIds: [DAD.id],
 };
 
 const COAST: Photo = {
@@ -125,8 +143,8 @@ function OpenSheet() {
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
 }
 
-function renderToday() {
-  const Shell = shellWrapper(store, { frozenAt: NOW });
+function renderToday({ who }: { who?: string[] } = {}) {
+  const Shell = shellWrapper(store, { frozenAt: NOW, who });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
@@ -205,7 +223,7 @@ test("TODAY-02 tapping the hero event opens Event details", async () => {
   );
 });
 
-test("TODAY-04 Add event opens New event on today", async () => {
+test("TODAY-04 Add event opens New event on today for everyone", async () => {
   await store.db.events.put(synced(CALL));
 
   renderToday();
@@ -213,7 +231,29 @@ test("TODAY-04 Add event opens New event on today", async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "newevent", day: "2026-10-09" }),
+    JSON.stringify({ kind: "newevent", day: "2026-10-09", who: { everyone: true, tagIds: [] } }),
+  );
+});
+
+test("TODAY-04 the filter is Calendar's: it starts from the shared filter and Add event pre-fills the people shown", async () => {
+  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
+  await store.db.events.bulkPut([synced(CALL), synced(DAD_RUN)]);
+
+  renderToday({ who: [MOM.id] });
+
+  expect(
+    await screen.findByRole("button", { name: "Show plans for: Mom. Change" }),
+  ).toBeInTheDocument();
+  await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
+
+  expect(screen.queryByRole("button", { name: /^Dad’s run, / })).not.toBeInTheDocument();
+
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({
+      kind: "newevent",
+      day: "2026-10-09",
+      who: { everyone: false, tagIds: [MOM.id] },
+    }),
   );
 });
 
@@ -295,7 +335,12 @@ test("TODAY-03 TL-08 tapping a free slot opens New event at that slot", async ()
   await userEvent.click(await screen.findByRole("button", { name: /^Free / }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "newevent", day: "2026-10-09", times: { start: 675, end: 735 } }),
+    JSON.stringify({
+      kind: "newevent",
+      day: "2026-10-09",
+      who: { everyone: true, tagIds: [] },
+      times: { start: 675, end: 735 },
+    }),
   );
 });
 

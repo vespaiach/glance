@@ -2,16 +2,17 @@ import * as stylex from "@stylexjs/stylex";
 import { Plus } from "lucide-react";
 import { copy } from "@/copy";
 import type { Tag } from "@/domain/schemas";
-import { colors, motion, radii } from "@/theme/tokens.stylex";
-import { type } from "@/theme/type.stylex";
+import type { TagFilter } from "@/domain/tags";
+import { colors } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
-import { press } from "@/ui/press";
+import { WhoFilter } from "@/ui/WhoFilter";
 
 type CalendarToolbarProps = {
   tags: readonly Tag[];
   filter: ReadonlySet<string>;
   small: boolean;
-  onToggleTag: (id: string) => void;
+  whoSheet: boolean;
+  onFilter: (filter: TagFilter) => void;
   onAddEvent: () => void;
 };
 
@@ -31,19 +32,7 @@ const styles = stylex.create({
     minWidth: 0,
     flexGrow: 1,
     flexShrink: 1,
-    flexBasis: 520,
-  },
-  pills: {
-    margin: 0,
-    padding: 0,
-    borderWidth: 0,
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    minWidth: 0,
-    flexShrink: 1,
-    overflowX: "auto",
-    scrollbarWidth: "none",
+    flexBasis: "auto",
   },
   actions: {
     display: "flex",
@@ -57,33 +46,6 @@ const styles = stylex.create({
   actionsSmall: {
     flexShrink: 1,
   },
-  pill: (height: number) => ({
-    flexShrink: 0,
-    height,
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    paddingBlock: 0,
-    paddingInlineStart: 12,
-    paddingInlineEnd: 16,
-    borderWidth: 0,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceSoft,
-    color: colors.textPrimary,
-    fontFamily: type.fontSans,
-    fontSize: 16,
-    fontWeight: 480,
-    whiteSpace: "nowrap",
-    cursor: "pointer",
-    transitionProperty: "transform, background-color, color",
-    transitionDuration: `${motion.durPress}, ${motion.durFast}, ${motion.durFast}`,
-    transitionTimingFunction: motion.easeOut,
-  }),
-  tag: {
-    paddingInlineStart: 18,
-    paddingInlineEnd: 18,
-    backgroundColor: colors.borderHairline,
-  },
   soft: (height: number) => ({
     flexShrink: 0,
     minHeight: height,
@@ -95,79 +57,43 @@ const styles = stylex.create({
   },
 });
 
-const fills = stylex.create({
-  lilac: { backgroundColor: colors.blockLilac },
-  sky: { backgroundColor: colors.blockSky },
-  coral: { backgroundColor: colors.blockCoral },
-  mint: { backgroundColor: colors.blockMint },
-  sun: { backgroundColor: colors.blockSun },
-  pink: { backgroundColor: colors.blockPink },
-  lime: { backgroundColor: colors.blockLime },
-  rust: { backgroundColor: colors.blockRust },
-  glacier: { backgroundColor: colors.blockGlacier },
-  amber: { backgroundColor: colors.blockAmber },
-  sage: { backgroundColor: colors.blockSage },
-  ice: { backgroundColor: colors.blockIce },
-});
+const HEIGHT = { small: 44, large: 48 } as const;
 
-const PILL_HEIGHT = { small: 44, large: 48 } as const;
+const STACK_MAX = { small: 4, large: 8 } as const;
 
 export function CalendarToolbar({
   tags,
   filter,
   small,
-  onToggleTag,
+  whoSheet,
+  onFilter,
   onAddEvent,
 }: CalendarToolbarProps) {
-  const height = small ? PILL_HEIGHT.small : PILL_HEIGHT.large;
-
-  const words = copy.calendar;
+  const size = small ? "small" : "large";
 
   return (
     <div {...stylex.props(styles.row)}>
       <div {...stylex.props(styles.people)}>
-        <fieldset aria-label={words.showPlansFor} {...stylex.props(styles.pills)}>
-          {tags.map((tag) => (
-            <TagPill
-              key={tag.id}
-              tag={tag}
-              selected={filter.has(tag.id)}
-              height={height}
-              onClick={() => onToggleTag(tag.id)}
-            />
-          ))}
-        </fieldset>
+        <WhoFilter
+          tags={tags}
+          selected={filter}
+          size={size}
+          max={STACK_MAX[size]}
+          labels={copy.personFilter}
+          defaultOpen={whoSheet}
+          onChange={onFilter}
+        />
       </div>
       <div {...stylex.props(styles.actions, small && styles.actionsSmall)}>
         <Button
           variant="ghost"
           icon={Plus}
           onClick={onAddEvent}
-          xstyle={[styles.soft(height), styles.add]}
+          xstyle={[styles.soft(HEIGHT[size]), styles.add]}
         >
-          {words.addEvent}
+          {copy.calendar.addEvent}
         </Button>
       </div>
     </div>
-  );
-}
-
-type TagPillProps = {
-  tag: Tag;
-  selected: boolean;
-  height: number;
-  onClick: () => void;
-};
-
-function TagPill({ tag, selected, height, onClick }: TagPillProps) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      {...stylex.props(styles.pill(height), styles.tag, selected && fills[tag.color], press.scale)}
-    >
-      {tag.name}
-    </button>
   );
 }

@@ -34,6 +34,7 @@ import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
+import { useWhoFilter } from "@/shell/providers/whoFilter";
 import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import type { TimelineWeather } from "@/ui/DayTimeline";
@@ -75,11 +76,13 @@ export function CalendarScreen() {
 
   const week = weekDays(day);
 
+  const who = useWhoFilter();
+
   const tags = useTags() ?? NO_MEMBERS;
 
   const allIds = tags.map((tag) => tag.id);
 
-  const filter = liveFilter(view.filter, allIds);
+  const filter = liveFilter(who.filter, allIds);
 
   const events = useEventsOnDay(day, tz);
 
@@ -141,7 +144,8 @@ export function CalendarScreen() {
             tags={tags}
             filter={filter}
             small={breakpoint === "small"}
-            onToggleTag={(id) => dispatch({ type: "toggleTag", id, allIds })}
+            whoSheet={fixture.whosheet === true}
+            onFilter={who.setFilter}
             onAddEvent={() => sheets.open(newEvent(day, filterTagIds(filter, allIds)))}
           />
         }

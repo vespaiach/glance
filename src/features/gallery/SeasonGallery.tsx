@@ -50,6 +50,7 @@ import { CalendarGallery } from "./CalendarGallery";
 import { EventSheetGallery } from "./EventSheetGallery";
 import { GalleryGroup } from "./GalleryGroup";
 import { NotesGallery } from "./NotesGallery";
+import { PersonFilterGallery } from "./PersonFilterGallery";
 import { PhotosGallery } from "./PhotosGallery";
 import { SettingsGallery } from "./SettingsGallery";
 import { SidebarGallery } from "./SidebarGallery";
@@ -137,6 +138,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <ZoneGroup />
       <TodayGallery season={season} />
       <CalendarGallery />
+      <PersonFilterGallery />
       <TimelineGallery />
       <EventSheetGallery />
       <WeatherGallery />

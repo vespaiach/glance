@@ -103,7 +103,9 @@ const UPCOMING: CalendarEvent[] = [
 type Props = ComponentProps<typeof TodaySchedule>;
 
 function renderSchedule(state: ZoneState<CalendarEvent>, props: Partial<Props> = {}) {
-  return render(<TodaySchedule {...rendered(state)} {...props} />);
+  const everyone = new Set((props.tags ?? []).map((one) => one.id));
+
+  return render(<TodaySchedule {...rendered(state)} selected={everyone} {...props} />);
 }
 
 function cardWidth(width: number) {
@@ -122,6 +124,9 @@ function rendered(state: ZoneState<CalendarEvent>): Props {
     onRetry: () => {},
     state,
     tags: [],
+    selected: new Set(),
+    whoSheet: false,
+    onFilter: () => {},
     day: "2026-10-09",
     now: NOW,
     clock: "12h",
@@ -402,4 +407,89 @@ test("TODAY-04 icon-only, an empty day keeps Add event in the header", () => {
   renderSchedule({ kind: "empty" }, { iconActions: true });
 
   expect(screen.getByRole("button", { name: "Add event" })).toHaveTextContent("");
+});
+
+const stack = () => screen.queryByRole("button", { name: /^Show plans for: / });
+
+const FOR_MOM: CalendarEvent = {
+  ...EVENTS[2],
+  id: "mom-lunch",
+  tagIds: [MOM.id],
+  everyone: false,
+} as CalendarEvent;
+
+const FOR_DAD_ALL_DAY: CalendarEvent = {
+  ...GRANDPA,
+  id: "dad-trip",
+  title: "Dad’s trip",
+  everyone: false,
+  tagIds: [DAD.id],
+};
+
+test("TODAY-04 the person filter shows under the header with two or more tags", () => {
+  renderSchedule(ready, { tags: [MOM, DAD] });
+
+  expect(stack()).toHaveAccessibleName("Show plans for: Everyone. Change");
+});
+
+test("TODAY-04 the person filter is hidden with one tag", () => {
+  renderSchedule(ready, { tags: [MOM] });
+
+  expect(stack()).not.toBeInTheDocument();
+});
+
+test("TODAY-04 the stack shows up to 5 circles, or 3 on a card under 450 px", () => {
+  const six = [MOM, DAD, TIN, tag(4, "Bao", "sun"), tag(5, "Lan", "pink"), tag(6, "Kim", "lime")];
+
+  const { unmount } = renderSchedule(ready, { tags: six });
+
+  expect(stack()).toHaveTextContent("+2");
+
+  unmount();
+  cardWidth(449);
+  renderSchedule(ready, { tags: six });
+
+  expect(stack()).toHaveTextContent("+4");
+});
+
+test("TODAY-04 the filter hides plans and all-day tiles of people not shown, and the count follows", () => {
+  renderSchedule(
+    { kind: "ready", data: [...EVENTS.slice(0, 2), FOR_MOM, FOR_DAD_ALL_DAY] },
+    { tags: [MOM, DAD], selected: new Set([MOM.id]) },
+  );
+
+  expect(stack()).toHaveAccessibleName("Show plans for: Mom. Change");
+  expect(screen.getByRole("button", { name: /^Lunch with Aunt Rosa, / })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Dad’s trip/ })).not.toBeInTheDocument();
+  expect(screen.getByText("Today · 2 of 3 left")).toBeInTheDocument();
+});
+
+test("TODAY-04 with nobody selected no plans or free slots show", () => {
+  renderSchedule(ready, { tags: [MOM, DAD], selected: new Set() });
+
+  expect(stack()).toHaveAccessibleName("Show plans for: No one. Change");
+  expect(screen.queryByRole("button", { name: /^Grandma’s video call, / })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Free / })).not.toBeInTheDocument();
+  expect(screen.getByText("Today · No events")).toBeInTheDocument();
+});
+
+test("TODAY-04 Coming up follows the filter", () => {
+  renderSchedule(
+    { kind: "empty" },
+    { upcoming: UPCOMING, tags: [MOM, DAD, TIN], selected: new Set([DAD.id]) },
+  );
+
+  expect(screen.getByRole("button", { name: /^Soccer, / })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Dentist, / })).not.toBeInTheDocument();
+});
+
+test("TODAY-04 a row in Show plans for changes the filter", async () => {
+  const onFilter = vi.fn();
+
+  renderSchedule(ready, { tags: [MOM, DAD], onFilter });
+
+  await userEvent.click(stack() as HTMLElement);
+  await userEvent.click(screen.getByRole("checkbox", { name: "Dad" }));
+
+  expect(onFilter).toHaveBeenCalledWith(new Set([MOM.id]));
 });

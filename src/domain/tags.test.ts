@@ -2,10 +2,15 @@ import { type Tag, TagColorSchema } from "./schemas";
 import {
   eventColor,
   exactTag,
+  filterLabel,
+  filterScope,
   filterTagIds,
+  initials,
   liveFilter,
   matchesFilter,
   nextFreeColor,
+  stackCircles,
+  toggleEveryone,
   toggleFilter,
   whoIds,
   whoLabel,
@@ -203,5 +208,81 @@ describe("exactTag", () => {
 
   it("EVT-11 a partial name finds no tag", () => {
     expect(exactTag(FAMILY, "Minh")).toBeUndefined();
+  });
+});
+
+const LABELS = {
+  everyone: "Everyone",
+  nobody: "No one",
+  people: (count: number) => `${count} people`,
+};
+
+describe("filterLabel", () => {
+  it("CAL-05 is Everyone when every tag is shown", () => {
+    expect(filterLabel(new Set(ALL_IDS), FAMILY, LABELS)).toBe("Everyone");
+  });
+
+  it("CAL-05 names one or two shown tags in tag order", () => {
+    expect(filterLabel(new Set([MOM.id]), FAMILY, LABELS)).toBe("Mom");
+    expect(filterLabel(new Set([MOM.id, AN.id]), FAMILY, LABELS)).toBe("Minh-An, Mom");
+  });
+
+  it("CAL-05 counts 3 or more shown tags as {n} people", () => {
+    const four = [...FAMILY, tag(4, "Dad", "mint")];
+
+    expect(filterLabel(new Set(ALL_IDS), four, LABELS)).toBe("3 people");
+  });
+
+  it("CAL-05 is No one when nobody is shown", () => {
+    expect(filterLabel(new Set(), FAMILY, LABELS)).toBe("No one");
+  });
+});
+
+describe("initials", () => {
+  it("CAL-05 keeps a name of 3 letters or fewer in full", () => {
+    expect(initials("Mom")).toBe("Mom");
+    expect(initials("Bo")).toBe("Bo");
+  });
+
+  it("CAL-05 takes the first letters of the first two words", () => {
+    expect(initials("Minh-An")).toBe("MA");
+    expect(initials("grandma rose lee")).toBe("GR");
+  });
+
+  it("CAL-05 else takes the first two letters", () => {
+    expect(initials("Grandma")).toBe("Gr");
+    expect(initials("Đức")).toBe("Đức");
+    expect(initials("Đức Anh")).toBe("ĐA");
+  });
+});
+
+describe("stackCircles", () => {
+  const eight = Array.from({ length: 8 }, (_, n) => tag(n + 1, `P${n}`, "lilac"));
+
+  it("CAL-05 shows every tag up to the cap", () => {
+    expect(stackCircles(eight, 8)).toEqual({ shown: eight, more: 0 });
+  });
+
+  it("CAL-05 past the cap shows one fewer and a +N circle", () => {
+    expect(stackCircles(eight, 4)).toEqual({ shown: eight.slice(0, 3), more: 5 });
+  });
+});
+
+describe("toggleEveryone", () => {
+  it("CAL-05 Everyone selects every tag", () => {
+    expect(toggleEveryone(new Set([AN.id]), ALL_IDS)).toBe("all");
+    expect(toggleEveryone(new Set(), ALL_IDS)).toBe("all");
+  });
+
+  it("CAL-05 Everyone clears every tag when all are selected", () => {
+    expect(toggleEveryone(new Set(ALL_IDS), ALL_IDS)).toEqual(new Set());
+  });
+});
+
+describe("filterScope", () => {
+  it("CAL-05 is everyone with every tag selected, some with a few, none with nobody", () => {
+    expect(filterScope(new Set(ALL_IDS), ALL_IDS)).toBe("everyone");
+    expect(filterScope(new Set([MOM.id]), ALL_IDS)).toBe("some");
+    expect(filterScope(new Set(), ALL_IDS)).toBe("none");
   });
 });

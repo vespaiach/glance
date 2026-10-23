@@ -18,16 +18,19 @@ import type { Breakpoint } from "@/domain/breakpoint";
 import { dayRibbon } from "@/domain/dayRibbon";
 import { slotTimes } from "@/domain/eventTimes";
 import type { AccountSettings, CalendarEvent, Photo, Tag, Weather } from "@/domain/schemas";
+import { filterTagIds, liveFilter } from "@/domain/tags";
 import { hasEvent, todayHero } from "@/domain/todayHero";
 import { comingUp } from "@/domain/todaySchedule";
 import { hourlyByHour } from "@/domain/weather";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
 import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
+import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
+import { useWhoFilter } from "@/shell/providers/whoFilter";
 import { type View, viewPath } from "@/shell/routes";
 import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
@@ -58,6 +61,8 @@ import {
 const TEXT_ACTIONS_MIN_WIDTH = 1440;
 
 const COMING_UP_READ = 5;
+
+const NO_TAGS: Tag[] = [];
 
 const styles = stylex.create({
   grid: {
@@ -119,7 +124,17 @@ export function TodayScreen() {
 
   const later = useEventsAfter(day, tz, COMING_UP_READ);
 
-  const tags = useTags() ?? [];
+  const tags = useTags() ?? NO_TAGS;
+
+  const who = useWhoFilter();
+
+  const fixture = useFixtureParams();
+
+  const allIds = tags.map((tag) => tag.id);
+
+  const selected = liveFilter(who.filter, allIds);
+
+  const people = filterTagIds(selected, allIds);
 
   const notes = useSyncedZone<ShownNote>(useNotes(now));
 
@@ -162,6 +177,9 @@ export function TodayScreen() {
       <TodaySchedule
         state={events.state}
         tags={tags}
+        selected={selected}
+        whoSheet={fixture.whosheet === true}
+        onFilter={who.setFilter}
         retryIn={events.retryIn}
         onRetry={events.retry}
         day={day}
@@ -173,8 +191,10 @@ export function TodayScreen() {
         weather={gutterWeather(weather.state, day, tz, settings.tempUnit)}
         upcoming={later && comingUp(later, now, tz)}
         onOpenEvent={openEvent}
-        onAddEvent={() => sheets.open({ kind: "newevent", day })}
-        onAddSlot={(slot) => sheets.open({ kind: "newevent", day, times: slotTimes(slot, tz) })}
+        onAddEvent={() => sheets.open({ kind: "newevent", day, who: people })}
+        onAddSlot={(slot) =>
+          sheets.open({ kind: "newevent", day, who: people, times: slotTimes(slot, tz) })
+        }
         onOpenCalendar={() => go("calendar")}
         xstyle={[todayAreas.sched, columns && todayAreas.clipped]}
       />

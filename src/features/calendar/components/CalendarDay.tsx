@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import { type Breakpoint, type LayoutSize, layoutSize } from "@/domain/breakpoint";
 import type { CalendarEvent, Tag } from "@/domain/schemas";
-import { filterTagIds, matchesFilter } from "@/domain/tags";
+import { filterScope, matchesFilter } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
 import type { ZoneState } from "@/domain/zoneState";
 import { colors, motion, radii, space } from "@/theme/tokens.stylex";
@@ -207,7 +207,7 @@ function Timeline({
         variant="calendar"
         breakpoint={breakpoint}
         span={span24 ? "24h" : "day"}
-        free={freeFor(filter, allIds)}
+        free={filterScope(filter, allIds)}
         weather={weather}
         labels={LABELS}
         onOpenEvent={onOpenEvent}
@@ -218,14 +218,6 @@ function Timeline({
       {spanLink}
     </>
   );
-}
-
-function freeFor(filter: ReadonlySet<string>, allIds: readonly string[]) {
-  const who = filterTagIds(filter, allIds);
-
-  if (who.everyone) return "everyone";
-
-  return who.tagIds.length === 0 ? "none" : "some";
 }
 
 function DaySkeleton() {

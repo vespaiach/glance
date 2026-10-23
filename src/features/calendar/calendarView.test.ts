@@ -2,13 +2,11 @@ import { calendarView, initialCalendarView } from "./calendarView";
 
 const TODAY = "2026-10-09";
 
-const ALL_IDS = ["an", "hy", "mom"];
-
 const START = initialCalendarView({});
 
 describe("initialCalendarView", () => {
-  it("CAL-05 opens on today with every tag selected and 24 hours off", () => {
-    expect(START).toEqual({ day: undefined, filter: "all", span24: false, picker: false });
+  it("CAL-06 opens on today with 24 hours off", () => {
+    expect(START).toEqual({ day: undefined, span24: false, picker: false });
   });
 
   it("CAL-04 ?date= selects that day, ahead of the day= fixture", () => {
@@ -16,11 +14,6 @@ describe("initialCalendarView", () => {
       "2026-10-14",
     );
     expect(initialCalendarView({ fixture: { day: "2026-10-10" } }).day).toBe("2026-10-10");
-  });
-
-  it("CAL-05 who= sets the filter, and who=none is nobody", () => {
-    expect(initialCalendarView({ fixture: { who: ["mom"] } }).filter).toEqual(new Set(["mom"]));
-    expect(initialCalendarView({ fixture: { who: [] } }).filter).toEqual(new Set());
   });
 
   it("CAL-06 span=24 turns 24 hours on", () => {
@@ -58,21 +51,6 @@ describe("calendarView", () => {
 
   it("CAL-02 stepping from today selects the next week's Sunday", () => {
     expect(calendarView(START, { type: "step", delta: 1, today: TODAY }).day).toBe("2026-10-11");
-  });
-
-  it("CAL-05 a tap turns that tag off, then on again back to every tag", () => {
-    const off = calendarView(START, { type: "toggleTag", id: "mom", allIds: ALL_IDS });
-
-    expect(off.filter).toEqual(new Set(["an", "hy"]));
-    expect(calendarView(off, { type: "toggleTag", id: "mom", allIds: ALL_IDS }).filter).toBe("all");
-  });
-
-  it("D24 a tap drops ids of tags that are gone", () => {
-    const gone = { ...START, filter: new Set(["gone", "hy"]) };
-
-    expect(calendarView(gone, { type: "toggleTag", id: "an", allIds: ALL_IDS }).filter).toEqual(
-      new Set(["an", "hy"]),
-    );
   });
 
   it("CAL-06 24 hours stays on across days", () => {

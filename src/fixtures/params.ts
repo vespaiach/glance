@@ -69,6 +69,7 @@ export type FixtureParams = ChoiceParams & {
   span24?: true;
   switch?: true;
   who?: string[];
+  whosheet?: true;
 };
 
 const PLACE_PAGE = "/settings/location";
@@ -162,6 +163,7 @@ function readFlags(query: URLSearchParams): FixtureParams {
     ...(query.get("kb") === "1" && { kb: true }),
     ...(query.get("span") === "24" && { span24: true }),
     ...(query.get("switch") === "1" && { switch: true }),
+    ...(query.get("whosheet") === "1" && { whosheet: true }),
   };
 }
 

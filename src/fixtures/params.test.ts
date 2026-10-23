@@ -85,6 +85,7 @@ describe("parseFixtureParams", () => {
     "day=0",
     "day=ten",
     "who=bao",
+    "whosheet=yes",
     "span=12",
   ])("§6 ignores the unknown value %s", (query) => {
     expect(parseFixtureParams(query)).toEqual({});
@@ -100,6 +101,10 @@ describe("parseFixtureParams", () => {
       pending: 3,
       switch: true,
     });
+  });
+
+  it("CAL-05 reads whosheet=1", () => {
+    expect(parseFixtureParams("whosheet=1")).toEqual({ whosheet: true });
   });
 
   it("SIGNIN-16 reads demo=1", () => {
