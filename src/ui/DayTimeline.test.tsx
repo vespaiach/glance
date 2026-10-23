@@ -78,7 +78,7 @@ const base: Props = {
   tz,
   clock: "12h",
   variant: "calendar",
-  breakpoint: "wide",
+  breakpoint: "large",
   free: "everyone",
   labels,
   onOpenEvent: () => {},
@@ -181,9 +181,9 @@ test("TL-07 Calendar shows each hour's weather in the gutter, no lane, and plans
   expect(screen.getByRole("button", { name: /^Soccer game/ })).toHaveTextContent("80% rain");
 });
 
-test("TL-07 on phone Calendar keeps the gutter weather and drops the rain chips", () => {
+test("TL-07 on small Calendar keeps the gutter weather and drops the rain chips", () => {
   const weather = { hourly: hourly(10, [[9, 52, 70]]), unit: "F" } as const;
-  render(<DayTimeline {...base} breakpoint="phone" plans={[SOCCER]} weather={weather} />);
+  render(<DayTimeline {...base} breakpoint="small" plans={[SOCCER]} weather={weather} />);
 
   expect(screen.getByText("52°")).toBeVisible();
   expect(screen.getByRole("button", { name: /^Soccer game/ })).not.toHaveTextContent("rain");

@@ -9,14 +9,14 @@ import { colors, motion, space } from "@/theme/tokens.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { gallery } from "./samples";
 
-type Size = "wide" | "phone";
+type Size = "large" | "small";
 
 const MODES: Record<Size, readonly SidebarMode[]> = {
-  wide: ["hidden", "rail", "expanded"],
-  phone: ["hidden", "expanded"],
+  large: ["hidden", "rail", "expanded"],
+  small: ["hidden", "expanded"],
 };
 
-const SIZES: readonly Size[] = ["wide", "phone"];
+const SIZES: readonly Size[] = ["large", "small"];
 
 const FIXTURE: Record<SidebarMode, "1" | "open" | undefined> = {
   hidden: undefined,
@@ -41,12 +41,12 @@ const styles = stylex.create({
     overflow: "hidden",
     backgroundColor: colors.hairlineSoft,
   },
-  wide: {
+  large: {
     width: 960,
     maxWidth: "100%",
     height: 640,
   },
-  phone: {
+  small: {
     width: 390,
     maxWidth: "100%",
     height: 844,
@@ -82,10 +82,10 @@ export function SidebarGallery() {
 
 function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
   const [state, dispatch] = useReducer(sidebarReducer, FIXTURE[mode], (rail) =>
-    initialSidebar(rail, "today", size === "phone"),
+    initialSidebar(rail, "today", size === "small"),
   );
 
-  const phone = size === "phone";
+  const small = size === "small";
 
   const caption = `${gallery.sidebar[mode]} · ${gallery.sidebar[size]}`;
 
@@ -93,17 +93,17 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
     <div {...stylex.props(styles.demo)}>
       <Eyebrow>{caption}</Eyebrow>
       <div {...stylex.props(styles.stage, styles[size])}>
-        <div {...stylex.props(styles.page, styles.inset(sidebarInset(state.mode, phone)))}>
+        <div {...stylex.props(styles.page, styles.inset(sidebarInset(state.mode, small)))}>
           <div {...stylex.props(styles.panel)}>
             <Eyebrow>{gallery.groups.today}</Eyebrow>
           </div>
         </div>
         <SidebarGrip
-          phone={phone}
+          small={small}
           shown={state.mode === "hidden"}
-          onShow={() => dispatch({ type: "show", phone })}
+          onShow={() => dispatch({ type: "show", small })}
         />
-        {!phone && (
+        {!small && (
           <>
             <SidebarRail
               mode={state.mode}
@@ -120,11 +120,11 @@ function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
         )}
         <SidebarDrawer
           open={state.mode === "expanded"}
-          phone={phone}
+          small={small}
           active="today"
           onClose={() => dispatch({ type: "close" })}
-          onScrimTap={() => dispatch({ type: "back", phone })}
-          onNavigate={() => dispatch({ type: "viewChanged", view: "today", phone })}
+          onScrimTap={() => dispatch({ type: "back", small })}
+          onNavigate={() => dispatch({ type: "viewChanged", view: "today", small })}
         />
       </div>
     </div>

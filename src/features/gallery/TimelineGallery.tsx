@@ -68,7 +68,7 @@ const DEMOS: readonly Demo[] = [
     props: {
       plans: OCT_9_PLANS.filter((plan) => matchesFilter(plan, MOM_AND_DAD, ALL_IDS)),
       free: "some",
-      breakpoint: "mid",
+      breakpoint: "normal",
     },
   },
   { label: words.empty, width: 860, height: 640, props: { day: "2026-10-11", plans: [] } },
@@ -76,9 +76,9 @@ const DEMOS: readonly Demo[] = [
     label: words.nobody,
     width: 860,
     height: 640,
-    props: { plans: [], free: "none", breakpoint: "narrow" },
+    props: { plans: [], free: "none", breakpoint: "normal" },
   },
-  { label: words.phone, width: 358, height: 720, props: { breakpoint: "phone" } },
+  { label: words.small, width: 358, height: 720, props: { breakpoint: "small" } },
   {
     label: words.schedule,
     width: 560,
@@ -86,10 +86,10 @@ const DEMOS: readonly Demo[] = [
     props: { variant: "today", weather: { hourly: hourlyOn(9), unit: "F" } },
   },
   {
-    label: words.schedulePhone,
+    label: words.scheduleSmall,
     width: 358,
     height: 560,
-    props: { variant: "today", breakpoint: "phone", weather: { hourly: hourlyOn(9), unit: "F" } },
+    props: { variant: "today", breakpoint: "small", weather: { hourly: hourlyOn(9), unit: "F" } },
   },
 ];
 
@@ -127,7 +127,7 @@ export function TimelineGallery() {
               tz={GALLERY_TZ}
               clock="12h"
               variant="calendar"
-              breakpoint="wide"
+              breakpoint="large"
               free="everyone"
               labels={LABELS}
               onOpenEvent={ignore}

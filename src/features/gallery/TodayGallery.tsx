@@ -90,7 +90,7 @@ const PICTURES = [
     ),
   },
   {
-    key: "phone-empty",
+    key: "small-empty",
     picture: (
       <PictureOfDayPanel onOpenPhotos={ignore}>
         <PictureOfDayEmpty onOpenPhotos={ignore} canUpload={false} />
@@ -123,7 +123,7 @@ const styles = stylex.create({
     display: "flex",
     flexDirection: "column",
   },
-  phone: {
+  small: {
     width: 358,
     height: "auto",
   },
@@ -137,7 +137,7 @@ const schedule = {
   day: "2026-10-09",
   now: NOW,
   clock: "12h",
-  breakpoint: "wide",
+  breakpoint: "large",
   iconActions: false,
   weather: { hourly: hourlyOn(9), unit: "F" },
   onOpenEvent: ignore,
@@ -265,10 +265,10 @@ export function TodayGallery({ season }: { season: Season }) {
         tz={GALLERY_TZ}
         state={{ kind: "ready", data: TODAY_WITH_ALL_DAY }}
         {...schedule}
-        breakpoint="phone"
+        breakpoint="small"
         oneColumn
         iconActions
-        xstyle={[styles.zone, styles.phone]}
+        xstyle={[styles.zone, styles.small]}
       />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} weather={undefined} />
@@ -282,10 +282,10 @@ export function TodayGallery({ season }: { season: Season }) {
         tz={GALLERY_TZ}
         state={{ kind: "empty" }}
         {...schedule}
-        breakpoint="phone"
+        breakpoint="small"
         oneColumn
         iconActions
-        xstyle={[styles.zone, styles.phone]}
+        xstyle={[styles.zone, styles.small]}
       />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule} />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "failed" }} {...schedule} />

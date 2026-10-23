@@ -58,7 +58,7 @@ const base = {
   clock: "12h",
   today: TODAY,
   stale: false,
-  breakpoint: "wide",
+  breakpoint: "large",
 } as const;
 
 test("WX-01 the now block is named after the location and shows four details", () => {

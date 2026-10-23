@@ -9,7 +9,7 @@ export function useBreakpoint(): Breakpoint {
   return useSyncExternalStore(
     subscribe,
     () => breakpointFor(widestMatch()),
-    () => "wide",
+    () => "large",
   );
 }
 

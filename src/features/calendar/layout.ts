@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import type { Breakpoint } from "@/domain/breakpoint";
+import { type Breakpoint, layoutSize } from "@/domain/breakpoint";
 
 const styles = stylex.create({
   root: {
@@ -8,19 +8,16 @@ const styles = stylex.create({
     gap: 16,
     minWidth: 0,
   },
-  wide: { gap: 24 },
-  phone: { gap: 12 },
+  large: { gap: 24 },
+  small: { gap: 12 },
   fit: { height: "100%", minHeight: 0 },
   scroll: { minHeight: "100%" },
 });
 
 export function calendarLayout(breakpoint: Breakpoint, span24: boolean): stylex.StyleXStyles {
-  const fits = breakpoint !== "phone" && !span24;
+  const size = layoutSize(breakpoint);
 
-  return [
-    styles.root,
-    breakpoint === "wide" && styles.wide,
-    breakpoint === "phone" && styles.phone,
-    fits ? styles.fit : styles.scroll,
-  ];
+  const fits = size === "large" && !span24;
+
+  return [styles.root, styles[size], fits ? styles.fit : styles.scroll];
 }

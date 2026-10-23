@@ -93,29 +93,29 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const { hideSidebarWhenIdle } = useAccountSettings();
 
-  const phone = breakpoint === "phone";
+  const small = breakpoint === "small";
 
   const [sidebar, dispatch] = useReducer(sidebarReducer, rail, (fixture) =>
-    initialSidebar(fixture, view, phone),
+    initialSidebar(fixture, view, small),
   );
 
   const handle = useRef<HTMLButtonElement>(null);
 
   const grip = useRef<HTMLButtonElement>(null);
 
-  const mode = phone && sidebar.mode === "rail" ? "hidden" : sidebar.mode;
+  const mode = small && sidebar.mode === "rail" ? "hidden" : sidebar.mode;
 
-  const inset = sidebarInset(mode, phone);
+  const inset = sidebarInset(mode, small);
 
-  const back = { type: "back", phone } as const;
+  const back = { type: "back", small } as const;
 
-  const settled = phone ? grip : handle;
+  const settled = small ? grip : handle;
 
   useAmbientRoot(shell, pathname);
 
-  useRailOnViewChange(pathname, view, phone, dispatch);
+  useRailOnViewChange(pathname, view, small, dispatch);
 
-  useEscapeToRail(mode === "expanded", phone, dispatch, settled);
+  useEscapeToRail(mode === "expanded", small, dispatch, settled);
 
   useHideWhenIdle(
     hideSidebarWhenIdle && mode !== "hidden" && !sheetOpen && keyboardInset === 0,
@@ -143,15 +143,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <SidebarGrip
         ref={grip}
-        phone={phone}
+        small={small}
         shown={mode === "hidden"}
         onShow={() =>
-          phone
-            ? dispatch({ type: "show", phone })
+          small
+            ? dispatch({ type: "show", small })
             : dispatchThenFocus(dispatch, handle, { type: "show" })
         }
       />
-      {!phone && (
+      {!small && (
         <>
           <SidebarRail
             mode={mode}
@@ -169,7 +169,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       )}
       <SidebarDrawer
         open={mode === "expanded"}
-        phone={phone}
+        small={small}
         active={view}
         onClose={() => dispatchThenFocus(dispatch, grip, { type: "close" })}
         onScrimTap={() => dispatchThenFocus(dispatch, settled, back)}
@@ -194,20 +194,20 @@ function usePrefetchViews() {
 function useRailOnViewChange(
   pathname: string,
   view: View | undefined,
-  phone: boolean,
+  small: boolean,
   dispatch: Dispatch<SidebarAction>,
 ) {
   const [shownOn, setShownOn] = useState(pathname);
 
   if (pathname !== shownOn) {
     setShownOn(pathname);
-    dispatch({ type: "viewChanged", view, phone });
+    dispatch({ type: "viewChanged", view, small });
   }
 }
 
 function useEscapeToRail(
   expanded: boolean,
-  phone: boolean,
+  small: boolean,
   dispatch: Dispatch<SidebarAction>,
   settled: RefObject<HTMLButtonElement | null>,
 ) {
@@ -215,13 +215,13 @@ function useEscapeToRail(
     if (!expanded) return;
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") dispatchThenFocus(dispatch, settled, { type: "back", phone });
+      if (event.key === "Escape") dispatchThenFocus(dispatch, settled, { type: "back", small });
     };
 
     document.addEventListener("keydown", onKey);
 
     return () => document.removeEventListener("keydown", onKey);
-  }, [expanded, phone, dispatch, settled]);
+  }, [expanded, small, dispatch, settled]);
 }
 
 function useHideWhenIdle(running: boolean, dispatch: Dispatch<SidebarAction>) {

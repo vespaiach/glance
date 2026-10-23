@@ -36,8 +36,8 @@ test("SHELL-11 the grip takes no focus when it comes back", () => {
   expect(document.body).toHaveFocus();
 });
 
-test("SHELL-08 on a phone the grip is named Open menu", () => {
-  render(<SidebarGrip shown phone onShow={vi.fn()} />);
+test("SHELL-08 on small the grip is named Open menu", () => {
+  render(<SidebarGrip shown small onShow={vi.fn()} />);
 
   expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
     "aria-expanded",

@@ -82,7 +82,7 @@ function renderSchedule(
       day="2026-10-09"
       now={NOW}
       clock="12h"
-      breakpoint="wide"
+      breakpoint="large"
       iconActions={iconActions}
       weather={weather}
       onOpenEvent={handlers.onOpenEvent ?? (() => {})}
@@ -250,7 +250,7 @@ test("TODAY-11 the schedule has no See all row", () => {
   expect(screen.queryByRole("button", { name: /See all/ })).not.toBeInTheDocument();
 });
 
-test("TODAY-04 below wide, Add event and Full calendar are icon-only and keep their names and callbacks", async () => {
+test("TODAY-04 with icon actions, Add event and Full calendar are icon-only and keep their names and callbacks", async () => {
   const onAddEvent = vi.fn<() => void>();
 
   const onOpenCalendar = vi.fn<() => void>();

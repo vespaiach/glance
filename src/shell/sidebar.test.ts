@@ -84,28 +84,28 @@ test.each([
   expect(sidebarInset(mode, false)).toBe(inset);
 });
 
-const PHONE = { phone: true } as const;
+const SMALL = { small: true } as const;
 
 test.each([
-  ["show", "hidden", "expanded", { type: "show", ...PHONE }],
+  ["show", "hidden", "expanded", { type: "show", ...SMALL }],
   ["close", "expanded", "hidden", { type: "close" }],
-  ["back", "expanded", "hidden", { type: "back", ...PHONE }],
-  ["viewChanged to Calendar", "expanded", "hidden", { ...ON_CALENDAR, ...PHONE }],
-  ["viewChanged to Today", "expanded", "hidden", { ...ON_TODAY, ...PHONE }],
+  ["back", "expanded", "hidden", { type: "back", ...SMALL }],
+  ["viewChanged to Calendar", "expanded", "hidden", { ...ON_CALENDAR, ...SMALL }],
+  ["viewChanged to Today", "expanded", "hidden", { ...ON_TODAY, ...SMALL }],
 ] as const satisfies readonly (readonly [string, SidebarMode, SidebarMode, SidebarAction])[])(
-  "SHELL-08 on a phone %s turns %s into %s and never reaches Rail",
+  "SHELL-08 on small %s turns %s into %s and never reaches Rail",
   (_name, from, to, action) => {
     expect(sidebarReducer({ mode: from }, action)).toEqual({ mode: to });
   },
 );
 
 test.each([
-  ["hidden", "viewChanged to Calendar", { ...ON_CALENDAR, ...PHONE }],
-  ["hidden", "viewChanged to Today", { ...ON_TODAY, ...PHONE }],
-  ["hidden", "back", { type: "back", ...PHONE }],
-  ["expanded", "show", { type: "show", ...PHONE }],
+  ["hidden", "viewChanged to Calendar", { ...ON_CALENDAR, ...SMALL }],
+  ["hidden", "viewChanged to Today", { ...ON_TODAY, ...SMALL }],
+  ["hidden", "back", { type: "back", ...SMALL }],
+  ["expanded", "show", { type: "show", ...SMALL }],
 ] as const satisfies readonly (readonly [SidebarMode, string, SidebarAction])[])(
-  "SHELL-08 on a phone a %s sidebar stays as it is on %s",
+  "SHELL-08 on small a %s sidebar stays as it is on %s",
   (mode, _name, action) => {
     const state = { mode };
 
@@ -118,12 +118,12 @@ test.each([
   [undefined, "calendar", "hidden"],
   ["1", "calendar", "hidden"],
   ["open", "calendar", "expanded"],
-] as const)("SHELL-08 on a phone rail=%s on %s starts the sidebar %s", (rail, view, mode) => {
+] as const)("SHELL-08 on small rail=%s on %s starts the sidebar %s", (rail, view, mode) => {
   expect(initialSidebar(rail, view, true)).toEqual({ mode });
 });
 
 test.each(["hidden", "rail", "expanded"] as const)(
-  "SHELL-10 on a phone a %s sidebar insets the page by 0 px",
+  "SHELL-10 on small a %s sidebar insets the page by 0 px",
   (mode) => {
     expect(sidebarInset(mode, true)).toBe(0);
   },

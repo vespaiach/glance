@@ -31,7 +31,6 @@ function Strip({ selected = "2026-10-09" }: { selected?: string }) {
       days={DAYS}
       selected={day}
       today="2026-10-09"
-      breakpoint="wide"
       previousLabel="Previous week"
       nextLabel="Next week"
       onPrevious={vi.fn()}

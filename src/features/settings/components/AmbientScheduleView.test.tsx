@@ -13,7 +13,7 @@ function renderView(overrides: Partial<Props> = {}) {
     ambient: DEFAULT_AMBIENT,
     clock: "12h",
     idleTimeout: { on: true, minutes: 3 },
-    breakpoint: "wide",
+    breakpoint: "large",
     onChange: vi.fn(),
     onBack: vi.fn(),
     onPreview: vi.fn(),

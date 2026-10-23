@@ -1,11 +1,15 @@
-export type Breakpoint = "wide" | "mid" | "narrow" | "phone";
+export type Breakpoint = "large" | "normal" | "small";
 
-export const BREAKPOINT_MIN_WIDTHS = { wide: 1200, mid: 1000, narrow: 600 } as const;
+export type LayoutSize = "large" | "small";
+
+export const BREAKPOINT_MIN_WIDTHS = { large: 1201, normal: 769 } as const;
 
 export function breakpointFor(width: number): Breakpoint {
-  if (width >= BREAKPOINT_MIN_WIDTHS.wide) return "wide";
+  if (width >= BREAKPOINT_MIN_WIDTHS.large) return "large";
 
-  if (width >= BREAKPOINT_MIN_WIDTHS.mid) return "mid";
+  return width >= BREAKPOINT_MIN_WIDTHS.normal ? "normal" : "small";
+}
 
-  return width >= BREAKPOINT_MIN_WIDTHS.narrow ? "narrow" : "phone";
+export function layoutSize(breakpoint: Breakpoint): LayoutSize {
+  return breakpoint === "small" ? "small" : "large";
 }

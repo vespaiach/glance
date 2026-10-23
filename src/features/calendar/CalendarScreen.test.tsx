@@ -517,7 +517,7 @@ test("FAIL-01 a failed first sync shows Calendar unavailable with a countdown an
   expect(store.nudge).toHaveBeenCalledTimes(1);
 });
 
-function onPhone() {
+function onSmall() {
   vi.stubGlobal("matchMedia", () => ({
     matches: false,
     addEventListener: () => {},
@@ -527,8 +527,8 @@ function onPhone() {
 
 const picker = () => screen.queryByRole("dialog", { name: "Pick a date" });
 
-test("CAL-02 on a phone the date control replaces the week strip and opens the picker", async () => {
-  onPhone();
+test("CAL-02 on small the date control replaces the week strip and opens the picker", async () => {
+  onSmall();
   await seed(CALL);
 
   renderCalendar();
@@ -546,7 +546,7 @@ test("CAL-02 on a phone the date control replaces the week strip and opens the p
 });
 
 test("CAL-03 picking a day selects it, closes the picker and shows its plans", async () => {
-  onPhone();
+  onSmall();
   await seed(CALL, DENTIST);
 
   renderCalendar();
@@ -562,7 +562,7 @@ test("CAL-03 picking a day selects it, closes the picker and shows its plans", a
 });
 
 test("CAL-03 picker days carry a dot per tag with a plan", async () => {
-  onPhone();
+  onSmall();
   await seed(CALL, SOCCER, DENTIST);
 
   renderCalendar();
@@ -574,7 +574,7 @@ test("CAL-03 picker days carry a dot per tag with a plan", async () => {
 });
 
 test("CAL-03 Today selects today and closes; Close keeps the day", async () => {
-  onPhone();
+  onSmall();
   search = "date=2026-11-20";
   await seed();
 

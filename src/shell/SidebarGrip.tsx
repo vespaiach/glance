@@ -20,7 +20,7 @@ const styles = stylex.create({
     justifyContent: "center",
     cursor: "pointer",
   },
-  phoneGrip: {
+  smallGrip: {
     width: 40,
   },
   off: {
@@ -33,7 +33,7 @@ const styles = stylex.create({
     borderRadius: radii.full,
     backgroundColor: colors.textPrimary,
   },
-  phonePill: {
+  smallPill: {
     width: 4,
     height: 56,
   },
@@ -41,23 +41,23 @@ const styles = stylex.create({
 
 type SidebarGripProps = {
   shown: boolean;
-  phone?: boolean;
+  small?: boolean;
   onShow: () => void;
   ref?: Ref<HTMLButtonElement>;
 };
 
-export function SidebarGrip({ shown, phone = false, onShow, ref }: SidebarGripProps) {
+export function SidebarGrip({ shown, small = false, onShow, ref }: SidebarGripProps) {
   return (
     <button
       ref={ref}
       type="button"
       hidden={!shown}
-      aria-label={phone ? copy.nav.openMenu : copy.nav.showSidebar}
+      aria-label={small ? copy.nav.openMenu : copy.nav.showSidebar}
       aria-expanded={false}
       onClick={onShow}
-      {...stylex.props(styles.grip, phone && styles.phoneGrip, !shown && styles.off)}
+      {...stylex.props(styles.grip, small && styles.smallGrip, !shown && styles.off)}
     >
-      <span {...stylex.props(styles.pill, phone && styles.phonePill)} />
+      <span {...stylex.props(styles.pill, small && styles.smallPill)} />
     </button>
   );
 }

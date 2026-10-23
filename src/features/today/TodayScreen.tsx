@@ -194,7 +194,7 @@ export function TodayScreen() {
         day={day}
         tz={tz}
         grid={layout.grid}
-        canUpload={breakpoint !== "phone"}
+        canUpload={breakpoint !== "small"}
         onOpen={(id) => router.push(`${viewPath("photos")}?photo=${id}`)}
         onOpenPhotos={() => go("photos")}
       />

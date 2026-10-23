@@ -122,7 +122,7 @@ export function PhotosScreen() {
         playing={show.kind === "playing"}
         uploads={uploads.tiles}
         online={online}
-        canUpload={breakpoint !== "phone"}
+        canUpload={breakpoint !== "small"}
         breakpoint={breakpoint}
         backgroundId={photoBackground(background)}
         photoSrc={photoSrc}

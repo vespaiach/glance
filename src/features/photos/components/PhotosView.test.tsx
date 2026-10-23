@@ -69,7 +69,7 @@ function renderView(overrides: Partial<Props> = {}) {
     uploads: [],
     online: true,
     canUpload: true,
-    breakpoint: "wide",
+    breakpoint: "large",
     backgroundId: undefined,
     photoSrc: (id, variant) => `/photos/${id}/${variant}`,
     onSelect: vi.fn<(index: number) => void>(),
@@ -254,7 +254,7 @@ test("PHOTO-09 offline with no photos disables Upload photos beside the offline 
   expect(screen.getByRole("status")).toHaveTextContent("Offline · upload when back online");
 });
 
-test("spec§5.4 the phone has no Upload or Upload photos", () => {
+test("spec§5.4 small has no Upload or Upload photos", () => {
   renderView({ canUpload: false, online: false });
 
   expect(screen.queryByRole("button", { name: "Upload" })).not.toBeInTheDocument();

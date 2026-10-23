@@ -115,7 +115,7 @@ test("TODAY-07 each mount picks its prompt at random from the seven", () => {
   });
 });
 
-test("TODAY-07 on phone the tile has no Upload a photo pill but still opens Photos", async () => {
+test("TODAY-07 on small the tile has no Upload a photo pill but still opens Photos", async () => {
   const onOpenPhotos = vi.fn<() => void>();
 
   render(<PictureOfDayEmpty onOpenPhotos={onOpenPhotos} canUpload={false} />);

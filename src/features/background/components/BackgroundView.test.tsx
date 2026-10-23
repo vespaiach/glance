@@ -45,7 +45,7 @@ function renderView(overrides: Partial<Props> = {}) {
     uploads: [],
     online: true,
     canUpload: true,
-    breakpoint: "wide",
+    breakpoint: "large",
     photoSrc: (id, variant) => `/photos/${id}/${variant}`,
     onChange: vi.fn(),
     onBack: vi.fn(),
@@ -131,7 +131,7 @@ test("BG-02 offline the Upload photo tile reads Upload when online and is disabl
   expect(screen.getByRole("button", { name: "Upload when online" })).toBeDisabled();
 });
 
-test("spec§5.4 on phone the Upload photo tile is hidden", () => {
+test("spec§5.4 on small the Upload photo tile is hidden", () => {
   renderView({ canUpload: false });
 
   expect(screen.queryByRole("button", { name: "Upload photo" })).not.toBeInTheDocument();

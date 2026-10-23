@@ -21,5 +21,5 @@ export function forecastStale(fetchedAt: string, now: Date): boolean {
 export function savedTimeShown(breakpoint: Breakpoint, onWeather: boolean): boolean {
   if (onWeather) return false;
 
-  return breakpoint === "wide" || breakpoint === "mid";
+  return breakpoint !== "small";
 }
