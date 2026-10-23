@@ -31,7 +31,6 @@ const NOTE: Note = {
   text: "Milk and eggs",
   author: "Maria",
   createdAt: "2026-10-09T13:00:00.000Z",
-  tone: "soft",
   rotation: -1.5,
 };
 

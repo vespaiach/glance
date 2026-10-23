@@ -5,12 +5,11 @@ import { Pencil, Trash2, WifiOff } from "lucide-react";
 import { useReducer } from "react";
 import { copy } from "@/copy";
 import { noteDetailsTilt } from "@/domain/notes";
-import type { NoteTone } from "@/domain/schemas";
+import { NOTE_LIMITS } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { motion, radii, shadows } from "@/theme/tokens.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
-import { ColorSwatchPicker } from "@/ui/ColorSwatchPicker";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
 import { type CloseFrom, closeStep } from "@/ui/discard";
 import { Sheet } from "@/ui/Sheet";
@@ -20,7 +19,6 @@ import {
   isDirty,
   type NoteDraft,
   type NoteSheetState,
-  type NoteSwatchOption,
   noteSheetReducer,
 } from "../noteSheet";
 import { NoteDetails } from "./NoteDetails";
@@ -29,7 +27,6 @@ type NoteSheetProps = {
   mode: "new" | "edit";
   eyebrow: string;
   initial: NoteSheetState;
-  swatches: readonly NoteSwatchOption[];
   offline: boolean;
   keyboardInset?: number;
   onClose: () => void;
@@ -61,11 +58,7 @@ const styles = stylex.create({
     borderRadius: radii.sm,
   },
   tilt: (degrees: number) => ({ transform: `rotate(${degrees}deg)` }),
-  tone1: { backgroundColor: season.block1 },
-  tone2: { backgroundColor: season.block2 },
-  tone3: { backgroundColor: season.block3 },
-  tone4: { backgroundColor: season.block4 },
-  soft: { backgroundColor: season.soft },
+  paper: { backgroundColor: season.soft },
 });
 
 type DeleteActionProps = {
@@ -78,7 +71,6 @@ export function NoteSheet({
   mode,
   eyebrow,
   initial,
-  swatches,
   offline,
   onClose,
   onDelete,
@@ -103,12 +95,7 @@ export function NoteSheet({
         }
         keyboardInset={keyboardInset}
         uniform
-        xstyle={[
-          styles.morph,
-          styles.sticky,
-          toneStyle(state.opened.tone),
-          styles.tilt(noteDetailsTilt(rotation)),
-        ]}
+        xstyle={[styles.morph, styles.sticky, styles.paper, styles.tilt(noteDetailsTilt(rotation))]}
       >
         <NoteDetails text={state.opened.text.trim()} time={time} />
       </Sheet>
@@ -197,6 +184,7 @@ export function NoteSheet({
         value={draft.text}
         onChange={(value) => dispatch({ type: "text", value })}
         error={state.textError ? words.writeMessage : undefined}
+        maxLength={NOTE_LIMITS.text}
         multiline
         rows={3}
       />
@@ -204,13 +192,8 @@ export function NoteSheet({
         label={words.name}
         placeholder={words.namePlaceholder}
         value={draft.author}
+        maxLength={NOTE_LIMITS.author}
         onChange={(value) => dispatch({ type: "author", value })}
-      />
-      <ColorSwatchPicker
-        label={words.color}
-        options={swatches}
-        value={draft.tone}
-        onChange={(value) => dispatch({ type: "tone", value })}
       />
     </Sheet>
   );
@@ -218,10 +201,6 @@ export function NoteSheet({
 
 function authorName(author: string): string {
   return author.trim() === "" ? copy.notes.guestAuthor : author.trim();
-}
-
-function toneStyle(tone: NoteTone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }
 
 function primaryLabel(mode: NoteSheetProps["mode"], offline: boolean): string {

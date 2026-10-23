@@ -28,7 +28,6 @@ const NOTE: StoredNote = {
   text: "Milk and eggs",
   author: "Maria",
   createdAt: NOW,
-  tone: "soft",
   rotation: -1.5,
   updatedAt: NOW,
   version: 1,
@@ -242,18 +241,18 @@ export function databaseContract(open: () => Database): void {
 
     it("NOTE-06 round-trips notes and lists live notes across accounts", async () => {
       await db().notes.save(MARIA, NOTE);
-      await db().notes.save(OMAR, { ...NOTE, id: "n2", tone: 3 });
+      await db().notes.save(OMAR, { ...NOTE, id: "n2", author: "" });
       await db().notes.save(MARIA, { ...NOTE, id: "n3", deletedAt: NOW });
 
       expect(await db().notes.find("n2")).toEqual({
         accountId: OMAR,
-        value: { ...NOTE, id: "n2", tone: 3 },
+        value: { ...NOTE, id: "n2", author: "" },
       });
       expect(await db().notes.live()).toEqual([
         { accountId: MARIA, value: NOTE },
-        { accountId: OMAR, value: { ...NOTE, id: "n2", tone: 3 } },
+        { accountId: OMAR, value: { ...NOTE, id: "n2", author: "" } },
       ]);
-      expect(await db().notes.changedSince(OMAR, 0)).toEqual([{ ...NOTE, id: "n2", tone: 3 }]);
+      expect(await db().notes.changedSince(OMAR, 0)).toEqual([{ ...NOTE, id: "n2", author: "" }]);
     });
 
     it("FAM-05 finds live tags by id and by name in any case, in one account only", async () => {

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { AccountSettings, Note } from "@/domain/schemas";
-import { createNotesRepo, useNote, useNotes } from "./notes";
+import { createNotesRepo, useLastAuthor, useNote, useNotes } from "./notes";
 import {
   type Harness,
   openHarness,
@@ -21,7 +21,6 @@ function note(n: number, createdAt: string): Note {
     text: `Note ${n}`,
     author: "Maria",
     createdAt,
-    tone: 1,
     rotation: 0,
   };
 }
@@ -72,6 +71,45 @@ describe("notes repo", () => {
     expect(await store.db.outbox.toArray()).toMatchObject([
       { entity: "notes", entityId: FRESH.id, op: "delete" },
     ]);
+  });
+});
+
+describe("last author", () => {
+  function renderLastAuthor() {
+    return renderHook(() => useLastAuthor(), { wrapper: wrapperFor(store) });
+  }
+
+  it("NOTE-02 the last author is blank before anyone posts from this screen", async () => {
+    const { result } = renderLastAuthor();
+
+    await waitFor(() => expect(result.current).toBe(""));
+  });
+
+  it("NOTE-02 posting a note remembers its author on this screen, outside the outbox", async () => {
+    const { result } = renderLastAuthor();
+
+    await act(() => createNotesRepo(store).post({ ...NEW, author: "Mia" }));
+
+    await waitFor(() => expect(result.current).toBe("Mia"));
+    expect(await store.db.outbox.toArray()).toMatchObject([{ entity: "notes", entityId: NEW.id }]);
+  });
+
+  it("NOTE-03 an unsigned post keeps the last author", async () => {
+    await createNotesRepo(store).post({ ...NEW, author: "Mia" });
+    await createNotesRepo(store).post({ ...FRESH, author: "" });
+
+    const { result } = renderLastAuthor();
+
+    await waitFor(() => expect(result.current).toBe("Mia"));
+  });
+
+  it("NOTE-02 saving an edit leaves the last author alone", async () => {
+    await createNotesRepo(store).post({ ...NEW, author: "Mia" });
+    await createNotesRepo(store).put({ ...FRESH, author: "Leo" });
+
+    const { result } = renderLastAuthor();
+
+    await waitFor(() => expect(result.current).toBe("Mia"));
   });
 });
 

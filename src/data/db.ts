@@ -101,6 +101,12 @@ export function openGlanceDb(name: string): GlanceDb {
     await mapSettingsOutbox(tx);
   });
 
+  db.version(5).upgrade(async (tx) => {
+    await tx.table("notes").toCollection().modify(withoutTone);
+
+    await dropNoteOutboxTone(tx);
+  });
+
   return db;
 }
 
@@ -145,6 +151,20 @@ async function mapSettingsOutbox(tx: Transaction): Promise<void> {
     .modify((entry) => {
       if (isRecord(entry.payload)) withSettingsValues(entry.payload);
     });
+}
+
+async function dropNoteOutboxTone(tx: Transaction): Promise<void> {
+  await tx
+    .table<OutboxEntry, number>("outbox")
+    .where("entity")
+    .equals("notes")
+    .modify((entry) => {
+      if (isRecord(entry.payload)) withoutTone(entry.payload);
+    });
+}
+
+function withoutTone(note: Record<string, unknown>): void {
+  delete note.tone;
 }
 
 function withSettingsValues(settings: Record<string, unknown>): void {

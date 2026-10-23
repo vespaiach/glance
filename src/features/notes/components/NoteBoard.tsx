@@ -153,7 +153,6 @@ export function NoteBoard({
               {notes.map((note) => (
                 <StickyNote
                   key={note.id}
-                  tone={note.tone}
                   rotate={note.rotation}
                   author={note.author}
                   time={noteStampText(note, now, clock, tz)}

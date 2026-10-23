@@ -1,6 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ReactNode } from "react";
-import type { NoteTone } from "@/domain/schemas";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -9,7 +8,6 @@ type StickyNoteProps = {
   children: ReactNode;
   author?: string;
   time?: string;
-  tone?: NoteTone;
   rotate?: number;
   width?: number | string;
   minHeight?: number;
@@ -34,15 +32,11 @@ const styles = stylex.create({
     transitionProperty: "background-color, transform",
     transitionDuration: `${motion.durSeason}, ${motion.durBase}`,
     transitionTimingFunction: `${motion.easeInOut}, ${motion.easeOut}`,
+    backgroundColor: season.soft,
   },
   button: { cursor: "pointer" },
   size: (width: number | string, minHeight: number) => ({ width, minHeight }),
   rotate: (degrees: number) => ({ transform: `rotate(${degrees}deg)` }),
-  tone1: { backgroundColor: season.block1 },
-  tone2: { backgroundColor: season.block2 },
-  tone3: { backgroundColor: season.block3 },
-  tone4: { backgroundColor: season.block4 },
-  soft: { backgroundColor: season.soft },
   text: {
     fontSize: 24,
     fontWeight: 400,
@@ -65,19 +59,13 @@ export function StickyNote({
   children,
   author,
   time,
-  tone = 2,
   rotate = 0,
   width = 280,
   minHeight = 220,
   onClick,
   xstyle,
 }: StickyNoteProps) {
-  const rootStyles = [
-    styles.root,
-    styles.size(width, minHeight),
-    styles.rotate(rotate),
-    toneStyle(tone),
-  ];
+  const rootStyles = [styles.root, styles.size(width, minHeight), styles.rotate(rotate)];
 
   const content = (
     <>
@@ -104,8 +92,4 @@ export function StickyNote({
   }
 
   return <div {...stylex.props(...rootStyles, xstyle)}>{content}</div>;
-}
-
-function toneStyle(tone: NoteTone) {
-  return typeof tone === "number" ? styles[`tone${tone}`] : styles[tone];
 }

@@ -18,7 +18,7 @@ test("spec§4.2 StickyNote shows its message, author and time", () => {
 test("NOTE-01 StickyNote with onClick is a button that reports taps", async () => {
   const onClick = vi.fn();
   render(
-    <StickyNote author="Leo" time="Tue" tone={3} rotate={1.5} onClick={onClick}>
+    <StickyNote author="Leo" time="Tue" rotate={1.5} onClick={onClick}>
       Feed the cat
     </StickyNote>,
   );

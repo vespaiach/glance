@@ -9,6 +9,7 @@ type TextInputProps = {
   caption?: string;
   type?: "text" | "date";
   max?: string;
+  maxLength?: number;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -104,6 +105,7 @@ export function TextInput({
   caption,
   type: inputType = "text",
   max,
+  maxLength,
   value,
   onChange,
   placeholder,
@@ -123,6 +125,7 @@ export function TextInput({
     id,
     value,
     placeholder,
+    maxLength,
     "aria-label": ariaLabel,
     "aria-invalid": invalid || undefined,
     "aria-describedby": invalid ? errorId : undefined,

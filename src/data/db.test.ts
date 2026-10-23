@@ -34,6 +34,16 @@ const OLD_SETTINGS = {
   version: 3,
 };
 
+const NOTE = {
+  id: "0195f0a0-0000-7000-8000-000000000301",
+  text: "Back at 6",
+  author: "Mom",
+  createdAt: "2026-10-09T09:00:00.000Z",
+  rotation: -2,
+  updatedAt: "2026-10-09T09:00:00.000Z",
+  version: 1,
+};
+
 const GONE = { ...MOM, id: "0195f0a0-0000-7000-8000-000000000202", name: "Gone" };
 
 afterEach(async () => {
@@ -220,6 +230,38 @@ describe("account database", () => {
     db.close();
   });
 
+  it("D27 the v5 upgrade deletes the tone from stored notes", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = v4Dexie(name);
+    await old.table("notes").put({ ...NOTE, tone: "soft" });
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.notes.get(NOTE.id)).toEqual(NOTE);
+    db.close();
+  });
+
+  it("D27 the v5 upgrade deletes the tone from waiting note puts", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = v4Dexie(name);
+    await old.table("outbox").bulkAdd([
+      { entity: "notes", entityId: NOTE.id, op: "put", payload: { ...NOTE, tone: 3 }, attempts: 1 },
+      { entity: "notes", entityId: GONE.id, op: "delete", attempts: 0 },
+      { entity: "events", entityId: EVENT.id, op: "put", payload: EVENT, attempts: 0 },
+    ]);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.outbox.toArray()).toEqual([
+      { seq: 1, entity: "notes", entityId: NOTE.id, op: "put", payload: NOTE, attempts: 1 },
+      { seq: 2, entity: "notes", entityId: GONE.id, op: "delete", attempts: 0 },
+      { seq: 3, entity: "events", entityId: EVENT.id, op: "put", payload: EVENT, attempts: 0 },
+    ]);
+    db.close();
+  });
+
   it("tech§4.1 deleting one account's database leaves another account's rows", async () => {
     const a = openGlanceDb(accountDbName(ACCOUNT_A));
     const b = openGlanceDb(accountDbName(ACCOUNT_B));
@@ -252,9 +294,17 @@ function v2Dexie(name: string): Dexie {
 }
 
 function v3Dexie(name: string): Dexie {
+  return tagsDexie(name, 3);
+}
+
+function v4Dexie(name: string): Dexie {
+  return tagsDexie(name, 4);
+}
+
+function tagsDexie(name: string, version: number): Dexie {
   const old = new Dexie(name);
 
-  old.version(3).stores({
+  old.version(version).stores({
     events: "id, startAt, deletedAt",
     tags: "id, createdAt, deletedAt",
     notes: "id, createdAt, deletedAt",

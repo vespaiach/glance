@@ -186,7 +186,6 @@ export const FIXTURE_NOTES: Note[] = [
     text: "Wi-Fi password is on the fridge!",
     author: "Dad",
     createdAt: at(9, 8, 12),
-    tone: 1,
     rotation: -2,
   },
   {
@@ -194,7 +193,6 @@ export const FIXTURE_NOTES: Note[] = [
     text: "Package for Minh-Hy at the front door.",
     author: "Mom",
     createdAt: at(9, 9, 5),
-    tone: 2,
     rotation: 1.5,
   },
   {
@@ -202,7 +200,6 @@ export const FIXTURE_NOTES: Note[] = [
     text: "Window cleaner comes Wednesday — please leave blinds up.",
     author: "Mom",
     createdAt: at(5, 18, 30),
-    tone: 3,
     rotation: -1,
   },
   {
@@ -210,7 +207,6 @@ export const FIXTURE_NOTES: Note[] = [
     text: "Welcome home, Grandpa!",
     author: "Minh-Hy",
     createdAt: at(6, 16, 45),
-    tone: 4,
     rotation: 2.5,
   },
   {
@@ -218,7 +214,6 @@ export const FIXTURE_NOTES: Note[] = [
     text: "Bike lock code changes Friday. Ask Dad.",
     author: "Dad",
     createdAt: at(6, 7, 50),
-    tone: "soft",
     rotation: -1.5,
   },
 ];

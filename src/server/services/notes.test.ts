@@ -9,7 +9,6 @@ const NOTE: Note = {
   text: "Milk and eggs",
   author: "Maria",
   createdAt: "2026-10-09T13:00:00.000Z",
-  tone: "soft",
   rotation: -1.5,
 };
 
@@ -25,18 +24,24 @@ describe("putNote", () => {
     await putNote(harness.deps(), MARIA, NOTE);
     harness.advance(60_000);
 
-    const saved = await putNote(harness.deps(), MARIA, { ...NOTE, text: "Milk", tone: 3 });
+    const saved = await putNote(harness.deps(), MARIA, { ...NOTE, text: "Milk", author: "" });
 
     expect(saved).toEqual({
       ok: true,
       value: {
         ...NOTE,
         text: "Milk",
-        tone: 3,
+        author: "",
         updatedAt: "2026-10-09T14:01:00.000Z",
         version: 2,
       },
     });
+  });
+
+  it("NOTE-02 saves a 280-character message from a 32-character author", async () => {
+    const full = { ...NOTE, text: "a".repeat(280), author: "b".repeat(32) };
+
+    expect(await putNote(harness.deps(), MARIA, full)).toMatchObject({ ok: true, value: full });
   });
 
   it("SYNC-03 delete wins: a put on a deleted note answers the tombstone unchanged", async () => {

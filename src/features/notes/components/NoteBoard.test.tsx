@@ -15,7 +15,6 @@ const NEWEST: Note = {
   text: "Back at 6",
   author: "Mom",
   createdAt: new Date(2026, 9, 9, 10, 39).toISOString(),
-  tone: 2,
   rotation: 1.5,
 };
 
@@ -24,7 +23,6 @@ const WIFI: Note = {
   text: "Wi-Fi password is on the fridge!",
   author: "Dad",
   createdAt: new Date(2026, 9, 9, 8, 12).toISOString(),
-  tone: 1,
   rotation: -2,
 };
 

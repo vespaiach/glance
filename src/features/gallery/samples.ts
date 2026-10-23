@@ -1,7 +1,6 @@
 import type {
   CalendarEvent,
   Note,
-  NoteTone,
   Photo,
   Season,
   Tag,
@@ -275,32 +274,28 @@ export type SampleNote = {
   text: string;
   author: string;
   time: string;
-  tone: NoteTone;
   rotate: number;
 };
 
 export const NOTES: readonly SampleNote[] = [
-  { text: "Wi-Fi password is on the fridge!", author: "Dad", time: "8:12 AM", tone: 1, rotate: -2 },
+  { text: "Wi-Fi password is on the fridge!", author: "Dad", time: "8:12 AM", rotate: -2 },
   {
     text: "Package for Mia at the front door.",
     author: "Mom",
     time: "9:05 AM",
-    tone: 2,
     rotate: 1.5,
   },
   {
     text: "Window cleaner comes Wednesday — please leave blinds up.",
     author: "Mom",
     time: "Mon",
-    tone: 3,
     rotate: -1,
   },
-  { text: "Welcome home, Grandpa!", author: "Mia", time: "Tue", tone: 4, rotate: 2.5 },
+  { text: "Welcome home, Grandpa!", author: "Mia", time: "Tue", rotate: 2.5 },
   {
     text: "Bike lock code changes Friday. Ask Dad.",
     author: "Dad",
     time: "Tue",
-    tone: "soft",
     rotate: -1.5,
   },
 ];
@@ -495,7 +490,6 @@ export const TODAY_NOTES: readonly Note[] = [
     text: "Package for Mia at the front door.",
     author: "Mom",
     createdAt: todayAt(9, 5),
-    tone: 2,
     rotation: 1.5,
   },
   {
@@ -503,7 +497,6 @@ export const TODAY_NOTES: readonly Note[] = [
     text: "Wi-Fi password is on the fridge!",
     author: "Dad",
     createdAt: todayAt(8, 12),
-    tone: 1,
     rotation: -2,
   },
 ];
@@ -518,7 +511,6 @@ export const BOARD_NOTES: readonly Note[] = [
     text: "Window cleaner comes Wednesday — please leave blinds up.",
     author: "Mom",
     createdAt: daysAgoAt(4, 18, 20),
-    tone: 3,
     rotation: -1,
   },
   {
@@ -526,7 +518,6 @@ export const BOARD_NOTES: readonly Note[] = [
     text: "Welcome home, Grandpa!",
     author: "Mia",
     createdAt: daysAgoAt(3, 16, 45),
-    tone: 4,
     rotation: 2.5,
   },
   {
@@ -534,7 +525,6 @@ export const BOARD_NOTES: readonly Note[] = [
     text: "Bike lock code changes Friday. Ask Dad.",
     author: "Dad",
     createdAt: daysAgoAt(3, 7, 50),
-    tone: "soft",
     rotation: -1.5,
   },
 ];

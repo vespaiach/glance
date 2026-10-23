@@ -85,7 +85,7 @@ test("tech§6 sheet=note and sheet=newnote open the note sheets", () => {
   });
   expect(fixtureSheet({ sheet: "newnote" }, "2026-10-09")).toEqual({
     kind: "newnote",
-    draft: { text: "Has anyone seen my blue umbr", tone: 2 },
+    draft: { text: "Has anyone seen my blue umbr" },
   });
 });
 

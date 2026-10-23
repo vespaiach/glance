@@ -10,6 +10,7 @@ import { type RepoStore, useRepoStore } from "./store";
 export type ShownNote = StoredNote & { waiting: boolean };
 
 export interface NotesRepo {
+  post(note: Note): Promise<void>;
   put(note: Note): Promise<void>;
   remove(id: string): Promise<void>;
 }
@@ -20,11 +21,30 @@ type NotesRead = {
   expiry: AccountSettings["noteExpiry"];
 };
 
+const LAST_AUTHOR_KEY = "lastAuthor";
+
 export function createNotesRepo(store: RepoStore): NotesRepo {
+  const put = (note: Note) => putQueued<Note>(store, "notes", note.id, () => note);
+
   return {
-    put: (note) => putQueued<Note>(store, "notes", note.id, () => note),
+    post: async (note) => {
+      await put(note);
+
+      if (note.author !== "") await store.db.meta.put({ key: LAST_AUTHOR_KEY, value: note.author });
+    },
+    put,
     remove: (id) => removeQueued(store, "notes", id),
   };
+}
+
+export function useLastAuthor(): string | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => {
+    const entry = await db.meta.get(LAST_AUTHOR_KEY);
+
+    return typeof entry?.value === "string" ? entry.value : "";
+  }, [db]);
 }
 
 export function useNotesRepo(): NotesRepo {

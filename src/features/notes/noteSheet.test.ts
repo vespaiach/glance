@@ -11,10 +11,9 @@ import {
   newNoteDraft,
   noteFromDraft,
   noteSheetReducer,
-  noteSwatches,
 } from "./noteSheet";
 
-const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad", tone: 1 } as const;
+const WIFI = { text: "Wi-Fi password is on the fridge!", author: "Dad" } as const;
 
 function editing(state: NoteSheetState): NoteEditState {
   if (state.step === "details") throw new Error("expected an edit step");
@@ -31,30 +30,23 @@ function opening(...args: Parameters<typeof initialNoteSheet>): NoteEditState {
 }
 
 describe("note sheet drafts", () => {
-  it("NOTE-02 an existing note fills the message, name and color", () => {
-    expect(draftFromNote(WIFI)).toEqual({ text: WIFI.text, author: "Dad", tone: 1 });
+  it("NOTE-02 an existing note fills the message and name", () => {
+    expect(draftFromNote(WIFI)).toEqual({ text: WIFI.text, author: "Dad" });
   });
 
-  it("NOTE-02 a new note is blank with color 1", () => {
-    expect(newNoteDraft()).toEqual({ text: "", author: "", tone: 1 });
+  it("NOTE-02 a new note is blank before anyone posts from this screen", () => {
+    expect(newNoteDraft()).toEqual({ text: "", author: "" });
   });
 
-  it("tech§6 the sheet=newnote fixture fills the message and color", () => {
-    expect(newNoteDraft({ text: "Has anyone seen my blue umbr", tone: 2 })).toEqual({
+  it("NOTE-02 a new note prefills the last author posted from this screen", () => {
+    expect(newNoteDraft({ author: "Mia" })).toEqual({ text: "", author: "Mia" });
+  });
+
+  it("tech§6 the sheet=newnote fixture fills the message", () => {
+    expect(newNoteDraft({ text: "Has anyone seen my blue umbr" })).toEqual({
       text: "Has anyone seen my blue umbr",
       author: "",
-      tone: 2,
     });
-  });
-
-  it("NOTE-02 the swatches are the five season colors with no Alert", () => {
-    expect(noteSwatches("fall")).toEqual([
-      { value: 1, label: "Amber" },
-      { value: 2, label: "Rust" },
-      { value: 3, label: "Sage" },
-      { value: 4, label: "Coral" },
-      { value: "soft", label: "Cream" },
-    ]);
   });
 });
 
@@ -65,12 +57,11 @@ describe("note sheet reducer", () => {
     expect(start.step).toBe("editing");
   });
 
-  it("NOTE-02 message, name and color edits update the draft", () => {
+  it("NOTE-02 message and name edits update the draft", () => {
     const text = reduce(start, { type: "text", value: "Back at 6" });
     const author = reduce(text, { type: "author", value: "Mom" });
-    const tone = reduce(author, { type: "tone", value: "soft" });
 
-    expect(tone.draft).toEqual({ text: "Back at 6", author: "Mom", tone: "soft" });
+    expect(author.draft).toEqual({ text: "Back at 6", author: "Mom" });
   });
 
   it("NOTE-05 Delete asks for the inline confirm", () => {
@@ -86,8 +77,8 @@ describe("note sheet save", () => {
   });
 
   it("NOTE-03 a message of only spaces counts as empty", () => {
-    expect(canSave({ text: "   ", author: "", tone: 1 })).toBe(false);
-    expect(canSave({ text: "Back at 6", author: "", tone: 1 })).toBe(true);
+    expect(canSave({ text: "   ", author: "" })).toBe(false);
+    expect(canSave({ text: "Back at 6", author: "" })).toBe(true);
   });
 
   it("NOTE-03 typing a message clears Write a message", () => {
@@ -108,16 +99,15 @@ describe("note from draft", () => {
     rotation: -2,
   };
 
-  it("NOTE-03 a blank name posts as Guest", () => {
-    expect(noteFromDraft({ text: "Back at 6", author: "  ", tone: 2 }, base).author).toBe("Guest");
+  it("NOTE-03 a blank name posts unsigned", () => {
+    expect(noteFromDraft({ text: "Back at 6", author: "  " }, base).author).toBe("");
   });
 
   it("NOTE-03 the message and name are trimmed", () => {
-    expect(noteFromDraft({ text: " Back at 6 ", author: " Mom ", tone: 2 }, base)).toEqual({
+    expect(noteFromDraft({ text: " Back at 6 ", author: " Mom " }, base)).toEqual({
       ...base,
       text: "Back at 6",
       author: "Mom",
-      tone: 2,
     });
   });
 
@@ -159,17 +149,22 @@ describe("note sheet discard", () => {
   it.each<[string, Partial<NoteDraft>]>([
     ["message", { text: "Back at 6" }],
     ["name", { author: "Mom" }],
-    ["color", { tone: "soft" }],
   ])("§8.9 a changed %s makes the note dirty", (_, change) => {
     expect(isDirty({ ...draft, ...change }, draft)).toBe(true);
   });
 
   it("§8.9 a new note opened with text compares against a blank note", () => {
-    const typed = opening(newNoteDraft({ text: "Has anyone seen", tone: 2 }), {
+    const typed = opening(newNoteDraft({ text: "Has anyone seen" }), {
       opened: newNoteDraft(),
     });
 
     expect(isDirty(typed.draft, typed.opened)).toBe(true);
+  });
+
+  it("§8.9 a prefilled author alone doesn't make a new note dirty", () => {
+    const prefilled = newNoteDraft({ author: "Mia" });
+
+    expect(isDirty(opening(prefilled).draft, prefilled)).toBe(false);
   });
 
   it("§8.9 discard=1 opens on Discard changes?", () => {
@@ -192,7 +187,6 @@ describe("note sheet discard", () => {
   it.each<NoteSheetAction>([
     { type: "text", value: "Back at 7" },
     { type: "author", value: "Mom" },
-    { type: "tone", value: 3 },
   ])("§8.9 an edit ($type) brings the footer back", (action) => {
     expect(reduce(asking, action).step).toBe("editing");
   });

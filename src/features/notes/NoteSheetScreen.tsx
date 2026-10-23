@@ -1,11 +1,10 @@
 "use client";
 
 import { copy } from "@/copy";
-import { type ShownNote, useNote, useNotes, useNotesRepo } from "@/data/repos";
+import { type ShownNote, useLastAuthor, useNote, useNotes, useNotesRepo } from "@/data/repos";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
-import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSheetHost } from "@/shell/SheetHost";
@@ -19,7 +18,6 @@ import {
   newNoteBase,
   newNoteDraft,
   noteFromDraft,
-  noteSwatches,
 } from "./noteSheet";
 import { noteStampText } from "./stamp";
 
@@ -35,7 +33,7 @@ type SheetFrameProps = {
 
 type LoadedProps = { id: string; discard?: true; edit?: true };
 
-type NewNoteProps = { draft?: Pick<NoteDraft, "text" | "tone">; discard?: true };
+type NewNoteProps = { draft?: Pick<NoteDraft, "text">; discard?: true };
 
 export function NoteSheetScreen() {
   const { sheet } = useSheetHost();
@@ -56,12 +54,12 @@ function SheetFrame({ mode, eyebrow, initial, base, time, rotation, onDelete }: 
 
   const notes = useNotesRepo();
 
-  const season = useSeason();
-
   const { online } = useNetwork();
 
   const onSave = (draft: NoteDraft) => {
-    void notes.put(noteFromDraft(draft, base()));
+    const note = noteFromDraft(draft, base());
+
+    void (mode === "new" ? notes.post(note) : notes.put(note));
   };
 
   return (
@@ -69,7 +67,6 @@ function SheetFrame({ mode, eyebrow, initial, base, time, rotation, onDelete }: 
       mode={mode}
       eyebrow={eyebrow}
       initial={initial}
-      swatches={noteSwatches(season)}
       offline={!online}
       onClose={close}
       onDelete={onDelete}
@@ -123,11 +120,17 @@ function NewNoteSheet({ draft, discard }: NewNoteProps) {
 
   const shown = useNotes(useNow("minute"));
 
+  const author = useLastAuthor();
+
+  if (author === undefined) return null;
+
+  const opened = newNoteDraft({ author });
+
   return (
     <SheetFrame
       mode="new"
       eyebrow={copy.notes.board}
-      initial={initialNoteSheet(newNoteDraft(draft), { opened: newNoteDraft(), discard })}
+      initial={initialNoteSheet({ ...opened, ...draft }, { opened, discard })}
       base={() => newNoteBase(nowStore.get(), shown?.length ?? 0)}
       onDelete={() => {}}
     />

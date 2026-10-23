@@ -16,7 +16,6 @@ const NOTES: Note[] = [
     text: "Package for Mia at the front door.",
     author: "Mom",
     createdAt: at(9, 9, 5),
-    tone: 2,
     rotation: 1.5,
   },
   {
@@ -24,7 +23,6 @@ const NOTES: Note[] = [
     text: "Wi-Fi password is on the fridge!",
     author: "Dad",
     createdAt: at(9, 8, 12),
-    tone: 1,
     rotation: -2,
   },
   {
@@ -32,7 +30,6 @@ const NOTES: Note[] = [
     text: "Welcome home, Grandpa!",
     author: "Mia",
     createdAt: at(6, 16, 45),
-    tone: 4,
     rotation: 2.5,
   },
 ];

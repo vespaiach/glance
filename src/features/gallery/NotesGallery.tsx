@@ -1,7 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import { useState } from "react";
 import { copy } from "@/copy";
-import type { Season } from "@/domain/schemas";
 import {
   draftFromNote,
   initialNoteSheet,
@@ -9,7 +8,6 @@ import {
   NoteSheet,
   newNoteDraft,
   noteStampText,
-  noteSwatches,
 } from "@/features/notes";
 import { Button } from "@/ui/Button";
 import { GalleryGroup } from "./GalleryGroup";
@@ -68,7 +66,7 @@ const board = {
   onAddNote: ignore,
 } as const;
 
-export function NotesGallery({ season }: { season: Season }) {
+export function NotesGallery() {
   const [open, setOpen] = useState<Demo | null>(null);
 
   return (
@@ -117,31 +115,14 @@ export function NotesGallery({ season }: { season: Season }) {
             {demo.label}
           </Button>
         ))}
-        {open && (
-          <NoteSheetDemo
-            key={open.label}
-            season={season}
-            demo={open}
-            onClose={() => setOpen(null)}
-          />
-        )}
+        {open && <NoteSheetDemo key={open.label} demo={open} onClose={() => setOpen(null)} />}
       </GalleryGroup>
     </>
   );
 }
 
-function NoteSheetDemo({
-  season,
-  demo,
-  onClose,
-}: {
-  season: Season;
-  demo: Demo;
-  onClose: () => void;
-}) {
-  const draft = demo.draft
-    ? newNoteDraft({ text: gallery.input.notesValue, tone: 2 })
-    : newNoteDraft();
+function NoteSheetDemo({ demo, onClose }: { demo: Demo; onClose: () => void }) {
+  const draft = demo.draft ? newNoteDraft({ text: gallery.input.notesValue }) : newNoteDraft();
 
   const edit = demo.mode === "edit" && (demo.details === "waiting" ? WAITING_NOTES[0] : WIFI);
 
@@ -158,7 +139,6 @@ function NoteSheetDemo({
       })}
       time={time}
       rotation={edit ? edit.rotation : 0}
-      swatches={noteSwatches(season)}
       offline={demo.offline ?? false}
       onClose={onClose}
       onDelete={onClose}
