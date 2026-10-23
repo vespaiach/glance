@@ -26,7 +26,7 @@
     "esbuild": "0.28.2",
     "exif-reader": "2.0.3",
     "lucide-react": "0.460.0",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "nodemailer": "10.0.14",
     "pg": "8.23.1",
     "react": "19.3.0",
