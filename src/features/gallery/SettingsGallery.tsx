@@ -4,6 +4,7 @@ import { changeBackground } from "@/domain/background";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Season } from "@/domain/schemas";
 import { DEFAULT_AMBIENT } from "@/domain/schemas";
+import { GB } from "@/domain/storage";
 import { BackgroundView } from "@/features/background";
 import { AmbientScheduleView, LocationView, SettingsView } from "@/features/settings";
 import type { WeatherSetupState } from "@/features/weather";
@@ -41,6 +42,8 @@ const QR_OPEN = {
   tile: { kind: "open", url: QR_SAMPLE_URL, issuedAt: NOW.toISOString() },
   secondsLeft: 125,
 } as const;
+
+const STORAGE_LIMIT = 5 * GB;
 
 const PHOTO = { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST?.id } as const;
 
@@ -214,8 +217,17 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "qr-open", qr: QR_OPEN },
     { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 180 } },
     { key: "qr-failed", qr: { tile: { kind: "failed" }, secondsLeft: 180 } },
+    { key: "storage-almost", storage: { used: 4.6 * GB, limit: STORAGE_LIMIT } },
+    { key: "storage-full", storage: { used: STORAGE_LIMIT, limit: STORAGE_LIMIT } },
+    { key: "storage-unread", storage: undefined },
     { key: "offline", online: false },
     { key: "small", small: true, breakpoint: "small" },
+    {
+      key: "small-storage-almost",
+      small: true,
+      breakpoint: "small",
+      storage: { used: 4.6 * GB, limit: STORAGE_LIMIT },
+    },
     { key: "small-qr-open", small: true, breakpoint: "small", qr: QR_OPEN },
   ];
 }
@@ -224,6 +236,7 @@ function settingsBase(season: Season): SettingsProps {
   return {
     account: ACCOUNT,
     screens: SCREEN_SAMPLES,
+    storage: { used: 3.2 * GB, limit: STORAGE_LIMIT },
     now: NOW,
     tz: GALLERY_TZ,
     settings: { ...DEFAULT_SETTINGS, ...(PORTLAND && { weatherLocation: PORTLAND }) },

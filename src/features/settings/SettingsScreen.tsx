@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import {
   useAccount,
   usePhotos,
+  usePhotoUsage,
   useSettingsRepo,
   useSignedInScreens,
   useSignOut,
@@ -49,6 +50,8 @@ export function SettingsScreen() {
 
   const screens = useSignedInScreens();
 
+  const storage = usePhotoUsage();
+
   const { online } = useNetwork();
 
   const qr = useQrTile();
@@ -57,6 +60,7 @@ export function SettingsScreen() {
     <SettingsView
       account={account}
       screens={screens}
+      storage={storage}
       now={now}
       tz={tz}
       settings={settings}

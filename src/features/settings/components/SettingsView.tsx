@@ -3,6 +3,7 @@ import type { ShownBackground } from "@/domain/background";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { AccountSettings, Season } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
+import type { PhotoUsage } from "@/domain/storage";
 import { space } from "@/theme/tokens.stylex";
 import { settingsLayout } from "../layout";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
@@ -13,6 +14,7 @@ import { SettingsPanel } from "./SettingsPanel";
 type SettingsViewProps = {
   account: SettingsAccount;
   screens: readonly SignedInScreen[];
+  storage: PhotoUsage | undefined;
   now: Date;
   tz: string;
   settings: AccountSettings;
@@ -47,6 +49,7 @@ const styles = stylex.create({
 export function SettingsView({
   account,
   screens,
+  storage,
   now,
   tz,
   settings,
@@ -79,6 +82,7 @@ export function SettingsView({
         <AccountCard
           account={account}
           screens={screens}
+          storage={storage}
           now={now}
           tz={tz}
           online={online}

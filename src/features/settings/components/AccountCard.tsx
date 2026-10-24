@@ -3,6 +3,7 @@ import { Info, LogOut, type LucideIcon, Monitor, QrCode, Smartphone, Tablet } fr
 import { copy } from "@/copy";
 import type { Account } from "@/domain/schemas";
 import { activeStamp, type DeviceKind, type SignedInScreen } from "@/domain/screens";
+import type { PhotoUsage } from "@/domain/storage";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
@@ -10,12 +11,14 @@ import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { QrSignInTile, type QrTileShown } from "./QrSignInTile";
+import { StorageMeter } from "./StorageMeter";
 
 export type SettingsAccount = Pick<Account, "name" | "email">;
 
 type AccountCardProps = {
   account: SettingsAccount;
   screens: readonly SignedInScreen[];
+  storage: PhotoUsage | undefined;
   now: Date;
   tz: string;
   online: boolean;
@@ -167,6 +170,7 @@ const styles = stylex.create({
 export function AccountCard({
   account,
   screens,
+  storage,
   now,
   tz,
   online,
@@ -191,6 +195,7 @@ export function AccountCard({
           {account.name !== null && <span {...stylex.props(styles.email)}>{account.email}</span>}
         </div>
       </div>
+      {storage && online && <StorageMeter usage={storage} />}
       <div {...stylex.props(styles.screens)}>
         <Eyebrow>{count}</Eyebrow>
         <ul aria-label={count} {...stylex.props(styles.list)}>

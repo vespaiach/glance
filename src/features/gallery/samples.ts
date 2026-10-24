@@ -617,6 +617,15 @@ export const UPLOAD_SAMPLES: Record<string, readonly UploadTile[]> = {
     { id: "u5", title: "Recipe card", state: "failed", reason: "not-a-photo" },
     { id: "u6", title: "Halloween costumes", state: "failed", reason: "network" },
   ],
+  storageFull: [
+    {
+      id: "u7",
+      title: "Pumpkin patch",
+      preview: preview("pumpkins"),
+      state: "failed",
+      reason: "storage-full",
+    },
+  ],
   paused: [
     { id: "u1", title: "IMG_2041", preview: preview("orchard"), state: "paused", percent: 40 },
   ],

@@ -578,6 +578,16 @@ export const copy = {
       screenName: (device: Device) => screenName(device),
       thisScreen: "This screen",
       active: (stamp: ActiveStamp) => activeText(stamp),
+      storage: {
+        title: "Photo storage",
+        left: (left: number, unit: "GB" | "MB") => `${left} ${unit} left`,
+        noneLeft: "No space left",
+        used: (used: number, limit: number) => `${used} GB of ${limit} GB used`,
+        meter: "Photo storage used",
+        ok: "Shared by every screen on this account.",
+        almost: "Almost full. Delete photos in Photos to make room.",
+        full: "Storage full. New photos can’t be added until some are deleted in Photos.",
+      },
       signOut: "Sign out",
       signOutCaption: "Sign out this device only.",
       qr: {
