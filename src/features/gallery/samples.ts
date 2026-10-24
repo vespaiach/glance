@@ -80,6 +80,7 @@ export const gallery = {
     ambientScheduleView: "Ambient screen view",
     ambientView: "Ambient view",
     signInView: "Sign in view",
+    reminderStrip: "Reminder strip",
   },
   sidebar: {
     hidden: "Hidden",

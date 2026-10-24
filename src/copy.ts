@@ -257,6 +257,18 @@ export const copy = {
       { value: "15min", label: "15 min" },
       { value: "both", label: "Both" },
     ],
+    strip: {
+      label: "Reminder",
+      in: (minutes: number) => `In ${minutes} min`,
+      now: "Now",
+      span: (start: string, end: string) => `${start} – ${end}`,
+      count: (count: number) => `${count} events`,
+      eyebrow: (parts: readonly (string | undefined)[]) => parts.filter(Boolean).join(" · "),
+      titles: (titles: readonly string[], more: number) =>
+        [...titles, ...(more > 0 ? [`+${more} more`] : [])].join(", "),
+      details: "Details",
+      seeAll: "See all",
+    },
   },
   events: {
     now: "Now",
