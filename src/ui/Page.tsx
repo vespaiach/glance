@@ -3,7 +3,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { ArrowLeft } from "lucide-react";
 import { type ReactNode, type RefObject, useEffect, useId, useRef } from "react";
-import { colors, motion, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, sizes, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { dialogKeyDown, useFocusOnOpen } from "./dialogFocus";
 import { Eyebrow } from "./Eyebrow";
@@ -22,6 +22,7 @@ type PageProps = {
   startActions?: ReactNode;
   endActions?: ReactNode;
   keyboardInset?: number;
+  backdrop?: string;
   aside?: ReactNode;
   children: ReactNode;
 };
@@ -43,7 +44,11 @@ const styles = stylex.create({
     zIndex: 20,
     overflowY: "auto",
     boxSizing: "border-box",
-    backgroundColor: colors.surfaceCanvas,
+    padding: sizes.kioskGutter,
+    backgroundColor: colors.hairlineSoft,
+    backgroundPosition: "center",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
     color: colors.textPrimary,
     outline: "none",
     transitionProperty: "bottom",
@@ -51,6 +56,7 @@ const styles = stylex.create({
     transitionTimingFunction: motion.easeOut,
   },
   aboveKeyboard: (inset: number) => ({ bottom: inset }),
+  backdrop: (image: string) => ({ backgroundImage: image }),
   leaving: {
     pointerEvents: "none",
   },
@@ -70,14 +76,13 @@ const styles = stylex.create({
     columnGap: space.md,
     rowGap: space.sm,
     paddingBlock: 20,
-    paddingInline: 48,
+    paddingInline: 24,
     boxSizing: "border-box",
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceCanvas,
-    boxShadow: `inset 0 -1px 0 ${colors.borderHairlineSoft}`,
   },
   headerCompact: {
-    paddingBlock: 12,
-    paddingInline: 16,
+    padding: 12,
   },
   heading: {
     flexGrow: 1,
@@ -110,24 +115,29 @@ const styles = stylex.create({
     gap: space.sm,
   },
   banner: {
-    paddingTop: 16,
-    paddingInline: 48,
+    paddingTop: 24,
   },
   bannerCompact: {
     paddingTop: 12,
-    paddingInline: 16,
   },
   main: {
     flexGrow: 1,
     display: "flex",
     alignItems: "stretch",
+    gap: 24,
+    marginTop: 24,
+  },
+  mainCompact: {
+    marginTop: 12,
   },
   body: {
     flexGrow: 1,
     minWidth: 0,
     paddingTop: 40,
-    paddingBottom: 64,
-    paddingInline: 48,
+    paddingBottom: 48,
+    paddingInline: 40,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceCanvas,
   },
   form: {
     maxWidth: 720,
@@ -151,11 +161,11 @@ const styles = stylex.create({
     justifyContent: "space-between",
     alignItems: "center",
     gap: space.sm,
-    paddingBlock: 12,
-    paddingInline: 16,
+    marginTop: 12,
+    padding: 12,
     boxSizing: "border-box",
+    borderRadius: radii.lg,
     backgroundColor: colors.surfaceCanvas,
-    boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
   },
   group: {
     display: "flex",
@@ -176,6 +186,7 @@ export function Page({
   startActions,
   endActions,
   keyboardInset = 0,
+  backdrop,
   aside,
   children,
 }: PageProps) {
@@ -205,7 +216,12 @@ export function Page({
       tabIndex={-1}
       data-sheet-body
       onKeyDown={dialogKeyDown(onBack)}
-      {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), leaving && styles.leaving)}
+      {...stylex.props(
+        styles.root,
+        styles.aboveKeyboard(keyboardInset),
+        backdrop !== undefined && styles.backdrop(backdrop),
+        leaving && styles.leaving,
+      )}
     >
       <div {...stylex.props(styles.column)}>
         <div data-page-header {...stylex.props(styles.header, compact && styles.headerCompact)}>
@@ -221,7 +237,7 @@ export function Page({
         {banner && (
           <div {...stylex.props(styles.banner, compact && styles.bannerCompact)}>{banner}</div>
         )}
-        <div {...stylex.props(styles.main)}>
+        <div {...stylex.props(styles.main, compact && styles.mainCompact)}>
           <div {...stylex.props(styles.body, compact && styles.bodyCompact)}>
             <div {...stylex.props(styles.form)}>{children}</div>
           </div>

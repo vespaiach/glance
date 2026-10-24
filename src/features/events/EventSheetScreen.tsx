@@ -13,6 +13,7 @@ import { displayTemp } from "@/domain/temperature";
 import { formatDayTitle } from "@/domain/time";
 import { dayForecast } from "@/domain/weather";
 import { dateKey, parseDateKey } from "@/domain/zone";
+import { useBackgroundPhoto } from "@/shell/background";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useNetwork } from "@/shell/providers/network";
@@ -20,6 +21,7 @@ import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { type TimeFixture, useSheetHost } from "@/shell/SheetHost";
+import { photoLayer } from "@/ui/photoLayer";
 import { EventSheet, type SheetForecast } from "./components/EventSheet";
 import { DayPreviewPanel } from "./DayPreviewPanel";
 import {
@@ -110,6 +112,8 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
 
   const today = dateKey(useNow("minute"), tz);
 
+  const photo = useBackgroundPhoto();
+
   const onSave = (draft: EventDraft) => {
     void events.put(eventFromDraft(draft, chosen, id, tz, tagIds(tags)));
 
@@ -143,6 +147,7 @@ function SheetFrame({ mode, day, id, tags, initial, status, onDelete }: SheetFra
       onSave={onSave}
       onCreateTag={onCreateTag}
       keyboardInset={useKeyboardInset()}
+      backdrop={photo && photoLayer(photo.dim, photo.src)}
       preview={(draft) => <DayPreviewPanel day={chosen} id={id} tags={tags} times={draft} />}
     />
   );

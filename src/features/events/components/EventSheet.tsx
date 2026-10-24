@@ -56,6 +56,7 @@ type EventSheetProps = {
   status?: DetailsStatus;
   compact?: boolean;
   keyboardInset?: number;
+  backdrop?: string;
   preview?: (draft: EventDraft) => ReactNode;
   onClose: () => void;
   onDelete: () => void;
@@ -123,6 +124,7 @@ type DetailsPageProps = {
   status: DetailsStatus;
   compact?: boolean;
   keyboardInset?: number;
+  backdrop?: string;
   aside?: ReactNode;
   leaving: (() => void) | null;
   onClose: () => void;
@@ -160,6 +162,7 @@ export function EventSheet({
   onSave,
   onCreateTag,
   keyboardInset,
+  backdrop,
 }: EventSheetProps) {
   const [state, dispatch] = useReducer(eventSheetReducer, initial);
 
@@ -185,6 +188,7 @@ export function EventSheet({
       status,
       compact,
       keyboardInset,
+      backdrop,
       aside: preview?.(state.opened),
       leaving,
       onClose: () => leave(onClose),
@@ -293,6 +297,7 @@ export function EventSheet({
         )
       }
       keyboardInset={keyboardInset}
+      backdrop={backdrop}
       aside={preview?.(draft)}
     >
       <TextInput
@@ -341,6 +346,7 @@ function detailsPage({
   status,
   compact,
   keyboardInset,
+  backdrop,
   aside,
   leaving,
   onClose,
@@ -366,6 +372,7 @@ function detailsPage({
         )
       }
       keyboardInset={keyboardInset}
+      backdrop={backdrop}
       aside={aside}
     >
       <EventDetails draft={draft} tags={tags} clock={clock} status={status} />
@@ -418,7 +425,9 @@ function useRevealTimes(endError: boolean) {
 
     const header = body.querySelector<HTMLElement>("[data-page-header]")?.offsetHeight ?? 0;
 
-    body.scrollTop += row.top - box.top - header - REVEAL_GAP;
+    const gutter = Number.parseFloat(getComputedStyle(body).paddingTop) || 0;
+
+    body.scrollTop += row.top - box.top - gutter - header - REVEAL_GAP;
   }, [endError]);
 
   return times;

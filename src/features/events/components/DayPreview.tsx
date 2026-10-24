@@ -2,7 +2,8 @@ import * as stylex from "@stylexjs/stylex";
 import { useId } from "react";
 import { copy } from "@/copy";
 import type { WeatherIcon } from "@/domain/schemas";
-import { colors } from "@/theme/tokens.stylex";
+import { season } from "@/theme/seasons.stylex";
+import { colors, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
@@ -33,12 +34,12 @@ const styles = stylex.create({
     flexShrink: 0,
     minWidth: 380,
     boxSizing: "border-box",
-    marginBlock: 40,
-    paddingInline: "40px 48px",
+    padding: 32,
     display: "flex",
     flexDirection: "column",
     gap: 40,
-    boxShadow: `inset 1px 0 0 ${colors.borderHairline}`,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surfaceCanvas,
   },
   tile: {
     display: "flex",
@@ -46,7 +47,7 @@ const styles = stylex.create({
     gap: 16,
     padding: 20,
     borderRadius: 16,
-    backgroundColor: colors.surfaceSoft,
+    backgroundColor: season.block3,
   },
   now: {
     display: "flex",
@@ -78,7 +79,7 @@ const styles = stylex.create({
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(64px, 1fr))",
     gap: 8,
-    boxShadow: `inset 0 1px 0 ${colors.borderHairline}`,
+    boxShadow: `inset 0 1px 0 ${colors.white}`,
   },
   hour: {
     display: "flex",
