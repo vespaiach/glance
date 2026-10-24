@@ -1,10 +1,11 @@
-import { chmodSync, readdirSync } from "node:fs";
+import { chmodSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { Readable } from "node:stream";
 import sharp, { type Exif } from "sharp";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
+import { GB } from "@/domain/storage";
 import { tempDirPerTest } from "../db/testDir";
 import { bytesOf } from "../storage/contract";
 import { createDiskStore } from "../storage/disk";
@@ -15,6 +16,7 @@ import {
   type PhotoDeps,
   type PhotoUpload,
   photoFile,
+  photoUsage,
   putPhoto,
   type SyncedPhoto,
   uploadPhoto,
@@ -46,8 +48,13 @@ beforeEach(() => {
   placeAt.mockResolvedValue(ok(CANNON_BEACH));
 });
 
-function deps(): PhotoDeps {
-  return { ...harness.deps(), store: createDiskStore(photosDir()), locator: { placeAt } };
+function deps(storageLimit = 5 * GB): PhotoDeps {
+  return {
+    ...harness.deps(),
+    store: createDiskStore(photosDir()),
+    locator: { placeAt },
+    storageLimit,
+  };
 }
 
 const CANNON_BEACH_GPS: Exif = {
@@ -82,6 +89,12 @@ function storedFiles(): string[] {
   return readdirSync(photosDir(), { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name);
+}
+
+function storedBytes(): number {
+  return readdirSync(photosDir(), { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .reduce((sum, entry) => sum + statSync(path.join(entry.parentPath, entry.name)).size, 0);
 }
 
 async function* zeroChunks(total: number): AsyncGenerator<Uint8Array> {
@@ -581,5 +594,58 @@ describe("deletePhoto", () => {
       ok: false,
       error: "not-found",
     });
+  });
+});
+
+describe("photo storage", () => {
+  it("D32 photoUsage sums the stored copies of the account's live photos, with the limit", async () => {
+    await saved(await jpeg());
+    await saved(await jpeg({ width: 400, height: 300 }));
+
+    expect(await photoUsage(deps(), MARIA)).toEqual({ used: storedBytes(), limit: 5 * GB });
+  });
+
+  it("D32 a deleted photo no longer counts", async () => {
+    const photo = await saved(await jpeg());
+
+    await deletePhoto(deps(), MARIA, photo.id);
+
+    expect(await photoUsage(deps(), MARIA)).toEqual({ used: 0, limit: 5 * GB });
+  });
+
+  it("tech§5 photoUsage doesn't count another account's photos", async () => {
+    await saved(await jpeg());
+
+    expect(await photoUsage(deps(), OMAR)).toEqual({ used: 0, limit: 5 * GB });
+  });
+
+  it("SET-13 refuses an upload that would pass the configured limit with storage-full and stores nothing", async () => {
+    await saved(await jpeg());
+    const limit = storedBytes() + 10;
+
+    const answer = await uploadPhoto(deps(limit), MARIA, upload(await jpeg()));
+
+    expect(answer).toEqual({ ok: false, error: "storage-full" });
+    expect(storedFiles()).toHaveLength(2);
+    expect(await harness.globalVersion()).toBe(1);
+  });
+
+  it("SET-13 takes an upload that fills the limit exactly", async () => {
+    await saved(await jpeg());
+    const limit = 2 * storedBytes();
+
+    const answer = await uploadPhoto(deps(limit), MARIA, upload(await jpeg()));
+
+    expect(answer.ok).toBe(true);
+    expect(await photoUsage(deps(limit), MARIA)).toEqual({ used: limit, limit });
+  });
+
+  it("tech§5 another account's photos don't count toward the limit", async () => {
+    await saved(await jpeg());
+    const limit = storedBytes();
+
+    const answer = await uploadPhoto(deps(limit), OMAR, upload(await jpeg()));
+
+    expect(answer.ok).toBe(true);
   });
 });

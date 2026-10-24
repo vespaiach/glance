@@ -47,6 +47,13 @@ const NOT_A_PHOTO: UploadTile = {
   reason: "not-a-photo",
 };
 
+const STORAGE_FULL: UploadTile = {
+  id: "u7",
+  title: "Pumpkin patch",
+  state: "failed",
+  reason: "storage-full",
+};
+
 const NETWORK: UploadTile = {
   id: "u6",
   title: "Halloween costumes",
@@ -361,6 +368,23 @@ test("PHOTO-08 without a network failure the row offers only Clear", () => {
 
   const row = screen.getByRole("status");
 
+  expect(within(row).queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  expect(within(row).getByRole("button", { name: "Clear" })).toBeInTheDocument();
+});
+
+test("PHOTO-08 SET-13 a photo over the storage limit says Storage full, offers only Remove, and the row only Clear", () => {
+  renderView({ uploads: [STORAGE_FULL] });
+
+  const alert = screen.getByRole("alert");
+
+  expect(alert).toHaveAccessibleName("Pumpkin patch: Storage full · delete photos to make room");
+  expect(alert).toHaveTextContent("Storage full");
+  expect(within(alert).queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  expect(within(alert).getByRole("button", { name: "Remove" })).toBeInTheDocument();
+
+  const row = screen.getByRole("status");
+
+  expect(row).toHaveTextContent("Storage full");
   expect(within(row).queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
   expect(within(row).getByRole("button", { name: "Clear" })).toBeInTheDocument();
 });

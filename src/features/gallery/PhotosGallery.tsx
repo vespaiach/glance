@@ -53,6 +53,7 @@ const DEMOS: readonly Demo[] = [
   { key: "one", uploads: UPLOAD_SAMPLES.one },
   { key: "several", uploads: UPLOAD_SAMPLES.several },
   { key: "failed", uploads: UPLOAD_SAMPLES.failed },
+  { key: "storage-full", uploads: UPLOAD_SAMPLES.storageFull },
   { key: "paused", uploads: UPLOAD_SAMPLES.paused, online: false },
   { key: "first", state: EMPTY, uploads: UPLOAD_SAMPLES.one },
   { key: "empty", state: EMPTY, qr: QR },

@@ -211,6 +211,17 @@ describe("HttpTransport", () => {
     expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
   });
 
+  it("SET-13 photoUsage reads the account's used and limit bytes with the build header", async () => {
+    const usage = { used: 3_200_000_000, limit: 5_000_000_000 };
+    const { calls, fetch } = fakeFetch(json(usage));
+
+    const answer = await transport(fetch).photoUsage();
+
+    expect(answer).toEqual({ ok: true, value: usage });
+    expect(calls[0]?.url).toBe("/api/photos/usage");
+    expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
+  });
+
   it("SIGNIN-15 issueQr posts with the build header and reads the code's link", async () => {
     const code = { url: "https://glance.example.com/api/auth/verify?t=abc" };
     const { calls, fetch } = fakeFetch(json(code));
@@ -432,6 +443,7 @@ describe("HttpTransport", () => {
   it.each([
     [413, "too-large"],
     [415, "not-a-photo"],
+    [507, "storage-full"],
     [401, "unauthorized"],
     [426, "outdated"],
     [500, "server"],

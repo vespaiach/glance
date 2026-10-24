@@ -53,6 +53,7 @@ describe("uploadSummary", () => {
       kind: "failed",
       failed: 2,
       retryable: true,
+      storageFull: false,
     });
   });
 
@@ -63,6 +64,18 @@ describe("uploadSummary", () => {
       kind: "failed",
       failed: 1,
       retryable: false,
+      storageFull: false,
+    });
+  });
+
+  it("PHOTO-08 SET-13 a storage-full failure makes the row read Storage full, with only Clear", () => {
+    const full: UploadTile = { id: "a", title: "a", state: "failed", reason: "storage-full" };
+
+    expect(uploadSummary([full], true)).toEqual({
+      kind: "failed",
+      failed: 1,
+      retryable: false,
+      storageFull: true,
     });
   });
 
@@ -122,11 +135,12 @@ describe("chosenTile", () => {
 });
 
 describe("uploadFailure", () => {
-  it("PHOTO-08 the server's size and type checks keep their reason", () => {
-    expect([uploadFailure("too-large"), uploadFailure("not-a-photo")]).toEqual([
-      "too-large",
-      "not-a-photo",
-    ]);
+  it("PHOTO-08 SET-13 the server's size, type and storage checks keep their reason", () => {
+    expect([
+      uploadFailure("too-large"),
+      uploadFailure("not-a-photo"),
+      uploadFailure("storage-full"),
+    ]).toEqual(["too-large", "not-a-photo", "storage-full"]);
   });
 
   it("PHOTO-08 every other transport error is a network failure that can be retried", () => {

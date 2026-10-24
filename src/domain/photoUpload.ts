@@ -4,7 +4,7 @@ export const FILE_MODIFIED_HEADER = "x-file-modified";
 
 export const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
 
-export type UploadProblem = "too-large" | "not-a-photo";
+export type UploadProblem = "too-large" | "not-a-photo" | "storage-full";
 
 export function uploadProblem(file: { type: string; size: number }): UploadProblem | undefined {
   if (!file.type.startsWith("image/")) return "not-a-photo";

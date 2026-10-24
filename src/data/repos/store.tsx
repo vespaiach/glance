@@ -21,6 +21,7 @@ export type RepoStore = {
   places: Transport["places"];
   locate: Transport["locate"];
   displays: Transport["displays"];
+  photoUsage: Transport["photoUsage"];
   issueQr: Transport["issueQr"];
   voidQr: Transport["voidQr"];
   signOut: () => Promise<void>;

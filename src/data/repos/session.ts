@@ -203,6 +203,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     places: transport.places,
     locate: transport.locate,
     displays: transport.displays,
+    photoUsage: transport.photoUsage,
     issueQr: transport.issueQr,
     voidQr: transport.voidQr,
     signOut: async () => {

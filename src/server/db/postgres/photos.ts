@@ -27,7 +27,8 @@ export function photosRepo(sql: Sql): Repos["photos"] {
 
       return row && toPhoto(row);
     },
-    insert: (accountId, photo, filePath) => insertPhoto(sql, accountId, photo, filePath),
+    insert: (accountId, photo, filePath, bytes) =>
+      insertPhoto(sql, accountId, photo, filePath, bytes),
     save: (accountId, photo) => savePhoto(sql, accountId, photo),
     livePath: async (accountId, id) => {
       const row = await sql.one<{ file_path: string }>(
@@ -53,6 +54,24 @@ export function photosRepo(sql: Sql): Repos["photos"] {
     },
     filesRemoved: async (filePath) => {
       await sql.run("UPDATE photos SET files_removed = true WHERE file_path = $1", [filePath]);
+    },
+    usage: async (accountId) => {
+      const row = await sql.one<{ used: number }>(
+        "SELECT COALESCE(SUM(bytes), 0)::bigint AS used FROM photos WHERE account_id = $1 AND deleted_at IS NULL",
+        [accountId],
+      );
+
+      return row?.used ?? 0;
+    },
+    unsizedPaths: async () => {
+      const rows = await sql.all<{ file_path: string }>(
+        "SELECT file_path FROM photos WHERE deleted_at IS NULL AND bytes = 0",
+      );
+
+      return rows.map((row) => row.file_path);
+    },
+    sized: async (filePath, bytes) => {
+      await sql.run("UPDATE photos SET bytes = $1 WHERE file_path = $2", [bytes, filePath]);
     },
     changedSince: async (accountId, version) => {
       const rows = await sql.all<PhotoRow>(
@@ -84,11 +103,12 @@ async function insertPhoto(
   accountId: string,
   photo: StoredPhoto,
   filePath: string,
+  bytes: number,
 ): Promise<void> {
   await sql.run(
     `INSERT INTO photos (id, account_id, title, taken_on, place, file_path, created_at, updated_at,
-       deleted_at, version, title_source, date_source, place_source, checked, file_name)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+       deleted_at, version, title_source, date_source, place_source, checked, file_name, bytes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
     [
       photo.id,
       accountId,
@@ -105,6 +125,7 @@ async function insertPhoto(
       photo.sources.place,
       photo.checked,
       photo.fileName ?? null,
+      bytes,
     ],
   );
 }

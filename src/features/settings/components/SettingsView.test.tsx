@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { Photo } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
+import { GB } from "@/domain/storage";
 import { SettingsView } from "./SettingsView";
 
 type Props = ComponentProps<typeof SettingsView>;
@@ -67,6 +68,7 @@ function renderView(overrides: Partial<Props> = {}) {
     onOpenAmbient: vi.fn(),
     onSignOut: vi.fn(),
     screens: [KITCHEN],
+    storage: undefined,
     now: NOW,
     tz: TZ,
     online: true,
@@ -495,4 +497,53 @@ test("SIGNIN-15 offline Try again is disabled", () => {
   renderView({ online: false, qr: { tile: { kind: "failed" }, secondsLeft: 180 } });
 
   expect(accountCard().getByRole("button", { name: "Try again" })).toBeDisabled();
+});
+
+test("SET-13 photo storage shows what's left, what's used and a meter between the name and the screens", () => {
+  renderView({ storage: { used: 3.2 * GB, limit: 5 * GB } });
+
+  const card = screen.getByRole("region", { name: "Account" });
+  const meter = within(card).getByRole("meter", { name: "Photo storage used" });
+
+  expect(meter).toHaveAttribute("aria-valuetext", "3.2 GB of 5 GB used");
+  expect(meter).toHaveAttribute("aria-valuenow", "3.2");
+  expect(meter).toHaveAttribute("aria-valuemax", "5");
+  expect(within(card).getByText("1.8 GB left")).toBeInTheDocument();
+  expect(within(card).getByText("Shared by every screen on this account.")).toBeInTheDocument();
+  expect(
+    within(card)
+      .getByText("Photo storage")
+      .compareDocumentPosition(within(card).getByText("1 screen signed in")),
+  ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+});
+
+test("SET-13 from 90% the tile warns it's almost full, in MB under 1 GB", () => {
+  renderView({ storage: { used: 4.6 * GB, limit: 5 * GB } });
+
+  expect(screen.getByText("400 MB left")).toBeInTheDocument();
+  expect(
+    screen.getByText("Almost full. Delete photos in Photos to make room."),
+  ).toBeInTheDocument();
+});
+
+test("SET-13 at the limit the tile reads No space left", () => {
+  renderView({ storage: { used: 5 * GB, limit: 5 * GB } });
+
+  expect(screen.getByText("No space left")).toBeInTheDocument();
+  expect(
+    screen.getByText("Storage full. New photos can’t be added until some are deleted in Photos."),
+  ).toBeInTheDocument();
+});
+
+test("SET-13 the tile is hidden until the usage is read", () => {
+  renderView({ storage: undefined });
+
+  expect(screen.queryByRole("meter")).not.toBeInTheDocument();
+  expect(screen.queryByText("Photo storage")).not.toBeInTheDocument();
+});
+
+test("SET-13 offline the tile is hidden", () => {
+  renderView({ online: false, storage: { used: GB, limit: 5 * GB } });
+
+  expect(screen.queryByRole("meter")).not.toBeInTheDocument();
 });

@@ -3,6 +3,7 @@ import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, uploadProblem } from "@/domain/
 import { err, ok, type Result } from "@/domain/result";
 import type { Account, Weather, WeatherLocation } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
+import type { PhotoUsage } from "@/domain/storage";
 import type { OutboxEntry, StoredPhoto } from "../db";
 import type {
   AuthStatus,
@@ -47,6 +48,7 @@ export function createHttpTransport({
       send<WeatherLocation[]>(`/api/weather/places?q=${encodeURIComponent(query)}`),
     locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
     displays: () => send<SignedInScreen[]>("/api/displays"),
+    photoUsage: () => send<PhotoUsage>("/api/photos/usage"),
     issueQr: (opens) =>
       send<QrCode>("/api/auth/qr", opens ? jsonBody("POST", { opens }) : { method: "POST" }),
     voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
@@ -74,6 +76,8 @@ function uploadError(status: number): UploadError {
   if (status === 413) return "too-large";
 
   if (status === 415) return "not-a-photo";
+
+  if (status === 507) return "storage-full";
 
   return transportError(status);
 }

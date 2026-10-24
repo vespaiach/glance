@@ -277,7 +277,7 @@ export function databaseContract(open: () => Database): void {
 
   describe("photos", () => {
     it("tech§6.3 finds a photo and its file only in its own account", async () => {
-      await db().photos.insert(MARIA, PHOTO, `${MARIA}/${PHOTO.id}`);
+      await db().photos.insert(MARIA, PHOTO, `${MARIA}/${PHOTO.id}`, 100);
 
       expect(await db().photos.find(MARIA, PHOTO.id)).toEqual(PHOTO);
       expect(await db().photos.find(OMAR, PHOTO.id)).toBeUndefined();
@@ -293,7 +293,7 @@ export function databaseContract(open: () => Database): void {
       delete bare.place;
       delete bare.fileName;
 
-      await db().photos.insert(MARIA, PHOTO, `${MARIA}/${PHOTO.id}`);
+      await db().photos.insert(MARIA, PHOTO, `${MARIA}/${PHOTO.id}`, 100);
       await db().photos.save(MARIA, { ...bare, fileName: "IMG_0001.jpg", deletedAt: LATER });
 
       expect(await db().photos.find(MARIA, PHOTO.id)).toEqual({
@@ -307,11 +307,40 @@ export function databaseContract(open: () => Database): void {
     });
 
     it("PHOTO-13 stops listing a deleted photo's files once they are removed", async () => {
-      await db().photos.insert(MARIA, { ...PHOTO, deletedAt: LATER }, `${MARIA}/${PHOTO.id}`);
+      await db().photos.insert(MARIA, { ...PHOTO, deletedAt: LATER }, `${MARIA}/${PHOTO.id}`, 100);
 
       await db().photos.filesRemoved(`${MARIA}/${PHOTO.id}`);
 
       expect(await db().photos.deletedPaths()).toEqual([]);
+    });
+
+    it("D32 sums the stored bytes of the account's live photos only", async () => {
+      await db().photos.insert(MARIA, PHOTO, `${MARIA}/${PHOTO.id}`, 100);
+      await db().photos.insert(MARIA, photo(2), `${MARIA}/p2`, 50);
+      await db().photos.insert(MARIA, { ...photo(3), deletedAt: LATER }, `${MARIA}/p3`, 7);
+      await db().photos.insert(OMAR, photo(4), `${OMAR}/p4`, 1000);
+
+      expect(await db().photos.usage(MARIA)).toBe(150);
+      expect(await db().photos.usage(OMAR)).toBe(1000);
+    });
+
+    it("D32 reads no usage for an account without photos", async () => {
+      expect(await db().photos.usage(MARIA)).toBe(0);
+    });
+
+    it("D32 lists live photos stored without a size, in every account, until their size is saved", async () => {
+      await db().photos.insert(MARIA, PHOTO, `${MARIA}/${PHOTO.id}`, 0);
+      await db().photos.insert(OMAR, photo(2), `${OMAR}/p2`, 0);
+      await db().photos.insert(MARIA, photo(3), `${MARIA}/p3`, 9);
+
+      expect((await db().photos.unsizedPaths()).sort()).toEqual(
+        [`${MARIA}/${PHOTO.id}`, `${OMAR}/p2`].sort(),
+      );
+
+      await db().photos.sized(`${MARIA}/${PHOTO.id}`, 42);
+
+      expect(await db().photos.unsizedPaths()).toEqual([`${OMAR}/p2`]);
+      expect(await db().photos.usage(MARIA)).toBe(51);
     });
   });
 
@@ -351,6 +380,10 @@ function display(id: string, accountId: string, lastSeenAt: string) {
 
 function link(tokenHash: string, expiresAt: string) {
   return { tokenHash, accountId: MARIA, displayId: "d1", expiresAt, usedAt: null };
+}
+
+function photo(n: number): StoredPhoto {
+  return { ...PHOTO, id: `0192f3a0-4444-7000-8000-00000000000${n}` };
 }
 
 function tag(id: string, name: string) {

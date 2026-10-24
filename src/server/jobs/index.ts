@@ -4,7 +4,7 @@ import { database } from "../db";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
 import { expireNotes } from "./notes";
-import { removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
+import { backfillPhotoBytes, removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
 import { createJobTick } from "./schedule";
 import { cleanupSignIns } from "./signIns";
 
@@ -19,6 +19,8 @@ export function startJobs(): void {
   void tick(new Date());
 
   void runOriginalCleanup();
+
+  void runPhotoBytesBackfill();
 
   setInterval(() => void tick(new Date()), HOUR_MS).unref();
 }
@@ -43,4 +45,8 @@ async function runPhotoCleanup(): Promise<void> {
 
 async function runOriginalCleanup(): Promise<void> {
   await removePhotoOriginals({ ...deps(), store: photoStore() }).catch(console.error);
+}
+
+async function runPhotoBytesBackfill(): Promise<void> {
+  await backfillPhotoBytes({ ...deps(), store: photoStore() }).catch(console.error);
 }

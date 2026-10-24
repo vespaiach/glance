@@ -7,8 +7,10 @@ import type {
   Photo,
   Tag,
 } from "@/domain/schemas";
+import { GB } from "@/domain/storage";
 import { announce, syncBus } from "../bus";
 import { database } from "../db";
+import { env } from "../env";
 import { photoStore } from "../storage";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
@@ -79,6 +81,10 @@ export function photoFile(accountId: string, id: string, variant: photos.PhotoVa
   return photos.photoFile(photoDeps(), accountId, id, variant);
 }
 
+export function photoUsage(accountId: string) {
+  return photos.photoUsage(photoDeps(), accountId);
+}
+
 export function listDisplays(accountId: string, displayId: string) {
   return displays.listDisplays(deps(), accountId, displayId);
 }
@@ -111,5 +117,6 @@ function photoDeps(): photos.PhotoDeps {
     ...deps(),
     store: photoStore(),
     locator: createCensusGeocoder(fetch),
+    storageLimit: env().PHOTO_STORAGE_GB * GB,
   };
 }
