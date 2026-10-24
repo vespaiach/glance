@@ -18,6 +18,7 @@ const EVENT: StoredEvent = {
   location: "Rec center",
   everyone: false,
   tagIds: ["0192f3a0-3333-7000-8000-000000000001"],
+  reminder: "both",
   notes: "Bring goggles",
   updatedAt: NOW,
   version: 1,

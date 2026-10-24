@@ -24,6 +24,7 @@ const allDay = (n: number, who: Pick<CalendarEvent, "everyone" | "tagIds">): Cal
   startAt: "2026-10-09T00:00:00.000Z",
   allDay: true,
   location: "Home",
+  reminder: "15min",
   ...who,
 });
 

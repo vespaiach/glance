@@ -30,6 +30,7 @@ const LUNCH: CalendarEvent = {
   location: "Café Lumen",
   everyone: false,
   tagIds: [MOM],
+  reminder: "15min",
   notes: "Bring a gift",
 };
 
@@ -43,6 +44,7 @@ const NO_SCHOOL: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 const DRAFT: EventDraft = {

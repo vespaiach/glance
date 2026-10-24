@@ -27,6 +27,7 @@ const CONFERENCE: CalendarEvent = {
   startAt: octoberAt(14, 16).toISOString(),
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 const AMBIENT_WEATHER = {

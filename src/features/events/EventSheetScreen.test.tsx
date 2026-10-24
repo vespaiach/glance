@@ -23,6 +23,7 @@ const LUNCH: CalendarEvent = {
   location: "Café Lumen",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 let store: Harness;
@@ -235,6 +236,7 @@ const NO_SCHOOL: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
@@ -487,6 +489,7 @@ describe("day preview", () => {
     endAt: new Date(2026, 9, 9, 15, 0).toISOString(),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   };
 
   const HOLIDAY: CalendarEvent = {
@@ -496,6 +499,7 @@ describe("day preview", () => {
     allDay: true,
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   };
 
   const EARLY: CalendarEvent = {
@@ -505,6 +509,7 @@ describe("day preview", () => {
     endAt: new Date(2026, 9, 9, 8, 0).toISOString(),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   };
 
   const setWidth = (width: number) => {

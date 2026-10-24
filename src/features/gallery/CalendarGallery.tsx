@@ -174,6 +174,7 @@ const ALL_DAY = {
   location: "No school",
   everyone: false,
   tagIds: TIMELINE_FAMILY.slice(0, 2).map((one) => one.id),
+  reminder: "15min",
 } as const;
 
 const words = gallery.calendarView;

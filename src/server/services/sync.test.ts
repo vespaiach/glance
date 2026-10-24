@@ -17,6 +17,7 @@ const EVENT: CalendarEvent = {
   startAt: "2026-10-09T21:00:00.000Z",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 const MEMBER: Tag = {

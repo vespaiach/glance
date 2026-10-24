@@ -14,6 +14,7 @@ const EVENT: CalendarEvent = {
   location: "Rec center",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 const tag = (n: number, name: string): Tag => ({
@@ -108,6 +109,24 @@ describe("putEvent", () => {
 });
 
 describe("putEvent tags", () => {
+  it("NOTIF-09 saves the event's reminder", async () => {
+    const saved = await putEvent(harness.deps(), MARIA, { ...EVENT, reminder: "both" });
+
+    expect(saved).toEqual({
+      ok: true,
+      value: { ...EVENT, reminder: "both", updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
+    });
+  });
+
+  it("NOTIF-09 refuses to change another account's event reminder", async () => {
+    await putEvent(harness.deps(), MARIA, EVENT);
+
+    expect(await putEvent(harness.deps(), OMAR, { ...EVENT, reminder: "off" })).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+  });
+
   it("D24 saves a plan for some tags with its notes", async () => {
     await putTag(harness.deps(), MARIA, MOM);
     await putTag(harness.deps(), MARIA, DAD);

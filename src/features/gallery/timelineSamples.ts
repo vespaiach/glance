@@ -42,6 +42,7 @@ const plan = (
   location,
   startAt: octoberAt(day, 0, start).toISOString(),
   endAt: octoberAt(day, 0, end).toISOString(),
+  reminder: "15min",
   ...(who === "everyone"
     ? { everyone: true, tagIds: [] }
     : { everyone: false, tagIds: tagIds(who) }),

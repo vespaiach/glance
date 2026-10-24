@@ -27,6 +27,7 @@ const event = {
   location: "Living room",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 const tagId = "0192f1a0-7c2e-7a3b-9c4d-1e2f3a4b5c6e";
@@ -55,6 +56,8 @@ const settings = {
   noteExpiry: { on: true, days: 7 },
   hideSidebarWhenIdle: true,
   ambientBrightness: "medium",
+  defaultReminder: "15min",
+  chime: true,
   ambient: {
     mode: "same",
     all: { start: "18:00", end: "07:30" },
@@ -163,6 +166,22 @@ describe("CalendarEventSchema", () => {
 
   it("D21 rejects allDay false, so a timed event leaves the field out", () => {
     expect(accepts(CalendarEventSchema, { ...allDay, allDay: false })).toBe(false);
+  });
+});
+
+describe("CalendarEventSchema reminder", () => {
+  it.each(["off", "start", "15min", "both"])("NOTIF-09 accepts the %s reminder", (reminder) => {
+    expect(accepts(CalendarEventSchema, { ...event, reminder })).toBe(true);
+  });
+
+  it("NOTIF-09 rejects an unknown reminder", () => {
+    expect(accepts(CalendarEventSchema, { ...event, reminder: "1h" })).toBe(false);
+  });
+
+  it("D29 an event stored without a reminder reads 15 min", () => {
+    const { reminder: _, ...stored } = event;
+
+    expect(v.parse(CalendarEventSchema, stored)).toEqual(event);
   });
 });
 
@@ -374,6 +393,16 @@ describe("AccountSettingsSchema", () => {
     const { hideSidebarWhenIdle: _, ...saved } = settings;
 
     expect(v.parse(AccountSettingsSchema, saved)).toEqual(settings);
+  });
+
+  it("NOTIF-08 a settings row without defaultReminder and chime reads 15 min with the chime on", () => {
+    const { defaultReminder: _, chime: __, ...saved } = settings;
+
+    expect(v.parse(AccountSettingsSchema, saved)).toEqual(settings);
+  });
+
+  it("NOTIF-08 rejects an unknown default reminder", () => {
+    expect(accepts(AccountSettingsSchema, { ...settings, defaultReminder: "1h" })).toBe(false);
   });
 
   it("LOC-05 accepts a weather location with its IANA time zone", () => {

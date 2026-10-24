@@ -11,6 +11,7 @@ const EVENT = {
   title: "Soccer practice",
   everyone: true,
   tagIds: [],
+  reminder: "15min" as const,
   updatedAt: "2026-10-09T10:00:00.000Z",
   version: 1,
 };
@@ -105,7 +106,7 @@ describe("account database", () => {
     const db = openGlanceDb(name);
     await db.events.put(EVENT);
     const upgraded = new Dexie(name);
-    upgraded.version(5).stores({ events: "id, startAt, deletedAt, title" });
+    upgraded.version(7).stores({ events: "id, startAt, deletedAt, title" });
 
     await upgraded.open();
 
@@ -257,6 +258,40 @@ describe("account database", () => {
       { seq: 1, entity: "notes", entityId: NOTE.id, op: "put", payload: NOTE, attempts: 1 },
       { seq: 2, entity: "notes", entityId: GONE.id, op: "delete", attempts: 0 },
       { seq: 3, entity: "events", entityId: EVENT.id, op: "put", payload: EVENT, attempts: 0 },
+    ]);
+    db.close();
+  });
+
+  it("D29 the v6 upgrade gives stored events without a reminder 15 min", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = tagsDexie(name, 5);
+    const { reminder: _, ...v5Event } = EVENT;
+    await old.table("events").bulkPut([v5Event, { ...EVENT, id: GONE.id, reminder: "off" }]);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.events.toArray()).toEqual([EVENT, { ...EVENT, id: GONE.id, reminder: "off" }]);
+    db.close();
+  });
+
+  it("D29 the v6 upgrade gives waiting event puts without a reminder 15 min", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = tagsDexie(name, 5);
+    const { reminder: _, ...v5Event } = EVENT;
+    await old.table("outbox").bulkAdd([
+      { entity: "events", entityId: EVENT.id, op: "put", payload: v5Event, attempts: 0 },
+      { entity: "events", entityId: GONE.id, op: "delete", attempts: 0 },
+      { entity: "notes", entityId: NOTE.id, op: "put", payload: NOTE, attempts: 0 },
+    ]);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.outbox.toArray()).toEqual([
+      { seq: 1, entity: "events", entityId: EVENT.id, op: "put", payload: EVENT, attempts: 0 },
+      { seq: 2, entity: "events", entityId: GONE.id, op: "delete", attempts: 0 },
+      { seq: 3, entity: "notes", entityId: NOTE.id, op: "put", payload: NOTE, attempts: 0 },
     ]);
     db.close();
   });

@@ -105,6 +105,12 @@ export function openGlanceDb(name: string): GlanceDb {
     await dropNoteOutboxTone(tx);
   });
 
+  db.version(6).upgrade(async (tx) => {
+    await tx.table("events").toCollection().modify(withReminder);
+
+    await addEventOutboxReminder(tx);
+  });
+
   return db;
 }
 
@@ -159,6 +165,20 @@ async function dropNoteOutboxTone(tx: Transaction): Promise<void> {
     .modify((entry) => {
       if (isRecord(entry.payload)) withoutTone(entry.payload);
     });
+}
+
+async function addEventOutboxReminder(tx: Transaction): Promise<void> {
+  await tx
+    .table<OutboxEntry, number>("outbox")
+    .where("entity")
+    .equals("events")
+    .modify((entry) => {
+      if (isRecord(entry.payload)) withReminder(entry.payload);
+    });
+}
+
+function withReminder(event: Record<string, unknown>): void {
+  event.reminder ??= "15min";
 }
 
 function withoutTone(note: Record<string, unknown>): void {

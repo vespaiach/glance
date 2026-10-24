@@ -17,6 +17,7 @@ const call = {
   endAt: iso(11, 15),
   everyone: true,
   tagIds: [],
+  reminder: "15min" as const,
 };
 
 const MOM = { id: "mom", name: "Mom", color: "coral", createdAt: iso(8, 0) } as const;
@@ -31,6 +32,7 @@ const lunch = {
   endAt: iso(13, 0),
   everyone: false,
   tagIds: ["mom", "leo"],
+  reminder: "15min" as const,
 };
 
 const ignore = () => {};
