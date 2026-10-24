@@ -8,7 +8,7 @@ import { stamp } from "./rows";
 
 export type SyncedTag = Synced<Tag>;
 
-export type TagError = "not-found" | "tag-changed" | "name-taken";
+export type TagError = "not-found" | "tag-changed";
 
 export function putTag(
   { db, now }: ServiceDeps,
@@ -20,7 +20,9 @@ export function putTag(
 
     if (existing) return sameTag(existing, accountId, tag);
 
-    if (await tx.tags.liveByName(accountId, tag.name)) return err("name-taken");
+    const named = await tx.tags.liveByName(accountId, tag.name);
+
+    if (named) return ok(named);
 
     const saved = { ...tag, ...(await stamp(tx, now())) };
 

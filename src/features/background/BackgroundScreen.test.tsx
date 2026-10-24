@@ -1,12 +1,10 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import type { FixtureParams } from "@/data/repos";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
-import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { BackgroundScreen } from "./BackgroundScreen";
@@ -54,14 +52,12 @@ afterEach(async () => {
   await store.close();
 });
 
-function renderBackground(params: FixtureParams = {}) {
+function renderBackground() {
   const Shell = shellWrapper(store, { frozenAt: NOW });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <NetworkProvider>
-        <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
-      </NetworkProvider>
+      <NetworkProvider>{children}</NetworkProvider>
     </Shell>
   );
 
@@ -127,14 +123,6 @@ test("BG-03 tapping a thumb in Slideshow shows it now and keeps the slideshow", 
     ),
   ).toBeInTheDocument();
   expect((await store.db.settings.get(store.accountId))?.background.mode).toBe("slideshow");
-});
-
-test("BG-02 upload=one puts the uploading tile first", async () => {
-  await store.db.photos.bulkPut([synced(COAST)]);
-
-  renderBackground({ upload: "one" });
-
-  expect(await screen.findByRole("progressbar")).toBeInTheDocument();
 });
 
 test("BG-01 the back link opens Settings", async () => {

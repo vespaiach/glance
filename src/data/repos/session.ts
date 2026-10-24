@@ -1,23 +1,7 @@
 import Dexie from "dexie";
 import { useEffect, useState } from "react";
 import type { Account, AccountSettings } from "@/domain/schemas";
-import {
-  FIXTURE_ACCOUNT,
-  FIXTURE_LOCATED_PLACE,
-  FIXTURE_LONG_PHOTO_TITLE,
-  FIXTURE_NEW_NOTE_DRAFT,
-  FIXTURE_OTHER_EMAIL,
-  FIXTURE_OTHER_ZONE_PLACE,
-  FIXTURE_PLACES,
-  FIXTURE_SHEET_TARGETS,
-  FIXTURE_TIME_ZONE,
-  FIXTURE_UNKNOWN_PLACE,
-  FIXTURE_UPLOADS,
-  type FixtureUpload,
-  fixturePhotoImage,
-} from "@/fixtures/data";
-import { type FixtureParams, parseFixtureParams } from "@/fixtures/params";
-import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
+import { accountDbName, deleteGlanceDb, openGlanceDb } from "../db";
 import {
   clearSignedInAccount,
   type MetaDb,
@@ -27,46 +11,15 @@ import {
   type SignedInAccount,
   saveSignedInAccount,
 } from "../meta";
-import {
-  createFixtureAuth,
-  createFixtureSearch,
-  createFixtureTransport,
-  seedFixtureDb,
-} from "../sync/fixtureTransport";
-import { createInlineSyncHost, createWorkerSyncHost, spawnSyncWorker } from "../sync/host";
+import { createWorkerSyncHost, spawnSyncWorker } from "../sync/host";
 import { createHttpTransport } from "../sync/httpTransport";
 import { recordStatus } from "../sync/status";
 import type { Transport } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import { appServiceWorker } from "./serviceWorker";
 import { accountSettings } from "./settings";
-import type { PhotoVariant, RepoStore } from "./store";
+import type { RepoStore } from "./store";
 import type { WeatherRepo } from "./weather";
-
-export type { FixtureParams, FixtureUpload };
-
-export const fixtureSheetTargets = {
-  ...FIXTURE_SHEET_TARGETS,
-  noteDraft: { text: FIXTURE_NEW_NOTE_DRAFT },
-} as const;
-
-export const fixtureWeatherSearch = {
-  query: "Portland",
-  unknown: FIXTURE_UNKNOWN_PLACE,
-  matches: FIXTURE_PLACES.portland ?? [],
-  located: { draft: "Portland, OR", place: FIXTURE_LOCATED_PLACE },
-  otherZone: FIXTURE_OTHER_ZONE_PLACE,
-};
-
-export const fixtureUploads = FIXTURE_UPLOADS;
-
-export const fixtureLongPhotoTitle = FIXTURE_LONG_PHOTO_TITLE;
-
-export const fixtureTimeZone = FIXTURE_TIME_ZONE;
-
-export const fixtureSignIn = { ...FIXTURE_ACCOUNT, name: FIXTURE_ACCOUNT.name ?? "" };
-
-export const fixtureOtherEmail = FIXTURE_OTHER_EMAIL;
 
 export type SignedOutAccount = {
   email: string;
@@ -76,7 +29,7 @@ export type SignedOutAccount = {
 
 export type SignInAuth = Pick<
   Transport["auth"],
-  "sendCode" | "verifyCode" | "status" | "guestAvailable" | "guest" | "name" | "location"
+  "sendCode" | "verifyCode" | "status" | "name" | "location"
 > &
   Pick<WeatherRepo, "searchPlaces" | "locate"> & {
     remember(account: Account): Promise<void>;
@@ -87,33 +40,19 @@ export type DisplayBoot =
   | { kind: "signed-out" }
   | { kind: "ready"; store: RepoStore };
 
-type BootOptions = { demo: boolean; params: FixtureParams; now: () => Date };
-
 type OpenedDisplay = { boot: DisplayBoot; close(): void };
 
 const SIGNED_OUT: OpenedDisplay = { boot: { kind: "signed-out" }, close: () => {} };
 
 const PHOTO_CACHE = "photos";
 
-const fixturePhotoSrc = (photoId: string, variant: PhotoVariant) =>
-  fixturePhotoImage(photoId) ?? apiPhotoSrc(photoId, variant);
-
-export async function signedOutAccountFor(
-  demo: boolean,
-  params: FixtureParams,
-): Promise<SignedOutAccount | undefined> {
-  return demo ? fixtureSignedOut(params) : signedOutAccount();
-}
-
-export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth {
-  const { auth, places, locate } = signInTransport(demo, params);
+export function signInAuth(): SignInAuth {
+  const { auth, places, locate } = createHttpTransport();
 
   return {
     sendCode: auth.sendCode,
     verifyCode: auth.verifyCode,
     status: auth.status,
-    guestAvailable: auth.guestAvailable,
-    guest: auth.guest,
     name: auth.name,
     location: auth.location,
     searchPlaces: places,
@@ -122,17 +61,21 @@ export function signInAuthFor(demo: boolean, params: FixtureParams): SignInAuth 
   };
 }
 
-export function fixtureParamsFor(demo: boolean, search: string, pathname = ""): FixtureParams {
-  return demo ? parseFixtureParams(search, pathname) : {};
+export async function signedOutAccount(): Promise<SignedOutAccount | undefined> {
+  const entry = await readMeta(readSignedInAccount);
+
+  if (!entry?.signedOut) return undefined;
+
+  return { email: entry.email, ...(await keptAccount(entry.accountId)) };
 }
 
-export function useDisplayBoot({ demo, params, now }: BootOptions): DisplayBoot {
+export function useDisplayBoot(now: () => Date): DisplayBoot {
   const [boot, setBoot] = useState<DisplayBoot>({ kind: "booting" });
 
   useEffect(() => {
     let live = true;
 
-    const opening = demo ? openFixtureDisplay(params, now) : openAccountDisplay(now);
+    const opening = openAccountDisplay(now);
 
     opening.then(
       (opened) => {
@@ -151,7 +94,7 @@ export function useDisplayBoot({ demo, params, now }: BootOptions): DisplayBoot 
         () => {},
       );
     };
-  }, [demo, params, now]);
+  }, [now]);
 
   return boot;
 }
@@ -209,20 +152,6 @@ async function keptAccount(accountId: string) {
   return read().finally(() => db.close());
 }
 
-async function signedOutAccount(): Promise<SignedOutAccount | undefined> {
-  const entry = await readMeta(readSignedInAccount);
-
-  if (!entry?.signedOut) return undefined;
-
-  return { email: entry.email, ...(await keptAccount(entry.accountId)) };
-}
-
-function fixtureSignedOut(params: FixtureParams): SignedOutAccount | undefined {
-  if (params.signin !== "ended") return undefined;
-
-  return { email: FIXTURE_ACCOUNT.email, pending: params.pending ?? 0 };
-}
-
 async function forgetSignedIn(): Promise<void> {
   const meta = openMetaDb();
 
@@ -235,75 +164,6 @@ function signOutWith(signout: Transport["auth"]["signout"]) {
 
     await forgetSignedIn();
   };
-}
-
-function signInTransport(demo: boolean, params: FixtureParams) {
-  if (!demo) return createHttpTransport();
-
-  return { auth: createFixtureAuth(params), ...createFixtureSearch(params) };
-}
-
-function keepUploadedImages(transport: Transport) {
-  const images = new Map<string, string>();
-
-  const upload: Transport["upload"] = async (file, modifiedOn, onProgress) => {
-    const answer = await transport.upload(file, modifiedOn, onProgress);
-
-    if (answer.ok) images.set(answer.value.id, URL.createObjectURL(file));
-
-    return answer;
-  };
-
-  const photoSrc = (photoId: string, variant: PhotoVariant) =>
-    images.get(photoId) ?? fixturePhotoSrc(photoId, variant);
-
-  return { upload, photoSrc };
-}
-
-async function openFixtureDisplay(params: FixtureParams, now: () => Date): Promise<OpenedDisplay> {
-  const db = openGlanceDb(FIXTURE_DB_NAME);
-
-  const transport = createFixtureTransport({ db, params, now });
-
-  const host = createInlineSyncHost({ db, transport, now });
-
-  let closed = false;
-
-  const close = () => {
-    closed = true;
-    host.stop();
-    db.close();
-  };
-
-  await seedFixtureDb(db, params).catch((error: unknown) => {
-    close();
-
-    throw error;
-  });
-
-  host.start(FIXTURE_ACCOUNT.id).catch((error: unknown) => {
-    if (!closed) throw error;
-  });
-
-  const store = {
-    db,
-    accountId: FIXTURE_ACCOUNT.id,
-    account: FIXTURE_ACCOUNT,
-    now,
-    startedAt: now(),
-    nudge: host.nudge,
-    refreshWeather: host.refreshWeather,
-    places: transport.places,
-    locate: transport.locate,
-    displays: transport.displays,
-    issueQr: transport.issueQr,
-    voidQr: transport.voidQr,
-    signOut: signOutWith(transport.auth.signout),
-    markSignedOut: async () => {},
-    ...keepUploadedImages(transport),
-  };
-
-  return { boot: { kind: "ready", store }, close };
 }
 
 async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {

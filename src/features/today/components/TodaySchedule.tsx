@@ -40,7 +40,6 @@ type TodayScheduleProps = {
   state: ZoneState<CalendarEvent>;
   tags: readonly Tag[];
   selected: ReadonlySet<string>;
-  whoSheet: boolean;
   onFilter: (filter: TagFilter) => void;
   retryIn: number;
   onRetry: () => void;
@@ -180,7 +179,6 @@ export function TodaySchedule({
   onRetry,
   iconActions,
   upcoming,
-  whoSheet,
   onFilter,
   onAddEvent,
   xstyle,
@@ -233,7 +231,6 @@ export function TodaySchedule({
           size="today"
           max={narrow ? STACK_MAX.narrow : STACK_MAX.wide}
           labels={copy.personFilter}
-          defaultOpen={whoSheet}
           onChange={onFilter}
         />
       )}

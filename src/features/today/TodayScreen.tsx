@@ -4,9 +4,6 @@ import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import {
-  type FixtureParams,
-  fixtureLongPhotoTitle,
-  fixtureUploads,
   type ShownNote,
   useEventsAfter,
   useEventsOnDay,
@@ -29,10 +26,9 @@ import type { TodaysPhotoPick } from "@/domain/todaysPhoto";
 import { hourlyByHour } from "@/domain/weather";
 import { dateKey } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
-import { initialUploads, newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
+import { newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
 import { useQrTile } from "@/features/settings";
 import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -99,7 +95,6 @@ type PictureProps = {
 type PickInput = {
   state: ZoneState<Photo>;
   pick: TodaysPhotoPick | null | undefined;
-  fixture: FixtureParams;
   thisYear: number;
   photoSrc: ReturnType<typeof usePhotoSrc>;
 };
@@ -132,8 +127,6 @@ export function TodayScreen() {
   const tags = useTags() ?? NO_TAGS;
 
   const who = useWhoFilter();
-
-  const fixture = useFixtureParams();
 
   const allIds = tags.map((tag) => tag.id);
 
@@ -183,7 +176,6 @@ export function TodayScreen() {
         state={events.state}
         tags={tags}
         selected={selected}
-        whoSheet={fixture.whosheet === true}
         onFilter={who.setFilter}
         retryIn={events.retryIn}
         onRetry={events.retry}
@@ -255,8 +247,6 @@ function NowPanel({ breakpoint, weather, children, xstyle }: NowPanelProps) {
 function Picture({ state, day, tz, large, onOpen, onOpenPhotos }: PictureProps) {
   const photoSrc = usePhotoSrc();
 
-  const fixture = useFixtureParams();
-
   const { background } = useAccountSettings();
 
   const { online } = useNetwork();
@@ -267,11 +257,11 @@ function Picture({ state, day, tz, large, onOpen, onOpenPhotos }: PictureProps) 
 
   const pick = useTodaysPhoto(day, tz, backgroundId(background, photos, now, tz));
 
-  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads), online);
+  const uploads = useUploads(online);
 
   const picker = usePhotoPicker(uploads.choose);
 
-  const qr = useQrTile(fixture.potd === "qr" ? "open" : undefined, "photos");
+  const qr = useQrTile("photos");
 
   const thisYear = Number(day.slice(0, 4));
 
@@ -285,13 +275,12 @@ function Picture({ state, day, tz, large, onOpen, onOpenPhotos }: PictureProps) 
     <>
       {picker.input}
       <TodaysPhoto
-        state={shownPhoto({ state, pick, fixture, thisYear, photoSrc })}
+        state={shownPhoto({ state, pick, thisYear, photoSrc })}
         upload={firstUpload(uploads.tiles)}
         qr={large && qr.tile.kind !== "closed" ? { url: qrUrl(qr.tile) } : undefined}
         online={online}
         fromPhone={large}
         moments={momentsLine(day)}
-        defaultFailed={fixture.potd === "error"}
         frame={large && todayPhotoFrames.capped}
         onAdd={large ? qr.show : picker.open}
         onChooseFiles={chooseFiles}
@@ -358,22 +347,16 @@ function backgroundId(
   return shown.mode === "season" ? undefined : shown.photo.id;
 }
 
-function shownPhoto({
-  state,
-  pick,
-  fixture,
-  thisYear,
-  photoSrc,
-}: PickInput): ZoneState<ShownPhoto> {
+function shownPhoto({ state, pick, thisYear, photoSrc }: PickInput): ZoneState<ShownPhoto> {
   if (state.kind !== "ready") return state;
 
-  const chosen = fixturePick(state.data, fixture) ?? pick;
+  const chosen = pick;
 
   if (chosen === undefined) return { kind: "loading" };
 
   if (chosen === null) return { kind: "empty" };
 
-  const photo = fixture.potdlong ? { ...chosen.photo, title: fixtureLongPhotoTitle } : chosen.photo;
+  const { photo } = chosen;
 
   const others = newestFirst(state.data.filter((each) => each.id !== photo.id));
 
@@ -385,15 +368,6 @@ function shownPhoto({
   };
 
   return { kind: "ready", data: [shown] };
-}
-
-function fixturePick(
-  photos: readonly Photo[],
-  fixture: FixtureParams,
-): TodaysPhotoPick | undefined {
-  const photo = photos.find((each) => each.id === fixture.potdPhoto);
-
-  return photo && { photo };
 }
 
 function qrUrl(tile: ReturnType<typeof useQrTile>["tile"]): string | undefined {

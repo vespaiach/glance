@@ -61,8 +61,6 @@ export interface Transport {
     sendCode(request: CodeRequest): Answer<void>;
     verifyCode(request: CodeVerify): Answer<SignedIn, TransportError | CodeError>;
     status(): Answer<AuthStatus>;
-    guestAvailable(): Promise<boolean>;
-    guest(): Answer<AuthStatus>;
     name(name: string): Answer<Account>;
     location(request: LocationRequest): Answer<void>;
     signout(): Answer<void>;

@@ -4,7 +4,7 @@ import { SidebarDrawer } from "@/shell/SidebarDrawer";
 import { SidebarGrip } from "@/shell/SidebarGrip";
 import { SidebarHandle } from "@/shell/SidebarHandle";
 import { SidebarRail } from "@/shell/SidebarRail";
-import { initialSidebar, type SidebarMode, sidebarInset, sidebarReducer } from "@/shell/sidebar";
+import { type SidebarMode, sidebarInset, sidebarReducer } from "@/shell/sidebar";
 import { colors, motion, space } from "@/theme/tokens.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { gallery } from "./samples";
@@ -17,12 +17,6 @@ const MODES: Record<Size, readonly SidebarMode[]> = {
 };
 
 const SIZES: readonly Size[] = ["large", "small"];
-
-const FIXTURE: Record<SidebarMode, "1" | "open" | undefined> = {
-  hidden: undefined,
-  rail: "1",
-  expanded: "open",
-};
 
 const styles = stylex.create({
   row: {
@@ -81,9 +75,7 @@ export function SidebarGallery() {
 }
 
 function SidebarDemo({ mode, size }: { mode: SidebarMode; size: Size }) {
-  const [state, dispatch] = useReducer(sidebarReducer, FIXTURE[mode], (rail) =>
-    initialSidebar(rail, "today", size === "small"),
-  );
+  const [state, dispatch] = useReducer(sidebarReducer, { mode });
 
   const small = size === "small";
 

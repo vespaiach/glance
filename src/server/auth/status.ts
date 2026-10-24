@@ -5,7 +5,7 @@ import { toAccount } from "./account";
 import type { Clocked } from "./deps";
 import { hashToken } from "./tokens";
 
-export type SignedInBody = {
+type SignedInBody = {
   state: "signed-in";
   account: Account;
   returning: boolean;

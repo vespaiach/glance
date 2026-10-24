@@ -19,7 +19,7 @@ export type Uploads = {
   clear(): void;
 };
 
-export function useUploads(initial: () => UploadTile[], online: boolean): Uploads {
+export function useUploads(online: boolean): Uploads {
   const repo = usePhotosRepo();
 
   const clock = useNowStore();
@@ -32,7 +32,7 @@ export function useUploads(initial: () => UploadTile[], online: boolean): Upload
 
   const connected = useRef(online);
 
-  const [tiles, dispatch] = useReducer(uploads, undefined, initial);
+  const [tiles, dispatch] = useReducer(uploads, []);
 
   const forget = (id: string) => {
     const entry = chosen.current.get(id);

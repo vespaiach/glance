@@ -55,12 +55,6 @@ describe("PUT /api/tags/{id}", () => {
     expect(await response.json()).toEqual({ error: "tag-changed" });
   });
 
-  it("FAM-04 answers 409 for a taken name", async () => {
-    services.putTag.mockResolvedValue(err("name-taken"));
-
-    expect((await route.PUT(...put(MOM))).status).toBe(409);
-  });
-
   it("tech§6.1 answers 404 for another account's tag", async () => {
     services.putTag.mockResolvedValue(err("not-found"));
 

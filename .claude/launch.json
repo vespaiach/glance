@@ -23,13 +23,6 @@
       ],
       "port": 3010,
       "autoPort": false
-    },
-    {
-      "name": "dev-demo",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:demo", "--", "-p", "3020"],
-      "port": 3020,
-      "autoPort": false
     }
   ]
 }

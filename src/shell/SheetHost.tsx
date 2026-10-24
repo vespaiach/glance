@@ -2,11 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
-import type { FixtureParams } from "@/data/repos";
 import type { EventTimes } from "@/domain/eventTimes";
 import type { EventWho } from "@/domain/tags";
 
-export type TimeFixture = NonNullable<FixtureParams["time"]>;
+export type TimeFixture = "start" | "end" | "error" | "noend";
 
 export type SheetRequest = (
   | { kind: "event"; id: string; time?: TimeFixture; edit?: true }

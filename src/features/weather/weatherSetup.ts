@@ -1,7 +1,4 @@
-import type { FixtureParams } from "@/data/repos";
 import type { WeatherLocation } from "@/domain/schemas";
-
-export type WeatherFixture = FixtureParams["wx"];
 
 export type SetupError = "empty" | "unknown" | "unavailable" | "save-failed";
 
@@ -32,16 +29,6 @@ export type WeatherSetupAction =
   | { type: "keep" }
   | { type: "cancel" }
   | { type: "skip-failed" };
-
-export type FixtureSearch = {
-  query: string;
-  unknown: string;
-  matches: readonly WeatherLocation[];
-  located: { draft: string; place: WeatherLocation };
-  otherZone: WeatherLocation;
-};
-
-export type SetupHost = { confirmsZone?: boolean };
 
 export function placeQuery(draft: string): string {
   return draft.trim();
@@ -76,34 +63,8 @@ export function weatherSetupReducer(
   }
 }
 
-export function initialWeatherSetup(
-  fixture: WeatherFixture,
-  search: FixtureSearch,
-  { confirmsZone = false }: SetupHost = {},
-): WeatherSetupState {
-  switch (fixture) {
-    case "searching":
-      return { step: "searching", draft: search.query, query: search.query };
-    case "unknown":
-      return { step: "editing", draft: search.unknown, error: "unknown" };
-    case "choose":
-      return { step: "choosing", draft: search.query, matches: search.matches };
-    case "locating":
-      return { step: "locating", draft: "" };
-    case "denied":
-    case "no-position":
-    case "outside":
-    case "lookup":
-      return { step: "editing", draft: "", notice: fixture };
-    case "savefail":
-      return { step: "editing", ...search.located, error: "save-failed" };
-    case "tz":
-      return confirmsZone
-        ? { step: "confirm-zone", draft: search.query, place: search.otherZone }
-        : { step: "editing", draft: "" };
-    default:
-      return { step: "editing", draft: "" };
-  }
+export function initialWeatherSetup(): WeatherSetupState {
+  return { step: "editing", draft: "" };
 }
 
 function submit(state: WeatherSetupState): WeatherSetupState {

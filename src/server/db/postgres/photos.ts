@@ -39,10 +39,13 @@ export function photosRepo(sql: Sql): Repos["photos"] {
     },
     deletedPaths: async () => {
       const rows = await sql.all<{ file_path: string }>(
-        "SELECT file_path FROM photos WHERE deleted_at IS NOT NULL",
+        "SELECT file_path FROM photos WHERE deleted_at IS NOT NULL AND NOT files_removed",
       );
 
       return rows.map((row) => row.file_path);
+    },
+    filesRemoved: async (filePath) => {
+      await sql.run("UPDATE photos SET files_removed = true WHERE file_path = $1", [filePath]);
     },
     changedSince: async (accountId, version) => {
       const rows = await sql.all<PhotoRow>(

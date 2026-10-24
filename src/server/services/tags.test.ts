@@ -56,13 +56,21 @@ describe("putTag", () => {
     expect(saved).toEqual({ ok: false, error: "tag-changed" });
   });
 
-  it("FAM-04 refuses a name another tag already has, ignoring case", async () => {
-    await putTag(harness.deps(), MARIA, MOM);
+  it("FAM-04 a name another tag already has, ignoring case, answers that tag and bumps nothing", async () => {
+    const stored = await putTag(harness.deps(), MARIA, MOM);
 
     const saved = await putTag(harness.deps(), MARIA, { ...DAD, name: "mOM" });
 
-    expect(saved).toEqual({ ok: false, error: "name-taken" });
+    expect(saved).toEqual(stored);
     expect(await harness.globalVersion()).toBe(1);
+  });
+
+  it("tech§6.1 another account's tag with the same name is never answered", async () => {
+    await putTag(harness.deps(), OMAR, MOM);
+
+    const saved = await putTag(harness.deps(), MARIA, { ...DAD, name: "Mom" });
+
+    expect(saved).toMatchObject({ ok: true, value: { id: DAD.id, name: "Mom" } });
   });
 
   it("tech§6.1 another account's tag is not found and stays unchanged", async () => {

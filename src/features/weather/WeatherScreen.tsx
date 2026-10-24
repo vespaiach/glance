@@ -1,17 +1,10 @@
 "use client";
 
 import { copy } from "@/copy";
-import {
-  fixtureWeatherSearch,
-  type SettingsRepo,
-  useSettingsRepo,
-  useWeather,
-  useWeatherRepo,
-} from "@/data/repos";
+import { type SettingsRepo, useSettingsRepo, useWeather, useWeatherRepo } from "@/data/repos";
 import { forecastStale } from "@/domain/offline";
 import type { WeatherLocation } from "@/domain/schemas";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -34,10 +27,8 @@ export function WeatherScreen() {
 
   const { online } = useNetwork();
 
-  const fixture = useFixtureParams();
-
   const setup = useWeatherSetup({
-    initial: () => initialWeatherSetup(fixture.wx, fixtureWeatherSearch),
+    initial: initialWeatherSetup,
     source: useWeatherRepo(),
     save: saveLocation(useSettingsRepo()),
   });

@@ -240,13 +240,6 @@ test("SIGNIN-10 offline the code can be typed but Sign in and Send a new code ar
   expect(onAction).toHaveBeenCalledWith({ type: "code", text: "48291", online: false });
 });
 
-test("SIGNIN-01 there is no Continue as guests, also in demo builds", () => {
-  renderView({ step: "form", email: "" });
-
-  expect(screen.queryByRole("button", { name: "Continue as guests" })).not.toBeInTheDocument();
-  expect(screen.getAllByRole("button")).toHaveLength(1);
-});
-
 test("SIGNIN-03 a failed send shows Couldn’t send on the field with Send enabled", () => {
   renderView({ step: "form", email: EMAIL, error: "failed" });
 
@@ -422,54 +415,4 @@ test("SIGNIN-13 the notice stays while the code is sending", () => {
 
   expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
-});
-
-const GUEST_BUTTON = { name: "Sign-in as guests" };
-
-test("SIGNIN-16 Sign-in as guests sits next to Send code when guest sign-in is on", async () => {
-  const { onAction } = renderView({ step: "form", email: "" }, { guest: true });
-
-  await userEvent.click(screen.getByRole("button", GUEST_BUTTON));
-
-  expect(screen.getByRole("button", { name: "Send code" })).toBeEnabled();
-  expect(onAction).toHaveBeenCalledWith({ type: "guest" });
-});
-
-test("SIGNIN-16 Sign-in as guests is hidden when guest sign-in is off", () => {
-  renderView({ step: "form", email: "" }, { guest: false });
-
-  expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
-});
-
-test("SIGNIN-16 Sign-in as guests is hidden on the signed-out form", () => {
-  renderView({ step: "form", email: EMAIL }, { guest: true, signedOut: SIGNED_OUT });
-
-  expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
-});
-
-test("SIGNIN-16 Sign-in as guests is disabled while a code is sending", () => {
-  renderView({ step: "sending", email: EMAIL }, { guest: true });
-
-  expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
-});
-
-test("SIGNIN-16 Sign-in as guests is disabled offline", () => {
-  renderView({ step: "form", email: "" }, { guest: true, online: false });
-
-  expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
-});
-
-test("SIGNIN-16 both buttons are disabled while guest sign-in is on its way", () => {
-  renderView({ step: "guest", email: "" }, { guest: true });
-
-  expect(screen.getByRole("button", GUEST_BUTTON)).toBeDisabled();
-  expect(screen.getByRole("button", { name: "Send code" })).toBeDisabled();
-});
-
-test("SIGNIN-16 a failed guest sign-in shows Couldn’t sign in under the buttons, not on the field", () => {
-  renderView({ step: "form", email: "", error: "guest" }, { guest: true });
-
-  expect(screen.getByRole("alert")).toHaveTextContent("Couldn’t sign in. Try again.");
-  expect(screen.getByLabelText("Email")).not.toHaveAccessibleDescription();
-  expect(screen.getByRole("button", GUEST_BUTTON)).toBeEnabled();
 });

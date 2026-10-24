@@ -60,6 +60,18 @@ describe("removeDeletedPhotoFiles", () => {
     expect(storedFiles()).toEqual([`${kept}.display`, `${kept}.orig`, `${kept}.thumb`]);
   });
 
+  it("PHOTO-13 removes a deleted photo's files once, not on every run", async () => {
+    const gone = await stored(MARIA);
+    await markDeleted(MARIA, gone);
+    const disk = createDiskStore(photosDir());
+    const remove = vi.fn(disk.remove);
+
+    await removeDeletedPhotoFiles({ ...harness.deps(), store: { ...disk, remove } });
+    await removeDeletedPhotoFiles({ ...harness.deps(), store: { ...disk, remove } });
+
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
   it("PHOTO-13 removes the other deleted photos' files when one photo's removal fails, then throws", async () => {
     const stuck = await stored(MARIA);
     const gone = await stored(MARIA);

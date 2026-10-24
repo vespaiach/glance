@@ -125,7 +125,6 @@ function rendered(state: ZoneState<CalendarEvent>): Props {
     state,
     tags: [],
     selected: new Set(),
-    whoSheet: false,
     onFilter: () => {},
     day: "2026-10-09",
     now: NOW,

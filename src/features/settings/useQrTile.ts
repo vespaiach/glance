@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { useQrCodes } from "@/data/repos";
 import { QR_CODE_TTL_MS, type QrOpens, qrSecondsLeft } from "@/domain/qrSignIn";
 import { useNow, useNowStore } from "@/shell/providers/now";
-import { initialQrTile, type QrFixture, type QrTile, qrTile } from "./qrTile";
+import { type QrTile, qrTile } from "./qrTile";
 
 export type QrSignIn = {
   tile: QrTile;
@@ -15,12 +15,14 @@ export type QrSignIn = {
 
 const TTL_S = QR_CODE_TTL_MS / 1000;
 
-export function useQrTile(fixture: QrFixture | undefined, opens?: QrOpens): QrSignIn {
+const CLOSED: QrTile = { kind: "closed" };
+
+export function useQrTile(opens?: QrOpens): QrSignIn {
   const { issueQr, voidQr } = useQrCodes();
 
   const clock = useNowStore();
 
-  const [tile, dispatch] = useReducer(qrTile, fixture, initialQrTile);
+  const [tile, dispatch] = useReducer(qrTile, CLOSED);
 
   const now = useNow(tile.kind === "open" ? "second" : "minute");
 

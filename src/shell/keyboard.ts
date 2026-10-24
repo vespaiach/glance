@@ -1,14 +1,9 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
-import { fixtureKeyboardInset, keyboardInset } from "@/domain/keyboard";
-import { useFixtureParams } from "./fixtureOptions";
-
-const SETTLE_MS = 280;
+import { useSyncExternalStore } from "react";
+import { keyboardInset } from "@/domain/keyboard";
 
 const TEXT_INPUT_TYPES = new Set(["text", "email", "search", "tel", "url", "password", "number"]);
-
-const FIELDS = '[role="dialog"] textarea, [role="dialog"] input, main input';
 
 export function isTextField(element: Element | null): boolean {
   if (element instanceof HTMLTextAreaElement) return true;
@@ -19,21 +14,7 @@ export function isTextField(element: Element | null): boolean {
 }
 
 export function useKeyboardInset(): number {
-  const simulated = useFixtureParams().kb === true;
-
-  return useSyncExternalStore(
-    subscribe,
-    () => (simulated ? fixtureKeyboardInset(window.innerHeight) : liveInset()),
-    () => 0,
-  );
-}
-
-export function useFixtureFieldFocus() {
-  const simulated = useFixtureParams().kb === true;
-
-  useEffect(() => {
-    if (simulated) return focusWhenShown();
-  }, [simulated]);
+  return useSyncExternalStore(subscribe, liveInset, () => 0);
 }
 
 function subscribe(listener: () => void) {
@@ -56,37 +37,4 @@ function liveInset(): number {
   if (!viewport) return 0;
 
   return keyboardInset(window.innerHeight, viewport.height, viewport.offsetTop);
-}
-
-function focusFirstField() {
-  const field = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(FIELDS);
-
-  if (!field) return;
-
-  const end = field.value.length;
-
-  field.focus({ preventScroll: true });
-  field.setSelectionRange(end, end);
-  field.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
-}
-
-function focusWhenShown(): () => void {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
-  const observer = new MutationObserver(() => check());
-
-  const check = () => {
-    if (timer !== undefined || !document.querySelector(FIELDS)) return;
-
-    observer.disconnect();
-    timer = setTimeout(focusFirstField, SETTLE_MS);
-  };
-
-  observer.observe(document.body, { childList: true, subtree: true });
-  check();
-
-  return () => {
-    observer.disconnect();
-    clearTimeout(timer);
-  };
 }

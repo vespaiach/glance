@@ -235,7 +235,7 @@ test("SIGNIN-15 Sign in another device shows a code for this account, and Done v
 
   await userEvent.click(await screen.findByRole("button", { name: "Sign in another device" }));
 
-  expect(await screen.findByText("Code expires in 5:00")).toBeInTheDocument();
+  expect(await screen.findByText("Code expires in 3:00")).toBeInTheDocument();
   expect(screen.getByText(/It signs in with maria@example.com\.$/)).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "Done" }));

@@ -2,7 +2,6 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { type Harness, openHarness } from "@/data/repos/testHarness";
 import { ok } from "@/domain/result";
 import { shellWrapper } from "@/shell/providers/testShell";
-import type { QrFixture } from "./qrTile";
 import { useQrTile } from "./useQrTile";
 
 const START = new Date("2026-10-09T17:41:00.000Z");
@@ -27,8 +26,8 @@ afterEach(async () => {
   await store.close();
 });
 
-async function renderTile(fixture?: QrFixture) {
-  const rendered = renderHook(() => useQrTile(fixture), { wrapper: shellWrapper(store) });
+async function renderTile() {
+  const rendered = renderHook(() => useQrTile(), { wrapper: shellWrapper(store) });
 
   await waitFor(() => expect(rendered.result.current).not.toBeNull());
 
@@ -48,13 +47,13 @@ async function advance(ms: number) {
 }
 
 describe("useQrTile", () => {
-  it("SIGNIN-15 Sign in another device issues a code and starts at 5:00", async () => {
+  it("SIGNIN-15 Sign in another device issues a code and starts at 3:00", async () => {
     const { result } = await renderTile();
 
     await shown(result);
 
     expect(result.current.tile).toMatchObject({ kind: "open", url: LINKS[0] });
-    expect(result.current.secondsLeft).toBe(300);
+    expect(result.current.secondsLeft).toBe(180);
     expect(store.issueQr).toHaveBeenCalledTimes(1);
   });
 
@@ -64,17 +63,17 @@ describe("useQrTile", () => {
 
     await advance(65_000);
 
-    expect(result.current.secondsLeft).toBe(235);
+    expect(result.current.secondsLeft).toBe(115);
   });
 
-  it("SIGNIN-15 at 0:00 a new code replaces it and the countdown restarts at 5:00", async () => {
+  it("SIGNIN-15 at 0:00 a new code replaces it and the countdown restarts at 3:00", async () => {
     const { result } = await renderTile();
     await shown(result);
 
-    await advance(300_000);
+    await advance(180_000);
 
     await waitFor(() => expect(result.current.tile).toMatchObject({ url: LINKS[1] }));
-    expect(result.current.secondsLeft).toBe(300);
+    expect(result.current.secondsLeft).toBe(180);
     expect(store.issueQr).toHaveBeenCalledTimes(2);
   });
 
@@ -83,7 +82,7 @@ describe("useQrTile", () => {
     await shown(result);
 
     act(() => result.current.close());
-    await advance(300_000);
+    await advance(180_000);
 
     expect(result.current.tile).toEqual({ kind: "closed" });
     expect(store.voidQr).toHaveBeenCalledWith(LINKS[0]);
@@ -123,11 +122,5 @@ describe("useQrTile", () => {
     await shown(result);
 
     expect(store.issueQr).toHaveBeenCalledTimes(2);
-  });
-
-  it("SIGNIN-15 qr=open issues a code as the tile opens", async () => {
-    const { result } = await renderTile("open");
-
-    await waitFor(() => expect(result.current.tile).toMatchObject({ kind: "open" }));
   });
 });

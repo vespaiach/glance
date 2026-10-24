@@ -28,19 +28,17 @@ export async function verifyQrLink(
   { db, now }: Clocked,
   { token, userAgent }: QrVerifyInput,
 ): Promise<Result<{ sessionToken: string }, "stale">> {
-  const link = await db.magicLinks.get(hashToken(token));
-
   const at = now().toISOString();
 
-  if (link === undefined || link.usedAt !== null || link.expiresAt <= at) return err("stale");
+  return db.tx(async (tx): Promise<Result<{ sessionToken: string }, "stale">> => {
+    const link = await tx.magicLinks.get(hashToken(token));
 
-  const sessionToken = await db.tx(async (tx) => {
+    if (link === undefined || link.usedAt !== null || link.expiresAt <= at) return err("stale");
+
     await tx.magicLinks.markUsed(link.tokenHash, at);
 
-    return openDisplay(tx, link.accountId, { at, userAgent });
+    return ok({ sessionToken: await openDisplay(tx, link.accountId, { at, userAgent }) });
   });
-
-  return ok({ sessionToken });
 }
 
 export async function voidQrLink(

@@ -236,6 +236,37 @@ describe("push", () => {
     expect(await db.events.get(EVENT.id)).toEqual(tombstone);
   });
 
+  it("D24 a tag answered under another id moves this screen's events and their pushes to it", async () => {
+    const local: StoredTag = { ...MEMBER, id: "0195f0a0-0000-7000-8000-000000000399", version: 0 };
+    const event = { ...EVENT, everyone: false, tagIds: [local.id] };
+    const pushed: OutboxEntry[] = [];
+    const transport = fakeTransport({
+      push: vi.fn(async (entry: OutboxEntry) => {
+        pushed.push(entry);
+
+        return entry.entity === "tags"
+          ? ok({ entity: "tags", row: MEMBER } as Change)
+          : answerPut(entry);
+      }),
+    });
+    await db.tags.put(local);
+    await db.outbox.add({
+      entity: "tags",
+      entityId: local.id,
+      op: "put",
+      payload: local,
+      attempts: 0,
+    } as OutboxEntry);
+    await queuePut(event);
+
+    await engine(transport).nudge();
+
+    expect(await db.tags.get(local.id)).toBeUndefined();
+    expect(await db.tags.get(MEMBER.id)).toEqual(MEMBER);
+    expect(pushed[1]?.payload).toMatchObject({ tagIds: [MEMBER.id] });
+    expect((await db.events.get(EVENT.id))?.tagIds).toEqual([MEMBER.id]);
+  });
+
   it("tech§4.6 overlapping nudges never push an entry twice", async () => {
     const transport = fakeTransport();
 

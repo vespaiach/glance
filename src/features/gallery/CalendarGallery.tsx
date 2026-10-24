@@ -146,7 +146,6 @@ const EVERY_TAG = new Set(TIMELINE_FAMILY.map((one) => one.id));
 const toolbar = {
   tags: TIMELINE_FAMILY,
   small: false,
-  whoSheet: false,
   onFilter: ignore,
 } as const;
 

@@ -2,13 +2,7 @@ import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import Dexie from "dexie";
 import { vi } from "vitest";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import {
-  FIXTURE_ACCOUNT,
-  FIXTURE_NOW,
-  FIXTURE_PHOTOS,
-  FIXTURE_SEEDED_EVENTS,
-} from "@/fixtures/data";
-import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "../db";
+import { accountDbName, deleteGlanceDb, openGlanceDb } from "../db";
 import {
   deleteMetaDb,
   markSignedOut,
@@ -17,13 +11,7 @@ import {
   saveSignedInAccount,
 } from "../meta";
 import { INITIAL_STATUS, STATUS_KEY, type SyncStatus } from "../sync/status";
-import {
-  type DisplayBoot,
-  fixtureParamsFor,
-  signedOutAccountFor,
-  signInAuthFor,
-  useDisplayBoot,
-} from "./session";
+import { type DisplayBoot, signedOutAccount, signInAuth, useDisplayBoot } from "./session";
 
 const ACCOUNT = {
   accountId: "0195f0a0-0000-7000-8000-00000000000a",
@@ -31,9 +19,7 @@ const ACCOUNT = {
   email: "maria@example.com",
 };
 
-const now = () => FIXTURE_NOW;
-
-const params = {};
+const now = () => new Date("2026-10-09T17:41:00.000Z");
 
 const OTHER = { id: "0195f0a0-0000-7000-8000-00000000000b", name: "Ana", email: "ana@example.com" };
 
@@ -45,7 +31,6 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 
   await deleteMetaDb();
-  await deleteGlanceDb(FIXTURE_DB_NAME);
   await deleteGlanceDb(accountDbName(ACCOUNT.accountId));
   await deleteGlanceDb(accountDbName(OTHER.id));
 });
@@ -79,7 +64,7 @@ async function queueChange(accountId: string) {
 }
 
 async function bootSignedIn() {
-  const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+  const { result } = renderHook(() => useDisplayBoot(now));
 
   await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -93,22 +78,8 @@ function readyStore(boot: DisplayBoot) {
 }
 
 describe("useDisplayBoot", () => {
-  it("tech§6.5 a demo build opens the seeded fixture DB without reading glance-meta", async () => {
-    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
-
-    expect(result.current.kind).toBe("booting");
-
-    await waitFor(() => expect(result.current.kind).toBe("ready"));
-
-    const store = readyStore(result.current);
-
-    expect(store.accountId).toBe(FIXTURE_ACCOUNT.id);
-    expect(store.db.name).toBe(FIXTURE_DB_NAME);
-    expect(await store.db.events.count()).toBe(FIXTURE_SEEDED_EVENTS.length);
-  });
-
   it("tech§4.5 a screen with no glance-meta entry is signed out", async () => {
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("signed-out"));
   });
@@ -120,7 +91,7 @@ describe("useDisplayBoot", () => {
 
     meta.close();
 
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -137,7 +108,7 @@ describe("useDisplayBoot", () => {
 
     await signOutByServer();
 
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("signed-out"));
 
@@ -152,18 +123,6 @@ describe("useDisplayBoot", () => {
     expect(await storedAccount()).toEqual({ ...ACCOUNT, signedOut: true });
   });
 
-  it("SIGNIN-13 the fixture display leaves glance-meta alone when signed out", async () => {
-    await signIn();
-
-    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
-
-    await waitFor(() => expect(result.current.kind).toBe("ready"));
-
-    await readyStore(result.current).markSignedOut();
-
-    expect(await storedAccount()).toEqual(ACCOUNT);
-  });
-
   it("SIGNIN-13 opening a signed-in display clears the halt the last session left", async () => {
     await signIn();
 
@@ -173,7 +132,7 @@ describe("useDisplayBoot", () => {
 
     db.close();
 
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -185,7 +144,7 @@ describe("useDisplayBoot", () => {
   it("D19 a signed-in display starts syncing through the sync host", async () => {
     await signIn();
 
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -198,18 +157,6 @@ describe("useDisplayBoot", () => {
     });
   });
 
-  it("TODAY-07 the fixture display shows photos from the bundled images", async () => {
-    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
-
-    await waitFor(() => expect(result.current.kind).toBe("ready"));
-
-    const coast = FIXTURE_PHOTOS.find((photo) => photo.title === "Cannon Beach");
-
-    expect(readyStore(result.current).photoSrc(coast?.id ?? "", "display")).toBe(
-      "/fixtures/photos/coast.svg",
-    );
-  });
-
   it("tech§3 a signed-in display shows photos from the authenticated file route", async () => {
     const meta = openMetaDb();
 
@@ -217,7 +164,7 @@ describe("useDisplayBoot", () => {
 
     meta.close();
 
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -225,7 +172,9 @@ describe("useDisplayBoot", () => {
   });
 
   it("tech§4.5 unmounting closes the DB it opened", async () => {
-    const { result, unmount } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
+    await signIn();
+
+    const { result, unmount } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -264,22 +213,10 @@ async function signIn() {
 }
 
 describe("sign out", () => {
-  it("SIGNIN-11 signing out the fixture display forgets the signed-in account", async () => {
-    await signIn();
-
-    const { result } = renderHook(() => useDisplayBoot({ demo: true, params, now }));
-
-    await waitFor(() => expect(result.current.kind).toBe("ready"));
-
-    await readyStore(result.current).signOut();
-
-    expect(await storedAccount()).toBeUndefined();
-  });
-
   it("SIGNIN-11 a signed-in display signs out even when the server can't be reached", async () => {
     await signIn();
 
-    const { result } = renderHook(() => useDisplayBoot({ demo: false, params, now }));
+    const { result } = renderHook(() => useDisplayBoot(now));
 
     await waitFor(() => expect(result.current.kind).toBe("ready"));
 
@@ -325,9 +262,9 @@ describe("sign out", () => {
   });
 });
 
-describe("signInAuthFor", () => {
+describe("signInAuth", () => {
   it("tech§4.5 remembering a signed-in account writes glance-meta", async () => {
-    await signInAuthFor(false, params).remember({
+    await signInAuth().remember({
       id: ACCOUNT.accountId,
       name: "Maria",
       email: "maria@example.com",
@@ -341,7 +278,7 @@ describe("signInAuthFor", () => {
 
     await signOutByServer();
 
-    await signInAuthFor(false, params).remember({
+    await signInAuth().remember({
       id: ACCOUNT.accountId,
       name: "Maria",
       email: ACCOUNT.email,
@@ -350,19 +287,12 @@ describe("signInAuthFor", () => {
     expect(await storedAccount()).toEqual(ACCOUNT);
   });
 
-  it("tech§6.5 a demo build signs in through the fixture transport", async () => {
-    expect(await signInAuthFor(true, { signin: "done" }).status()).toEqual({
-      ok: true,
-      value: { state: "signed-in", account: FIXTURE_ACCOUNT, returning: false, setupDone: true },
-    });
-  });
-
-  it("tech§4.2 outside demo builds sign-in goes to the server", async () => {
+  it("tech§4.2 sign-in goes to the server", async () => {
     const fetch = stubServer();
 
     const request = { email: "maria@example.com", timeZone: "UTC" };
 
-    expect(await signInAuthFor(false, params).sendCode(request)).toEqual({
+    expect(await signInAuth().sendCode(request)).toEqual({
       ok: true,
       value: undefined,
     });
@@ -379,7 +309,7 @@ describe("signInAuthFor", () => {
 
     await queueChange(ACCOUNT.accountId);
 
-    await signInAuthFor(false, params).remember(OTHER);
+    await signInAuth().remember(OTHER);
 
     expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
     expect(remove).toHaveBeenCalledExactlyOnceWith("photos");
@@ -393,7 +323,7 @@ describe("signInAuthFor", () => {
 
     await queueChange(ACCOUNT.accountId);
 
-    await signInAuthFor(false, params).remember({
+    await signInAuth().remember({
       id: ACCOUNT.accountId,
       name: "Maria",
       email: ACCOUNT.email,
@@ -412,7 +342,7 @@ describe("signInAuthFor", () => {
 
     Object.defineProperty(navigator, "storage", { value: { persist }, configurable: true });
 
-    await signInAuthFor(false, params)
+    await signInAuth()
       .remember(OTHER)
       .finally(() => {
         Reflect.deleteProperty(navigator, "storage");
@@ -422,7 +352,7 @@ describe("signInAuthFor", () => {
   });
 });
 
-describe("signedOutAccountFor", () => {
+describe("signedOutAccount", () => {
   it("SIGNIN-13 reads the email, the waiting count and the settings from the kept account DB", async () => {
     await signIn();
 
@@ -441,7 +371,7 @@ describe("signedOutAccountFor", () => {
 
     await signOutByServer();
 
-    expect(await signedOutAccountFor(false, params)).toEqual({
+    expect(await signedOutAccount()).toEqual({
       email: ACCOUNT.email,
       pending: 2,
       settings: { ...DEFAULT_SETTINGS, clock: "24h" },
@@ -451,11 +381,11 @@ describe("signedOutAccountFor", () => {
   it("SIGNIN-13 a signed-in screen has no signed-out account", async () => {
     await signIn();
 
-    expect(await signedOutAccountFor(false, params)).toBeUndefined();
+    expect(await signedOutAccount()).toBeUndefined();
   });
 
   it("SIGNIN-13 a screen with no glance-meta entry has no signed-out account", async () => {
-    expect(await signedOutAccountFor(false, params)).toBeUndefined();
+    expect(await signedOutAccount()).toBeUndefined();
   });
 
   it("SIGNIN-13 reading it leaves no account DB behind for a signed-out entry with none", async () => {
@@ -463,38 +393,11 @@ describe("signedOutAccountFor", () => {
 
     await signOutByServer();
 
-    expect(await signedOutAccountFor(false, params)).toEqual({
+    expect(await signedOutAccount()).toEqual({
       email: ACCOUNT.email,
       pending: 0,
       settings: DEFAULT_SETTINGS,
     });
     expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
-  });
-
-  it("SIGNIN-13 signin=ended&pending=3 gives the fixture account with 3 waiting", async () => {
-    expect(await signedOutAccountFor(true, { signin: "ended", pending: 3 })).toEqual({
-      email: FIXTURE_ACCOUNT.email,
-      pending: 3,
-    });
-  });
-
-  it("SIGNIN-13 signin=ended alone has nothing waiting", async () => {
-    expect(await signedOutAccountFor(true, { signin: "ended" })).toEqual({
-      email: FIXTURE_ACCOUNT.email,
-      pending: 0,
-    });
-  });
-
-  it("SIGNIN-13 other demo fixtures are not signed out", async () => {
-    expect(await signedOutAccountFor(true, { pending: 3 })).toBeUndefined();
-  });
-});
-
-describe("fixtureParamsFor", () => {
-  it("tech§6.5 reads fixture params in demo builds only", () => {
-    const search = "?season=winter&clock=24";
-
-    expect(fixtureParamsFor(true, search)).toEqual({ season: "winter", clock: "24h" });
-    expect(fixtureParamsFor(false, search)).toEqual({});
   });
 });

@@ -1,7 +1,6 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import type { FixtureParams } from "@/data/repos";
 import {
   type Harness,
   markSynced,
@@ -11,7 +10,6 @@ import {
 } from "@/data/repos/testHarness";
 import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { EventSheetScreen } from "@/features/events";
-import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
@@ -108,14 +106,12 @@ function OpenSheet() {
   return <output aria-label="Open sheet">{sheet ? JSON.stringify(sheet) : ""}</output>;
 }
 
-function renderCalendar(params: FixtureParams = {}) {
-  const Shell = shellWrapper(store, { frozenAt: NOW, who: params.who });
+function renderCalendar() {
+  const Shell = shellWrapper(store, { frozenAt: NOW });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <FixtureParamsProvider params={params}>
-        <SheetHost>{children}</SheetHost>
-      </FixtureParamsProvider>
+      <SheetHost>{children}</SheetHost>
     </Shell>
   );
 
@@ -392,20 +388,6 @@ test("FAM-05 a new tag stays off when some tags are off", async () => {
     "aria-checked",
     "false",
   );
-});
-
-test("CAL-05 who= starts the filter and whosheet=1 opens the list", async () => {
-  await seed(CALL, SOCCER);
-
-  renderCalendar({ who: [MOM.id], whosheet: true });
-
-  expect(await screen.findByRole("dialog", { name: "Show plans for" })).toBeInTheDocument();
-  expect(await screen.findByRole("checkbox", { name: "Mom" })).toHaveAttribute(
-    "aria-checked",
-    "true",
-  );
-  expect(whoRow("Minh-An")).toHaveAttribute("aria-checked", "false");
-  expect(plan("Soccer")).not.toBeInTheDocument();
 });
 
 test("CAL-06 the 24 hours link counts the plans outside 5 AM to 9 PM and shows them when on", async () => {

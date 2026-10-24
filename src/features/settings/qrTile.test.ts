@@ -1,4 +1,4 @@
-import { initialQrTile, type QrTile, qrTile } from "./qrTile";
+import { type QrTile, qrTile } from "./qrTile";
 
 const OPEN: QrTile = { kind: "open", url: "https://glance.example.com/v?t=a", issuedAt: "T0" };
 
@@ -37,11 +37,5 @@ describe("qrTile", () => {
     for (const tile of [OPEN, { kind: "issuing" }, { kind: "failed" }] as const) {
       expect(qrTile(tile, { type: "close" })).toEqual({ kind: "closed" });
     }
-  });
-
-  it("SIGNIN-15 the tile starts closed, or as the qr fixture says", () => {
-    expect(initialQrTile(undefined)).toEqual({ kind: "closed" });
-    expect(initialQrTile("open")).toEqual({ kind: "issuing" });
-    expect(initialQrTile("failed")).toEqual({ kind: "failed" });
   });
 });

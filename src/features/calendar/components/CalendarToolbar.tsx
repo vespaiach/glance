@@ -12,7 +12,6 @@ type CalendarToolbarProps = {
   tags: readonly Tag[];
   filter: ReadonlySet<string>;
   small: boolean;
-  whoSheet: boolean;
   onFilter: (filter: TagFilter) => void;
   onToday?: () => void;
 };
@@ -69,14 +68,7 @@ const STACK_MAX = { small: 4, large: 8 } as const;
 
 const SMALL_STACK_BESIDE_TODAY = 3;
 
-export function CalendarToolbar({
-  tags,
-  filter,
-  small,
-  whoSheet,
-  onFilter,
-  onToday,
-}: CalendarToolbarProps) {
+export function CalendarToolbar({ tags, filter, small, onFilter, onToday }: CalendarToolbarProps) {
   const size = small ? "small" : "large";
 
   const max = small && onToday ? SMALL_STACK_BESIDE_TODAY : STACK_MAX[size];
@@ -90,7 +82,6 @@ export function CalendarToolbar({
           size={size}
           max={max}
           labels={copy.personFilter}
-          defaultOpen={whoSheet}
           onChange={onFilter}
         />
       </div>

@@ -1,17 +1,13 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
-  type FixtureParams,
-  fixtureTimeZone,
   type SignedOutAccount,
   SignedOutAccountProvider,
   SignInAuthProvider,
-  signedOutAccountFor,
-  signInAuthFor,
+  signedOutAccount,
+  signInAuth,
 } from "@/data/repos";
-import { DEMO_BUILD } from "./demo";
-import { FixtureParamsProvider, useShellSetup } from "./fixtureOptions";
 import { NowProvider } from "./providers/now";
 import { SeasonProvider } from "./providers/season";
 import { DefaultSettingsProvider } from "./providers/settings";
@@ -19,38 +15,23 @@ import { TimeZoneProvider } from "./providers/timeZone";
 
 type Loaded = { account: SignedOutAccount | undefined };
 
-export function SignedOutProviders({
-  demo = DEMO_BUILD,
-  children,
-}: {
-  demo?: boolean;
-  children: ReactNode;
-}) {
-  const setup = useShellSetup(demo);
+export function SignedOutProviders({ children }: { children: ReactNode }) {
+  const [auth] = useState(signInAuth);
 
-  const auth = useMemo(() => setup && signInAuthFor(demo, setup.params), [demo, setup]);
+  const loaded = useSignedOutLoad();
 
-  const loaded = useSignedOutLoad(demo, setup?.params);
-
-  const overrides = useMemo(
-    () => ({ ...loaded?.account?.settings, ...setup?.options.overrides }),
-    [loaded, setup],
-  );
-
-  if (setup === undefined || auth === undefined || loaded === undefined) return null;
+  if (loaded === undefined) return null;
 
   return (
-    <NowProvider frozenAt={setup.options.frozenAt}>
-      <DefaultSettingsProvider overrides={overrides}>
-        <TimeZoneProvider timeZone={demo ? fixtureTimeZone : undefined}>
+    <NowProvider>
+      <DefaultSettingsProvider overrides={loaded.account?.settings}>
+        <TimeZoneProvider>
           <SeasonProvider>
-            <FixtureParamsProvider params={setup.params}>
-              <SignInAuthProvider auth={auth}>
-                <SignedOutAccountProvider account={loaded.account}>
-                  {children}
-                </SignedOutAccountProvider>
-              </SignInAuthProvider>
-            </FixtureParamsProvider>
+            <SignInAuthProvider auth={auth}>
+              <SignedOutAccountProvider account={loaded.account}>
+                {children}
+              </SignedOutAccountProvider>
+            </SignInAuthProvider>
           </SeasonProvider>
         </TimeZoneProvider>
       </DefaultSettingsProvider>
@@ -58,22 +39,20 @@ export function SignedOutProviders({
   );
 }
 
-function useSignedOutLoad(demo: boolean, params: FixtureParams | undefined): Loaded | undefined {
+function useSignedOutLoad(): Loaded | undefined {
   const [loaded, setLoaded] = useState<Loaded>();
 
   useEffect(() => {
-    if (params === undefined) return;
-
     let live = true;
 
-    void signedOutAccountFor(demo, params).then((account) => {
+    void signedOutAccount().then((account) => {
       if (live) setLoaded({ account });
     });
 
     return () => {
       live = false;
     };
-  }, [demo, params]);
+  }, []);
 
   return loaded;
 }

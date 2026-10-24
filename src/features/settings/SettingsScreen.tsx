@@ -10,7 +10,6 @@ import {
 } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -52,7 +51,7 @@ export function SettingsScreen() {
 
   const { online } = useNetwork();
 
-  const qr = useQrTile(useFixtureParams().qr);
+  const qr = useQrTile();
 
   return (
     <SettingsView

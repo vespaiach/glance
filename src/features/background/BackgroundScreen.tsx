@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { fixtureUploads, usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
+import { usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
 import { changeBackground } from "@/domain/background";
 import type { AccountSettings, Photo } from "@/domain/schemas";
-import { initialUploads, newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
+import { newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -22,8 +21,6 @@ export function BackgroundScreen() {
   const breakpoint = useBreakpoint();
 
   const { online } = useNetwork();
-
-  const fixture = useFixtureParams();
 
   const photoSrc = usePhotoSrc();
 
@@ -41,7 +38,7 @@ export function BackgroundScreen() {
 
   const repo = useSettingsRepo();
 
-  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads), online);
+  const uploads = useUploads(online);
 
   const picker = usePhotoPicker(uploads.choose);
 

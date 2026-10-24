@@ -42,51 +42,17 @@ const locating: SignInState = { step: "location", account: ACCOUNT, returning: f
 
 describe("sign-in reducer", () => {
   it("SIGNIN-01 starts on the empty email form", () => {
-    expect(initialSignIn({}, ACCOUNT, NOW)).toEqual(form(""));
-    expect(initialSignIn({ signin: "form" }, ACCOUNT, NOW)).toEqual(form(""));
-  });
-
-  it.each([
-    ["sending", { step: "sending", email: "maria@example.com" }],
-    ["offline", { step: "form", email: "maria@example.com" }],
-    ["sent", { step: "sent", email: "maria@example.com", sentAt: NOW, code: "" }],
-    ["checking", { step: "checking", email: "maria@example.com", sentAt: NOW, code: "482913" }],
-    ["wrong", { step: "sent", email: "maria@example.com", sentAt: NOW, code: "", wrong: true }],
-    ["locked", { step: "locked", email: "maria@example.com", sentAt: NOW }],
-    ["name", { step: "name", email: "maria@example.com", draft: "" }],
-    ["expired", { step: "expired", email: "maria@example.com" }],
-    ["location", { step: "location", account: ACCOUNT, returning: false }],
-    ["done", { step: "done", name: "Maria", returning: false }],
-  ] as const)("tech§4.2 signin=%s opens its state with the fixture account", (signin, state) => {
-    expect(initialSignIn({ signin }, ACCOUNT, NOW)).toEqual(state);
-  });
-
-  it("SIGNIN-04 signin=sent&code=482 opens Enter the code with 3 digits typed", () => {
-    expect(initialSignIn({ signin: "sent", code: "482" }, ACCOUNT, NOW)).toEqual(typed("482"));
-  });
-
-  it("SIGNIN-09 signin=done&acct=returning opens Welcome back", () => {
-    expect(initialSignIn({ signin: "done", acct: "returning" }, ACCOUNT, NOW)).toMatchObject({
-      returning: true,
-    });
+    expect(initialSignIn()).toEqual(form(""));
   });
 
   it("SIGNIN-13 a screen signed out by the server opens the form with its last email", () => {
-    expect(initialSignIn({}, ACCOUNT, NOW, undefined, { email: "maria@example.com" })).toEqual(
+    expect(initialSignIn(undefined, { email: "maria@example.com" })).toEqual(
       form("maria@example.com"),
     );
   });
 
-  it("SIGNIN-13 switch=1 opens the signed-out form with another email entered", () => {
-    expect(
-      initialSignIn({ signin: "ended", switch: true }, ACCOUNT, NOW, undefined, {
-        email: "maria@example.com",
-      }),
-    ).toEqual(form("sam.lee@example.com"));
-  });
-
   it("SIGNIN-13 an opened link still checks the link on a signed-out screen", () => {
-    expect(initialSignIn({}, ACCOUNT, NOW, "opened", { email: "maria@example.com" })).toEqual({
+    expect(initialSignIn("opened", { email: "maria@example.com" })).toEqual({
       step: "opening",
     });
   });
@@ -281,26 +247,8 @@ describe("sign-in reducer", () => {
     expect(resent.reduce(signInReducer, expired)).toEqual({ ...sent, sentAt: LATER });
   });
 
-  it.each([
-    [8, new Date("2026-10-09T17:40:58Z")],
-    [0, new Date("2026-10-09T17:40:50Z")],
-  ])(
-    "SIGNIN-04 signin=sent&backin=%i starts the countdown with that many seconds left",
-    (backin, sentAt) => {
-      expect(initialSignIn({ signin: "sent", backin }, ACCOUNT, NOW)).toEqual({ ...sent, sentAt });
-    },
-  );
-
   it("SIGNIN-03 a failed send returns to the form with the email kept", () => {
     expect(signInReducer(sending, { type: "send-failed" })).toEqual({
-      step: "form",
-      email: "maria@example.com",
-      error: "failed",
-    });
-  });
-
-  it("SIGNIN-03 signin=sendfail opens the form with the fixture email and Couldn’t send", () => {
-    expect(initialSignIn({ signin: "sendfail" }, ACCOUNT, NOW)).toEqual({
       step: "form",
       email: "maria@example.com",
       error: "failed",
@@ -326,54 +274,6 @@ describe("sign-in reducer", () => {
 
     expect(signInReducer(typing, { type: "code-sent", at: NOW })).toBe(typing);
     expect(signInReducer(typing, { type: "send-failed" })).toBe(typing);
-  });
-
-  it("SIGNIN-16 Sign-in as guests starts signing in with the typed email kept", () => {
-    expect(signInReducer(form("ana@"), { type: "guest" })).toEqual({
-      step: "guest",
-      email: "ana@",
-    });
-  });
-
-  it("SIGNIN-16 Sign-in as guests does nothing while a code is sending", () => {
-    expect(signInReducer(sending, { type: "guest" })).toBe(sending);
-  });
-
-  it("SIGNIN-16 the email and Send are held while guest sign-in is on its way", () => {
-    const guest: SignInState = { step: "guest", email: "ana@" };
-
-    expect(signInReducer(guest, { type: "email", email: "ana@x" })).toBe(guest);
-    expect(signInReducer(guest, { type: "send" })).toBe(guest);
-    expect(signInReducer(guest, { type: "guest" })).toBe(guest);
-  });
-
-  it("SIGNIN-16 a guest sign-in welcomes the guest account back", () => {
-    const status = {
-      state: "signed-in",
-      account: { ...ACCOUNT, name: "Trinh" },
-      returning: true,
-      setupDone: true,
-    } as const;
-
-    expect(signInReducer({ step: "guest", email: "" }, { type: "status", status })).toEqual({
-      step: "done",
-      name: "Trinh",
-      returning: true,
-    });
-  });
-
-  it("SIGNIN-16 a failed guest sign-in returns to the form with Couldn’t sign in", () => {
-    expect(signInReducer({ step: "guest", email: "ana@" }, { type: "guest-failed" })).toEqual({
-      step: "form",
-      email: "ana@",
-      error: "guest",
-    });
-  });
-
-  it("SIGNIN-16 guest answers are ignored outside a guest sign-in", () => {
-    const typing = form("ana@example.com");
-
-    expect(signInReducer(typing, { type: "guest-failed" })).toBe(typing);
   });
 
   it("SIGNIN-09 the right code welcomes the account", () => {
@@ -508,8 +408,8 @@ describe("sign-in reducer", () => {
   });
 
   it("SIGNIN-15 the device that opened a QR link starts by checking it", () => {
-    expect(initialSignIn({ signin: "sent" }, ACCOUNT, NOW, "opened")).toEqual({ step: "opening" });
-    expect(initialSignIn({}, ACCOUNT, NOW, "stale")).toEqual({ step: "opening" });
+    expect(initialSignIn("opened")).toEqual({ step: "opening" });
+    expect(initialSignIn("stale")).toEqual({ step: "opening" });
   });
 
   it("SIGNIN-09 a link opened for a named account welcomes it", () => {

@@ -1,8 +1,7 @@
 import "server-only";
 import { env } from "../env";
 import type { Database, DatabaseConfig, OpenedDatabase } from "./database";
-import { openMemoryDatabase } from "./memory";
-import { openPostgresDatabase } from "./postgres";
+import { openPgliteDatabase, openPostgresDatabase } from "./postgres";
 
 export type * from "./database";
 
@@ -13,7 +12,7 @@ export function createDatabase(config: DatabaseConfig): OpenedDatabase {
     case "postgres":
       return openPostgresDatabase(config.url);
     case "memory":
-      return { db: openMemoryDatabase(), prepare: async () => {} };
+      return openPgliteDatabase();
   }
 }
 

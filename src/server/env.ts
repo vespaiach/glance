@@ -18,7 +18,6 @@ const BaseSchema = v.object({
     Filled,
     v.check((from) => parseAddress(from) !== undefined),
   ),
-  GUEST_EMAIL: v.optional(v.pipe(v.string(), v.trim(), v.toLowerCase(), v.email())),
 });
 
 const DatabaseSchema = v.variant("DB", [

@@ -1,6 +1,6 @@
 const EMAIL = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
-export const DIFFERENT_EMAIL_WAIT_S = 10;
+const DIFFERENT_EMAIL_WAIT_S = 10;
 
 export const CODE_LENGTH = 6;
 

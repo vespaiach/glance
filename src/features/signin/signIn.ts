@@ -1,25 +1,12 @@
-import {
-  type AuthStatus,
-  type CodeError,
-  type FixtureParams,
-  fixtureOtherEmail,
-  type TransportError,
-} from "@/data/repos";
+import type { AuthStatus, CodeError, TransportError } from "@/data/repos";
 import { QR_OPENS, type QrOpens } from "@/domain/qrSignIn";
 import type { Account } from "@/domain/schemas";
-import {
-  CODE_LENGTH,
-  codeDigits,
-  codeExpired,
-  DIFFERENT_EMAIL_WAIT_S,
-  isValidEmail,
-} from "@/domain/signIn";
+import { CODE_LENGTH, codeDigits, codeExpired, isValidEmail } from "@/domain/signIn";
 
 export type SignInState =
   | { step: "opening" }
-  | { step: "form"; email: string; error?: "invalid" | "failed" | "guest" }
+  | { step: "form"; email: string; error?: "invalid" | "failed" }
   | { step: "sending"; email: string }
-  | { step: "guest"; email: string }
   | { step: "sent"; email: string; sentAt: Date; code: string; wrong?: true }
   | { step: "checking"; email: string; sentAt: Date; code: string }
   | { step: "locked"; email: string; sentAt: Date }
@@ -31,8 +18,6 @@ export type SignInState =
 export type SignInAction =
   | { type: "email"; email: string }
   | { type: "send" }
-  | { type: "guest" }
-  | { type: "guest-failed" }
   | { type: "back" }
   | { type: "name"; draft: string }
   | { type: "submit-name" }
@@ -52,15 +37,9 @@ export type SignInAction =
 
 type CodeStepState = Extract<SignInState, { step: "sent" | "checking" | "locked" | "expired" }>;
 
-export type SignInFixture = Pick<FixtureParams, "signin" | "code" | "acct" | "switch" | "backin">;
-
-export type FixtureAccount = Account & { name: string };
-
 export type OpenedLink = "opened" | "stale";
 
 const EMPTY_FORM: SignInState = { step: "form", email: "" };
-
-const FIXTURE_CODE = "482913";
 
 const CODE_STEPS: readonly SignInState["step"][] = ["sent", "checking", "locked", "expired"];
 
@@ -70,10 +49,6 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
       return state.step === "form" ? { step: "form", email: action.email } : state;
     case "send":
       return send(state);
-    case "guest":
-      return state.step === "form" ? { step: "guest", email: state.email } : state;
-    case "guest-failed":
-      return state.step === "guest" ? { step: "form", email: state.email, error: "guest" } : state;
     case "back":
       return back(state);
     case "name":
@@ -123,48 +98,10 @@ export function openedViewFrom(search: string): "today" | QrOpens {
   return (opened && QR_OPENS.find((view) => view === query.get("to"))) || "today";
 }
 
-export function initialSignIn(
-  fixture: SignInFixture,
-  account: FixtureAccount,
-  now: Date,
-  link?: OpenedLink,
-  signedOut?: { email: string },
-): SignInState {
-  const { email, name } = account;
-
+export function initialSignIn(link?: OpenedLink, signedOut?: { email: string }): SignInState {
   if (link) return { step: "opening" };
 
-  if (signedOut)
-    return { step: "form", email: fixture.switch ? fixtureOtherEmail : signedOut.email };
-
-  const sentAt = fixtureSentAt(now, fixture.backin);
-
-  switch (fixture.signin) {
-    case "sending":
-      return { step: "sending", email };
-    case "sent":
-      return { step: "sent", email, sentAt, code: fixture.code ?? "" };
-    case "checking":
-      return { step: "checking", email, sentAt, code: FIXTURE_CODE };
-    case "wrong":
-      return { step: "sent", email, sentAt, code: "", wrong: true };
-    case "locked":
-      return { step: "locked", email, sentAt };
-    case "offline":
-      return { step: "form", email };
-    case "sendfail":
-      return { step: "form", email, error: "failed" };
-    case "name":
-      return { step: "name", email, draft: "" };
-    case "location":
-      return { step: "location", account, returning: false };
-    case "expired":
-      return { step: "expired", email };
-    case "done":
-      return { step: "done", name, returning: fixture.acct === "returning" };
-    default:
-      return EMPTY_FORM;
-  }
+  return signedOut ? { step: "form", email: signedOut.email } : EMPTY_FORM;
 }
 
 function send(state: SignInState): SignInState {
@@ -246,10 +183,6 @@ function tick(state: SignInState, now: Date): SignInState {
   return { step: "expired", email: state.email };
 }
 
-function fixtureSentAt(now: Date, backin = DIFFERENT_EMAIL_WAIT_S): Date {
-  return new Date(now.getTime() - (DIFFERENT_EMAIL_WAIT_S - backin) * 1_000);
-}
-
 function signedIn(account: Account, returning: boolean, setupDone: boolean): SignInState {
   if (account.name === null) return { step: "name", email: account.email, draft: "" };
 
@@ -264,16 +197,8 @@ function linkChecked(status: AuthStatus): SignInState {
   return signedIn(status.account, status.returning, status.setupDone);
 }
 
-function guestChecked(email: string, status: AuthStatus): SignInState {
-  if (status.state !== "signed-in") return { step: "form", email, error: "guest" };
-
-  return signedIn(status.account, status.returning, status.setupDone);
-}
-
 function statusAnswered(state: SignInState, status: AuthStatus): SignInState {
   if (state.step === "opening") return linkChecked(status);
-
-  if (state.step === "guest") return guestChecked(state.email, status);
 
   if (state.step !== "checking") return state;
 

@@ -1,13 +1,5 @@
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
-import {
-  chosenTile,
-  type FixtureUploads,
-  initialUploads,
-  type UploadTile,
-  uploadFailure,
-  uploadSummary,
-  uploads,
-} from "./uploads";
+import { chosenTile, type UploadTile, uploadFailure, uploadSummary, uploads } from "./uploads";
 
 const uploading = (title: string, percent: number): UploadTile => ({
   id: title,
@@ -29,18 +21,6 @@ const paused = (title: string): UploadTile => ({
   state: "paused",
   percent: 40,
 });
-
-const FIXTURES: FixtureUploads = {
-  one: [{ title: "IMG_2041", status: "uploading", progress: 64, preview: "/a.svg" }],
-  progress: [],
-  error: [
-    { title: "IMG_3307", status: "failed", progress: 0, error: "tooLarge" },
-    { title: "Recipe card", status: "failed", progress: 0, error: "notPhoto" },
-    { title: "Halloween costumes", status: "failed", progress: 0, error: "network" },
-  ],
-  offline: [{ title: "IMG_2041", status: "paused", progress: 40 }],
-  done: [],
-};
 
 describe("uploadSummary", () => {
   it("PHOTO-06 with nothing uploading there is no row", () => {
@@ -102,34 +82,6 @@ describe("uploadSummary", () => {
 
   it("PHOTO-09 offline with nothing paused still shows the offline row", () => {
     expect(uploadSummary([], false)).toEqual({ kind: "offline", paused: 0 });
-  });
-});
-
-describe("initialUploads", () => {
-  it("PHOTO-06 starts with no uploads without a fixture", () => {
-    expect(initialUploads(undefined, FIXTURES)).toEqual([]);
-  });
-
-  it("PHOTO-06 upload=one starts with one running upload", () => {
-    expect(initialUploads("one", FIXTURES)).toEqual([
-      { id: "upload-0", title: "IMG_2041", preview: "/a.svg", state: "uploading", percent: 64 },
-    ]);
-  });
-
-  it("PHOTO-08 upload=error starts with one tile per failure reason", () => {
-    expect(
-      initialUploads("error", FIXTURES).map((tile) => tile.state === "failed" && tile.reason),
-    ).toEqual(["too-large", "not-a-photo", "network"]);
-  });
-
-  it("PHOTO-03 upload=done starts with no uploads, since they finished", () => {
-    expect(initialUploads("done", FIXTURES)).toEqual([]);
-  });
-
-  it("PHOTO-09 upload=offline starts with a paused upload", () => {
-    expect(initialUploads("offline", FIXTURES)).toEqual([
-      { id: "upload-0", title: "IMG_2041", state: "paused", percent: 40 },
-    ]);
   });
 });
 

@@ -10,8 +10,12 @@ export async function removeDeletedPhotoFiles({ db, store }: PhotoJobDeps): Prom
 
   const failures: unknown[] = [];
 
-  for (const filePath of filePaths)
-    await store.remove(photoKeys(filePath)).catch((error) => failures.push(error));
+  for (const filePath of filePaths) {
+    await store
+      .remove(photoKeys(filePath))
+      .then(() => db.photos.filesRemoved(filePath))
+      .catch((error) => failures.push(error));
+  }
 
   if (failures.length > 0) throw failures[0];
 }

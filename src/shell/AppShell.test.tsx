@@ -1,10 +1,9 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { createSettingsRepo, type FixtureParams } from "@/data/repos";
+import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import { AppShell } from "./AppShell";
-import { FixtureParamsProvider } from "./fixtureOptions";
 import { IdleProvider } from "./providers/idle";
 import { NetworkProvider } from "./providers/network";
 import { shellWrapper } from "./providers/testShell";
@@ -46,22 +45,22 @@ afterEach(async () => {
   await store.close();
 });
 
+type Start = "default" | "rail" | "expanded";
+
 async function renderShell(
   children: ReactNode,
-  params: FixtureParams = {},
+  start: Start = "default",
   sheet: SheetRequest | null = null,
 ) {
   const Shell = shellWrapper(store);
 
   const wrapper = ({ children: shell }: { children: ReactNode }) => (
     <Shell>
-      <FixtureParamsProvider params={params}>
-        <SheetHost initial={sheet}>
-          <IdleProvider>
-            <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
-          </IdleProvider>
-        </SheetHost>
-      </FixtureParamsProvider>
+      <SheetHost initial={sheet}>
+        <IdleProvider>
+          <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
+        </IdleProvider>
+      </SheetHost>
     </Shell>
   );
 
@@ -69,7 +68,19 @@ async function renderShell(
 
   await screen.findByRole("main");
 
+  startSidebar(start);
+
   return view;
+}
+
+function startSidebar(start: Start) {
+  if (start === "default") return;
+
+  const small = screen.queryByRole("button", { name: "Open menu" });
+
+  act(() => (small ?? grip())?.click());
+
+  if (start === "expanded" && !small) act(() => expandMenu().click());
 }
 
 function trackScroll(element: HTMLElement) {
@@ -127,22 +138,10 @@ test("SHELL-08 starts Hidden: only the grip shows, the rail and the drawer are i
   expect(drawer()).toHaveAttribute("inert");
 });
 
-test("SHELL-08 rail=1 starts on Rail and rail=open starts Expanded", async () => {
-  const { unmount } = await renderShell("Today view", { rail: "1" });
-
-  expect(sidebarMode()).toBe("rail");
-
-  unmount();
-
-  await renderShell("Today view", { rail: "open" });
-
-  expect(sidebarMode()).toBe("expanded");
-});
-
 test("SHELL-02 the rail marks the route's view", async () => {
   navigation.pathname = "/settings/background";
 
-  await renderShell("Background view", { rail: "1" });
+  await renderShell("Background view", "rail");
 
   expect(within(rail()).getByRole("button", { name: "Settings" })).toHaveAttribute(
     "aria-current",
@@ -151,7 +150,7 @@ test("SHELL-02 the rail marks the route's view", async () => {
 });
 
 test("SHELL-01 tapping a view on the rail navigates to it", async () => {
-  await renderShell("Today view", { rail: "1" });
+  await renderShell("Today view", "rail");
 
   await userEvent.click(within(rail()).getByRole("button", { name: "Notes" }));
 
@@ -183,7 +182,7 @@ test("SHELL-08 the grip shows the rail, Expand menu expands it and Close hides i
 });
 
 test("SHELL-08 the rail's ✕ hides the sidebar", async () => {
-  await renderShell("Today view", { rail: "1" });
+  await renderShell("Today view", "rail");
 
   await userEvent.click(screen.getByRole("button", { name: "Hide sidebar" }));
 
@@ -212,7 +211,7 @@ test("SHELL-08 going to Today keeps a Hidden sidebar hidden", async () => {
 });
 
 test("SHELL-08 a view change from Expanded lands on Rail", async () => {
-  const { rerender } = await renderShell("Today view", { rail: "open" });
+  const { rerender } = await renderShell("Today view", "expanded");
 
   changeView(rerender, "/calendar");
 
@@ -220,7 +219,7 @@ test("SHELL-08 a view change from Expanded lands on Rail", async () => {
 });
 
 test("SHELL-08 picking a drawer row goes to that view and returns to Rail", async () => {
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.click(within(drawer()).getByRole("button", { name: "Weather" }));
 
@@ -231,7 +230,7 @@ test("SHELL-08 picking a drawer row goes to that view and returns to Rail", asyn
 test("SHELL-09 opening the drawer moves focus to the current view's row", async () => {
   navigation.pathname = "/photos";
 
-  await renderShell("Photos view", { rail: "1" });
+  await renderShell("Photos view", "rail");
 
   await userEvent.click(expandMenu());
 
@@ -239,7 +238,7 @@ test("SHELL-09 opening the drawer moves focus to the current view's row", async 
 });
 
 test("SHELL-09 Escape returns to Rail and focuses Expand menu", async () => {
-  await renderShell("Today view", { rail: "1" });
+  await renderShell("Today view", "rail");
 
   await userEvent.click(expandMenu());
 
@@ -250,7 +249,7 @@ test("SHELL-09 Escape returns to Rail and focuses Expand menu", async () => {
 });
 
 test("SHELL-09 picking a drawer row focuses Expand menu", async () => {
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.click(within(drawer()).getByRole("button", { name: "Notes" }));
 
@@ -258,7 +257,7 @@ test("SHELL-09 picking a drawer row focuses Expand menu", async () => {
 });
 
 test("SHELL-09 Escape does nothing on Rail", async () => {
-  await renderShell("Today view", { rail: "1" });
+  await renderShell("Today view", "rail");
 
   await userEvent.keyboard("{Escape}");
 
@@ -266,7 +265,7 @@ test("SHELL-09 Escape does nothing on Rail", async () => {
 });
 
 test("SHELL-09 Close moves focus to the grip", async () => {
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
 
@@ -274,7 +273,7 @@ test("SHELL-09 Close moves focus to the grip", async () => {
 });
 
 test("SHELL-09 the rail's ✕ moves focus to the grip", async () => {
-  await renderShell("Today view", { rail: "1" });
+  await renderShell("Today view", "rail");
 
   await userEvent.click(screen.getByRole("button", { name: "Hide sidebar" }));
 
@@ -320,7 +319,7 @@ test("SHELL-08 on small the grip opens the drawer directly and focuses the curre
 test("SHELL-08 on small Close returns to the grip and focuses it", async () => {
   onSmall();
 
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
 
@@ -331,7 +330,7 @@ test("SHELL-08 on small Close returns to the grip and focuses it", async () => {
 test("SHELL-08 on small a scrim tap returns to the grip and focuses it", async () => {
   onSmall();
 
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.click(drawer().previousElementSibling as HTMLElement);
 
@@ -342,7 +341,7 @@ test("SHELL-08 on small a scrim tap returns to the grip and focuses it", async (
 test("SHELL-08 on small picking a view returns to the grip", async () => {
   onSmall();
 
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.click(within(drawer()).getByRole("button", { name: "Calendar" }));
 
@@ -354,7 +353,7 @@ test("SHELL-08 on small picking a view returns to the grip", async () => {
 test("SHELL-08 on small a view change returns the drawer to the grip", async () => {
   onSmall();
 
-  const { rerender } = await renderShell("Today view", { rail: "open" });
+  const { rerender } = await renderShell("Today view", "expanded");
 
   changeView(rerender, "/calendar");
 
@@ -365,7 +364,7 @@ test("SHELL-08 on small a view change returns the drawer to the grip", async () 
 test("SHELL-09 on small Escape closes the drawer and focuses the grip", async () => {
   onSmall();
 
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view", "expanded");
 
   await userEvent.keyboard("{Escape}");
 
@@ -382,7 +381,7 @@ test("SHELL-09 the grip's tap moves focus to Expand menu", async () => {
 });
 
 test("SHELL-09 loading the page moves no focus", async () => {
-  await renderShell("Today view", { rail: "open" });
+  await renderShell("Today view");
 
   expect(document.body).toHaveFocus();
 });
@@ -416,14 +415,14 @@ test("tech§4.5 prefetches the six views on startup", async () => {
   );
 });
 
-async function idleBackToToday(params: FixtureParams, hidden = false) {
+async function idleBackToToday(start: Start, hidden = false) {
   await createSettingsRepo(store).update({ idleTimeout: { on: true, minutes: 1 } });
 
   vi.useFakeTimers({ now: new Date("2026-10-09T10:41:00"), shouldAdvanceTime: true });
 
   navigation.pathname = "/calendar";
 
-  const { rerender } = await renderShell("/calendar view", params);
+  const { rerender } = await renderShell("/calendar view", start);
 
   if (hidden) act(() => screen.getByRole("button", { name: "Hide sidebar" }).click());
 
@@ -437,23 +436,23 @@ async function idleBackToToday(params: FixtureParams, hidden = false) {
 }
 
 test("IDLE-01 the idle return to Today leaves an open drawer Hidden", async () => {
-  await idleBackToToday({ rail: "open" });
+  await idleBackToToday("expanded");
 
   expect(sidebarMode()).toBe("hidden");
 });
 
 test("IDLE-01 the idle return to Today keeps a Hidden sidebar hidden", async () => {
-  await idleBackToToday({}, true);
+  await idleBackToToday("default", true);
 
   expect(sidebarMode()).toBe("hidden");
 });
 
-async function renderIdleShell(params: FixtureParams = {}, sheet: SheetRequest | null = null) {
+async function renderIdleShell(start: Start = "default", sheet: SheetRequest | null = null) {
   vi.useFakeTimers({ now: new Date("2026-10-09T10:41:00"), shouldAdvanceTime: true });
 
   navigation.pathname = "/calendar";
 
-  await renderShell("/calendar view", params, sheet);
+  await renderShell("/calendar view", start, sheet);
 
   await act(() => vi.advanceTimersByTimeAsync(200));
 }
@@ -473,7 +472,7 @@ test("SHELL-11 after 15 s without a touch the rail hides", async () => {
 });
 
 test("SHELL-11 after 15 s without a touch the open drawer closes to Hidden", async () => {
-  await renderIdleShell({ rail: "open" });
+  await renderIdleShell("expanded");
 
   seconds(15);
 
@@ -505,15 +504,7 @@ test("SHELL-11 hiding when idle moves no focus", async () => {
 });
 
 test("SHELL-11 the rail stays while a sheet is open", async () => {
-  await renderIdleShell({}, { kind: "note", id: "n1" });
-
-  seconds(30);
-
-  expect(sidebarMode()).toBe("rail");
-});
-
-test("SHELL-11 the rail stays while the keyboard is up", async () => {
-  await renderIdleShell({ kb: true });
+  await renderIdleShell("default", { kind: "note", id: "n1" });
 
   seconds(30);
 

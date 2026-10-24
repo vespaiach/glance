@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useSettingsRepo } from "@/data/repos";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useAmbientNavigate } from "@/shell/useAmbientNavigate";
 import { AmbientScheduleView } from "./components/AmbientScheduleView";
@@ -23,8 +22,6 @@ export function AmbientScheduleScreen() {
 
   const repo = useSettingsRepo();
 
-  const { pick } = useFixtureParams();
-
   return (
     <AmbientScheduleView
       ambient={settings.ambient}
@@ -32,7 +29,6 @@ export function AmbientScheduleScreen() {
       clock={settings.clock}
       idleTimeout={settings.idleTimeout}
       breakpoint={breakpoint}
-      initialPick={pick}
       onChange={(ambient) => void repo.update({ ambient })}
       onBrightness={(ambientBrightness) => void repo.update({ ambientBrightness })}
       onBack={() => router.push(SETTINGS_PATH)}

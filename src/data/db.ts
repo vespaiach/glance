@@ -51,8 +51,6 @@ export type GlanceDb = Dexie & {
   meta: EntityTable<MetaEntry, "key">;
 };
 
-export const FIXTURE_DB_NAME = "glance-fixture";
-
 export const CURSOR_KEY = "cursor";
 
 export function accountDbName(accountId: string): string {

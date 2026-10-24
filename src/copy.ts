@@ -862,8 +862,6 @@ export const copy = {
       sendingTo: "Sending a code to ",
       invalid: "Enter a valid email address",
       failed: "Couldn’t send. Try again.",
-      guest: "Sign-in as guests",
-      guestFailed: "Couldn’t sign in. Try again.",
       offlineTitle: "You’re offline",
       offlineBody:
         "A code can’t be sent right now. Sending turns back on when the screen reconnects.",

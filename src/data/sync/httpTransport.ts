@@ -54,8 +54,6 @@ export function createHttpTransport({
       sendCode: (request) => send<void>("/api/auth/code", jsonBody("POST", request)),
       verifyCode: verifyCodeWith(fetch),
       status: () => send<AuthStatus>("/api/auth/status"),
-      guestAvailable: async () => (await send<void>("/api/auth/guest")).ok,
-      guest: () => send<AuthStatus>("/api/auth/guest", { method: "POST" }),
       name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
       location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
       signout: () => send<void>("/api/auth/signout", { method: "POST" }),
@@ -69,7 +67,7 @@ function transportError(status: number): TransportError {
 
   if (status === 426) return "outdated";
 
-  return status >= 500 || status === 429 ? "server" : "invalid";
+  return status >= 500 || status === 429 || status === 403 ? "server" : "invalid";
 }
 
 function uploadError(status: number): UploadError {

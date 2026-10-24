@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useReducer, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import type { AuthStatus, SignInAuth } from "@/data/repos";
 import type { Account, LocationRequest, WeatherLocation } from "@/domain/schemas";
 import { useWeatherSetup, type WeatherSetupFlow, type WeatherSetupState } from "@/features/weather";
@@ -17,7 +17,6 @@ type Options = {
 
 export type SignInFlow = {
   state: SignInState;
-  guest: boolean;
   setup: WeatherSetupFlow;
   act(action: SignInAction): void;
 };
@@ -81,16 +80,6 @@ export function useSignIn({ initial, initialSetup, auth, clock, onSignedIn }: Op
     statusAnswered(answer.value);
   });
 
-  const guest = useGuestAvailable(auth.guestAvailable);
-
-  const signInAsGuest = async () => {
-    const answer = await auth.guest();
-
-    if (!answer.ok) return dispatch({ type: "guest-failed" });
-
-    statusAnswered(answer.value);
-  };
-
   const sendCode = async (email: string) => {
     const answer = await auth.sendCode({ email, timeZone: timeZone() });
 
@@ -124,14 +113,12 @@ export function useSignIn({ initial, initialSetup, auth, clock, onSignedIn }: Op
 
     if (next.step === "checking") void verifyCode(next.email, next.code);
 
-    if (next.step === "guest") void signInAsGuest();
-
     if (next.step === "name" && next.saving) void saveName(next.draft);
 
     if (next.step === "location" && next.skipping) skip(next.account);
   };
 
-  return { state, guest, setup, act };
+  return { state, setup, act };
 }
 
 function useCodeExpiry(open: boolean, clock: NowStore, onTick: (now: Date) => void) {
@@ -164,24 +151,6 @@ function useLinkCheck(
       live = false;
     };
   }, [checking, status]);
-}
-
-function useGuestAvailable(guestAvailable: SignInAuth["guestAvailable"]): boolean {
-  const [available, setAvailable] = useState(false);
-
-  useEffect(() => {
-    let live = true;
-
-    void guestAvailable().then((on) => {
-      if (live) setAvailable(on);
-    });
-
-    return () => {
-      live = false;
-    };
-  }, [guestAvailable]);
-
-  return available;
 }
 
 function useMounted() {

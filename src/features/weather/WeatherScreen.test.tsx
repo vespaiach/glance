@@ -1,11 +1,10 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { createSettingsRepo, type FixtureParams } from "@/data/repos";
+import { createSettingsRepo } from "@/data/repos";
 import { type Harness, markSynced, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import { err, ok } from "@/domain/result";
 import type { Weather, WeatherLocation } from "@/domain/schemas";
-import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { WeatherScreen } from "./WeatherScreen";
@@ -78,14 +77,12 @@ async function locate() {
   await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
 }
 
-function renderWeather(params: FixtureParams = {}) {
+function renderWeather() {
   const Shell = shellWrapper(store, { frozenAt: NOW });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <NetworkProvider>
-        <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
-      </NetworkProvider>
+      <NetworkProvider>{children}</NetworkProvider>
     </Shell>
   );
 
@@ -97,19 +94,6 @@ test("WX-04 with no location the view asks where the screen is", async () => {
 
   expect(await screen.findByText("Where is this screen?")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Show weather" })).toBeInTheDocument();
-});
-
-test("WX-09 wx=choose opens the setup on the Portland matches", async () => {
-  renderWeather({ wx: "choose" });
-
-  expect(await screen.findByText("2 places called Portland")).toBeInTheDocument();
-  expect(screen.getByLabelText("City or ZIP code")).toHaveValue("Portland");
-});
-
-test("WX-08 wx=unknown opens the setup on the unknown place", async () => {
-  renderWeather({ wx: "unknown" });
-
-  expect(await screen.findByLabelText("City or ZIP code")).toHaveValue("Pordland");
 });
 
 test("WX-01 with a location and a saved forecast the view shows it", async () => {
@@ -328,15 +312,4 @@ test("LOC-03 a lookup the server can't answer keeps the card with the lookup not
     await screen.findByText("Couldn’t look up this place. Try again, or type a city or ZIP."),
   ).toBeInTheDocument();
   expect(await savedLocation()).toBeUndefined();
-});
-
-test("LOC-03 wx=denied opens on the location-off notice without Use my location", async () => {
-  stubDevicePosition();
-
-  renderWeather({ wx: "denied" });
-
-  expect(
-    await screen.findByText("Location is off for this screen. Type a city or ZIP instead."),
-  ).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Use my location" })).not.toBeInTheDocument();
 });

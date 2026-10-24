@@ -19,8 +19,7 @@ import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
 import { useBackgroundPhoto } from "./background";
 import { useBreakpoint } from "./breakpoint";
-import { useFixtureParams } from "./fixtureOptions";
-import { isTextField, useFixtureFieldFocus, useKeyboardInset } from "./keyboard";
+import { isTextField, useKeyboardInset } from "./keyboard";
 import { OfflineNotice } from "./OfflineNotice";
 import { useNowStore } from "./providers/now";
 import { useAccountSettings } from "./providers/settings";
@@ -87,16 +86,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const keyboardInset = useKeyboardInset();
 
-  const rail = useFixtureParams().rail;
-
   const sheetOpen = useSheetHost().sheet !== null;
 
   const { hideSidebarWhenIdle } = useAccountSettings();
 
   const small = breakpoint === "small";
 
-  const [sidebar, dispatch] = useReducer(sidebarReducer, rail, (fixture) =>
-    initialSidebar(fixture, view, small),
+  const [sidebar, dispatch] = useReducer(sidebarReducer, undefined, () =>
+    initialSidebar(view, small),
   );
 
   const handle = useRef<HTMLButtonElement>(null);
@@ -125,8 +122,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   usePrefetchViews();
 
   useFieldInView(main, keyboardInset);
-
-  useFixtureFieldFocus();
 
   return (
     <div

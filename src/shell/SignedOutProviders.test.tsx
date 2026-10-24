@@ -12,35 +12,21 @@ vi.mock("@/data/repos", async (importOriginal) => {
 
   return {
     ...original,
-    signedOutAccountFor: async (
-      demo: boolean,
-      params: Parameters<typeof original.signedOutAccountFor>[1],
-    ) => (demo ? original.signedOutAccountFor(demo, params) : kept.account),
+    signedOutAccount: async () => kept.account,
   };
 });
 
 afterEach(() => {
   kept.account = undefined;
-  window.history.replaceState(null, "", "/");
 });
 
 function ZoneProbe() {
   return <p>zone {useTimeZone()}</p>;
 }
 
-test("LOC-06 the demo Sign in screen follows the fixture place's zone", async () => {
-  render(
-    <SignedOutProviders demo>
-      <ZoneProbe />
-    </SignedOutProviders>,
-  );
-
-  expect(await screen.findByText("zone America/Los_Angeles")).toBeInTheDocument();
-});
-
 test("LOC-06 a real Sign in screen with no place follows the device's zone", async () => {
   render(
-    <SignedOutProviders demo={false}>
+    <SignedOutProviders>
       <ZoneProbe />
     </SignedOutProviders>,
   );
@@ -72,7 +58,7 @@ describe("signed out by the server", () => {
     };
 
     render(
-      <SignedOutProviders demo={false}>
+      <SignedOutProviders>
         <ZoneProbe />
         <SignedOutProbe />
       </SignedOutProviders>,
@@ -84,23 +70,11 @@ describe("signed out by the server", () => {
 
   it("SIGNIN-13 a screen that was never signed in has no signed-out account", async () => {
     render(
-      <SignedOutProviders demo={false}>
+      <SignedOutProviders>
         <SignedOutProbe />
       </SignedOutProviders>,
     );
 
     expect(await screen.findByText("signed in")).toBeInTheDocument();
-  });
-
-  it("SIGNIN-13 the demo signin=ended&pending=3 fixture is signed out with 3 waiting", async () => {
-    window.history.replaceState(null, "", "/signin?signin=ended&pending=3");
-
-    render(
-      <SignedOutProviders demo>
-        <SignedOutProbe />
-      </SignedOutProviders>,
-    );
-
-    expect(await screen.findByText("signed out maria@example.com 3")).toBeInTheDocument();
   });
 });
