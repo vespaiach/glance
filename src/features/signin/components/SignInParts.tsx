@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { copy } from "@/copy";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, radii, sizes, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
@@ -104,6 +104,22 @@ const styles = stylex.create({
     fontWeight: 330,
     lineHeight: 1.45,
   },
+  terms: {
+    marginTop: -16,
+    fontSize: 15,
+    fontWeight: 330,
+    lineHeight: 1.45,
+    textWrap: "pretty",
+  },
+  termsLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: sizes.touchMin,
+    color: colors.textPrimary,
+    fontWeight: 540,
+    textDecorationLine: "underline",
+    textUnderlineOffset: 3,
+  },
 });
 
 export function Heading({
@@ -186,6 +202,18 @@ export function LockFooter() {
         <Icon icon={Lock} size={18} />
       </span>
       <span>{copy.signIn.lock}</span>
+    </div>
+  );
+}
+
+export function TermsLine() {
+  return (
+    <div {...stylex.props(styles.terms)}>
+      {copy.signIn.terms.before}
+      <a href="/terms" target="_blank" rel="noopener" {...stylex.props(styles.termsLink)}>
+        {copy.signIn.terms.link}
+      </a>
+      {copy.signIn.terms.after}
     </div>
   );
 }
