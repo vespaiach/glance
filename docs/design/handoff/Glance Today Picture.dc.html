@@ -15,51 +15,11 @@
 <style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
 <section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
-<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Event.dc.html">Today event →</a><a href="Glance%20Today%20Notes.dc.html">Today notes →</a><a href="Glance%20States.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Event.dc.html">Today event →</a><a href="Glance%20Today%20Notes.dc.html">Today notes →</a><a href="Glance%20States%20-%20Today.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
 <span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Today’s photo</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today’s photo box (was “Picture of the day”) on Today at each screen size: large 1920×1080, normal 1024×768 (plus its 280 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. Large and normal: bottom of the right column, under the notes box. Small: last block in the scrolling column, after the notes box.</p>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today’s photo box (was “Picture of the day”) on Today at each screen size: large 1920×1080, normal 1024×768 (plus its 280 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. Large: bottom of the right column, under the notes box. Normal: second row, beside the notes box. Small: last block in the scrolling column, after the notes box.</p>
 </section>
-<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px">
-<div style="background:#fff;border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
-<span style="font:600 24px/1.2 var(--font-sans)">Behaviour</span>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px 40px;font:15px/1.5 var(--font-sans)">
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout and size</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Large and normal: bottom of the right column of the Today grid (min 280 px wide). The box is as tall as its content: the photo frame is a fixed 4:3, so the box never changes size with the note count. The notes box above takes the rest of the column.</li>
-<li>Large: the photo frame is capped at 50% of the viewport height minus 64 px, so short windows keep room for notes. Small: no cap; last block in the scrolling column.</li>
-<li>White canvas box, 24 px radius, 16 px padding, 12 px gap, the same as the notes box, so both eyebrows sit 24 px from the box edge.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Header</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Eyebrow “Today’s photo”.</li>
-<li>With a photo: ghost “Add photo” (image-plus), the same as the notes header. “All photos” (arrow-right) shows only when the account has one photo; otherwise the “{n} more photos” row at the bottom goes to Photos instead. Right column narrower than 440 px: 44 px white icon buttons with the same aria-labels.</li>
-<li>No photos, first upload, loading, Add from your phone: no header buttons.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Photo</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Photo in a 4:3 frame, object-fit cover, 8 px radius. object-position comes from the photo’s focal point (face detection on upload); with none, portrait photos sit at 50% 30% and landscape at the center.</li>
-<li>Title 18 px / 480: one line with an ellipsis when the column is 440 px or wider, two lines below that. Then a 14 px mono caption: “On this day · {year}” for an anniversary photo, otherwise date · place.</li>
-<li>Title fallback: the photo’s title, then its place, then its date. Camera file names (IMG_, DSC, PXL…) never show.</li>
-<li>More photos: only when there are other photos, under the caption, a 52 px row → Photos view, the same as the notes box’s “{n} more notes” row. No fill: 1 px hairline divider on top, up to 3 overlapping 28 px round thumbnails of the other photos (2 px white ring, −8 px overlap), “{n} more photos” (17 px, 480, count of the other photos), arrow-right at the right edge; 0.97 press, aria-label “{n} more photos, open Photos”. Hidden when today’s photo is the only finished photo.</li>
-<li>Photo, title and caption are one button: press scales to 0.97 (120 ms), aria-label “Today’s photo: {title}, {caption}”. Tap → Photos view with this photo featured, slideshow paused.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Which photo</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>One per calendar day, the same on every screen of the account; it changes at midnight in the location’s time zone with the 600 ms cross-fade.</li>
-<li>First choice: a photo taken on today’s date in an earlier year. Otherwise the next in a shuffled cycle. Only finished uploads count.</li>
-<li>Skips the photo that is the screen background, so the same photo never shows twice.</li>
-<li>If today’s photo is deleted, the next in the cycle replaces it at once. Mock: today is Oct 9 2026, so it picks “Picnic on Sauvie Island” (Oct 9 2024).</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Adding photos</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Large (wider than 1200 px, the kiosk): “Add photo” and the empty tile open “Add from your phone” inside the box: a QR code on the hero block, “Scan to add photos”, plus “Choose files here” (secondary) and Done. Closes on Done, after the idle timeout, or when a photo arrives.</li>
-<li>Normal and small: “Add photo” and the empty tile open the file picker. Uploads keep going in the background; progress shows in Photos.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">States</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li><strong>No photos</strong>: one warm 8:7 tile (no border): stacked frames, “A memory to share?”, three example moments that change once a day (“A birthday cake, pizza night, the first day of school.”), “Add family photos and one shows here each day.” and a white pill (“Add from your phone” on large, “Add photos” on normal and small). aria-label is the pill label.</li>
-<li><strong>First upload</strong>: no finished photos yet but uploads running. The frame shows the first upload at 60% with the 8 px progress bar, “Your first photo is on its way” and a mono status (“Uploading · 64%”, “{n} photos · 64%”, “Waiting”, “Paused · offline”). Tap → Photos.</li>
-<li><strong>Loading</strong>: pulsing season-soft frame and two bars, no header buttons.</li>
-<li><strong>Didn’t load</strong>: soft frame, image-off icon, mono “Photo didn’t load”; title and caption stay. Retries on the next sync. Offline with no cached copy: “Shows when back online”. Offline with a cached copy: the photo shows as normal.</li>
-<li><strong>On photo background</strong>: the box stays a white panel and picks a different photo from the background.</li>
-</ul></div>
-</div>
-</div>
-</section>
+<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px"><p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="Glance%20Notes.dc.html#today">Notes · Today</a>.</p></section>
 <sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
 <section id="{{ s.id }}" data-screen-label="{{ s.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
 <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>

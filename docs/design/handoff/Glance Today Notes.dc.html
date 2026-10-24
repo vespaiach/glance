@@ -15,38 +15,11 @@
 <style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
 <section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
-<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Event.dc.html">Today event →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Event.dc.html">Today event →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States%20-%20Today.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
 <span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Today notes</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today notes box at each screen size: large 1920×1080, normal 1024×768 (plus its 280 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. Large and normal: top of the right column, above Today’s photo. Small: below the Today events box in the scrolling column. Clock reads 10:41 AM.</p>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today notes box at each screen size: large 1920×1080, normal 1024×768 (plus its 280 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. Large: top of the right column, above Today’s photo. Normal: second row, beside Today’s photo. Small: below the Today events box in the scrolling column. Clock reads 10:41 AM.</p>
 </section>
-<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px">
-<div style="background:#fff;border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
-<span style="font:600 24px/1.2 var(--font-sans)">Behaviour</span>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px 40px;font:15px/1.5 var(--font-sans)">
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout and size</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Large and normal: top of the right column of the Today grid (min 280 px). The box takes the column height left above Today’s photo (which keeps a fixed 4:3 photo frame); the “{n} more notes” row sits at the bottom and the no-notes tile fills the box.</li>
-<li>Small: third block in the scrolling column, after the Now panel and the Today events box. Height fits its content.</li>
-<li>White canvas box, 24 px radius, 16 px padding, the same as Today’s photo, so both eyebrows sit 24 px from the box edge.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Header</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Eyebrow “Notes · {n}”, the total number of notes on the board. “Notes” while loading or with no notes.</li>
-<li>Right column 440 px or wider: ghost “Add note” (square-pen) → New note and ghost “All notes” (arrow-right) → Notes view. Narrower: 44 px white icon buttons (square-pen, arrow-right) with those labels as aria-label. “All notes” is dropped when some notes are hidden; the “{n} more notes” row covers it. Today’s photo uses the same rule for “Add photo” and “All photos”.</li>
-<li>No notes: no header buttons. Loading: “Add note” only.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Notes</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Newest notes as small StickyNotes (150 px min height), text cut at 3 lines with an ellipsis; full text in Note details. One note per row, full box width, 20 px gap, at every screen size.</li>
-<li>Large and normal: 2 notes when both fit in the box above Today’s photo, otherwise 1. Re-checked when the notes or the box width change. Small: up to 2.</li>
-<li>Each note is a button: press scales to 0.97 (120 ms), aria-label “Note from {author}: {text}”. Tap → Note details.</li>
-<li>Notes not shown: a 52 px row under the notes → Notes view. No fill: hairline divider, up to 3 overlapping 28 px paper-tone dots, “{n} more notes”, arrow-right at the right edge.</li>
-<li>Color: every note is the season paper tone (cream; frost in winter), so color on Today only means a person. No color picker; tilt and shadow keep notes apart.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Variants</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li><strong>No notes</strong>: the whole dashed card (1.5 px hairline, 24 px radius) is one button → New note: a stack of three blank notes, “Something to share at home?”, one line of copy and an “Add note” pill label. Right column under 440 px: the stack is hidden so the card stays compact.</li>
-<li><strong>Loading</strong>: season-soft tiles shaped like the notes (150 px min height, 6 px radius, −2° and 1.5°), as many as the box will show, 20 px gap.</li>
-</ul></div>
-</div>
-</div>
-</section>
+<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px"><p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="Glance%20Notes.dc.html#today">Notes · Today</a>.</p></section>
 <sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
 <section id="{{ s.id }}" data-screen-label="{{ s.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
 <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>

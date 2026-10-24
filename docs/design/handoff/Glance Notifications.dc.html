@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section data-season="{{ season }}" style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20States.dc.html">States and variants →</a><a href="Glance%20Notes.dc.html">Notes →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · event notifications</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Reminders for upcoming events, shown on the display over any view and as a push notification on phones and tablets when Glance is closed. Each event fires 15 min before, at start, or both; the default comes from Settings. Notifications close by themselves; a tap opens the event. Events with the same reminder time merge into one. During quiet hours the reminder shows quietly on Ambient without waking the screen. The on-display notification is a compact black strip at the top center. Frames are the live mockup at 1920×1080, drawn at 40%. Logic and behavior: <a href="Glance%20Notes.dc.html#notifications">Notes · Notifications</a>.</p>
+</section>
+
+<section id="t2" data-season="{{ season }}" style="padding:40px 56px 32px;border-top:1px solid rgba(0,0,0,.08);scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:10px;margin:0 0 24px"><a href="#t2" style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none">2</a><span style="font:600 15px/1.2 var(--font-sans)">On-display notification</span></div>
+<div id="2a" data-screen-label="2a Compact strip" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:10px"><a href="#2a" style="font:600 12px ui-monospace,Menlo,monospace;padding:3px 8px;background:#000;color:#fff;border-radius:6px;text-decoration:none">2a</a><span style="font:600 20px/1.2 var(--font-sans)">Compact strip</span></div>
+<p style="margin:0;font:15px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Centered at the top, 960 px wide, 96 px tall (was full width and 128 px). The time left moves into the mono eyebrow above the title, next to the event color dot. Title 28 px, Details is the 44 px button.</p>
+<div style="display:flex;flex-wrap:wrap;gap:32px 48px;align-items:flex-start">
+<sc-for list="{{ strips }}" as="f" hint-placeholder-count="3">
+<div style="flex:none;width:768px;display:flex;flex-direction:column;gap:12px">
+<span style="font:500 13px ui-monospace,Menlo,monospace">{{ f.label }}</span>
+<div style="width:768px;height:432px;overflow:hidden;border-radius:12px;position:relative;background:#f1f1f1"><div style="width:1920px;height:1080px;transform:scale(0.4);transform-origin:0 0;position:relative">
+<iframe title="{{ f.label }}" src="{{ f.src }}" tabindex="-1" scrolling="no" style="border:0;display:block;width:1920px;height:1080px;pointer-events:none"></iframe>
+<div style="position:absolute;top:24px;left:50%;transform:translateX(-50%);width:960px;background:#000;color:#fff;border-radius:24px;box-shadow:0 24px 64px rgba(0,0,0,.18);overflow:hidden">
+<div style="display:flex;align-items:center;gap:20px;padding:16px 16px 16px 28px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ f.icon }}" size="28" hint-size="28px,28px"></x-import>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+<span style="display:flex;align-items:center;gap:10px;font:400 16px/1.2 var(--font-mono);text-transform:uppercase;letter-spacing:0.5px"><span style="flex:none;width:12px;height:12px;border-radius:50%;background:{{ f.dot }}"></span>{{ f.eyebrow }}</span>
+<span style="font:540 28px/1.15 var(--font-sans);letter-spacing:-0.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.title }}</span>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="inverse" icon-right="arrow-right" hint-size="130px,44px">{{ f.btn }}</x-import>
+</div>
+<sc-if value="{{ bar }}" hint-placeholder-val="{{ true }}"><div style="height:4px;background:var(--on-inverse-soft)"><div style="width:{{ f.pct }};height:100%;background:#fff"></div></div></sc-if>
+</div>
+</div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="shared" data-season="{{ season }}" data-screen-label="Shared parts" style="padding:40px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:32px">
+<span style="font:600 24px/1.2 var(--font-sans)">Ambient, push, event sheet and Settings</span>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div style="flex:none;width:768px;display:flex;flex-direction:column;gap:12px">
+<span style="font:500 13px ui-monospace,Menlo,monospace">Ambient · quiet hours, 15 min before</span>
+<div style="width:768px;height:432px;overflow:hidden;border-radius:12px;position:relative;background:var(--surface-deep)"><div style="width:1920px;height:1080px;transform:scale(0.4);transform-origin:0 0;box-sizing:border-box;padding:112px 120px;display:flex;flex-direction:column;color:#dcdcdc">
+<span style="display:flex;align-items:center;gap:16px;font:400 30px/1 var(--font-mono);text-transform:uppercase"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="map-pin" size="36" hint-size="36px,36px"></x-import>Portland, OR</span>
+<span style="margin-top:64px;font:400 26px/1 var(--font-mono);text-transform:uppercase">Friday, October 9</span>
+<div style="margin-top:24px;display:flex;align-items:baseline;gap:16px"><span style="font:300 300px/0.9 var(--font-sans);letter-spacing:-12px;font-variant-numeric:tabular-nums">7:15</span><span style="font:400 52px/1 var(--font-mono)">PM</span></div>
+<div style="margin-top:72px;height:1px;background:var(--on-inverse-soft)"></div>
+<div style="margin-top:64px;display:grid;grid-template-columns:1fr 1fr;gap:64px">
+<div style="display:flex;align-items:center;gap:32px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-rain" size="104" hint-size="104px,104px"></x-import><div style="display:flex;flex-direction:column;gap:10px"><span style="font:330 60px/1.1 var(--font-sans);letter-spacing:-1px">56° · Light rain</span><span style="font:330 30px/1.3 var(--font-sans)">Low 51° overnight · Tomorrow 80% rain</span></div></div>
+<div style="display:flex;flex-direction:column;gap:12px"><span style="display:flex;align-items:center;gap:14px;font:400 28px/1.2 var(--font-mono);text-transform:uppercase"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="bell" size="30" hint-size="30px,30px"></x-import>In 15 min · 7:30 PM</span><span style="font:330 56px/1.1 var(--font-sans);letter-spacing:-1px">Movie night</span><span style="font:330 30px/1.3 var(--font-sans)">Everyone · Living room</span></div>
+</div>
+</div></div>
+<span style="font:13px/1.45 var(--font-sans);text-wrap:pretty;max-width:768px">The Next slot becomes the reminder: bell, “In 15 min” and the start time in the eyebrow. Ambient brightness, no chime, no wake, no card. It stays until the event starts, then the slot shows “Now · Movie night” until it ends.</span>
+</div>
+
+<div style="flex:none;width:340px;display:flex;flex-direction:column;gap:12px">
+<span style="font:500 13px ui-monospace,Menlo,monospace">Phone or tablet · Glance closed</span>
+<div style="width:340px;height:620px;box-sizing:border-box;border-radius:48px;background:#1a1a1a;padding:12px">
+<div style="height:100%;border-radius:38px;background:var(--surface-deep);display:flex;flex-direction:column;align-items:center;padding:64px 14px 0;gap:10px;box-sizing:border-box">
+<span style="font:300 72px/1 var(--font-sans);color:#fff;letter-spacing:-2px">3:15</span>
+<span style="font:400 15px/1 var(--font-sans);color:#fff;margin-bottom:32px">Friday, October 9</span>
+<div style="width:100%;box-sizing:border-box;display:flex;gap:12px;padding:14px;border-radius:20px;background:#fff"><img src="pwa-icons/icon-192.png" alt="" style="flex:none;width:36px;height:36px;border-radius:8px"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div style="display:flex;justify-content:space-between;font:400 13px/1.3 var(--font-sans)"><span>Glance</span><span>now</span></div><span style="font:600 15px/1.3 var(--font-sans)">3 events in 15 min</span><span style="font:400 14px/1.35 var(--font-sans)">3:30 PM · Soccer practice, Piano lesson, Dentist</span></div></div>
+<div style="width:100%;box-sizing:border-box;display:flex;gap:12px;padding:14px;border-radius:20px;background:#fff"><img src="pwa-icons/icon-192.png" alt="" style="flex:none;width:36px;height:36px;border-radius:8px"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div style="display:flex;justify-content:space-between;font:400 13px/1.3 var(--font-sans)"><span>Glance</span><span>4h ago</span></div><span style="font:600 15px/1.3 var(--font-sans)">Volunteer shift in 15 min</span><span style="font:400 14px/1.35 var(--font-sans)">11:00 AM · Nghe · Food bank</span></div></div>
+</div>
+</div>
+<span style="font:13px/1.45 var(--font-sans);text-wrap:pretty">System notification, drawn generic. Title leads with the fact; body is time · who · place. Tap opens Glance on Event details (or Today at 3:30 PM for a group). The phone’s own Do Not Disturb applies, not Glance quiet hours.</span>
+</div>
+
+<div style="flex:none;width:520px;display:flex;flex-direction:column;gap:12px">
+<span style="font:500 13px ui-monospace,Menlo,monospace">Event page · new Reminder field, under All day</span>
+<div style="background:#fff;border-radius:24px;padding:40px;display:flex;flex-direction:column;gap:12px">
+<span style="font:400 20px/1.2 var(--font-sans)">Reminder</span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ remOpts }}" value="15 min" style="background:#f7f7f5;align-self:flex-start" hint-size="420px,48px"></x-import>
+<span style="font:400 14px/1.3 var(--font-mono);text-transform:uppercase">Default from Settings</span>
+</div>
+<span style="font:13px/1.45 var(--font-sans);text-wrap:pretty">Off · At start · 15 min · Both. New events start on the Settings default; the caption shows until the value is changed. All-day events have no reminder, so the field hides when All day is on.</span>
+</div>
+
+<div style="flex:none;width:620px;display:flex;flex-direction:column;gap:12px">
+<span style="font:500 13px ui-monospace,Menlo,monospace">Settings · Notifications</span>
+<div style="background:#fff;border-radius:24px;padding:40px;display:flex;flex-direction:column;gap:24px">
+<span style="font:400 14px/1.3 var(--font-mono);text-transform:uppercase">Notifications</span>
+<div style="display:flex;flex-direction:column;gap:12px"><span style="font:400 20px/1.2 var(--font-sans)">Default reminder</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ remOpts }}" value="15 min" style="background:#f7f7f5;align-self:flex-start" hint-size="420px,48px"></x-import></div>
+<div style="height:1px;background:#f1f1f1"></div>
+<div style="display:flex;align-items:center;gap:24px"><div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:400 20px/1.2 var(--font-sans)">Chime</span><span style="font:330 16px/1.4 var(--font-sans)">Plays once when a reminder shows. Never during quiet hours.</span></div><span role="switch" aria-checked="true" aria-label="Chime" style="flex:none;width:56px;height:32px;border-radius:9999px;background:#000;position:relative"><span style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:#fff"></span></span></div>
+<div style="height:1px;background:#f1f1f1"></div>
+<div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap"><div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:4px"><span style="font:400 20px/1.2 var(--font-sans)">This phone</span><span style="font:330 16px/1.4 var(--font-sans)">Get reminders when Glance is closed.</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="bell" style="border:1px solid #e6e6e6" hint-size="210px,44px">Allow notifications</x-import></div>
+</div>
+<span style="font:13px/1.45 var(--font-sans);text-wrap:pretty">Default reminder and Chime are per account. The “This phone” row shows only on phones and tablets that support push; after allowing it reads “On” with a “Turn off” ghost button.</span>
+</div>
+
+</div>
+
+<p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="Glance%20Notes.dc.html#notifications">Notes · Event notifications</a>.</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dismissBar&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const season = this.props.season ?? 'fall';
+    const src = (v) => `Glance.dc.html?view=${v}&season=${season}`;
+    const strips = [
+      { label: 'Today · 15 min before', src: src('today'), icon: 'bell', dot: 'var(--block-lime)', eyebrow: 'In 15 min · 11:00 AM · Nghe · Food bank', title: 'Volunteer shift', btn: 'Details', pct: '62%' },
+      { label: 'Calendar · at start', src: src('calendar'), icon: 'bell-ring', dot: 'var(--block-lime)', eyebrow: 'Now · 11:00 AM – 12:00 PM · Food bank', title: 'Volunteer shift', btn: 'Details', pct: '30%' },
+      { label: 'Weather · 3 events at once', src: src('weather'), icon: 'bell', dot: 'var(--surface-warm)', eyebrow: 'In 15 min · 3:30 PM · 3 events', title: 'Soccer practice, Piano lesson, Dentist', btn: 'See all', pct: '80%' },
+    ];
+    return {
+      strips,
+      season,
+      bar: this.props.dismissBar ?? true,
+      remOpts: [{ value: 'off', label: 'Off' }, { value: 'start', label: 'At start' }, { value: '15 min', label: '15 min' }, { value: 'both', label: 'Both' }],
+    };
+  }
+}
+</script>
+</body>
+</html>

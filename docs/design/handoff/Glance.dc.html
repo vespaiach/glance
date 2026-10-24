@@ -61,12 +61,14 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Email" placeholder="name@example.com" value="{{ email }}" on-change="{{ setEmail }}" error="{{ emailErr }}" hint-size="100%,84px"></x-import>
 <sc-if value="{{ si.switchWarn }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;flex-direction:column;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px;margin-top:-16px"><div style="display:flex;align-items:flex-start;gap:12px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="info" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0;overflow-wrap:anywhere">Changes waiting on this screen belong to <strong style="font-weight:540">{{ si.prevEmail }}</strong>. They’ll be removed from this screen if a different email signs in.</span></div><div style="display:flex;margin-left:18px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="undo-2" on-click="{{ usePrevEmail }}" hint-size="240px,44px">Use {{ si.prevEmail }}</x-import></div></div></sc-if>
 <sc-if value="{{ off }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="A code can’t be sent right now. Sending turns back on when the screen reconnects." tone="soft" hint-size="100%,80px"></x-import></sc-if>
+<sc-if value="{{ scanErrOn }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:flex-start;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="info" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty;min-width:0">{{ scanErr }}</span></div></sc-if>
 <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="{{ si.sendIcon }}" disabled="{{ si.sendOff }}" on-click="{{ sendCode }}" hint-size="200px,44px">{{ si.sendLabel }}</x-import>
-<sc-if value="{{ si.demo }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="user-round" disabled="{{ si.sending }}" on-click="{{ guestSignIn }}" hint-size="220px,44px">Sign-in as guests</x-import></sc-if>
 </div>
+<sc-if value="{{ scn.btn }}" hint-placeholder-val="{{ false }}"><div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="qr-code" disabled="{{ scn.btnOff }}" on-click="{{ scn.open }}" dc-props="{{ sx.ring }}" hint-size="290px,44px">Scan code from another screen</x-import></div></sc-if>
 <sc-if value="{{ si.sending }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><span style="display:flex;animation:kskPulse 1.2s ease-in-out infinite alternate"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;min-width:0;overflow-wrap:anywhere">Sending a code to <strong style="font-weight:540">{{ emailShown }}</strong></span></div></sc-if>
 <div style="display:flex;align-items:center;gap:12px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="lock" size="18" hint-size="18px,18px"></x-import><span style="font-size:15px;font-weight:330;line-height:1.45">Only your family can see its calendar, notes and photos.</span></div>
+<div style="font-size:15px;font-weight:330;line-height:1.45;margin-top:-16px;text-wrap:pretty">By continuing, you agree to the <a href="Glance%20Terms%20of%20Service.dc.html" target="_blank" style="color:var(--text-primary);font-weight:540;text-decoration:underline;text-underline-offset:3px;display:inline-flex;align-items:center;min-height:44px">Terms of Service</a>.</div>
 </sc-if>
 <sc-if value="{{ si.sent }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:12px">
@@ -140,6 +142,43 @@
 </sc-if>
 </div>
 </main>
+<sc-if value="{{ scn.sheet }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:30;display:grid;place-items:end center;padding:8px;box-sizing:border-box">
+<div onClick="{{ scn.cancel }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="scn-title" style="position:relative;width:100%;max-width:480px;background:var(--surface-canvas);border-radius:32px;box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:24px;padding:28px 24px 24px;box-sizing:border-box">
+<span style="display:grid;place-items:center;width:64px;height:64px;border-radius:9999px;background:var(--season-block-1)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ scn.icon }}" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span>
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Scan to sign in</x-import>
+<sc-if value="{{ scn.ask }}" hint-placeholder-val="{{ true }}"><div id="scn-title" style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">Glance needs the camera</div><div style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">The camera reads the code on your Glance screen. Your phone asks next; choose Allow. Nothing is recorded or saved.</div></sc-if>
+<sc-if value="{{ scn.blocked }}" hint-placeholder-val="{{ false }}"><div id="scn-title" style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">Allow camera access in Settings</div><div style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">Camera access is off for Glance. Turn it on in your phone’s Settings, then tap Try again.</div></sc-if>
+<sc-if value="{{ scn.nocam }}" hint-placeholder-val="{{ false }}"><div id="scn-title" style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">No camera on this device</div><div style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">Sign in with your email instead.</div></sc-if>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+<sc-if value="{{ scn.ask }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon-right="arrow-right" on-click="{{ scn.allow }}" hint-size="140px,44px">Continue</x-import></sc-if>
+<sc-if value="{{ scn.blocked }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="rotate-cw" on-click="{{ scn.allow }}" hint-size="140px,44px">Try again</x-import></sc-if>
+<sc-if value="{{ scn.nocam }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="mail" on-click="{{ scn.cancel }}" hint-size="140px,44px">Use email</x-import></sc-if>
+<sc-if value="{{ scn.canCancel }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ scn.cancel }}" hint-size="100px,44px">Cancel</x-import></sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ scn.cam }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-modal="true" aria-label="Scan to sign in" style="position:fixed;inset:0;z-index:30;background:var(--black);color:var(--white);display:flex;flex-direction:column;overflow:hidden">
+<div style="position:relative;z-index:1;flex:none;display:flex;align-items:center;min-height:72px;padding:16px 24px;box-sizing:border-box"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase">Scan to sign in</span></div>
+<div style="position:relative;flex:1;min-height:0;display:grid;place-items:center">
+<div aria-hidden="true" style="position:absolute;left:50%;top:50%;width:360px;height:264px;margin:-132px 0 0 -180px;background:var(--white);border-radius:16px;rotate:-4deg;display:grid;place-items:center"><div style="display:grid;grid-template-columns:repeat(25,8px);grid-auto-rows:8px;width:200px;height:200px"><sc-for list="{{ qrCells }}" as="q" hint-placeholder-count="0"><span style="background:{{ q.bg }}"></span></sc-for></div></div>
+<div style="position:relative;width:min(264px,70vw);aspect-ratio:1;border-radius:24px;box-shadow:{{ scn.ring }};display:grid;place-items:center;transition:box-shadow 180ms ease-out">
+<sc-if value="{{ scn.found }}" hint-placeholder-val="{{ false }}"><span style="display:grid;place-items:center;width:96px;height:96px;border-radius:9999px;background:var(--season-block-1);color:var(--black)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="48" stroke-width="1.75" hint-size="48px,48px"></x-import></span></sc-if>
+</div>
+</div>
+<div style="position:relative;z-index:1;flex:none;display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px 24px 32px;box-sizing:border-box;text-align:center">
+<sc-if value="{{ scn.wrong }}" hint-placeholder-val="{{ false }}"><div role="alert" style="display:flex;align-items:flex-start;gap:12px;background:var(--surface-canvas);color:var(--text-primary);border-radius:8px;padding:16px 20px;text-align:left;width:100%;max-width:400px;box-sizing:border-box"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="circle-alert" size="22" hint-size="22px,22px"></x-import></span><span style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">That isn’t a Glance code. Keep scanning.</span></div></sc-if>
+<sc-if value="{{ scn.looking }}" hint-placeholder-val="{{ true }}"><div role="status" style="display:flex;flex-direction:column;gap:8px;max-width:320px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px;line-height:1.3">Point at the code on your Glance screen</span><span style="font-size:15px;font-weight:330;line-height:1.45;text-wrap:pretty">On a signed-in screen, open Settings › Account › Sign in another device.</span></div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="inverse" on-click="{{ scn.cancel }}" hint-size="120px,44px">Cancel</x-import></sc-if>
+<sc-if value="{{ scn.found }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;flex-direction:column;gap:8px;max-width:320px;min-height:112px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px;line-height:1.3">Code found</span><span style="font-size:15px;font-weight:330;line-height:1.45">Signing in…</span></div></sc-if>
+</div>
+</div>
+</sc-if>
 </sc-if>
 
 <sc-if value="{{ is.ambient }}" hint-placeholder-val="{{ false }}">
@@ -213,13 +252,13 @@
 <span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ nh.open.body }}</span>
 </div>
 <div aria-hidden="true" style="position:relative;padding:30px 0 26px">
-<span style="position:absolute;top:0;left:{{ nh.open.nowPct }};transform:translateX(-50%);font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now {{ nh.open.nowL }}</span>
-<span title="Sunset {{ nh.open.sunL }}" style="position:absolute;top:-3px;left:{{ nh.open.sunPct }};transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span>
+<span style="position:absolute;top:0;left:{{ nh.open.nowPct }};transform:translateX({{ nh.open.nowTx }});font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now {{ nh.open.nowL }}</span>
+<sc-if value="{{ nh.open.sunOn }}" hint-placeholder-val="{{ true }}"><span title="Sunset {{ nh.open.sunL }}" style="position:absolute;top:-3px;left:{{ nh.open.sunPct }};transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span></sc-if>
 <div style="position:relative;height:14px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden">
 <div style="position:absolute;left:0;top:0;bottom:0;width:{{ nh.open.nowPct }};background:var(--action-primary)"></div>
 <sc-for list="{{ nh.open.segs }}" as="g" hint-placeholder-count="0"><div style="position:absolute;top:4px;bottom:4px;left:{{ g.l }};width:{{ g.w }};border-radius:9999px;background:var(--surface-canvas)"></div></sc-for>
 </div>
-<div style="position:absolute;top:24px;left:{{ nh.open.sunPct }};width:2px;height:26px;margin-left:-1px;background:var(--action-primary)"></div>
+<sc-if value="{{ nh.open.sunOn }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;top:24px;left:{{ nh.open.sunPct }};width:2px;height:26px;margin-left:-1px;background:var(--action-primary)"></div></sc-if>
 <div style="position:absolute;top:21px;left:{{ nh.open.nowPct }};width:32px;height:32px;margin-left:-16px;border-radius:50%;background:var(--action-primary);color:var(--on-action-primary);box-shadow:0 0 0 4px var(--surface-canvas);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" stroke-width="2" hint-size="20px,20px"></x-import></div>
 <span style="position:absolute;bottom:0;left:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">{{ nh.open.startL }}</span>
 <span style="position:absolute;bottom:0;right:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">{{ nh.open.endL }}</span>
@@ -793,6 +832,18 @@
 <span style="font-size:15px;font-weight:330;overflow:hidden;text-overflow:ellipsis">{{ emailShown }}</span>
 </div>
 </div>
+<div data-ds-new="StorageMeter" style="display:flex;flex-direction:column;gap:8px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="140px,20px">Photo storage</x-import>
+<div style="background:var(--surface-soft);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px">
+<span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;font-variant-numeric:tabular-nums">{{ store.left }}</span>
+<span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;font-variant-numeric:tabular-nums">{{ store.used }}</span>
+</div>
+<div role="meter" aria-label="Photo storage used" aria-valuemin="0" aria-valuemax="5" aria-valuenow="{{ store.n }}" aria-valuetext="{{ store.used }}" style="height:12px;border-radius:9999px;background:var(--surface-canvas);box-shadow:inset 0 0 0 1px var(--border-hairline);overflow:hidden"><div style="width:{{ store.pct }};height:100%;border-radius:9999px;background:{{ store.fill }};transition:width 280ms ease"></div></div>
+<sc-if value="{{ store.warn }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:flex-start;gap:8px;font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty"><span style="display:flex;flex:none;padding-top:1px;color:var(--danger)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="triangle-alert" size="18" hint-size="18px,18px"></x-import></span>{{ store.msg }}</span></sc-if>
+<sc-if value="{{ store.ok }}" hint-placeholder-val="{{ true }}"><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">Shared by every screen on this account.</span></sc-if>
+</div>
+</div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ deviceCount }}</x-import>
 <div style="display:flex;flex-direction:column;background:var(--surface-soft);border-radius:8px;padding:0 16px">
@@ -827,9 +878,14 @@
 </sc-if>
 </div>
 <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)">
-<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="display:flex;flex:none;align-items:center;justify-content:center;width:18px;height:18px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="info" size="18" hint-size="18px,18px"></x-import></span><span style="display:flex;align-items:center;min-height:18px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;line-height:1">Sign out this device only.</span></span>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="log-out" on-click="{{ signOut }}" dc-props="{{ sx.ring }}" hint-size="130px,44px">Sign out</x-import>
+<span style="display:flex;align-items:center;gap:8px;min-width:0"><span style="display:flex;flex:none;align-items:center;justify-content:center;width:18px;height:18px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="info" size="18" hint-size="18px,18px"></x-import></span><span style="display:flex;align-items:center;min-height:18px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;line-height:1">This device or every device.</span></span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="log-out" on-click="{{ so.open }}" dc-props="{{ sx.ring }}" hint-size="130px,44px">Sign out</x-import>
 </div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 240px"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Delete account</span><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">Erases every event, note, photo and family member for everyone, and signs out all screens.</span></div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="trash-2" on-click="{{ da.open }}" dc-props="{{ da.openP }}" hint-size="170px,44px">Delete account</x-import>
+</div>
+<a href="Glance%20Terms%20of%20Service.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Terms of Service</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
 </div>
 </div>
 </div>
@@ -1156,6 +1212,60 @@
 </div>
 </div>
 </sc-if>
+<sc-if value="{{ so.on }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px;box-sizing:border-box">
+<div onClick="{{ so.close }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
+<div role="dialog" aria-modal="true" aria-labelledby="so-title" style="position:relative;width:100%;max-width:480px;background:var(--surface-canvas);border-radius:32px;box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:24px;padding:28px 24px 24px;box-sizing:border-box">
+<span style="display:grid;place-items:center;width:64px;height:64px;border-radius:9999px;background:var(--season-block-1)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="log-out" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span>
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ so.who }}</x-import>
+<div id="so-title" style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">Sign out</div>
+<div style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">Sign out of this screen only, or of every phone, tablet and screen signed in with this email. Calendars, notes and photos stay saved to the account.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="log-out" on-click="{{ signOut }}" dc-props="{{ so.fullRing }}" hint-size="100%,44px">Sign out this device</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="monitor-smartphone" on-click="{{ so.all }}" dc-props="{{ so.full }}" hint-size="100%,44px">Sign out all devices</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ so.close }}" dc-props="{{ so.full }}" hint-size="100%,44px">Cancel</x-import>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ da.on }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px;box-sizing:border-box">
+<div onClick="{{ da.close }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
+<div role="alertdialog" aria-modal="true" aria-labelledby="da-title" aria-describedby="da-body" aria-busy="{{ da.busyStr }}" style="position:relative;width:100%;max-width:520px;max-height:calc(100% - 32px);overflow-y:auto;background:var(--surface-canvas);border-radius:32px;box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:24px;padding:28px 24px 24px;box-sizing:border-box">
+<span style="display:grid;place-items:center;width:64px;height:64px;flex:none;border-radius:9999px;background:var(--danger);color:var(--white)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="trash-2" size="28" stroke-width="1.5" hint-size="28px,28px"></x-import></span>
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ da.who }}</x-import>
+<div id="da-title" style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">Delete account?</div>
+<div id="da-body" style="font-size:16px;font-weight:330;line-height:1.45;text-wrap:pretty">Everything saved to this account is erased for the whole family. This can’t be undone.</div>
+</div>
+<div role="list" aria-label="What gets erased" style="display:flex;flex-direction:column;background:var(--surface-soft);border-radius:8px;padding:0 16px">
+<sc-for list="{{ da.items }}" as="it" hint-placeholder-count="5">
+<div role="listitem" style="display:flex;align-items:center;gap:14px;min-height:52px;box-shadow:{{ it.div }}">
+<span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ it.icon }}" size="20" hint-size="20px,20px"></x-import></span>
+<span style="flex:1;min-width:0;font-size:17px;font-weight:330">{{ it.label }}</span>
+<span style="flex:none;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;font-variant-numeric:tabular-nums">{{ it.count }}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ da.idle }}" hint-placeholder-val="{{ true }}">
+<button type="button" role="checkbox" aria-checked="{{ da.ackStr }}" onClick="{{ da.toggle }}" style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0;border:0;background:transparent;font-family:inherit;color:var(--text-primary);text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.98)"><span style="flex:none;width:28px;height:28px;border-radius:8px;background:{{ da.cbBg }};box-shadow:{{ da.cbRing }};color:var(--on-action-primary);display:grid;place-items:center"><sc-if value="{{ da.ack }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="18" stroke-width="2.5" hint-size="18px,18px"></x-import></sc-if></span><span style="font-size:17px;font-weight:340;line-height:1.35;text-wrap:pretty">I understand everything will be erased for good.</span></button>
+</sc-if>
+<sc-if value="{{ da.busy }}" hint-placeholder-val="{{ false }}"><div role="status" style="display:flex;align-items:center;min-height:56px;font-size:17px;font-weight:340;line-height:1.35">Erasing events, notes and photos. Keep this screen on.</div></sc-if>
+<div style="display:flex;flex-direction:column;gap:12px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" icon="trash-2" on-click="{{ da.confirm }}" dc-props="{{ da.btn }}" hint-size="100%,44px">{{ da.btnLabel }}</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ da.close }}" dc-props="{{ da.cancelP }}" hint-size="100%,44px">Keep account</x-import>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ daDone }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:31;max-width:calc(100% - 32px);box-sizing:border-box;background:var(--surface-inverse,#000);color:#fff;border-radius:9999px;padding:12px 20px;font-size:15px;font-weight:340;text-wrap:pretty">Account deleted. Everything on it has been erased.</div>
+</sc-if>
+<sc-if value="{{ soDone }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:31;max-width:calc(100% - 32px);box-sizing:border-box;background:var(--surface-inverse,#000);color:#fff;border-radius:9999px;padding:12px 20px;font-size:15px;font-weight:340;text-wrap:pretty">Signed out of all devices.</div>
+</sc-if>
 <sc-if value="{{ dp.isOpen }}" hint-placeholder-val="{{ false }}">
 <div style="position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:8px;box-sizing:border-box">
 <div onClick="{{ dp.close }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
@@ -1173,9 +1283,10 @@
 <sc-if value="{{ sheet.open }}" hint-placeholder-val="{{ false }}">
 <div style="position:fixed;top:0;left:0;right:0;bottom:{{ kbPad }};z-index:10;display:grid;place-items:{{ pgx.place }};padding:{{ pgx.outPad }};pointer-events:{{ pgx.pe }};box-sizing:border-box;transition:bottom 280ms cubic-bezier(.2,.7,.2,1)">
 <div onClick="{{ scrimTap }}" style="position:absolute;inset:0;background:var(--scrim);display:{{ pgx.scrimD }}"></div>
-<div role="dialog" aria-label="{{ sheet.title }}" data-page="{{ pgx.on }}" style="position:relative;width:100%;max-width:{{ pgx.maxW }};max-height:100%;height:{{ pgx.h }};overflow:{{ pgx.ov }};background:{{ sheet.bodyBg }};border-radius:{{ sheet.radius }};transform:{{ sheet.rot }};transition:{{ pgx.tr }};padding:{{ pgx.pad }};box-shadow:{{ pgx.sh }};display:{{ pgx.d }};flex-direction:column;gap:{{ pgx.gap }};grid-template-columns:{{ pgx.cols }};grid-template-rows:{{ pgx.rows }};box-sizing:border-box">
-<div data-ds-new="SheetHeader" style="grid-row:1;grid-column:1;position:{{ pgx.hdPos }};top:{{ pgx.hdTop }};z-index:2;background:{{ sheet.bg }};box-shadow:{{ pgx.hdSh }};margin:{{ pgx.hdM }};padding:{{ pgx.hdP }};display:flex;flex-direction:{{ pgx.hdDir }};justify-content:{{ pgx.hdJc }};align-items:{{ pgx.hdAi }};gap:16px;min-width:0">
-<div style="display:flex;flex-direction:column;gap:6px">
+<div role="dialog" aria-label="{{ sheet.title }}" data-page="{{ pgx.on }}" style="position:relative;width:100%;max-width:{{ pgx.maxW }};max-height:100%;height:{{ pgx.h }};overflow:{{ pgx.ov }};background:{{ pgx.bg }};border-radius:{{ sheet.radius }};transform:{{ sheet.rot }};transition:{{ pgx.tr }};padding:{{ pgx.pad }};box-shadow:{{ pgx.sh }};display:{{ pgx.d }};flex-direction:column;gap:{{ pgx.gap }};grid-template-columns:{{ pgx.cols }};grid-template-rows:{{ pgx.rows }};box-sizing:border-box">
+<div data-pg-scroll="1" style="display:{{ pgx.inD }};height:100%;overflow:auto;background:var(--surface-canvas);border-radius:24px;grid-template-columns:{{ pgx.cols }};grid-template-rows:{{ pgx.rows }};box-sizing:border-box">
+<div data-ds-new="SheetHeader" style="grid-row:1;grid-column:1;position:{{ pgx.hdPos }};top:{{ pgx.hdTop }};z-index:2;background:{{ pgx.hdBg }};box-shadow:{{ pgx.hdSh }};border-radius:{{ pgx.hdR }};margin:{{ pgx.hdM }};padding:{{ pgx.hdP }};display:flex;flex-direction:{{ pgx.hdDir }};justify-content:{{ pgx.hdJc }};align-items:{{ pgx.hdAi }};gap:16px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 auto;min-width:0">
 <div style="position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-height:20px"><sc-if value="{{ sdp.fixed }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import></sc-if><sc-if value="{{ sdp.can }}" hint-placeholder-val="{{ false }}"><button data-ds-new="DateEyebrow" type="button" onClick="{{ sdp.toggle }}" aria-expanded="{{ sdp.expanded }}" aria-label="{{ sdp.aria }}" style="display:flex;align-items:center;min-height:44px;margin:-12px 0;padding:0;border:0;background:transparent;color:inherit;font-family:inherit;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;align-items:center;gap:8px;height:20px"><span style="display:flex;align-items:center;height:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="16" stroke-width="1.75" style="display:block" hint-size="16px,16px"></x-import></span><span style="display:flex;align-items:center;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" style="display:block;line-height:1" hint-size="160px,20px">{{ sheet.eyebrow }}</x-import></span><span style="display:flex;align-items:center;height:16px;transform:{{ sdp.chevRot }};transition:transform 180ms"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="16" stroke-width="1.75" style="display:block" hint-size="16px,16px"></x-import></span></span></button></sc-if><sc-if value="{{ sdp.open }}" hint-placeholder-val="{{ false }}"><button type="button" aria-label="Close date picker" onClick="{{ sdp.close }}" style="position:fixed;inset:0;z-index:4;border:0;padding:0;margin:0;background:transparent;cursor:default"></button><div data-ds-new="QuickDatePicker" role="dialog" aria-label="Change date" style="position:absolute;top:calc(100% + 16px);left:-10px;z-index:5;width:352px;max-width:calc(100vw - 32px);box-sizing:border-box;background:var(--surface-canvas);border-radius:24px;padding:16px;box-shadow:0 12px 32px rgba(0,0,0,.14),inset 0 0 0 1px var(--border-hairline-soft);display:flex;flex-direction:column;gap:14px">
 <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ sdp.quick }}" as="q" hint-placeholder-count="3"><button type="button" onClick="{{ q.tap }}" aria-pressed="{{ q.sel }}" style="min-height:44px;padding:0 16px;border:0;border-radius:9999px;background:{{ q.bg }};color:{{ q.fg }};font-family:inherit;font-size:16px;font-weight:{{ q.w }};cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ q.label }}</button></sc-for></div>
 <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><button type="button" onClick="{{ sdp.prev }}" aria-label="Previous month" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;border-radius:9999px;background:transparent;color:inherit;cursor:pointer" style-hover="background:var(--surface-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-left" size="20" hint-size="20px,20px"></x-import></button><span aria-live="polite" style="font-size:17px;font-weight:540">{{ sdp.month }}</span><button type="button" onClick="{{ sdp.next }}" aria-label="Next month" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;border-radius:9999px;background:transparent;color:inherit;cursor:pointer" style-hover="background:var(--surface-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="20" hint-size="20px,20px"></x-import></button></div>
@@ -1183,11 +1294,11 @@
 </div></sc-if><sc-if value="{{ sheet.wx.has }}" hint-placeholder-val="{{ false }}"><span data-ds-new="SheetWeather" aria-label="{{ sheet.wx.aria }}" style="display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);white-space:nowrap"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ sheet.wx.icon }}" size="16" stroke-width="1.5" hint-size="16px,16px"></x-import>{{ sheet.wx.temp }}</span></sc-if></div>
 <sc-if value="{{ sheet.showTitle }}" hint-placeholder-val="{{ true }}"><div style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">{{ sheet.title }}</div></sc-if>
 </div>
-<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="{{ pgx.closeIcon }}" label="{{ pgx.closeLabel }}" size="touch" on-click="{{ sheetClose }}" hint-size="56px,56px"></x-import>
+<div style="flex:none;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="{{ pgx.closeIcon }}" label="{{ pgx.closeLabel }}" size="touch" dc-props="{{ pgx.closeBp }}" on-click="{{ sheetClose }}" hint-size="56px,56px"></x-import></div>
 </div>
 <sc-if value="{{ sheet.showOff }}" hint-placeholder-val="{{ false }}"><div style="grid-row:2;grid-column:1 / -1;padding:{{ pgx.offP }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" title="You’re offline" body="{{ sheet.offBody }}" tone="soft" hint-size="100%,80px"></x-import></div></sc-if>
-<div data-ds-new="EventPageBody" data-sheet-scroll="1" style="grid-row:3;grid-column:1 / -1;display:{{ pgx.bodyD }};grid-template-columns:{{ pgx.bodyCols }};align-items:stretch;position:relative">
-<div style="display:{{ pgx.fcD }};flex-direction:column;gap:20px;padding:{{ pgx.fcP }};box-sizing:border-box">
+<div data-ds-new="EventPageBody" data-sheet-scroll="1" style="grid-row:3;grid-column:1 / -1;display:{{ pgx.bodyD }};grid-template-columns:{{ pgx.bodyCols }};column-gap:{{ pgx.bodyGap }};margin-top:{{ pgx.bodyMt }};padding:{{ pgx.bodyP }};align-items:stretch;position:relative">
+<div style="display:{{ pgx.fcD }};flex-direction:column;gap:20px;padding:{{ pgx.fcP }};background:{{ pgx.fcBg }};border-radius:{{ pgx.fcR }};box-sizing:border-box">
 <sc-if value="{{ sheet.isEventView }}" hint-placeholder-val="{{ false }}">
 <div data-ds-new="EventDetails" style="display:flex;flex-direction:column">
 <div style="background:{{ evv.fill }};border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:12px;margin-bottom:8px">
@@ -1291,7 +1402,7 @@
 </sc-if>
 <sc-if value="{{ sheet.isNoteView }}" hint-placeholder-val="{{ false }}">
 <div data-ds-new="NoteDetails" style="margin-top:-12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:24px">
-<div style="font-size:clamp(32px,3.4vw,48px);font-weight:400;letter-spacing:-0.6px;line-height:1.2;white-space:pre-line;text-wrap:pretty;overflow-wrap:anywhere">{{ nv.text }}</div>
+<div style="font-size:clamp(24px,2.4vw,32px);font-weight:400;letter-spacing:-0.4px;line-height:1.25;white-space:pre-line;text-wrap:pretty;overflow-wrap:anywhere">{{ nv.text }}</div>
 </div>
 </sc-if>
 <sc-if value="{{ sheet.isNoteEdit }}" hint-placeholder-val="{{ false }}">
@@ -1326,15 +1437,15 @@
 </sc-if>
 </div>
 <sc-if value="{{ pv.show }}" hint-placeholder-val="{{ false }}">
-<aside data-ds-new="DayPreview" aria-label="{{ pv.eyebrow }}" style="margin:40px 0;background:transparent;border-left:1px solid var(--border-hairline);padding:0 48px 0 40px;display:flex;flex-direction:column;gap:40px;min-height:0;box-sizing:border-box">
+<aside data-ds-new="DayPreview" aria-label="{{ pv.eyebrow }}" style="margin:{{ pgx.pvM }};background:{{ pgx.pvBg }};border-left:{{ pgx.pvBl }};border-radius:{{ pgx.pvR }};padding:{{ pgx.pvP }};display:flex;flex-direction:column;gap:40px;min-height:0;box-sizing:border-box">
 <sc-if value="{{ pv.wx.has }}" hint-placeholder-val="{{ false }}">
-<div style="background:var(--surface-soft);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-weather);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px">
 <div style="display:flex;align-items:center;gap:16px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ pv.wx.icon }}" size="40" stroke-width="1.25" hint-size="40px,40px"></x-import>
 <div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:40px;font-weight:300;letter-spacing:-1px;line-height:1">{{ pv.wx.temp }}</span><span style="font-size:17px;font-weight:330;line-height:1.35">{{ pv.wx.cond }}</span></div>
 </div>
 <sc-if value="{{ pv.wx.multi }}" hint-placeholder-val="{{ false }}">
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;border-top:1px solid var(--border-hairline);padding-top:16px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px;border-top:1px solid var(--surface-canvas);padding-top:16px">
 <sc-for list="{{ pv.wx.hours }}" as="w" hint-placeholder-count="3"><div aria-label="{{ w.aria }}" style="display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;white-space:nowrap">{{ w.t }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ w.icon }}" size="20" stroke-width="1.5" hint-size="20px,20px"></x-import><span style="font-size:16px;font-weight:400">{{ w.temp }}</span></div></sc-for>
 </div>
 </sc-if>
@@ -1349,7 +1460,7 @@
 </aside>
 </sc-if>
 </div>
-<div style="grid-row:{{ pgx.ftRow }};grid-column:{{ pgx.ftCol }};display:flex;justify-content:{{ pgx.ftJc }};align-items:center;gap:12px;flex-wrap:wrap;position:{{ pgx.ftPos }};top:{{ pgx.ftTop }};bottom:{{ pgx.ftBot }};z-index:2;margin:{{ pgx.ftM }};padding:{{ pgx.ftP }};background:{{ sheet.bg }};box-shadow:{{ pgx.ftSh }}">
+<div style="grid-row:{{ pgx.ftRow }};grid-column:{{ pgx.ftCol }};display:flex;justify-content:{{ pgx.ftJc }};align-items:center;gap:12px;flex-wrap:wrap;position:{{ pgx.ftPos }};top:{{ pgx.ftTop }};bottom:{{ pgx.ftBot }};z-index:2;margin:{{ pgx.ftM }};padding:{{ pgx.ftP }};background:{{ pgx.ftBg }};border-radius:{{ pgx.ftR }};box-shadow:{{ pgx.ftSh }}">
 <sc-if value="{{ sheet.notAsking }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex">
 <sc-if value="{{ sheet.canDelete }}" hint-placeholder-val="{{ false }}">
@@ -1383,6 +1494,7 @@
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" on-click="{{ discardSheet }}" dc-props="{{ dangerBtn }}" hint-size="110px,44px">Discard</x-import>
 </div>
 </sc-if>
+</div>
 </div>
 </div>
 </div>
@@ -1505,14 +1617,16 @@ class Component extends DCLogic {
       net, kb: q.get('kb') === '1', vh: window.innerHeight,
       amb: { mode: { split: 'Weekends differ', off: 'Off' }[q.get('amb')] || 'Every night', all: { s: 1080, e: 450 }, wknd: { s: 1260, e: 540 }, ...(q.get('amb') === 'same' ? { all: { s: 1080, e: 1080 } } : {}) }, ambPick: q.get('pick') || null, ambBright: { full: 'Full', low: 'Low' }[q.get('bright')] || 'Medium', ambShiftI: 0,
       view: view0, vw: window.innerWidth, geo, geoOff: false, wxPending: '',
-      demo: q.get('demo') === '1' || /^demo\./.test(location.hostname), signinStep: SIS[siq] || 'form', code: { code: (q.get('code') || '').replace(/\D/g, '').slice(0, 6), checking: '482913', wrong: '' }[siq] ?? '', codeBusy: siq === 'checking', codeTries: siq === 'locked' ? 5 : siq === 'wrong' ? 1 : 0, codeErr: { wrong: 'That code isn’t right. Try again.', locked: 'Too many tries. Send a new code.' }[siq] || '', codeFocus: false, acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
+      scan: { ask: 'ask', blocked: 'blocked', nocam: 'nocam', on: 'on', found: 'found', wrong: 'wrong' }[q.get('scan')] || '', scanErr: q.get('scan') === 'expired' ? 'That code has expired or was already used. Sign in with your email instead.' : '', signinStep: SIS[siq] || 'form', code: { code: (q.get('code') || '').replace(/\D/g, '').slice(0, 6), checking: '482913', wrong: '' }[siq] ?? '', codeBusy: siq === 'checking', codeTries: siq === 'locked' ? 5 : siq === 'wrong' ? 1 : 0, codeErr: { wrong: 'That code isn’t right. Try again.', locked: 'Too many tries. Send a new code.' }[siq] || '', codeFocus: false, acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
       email: sw ? 'sam.lee@example.com' : siq && siq !== 'form' ? 'maria@example.com' : '', emailErr: siq === 'sendfail' ? 'Couldn’t send. Try again.' : '', ended, pendingN: ended ? Math.max(0, parseInt(q.get('pending'), 10) || 0) : 0, endedEmail: 'maria@example.com', wxStep: '', wxMatches: [], wxQ: '',
       people: Component.PEOPLE.map((p) => [...p]), events, notes, span24: q.get('span') === '24', dpOpen: q.get('dp') === 'open', whoOpen: q.get('whosheet') === '1', selDay: parseInt(q.get('day'), 10) || 9, who: q.get('who') === 'none' ? [] : q.get('who') ? q.get('who').split(',').filter((k) => Component.PEOPLE.some((p) => p[0] === k)) : Component.PEOPLE.map((p) => p[0]), tl: {}, sheet, photoIdx: 0, full: q.get('full') === '1', fsChrome: q.get('chrome') !== '0', empty, wxLoc: empty || siq === 'location' || siq === 'name' || (wxq && view0 !== 'location') ? '' : 'Portland, OR', wxDraft: '', wxErr: '', hasPhotos: !empty,
       bgMode: q.get('bg') === 'photo' ? 'Photo' : 'Season color', bgId: 'coast', dim: 'Light', rotate: 'Daily', potdQ: q.get('potd') || '', potdLong: q.get('potdlong') === '1', potdQr: q.get('potd') === 'qr', potdErr: q.get('potd') === 'error',
+      storeGB: Math.max(0, parseFloat(q.get('storage')) || 3.2), da: ['ask', 'ack', 'deleting'].includes(q.get('delacct')) ? q.get('delacct') : '', daDone: q.get('delacct') === 'done',
       seasonPick: sn ? sn[0].toUpperCase() + sn.slice(1) : 'Auto', clockFmt: q.get('clock') === '24' ? '24-hour' : '12-hour', tempUnit: 'Fahrenheit', idle: '3 min', idleN: 3, barMode: ['hidden', 'float'].includes(q.get('bar')) ? q.get('bar') : 'docked', barAuto: q.get('barauto') === 'off' ? 'Off' : 'On', railHidden: q.get('rail') !== '1' && q.get('drawer') !== '1' && view0 === 'today', drawerOpen: q.get('drawer') === '1', noteKeep: '7 days', keepN: 7, calYM: 2026 * 12 + 9, playing: q.get('play') !== '0' && q.get('phdel') !== '1', phDel: q.get('phdel') === '1' ? 'orchard' : '', phQr: q.get('phqr') === '1', uploads: UPM[upq] || (sheet && sheet.kind === 'photo' ? UPM.done : []), phEdits: {}, phGone: [], ...WXS,
     };
   }
   static NOW = 10 * 60 + 41;
+  static STORAGE_GB = 5;
   static PEOPLE = [['an', 'Minh-An', 'var(--block-lilac)'], ['hy', 'Minh-Hy', 'var(--block-sky)'], ['mom', 'Mom', 'var(--block-coral)'], ['dad', 'Dad', 'var(--block-mint)'], ['thang', 'Thang', 'var(--block-sun)'], ['tin', 'Tin', 'var(--block-pink)'], ['nghe', 'Nghe', 'var(--block-lime)'], ['an2', 'An', 'var(--block-rust)'], ['nga', 'Nga', 'var(--block-glacier)']];
   static TAG_PAL = ['lilac', 'sky', 'coral', 'mint', 'sun', 'pink', 'lime', 'rust', 'glacier', 'amber', 'sage', 'ice'].map((k) => ['var(--block-' + k + ')', k[0].toUpperCase() + k.slice(1)]);
   static dayWx(k) { if (Component.DAILY[k]) return Component.DAILY[k]; const dt = new Date(2026, 9, k), doy = Math.round((dt - new Date(2026, 0, 1)) / 864e5), I = ['sun', 'cloud-sun', 'cloud', 'cloud-rain', 'cloud-sun', 'sun', 'cloud-drizzle', 'cloud', 'cloud-sun', 'cloud-rain', 'sun']; const s = Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1; return [I[Math.floor(s * I.length)], Math.round(64 + 16 * Math.cos((doy - 200) / 365 * 2 * Math.PI) + (s - 0.5) * 8)]; }
@@ -1743,6 +1857,17 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { clearInterval(this.driftTimer); clearInterval(this.drawerTimer); clearInterval(this.backTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
   later(ms, fn) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
+  openScan() { const S = this.state; if (S.net === 'offline' || S.signinStep === 'sending') return; if (this._camOk) { this.setState({ scan: 'on', scanErr: '' }); this.runScan(); } else this.setState({ scan: 'ask', scanErr: '' }); }
+  allowCam() { this._camOk = true; this.setState({ scan: 'on' }); this.runScan(); }
+  runScan() {
+    clearTimeout(this._scanT);
+    this._scanT = setTimeout(() => {
+      if (this.state.scan !== 'on' && this.state.scan !== 'wrong') return;
+      this.setState({ scan: 'found' });
+      this._scanT = setTimeout(() => { if (this.state.scan !== 'found') return; this.setState({ scan: '', email: 'maria@example.com', userName: 'Maria', acctNew: false, emailErr: '' }); this.finishSignIn(); }, 1200);
+    }, 3000);
+  }
+  cancelScan() { clearTimeout(this._scanT); this.setState({ scan: '' }); }
   setCode(v) {
     const S = this.state; if (S.codeBusy || S.codeTries >= 5) return;
     const code = String(v).replace(/\D/g, '').slice(0, 6);
@@ -1762,7 +1887,7 @@ class Component extends DCLogic {
   sendLink() {
     const S = this.state; if (S.net === 'offline' || S.signinStep === 'sending') return;
     if (!/\S+@\S+\.\S+/.test(S.email)) return this.setState({ emailErr: 'Enter a valid email address' });
-    this.setState({ signinStep: 'sending', emailErr: '', code: '', codeErr: '', codeTries: 0, codeBusy: false });
+    this.setState({ signinStep: 'sending', emailErr: '', scanErr: '', code: '', codeErr: '', codeTries: 0, codeBusy: false });
     this.later(1400, () => /fail/i.test(this.state.email) ? this.setState({ signinStep: 'form', emailErr: 'Couldn’t send. Try again.' }) : this.setState({ signinStep: 'sent' }));
   }
   endNow(add = 0) { this.setState((s) => ({ pendingN: s.pendingN + add })); this.go('signin'); }
@@ -1835,8 +1960,9 @@ class Component extends DCLogic {
   backToView() { this.setState((st) => ({ sheet: { ...st.sheet, mode: 'view', draft: { ...st.sheet.orig }, discard: false, discardTo: null, confirm: false, pick: null, err: '', endErr: '' } })); }
   revealTimes() {
     try {
-      const dlg = document.querySelector('[role=dialog]'), row = dlg && dlg.querySelector('[data-time-row]');
+      const dlg0 = document.querySelector('[role=dialog]'), row = dlg0 && dlg0.querySelector('[data-time-row]');
       if (!row) return false;
+      const sc = dlg0.querySelector('[data-pg-scroll]'), dlg = sc && getComputedStyle(sc).display !== 'contents' ? sc : dlg0;
       const d = dlg.getBoundingClientRect(), r = row.getBoundingClientRect(), panel = dlg.querySelector('[data-time-panel]');
       const bottom = (panel || row).getBoundingClientRect().bottom;
       if (bottom > d.bottom - 96 || r.top < d.top) dlg.scrollTop = Math.max(0, dlg.scrollTop + (r.top - d.top) - 16);
@@ -2030,7 +2156,7 @@ class Component extends DCLogic {
     const RAIL = HS === 'rail' && !S.railHidden && !PH1;
     const dItem = (k, label, icon, active, tap) => ({ label, icon, active: !!active, cur: active ? 'page' : undefined, bg: active ? 'var(--action-primary)' : 'transparent', fg: active ? 'var(--on-action-primary)' : 'var(--text-primary)', tap: () => { tap(); this.setState({ drawerOpen: false }); } });
     const noSide = view === 'ambient' || view === 'signin';
-    const gripPad = view !== 'today' && !S.full && (HS === 'grip' || HS === 'rail') ? (PH1 ? '24px' : '36px') : '0px';
+    const gripPad = !S.full && (HS === 'grip' || HS === 'rail') ? (PH1 ? '24px' : '36px') : '0px';
     const nav = { bottom: NAVP === 'bottom', side: NAVP !== 'bottom' && !noSide, expanded: dOpen ? 'true' : 'false', hidden: dOpen ? 'false' : 'true', pe: dOpen ? 'auto' : 'none', op: dOpen ? 1 : 0,
       open: () => this.setState({ drawerOpen: true }), close: closeD,
       hl: isL ? '0' : 'auto', hr: isL ? 'auto' : '0', hRad: isL ? '0 24px 24px 0' : '24px 0 0 24px', gJ: isL ? 'flex-start' : 'flex-end', gW: PH1 ? '24px' : '36px', gH: PH1 ? '96px' : '112px', hIcon: isL ? 'chevron-right' : 'chevron-left', hOp: dOpen || S.full ? 0 : 1,
@@ -2320,18 +2446,31 @@ class Component extends DCLogic {
     })();
     const evvOn = !!ev0 && ev0.mode === 'view', nvOn = !!sh && sh.kind === 'note' && sh.mode === 'view', viewing = evvOn || nvOn;
     const PG = !!ev0, PGP = PG && SM, pgS = S.pg || 'in', noteEd = !!sh && sh.kind === 'note' && !nvOn, NFS = noteEd && SM;
+    const LKQ = new URLSearchParams(location.search).get('evlook'), LK = PG ? (['bars', 'panel', 'season'].includes(LKQ) ? LKQ : 'cards') : null;
+    const CARDS = LK === 'cards', BARS = LK === 'bars', PAN = LK === 'panel', SEA = LK === 'season', G = 'clamp(20px,2.6vw,40px)', HL = 'var(--border-hairline-soft)';
+    const appBg = layer(d, 'var(--hairline-soft)'), shBg = nvOn || noteEd ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', barBg = SEA ? 'var(--surface-hero)' : shBg;
     const pgx = {
       on: PG ? 'true' : 'false', place: PG || NFS ? 'stretch' : noteEd ? 'start center' : 'center', outPad: PG || NFS ? '0' : noteEd ? 'clamp(16px,6vh,64px) 24px 24px' : '24px', pe: PG && pgS === 'exit' ? 'none' : 'auto', scrimD: PG ? 'none' : 'block',
-      maxW: PG || NFS ? 'none' : noteEd ? '640px' : '560px', h: PG || NFS ? '100%' : 'auto', ov: 'auto', pad: PG ? '0' : 'clamp(24px,3vw,40px)', sh: PG ? 'none' : 'var(--shadow-3)', d: PG ? 'grid' : 'flex', gap: PG ? '0' : '20px',
+      maxW: PG || NFS ? 'none' : noteEd ? '640px' : '560px', h: PG || NFS ? '100%' : 'auto', ov: PAN ? 'hidden' : 'auto', sh: PG ? 'none' : 'var(--shadow-3)', d: PAN ? 'block' : PG ? 'grid' : 'flex', gap: PG ? '0' : '20px',
+      pad: !PG ? 'clamp(24px,3vw,40px)' : CARDS ? G : PAN ? (PGP ? '12px' : G) : '0',
+      bg: !PG ? (nvOn || noteEd ? toneBg(sh.draft.tone) : 'var(--surface-soft)') : SEA ? 'var(--surface-canvas)' : appBg, inD: PAN ? 'grid' : 'contents',
       tr: !PG ? 'transform 280ms ease-out' : pgS === 'enter' ? 'none' : pgS === 'exit' ? 'transform 280ms cubic-bezier(.6,0,.8,.3)' : 'transform 280ms cubic-bezier(.2,.7,.2,1)',
       cols: PG && !PGP ? 'minmax(0,1fr) auto' : 'minmax(0,1fr)', rows: PGP ? 'auto auto 1fr auto' : 'auto auto 1fr',
-      hdPos: 'sticky', hdTop: PG ? '0' : 'calc(-1 * clamp(24px,3vw,40px))', hdM: PG ? '0' : 'calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px)) 0', hdP: !PG ? 'clamp(24px,3vw,40px) clamp(24px,3vw,40px) 12px' : PGP ? '12px 16px' : '20px 48px',
-      hdSh: PG ? 'inset 0 -1px 0 var(--border-hairline-soft)' : sh && sh.kind === 'note' ? 'none' : '0 2px 8px rgba(0,0,0,.04)', hdDir: PG ? 'row-reverse' : 'row', hdJc: PG ? 'flex-end' : 'space-between', hdAi: PG || noteEd || nvOn ? 'center' : 'flex-start',
-      closeIcon: PG ? 'arrow-left' : 'x', closeLabel: PG ? 'Back' : 'Close', offP: PG ? (PGP ? '12px 16px 0' : '16px 48px 0') : '0',
-      bodyD: PG ? 'grid' : 'contents', bodyCols: PGP ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(380px,34%)', fcD: PG ? 'flex' : 'contents', fcP: PGP ? '20px 16px 32px' : '40px max(48px, calc((100% - 720px) / 2)) 64px',
+      hdPos: 'sticky', hdTop: PG ? '0' : 'calc(-1 * clamp(24px,3vw,40px))', hdM: PG ? '0' : 'calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px)) 0',
+      hdP: !PG ? 'clamp(24px,3vw,40px) clamp(24px,3vw,40px) 12px' : CARDS ? (PGP ? '12px' : '20px 24px') : SEA ? (PGP ? '16px' : `28px ${G}`) : PGP ? '12px 16px' : BARS ? `20px ${G}` : '20px 32px',
+      hdR: CARDS ? (PGP ? '24px' : '24px 0 0 24px') : '0', hdBg: PG ? barBg : shBg,
+      hdSh: !PG ? (sh && sh.kind === 'note' ? 'none' : '0 2px 8px rgba(0,0,0,.04)') : CARDS || SEA ? 'none' : `inset 0 -1px 0 ${HL}`, hdDir: PG ? 'row-reverse' : 'row', hdJc: PG ? 'flex-end' : 'space-between', hdAi: PG || noteEd || nvOn ? 'center' : 'flex-start',
+      closeIcon: PG ? 'arrow-left' : 'x', closeLabel: PG ? 'Back' : 'Close', closeBp: SEA ? { variant: 'canvas' } : {},
+      offP: !PG ? '0' : CARDS ? (PGP ? '12px 0 0' : '24px 0 0') : PGP ? '12px 16px 0' : PAN ? '24px 32px 0' : `24px ${G} 0`,
+      bodyGap: CARDS || BARS ? (PGP ? '12px' : '24px') : '0', bodyMt: CARDS ? (PGP ? '12px' : '24px') : '0', bodyP: BARS ? (PGP ? '12px' : G) : '0',
+      fcBg: CARDS || BARS ? 'var(--surface-canvas)' : 'transparent', fcR: CARDS || BARS ? '24px' : '0',
+      bodyD: PG ? 'grid' : 'contents', bodyCols: PGP ? 'minmax(0,1fr)' : 'minmax(0,1fr) minmax(380px,34%)', fcD: PG ? 'flex' : 'contents', fcP: PGP ? '20px 16px 32px' : '40px max(40px, calc((100% - 720px) / 2)) 48px',
       ftRow: PGP ? '4' : '1', ftCol: PGP ? '1' : '2', ftJc: PG && !PGP ? 'flex-end' : 'space-between', ftPos: 'sticky', ftTop: PG && !PGP ? '0' : 'auto', ftBot: PGP ? '0' : PG ? 'auto' : 'calc(-1 * clamp(24px,3vw,40px))',
-      ftM: PG ? '0' : '0 calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px))', ftP: !PG ? '16px clamp(24px,3vw,40px) clamp(24px,3vw,40px)' : PGP ? '12px 16px' : '20px 48px 20px 0',
-      ftSh: !PG ? (sh && sh.kind === 'note' ? 'none' : '0 -2px 8px rgba(0,0,0,.04)') : PGP ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'inset 0 -1px 0 var(--border-hairline-soft)',
+      ftM: PG ? (CARDS && PGP ? '12px 0 0' : '0') : '0 calc(-1 * clamp(24px,3vw,40px)) calc(-1 * clamp(24px,3vw,40px))',
+      ftP: !PG ? '16px clamp(24px,3vw,40px) clamp(24px,3vw,40px)' : CARDS ? (PGP ? '12px' : '20px 24px 20px 0') : PGP ? '12px 16px' : SEA ? `28px ${G} 28px 0` : BARS ? `20px ${G} 20px 0` : '20px 32px 20px 0',
+      ftR: CARDS ? (PGP ? '24px' : '0 24px 24px 0') : '0', ftBg: PG && !PGP ? barBg : shBg,
+      ftSh: !PG ? (sh && sh.kind === 'note' ? 'none' : '0 -2px 8px rgba(0,0,0,.04)') : CARDS ? 'none' : PGP ? `inset 0 1px 0 ${HL}` : SEA ? 'none' : `inset 0 -1px 0 ${HL}`,
+      pvBg: SEA ? 'transparent' : PAN ? 'var(--surface-soft)' : 'var(--surface-canvas)', pvR: CARDS || BARS ? '24px' : '0', pvP: SEA ? '0 48px 0 40px' : PAN ? '40px' : '32px', pvM: SEA ? '40px 0' : '0', pvBl: SEA ? '1px solid var(--border-hairline)' : 'none',
     };
     const sdp = (() => {
       const can = !!ev0 && !evvOn, base = { can, fixed: !can, open: false, expanded: 'false', quick: [], cells: [], wds: [], ebBg: 'transparent', chevRot: 'none' };
@@ -2442,7 +2581,7 @@ class Component extends DCLogic {
     const codeLocked = S.codeTries >= 5;
     const st = S.signinStep, first = S.userName.trim().split(/\s+/)[0] || 'Maria';
     const si = { form: st === 'form' || st === 'sending', sending: st === 'sending', notSending: st !== 'sending', sent: st === 'sent', name: st === 'name', location: st === 'location', expired: st === 'expired', done: st === 'done',
-      ended: S.ended, notEnded: !S.ended, demo: S.demo && !S.ended, showDemo: st !== 'sending' && !S.ended, prevEmail: S.endedEmail,
+      ended: S.ended, notEnded: !S.ended, prevEmail: S.endedEmail,
       endBody: 'Sign in again to keep the calendar, notes and photos up to date.' + (S.pendingN ? ` Changes waiting on this screen: ${S.pendingN}.` + (S.email.trim().toLowerCase() === S.endedEmail ? ' They’ll be sent after you sign in.' : '') : ''),
       switchWarn: S.ended && S.pendingN > 0 && !!S.email.trim() && S.email.trim().toLowerCase() !== S.endedEmail,
       sendOff: off || st === 'sending', sendLabel: st === 'sending' ? 'Sending…' : 'Send code', sendIcon: st === 'sending' ? undefined : 'arrow-right', welcome: (S.acctNew ? 'Welcome, ' : 'Welcome back, ') + first };
@@ -2518,6 +2657,16 @@ class Component extends DCLogic {
         { icon: 'smartphone', name: 'Maria’s phone', meta: 'Active Oct 2' }
       ].map((d, i) => ({ ...d, div: i ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'none' })),
       deviceCount: '4 screens signed in',
+      store: (() => {
+        const cap = Component.STORAGE_GB, u = Math.min(cap, S.storeGB), left = cap - u, r = u / cap, f = (n) => String(Math.round(n * 10) / 10);
+        const full = r >= 1, near = !full && r >= 0.9;
+        return { n: u, pct: (r * 100).toFixed(1) + '%', fill: full || near ? 'var(--danger)' : 'var(--black)',
+          left: full ? 'No space left' : left < 1 ? `${Math.round(left * 1000)} MB left` : `${f(left)} GB left`,
+          used: `${f(u)} GB of ${cap} GB used`, warn: full || near, ok: !full && !near,
+          msg: full ? 'Storage full. New photos can’t be added until some are deleted in Photos.' : 'Almost full. Delete photos in Photos to make room.' };
+      })(),
+      scn: (() => { const c = S.scan, ring = '0 0 0 2000px var(--scrim), inset 0 0 0 ' + (c === 'found' ? '4px var(--season-block-1)' : '3px var(--white)'); return { sheet: c === 'ask' || c === 'blocked' || c === 'nocam', ask: c === 'ask', blocked: c === 'blocked', nocam: c === 'nocam', canCancel: c === 'ask' || c === 'blocked', cam: c === 'on' || c === 'found' || c === 'wrong', found: c === 'found', looking: c === 'on' || c === 'wrong', wrong: c === 'wrong', icon: c === 'ask' ? 'camera' : 'camera-off', ring, btn: bp !== 'large' && view === 'signin', btnOff: off || st === 'sending', open: () => this.openScan(), allow: () => this.allowCam(), cancel: () => this.cancelScan() }; })(),
+      scanErr: S.scanErr, scanErrOn: !!S.scanErr,
       qrOpen: !!S.qrOpen, qrClosed: !S.qrOpen,
       openQr: () => { clearInterval(this._qrT); this.setState({ qrOpen: true, qrLeft: 300 }); this._qrT = setInterval(() => this.setState(s => ({ qrLeft: s.qrLeft > 1 ? s.qrLeft - 1 : 300 })), 1000); },
       closeQr: () => { clearInterval(this._qrT); this.setState({ qrOpen: false }); },
@@ -2533,7 +2682,6 @@ class Component extends DCLogic {
       nameDraft: S.nameDraft, nameErr: S.nameErr || undefined,
       setNameDraft: (v) => this.setState({ nameDraft: v, nameErr: '' }),
       submitName: () => { const n = S.nameDraft.trim(); if (!n) return this.setState({ nameErr: 'Add your name' }); this.setState({ userName: n, acctNew: true, signinStep: 'location', wxLoc: '', wxDraft: '', wxErr: '', wxStep: '', wxMatches: [] }); },
-      guestSignIn: () => { this.setState({ userName: 'Trinh', email: 'guests@takeaglance.app', emailErr: '', wxLoc: 'Carmel, IN 46032', acctNew: false }); this.finishSignIn(); },
       resend: () => this.sendLink(),
       ld, off, online: !off, wxFail, retry: () => this.setState({ net: 'online' }),
       savedAt, rainTitle: `Rain moving in after ${h12 ? '4 PM' : '16:00'}`, ambientHours, amb,
@@ -2546,7 +2694,7 @@ class Component extends DCLogic {
         today: view === 'today', calendar: view === 'calendar', weather: view === 'weather', notes: view === 'notes', photos: view === 'photos', settings: view === 'settings', background: view === 'background' },
       L: FL, go, bar, barCenter, barH, sx: { ring: { style: { boxShadow: 'var(--shadow-1)' } }, ml16: { style: { marginLeft: -16 } }, ml12: { style: { marginLeft: -12 } }, ml8: { style: { marginLeft: -8 } }, pillSoft: { style: { background: 'var(--surface-soft)', flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, bar: { style: { flex: 'none', gap: 0, marginTop: 'auto', position: BM === 'docked' ? 'sticky' : 'fixed', ...(BM === 'docked' ? {} : { left: 0, right: 0 }), bottom: 0, zIndex: 5, boxShadow: BM === 'float' ? 'inset 0 1px 0 var(--border-hairline-soft), 0 -4px 16px rgba(0,0,0,.06)' : 'inset 0 1px 0 var(--border-hairline-soft)', transform: BM === 'hidden' ? 'translateY(100%)' : 'none', opacity: BM === 'hidden' ? 0 : 1, pointerEvents: BM === 'hidden' ? 'none' : 'auto', transition: 'transform 280ms cubic-bezier(0.2, 0, 0, 1), opacity 280ms ease-out' } } }, pillWrap: { style: { flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, dangerBtn: { style: { background: 'var(--danger)', color: '#fff' } },
       email: S.email, emailErr: S.emailErr || undefined, emailShown: S.email || 'maria@example.com',
-      setEmail: (v) => { if (this.state.signinStep !== 'sending') this.setState({ email: v, emailErr: '' }); },
+      setEmail: (v) => { if (this.state.signinStep !== 'sending') this.setState({ email: v, emailErr: '', scanErr: '' }); },
       sendCode: () => this.sendLink(),
       code: S.code, codeErr: S.codeErr, codeErrOn: !!S.codeErr, codeInputOff: codeLocked || S.codeBusy,
       codeCells: [0, 1, 2, 3, 4, 5].map((i) => ({ d: S.code[i] || '', ring: S.codeErr ? 'inset 0 0 0 1px var(--danger)' + (S.codeFocus && i === Math.min(S.code.length, 5) ? ', 0 0 0 2px var(--danger)' : '') : S.codeFocus && i === Math.min(S.code.length, 5) ? 'inset 0 0 0 1px var(--black), 0 0 0 2px var(--focus-ring)' : 'inset 0 0 0 1px var(--border-hairline)' })),
@@ -2556,7 +2704,20 @@ class Component extends DCLogic {
       backToForm: () => this.setState({ signinStep: 'form', code: '', codeErr: '', codeTries: 0, codeBusy: false }),
       backReady: !(S.backWait > 0) || codeLocked, backWaiting: S.backWait > 0 && !codeLocked, backWaitLabel: '0:' + String(S.backWait || 0).padStart(2, '0'),
       demoSignIn: () => { this.setState({ signinStep: 'form' }); this.go('today'); },
-      signOut: () => { this.setState({ signinStep: 'form', email: '' }); this.go('signin'); },
+      signOut: () => { this.setState({ signinStep: 'form', email: '', soOpen: false }); this.go('signin'); },
+      so: { on: !!S.soOpen, who: S.email || 'maria@example.com', full: { style: { width: '100%', justifyContent: 'center' } }, fullRing: { style: { width: '100%', justifyContent: 'center', boxShadow: 'var(--shadow-1)' } },
+        open: () => this.setState({ soOpen: true }), close: () => this.setState({ soOpen: false }),
+        all: () => { this.setState({ signinStep: 'form', email: '', soOpen: false, soDone: true }); this.go('signin'); clearTimeout(this._soT); this._soT = setTimeout(() => this.setState({ soDone: false }), 4000); } },
+      soDone: !!S.soDone,
+      da: (() => { const st = S.da || '', busy = st === 'deleting', ack = st === 'ack' || busy, wide = { width: '100%', justifyContent: 'center' };
+        return { on: !!st, busy, idle: !busy, ack, ackStr: ack ? 'true' : 'false', busyStr: busy ? 'true' : 'false', who: S.email || 'maria@example.com',
+          items: [['calendar-days', 'Events', S.events.length], ['sticky-note', 'Notes', S.notes.length], ['image', 'Photos', ALL.length], ['users', 'Family members', S.people.length], ['monitor-smartphone', 'Signed-in screens', 4]].map(([icon, label, c], i) => ({ icon, label, count: String(c), div: i ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'none' })),
+          cbBg: ack ? 'var(--action-primary)' : 'var(--surface-canvas)', cbRing: ack ? 'none' : 'inset 0 0 0 1.5px var(--black)',
+          btn: { disabled: !ack || busy, style: { ...wide, background: 'var(--danger)', color: 'var(--white)' } }, btnLabel: busy ? 'Deleting…' : 'Delete account',
+          cancelP: { disabled: busy, style: wide }, openP: { style: { boxShadow: 'var(--shadow-1)', color: 'var(--danger)' } },
+          open: () => this.setState({ da: 'ask' }), close: () => { if (!busy) this.setState({ da: '' }); }, toggle: () => { if (!busy) this.setState({ da: ack ? 'ask' : 'ack' }); },
+          confirm: () => { if (!ack || busy) return; this.setState({ da: 'deleting' }); this.later(2200, () => { this.setState({ da: '', daDone: true, events: [], notes: [], signinStep: 'form', email: '' }); this.go('signin'); clearTimeout(this._daT); this._daT = setTimeout(() => this.setState({ daDone: false }), 5000); }); } }; })(),
+      daDone: !!S.daDone,
       wake: () => this.go(S.ended ? 'signin' : 'today'),
       usePrevEmail: () => this.setState({ email: S.endedEmail, emailErr: '' }),
       heroPreview: !SM, heroTime: fmtT(10 * 60 + 41, true), heroDateShown: (() => { const d = new Date(isoT(lt(10 * 60 + 41))); return SM ? `${DOW[d.getDay()].slice(0, 3)}, ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}` : `${DOW[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`; })(),
@@ -2652,7 +2813,7 @@ class Component extends DCLogic {
         return { title: p.title, thumb: p.src('bg-', 480, 270), ring: sel ? ring : 'none', weight: sel ? 540 : 330, op: isSeason ? 0.5 : 1, pick: () => this.setState((s) => ({ bgId: p.id, bgMode: s.bgMode === 'Season color' ? 'Photo' : s.bgMode })) };
       }),
       sheet: {
-        open: !!sh, wx: (() => { const dw = ev0 && wxOn && ymOf(dr) === OCT ? Component.DAILY[dr.day] : null; return dw ? { has: true, icon: dw[0], temp: T(dw[1]) + '°', aria: `Forecast high ${T(dw[1])} degrees` } : { has: false, icon: 'cloud', temp: '', aria: '' }; })(), isEvent: !!sh && sh.kind === 'event', bg: nvOn || noteEd ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', bodyBg: nvOn || noteEd ? toneBg(sh.draft.tone) : PG ? 'var(--surface-canvas)' : 'var(--surface-soft)', radius: PG || NFS ? '0' : nvOn || noteEd ? '6px' : '32px', rot: PG && pgS !== 'in' ? 'translateX(100%)' : 'none', isEventView: evvOn, isEventEdit: !!sh && sh.kind === 'event' && !evvOn, isNoteView: nvOn, showTitle: !nvOn && !noteEd, viewDelete: nvOn && !!sh.id, isNoteEdit: !!sh && sh.kind === 'note' && !nvOn, viewing, canEdit: viewing && !(evvOn && evv.isPast), locked: evvOn && !!evv.isPast, showOff: !!off && !viewing, isNote: !!sh && sh.kind === 'note', isPhoto: !!sh && sh.kind === 'photo', isFamily: famOn, famFoot: famOn && !sh.discard, hasColor: false, err: (sh && sh.err) || undefined,
+        open: !!sh, wx: (() => { const dw = ev0 && wxOn && ymOf(dr) === OCT ? Component.DAILY[dr.day] : null; return dw ? { has: true, icon: dw[0], temp: T(dw[1]) + '°', aria: `Forecast high ${T(dw[1])} degrees` } : { has: false, icon: 'cloud', temp: '', aria: '' }; })(), isEvent: !!sh && sh.kind === 'event', bg: nvOn || noteEd ? toneBg(sh.draft.tone) : 'var(--surface-canvas)', bodyBg: nvOn || noteEd ? toneBg(sh.draft.tone) : PG ? layer(d, 'var(--hairline-soft)') : 'var(--surface-soft)', radius: PG || NFS ? '0' : nvOn || noteEd ? '6px' : '32px', rot: PG && pgS !== 'in' ? 'translateX(100%)' : 'none', isEventView: evvOn, isEventEdit: !!sh && sh.kind === 'event' && !evvOn, isNoteView: nvOn, showTitle: !nvOn && !noteEd, viewDelete: nvOn && !!sh.id, isNoteEdit: !!sh && sh.kind === 'note' && !nvOn, viewing, canEdit: viewing && !(evvOn && evv.isPast), locked: evvOn && !!evv.isPast, showOff: !!off && !viewing, isNote: !!sh && sh.kind === 'note', isPhoto: !!sh && sh.kind === 'photo', isFamily: famOn, famFoot: famOn && !sh.discard, hasColor: false, err: (sh && sh.err) || undefined,
         title: !sh ? '' : famOn ? 'Family' : sh.kind === 'photo' ? 'Photo details' : sh.kind === 'event' ? (evvOn ? sh.draft.title : sh.id ? 'Edit event' : 'New event') : nvOn ? (sh.draft.author ? `Note from ${sh.draft.author}` : 'Note') : (sh.id ? 'Edit note' : 'New note'),
         eyebrow: !sh ? '' : famOn ? `${PPL.length} member${PPL.length === 1 ? '' : 's'}` : sh.kind === 'photo' ? 'Family photos' : sh.kind === 'event' ? sdayLabel : (nvOn ? [sh.draft.author, sh.draft.time].filter(Boolean).join(' · ') : sh.id ? 'Edit note' : 'New note'),
         asking: !!sh && !!sh.discard && !viewing, notAsking: (!sh || !sh.discard) && !viewing && !famOn, discardBody: !sh ? '' : famOn ? `${sh.draft.name.trim() || 'This member'} won’t be added.` : sh.kind === 'note' ? 'This note won’t be posted.' : sh.kind === 'photo' ? 'Your edits to this photo won’t be saved.' : sh.id ? 'Your edits to this event won’t be saved.' : 'This event won’t be added.',
@@ -2687,7 +2848,7 @@ class Component extends DCLogic {
           return {
             title: n ? 'That’s a wrap for today' : 'The day is wide open',
             body: n ? `${n} event${n > 1 ? 's' : ''} done · free until ${fmtT(lt(D1), true)}` : `Free until ${fmtT(lt(D1), true)} · ${dur(left)}`,
-            nowPct: P(NOWL), nowL: fmtT(NOWL, true), sunPct: P(SUN), sunL: fmtT(lt(SUN), true), startL: fmtT(lt(D0), true), endL: fmtT(lt(D1), true),
+            nowPct: P(NOWL), nowTx: (() => { const f = (NOWL - D0) / (D1 - D0); return f > 0.8 ? '-100%' : f < 0.2 ? '0%' : '-50%'; })(), sunOn: Math.abs(NOWL - SUN) > 120, nowL: fmtT(NOWL, true), sunPct: P(SUN), sunL: fmtT(lt(SUN), true), startL: fmtT(lt(D0), true), endL: fmtT(lt(D1), true),
             segs: done.map((e) => ({ l: P(evS(e)), w: `calc(${P(Math.max(evE(e), evS(e) + 20))} - ${P(evS(e))})` })),
             hasNext: false, next: out.ambientNext, goNext: go.calendar,
           };

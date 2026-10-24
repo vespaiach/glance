@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<style>body{margin:0;background:#f0eee9;font-family:'Geist',system-ui,sans-serif;color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance%20Event%20Page%20Layout.dc.html">Event page layout →</a><a href="Glance%20Notes.dc.html#calendar">Notes · Event page →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Event page look, options</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Three looks for the New event / Edit event page. Same fields and behavior in each; only the container changes. Frames are the live mockup; scroll inside a frame to see how the header and action bar behave. Pick one and it becomes the event page everywhere.</p>
+</section>
+<section data-screen-label="Turn 1" style="padding:32px 56px 72px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:40px">
+<sc-for list="{{ opts }}" as="o" hint-placeholder-count="3">
+<div id="{{ o.id }}" data-screen-label="{{ o.label }}" style="display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><a href="#{{ o.id }}" style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px;text-decoration:none">{{ o.id }}</a><span style="font:600 24px/1.2 var(--font-sans)">{{ o.name }}</span><a href="{{ o.href }}" target="_blank" style="font:500 13px ui-monospace,Menlo,monospace">{{ o.q }}</a></div>
+<p style="margin:0;font:15px/1.45 var(--font-sans);max-width:900px;text-wrap:pretty">{{ o.note }}</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<sc-for list="{{ o.frames }}" as="fr" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;}}">
+class Component extends DCLogic {
+  static FRAMES = [['Large', 1920, 1080, 'sheet=event'], ['Small', 390, 844, 'sheet=event'], ['Small · details', 390, 844, 'sheet=event&details=1']];
+  static OPTS = [
+    ['1a', 'Solid bars', 'bars', 'Header and action bar are full-width white bars with a hairline, fixed to the screen edges, so content scrolls cleanly under them. The body sits on the app background with the form and the time preview on white cards, like Calendar. Small: white bars top and bottom, one white form card between them.'],
+    ['1b', 'Inset panel', 'panel', 'One white panel (radius 24) inset by the app gutter on the app background, like a single big card. It scrolls inside, so the header and actions stay pinned to the panel’s own edges and nothing floats in the gutter. The time preview is a soft column inside the panel. Small: the same panel with a 12 px gutter.'],
+    ['1c', 'Season header', 'season', 'A full-width header band in the season hero color (the Today “Happening now” color) holding Back, the day, the title and the actions. White body below, with the time preview set off by a hairline. Small: the season band on top, a white action bar at the bottom.']
+  ];
+  renderVals() {
+    const H = 480, season = this.props.season ?? 'fall';
+    const opts = Component.OPTS.map(([id, name, lk, note]) => {
+      const q = 'view=calendar&sheet=event&evlook=' + lk;
+      return { id, name, note, label: id + ' ' + name, q: '?' + q, href: 'Glance.dc.html?' + q + '&season=' + season,
+        frames: Component.FRAMES.map(([l, w, h, s]) => { const sc = H / h; return { label: l + ' · ' + w + '×' + h, src: 'Glance.dc.html?view=calendar&' + s + '&evlook=' + lk + '&season=' + season, screenLabel: id + ' · ' + l, w: w + 'px', h: h + 'px', boxW: Math.round(w * sc) + 'px', boxH: Math.round(h * sc) + 'px', tf: 'scale(' + sc + ')' }; }) };
+    });
+    return { opts };
+  }
+}
+</script>
+</body>
+</html>

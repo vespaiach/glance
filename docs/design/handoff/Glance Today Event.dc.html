@@ -15,48 +15,11 @@
 <style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
 <section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
-<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Hero.dc.html">Today hero →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States%20-%20Today.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
 <span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Today event</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today events box at each screen size: large 1920×1080, normal 1024×768 (plus its 300 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. The box is never narrower than 300 px or shorter than 500 px. Large: viewport height minus the top and bottom gaps, no page scrollbar. Normal: capped at viewport height minus the top gap and 3 × the bottom gap; the box scrolls when events need more room. Small: no cap; the box grows to fit its events, shown at full height. Clock reads 10:41 AM.</p>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Today events box at each screen size: large 1920×1080, normal 1024×768 (plus its 300 px minimum width at 769×768) and small 390×844. Each frame is the live mockup cropped to the box, so it matches Glance.dc.html exactly. The box is never narrower than 300 px or shorter than 500 px. Large: viewport height minus the top and bottom gaps, no page scrollbar. Normal: no max height; the box grows to fit its timeline and the page scrolls. Small: no cap; the box grows to fit its events, shown at full height. Clock reads 10:41 AM.</p>
 </section>
-<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px">
-<div style="background:#fff;border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
-<span style="font:600 24px/1.2 var(--font-sans)">Behaviour</span>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px 40px;font:15px/1.5 var(--font-sans)">
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout and size</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Never narrower than 300 px. Large and normal: middle column of the Today grid (min 300 px). Small: below the Now panel in the scrolling column; windows under 340 px scroll sideways.</li>
-<li>Min height 500 px on every size.</li>
-<li>Large: height = viewport height minus the top and bottom gaps (2 × gutter), so the page never shows a vertical scrollbar. The timeline fits the box.</li>
-<li>Normal and small: the timeline starts at 536 px and grows (up to 3×) until every current and upcoming plan has room for its full card (92 px for 30 min or more, 66 px for shorter).</li>
-<li>Normal: max height = viewport height minus the top gap and 3 × the bottom gap (4 × gutter). Past it the box shows a vertical scrollbar, hinting that more of the day is below.</li>
-<li>Small: no max height. The box grows to fit its timeline and the page scrolls; it sits below the Now panel, so no hint is needed.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Header</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Eyebrow “Today · {left} of {n} left” (plans not yet ended plus all-day), “Today · All done” or “Today · No events”. Below 450 px box width (any screen size): “{left} left today” / “All done” / “No events”.</li>
-<li>“Add event” → New event on today. “Full calendar” → Calendar.</li>
-<li>Below 1440 px both are 56 px white IconButtons (calendar-plus, calendar-days) with the labels as aria-label. Box narrower than 450 px (any screen size): always 44 px icon buttons, one-line header. From 1440 px they are text buttons.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Timeline</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Same day timeline as Calendar, always today. Runs 5 AM to 9 PM.</li><li>Person filter: avatar stack under the header (40 px color circles, no initials, up to 5 or 4 + “+N”; under 450 px box width up to 3 or 2 + “+N”, then the label and a chevron). Opens “Show plans for”; shared with Calendar. Filters plans, all-day tiles, free slots and the count.</li>
-<li>Elastic hours: passed hours shrink (weight × 0.3) so the rest of the day gets the room. Overlapping plans sit side by side, each column at least 120 px; extra overlaps (long plans first) fold into a 52 px “+{n} MORE” tile on the right. Tap → Calendar on today.</li>
-<li>Gutter 80 px on large and normal, 52 px on small. Hour weather under each label: 20 px icon + 17 px temperature (small: 16 / 15 px).</li>
-<li>Now line at the current time; it moves with the clock. The time pill sits in the gutter; below 400 px box width it becomes a 14 px black circle on the line.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Plans and taps</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Past: white with a hairline, title struck through. Now: 2 px black ring. Upcoming: the person’s color, or the season soft color with person dots when shared.</li>
-<li>Tap a plan → Event details (Edit inside opens Edit event).</li>
-<li>Tap a dashed free slot → New event at that time.</li>
-<li>Plans move past → now → upcoming in real time as start and end times pass.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Variants</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li><strong>Busy day</strong>: no “See all” row. Elastic hours and columns make room; overlaps beyond the column cap fold into “+{n} MORE” tiles.</li>
-<li><strong>All-day</strong>: soft tiles (56 px min, radius 8) above the timeline: “ALL DAY”, person dot, title, “{who} · {place}”. Tap → Event details. Never struck through.</li>
-<li><strong>Open day</strong>: no timeline. “Coming up” lists the next 5 plans after today (mono day and time, title, who · place; tap → Event details), or “Nothing else on the calendar yet.” The free time shows only on the Now panel’s day ribbon.</li><li><strong>Earlier fold</strong> (large and normal): the timeline starts at the current hour without ended plans; the “Earlier · {n} done” pill expands the full day. <strong>Small</strong>: the box shows the phone day list instead of a timeline.</li>
-<li><strong>Weather unavailable or no location</strong>: no weather lane; plans take the full width.</li>
-</ul></div>
-</div>
-</div>
-</section>
+<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px"><p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="Glance%20Notes.dc.html#today">Notes · Today</a>.</p></section>
 <sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
 <section id="{{ s.id }}" data-screen-label="{{ s.name }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
 <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>

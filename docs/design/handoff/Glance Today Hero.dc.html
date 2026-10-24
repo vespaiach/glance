@@ -15,40 +15,11 @@
 <style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
 <section data-season="{{ season }}" style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
-<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20Today%20Picture.dc.html">Today’s photo →</a><a href="Glance%20States%20-%20Today.dc.html#today">States · Today →</a><a href="Glance%20Notes.dc.html#today">Notes · Today →</a></nav>
 <span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · Today hero</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Now panel on Today at each screen size, drawn at the size it gets in the layout: large 1920×1080 (left column, full height), normal 1024×768 (same three-column layout, narrow column) and small 390×844 (first block in the scrolling column, viewport height minus 90 px so the next block peeks in). Each size shows four variants: weather on or off, and a day with an event running or no events. Clock reads 10:41 AM.</p>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">The Now panel on Today at each screen size, drawn at the size it gets in the layout: large 1920×1080 (left column, full height), normal 1024×768 (left column of the two-column layout, first row) and small 390×844 (first block in the scrolling column, as tall as its content). Each size shows four variants: weather on or off, and a day with an event running or no events. Clock reads 10:41 AM.</p>
 </section>
-<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px">
-<div style="background:#fff;border-radius:12px;padding:28px 32px;display:flex;flex-direction:column;gap:20px">
-<span style="font:600 24px/1.2 var(--font-sans)">Behaviour</span>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px 40px;font:15px/1.5 var(--font-sans)">
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Layout and size</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Height: large is the viewport height minus the 40 px top and bottom gaps. Normal is the first grid row: at least the viewport height minus the 26.5 px top gap and 90 px, and as tall as the schedule beside it; the content sticks one gutter below the top of the screen while the page scrolls and stops at the panel’s bottom. Small is at least the viewport height minus the 20 px top gap and 90 px.</li>
-<li>Never narrower than 280 px on any size. Large and normal: left column of the three-column Today grid. Small: first block of the single scrolling column, full width minus 20 px gutters (windows under 320 px scroll sideways); the schedule starts below the fold.</li>
-<li>Order top to bottom: date with season icon, clock, weather now, event. Groups stack from the top, 24 px apart; weather and event each start with a 1 px white divider and 24 px above their content. Spare height stays at the bottom of the panel.</li>
-<li>Small: no clock (the phone already shows the time). Date with season icon, then a compact 60 px weather row (40 px icon, 44 px temperature, high/low and rain at 15 px, chevron), then the event. The panel is as tall as its content.</li><li>Clock, temperature and event title scale with the panel’s width (container units): clock 31%, temperature 17%, title 12% of the panel width (title 32–64 px), with min and max caps.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Weather</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Shows “{City} · Now”, temperature, “{condition} · High {h}° · Low {l}°” and “Rain from {time}” (first drizzle or rain hour; line hidden if none).</li>
-<li>Tap anywhere on the weather block → Weather.</li>
-<li>Weather off: the block is left out; the event follows the clock.</li>
-<li>No location → “Set weather location” → Weather. Fetch failed → “Weather unavailable” · “Trying again in 1 min.”</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">Event</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Running → “Happening now”, title, “{where} · until {end} · {who}”, black pill “{n} min left”. Several running → the one that started last (ties: the shorter one).</li>
-<li>Nothing running, more later → “Up next”, title, “{where} · {start}”, pill “In {n} min” (“1 h 20 min” past an hour).</li>
-<li>Event title: two lines max, then cut with an ellipsis.</li>
-<li>Tap the event block → Event details. Countdown updates every minute.</li>
-</ul></div>
-<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase">No events</span><ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
-<li>Empty day → “Today · Open”, “The day is wide open”, “Free until 10 PM · {time left}”. All ended → “That’s a wrap for today”, “{n} events done · free until 10 PM”, ended events as white bars on the ribbon.</li>
-<li>Day ribbon 6 AM – 10 PM: elapsed part black, now marker with “Now {time}”, sunset tick with icon only.</li>
-<li>No “Next on the calendar” tile. On an open day the schedule card lists what’s coming up.</li>
-</ul></div>
-</div>
-</div>
-</section>
+<section id="behaviour" data-screen-label="Behaviour notes" style="padding:0 56px 40px;max-width:1100px"><p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="Glance%20Notes.dc.html#today">Notes · Today</a>.</p></section>
 <sc-for list="{{ sizes }}" as="s" hint-placeholder-count="3">
 <section id="{{ s.id }}" data-screen-label="{{ s.name }}" data-season="{{ season }}" style="padding:32px 56px 56px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:24px">
 <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><span style="font:600 24px/1.2 var(--font-sans)">{{ s.name }}</span><span style="font:500 13px ui-monospace,Menlo,monospace">{{ s.meta }}</span></div>
