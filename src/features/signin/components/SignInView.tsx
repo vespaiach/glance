@@ -35,7 +35,15 @@ import type { SignInAction, SignInState } from "../signIn";
 import { Scanner } from "./Scanner";
 import { ScanSheet } from "./ScanSheet";
 import { SignInHero } from "./SignInHero";
-import { Actions, Email, Heading, LockFooter, StatusTile, SwitchTile } from "./SignInParts";
+import {
+  Actions,
+  Email,
+  Heading,
+  LockFooter,
+  StatusTile,
+  SwitchTile,
+  TermsLine,
+} from "./SignInParts";
 
 type SignedOut = { email: string; pending: number };
 
@@ -317,6 +325,7 @@ function FormStep({ state, signedOut, online, scan, onAction }: StepProps) {
         </StatusTile>
       )}
       <LockFooter />
+      <TermsLine />
     </>
   );
 }

@@ -472,6 +472,19 @@ test("SET-08 the account card shows the initial, name and email and signs out", 
   expect(props.onSignOut).toHaveBeenCalled();
 });
 
+test("SET-15 the account card ends with a Terms of Service link that opens /terms in a new tab", () => {
+  renderView();
+
+  const links = within(screen.getByRole("region", { name: "Account" })).getAllByRole("link");
+
+  const terms = links.at(-1);
+
+  expect(terms).toHaveAccessibleName("Terms of Service");
+  expect(terms).toHaveAttribute("href", "/terms");
+  expect(terms).toHaveAttribute("target", "_blank");
+  expect(terms?.getAttribute("rel")).toContain("noopener");
+});
+
 test("SET-08 with no name yet the card falls back to the email", () => {
   renderView({ account: { name: null, email: "maria@example.com" } });
 

@@ -7,6 +7,14 @@ import type { WmoCondition } from "@/domain/wmo";
 
 type NoteExpiry = AccountSettings["noteExpiry"];
 
+export type TermsPart = string | { text: string; href: string } | { strong: string };
+
+export type TermsBlock = string | readonly TermsPart[] | { list: readonly string[] };
+
+const GITHUB = "https://github.com/vespaiach/glance";
+
+const CONTACT = { text: "nta.toan@gmail.com", href: "mailto:nta.toan@gmail.com" };
+
 export const copy = {
   appName: "Glance",
   zone: {
@@ -636,6 +644,7 @@ export const copy = {
         cancel: "Cancel",
         failed: "Couldn’t sign out. Try again.",
       },
+      terms: "Terms of Service",
       deleteAccount: {
         title: "Delete account",
         caption:
@@ -936,6 +945,7 @@ export const copy = {
       noteTime: "8:12 AM",
     },
     lock: "Only your family can see its calendar, notes and photos.",
+    terms: { before: "By continuing, you agree to the ", link: "Terms of Service", after: "." },
     form: {
       eyebrow: "One account per family",
       title: "Sign in or get started",
@@ -1053,6 +1063,176 @@ export const copy = {
       body: "Opening Today…",
       bodyPhotos: "Opening Photos…",
     },
+  },
+  terms: {
+    wordmark: "Glance",
+    source: "Source on GitHub",
+    sourceHref: GITHUB,
+    eyebrow: "Legal",
+    title: "Terms of service",
+    effective: "Effective October 24, 2026",
+    inShort: "In short",
+    cards: [
+      { title: "Free and open source", body: "No fees. The code is MIT-licensed and public." },
+      {
+        title: "Your data, not encrypted",
+        body: "Stored in PostgreSQL on VPS servers without encryption. Keep sensitive information out.",
+      },
+      {
+        title: "Provided as is",
+        body: "No guarantees of uptime or data safety. The operator is not liable for losses.",
+      },
+      { title: "18 and over", body: "You must be at least 18 to use Glance." },
+    ],
+    sections: [
+      {
+        id: "acceptance",
+        title: "Acceptance",
+        body: [
+          'These terms of service ("Terms") govern your use of Glance, the web app at takeaglance.app (the "Service"). The Service is operated by Trinh Nguyen, an individual (the "Operator").',
+          "By creating an account or using the Service, you agree to these Terms. If you do not agree, do not use the Service.",
+        ],
+      },
+      {
+        id: "eligibility",
+        title: "Eligibility",
+        body: [
+          "You must be at least 18 years old to use the Service. By using it, you confirm that you meet this requirement and can enter into a binding agreement.",
+        ],
+      },
+      {
+        id: "service",
+        title: "The service",
+        body: [
+          "Glance shows calendar events, notes, photos and weather on a display. The Service is free of charge.",
+          "The Operator may change, suspend or discontinue any part of the Service at any time, with or without notice. There is no guarantee of availability, uptime or support.",
+        ],
+      },
+      {
+        id: "open-source",
+        title: "Open source",
+        body: [
+          [
+            "The source code for Glance is available at ",
+            { text: "github.com/vespaiach/glance", href: GITHUB },
+            " under the MIT License. The MIT License governs your use of the code. These Terms govern your use of the hosted Service at takeaglance.app.",
+          ],
+          "If you run your own copy of Glance, you are responsible for that installation, its data and its users. These Terms do not apply to it.",
+        ],
+      },
+      {
+        id: "account",
+        title: "Your account",
+        body: [
+          "You are responsible for keeping your sign-in details secure and for all activity under your account.",
+          "Glance is designed for shared screens. Anything you put on a display can be seen by anyone nearby. You are responsible for what you choose to show.",
+        ],
+      },
+      {
+        id: "content",
+        title: "Your content",
+        body: [
+          "Your content includes the calendar events, notes, uploaded photos and display or device settings you add to the Service. You keep ownership of it.",
+          "You give the Operator a limited permission to store, process and display your content only as needed to run the Service.",
+          "You confirm that you have the right to upload and display your content, including any photos of other people.",
+        ],
+      },
+      {
+        id: "acceptable-use",
+        title: "Acceptable use",
+        body: [
+          "You agree not to:",
+          {
+            list: [
+              "break any law or use the Service for anything illegal",
+              "upload content that infringes someone else's rights, or that is abusive, hateful or sexually explicit",
+              "upload malware or try to access other accounts, servers or data without permission",
+              "overload, disrupt or reverse-engineer the hosted Service",
+              "resell or commercially redistribute access to the hosted Service",
+            ],
+          },
+        ],
+      },
+      {
+        id: "data",
+        title: "How your data is stored",
+        body: [
+          "Your content is stored in PostgreSQL databases on virtual private servers (VPS) rented from a third-party hosting provider.",
+          [
+            { strong: "Your data is not encrypted." },
+            " The Service does not encrypt your content in the database or on the servers. Anyone who gains access to those servers, including the hosting provider, could read it.",
+          ],
+          "Do not store passwords, financial, health, government ID or other sensitive information in Glance.",
+          "The Operator does not sell your data or share it with anyone, except the hosting provider that runs the servers, or when required by law.",
+          "Backups are not guaranteed. Keep your own copies of anything you care about.",
+        ],
+      },
+      {
+        id: "deletion",
+        title: "Deleting your account",
+        body: [
+          [
+            "You can delete your account at any time in Settings, or by emailing ",
+            CONTACT,
+            " from the address on your account.",
+          ],
+          "Deleting your account removes your content from the live database. Copies may remain in server backups for a limited time before they are overwritten.",
+        ],
+      },
+      {
+        id: "termination",
+        title: "Termination",
+        body: [
+          "The Operator may suspend or close any account, or remove any content, at any time and for any reason, with or without notice. Sections 6, 8 and 11–15 continue to apply after your account ends.",
+        ],
+      },
+      {
+        id: "warranties",
+        title: "No warranties",
+        body: [
+          'THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ACCURACY, SECURITY OR UNINTERRUPTED OPERATION.',
+          "Calendar times, weather forecasts and other information shown may be wrong or out of date. Do not rely on the Service for anything critical.",
+        ],
+      },
+      {
+        id: "liability",
+        title: "Limitation of liability",
+        body: [
+          "TO THE FULLEST EXTENT PERMITTED BY LAW, THE OPERATOR IS NOT LIABLE FOR ANY DAMAGES OR LOSSES ARISING FROM YOUR USE OF, OR INABILITY TO USE, THE SERVICE. THIS INCLUDES LOST OR EXPOSED DATA, SECURITY BREACHES, MISSED EVENTS, SERVICE OUTAGES, AND ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR PUNITIVE DAMAGES, EVEN IF THE OPERATOR WAS TOLD THEY WERE POSSIBLE.",
+          "Because the Service is free, the Operator's total liability for any claim is limited to zero US dollars (US $0), or the lowest amount allowed by law.",
+          "Some jurisdictions do not allow certain limits on liability. In those places, these limits apply as far as the law allows.",
+        ],
+      },
+      {
+        id: "indemnity",
+        title: "Indemnification",
+        body: [
+          "You agree to defend and hold the Operator harmless from any claims, damages, losses or costs, including legal fees, that arise from your content, your use of the Service, or your breach of these Terms.",
+        ],
+      },
+      {
+        id: "law",
+        title: "Governing law",
+        body: [
+          "These Terms are governed by the laws of the State of Indiana, USA, without regard to its conflict-of-law rules. Any dispute will be handled in the state or federal courts located in Indiana, and you agree to their jurisdiction.",
+        ],
+      },
+      {
+        id: "general",
+        title: "Changes and general terms",
+        body: [
+          "The Operator may update these Terms at any time. Changes are posted on this page with a new effective date. If you keep using the Service after a change, you accept the updated Terms.",
+          "These Terms are the entire agreement between you and the Operator about the Service. If any part is found unenforceable, the rest stays in effect. Not enforcing a part of these Terms is not a waiver of it.",
+        ],
+      },
+      {
+        id: "contact",
+        title: "Contact",
+        body: [["Questions about these Terms: ", CONTACT]],
+      },
+    ],
+    footer: "Glance · takeaglance.app",
+    license: "MIT License",
   },
 } as const;
 

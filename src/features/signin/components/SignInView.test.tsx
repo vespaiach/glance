@@ -71,6 +71,17 @@ test("SIGNIN-01 the hero shows the wordmark, the date and time, the headline and
   expect(screen.getByText("Soccer cleats are by the door")).toBeInTheDocument();
 });
 
+test("SIGNIN-19 under the lock footer the Terms of Service link opens /terms in a new tab", () => {
+  renderView({ step: "form", email: "" });
+
+  const link = screen.getByRole("link", { name: "Terms of Service" });
+
+  expect(link.parentElement?.textContent).toBe("By continuing, you agree to the Terms of Service.");
+  expect(link).toHaveAttribute("href", "/terms");
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link.getAttribute("rel")).toContain("noopener");
+});
+
 test("SIGNIN-01 on small the hero shows the short date and no preview", () => {
   renderView({ step: "form", email: "" }, { breakpoint: "small" });
 
