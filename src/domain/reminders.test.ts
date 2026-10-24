@@ -1,4 +1,4 @@
-import { minutesLeft, reminderKey, remindersDue } from "./reminders";
+import { ambientReminder, minutesLeft, reminderKey, remindersDue } from "./reminders";
 
 const iso = (h: number, m: number) => new Date(2026, 9, 9, h, m).toISOString();
 const at = (h: number, m: number, s = 0) => new Date(2026, 9, 9, h, m, s);
@@ -157,5 +157,49 @@ describe("remindersDue", () => {
     expect(group).toMatchObject({ titles: ["A", "B"], more: 3 });
 
     expect(group?.keys).toHaveLength(5);
+  });
+});
+
+describe("ambientReminder", () => {
+  const tz = "Asia/Kolkata";
+
+  const dinner = { ...shift, id: "dinner", endAt: iso(12, 0) };
+
+  it("NOTIF-06 takes the slot 15 min before the start and reads In until the start", () => {
+    expect(ambientReminder([dinner], at(10, 44, 59), tz)).toBeUndefined();
+    expect(ambientReminder([dinner], at(10, 45), tz)).toEqual({ event: dinner, atStart: false });
+    expect(ambientReminder([dinner], at(10, 59, 59), tz)).toEqual({
+      event: dinner,
+      atStart: false,
+    });
+  });
+
+  it("NOTIF-06 from the start it reads Now until the event ends", () => {
+    expect(ambientReminder([dinner], at(11, 0), tz)).toEqual({ event: dinner, atStart: true });
+    expect(ambientReminder([dinner], at(11, 59, 59), tz)).toEqual({ event: dinner, atStart: true });
+    expect(ambientReminder([dinner], at(12, 0), tz)).toBeUndefined();
+  });
+
+  it("NOTIF-06 an event with no end keeps the slot until its day ends", () => {
+    expect(ambientReminder([shift], at(23, 59), tz)).toEqual({ event: shift, atStart: true });
+    expect(ambientReminder([shift], new Date(2026, 9, 10, 0, 0), tz)).toBeUndefined();
+  });
+
+  it("NOTIF-06 an at-start reminder takes the slot only from the start", () => {
+    expect(ambientReminder([piano], at(10, 50), tz)).toBeUndefined();
+    expect(ambientReminder([piano], at(11, 0), tz)).toEqual({ event: piano, atStart: true });
+  });
+
+  it("NOTIF-06 events with the reminder off and all-day events never take the slot", () => {
+    expect(ambientReminder([quiet, fair], at(11, 0), tz)).toBeUndefined();
+  });
+
+  it("NOTIF-06 the latest-starting reminder wins the slot", () => {
+    const later = { ...shift, id: "later", startAt: iso(11, 10) };
+
+    expect(ambientReminder([later, dinner], at(11, 0), tz)).toEqual({
+      event: later,
+      atStart: false,
+    });
   });
 });

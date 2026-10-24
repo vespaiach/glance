@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { LogOut, MapPin, WifiOff } from "lucide-react";
+import { Bell, LogOut, MapPin, WifiOff } from "lucide-react";
 import type { Ref } from "react";
 import { copy } from "@/copy";
 import { type AmbientStatus, ambientStatus, driftOffset, driftStep } from "@/domain/ambient";
@@ -38,6 +38,7 @@ type AmbientViewProps = {
   weather: ZoneState<Weather>;
   unit: Unit;
   nextEvent: ZoneState<CalendarEvent>;
+  reminder?: NextEventLines | undefined;
   photoSrc?: string;
   dim: number;
   brightness: Brightness;
@@ -166,6 +167,11 @@ const styles = stylex.create({
     letterSpacing: "0.54px",
     textTransform: "uppercase",
   },
+  bellRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
   title: {
     fontSize: "clamp(24px, 2.6vw, 40px)",
     fontWeight: 340,
@@ -216,6 +222,7 @@ export function AmbientView({
   weather,
   unit,
   nextEvent,
+  reminder,
   photoSrc,
   dim,
   brightness,
@@ -268,14 +275,18 @@ export function AmbientView({
             )
           }
         </Zone>
-        <Zone
-          state={nextEvent}
-          loading={<LineSkeleton label={copy.ambient.loadingEvent} />}
-          empty={<NextEvent lines={nothingLines(place !== undefined)} />}
-          failed={null}
-        >
-          {([event]) => event && <NextEvent lines={nextEventLines(event, time, clock, tz)} />}
-        </Zone>
+        {reminder ? (
+          <NextEvent lines={reminder} bell />
+        ) : (
+          <Zone
+            state={nextEvent}
+            loading={<LineSkeleton label={copy.ambient.loadingEvent} />}
+            empty={<NextEvent lines={nothingLines(place !== undefined)} />}
+            failed={null}
+          >
+            {([event]) => event && <NextEvent lines={nextEventLines(event, time, clock, tz)} />}
+          </Zone>
+        )}
       </div>
       <span {...stylex.props(styles.hint, styles.hintFade, row)}>
         {signedOut ? copy.ambient.hintSignedOut : copy.ambient.hint}
@@ -343,10 +354,13 @@ function AmbientWeather({ weather, now, clock, tz, unit, offline }: AmbientWeath
   );
 }
 
-function NextEvent({ lines }: { lines: NextEventLines }) {
+function NextEvent({ lines, bell = false }: { lines: NextEventLines; bell?: boolean }) {
   return (
     <div {...stylex.props(styles.event)}>
-      <span {...stylex.props(styles.eyebrow)}>{lines.eyebrow}</span>
+      <span {...stylex.props(styles.eyebrow, bell && styles.bellRow)}>
+        {bell && <Icon icon={Bell} size={20} />}
+        {lines.eyebrow}
+      </span>
       <span {...stylex.props(styles.title)}>{lines.title}</span>
       {lines.place && <span {...stylex.props(styles.sub)}>{lines.place}</span>}
     </div>
