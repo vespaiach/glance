@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.71 |
+| Status | v2.72 |
 | Date | 2026-10-24 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.83) · [`design/handoff/`](design/handoff/README.md) (v12) |
 
@@ -402,6 +402,6 @@ Bad config names the variables (not their values) and exits. `next build` needs 
 | Data / sync | Vitest + `fake-indexeddb`, stubbed `fetch` / `EventSource` | Repos (row + outbox in one transaction), `engine.ts` (push order, backoff, 401 keeps the outbox, pending rows skipped, tombstones, weather retries), worker lock and restart |
 | Time zone | Vitest with `TZ=Asia/Kolkata` | `zone.ts` across DST in several zones; every rule that reads a day or hour runs in a zone other than the device's |
 
-Checks: `biome check` → `tsc --noEmit` → Vitest → `next build`. GitHub CI (`.github/workflows/ci.yml`) runs them on demand only for now; `/glance-next` runs them locally before each merge to `main`.
+Checks: `biome check` → `tsc --noEmit` → Vitest → `next build`. GitHub CI (`.github/workflows/ci.yml`) runs them on demand only for now; run them locally before each merge to `main`.
 
 **Manual checks** on a production build, before each release and every Next upgrade: visual parity with `Glance States` and the side pages at the three sizes (1920×1080, 1024×768, 390×844); offline cold start with every view and synced photo (OFF-06); two screens syncing, offline replay, delete wins, polling fallback (SYNC-01..03); a 401 with a change waiting, then signing in with the same and another email (SIGNIN-13, SIGNIN-11); a new build applied on an idle screen (OFF-07).

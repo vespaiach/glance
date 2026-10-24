@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| Status | v2.16 |
+| Status | v2.17 |
 | Date | 2026-10-23 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.82) · [`tech-design.md`](tech-design.md) (v2.68) |
 
-The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it takes the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
+The backlog of open work. The next task is the first ⬜ task whose dependencies are ✅. Done tasks are removed at cleanup; their history is the merged PRs, each titled with its task ID.
 
 ## Status tracking
 
@@ -17,7 +17,7 @@ The backlog of open work. `/glance-next` (`scripts/glance-next.mjs`) runs it: it
 | ✅ Done ([#n](#)) | The task's code is **merged to `main`** |
 
 **Rules**
-- A task is PR-sized (about 0.5–2 days), cites the requirement IDs it covers (**Covers**) and has a **Done when** check. Done also means the checks pass (`biome check → tsc → Vitest → next build`), run locally by `/glance-next` while GitHub CI is off.
+- A task is PR-sized (about 0.5–2 days), cites the requirement IDs it covers (**Covers**) and has a **Done when** check. Done also means the checks pass (`biome check → tsc → Vitest → next build`), run locally while GitHub CI is off.
 - **IDs** are a letter and two digits (`T05`), with a letter per batch of work. Never reuse an ID: every letter A–Z is used, so a new batch reuses a letter and continues after its highest number (M: M01 is taken, the v12 batch starts at M02).
 - **Depends on** lists hard dependencies only, by ID, and only on rows still in this file. A task can start once they are ✅.
 - One task = one branch (`feat/<ID>-<slug>`) and one PR titled with the ID (`T05: …`). **Start:** `git fetch origin`, check its dependencies are ✅ on `origin/main`, branch from `origin/main`, open a draft PR; its first commit sets the row to 🔄. **Finish:** bring in the latest `origin/main`; the last commit before merge sets the row to ✅. A closed, unmerged PR resets it to ⬜.

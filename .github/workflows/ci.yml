@@ -1,6 +1,6 @@
 name: CI
 
-# Temporarily off: /glance-next runs these checks locally before merging. Restore push/pull_request to turn it back on.
+# On demand only. Add push/pull_request to run it automatically.
 on:
   workflow_dispatch:
 
