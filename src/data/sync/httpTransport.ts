@@ -70,6 +70,7 @@ export function createHttpTransport({
       location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
       signout: () => send<void>("/api/auth/signout", { method: "POST" }),
       signoutAll: () => send<void>("/api/auth/signout-all", { method: "POST" }),
+      deleteAccount: () => send<void>("/api/account", { method: "DELETE" }),
     },
     upload: uploadWith(createXhr),
   };

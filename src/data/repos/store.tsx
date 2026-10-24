@@ -28,6 +28,7 @@ export type RepoStore = {
   webPush: Transport["webPush"];
   signOut: () => Promise<void>;
   signOutAll: () => Promise<Result<void, TransportError>>;
+  deleteAccount: () => Promise<Result<void, TransportError>>;
   markSignedOut: () => Promise<void>;
   markRevoked: () => Promise<void>;
 };
@@ -56,6 +57,10 @@ export function useSignOut(): RepoStore["signOut"] {
 
 export function useSignOutAll(): RepoStore["signOutAll"] {
   return useRepoStore().signOutAll;
+}
+
+export function useDeleteAccount(): RepoStore["deleteAccount"] {
+  return useRepoStore().deleteAccount;
 }
 
 export function useMarkSignedOut(): RepoStore["markSignedOut"] {

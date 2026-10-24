@@ -27,6 +27,7 @@ export type Harness = RepoStore & {
   };
   signOut: Mock<() => Promise<void>>;
   signOutAll: Mock<() => Promise<Result<void, TransportError>>>;
+  deleteAccount: Mock<() => Promise<Result<void, TransportError>>>;
   markSignedOut: Mock<() => Promise<void>>;
   markRevoked: Mock<() => Promise<void>>;
   close(): Promise<void>;
@@ -58,6 +59,7 @@ export function openHarness(name: string): Harness {
     },
     signOut: vi.fn<() => Promise<void>>(async () => {}),
     signOutAll: vi.fn<() => Promise<Result<void, TransportError>>>(async () => err("network")),
+    deleteAccount: vi.fn<() => Promise<Result<void, TransportError>>>(async () => err("network")),
     markSignedOut: vi.fn<() => Promise<void>>(async () => {}),
     markRevoked: vi.fn<() => Promise<void>>(async () => {}),
     close: async () => {

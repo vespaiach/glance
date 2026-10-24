@@ -1,4 +1,5 @@
 export type { AuthStatus, CodeError, LocateError, TransportError } from "../sync/transport";
+export { type AccountCounts, useAccountCounts } from "./account";
 export {
   SignedOutAccountProvider,
   SignInAuthProvider,
@@ -72,6 +73,7 @@ export {
   type RepoStore,
   type StoreAccount,
   useAccount,
+  useDeleteAccount,
   useMarkRevoked,
   useMarkSignedOut,
   useSignOut,

@@ -84,6 +84,7 @@ export interface Transport {
     location(request: LocationRequest): Answer<void>;
     signout(): Answer<void>;
     signoutAll(): Answer<void>;
+    deleteAccount(): Answer<void>;
   };
   upload(
     file: File,

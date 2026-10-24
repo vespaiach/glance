@@ -46,7 +46,8 @@ function stubCaches() {
 
 function stubServer() {
   const fetch = vi.fn<typeof globalThis.fetch>(async (input) => {
-    if (String(input).startsWith("/api/auth/")) return new Response(null, { status: 204 });
+    if (String(input).startsWith("/api/auth/") || String(input) === "/api/account")
+      return new Response(null, { status: 204 });
 
     throw new TypeError("offline");
   });
@@ -307,6 +308,39 @@ describe("sign out all devices", () => {
     const store = await bootSignedIn();
 
     expect(await store.signOutAll()).toEqual({ ok: false, error: "server" });
+    expect(await storedAccount()).toEqual(ACCOUNT);
+    expect(await store.db.outbox.count()).toBe(1);
+  });
+});
+
+describe("delete account", () => {
+  it("SET-14 asks the server to delete the account, then signs this screen out with its data", async () => {
+    const fetch = stubServer();
+    await signIn();
+    await queueChange(ACCOUNT.accountId);
+
+    const answer = await (await bootSignedIn()).deleteAccount();
+
+    expect(answer).toEqual({ ok: true, value: undefined });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/account",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(await storedAccount()).toBeUndefined();
+    expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
+  });
+
+  it("SET-14 a failed request keeps this screen signed in with its data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 500 })),
+    );
+    await signIn();
+    await queueChange(ACCOUNT.accountId);
+
+    const store = await bootSignedIn();
+
+    expect(await store.deleteAccount()).toEqual({ ok: false, error: "server" });
     expect(await storedAccount()).toEqual(ACCOUNT);
     expect(await store.db.outbox.count()).toBe(1);
   });

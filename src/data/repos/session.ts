@@ -1,5 +1,6 @@
 import Dexie from "dexie";
 import { useEffect, useState } from "react";
+import type { Result } from "@/domain/result";
 import type { Account, AccountSettings } from "@/domain/schemas";
 import { accountDbName, deleteGlanceDb, openGlanceDb } from "../db";
 import {
@@ -15,7 +16,7 @@ import {
 import { createWorkerSyncHost, spawnSyncWorker } from "../sync/host";
 import { createHttpTransport } from "../sync/httpTransport";
 import { recordStatus } from "../sync/status";
-import type { Transport } from "../sync/transport";
+import type { Transport, TransportError } from "../sync/transport";
 import { apiPhotoSrc } from "./photos";
 import { appServiceWorker } from "./serviceWorker";
 import { accountSettings } from "./settings";
@@ -225,16 +226,22 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     voidQr: transport.voidQr,
     webPush: transport.webPush,
     signOut,
-    signOutAll: async () => {
-      const answer = await transport.auth.signoutAll();
-
-      if (answer.ok) await signOut();
-
-      return answer;
-    },
+    signOutAll: () => thenSignOut(transport.auth.signoutAll(), signOut),
+    deleteAccount: () => thenSignOut(transport.auth.deleteAccount(), signOut),
     markSignedOut: () => readMeta(markSignedOut),
     markRevoked: () => readMeta(markRevoked),
   };
 
   return { boot: { kind: "ready", store }, close };
+}
+
+async function thenSignOut(
+  request: Promise<Result<void, TransportError>>,
+  signOut: () => Promise<void>,
+): Promise<Result<void, TransportError>> {
+  const answer = await request;
+
+  if (answer.ok) await signOut();
+
+  return answer;
 }
