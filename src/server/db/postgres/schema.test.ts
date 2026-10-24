@@ -572,6 +572,22 @@ describe("011_note_tone", () => {
   });
 });
 
+describe("013_event_reminder", () => {
+  it("D29 an event without a reminder stores 15 min", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    expect(await db().one("SELECT reminder FROM events")).toEqual({ reminder: "15min" });
+  });
+
+  it("D29 rejects an unknown reminder", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    await expect(db().run("UPDATE events SET reminder = '1h'")).rejects.toThrow(/check constraint/);
+  });
+});
+
 describe("007_members", () => {
   it("D24 gives each named account one lilac member and turns old events into everyone events", async () => {
     const client = await openPglite();

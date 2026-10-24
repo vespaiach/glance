@@ -45,6 +45,7 @@ const SOCCER: CalendarEvent = {
   startAt: "2026-10-09T22:30:00.000Z",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 let store: Harness;

@@ -250,6 +250,14 @@ export const copy = {
       ice: "Ice",
     } satisfies Record<TagColor, string>,
   },
+  reminder: {
+    options: [
+      { value: "off", label: "Off" },
+      { value: "start", label: "At start" },
+      { value: "15min", label: "15 min" },
+      { value: "both", label: "Both" },
+    ],
+  },
   events: {
     now: "Now",
     allDay: "All day",
@@ -276,6 +284,8 @@ export const copy = {
       who: "Who",
       notes: "Notes",
       notesPlaceholder: "Anything to remember",
+      reminder: "Reminder",
+      reminderDefault: "Default from Settings",
       add: "Save event",
       save: "Save",
       saveOffline: "Save for later",
@@ -555,6 +565,12 @@ export const copy = {
     hideSidebar: {
       title: "Hide sidebar when idle",
       body: "After 15 seconds without a touch. Any tap brings it back.",
+    },
+    notifications: {
+      title: "Notifications",
+      defaultReminder: "Default reminder",
+      chime: "Chime",
+      chimeBody: "Plays once when a reminder shows. Never during quiet hours.",
     },
     idle: {
       title: "Back to Today after",

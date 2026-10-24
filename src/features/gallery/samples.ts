@@ -358,7 +358,7 @@ const todayAt = (hour: number, minute: number) => octoberAt(9, hour, minute).toI
 
 const sampleId = (n: number) => `0195f0a0-0000-7000-8000-${String(n).padStart(12, "0")}`;
 
-const EVERYONE = { everyone: true, tagIds: [] };
+const EVERYONE = { everyone: true, tagIds: [], reminder: "15min" as const };
 
 const FAMILY_ROWS: readonly (readonly [string, Tag["color"]])[] = [
   ["Minh-An", "lilac"],
@@ -378,6 +378,7 @@ export const GALLERY_FAMILY: readonly Tag[] = FAMILY_ROWS.map(([name, color], in
 const forTags = (...indexes: number[]) => ({
   everyone: false,
   tagIds: indexes.map((index) => sampleId(501 + index)),
+  reminder: "15min" as const,
 });
 
 export const TODAY_EVENTS: readonly CalendarEvent[] = [

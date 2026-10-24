@@ -23,6 +23,7 @@ const LUNCH: CalendarEvent = {
   location: "Café Lumen",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 let store: Harness;
@@ -179,6 +180,21 @@ test("tech§4.3 a note request renders no event sheet", () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
+test("NOTIF-08 a new event starts on the Settings default reminder and saves it", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" }, { defaultReminder: "start" });
+
+  expect(await screen.findByRole("button", { name: "At start" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
+
+  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+  expect((await store.db.events.toArray())[0]?.reminder).toBe("start");
+});
+
 test("EVT-07 Add event queues the new event on the request's day and closes the sheet", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-12" });
 
@@ -235,6 +251,7 @@ const NO_SCHOOL: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
@@ -487,6 +504,7 @@ describe("day preview", () => {
     endAt: new Date(2026, 9, 9, 15, 0).toISOString(),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   };
 
   const HOLIDAY: CalendarEvent = {
@@ -496,6 +514,7 @@ describe("day preview", () => {
     allDay: true,
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   };
 
   const EARLY: CalendarEvent = {
@@ -505,6 +524,7 @@ describe("day preview", () => {
     endAt: new Date(2026, 9, 9, 8, 0).toISOString(),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   };
 
   const setWidth = (width: number) => {

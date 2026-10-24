@@ -222,6 +222,39 @@ test("SET-05 the Hide sidebar when idle switch says it hides after 15 seconds", 
   ).toHaveAccessibleDescription("After 15 seconds without a touch. Any tap brings it back.");
 });
 
+test("NOTIF-08 Notifications follows Hide sidebar when idle with Default reminder and Chime", () => {
+  renderView();
+
+  const section = screen.getByRole("region", { name: "Notifications" });
+
+  expect(within(section).getByRole("group", { name: "Default reminder" })).toBeInTheDocument();
+  expect(within(section).getByRole("switch", { name: "Chime" })).toHaveAccessibleDescription(
+    "Plays once when a reminder shows. Never during quiet hours.",
+  );
+});
+
+test("NOTIF-08 Default reminder shows and saves the setting", async () => {
+  const props = renderView({ settings: { ...DEFAULT_SETTINGS, defaultReminder: "start" } });
+
+  expect(screen.getByRole("button", { name: "At start" })).toHaveAttribute("aria-pressed", "true");
+
+  await userEvent.click(screen.getByRole("button", { name: "Both" }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ defaultReminder: "both" });
+});
+
+test("NOTIF-08 the Chime switch shows and saves the setting", async () => {
+  const props = renderView();
+
+  const chime = screen.getByRole("switch", { name: "Chime" });
+
+  expect(chime).toHaveAttribute("aria-checked", "true");
+
+  await userEvent.click(chime);
+
+  expect(props.onChange).toHaveBeenCalledWith({ chime: false });
+});
+
 test("SET-06 the Ambient tile shows the hours in the clock format and opens the Ambient screen page", async () => {
   const props = renderView();
 
@@ -291,7 +324,7 @@ test("SET-07 Back to Today after shows the minutes on the slider with the switch
   expect(screen.getByText("3 min")).toBeInTheDocument();
   expect(screen.getByText("without a touch")).toBeInTheDocument();
   expect(screen.getByText("1 min")).toBeInTheDocument();
-  expect(screen.getByText("15 min")).toBeInTheDocument();
+  expect(screen.getByText("15 min", { selector: "span" })).toBeInTheDocument();
 });
 
 test("SET-07 moving the Back to Today slider saves the minutes", () => {

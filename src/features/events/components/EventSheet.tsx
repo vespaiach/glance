@@ -5,7 +5,7 @@ import { Check, Pencil, Trash2, WifiOff } from "lucide-react";
 import { type ReactNode, useEffect, useReducer, useRef, useState } from "react";
 import { copy } from "@/copy";
 import type { DetailsStatus } from "@/domain/eventStatus";
-import type { Tag, TagColor, WeatherIcon } from "@/domain/schemas";
+import type { Reminder, Tag, TagColor, WeatherIcon } from "@/domain/schemas";
 import { nextFreeColor } from "@/domain/tags";
 import type { Clock } from "@/domain/time";
 import { shadows } from "@/theme/tokens.stylex";
@@ -14,8 +14,10 @@ import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
 import { DiscardButtons, DiscardMessage } from "@/ui/DiscardPrompt";
 import { type CloseFrom, closeStep } from "@/ui/discard";
+import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
 import { Page } from "@/ui/Page";
+import { PillTabs } from "@/ui/PillTabs";
 import { Switch } from "@/ui/Switch";
 import { TextInput } from "@/ui/TextInput";
 import { TimeField } from "@/ui/TimeField";
@@ -97,6 +99,17 @@ const styles = stylex.create({
   cancel: {
     boxShadow: shadows.shadow1,
   },
+  reminder: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  reminderLabel: {
+    fontSize: type.bodyLgSize,
+    fontWeight: type.bodyLgWeight,
+    letterSpacing: type.bodyLgLs,
+  },
   ended: {
     minHeight: 44,
     display: "flex",
@@ -114,6 +127,12 @@ type TimesProps = {
   clock: Clock;
   compact?: boolean;
   dispatch: (action: EventSheetAction) => void;
+};
+
+type ReminderFieldProps = {
+  value: Reminder;
+  fromSettings: boolean;
+  onChange: (value: Reminder) => void;
 };
 
 type DetailsPageProps = {
@@ -308,6 +327,13 @@ export function EventSheet({
         error={state.titleError ? words.addTitle : undefined}
       />
       <EventTimes state={state} clock={clock} compact={compact} dispatch={dispatch} />
+      {!draft.allDay && (
+        <ReminderField
+          value={draft.reminder}
+          fromSettings={mode === "new" && draft.reminder === state.opened.reminder}
+          onChange={(value) => dispatch({ type: "reminder", value })}
+        />
+      )}
       <WhoField
         tags={tags}
         tagIds={draft.tagIds}
@@ -490,6 +516,21 @@ function EventTimes({ state, clock, compact, dispatch }: TimesProps) {
           })}
         />
       )}
+    </div>
+  );
+}
+
+function ReminderField({ value, fromSettings, onChange }: ReminderFieldProps) {
+  return (
+    <div {...stylex.props(styles.reminder)}>
+      <span {...stylex.props(styles.reminderLabel)}>{words.reminder}</span>
+      <PillTabs
+        label={words.reminder}
+        options={copy.reminder.options}
+        value={value}
+        onChange={onChange}
+      />
+      {fromSettings && <Eyebrow size="caption">{words.reminderDefault}</Eyebrow>}
     </div>
   );
 }

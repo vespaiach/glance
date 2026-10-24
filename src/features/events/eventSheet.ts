@@ -6,7 +6,7 @@ import {
   endsAfterStart,
   moveStart,
 } from "@/domain/eventTimes";
-import type { CalendarEvent, TagColor } from "@/domain/schemas";
+import type { CalendarEvent, Reminder, TagColor } from "@/domain/schemas";
 import { whoIds, whoValue } from "@/domain/tags";
 import { atMinute, minutesOfDay } from "@/domain/time";
 import type { TimeFixture } from "@/shell/SheetHost";
@@ -18,6 +18,7 @@ export type EventDraft = EventTimes & {
   location: string;
   tagIds: string[];
   notes: string;
+  reminder: Reminder;
   allDay?: true;
 };
 
@@ -44,6 +45,7 @@ export type EventEditState = Exclude<EventSheetState, { step: "details" }>;
 export type EventSheetAction =
   | { type: "title" | "location" | "notes"; value: string }
   | { type: "whoInput"; value: string }
+  | { type: "reminder"; value: Reminder }
   | { type: "addTag" | "removeTag"; id: string }
   | { type: "clearTags" }
   | { type: "newColor"; color: TagColor }
@@ -74,6 +76,7 @@ export function draftFromEvent(
     location: event.location ?? "",
     tagIds: [...whoIds(event, allIds)],
     notes: event.notes ?? "",
+    reminder: event.reminder,
   };
 }
 
@@ -98,6 +101,7 @@ export function eventFromDraft(
     everyone: who.everyone,
     tagIds: [...who.tagIds],
     ...(notes === "" ? {} : { notes }),
+    reminder: draft.reminder,
   };
 }
 
@@ -105,6 +109,7 @@ export function newEventDraft(
   now: Date,
   tz: string,
   tagIds: readonly string[],
+  reminder: Reminder,
   times: EventTimes = defaultTimes(now, tz),
 ): EventDraft {
   return {
@@ -113,6 +118,7 @@ export function newEventDraft(
     location: "",
     tagIds: [...tagIds],
     notes: "",
+    reminder,
   };
 }
 
@@ -149,7 +155,8 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
     !sameWho(draft.tagIds, opened.tagIds) ||
     draft.start !== opened.start ||
     draft.end !== opened.end ||
-    draft.allDay !== opened.allDay
+    draft.allDay !== opened.allDay ||
+    draft.reminder !== opened.reminder
   );
 }
 
@@ -178,6 +185,8 @@ function editReducer(state: EventEditState, action: EventSheetAction): EventShee
       return edited(state, { ...draft, [action.type]: action.value });
     case "whoInput":
       return { ...state, whoInput: action.value };
+    case "reminder":
+      return edited(state, { ...draft, reminder: action.value });
     case "addTag":
       return { ...withTagIds(state, withTag(draft.tagIds, action.id)), ...NO_WHO_INPUT };
     case "removeTag":

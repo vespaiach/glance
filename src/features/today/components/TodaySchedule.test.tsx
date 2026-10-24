@@ -19,6 +19,7 @@ const EVENTS: CalendarEvent[] = [
     endAt: iso(9, 30),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   },
   {
     id: "call",
@@ -27,6 +28,7 @@ const EVENTS: CalendarEvent[] = [
     endAt: iso(11, 15),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   },
   {
     id: "lunch",
@@ -35,6 +37,7 @@ const EVENTS: CalendarEvent[] = [
     endAt: iso(13, 0),
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   },
 ];
 
@@ -48,6 +51,7 @@ const GRANDPA: CalendarEvent = {
   location: "Guest room",
   everyone: true,
   tagIds: [],
+  reminder: "15min",
 };
 
 const WEATHER: TimelineWeather = {
@@ -82,6 +86,7 @@ const UPCOMING: CalendarEvent[] = [
     location: "Park",
     everyone: true,
     tagIds: [],
+    reminder: "15min",
   },
   {
     id: "soccer",
@@ -90,6 +95,7 @@ const UPCOMING: CalendarEvent[] = [
     endAt: new Date(2026, 9, 10, 10, 0).toISOString(),
     everyone: false,
     tagIds: [MOM.id, DAD.id],
+    reminder: "15min",
   },
   {
     id: "dentist",
@@ -97,6 +103,7 @@ const UPCOMING: CalendarEvent[] = [
     startAt: new Date(2026, 9, 11, 15, 0).toISOString(),
     everyone: false,
     tagIds: [MOM.id],
+    reminder: "15min",
   },
 ];
 

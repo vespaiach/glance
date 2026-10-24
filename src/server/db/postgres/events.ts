@@ -14,6 +14,7 @@ type EventRow = ServerColumns & {
   everyone: boolean;
   tag_ids: string[];
   notes: string | null;
+  reminder: StoredEvent["reminder"];
 };
 
 export function eventsRepo(sql: Sql): Repos["events"] {
@@ -50,6 +51,7 @@ function toEvent(row: EventRow): StoredEvent {
     everyone: row.everyone,
     tagIds: row.tag_ids,
     ...optional("notes", row.notes),
+    reminder: row.reminder,
     ...serverFields(row),
   };
 }
@@ -57,13 +59,13 @@ function toEvent(row: EventRow): StoredEvent {
 async function saveEvent(sql: Sql, accountId: string, event: StoredEvent): Promise<void> {
   await sql.run(
     `INSERT INTO events (id, account_id, title, start_at, end_at, location, all_day, everyone,
-       tag_ids, notes, updated_at, deleted_at, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       tag_ids, notes, reminder, updated_at, deleted_at, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      ON CONFLICT (id) DO UPDATE SET title = excluded.title, start_at = excluded.start_at,
        end_at = excluded.end_at, location = excluded.location, all_day = excluded.all_day,
        everyone = excluded.everyone, tag_ids = excluded.tag_ids, notes = excluded.notes,
-       updated_at = excluded.updated_at, deleted_at = excluded.deleted_at,
-       version = excluded.version`,
+       reminder = excluded.reminder, updated_at = excluded.updated_at,
+       deleted_at = excluded.deleted_at, version = excluded.version`,
     [
       event.id,
       accountId,
@@ -75,6 +77,7 @@ async function saveEvent(sql: Sql, accountId: string, event: StoredEvent): Promi
       event.everyone,
       event.tagIds,
       event.notes ?? null,
+      event.reminder,
       event.updatedAt,
       event.deletedAt ?? null,
       event.version,

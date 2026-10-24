@@ -1,11 +1,13 @@
 import * as stylex from "@stylexjs/stylex";
 import { CalendarDays } from "lucide-react";
+import { useId } from "react";
 import { copy } from "@/copy";
 import type { ShownBackground } from "@/domain/background";
 import type { AccountSettings, Season } from "@/domain/schemas";
 import { colors, radii, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
+import { PillTabs } from "@/ui/PillTabs";
 import { Radio } from "@/ui/Radio";
 import { SettingsRow } from "@/ui/SettingsRow";
 import { seasonIcons } from "@/ui/seasonIcons";
@@ -64,6 +66,9 @@ const styles = stylex.create({
   rows: {
     display: "flex",
     flexDirection: "column",
+  },
+  section: {
+    paddingTop: space.md,
   },
 });
 
@@ -137,7 +142,40 @@ export function SettingsPanel({
           divider={false}
         />
       </div>
+      <NotificationsSection settings={settings} onChange={onChange} />
     </div>
+  );
+}
+
+function NotificationsSection({
+  settings,
+  onChange,
+}: Pick<SettingsPanelProps, "settings" | "onChange">) {
+  const text = copy.settings.notifications;
+
+  const heading = useId();
+
+  return (
+    <section aria-labelledby={heading} {...stylex.props(styles.rows, styles.section)}>
+      <Eyebrow>
+        <span id={heading}>{text.title}</span>
+      </Eyebrow>
+      <SettingsRow title={text.defaultReminder}>
+        <PillTabs
+          label={text.defaultReminder}
+          options={copy.reminder.options}
+          value={settings.defaultReminder}
+          onChange={(value) => onChange({ defaultReminder: value })}
+        />
+      </SettingsRow>
+      <SettingsRow
+        title={text.chime}
+        description={text.chimeBody}
+        checked={settings.chime}
+        onCheckedChange={(checked) => onChange({ chime: checked })}
+        divider={false}
+      />
+    </section>
   );
 }
 
