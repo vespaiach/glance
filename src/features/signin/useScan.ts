@@ -4,6 +4,7 @@ import {
   type CameraAccess,
   CLOSED_SCAN,
   isCameraLive,
+  type ScanAction,
   type ScanControls,
   scanReducer,
 } from "./scan";
@@ -33,11 +34,13 @@ export function useScan({ verifyLink, online, onSignedIn }: Options): ScanContro
     let current = true;
 
     void startCamera().then((started) => {
+      if (typeof started === "string") return current && dispatch(cameraFailed(started));
+
       if (!current) return stopCamera(started);
 
-      if (started instanceof MediaStream) setStream(started);
+      setStream(started);
 
-      dispatch(cameraAnswer(started));
+      dispatch({ type: "started" });
     });
 
     return () => {
@@ -104,22 +107,16 @@ async function cameraAccess(): Promise<CameraAccess> {
   return permission?.state ?? "prompt";
 }
 
-function startCamera(): Promise<MediaStream | DOMException> {
+function startCamera(): Promise<MediaStream | string> {
   return navigator.mediaDevices
     .getUserMedia({ video: { facingMode: "environment" }, audio: false })
-    .catch((error: DOMException) => error);
+    .catch((error: DOMException) => error.name);
 }
 
-function cameraAnswer(started: MediaStream | DOMException) {
-  if (started instanceof MediaStream) return { type: "started" } as const;
-
-  return NO_CAMERA.includes(started.name)
-    ? ({ type: "no-camera" } as const)
-    : ({ type: "denied" } as const);
+function cameraFailed(name: string): ScanAction {
+  return { type: NO_CAMERA.includes(name) ? "no-camera" : "denied" };
 }
 
-function stopCamera(stream: MediaStream | DOMException | undefined): void {
-  if (!(stream instanceof MediaStream)) return;
-
-  for (const track of stream.getTracks()) track.stop();
+function stopCamera(stream: MediaStream | undefined): void {
+  for (const track of stream?.getTracks() ?? []) track.stop();
 }

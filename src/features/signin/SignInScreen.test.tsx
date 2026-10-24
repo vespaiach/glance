@@ -687,3 +687,60 @@ test("SIGNIN-03 Couldn’t send clears on the next keystroke and Send retries", 
   );
   expect(await screen.findByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
 });
+
+function stubCamera(getUserMedia: () => Promise<MediaStream>) {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query.includes("display-mode"),
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+  Object.defineProperty(navigator, "mediaDevices", {
+    configurable: true,
+    value: { getUserMedia: vi.fn(getUserMedia) },
+  });
+}
+
+test("SIGNIN-21 the installed app asks for the camera, and a refusal shows Blocked", async () => {
+  stubCamera(async () => {
+    throw new DOMException("Permission denied", "NotAllowedError");
+  });
+  renderScreen();
+
+  await user().click(screen.getByRole("button", { name: "Scan code from another screen" }));
+  await user().click(await screen.findByRole("button", { name: "Continue" }));
+
+  expect(
+    await screen.findByRole("dialog", { name: "Allow camera access in Settings" }),
+  ).toBeInTheDocument();
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({
+    video: { facingMode: "environment" },
+    audio: false,
+  });
+});
+
+test("SIGNIN-21 a phone with no camera shows No camera", async () => {
+  stubCamera(async () => {
+    throw new DOMException("No camera", "NotFoundError");
+  });
+  renderScreen();
+
+  await user().click(screen.getByRole("button", { name: "Scan code from another screen" }));
+  await user().click(await screen.findByRole("button", { name: "Continue" }));
+
+  expect(
+    await screen.findByRole("dialog", { name: "No camera on this device" }),
+  ).toBeInTheDocument();
+});
+
+test("SIGNIN-22 a started camera opens the scanner, and Cancel stops it", async () => {
+  const stop = vi.fn();
+  stubCamera(async () => ({ getTracks: () => [{ stop }] }) as unknown as MediaStream);
+  renderScreen();
+
+  await user().click(screen.getByRole("button", { name: "Scan code from another screen" }));
+  await user().click(await screen.findByRole("button", { name: "Continue" }));
+  await user().click(await screen.findByRole("button", { name: "Cancel" }));
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(stop).toHaveBeenCalled();
+});
