@@ -73,12 +73,12 @@ export function createAppServiceWorker(
 }
 
 export function appServiceWorker(): AppServiceWorker {
-  shared ??= createAppServiceWorker(supported());
+  shared ??= createAppServiceWorker(serviceWorkerContainer());
 
   return shared;
 }
 
-function supported(): ServiceWorkerContainer | undefined {
+export function serviceWorkerContainer(): ServiceWorkerContainer | undefined {
   if (process.env.NODE_ENV === "development") return undefined;
 
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return undefined;

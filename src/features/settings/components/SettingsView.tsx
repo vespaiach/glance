@@ -6,6 +6,7 @@ import type { SignedInScreen } from "@/domain/screens";
 import type { PhotoUsage } from "@/domain/storage";
 import { space } from "@/theme/tokens.stylex";
 import { settingsLayout } from "../layout";
+import type { ThisPhone } from "../thisPhone";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
 import type { QrTileShown } from "./QrSignInTile";
 import { ScreenOptions } from "./ScreenOptions";
@@ -30,6 +31,9 @@ type SettingsViewProps = {
   onOpenLocation: () => void;
   onOpenAmbient: () => void;
   onSignOut: () => void;
+  phone: ThisPhone;
+  onAllowPush: () => void;
+  onTurnOffPush: () => void;
 };
 
 const styles = stylex.create({
@@ -65,6 +69,9 @@ export function SettingsView({
   onOpenLocation,
   onOpenAmbient,
   onSignOut,
+  phone,
+  onAllowPush,
+  onTurnOffPush,
 }: SettingsViewProps) {
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
@@ -76,6 +83,9 @@ export function SettingsView({
         onChange={onChange}
         onOpenBackground={onOpenBackground}
         onOpenLocation={onOpenLocation}
+        phone={phone}
+        onAllowPush={onAllowPush}
+        onTurnOffPush={onTurnOffPush}
       />
       <div {...stylex.props(styles.side)}>
         <ScreenOptions settings={settings} onChange={onChange} onOpenAmbient={onOpenAmbient} />

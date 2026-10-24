@@ -1,7 +1,13 @@
 import type { UploadProblem } from "@/domain/photoUpload";
 import type { QrOpens } from "@/domain/qrSignIn";
 import type { Result } from "@/domain/result";
-import type { Account, LocationRequest, Weather, WeatherLocation } from "@/domain/schemas";
+import type {
+  Account,
+  LocationRequest,
+  PushSubscription,
+  Weather,
+  WeatherLocation,
+} from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
 import type { PhotoUsage } from "@/domain/storage";
 import type {
@@ -59,6 +65,11 @@ export interface Transport {
   photoUsage(): Answer<PhotoUsage>;
   issueQr(opens?: QrOpens): Answer<QrCode>;
   voidQr(url: string): Answer<void>;
+  webPush: {
+    key(): Answer<string>;
+    subscribe(subscription: PushSubscription): Answer<void>;
+    unsubscribe(): Answer<void>;
+  };
   auth: {
     sendCode(request: CodeRequest): Answer<void>;
     verifyCode(request: CodeVerify): Answer<SignedIn, TransportError | CodeError>;

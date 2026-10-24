@@ -52,6 +52,16 @@ export function createHttpTransport({
     issueQr: (opens) =>
       send<QrCode>("/api/auth/qr", opens ? jsonBody("POST", { opens }) : { method: "POST" }),
     voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
+    webPush: {
+      key: async () => {
+        const answer = await send<{ key: string }>("/api/push/key");
+
+        return answer.ok ? ok(answer.value.key) : answer;
+      },
+      subscribe: (subscription) =>
+        send<void>("/api/push/subscription", jsonBody("PUT", subscription)),
+      unsubscribe: () => send<void>("/api/push/subscription", { method: "DELETE" }),
+    },
     auth: {
       sendCode: (request) => send<void>("/api/auth/code", jsonBody("POST", request)),
       verifyCode: verifyCodeWith(fetch),

@@ -24,6 +24,7 @@ export type RepoStore = {
   photoUsage: Transport["photoUsage"];
   issueQr: Transport["issueQr"];
   voidQr: Transport["voidQr"];
+  webPush: Transport["webPush"];
   signOut: () => Promise<void>;
   markSignedOut: () => Promise<void>;
 };

@@ -587,6 +587,12 @@ export const copy = {
       defaultReminder: "Default reminder",
       chime: "Chime",
       chimeBody: "Plays once when a reminder shows. Never during quiet hours.",
+      thisPhone: "This phone",
+      thisPhoneBody: "Get reminders when Glance is closed.",
+      allow: "Allow notifications",
+      on: "On",
+      turnOff: "Turn off",
+      blocked: "Notifications are off for Glance in this browser’s settings.",
     },
     idle: {
       title: "Back to Today after",
