@@ -1,4 +1,5 @@
 import type { CalendarEvent } from "./schemas";
+import { addDays, dateKey, dayStart } from "./zone";
 
 export type ReminderKind = "15min" | "start";
 
@@ -13,6 +14,8 @@ export type ReminderGroup<T extends ReminderEvent = ReminderEvent> = {
   titles: string[];
   more: number;
 };
+
+export type AmbientReminder<T> = { event: T; atStart: boolean };
 
 type Fire<T> = { event: T; kind: ReminderKind; fireAt: number; start: number };
 
@@ -50,6 +53,32 @@ export function reminderKey(eventId: string, kind: ReminderKind, fireAt: number)
 
 export function minutesLeft(group: Pick<ReminderGroup, "startAt">, now: Date): number {
   return Math.max(0, Math.ceil((Date.parse(group.startAt) - now.getTime()) / MINUTE));
+}
+
+export function ambientReminder<T extends ReminderEvent & Pick<CalendarEvent, "endAt">>(
+  events: readonly T[],
+  now: Date,
+  tz: string,
+): AmbientReminder<T> | undefined {
+  const time = now.getTime();
+
+  const [latest] = events
+    .filter((event) => holdsSlot(event, time, tz))
+    .sort((a, b) => Date.parse(b.startAt) - Date.parse(a.startAt));
+
+  return latest && { event: latest, atStart: time >= Date.parse(latest.startAt) };
+}
+
+function holdsSlot(event: ReminderEvent & Pick<CalendarEvent, "endAt">, time: number, tz: string) {
+  const [first] = fires(event);
+
+  return first !== undefined && time >= first.fireAt && time < slotEnd(event, tz);
+}
+
+function slotEnd({ startAt, endAt }: Pick<CalendarEvent, "startAt" | "endAt">, tz: string): number {
+  if (endAt !== undefined) return Date.parse(endAt);
+
+  return dayStart(addDays(dateKey(new Date(startAt), tz), 1), tz).getTime();
 }
 
 function fires<T extends ReminderEvent>(event: T): Fire<T>[] {

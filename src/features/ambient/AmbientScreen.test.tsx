@@ -102,8 +102,8 @@ afterEach(async () => {
   await store.close();
 });
 
-function renderAmbient() {
-  const Shell = shellWrapper(store, { frozenAt: NOW });
+function renderAmbient(frozenAt = NOW) {
+  const Shell = shellWrapper(store, { frozenAt });
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
@@ -188,4 +188,40 @@ test("AMB-02 the giant clock shows the frozen time", async () => {
   renderAmbient();
 
   expect(await screen.findByText(clockTime("7:12"))).toBeInTheDocument();
+});
+
+const MOVIE: CalendarEvent = {
+  ...TODAY_EVENT,
+  startAt: new Date(2026, 9, 9, 19, 30).toISOString(),
+  endAt: new Date(2026, 9, 9, 21, 0).toISOString(),
+  location: "Living room",
+};
+
+test("NOTIF-06 15 min before, the Next slot becomes the reminder with who and place", async () => {
+  await seed([MOVIE, CONFERENCE]);
+
+  renderAmbient(new Date(2026, 9, 9, 19, 15));
+
+  expect(await screen.findByText("In 15 min · 7:30 PM")).toBeInTheDocument();
+  expect(screen.getByText("Movie night")).toBeInTheDocument();
+  expect(screen.getByText("Everyone · Living room")).toBeInTheDocument();
+  expect(screen.queryByText("Parent-teacher conference")).not.toBeInTheDocument();
+});
+
+test("NOTIF-06 from the start the slot reads Now with the span until the event ends", async () => {
+  await seed([MOVIE, CONFERENCE]);
+
+  renderAmbient(new Date(2026, 9, 9, 20, 59));
+
+  expect(await screen.findByText("Now · 7:30 PM – 9:00 PM")).toBeInTheDocument();
+  expect(screen.getByText("Movie night")).toBeInTheDocument();
+});
+
+test("NOTIF-06 once the event ends the slot returns to the next event", async () => {
+  await seed([MOVIE, CONFERENCE]);
+
+  renderAmbient(new Date(2026, 9, 9, 21, 0));
+
+  expect(await screen.findByText("Next · Wed, Oct 14 · 4:00 PM")).toBeInTheDocument();
+  expect(screen.queryByText("Movie night")).not.toBeInTheDocument();
 });

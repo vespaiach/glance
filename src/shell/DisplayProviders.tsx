@@ -10,6 +10,7 @@ import { SeasonProvider } from "./providers/season";
 import { SettingsProvider } from "./providers/settings";
 import { TimeZoneProvider } from "./providers/timeZone";
 import { WhoFilterProvider } from "./providers/whoFilter";
+import { ReminderHost } from "./ReminderHost";
 import { SessionGuard } from "./SessionGuard";
 import { SheetHost } from "./SheetHost";
 
@@ -48,6 +49,7 @@ function DisplaySession({ children }: { children: ReactNode }) {
                 <WhoFilterProvider>
                   <IdleProvider>
                     <SessionGuard>{children}</SessionGuard>
+                    <ReminderHost />
                   </IdleProvider>
                 </WhoFilterProvider>
               </SheetHost>
