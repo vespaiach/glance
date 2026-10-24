@@ -126,12 +126,7 @@ test("AMB-10 leaving Ambient animates its rows, not the backdrop", async () => {
   navigation.pathname = "/ambient";
   render(<Root path="/ambient" />);
   const navigate = vi.fn();
-  function Wake() {
-    const go = useAmbientNavigate();
-    navigate.mockImplementation(go);
-    return null;
-  }
-  render(<Wake />);
+  render(<Wake navigate={navigate} />);
 
   act(() => navigate("/today"));
 
@@ -160,14 +155,6 @@ test("AMB-10 a browser without the Web Animations API pushes at once", () => {
 });
 
 test("AMB-10 a move between views pushes at once", () => {
-  function Views() {
-    const navigate = useAmbientNavigate();
-    return (
-      <button type="button" onClick={() => navigate("/calendar")}>
-        Calendar
-      </button>
-    );
-  }
   render(<Views />);
 
   fireEvent.click(screen.getByRole("button", { name: "Calendar" }));
@@ -175,3 +162,18 @@ test("AMB-10 a move between views pushes at once", () => {
   expect(navigation.push).toHaveBeenCalledWith("/calendar");
   expect(animate).not.toHaveBeenCalled();
 });
+
+function Wake({ navigate }: { navigate: ReturnType<typeof vi.fn> }) {
+  const go = useAmbientNavigate();
+  navigate.mockImplementation(go);
+  return null;
+}
+
+function Views() {
+  const navigate = useAmbientNavigate();
+  return (
+    <button type="button" onClick={() => navigate("/calendar")}>
+      Calendar
+    </button>
+  );
+}

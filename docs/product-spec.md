@@ -67,7 +67,7 @@ Next.js (App Router) as a single-page app, TypeScript strict, Biome, StyleX, Val
 - After the first load, view changes never reload the page, and the shell's timers (clock, idle, slideshow, sync) keep running. Every view is a real route, so deep links work.
 - One Node server; photos on its persistent disk or in an S3 or R2 bucket; PostgreSQL runs outside it.
 - The app is an **installable PWA** that cold-starts offline (OFF-06). It needs HTTPS. On iPad kiosks, install it to the home screen so saved data isn't evicted.
-- Icons: Lucide 0.460.0, stroke 1.75 (1.25–1.5 at ≥ 48 px). Fonts: Geist and Geist Mono variable 100–900, self-hosted.
+- Icons: Lucide 1.61.0, stroke 1.75 (1.25–1.5 at ≥ 48 px). Fonts: Geist and Geist Mono variable 100–900, self-hosted.
 
 ---
 

@@ -52,9 +52,6 @@ test("FAIL-02 Zone passes the last sync time to ready rows", () => {
 
 test("tech§4.4 Zone shows its failed state when its content throws", () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
-  const Broken = () => {
-    throw new Error("render failed");
-  };
 
   render(
     <>
@@ -73,3 +70,7 @@ test("tech§4.4 Zone shows its failed state when its content throws", () => {
   expect(screen.getByText("Unavailable")).toBeInTheDocument();
   expect(screen.getByText("Other zone")).toBeInTheDocument();
 });
+
+function Broken(): never {
+  throw new Error("render failed");
+}

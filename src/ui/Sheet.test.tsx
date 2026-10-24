@@ -120,16 +120,6 @@ test("SHEET taps inside the card do not close the sheet", async () => {
 });
 
 test("SHEET focus returns to the opener when the sheet closes", () => {
-  const Page = ({ open }: { open: boolean }) => (
-    <>
-      <button type="button">Open</button>
-      {open && (
-        <Sheet title="New note" closeLabel="Close" onClose={() => {}}>
-          <span>Body</span>
-        </Sheet>
-      )}
-    </>
-  );
   const { rerender } = render(<Page open={false} />);
   screen.getByRole("button", { name: "Open" }).focus();
 
@@ -168,4 +158,17 @@ test("§8.9 the header and the actions sit outside the scrolling body", () => {
 
 function sheetBody() {
   return screen.getByRole("dialog").querySelector("[data-sheet-body]") as HTMLElement;
+}
+
+function Page({ open }: { open: boolean }) {
+  return (
+    <>
+      <button type="button">Open</button>
+      {open && (
+        <Sheet title="New note" closeLabel="Close" onClose={() => {}}>
+          <span>Body</span>
+        </Sheet>
+      )}
+    </>
+  );
 }

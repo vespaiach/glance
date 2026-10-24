@@ -100,13 +100,6 @@ describe("NowProvider", () => {
   });
 
   it("TIME-03 every reader sees the same now", () => {
-    function Both() {
-      const a = useNow();
-      const b = useNow("minute");
-
-      return <output>{`${a.getTime() - b.getTime()}`}</output>;
-    }
-
     const { container } = render(
       <NowProvider frozenAt={new Date("2026-10-09T10:41:00")}>
         <Both />
@@ -116,3 +109,10 @@ describe("NowProvider", () => {
     expect(container).toHaveTextContent("0");
   });
 });
+
+function Both() {
+  const a = useNow();
+  const b = useNow("minute");
+
+  return <output>{`${a.getTime() - b.getTime()}`}</output>;
+}
