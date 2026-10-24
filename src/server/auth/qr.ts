@@ -4,6 +4,7 @@ import { err, ok, type Result } from "@/domain/result";
 import type { Database, MagicLinkRecord } from "../db";
 import type { AuthDeps, Clocked } from "./deps";
 import { openDisplay, type SignedInDisplay } from "./sessions";
+import { type SessionSignIn, signedIn } from "./status";
 import { hashToken, newToken } from "./tokens";
 
 export type QrCode = { url: string };
@@ -27,17 +28,21 @@ export async function issueQrLink(
 export async function verifyQrLink(
   { db, now }: Clocked,
   { token, userAgent }: QrVerifyInput,
-): Promise<Result<{ sessionToken: string }, "stale">> {
+): Promise<Result<SessionSignIn, "stale">> {
   const at = now().toISOString();
 
-  return db.tx(async (tx): Promise<Result<{ sessionToken: string }, "stale">> => {
+  return db.tx(async (tx): Promise<Result<SessionSignIn, "stale">> => {
     const link = await tx.magicLinks.get(hashToken(token));
 
-    if (link === undefined || link.usedAt !== null || link.expiresAt <= at) return err("stale");
+    const account = link && (await tx.accounts.byId(link.accountId));
+
+    if (!link || !account || link.usedAt !== null || link.expiresAt <= at) return err("stale");
 
     await tx.magicLinks.markUsed(link.tokenHash, at);
 
-    return ok({ sessionToken: await openDisplay(tx, link.accountId, { at, userAgent }) });
+    const sessionToken = await openDisplay(tx, link.accountId, { at, userAgent });
+
+    return ok({ status: signedIn(account, true), sessionToken });
   });
 }
 

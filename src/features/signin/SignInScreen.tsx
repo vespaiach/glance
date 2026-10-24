@@ -6,6 +6,7 @@ import { copy } from "@/copy";
 import { useSignedOutAccount, useSignInAuth } from "@/data/repos";
 import { initialWeatherSetup } from "@/features/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
+import { isInstalledApp } from "@/shell/installed";
 import { useKeyboardInset } from "@/shell/keyboard";
 import { useBrowserOnline } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
@@ -16,7 +17,8 @@ import { viewPath } from "@/shell/routes";
 import { useAmbientRoot } from "@/shell/useAmbientNavigate";
 import { Toast } from "@/ui/Toast";
 import { SignInView } from "./components/SignInView";
-import { initialSignIn, openedLinkFrom, openedViewFrom } from "./signIn";
+import { initialSignIn, openedLinkFrom, openedViewFrom, type SignInAction } from "./signIn";
+import { useScan } from "./useScan";
 import { useSignIn } from "./useSignIn";
 
 const TOASTS: Partial<Record<string, { text: string; ms: number }>> = {
@@ -35,15 +37,27 @@ export function SignInScreen() {
 
   const clock = useNowStore();
 
+  const auth = useSignInAuth();
+
   const flow = useSignIn({
     initial: initialSignIn(link, signedOut),
     initialSetup: initialWeatherSetup,
-    auth: useSignInAuth(),
+    auth,
     clock,
     onSignedIn: () => router.replace(viewPath(opens)),
   });
 
   const online = useBrowserOnline();
+
+  const [installed] = useState(isInstalledApp);
+
+  const scan = useScan({ verifyLink: auth.verifyLink, online, onSignedIn: flow.scanned });
+
+  const act = (action: SignInAction) => {
+    if (action.type === "email" || action.type === "send") scan.act({ type: "dismiss" });
+
+    flow.act(action);
+  };
 
   const root = useRef<HTMLDivElement>(null);
 
@@ -65,7 +79,8 @@ export function SignInScreen() {
         keyboardInset={useKeyboardInset()}
         online={online}
         {...(opens !== "today" && { opens })}
-        onAction={flow.act}
+        {...(installed && { scan })}
+        onAction={act}
         rootRef={root}
       />
       {toast && <Toast>{toast}</Toast>}

@@ -396,6 +396,23 @@ describe("HttpTransport", () => {
     expect(await auth.verifyCode(request)).toEqual({ ok: false, error: "network" });
   });
 
+  it("SIGNIN-22 auth.verifyLink posts the scanned token and answers the signed-in status", async () => {
+    const status = {
+      state: "signed-in",
+      account: { id: "a1", name: "Maria", email: "maria@example.com" },
+      returning: true,
+      setupDone: true,
+    };
+    const { calls, fetch } = fakeFetch(json(status), json({ error: "link-stale" }, 400));
+    const auth = transport(fetch).auth;
+
+    expect(await auth.verifyLink("abc123")).toEqual({ ok: true, value: status });
+    expect(calls[0]?.url).toBe("/api/auth/verify");
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ t: "abc123" }));
+    expect(await auth.verifyLink("abc123")).toEqual({ ok: false, error: "invalid" });
+  });
+
   it("tech§6.2 auth.status reads whether the screen is signed in", async () => {
     const { calls, fetch } = fakeFetch(json({ state: "signed-out" }));
 

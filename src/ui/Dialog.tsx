@@ -9,6 +9,7 @@ type DialogProps = {
   labelledBy: string;
   alert?: boolean;
   busy?: boolean;
+  bottom?: boolean;
   onClose: () => void;
   children: ReactNode;
 };
@@ -22,6 +23,10 @@ const styles = stylex.create({
     placeItems: "center",
     padding: 16,
     boxSizing: "border-box",
+  },
+  overlayBottom: {
+    placeItems: "end center",
+    padding: 8,
   },
   scrim: {
     position: "absolute",
@@ -54,13 +59,20 @@ const styles = stylex.create({
   },
 });
 
-export function Dialog({ labelledBy, alert = false, busy, onClose, children }: DialogProps) {
+export function Dialog({
+  labelledBy,
+  alert = false,
+  busy,
+  bottom = false,
+  onClose,
+  children,
+}: DialogProps) {
   const dialog = useRef<HTMLDivElement>(null);
 
   useFocusOnOpen(dialog);
 
   return (
-    <div {...stylex.props(styles.overlay)}>
+    <div {...stylex.props(styles.overlay, bottom && styles.overlayBottom)}>
       <button
         type="button"
         tabIndex={-1}

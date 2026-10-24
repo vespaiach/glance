@@ -1,4 +1,10 @@
-export type { AuthStatus, CodeError, LocateError, TransportError } from "../sync/transport";
+export type {
+  AuthStatus,
+  CodeError,
+  LocateError,
+  SignedIn,
+  TransportError,
+} from "../sync/transport";
 export { type AccountCounts, useAccountCounts } from "./account";
 export {
   SignedOutAccountProvider,

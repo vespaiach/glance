@@ -79,6 +79,7 @@ export interface Transport {
   auth: {
     sendCode(request: CodeRequest): Answer<void>;
     verifyCode(request: CodeVerify): Answer<SignedIn, TransportError | CodeError>;
+    verifyLink(token: string): Answer<SignedIn>;
     status(): Answer<AuthStatus>;
     name(name: string): Answer<Account>;
     location(request: LocationRequest): Answer<void>;

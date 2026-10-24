@@ -951,6 +951,33 @@ export const copy = {
       offlineBody:
         "A code can’t be sent right now. Sending turns back on when the screen reconnects.",
     },
+    scan: {
+      entry: "Scan code from another screen",
+      stale: "That code has expired or was already used. Sign in with your email instead.",
+      eyebrow: "Scan to sign in",
+      ask: {
+        title: "Glance needs the camera",
+        body: "The camera reads the code on your Glance screen. Your phone asks next; choose Allow. Nothing is recorded or saved.",
+        action: "Continue",
+      },
+      blocked: {
+        title: "Allow camera access in Settings",
+        body: "Camera access is off for Glance. Turn it on in your phone’s Settings, then tap Try again.",
+        action: "Try again",
+      },
+      nocam: {
+        title: "No camera on this device",
+        body: "Sign in with your email instead.",
+        action: "Use email",
+      },
+      cancel: "Cancel",
+      title: "Scan to sign in",
+      point: "Point at the code on your Glance screen",
+      where: "On a signed-in screen, open Settings › Account › Sign in another device.",
+      wrong: "That isn’t a Glance code. Keep scanning.",
+      found: "Code found",
+      signingIn: "Signing in…",
+    },
     ended: {
       notice: "This screen was signed out",
       noticeBody: "Sign in again to keep the calendar, notes and photos up to date.",

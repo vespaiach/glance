@@ -305,6 +305,32 @@ describe("sign-in reducer", () => {
     },
   );
 
+  it("SIGNIN-22 a scanned code signs the form in to Welcome back", () => {
+    const status = {
+      state: "signed-in",
+      account: ACCOUNT,
+      returning: true,
+      setupDone: true,
+    } as const;
+
+    expect(signInReducer(form(""), { type: "scanned", status })).toEqual({
+      step: "done",
+      name: "Maria",
+      returning: true,
+    });
+  });
+
+  it("SIGNIN-22 a scanned code is ignored outside the form", () => {
+    const status = {
+      state: "signed-in",
+      account: ACCOUNT,
+      returning: true,
+      setupDone: true,
+    } as const;
+
+    expect(signInReducer(sending, { type: "scanned", status })).toBe(sending);
+  });
+
   it("SIGNIN-06 Continue with a name starts saving it", () => {
     const naming: SignInState = { step: "name", email: "maria@example.com", draft: "Ana" };
 

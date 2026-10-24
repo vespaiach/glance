@@ -65,6 +65,7 @@ export function createHttpTransport({
     auth: {
       sendCode: (request) => send<void>("/api/auth/code", jsonBody("POST", request)),
       verifyCode: verifyCodeWith(fetch),
+      verifyLink: (t) => send<SignedIn>("/api/auth/verify", jsonBody("POST", { t })),
       status: () => send<AuthStatus>("/api/auth/status"),
       name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
       location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
