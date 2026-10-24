@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.86 |
+| Status | v0.87 |
 | Date | 2026-10-24 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) and the side pages (§2) |
@@ -193,7 +193,7 @@ The sidebar narrows the page but doesn't change the size. "Large" in a requireme
 | Route | View |
 |---|---|
 | `/signin` | Sign in |
-| `/` → `/today` | Today (`?event={id}` opens Event details, `?at={HH:MM}` a reminder group's time; NOTIF-07) |
+| `/` → `/today` | Today (`?event={id}` opens Event details; `?at={HH:MM}`, a reminder group's push, shows Today; NOTIF-07) |
 | `/calendar` | Calendar (`?date=YYYY-MM-DD`) |
 | `/weather` · `/notes` | Weather · Notes |
 | `/photos` | Photos (`?photo={id}`, PHOTO-01) |
