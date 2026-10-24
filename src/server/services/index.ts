@@ -1,10 +1,12 @@
 import "server-only";
+import { err, ok, type Result } from "@/domain/result";
 import type {
   AccountSettings,
   CalendarEvent,
   LocationRequest,
   Note,
   Photo,
+  PushSubscription,
   Tag,
 } from "@/domain/schemas";
 import { GB } from "@/domain/storage";
@@ -20,6 +22,7 @@ import * as displays from "./displays";
 import * as events from "./events";
 import * as notes from "./notes";
 import * as photos from "./photos";
+import * as push from "./push";
 import * as settings from "./settings";
 import * as sync from "./sync";
 import * as tags from "./tags";
@@ -87,6 +90,24 @@ export function photoUsage(accountId: string) {
 
 export function listDisplays(accountId: string, displayId: string) {
   return displays.listDisplays(deps(), accountId, displayId);
+}
+
+export function pushKey(): Result<string, "push-off"> {
+  const config = env().push;
+
+  return config ? ok(config.publicKey) : err("push-off");
+}
+
+export function subscribePush(
+  accountId: string,
+  displayId: string,
+  subscription: PushSubscription,
+) {
+  return push.subscribePush(deps(), accountId, displayId, subscription);
+}
+
+export function unsubscribePush(accountId: string, displayId: string) {
+  return push.unsubscribePush(deps(), accountId, displayId);
 }
 
 export function accountWeather(accountId: string) {

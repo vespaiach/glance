@@ -2,6 +2,7 @@ import "server-only";
 import * as v from "valibot";
 import type { DatabaseConfig } from "./db/database";
 import { type MailConfig, parseAddress } from "./mail/mailer";
+import type { PushConfig } from "./push";
 import type { PhotoStoreConfig } from "./storage/store";
 
 const POSTGRES_URL = /^postgres(ql)?:\/\//;
@@ -11,6 +12,12 @@ const PORT = /^\d{1,5}$/;
 const DECIMAL = /^\d+(\.\d+)?$/;
 
 const SMTP_CREDENTIALS = [["SMTP_USER"], ["SMTP_PASSWORD"]] as const;
+
+const VAPID_PATHS = [["VAPID_PUBLIC_KEY"], ["VAPID_PRIVATE_KEY"], ["VAPID_SUBJECT"]] as const;
+
+type VapidKey = (typeof VAPID_PATHS)[number][0];
+
+const VAPID_SUBJECT = /^(mailto:|https:)/;
 
 const Filled = v.pipe(v.string(), v.trim(), v.nonEmpty());
 
@@ -167,10 +174,31 @@ const StorageSchema = v.variant("PHOTO_STORE", [
   ),
 ]);
 
+const PushSchema = v.pipe(
+  v.object({
+    VAPID_PUBLIC_KEY: v.optional(Filled),
+    VAPID_PRIVATE_KEY: v.optional(Filled),
+    VAPID_SUBJECT: v.optional(v.pipe(Filled, v.regex(VAPID_SUBJECT))),
+  }),
+  v.forward(v.partialCheck(VAPID_PATHS, pushKeyGiven("VAPID_PUBLIC_KEY")), ["VAPID_PUBLIC_KEY"]),
+  v.forward(v.partialCheck(VAPID_PATHS, pushKeyGiven("VAPID_PRIVATE_KEY")), ["VAPID_PRIVATE_KEY"]),
+  v.forward(v.partialCheck(VAPID_PATHS, pushKeyGiven("VAPID_SUBJECT")), ["VAPID_SUBJECT"]),
+  v.transform((source): PushConfig | undefined =>
+    source.VAPID_PUBLIC_KEY && source.VAPID_PRIVATE_KEY && source.VAPID_SUBJECT
+      ? {
+          publicKey: source.VAPID_PUBLIC_KEY,
+          privateKey: source.VAPID_PRIVATE_KEY,
+          subject: source.VAPID_SUBJECT,
+        }
+      : undefined,
+  ),
+);
+
 export type Env = v.InferOutput<typeof BaseSchema> & {
   database: DatabaseConfig;
   mail: MailConfig;
   storage: PhotoStoreConfig;
+  push: PushConfig | undefined;
 };
 
 let cached: Env | undefined;
@@ -184,9 +212,11 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
 
   const storage = v.safeParse(StorageSchema, source);
 
-  if (!database.success || !base.success || !mail.success || !storage.success) {
+  const push = v.safeParse(PushSchema, source);
+
+  if (!database.success || !base.success || !mail.success || !storage.success || !push.success) {
     throw new Error(
-      `Invalid server config: ${invalidKeys([database, base, mail, storage]).join(", ")}`,
+      `Invalid server config: ${invalidKeys([database, base, mail, storage, push]).join(", ")}`,
     );
   }
 
@@ -195,6 +225,7 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
     database: database.output,
     mail: mail.output,
     storage: storage.output,
+    push: push.output,
   };
 }
 
@@ -214,4 +245,9 @@ function invalidKeys(results: { issues?: v.GenericIssue[] | undefined }[]): stri
 
 function credentialsPaired(input: { SMTP_USER?: string; SMTP_PASSWORD?: string }): boolean {
   return (input.SMTP_USER === undefined) === (input.SMTP_PASSWORD === undefined);
+}
+
+function pushKeyGiven(key: VapidKey) {
+  return (input: Partial<Record<VapidKey, string>>): boolean =>
+    input[key] !== undefined || VAPID_PATHS.every(([other]) => input[other] === undefined);
 }

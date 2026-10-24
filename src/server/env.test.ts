@@ -30,6 +30,12 @@ const R2 = {
   R2_SECRET_ACCESS_KEY: "r2_secret",
 };
 
+const VAPID = {
+  VAPID_PUBLIC_KEY: "test-public-key",
+  VAPID_PRIVATE_KEY: "test-private-key",
+  VAPID_SUBJECT: "mailto:hello@example.com",
+};
+
 describe("parseEnv", () => {
   it("tech§6.5 reads DATABASE_URL, APP_URL, MAIL_FROM, Resend mail and a disk store at DATA_DIR by default", () => {
     expect(parseEnv({ ...VALID, OTHER: "x" })).toEqual({
@@ -267,4 +273,36 @@ describe("parseEnv", () => {
       );
     },
   );
+
+  it("D30 turns push off when no VAPID key is set", () => {
+    expect(parseEnv(VALID).push).toBeUndefined();
+  });
+
+  it("D30 reads the VAPID keys and subject", () => {
+    expect(parseEnv({ ...VALID, ...VAPID }).push).toEqual({
+      publicKey: "test-public-key",
+      privateKey: "test-private-key",
+      subject: "mailto:hello@example.com",
+    });
+  });
+
+  it("D30 takes an https subject", () => {
+    expect(
+      parseEnv({ ...VALID, ...VAPID, VAPID_SUBJECT: "https://glance.example.com" }).push,
+    ).toMatchObject({ subject: "https://glance.example.com" });
+  });
+
+  it("D30 fails at boot when only some VAPID keys are set", () => {
+    const { VAPID_PRIVATE_KEY: _, ...partial } = VAPID;
+
+    expect(() => parseEnv({ ...VALID, ...partial })).toThrow(
+      "Invalid server config: VAPID_PRIVATE_KEY",
+    );
+  });
+
+  it("D30 fails at boot on a subject that isn't mailto: or https:", () => {
+    expect(() => parseEnv({ ...VALID, ...VAPID, VAPID_SUBJECT: "hello@example.com" })).toThrow(
+      "Invalid server config: VAPID_SUBJECT",
+    );
+  });
 });

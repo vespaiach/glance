@@ -43,6 +43,8 @@ describe("001_init", () => {
       "magic_links",
       "notes",
       "photos",
+      "push_subscriptions",
+      "reminder_sends",
       "schema_migrations",
       "sessions",
       "settings",
@@ -585,6 +587,31 @@ describe("013_event_reminder", () => {
     await insertEvent(NOW, null);
 
     await expect(db().run("UPDATE events SET reminder = '1h'")).rejects.toThrow(/check constraint/);
+  });
+});
+
+describe("014_push", () => {
+  it("D30 deleting a display deletes its push subscription", async () => {
+    await insertAccount("a1");
+    await insertDisplay("", "");
+    await db().run(
+      "INSERT INTO push_subscriptions (id, account_id, display_id, endpoint, p256dh, auth, created_at) VALUES ('p1', 'a1', 'd1', 'https://push.example.com/1', 'k', 'a', $1)",
+      [NOW],
+    );
+
+    await db().run("DELETE FROM displays");
+
+    expect(await db().all("SELECT id FROM push_subscriptions")).toEqual([]);
+  });
+
+  it("D30 keeps one send per event, kind and fire time", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+    const send =
+      "INSERT INTO reminder_sends (event_id, kind, fire_at, sent_at) VALUES ('e1', 'start', $1, $1)";
+    await db().run(send, [NOW]);
+
+    await expect(db().run(send, [NOW])).rejects.toThrow(/duplicate key/);
   });
 });
 

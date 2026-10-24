@@ -1,4 +1,5 @@
 import "server-only";
+import type { ReminderKind } from "@/domain/reminders";
 import type {
   AccountSettings,
   CalendarEvent,
@@ -63,6 +64,17 @@ export type MagicLinkRecord = {
   usedAt: string | null;
 };
 
+export type PushSubscriptionRecord = {
+  id: string;
+  accountId: string;
+  displayId: string;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  createdAt: string;
+};
+
+export type ReminderSendRecord = { eventId: string; kind: ReminderKind; fireAt: string };
+
 type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
 
 export type Repos = {
@@ -106,6 +118,7 @@ export type Repos = {
     find(id: string): Promise<Owned<StoredEvent> | undefined>;
     save(accountId: string, event: StoredEvent): Promise<void>;
     changedSince(accountId: string, version: number): Promise<StoredEvent[]>;
+    liveStarting(after: string, until: string): Promise<Owned<StoredEvent>[]>;
   };
   notes: {
     find(id: string): Promise<Owned<StoredNote> | undefined>;
@@ -139,6 +152,16 @@ export type Repos = {
     save(settings: StoredSettings): Promise<void>;
     all(): Promise<StoredSettings[]>;
     changedSince(accountId: string, version: number): Promise<StoredSettings[]>;
+  };
+  pushSubscriptions: {
+    save(subscription: PushSubscriptionRecord): Promise<void>;
+    forAccount(accountId: string): Promise<PushSubscriptionRecord[]>;
+    removeForDisplay(accountId: string, displayId: string): Promise<void>;
+    removeEndpoint(endpoint: string): Promise<void>;
+  };
+  reminderSends: {
+    insert(sends: readonly ReminderSendRecord[], sentAt: string): Promise<ReminderSendRecord[]>;
+    removeSentBefore(at: string): Promise<void>;
   };
   weatherCache: {
     get(accountId: string): Promise<WeatherCacheRecord | undefined>;
