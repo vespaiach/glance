@@ -17,11 +17,16 @@ import { shellWrapper } from "@/shell/providers/testShell";
 import { SheetHost, useSheetHost } from "@/shell/SheetHost";
 import { TodayScreen } from "./TodayScreen";
 
-const navigation = vi.hoisted(() => ({ push: vi.fn<(path: string) => void>() }));
+const navigation = vi.hoisted(() => ({
+  push: vi.fn<(path: string) => void>(),
+  replace: vi.fn<(path: string) => void>(),
+  search: "",
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/today",
-  useRouter: () => ({ push: navigation.push, prefetch: () => {} }),
+  useRouter: () => ({ push: navigation.push, replace: navigation.replace, prefetch: () => {} }),
+  useSearchParams: () => new URLSearchParams(navigation.search),
 }));
 
 const NOW = new Date(2026, 9, 9, 10, 41);
@@ -135,6 +140,8 @@ let store: Harness;
 beforeEach(() => {
   store = openHarness("glance-today-screen-test");
   navigation.push.mockReset();
+  navigation.replace.mockReset();
+  navigation.search = "";
 
   vi.stubGlobal("matchMedia", () => ({
     matches: true,
@@ -317,6 +324,26 @@ test("TODAY-11 every plan from 5 AM to 9 PM shows on the timeline, with no See a
 
   expect(await screen.findAllByRole("button", { name: /^Plan \d, / })).toHaveLength(9);
   expect(screen.queryByRole("button", { name: /See all/ })).not.toBeInTheDocument();
+});
+
+test("NOTIF-07 opening /today?event={id} from a push opens Event details and drops the param", async () => {
+  navigation.search = `event=${CALL.id}`;
+
+  renderToday();
+
+  expect(await screen.findByRole("status", { name: "Open sheet" })).toHaveTextContent(
+    JSON.stringify({ kind: "event", id: CALL.id }),
+  );
+  expect(navigation.replace).toHaveBeenCalledWith("/today");
+});
+
+test("NOTIF-07 opening /today?at={HH:MM} from a group push shows Today and drops the param", async () => {
+  navigation.search = "at=15:30";
+
+  renderToday();
+
+  await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/today"));
+  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
 });
 
 test("TODAY-03 tapping a plan opens Event details", async () => {

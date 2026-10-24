@@ -1,7 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useEffectEvent, useRef } from "react";
 import {
   type ShownNote,
@@ -144,6 +144,12 @@ export function TodayScreen() {
   const go = (view: View) => router.push(viewPath(view));
 
   const openEvent = (id: string) => sheets.open({ kind: "event", id });
+
+  usePushLink((id) => {
+    if (id) openEvent(id);
+
+    router.replace(viewPath("today"));
+  });
 
   return (
     <div {...stylex.props(todayType, styles.grid, todayGrids[grid])}>
@@ -389,4 +395,18 @@ function useOnPhotoArrival(count: number, onArrival: () => void) {
 
     seen.current = count;
   }, [count]);
+}
+
+function usePushLink(onLinked: (eventId: string | null) => void) {
+  const params = useSearchParams();
+
+  const linked = params.has("event") || params.has("at");
+
+  const eventId = params.get("event");
+
+  const follow = useEffectEvent(() => onLinked(eventId));
+
+  useEffect(() => {
+    if (linked) follow();
+  }, [linked]);
 }

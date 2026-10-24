@@ -18,6 +18,7 @@ import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { SettingsView } from "./components/SettingsView";
 import { useQrTile } from "./useQrTile";
+import { useThisPhone } from "./useThisPhone";
 
 const BACKGROUND_PATH = "/settings/background";
 
@@ -56,6 +57,8 @@ export function SettingsScreen() {
 
   const qr = useQrTile();
 
+  const thisPhone = useThisPhone();
+
   return (
     <SettingsView
       account={account}
@@ -76,6 +79,9 @@ export function SettingsScreen() {
       onOpenLocation={() => router.push(LOCATION_PATH)}
       onOpenAmbient={() => router.push(AMBIENT_PATH)}
       onSignOut={() => void signOut().then(() => router.replace(SIGN_IN_PATH))}
+      phone={thisPhone.phone}
+      onAllowPush={thisPhone.allow}
+      onTurnOffPush={thisPhone.turnOff}
     />
   );
 }

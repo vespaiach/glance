@@ -75,6 +75,9 @@ function renderView(overrides: Partial<Props> = {}) {
     qr: { tile: { kind: "closed" }, secondsLeft: 180 },
     onShowQr: vi.fn(),
     onCloseQr: vi.fn(),
+    phone: { kind: "unsupported" },
+    onAllowPush: vi.fn(),
+    onTurnOffPush: vi.fn(),
     ...overrides,
   };
 
@@ -253,6 +256,53 @@ test("NOTIF-08 the Chime switch shows and saves the setting", async () => {
   await userEvent.click(chime);
 
   expect(props.onChange).toHaveBeenCalledWith({ chime: false });
+});
+
+test("NOTIF-08 This phone is hidden where push is unsupported", () => {
+  renderView();
+
+  expect(screen.queryByText("This phone")).not.toBeInTheDocument();
+});
+
+test("NOTIF-08 This phone offers Allow notifications and asks on tap", async () => {
+  const props = renderView({ phone: { kind: "ask" } });
+
+  expect(screen.getByText("Get reminders when Glance is closed.")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Allow notifications" }));
+
+  expect(props.onAllowPush).toHaveBeenCalled();
+});
+
+test("NOTIF-08 while the prompt is up Allow notifications is disabled", () => {
+  renderView({ phone: { kind: "asking" } });
+
+  expect(screen.getByRole("button", { name: "Allow notifications" })).toBeDisabled();
+});
+
+test("NOTIF-08 once allowed This phone reads On with Turn off", async () => {
+  const props = renderView({ phone: { kind: "on" } });
+
+  expect(screen.getByText("On")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Turn off" }));
+
+  expect(props.onTurnOffPush).toHaveBeenCalled();
+});
+
+test("NOTIF-08 while turning off the Turn off button is disabled", () => {
+  renderView({ phone: { kind: "turning-off" } });
+
+  expect(screen.getByRole("button", { name: "Turn off" })).toBeDisabled();
+});
+
+test("NOTIF-08 blocked by the browser shows the settings note in place of the button", () => {
+  renderView({ phone: { kind: "denied" } });
+
+  expect(
+    screen.getByText("Notifications are off for Glance in this browser’s settings."),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Allow notifications" })).not.toBeInTheDocument();
 });
 
 test("SET-06 the Ambient tile shows the hours in the clock format and opens the Ambient screen page", async () => {

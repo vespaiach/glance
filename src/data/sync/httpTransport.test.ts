@@ -254,6 +254,37 @@ describe("HttpTransport", () => {
     expect(calls[0]?.init.body).toBe(JSON.stringify({ url }));
   });
 
+  it("NOTIF-08 webPush.key reads the VAPID public key", async () => {
+    const { calls, fetch } = fakeFetch(json({ key: "BPublicKey" }));
+
+    const answer = await transport(fetch).webPush.key();
+
+    expect(answer).toEqual({ ok: true, value: "BPublicKey" });
+    expect(calls[0]?.url).toBe("/api/push/key");
+  });
+
+  it("NOTIF-08 webPush.subscribe puts this device's subscription and unsubscribe deletes it", async () => {
+    const subscription = {
+      endpoint: "https://push.example.com/abc",
+      keys: { p256dh: "p256", auth: "secret" },
+    };
+    const { calls, fetch } = fakeFetch(
+      new Response(null, { status: 204 }),
+      new Response(null, { status: 204 }),
+    );
+
+    expect(await transport(fetch).webPush.subscribe(subscription)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect(await transport(fetch).webPush.unsubscribe()).toEqual({ ok: true, value: undefined });
+    expect(calls.map((call) => [call.url, call.init.method])).toEqual([
+      ["/api/push/subscription", "PUT"],
+      ["/api/push/subscription", "DELETE"],
+    ]);
+    expect(calls[0]?.init.body).toBe(JSON.stringify(subscription));
+  });
+
   it("WX-07 places searches with the query encoded", async () => {
     const places = [{ name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 }];
     const { calls, fetch } = fakeFetch(json(places));

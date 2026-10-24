@@ -9,6 +9,7 @@ import {
   type SerwistGlobalConfig,
   type SerwistPlugin,
 } from "serwist";
+import { openPush, showPush } from "@/data/sw/push";
 import {
   CACHES,
   FALLBACK_PAGE,
@@ -105,6 +106,16 @@ self.addEventListener("message", (event) => {
   if (isWarmPhotos(event.data)) event.waitUntil(warmPhotos(event.data.ids, event));
 });
 
+self.addEventListener("push", (event) => {
+  event.waitUntil(showPush(self, readPush(event)));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  event.waitUntil(openPush(self.clients, event.notification.data));
+});
+
 serwist.addEventListeners();
 
 async function cachePage(cache: Cache, path: string): Promise<void> {
@@ -122,5 +133,13 @@ async function cachePages(): Promise<void> {
 async function warmPhotos(ids: string[], event: ExtendableEvent): Promise<void> {
   for (const url of photoFileUrls(ids)) {
     await photos.handle({ request: new Request(url), event }).catch(() => undefined);
+  }
+}
+
+function readPush(event: PushEvent): unknown {
+  try {
+    return event.data?.json();
+  } catch {
+    return undefined;
   }
 }

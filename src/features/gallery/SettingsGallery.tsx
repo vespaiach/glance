@@ -221,7 +221,14 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "storage-full", storage: { used: STORAGE_LIMIT, limit: STORAGE_LIMIT } },
     { key: "storage-unread", storage: undefined },
     { key: "offline", online: false },
+    { key: "phone-ask", phone: { kind: "ask" } },
+    { key: "phone-asking", phone: { kind: "asking" } },
+    { key: "phone-denied", phone: { kind: "denied" } },
+    { key: "phone-on", phone: { kind: "on" } },
+    { key: "phone-turning-off", phone: { kind: "turning-off" } },
     { key: "small", small: true, breakpoint: "small" },
+    { key: "small-phone-ask", small: true, breakpoint: "small", phone: { kind: "ask" } },
+    { key: "small-phone-on", small: true, breakpoint: "small", phone: { kind: "on" } },
     {
       key: "small-storage-almost",
       small: true,
@@ -252,5 +259,8 @@ function settingsBase(season: Season): SettingsProps {
     onOpenLocation: ignore,
     onOpenAmbient: ignore,
     onSignOut: ignore,
+    phone: { kind: "unsupported" },
+    onAllowPush: ignore,
+    onTurnOffPush: ignore,
   };
 }

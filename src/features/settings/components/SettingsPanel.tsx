@@ -1,17 +1,19 @@
 import * as stylex from "@stylexjs/stylex";
-import { CalendarDays } from "lucide-react";
+import { Bell, CalendarDays } from "lucide-react";
 import { useId } from "react";
 import { copy } from "@/copy";
 import type { ShownBackground } from "@/domain/background";
 import type { AccountSettings, Season } from "@/domain/schemas";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
+import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { PillTabs } from "@/ui/PillTabs";
 import { Radio } from "@/ui/Radio";
 import { SettingsRow } from "@/ui/SettingsRow";
 import { seasonIcons } from "@/ui/seasonIcons";
 import { locationSummary } from "../location";
+import type { ThisPhone } from "../thisPhone";
 import type { SettingsAccount } from "./AccountCard";
 
 type SettingsPanelProps = {
@@ -22,6 +24,9 @@ type SettingsPanelProps = {
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
   onOpenLocation: () => void;
+  phone: ThisPhone;
+  onAllowPush: () => void;
+  onTurnOffPush: () => void;
 };
 
 const SEASON_OPTIONS = [
@@ -70,6 +75,22 @@ const styles = stylex.create({
   section: {
     paddingTop: space.md,
   },
+  phoneOn: {
+    display: "flex",
+    alignItems: "center",
+    gap: space.sm,
+    fontSize: type.headlineSize,
+    fontWeight: type.headlineWeight,
+  },
+  ring: {
+    boxShadow: shadows.shadow1,
+  },
+  blocked: {
+    maxWidth: 360,
+    fontSize: type.bodySmSize,
+    fontWeight: type.bodySmWeight,
+    textWrap: "pretty",
+  },
 });
 
 export function SettingsPanel({
@@ -80,6 +101,9 @@ export function SettingsPanel({
   onChange,
   onOpenBackground,
   onOpenLocation,
+  phone,
+  onAllowPush,
+  onTurnOffPush,
 }: SettingsPanelProps) {
   const text = copy.settings;
 
@@ -142,7 +166,13 @@ export function SettingsPanel({
           divider={false}
         />
       </div>
-      <NotificationsSection settings={settings} onChange={onChange} />
+      <NotificationsSection
+        settings={settings}
+        onChange={onChange}
+        phone={phone}
+        onAllowPush={onAllowPush}
+        onTurnOffPush={onTurnOffPush}
+      />
     </div>
   );
 }
@@ -150,7 +180,10 @@ export function SettingsPanel({
 function NotificationsSection({
   settings,
   onChange,
-}: Pick<SettingsPanelProps, "settings" | "onChange">) {
+  phone,
+  onAllowPush,
+  onTurnOffPush,
+}: Pick<SettingsPanelProps, "settings" | "onChange" | "phone" | "onAllowPush" | "onTurnOffPush">) {
   const text = copy.settings.notifications;
 
   const heading = useId();
@@ -173,10 +206,55 @@ function NotificationsSection({
         description={text.chimeBody}
         checked={settings.chime}
         onCheckedChange={(checked) => onChange({ chime: checked })}
-        divider={false}
+        divider={phone.kind !== "unsupported"}
       />
+      {phone.kind !== "unsupported" && (
+        <SettingsRow title={text.thisPhone} description={text.thisPhoneBody} divider={false}>
+          <ThisPhoneControl phone={phone} onAllow={onAllowPush} onTurnOff={onTurnOffPush} />
+        </SettingsRow>
+      )}
     </section>
   );
+}
+
+function ThisPhoneControl({
+  phone,
+  onAllow,
+  onTurnOff,
+}: {
+  phone: Exclude<ThisPhone, { kind: "unsupported" }>;
+  onAllow: () => void;
+  onTurnOff: () => void;
+}) {
+  const text = copy.settings.notifications;
+
+  switch (phone.kind) {
+    case "ask":
+    case "asking":
+      return (
+        <Button
+          variant="secondary"
+          icon={Bell}
+          disabled={phone.kind === "asking"}
+          onClick={onAllow}
+          xstyle={styles.ring}
+        >
+          {text.allow}
+        </Button>
+      );
+    case "denied":
+      return <span {...stylex.props(styles.blocked)}>{text.blocked}</span>;
+    case "on":
+    case "turning-off":
+      return (
+        <span {...stylex.props(styles.phoneOn)}>
+          {text.on}
+          <Button variant="ghost" disabled={phone.kind === "turning-off"} onClick={onTurnOff}>
+            {text.turnOff}
+          </Button>
+        </span>
+      );
+  }
 }
 
 function seasonSubtitle(setting: AccountSettings["season"], season: Season): string {

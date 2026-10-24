@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { TodayScreen } from "@/features/today";
 
 export default function TodayPage() {
-  return <TodayScreen />;
+  return (
+    <Suspense>
+      <TodayScreen />
+    </Suspense>
+  );
 }

@@ -206,6 +206,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     photoUsage: transport.photoUsage,
     issueQr: transport.issueQr,
     voidQr: transport.voidQr,
+    webPush: transport.webPush,
     signOut: async () => {
       close();
 

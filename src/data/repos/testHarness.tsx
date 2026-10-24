@@ -20,6 +20,11 @@ export type Harness = RepoStore & {
   photoUsage: Mock<Transport["photoUsage"]>;
   issueQr: Mock<Transport["issueQr"]>;
   voidQr: Mock<Transport["voidQr"]>;
+  webPush: {
+    key: Mock<Transport["webPush"]["key"]>;
+    subscribe: Mock<Transport["webPush"]["subscribe"]>;
+    unsubscribe: Mock<Transport["webPush"]["unsubscribe"]>;
+  };
   signOut: Mock<() => Promise<void>>;
   markSignedOut: Mock<() => Promise<void>>;
   close(): Promise<void>;
@@ -44,6 +49,11 @@ export function openHarness(name: string): Harness {
     photoUsage: vi.fn<Transport["photoUsage"]>(async () => err("network")),
     issueQr: vi.fn<Transport["issueQr"]>(async () => err("network")),
     voidQr: vi.fn<Transport["voidQr"]>(async () => err("network")),
+    webPush: {
+      key: vi.fn<Transport["webPush"]["key"]>(async () => err("network")),
+      subscribe: vi.fn<Transport["webPush"]["subscribe"]>(async () => err("network")),
+      unsubscribe: vi.fn<Transport["webPush"]["unsubscribe"]>(async () => err("network")),
+    },
     signOut: vi.fn<() => Promise<void>>(async () => {}),
     markSignedOut: vi.fn<() => Promise<void>>(async () => {}),
     close: async () => {
