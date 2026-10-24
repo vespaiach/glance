@@ -1,19 +1,24 @@
 import "server-only";
 import { syncBus } from "../bus";
 import { database } from "../db";
+import { env } from "../env";
+import { createWebPush } from "../push";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
 import { expireNotes } from "./notes";
 import { backfillPhotoBytes, removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
+import { cleanupReminderSends, sendReminderPushes } from "./reminders";
 import { createJobTick } from "./schedule";
 import { cleanupSignIns } from "./signIns";
 
-const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+
+const HOUR_MS = 60 * MINUTE_MS;
 
 export function startJobs(): void {
   const tick = createJobTick({
     hourly: runHourly,
-    daily: [runSignInCleanup, runPhotoCleanup],
+    daily: [runSignInCleanup, runPhotoCleanup, runReminderSendCleanup],
   });
 
   void tick(new Date());
@@ -23,6 +28,20 @@ export function startJobs(): void {
   void runPhotoBytesBackfill();
 
   setInterval(() => void tick(new Date()), HOUR_MS).unref();
+
+  startReminderPushes();
+}
+
+function startReminderPushes(): void {
+  const config = env().push;
+
+  if (config === undefined) return;
+
+  const push = createWebPush(config);
+
+  const run = () => void sendReminderPushes({ ...deps(), push }).catch(console.error);
+
+  setInterval(run, MINUTE_MS).unref();
 }
 
 function deps(): ServiceDeps {
@@ -41,6 +60,10 @@ async function runSignInCleanup(): Promise<void> {
 
 async function runPhotoCleanup(): Promise<void> {
   await removeDeletedPhotoFiles({ ...deps(), store: photoStore() });
+}
+
+async function runReminderSendCleanup(): Promise<void> {
+  await cleanupReminderSends(deps());
 }
 
 async function runOriginalCleanup(): Promise<void> {

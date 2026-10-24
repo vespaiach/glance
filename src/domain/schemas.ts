@@ -291,6 +291,14 @@ export const LocationRequestSchema = v.union([
 ]);
 export type LocationRequest = v.InferOutput<typeof LocationRequestSchema>;
 
+const PushKeySchema = v.pipe(v.string(), v.nonEmpty(), v.maxLength(256));
+
+export const PushSubscriptionSchema = v.object({
+  endpoint: v.pipe(v.string(), v.url(), v.startsWith("https://"), v.maxLength(2048)),
+  keys: v.object({ p256dh: PushKeySchema, auth: PushKeySchema }),
+});
+export type PushSubscription = v.InferOutput<typeof PushSubscriptionSchema>;
+
 export const DisplaySchema = v.object({
   id: IdSchema,
   accountId: IdSchema,

@@ -6,6 +6,7 @@ import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
 import { notesRepo } from "./notes";
 import { newPglite, pgliteSql } from "./pglite";
 import { photosRepo } from "./photos";
+import { pushSubscriptionsRepo, reminderSendsRepo } from "./push";
 import { settingsRepo, weatherCacheRepo } from "./settings";
 import { openPgSql, type Sql } from "./sql";
 import { tagsRepo } from "./tags";
@@ -61,6 +62,8 @@ function repos(sql: Sql): Repos {
     tags: tagsRepo(sql),
     photos: photosRepo(sql),
     settings: settingsRepo(sql),
+    pushSubscriptions: pushSubscriptionsRepo(sql),
+    reminderSends: reminderSendsRepo(sql),
     weatherCache: weatherCacheRepo(sql),
   };
 }
