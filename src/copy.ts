@@ -627,7 +627,15 @@ export const copy = {
         full: "Storage full. New photos can’t be added until some are deleted in Photos.",
       },
       signOut: "Sign out",
-      signOutCaption: "Sign out this device only.",
+      signOutCaption: "This device or every device.",
+      signOutDialog: {
+        title: "Sign out",
+        body: "Sign out of this screen only, or of every phone, tablet and screen signed in with this email. Calendars, notes and photos stay saved to the account.",
+        thisDevice: "Sign out this device",
+        allDevices: "Sign out all devices",
+        cancel: "Cancel",
+        failed: "Couldn’t sign out. Try again.",
+      },
       qr: {
         show: "Sign in another device",
         title: "Scan to sign in",
@@ -885,6 +893,7 @@ export const copy = {
     loadingEvent: "Loading next event",
   },
   signIn: {
+    signedOutAll: "Signed out of all devices.",
     headline: "Your family’s day, at a glance.",
     tagline: "Calendar, weather, notes and photos for your family. Sign in to manage them.",
     shortDate: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,

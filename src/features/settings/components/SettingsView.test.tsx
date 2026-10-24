@@ -66,7 +66,11 @@ function renderView(overrides: Partial<Props> = {}) {
     onOpenBackground: vi.fn(),
     onOpenLocation: vi.fn(),
     onOpenAmbient: vi.fn(),
+    signOut: { kind: "closed" },
     onSignOut: vi.fn(),
+    onSignOutThisDevice: vi.fn(),
+    onSignOutAll: vi.fn(),
+    onCancelSignOut: vi.fn(),
     screens: [KITCHEN],
     storage: undefined,
     now: NOW,
@@ -455,7 +459,7 @@ test("SET-08 the account card shows the initial, name and email and signs out", 
   expect(card.getByText("M")).toBeInTheDocument();
   expect(card.getByText("Maria")).toBeInTheDocument();
   expect(card.getByText("maria@example.com")).toBeInTheDocument();
-  expect(card.getByText("Sign out this device only.")).toBeInTheDocument();
+  expect(card.getByText("This device or every device.")).toBeInTheDocument();
 
   await userEvent.click(card.getByRole("button", { name: "Sign out" }));
 

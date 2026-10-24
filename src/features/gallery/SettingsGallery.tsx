@@ -62,6 +62,10 @@ const styles = stylex.create({
   small: {
     width: 350,
   },
+  dialog: {
+    contain: "layout paint",
+    minHeight: 760,
+  },
 });
 
 const BACKGROUND_DEMOS: readonly Demo<BackgroundProps>[] = [
@@ -159,7 +163,10 @@ export function SettingsGallery({ season }: { season: Season }) {
     <>
       <GalleryGroup title={gallery.groups.settingsView}>
         {settingsDemos(season).map(({ key, small, ...demo }) => (
-          <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
+          <div
+            key={key}
+            {...stylex.props(small ? styles.small : styles.view, demo.signOut && styles.dialog)}
+          >
             <SettingsView {...settingsBase(season)} {...demo} />
           </div>
         ))}
@@ -236,6 +243,11 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
       storage: { used: 4.6 * GB, limit: STORAGE_LIMIT },
     },
     { key: "small-qr-open", small: true, breakpoint: "small", qr: QR_OPEN },
+    { key: "sign-out", signOut: { kind: "open" } },
+    { key: "sign-out-offline", online: false, signOut: { kind: "open" } },
+    { key: "sign-out-signing-out", signOut: { kind: "signing-out" } },
+    { key: "sign-out-failed", signOut: { kind: "failed" } },
+    { key: "small-sign-out", small: true, breakpoint: "small", signOut: { kind: "open" } },
   ];
 }
 
@@ -258,7 +270,11 @@ function settingsBase(season: Season): SettingsProps {
     onOpenBackground: ignore,
     onOpenLocation: ignore,
     onOpenAmbient: ignore,
+    signOut: { kind: "closed" },
     onSignOut: ignore,
+    onSignOutThisDevice: ignore,
+    onSignOutAll: ignore,
+    onCancelSignOut: ignore,
     phone: { kind: "unsupported" },
     onAllowPush: ignore,
     onTurnOffPush: ignore,

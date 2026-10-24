@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useReducer } from "react";
 import {
   useAccount,
   usePhotos,
@@ -8,6 +9,7 @@ import {
   useSettingsRepo,
   useSignedInScreens,
   useSignOut,
+  useSignOutAll,
 } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
@@ -17,6 +19,7 @@ import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { SettingsView } from "./components/SettingsView";
+import { SIGN_OUT_CLOSED, signOutDialog } from "./signOutDialog";
 import { useQrTile } from "./useQrTile";
 import { useThisPhone } from "./useThisPhone";
 
@@ -27,6 +30,8 @@ const LOCATION_PATH = "/settings/location";
 const AMBIENT_PATH = "/settings/ambient";
 
 const SIGN_IN_PATH = "/signin";
+
+const SIGNED_OUT_ALL_PATH = "/signin?toast=signed-out-all";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -48,6 +53,19 @@ export function SettingsScreen() {
   const repo = useSettingsRepo();
 
   const signOut = useSignOut();
+
+  const signOutAll = useSignOutAll();
+
+  const [signOutState, dispatchSignOut] = useReducer(signOutDialog, SIGN_OUT_CLOSED);
+
+  const signOutEverywhere = async () => {
+    dispatchSignOut({ type: "sign-out-all" });
+
+    const answer = await signOutAll();
+
+    if (answer.ok) router.replace(SIGNED_OUT_ALL_PATH);
+    else dispatchSignOut({ type: "failed" });
+  };
 
   const screens = useSignedInScreens();
 
@@ -78,7 +96,11 @@ export function SettingsScreen() {
       onOpenBackground={() => router.push(BACKGROUND_PATH)}
       onOpenLocation={() => router.push(LOCATION_PATH)}
       onOpenAmbient={() => router.push(AMBIENT_PATH)}
-      onSignOut={() => void signOut().then(() => router.replace(SIGN_IN_PATH))}
+      signOut={signOutState}
+      onSignOut={() => dispatchSignOut({ type: "open" })}
+      onSignOutThisDevice={() => void signOut().then(() => router.replace(SIGN_IN_PATH))}
+      onSignOutAll={() => void signOutEverywhere()}
+      onCancelSignOut={() => dispatchSignOut({ type: "cancel" })}
       phone={thisPhone.phone}
       onAllowPush={thisPhone.allow}
       onTurnOffPush={thisPhone.turnOff}

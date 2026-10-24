@@ -382,6 +382,30 @@ test("SIGNIN-09 signing in saves the account to glance-meta and opens Today afte
   expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
 });
 
+test("SIGNIN-11 after signing out every device the form shows the toast for 4 s", async () => {
+  window.history.replaceState(null, "", "/signin?toast=signed-out-all");
+
+  renderScreen();
+
+  expect(await screen.findByText("Signed out of all devices.")).toHaveAttribute("role", "status");
+
+  await advance(3900);
+
+  expect(screen.getByText("Signed out of all devices.")).toBeInTheDocument();
+
+  await advance(200);
+
+  expect(screen.queryByText("Signed out of all devices.")).not.toBeInTheDocument();
+});
+
+test("SIGNIN-11 the plain form shows no toast", async () => {
+  renderScreen();
+
+  await advance(100);
+
+  expect(screen.queryByText("Signed out of all devices.")).not.toBeInTheDocument();
+});
+
 function openLink(link: "opened" | "stale") {
   window.history.replaceState(null, "", `/signin?link=${link}`);
 }

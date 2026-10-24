@@ -4,3 +4,8 @@ CREATE TABLE revoked_sessions (
 );
 
 CREATE INDEX revoked_sessions_revoked_at ON revoked_sessions (revoked_at);
+
+CREATE TABLE photo_file_cleanup (
+  file_path text PRIMARY KEY,
+  created_at timestamptz NOT NULL
+);
