@@ -301,8 +301,8 @@ describe("push errors", () => {
     expect(await db.events.get(OTHER_EVENT.id)).toEqual(OTHER_EVENT);
   });
 
-  it.each(["unauthorized", "outdated"] as const)(
-    "tech§5 %s keeps the outbox, records the error and stops syncing",
+  it.each(["unauthorized", "revoked", "outdated"] as const)(
+    "tech§5 %s keeps the outbox unsent, records the error and stops syncing",
     async (error) => {
       const transport = fakeTransport({ push: vi.fn(async () => err<TransportError>(error)) });
 

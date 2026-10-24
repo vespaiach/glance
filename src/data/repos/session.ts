@@ -5,6 +5,7 @@ import { accountDbName, deleteGlanceDb, openGlanceDb } from "../db";
 import {
   clearSignedInAccount,
   type MetaDb,
+  markRevoked,
   markSignedOut,
   openMetaDb,
   readSignedInAccount,
@@ -65,6 +66,8 @@ export async function signedOutAccount(): Promise<SignedOutAccount | undefined> 
   const entry = await readMeta(readSignedInAccount);
 
   if (!entry?.signedOut) return undefined;
+
+  if (entry.revoked) return forgetRevoked(entry.accountId);
 
   return { email: entry.email, ...(await keptAccount(entry.accountId)) };
 }
@@ -152,6 +155,12 @@ async function keptAccount(accountId: string) {
   return read().finally(() => db.close());
 }
 
+async function forgetRevoked(accountId: string): Promise<undefined> {
+  await deleteAccountData(accountId);
+
+  await forgetSignedIn();
+}
+
 async function forgetSignedIn(): Promise<void> {
   const meta = openMetaDb();
 
@@ -190,6 +199,14 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
 
   void host.start(account.accountId);
 
+  const signOut = async () => {
+    close();
+
+    await signOutWith(transport.auth.signout)();
+
+    await deleteAccountData(account.accountId);
+  };
+
   const store = {
     db,
     accountId: account.accountId,
@@ -207,14 +224,16 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     issueQr: transport.issueQr,
     voidQr: transport.voidQr,
     webPush: transport.webPush,
-    signOut: async () => {
-      close();
+    signOut,
+    signOutAll: async () => {
+      const answer = await transport.auth.signoutAll();
 
-      await signOutWith(transport.auth.signout)();
+      if (answer.ok) await signOut();
 
-      await deleteAccountData(account.accountId);
+      return answer;
     },
     markSignedOut: () => readMeta(markSignedOut),
+    markRevoked: () => readMeta(markRevoked),
   };
 
   return { boot: { kind: "ready", store }, close };

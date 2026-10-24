@@ -6,6 +6,7 @@ export type SignedInAccount = {
   name: Account["name"];
   email: Account["email"];
   signedOut?: true;
+  revoked?: true;
 };
 
 export type MetaDb = Dexie & { account: EntityTable<SignedInAccount, "accountId"> };
@@ -42,4 +43,8 @@ export function clearSignedInAccount(db: MetaDb): Promise<void> {
 
 export async function markSignedOut(db: MetaDb): Promise<void> {
   await db.account.toCollection().modify({ signedOut: true });
+}
+
+export async function markRevoked(db: MetaDb): Promise<void> {
+  await db.account.toCollection().modify({ signedOut: true, revoked: true });
 }

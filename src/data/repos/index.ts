@@ -60,6 +60,7 @@ export {
   type SyncStatus,
   useOutboxEmpty,
   useRetry,
+  useRevoked,
   useSignedOut,
   useSourceStatus,
   useSyncStatus,
@@ -72,8 +73,10 @@ export {
   type RepoStore,
   type StoreAccount,
   useAccount,
+  useMarkRevoked,
   useMarkSignedOut,
   useSignOut,
+  useSignOutAll,
 } from "./store";
 export {
   createTagsRepo,

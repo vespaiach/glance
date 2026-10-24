@@ -5,6 +5,7 @@ import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { accountDbName, deleteGlanceDb, openGlanceDb } from "../db";
 import {
   deleteMetaDb,
+  markRevoked,
   markSignedOut,
   openMetaDb,
   readSignedInAccount,
@@ -115,6 +116,14 @@ describe("useDisplayBoot", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("SIGNIN-18 a revoked display marks glance-meta revoked", async () => {
+    await signIn();
+
+    await (await bootSignedIn()).markRevoked();
+
+    expect(await storedAccount()).toEqual({ ...ACCOUNT, signedOut: true, revoked: true });
+  });
+
   it("SIGNIN-13 a signed-in display marks glance-meta signed out, keeping the email", async () => {
     await signIn();
 
@@ -204,6 +213,14 @@ async function signOutByServer() {
   meta.close();
 }
 
+async function revokeByServer() {
+  const meta = openMetaDb();
+
+  await markRevoked(meta);
+
+  meta.close();
+}
+
 async function signIn() {
   const meta = openMetaDb();
 
@@ -259,6 +276,39 @@ describe("sign out", () => {
     await (await bootSignedIn()).signOut();
 
     expect(remove).toHaveBeenCalledExactlyOnceWith("photos");
+  });
+});
+
+describe("sign out all devices", () => {
+  it("SIGNIN-11 asks the server to sign out every device, then signs this screen out", async () => {
+    const fetch = stubServer();
+    await signIn();
+    await queueChange(ACCOUNT.accountId);
+
+    const answer = await (await bootSignedIn()).signOutAll();
+
+    expect(answer).toEqual({ ok: true, value: undefined });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/auth/signout-all",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(await storedAccount()).toBeUndefined();
+    expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
+  });
+
+  it("SIGNIN-11 a failed request keeps this screen signed in with its data", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(null, { status: 500 })),
+    );
+    await signIn();
+    await queueChange(ACCOUNT.accountId);
+
+    const store = await bootSignedIn();
+
+    expect(await store.signOutAll()).toEqual({ ok: false, error: "server" });
+    expect(await storedAccount()).toEqual(ACCOUNT);
+    expect(await store.db.outbox.count()).toBe(1);
   });
 });
 
@@ -376,6 +426,26 @@ describe("signedOutAccount", () => {
       pending: 2,
       settings: { ...DEFAULT_SETTINGS, clock: "24h" },
     });
+  });
+
+  it("SIGNIN-18 a revoked screen's account DB with its outbox, the photos cache and glance-meta are removed", async () => {
+    const remove = stubCaches();
+    await signIn();
+    await queueChange(ACCOUNT.accountId);
+    await revokeByServer();
+
+    expect(await signedOutAccount()).toBeUndefined();
+    expect(await Dexie.exists(accountDbName(ACCOUNT.accountId))).toBe(false);
+    expect(remove).toHaveBeenCalledExactlyOnceWith("photos");
+    expect(await storedAccount()).toBeUndefined();
+  });
+
+  it("SIGNIN-13 a plain sign-out by the server keeps the outbox", async () => {
+    await signIn();
+    await queueChange(ACCOUNT.accountId);
+    await signOutByServer();
+
+    expect((await signedOutAccount())?.pending).toBe(1);
   });
 
   it("SIGNIN-13 a signed-in screen has no signed-out account", async () => {

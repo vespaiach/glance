@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-import { useMarkSignedOut, useSignedOut } from "@/data/repos";
+import { useMarkRevoked, useMarkSignedOut, useRevoked, useSignedOut } from "@/data/repos";
 import { isTextField } from "./keyboard";
 import { useSheetHost } from "./SheetHost";
 
@@ -19,7 +19,7 @@ export function SessionGuard({ children }: { children: ReactNode }) {
 
   const editing = useEditingField();
 
-  const marked = useMarkedSignedOut(useSignedOut());
+  const marked = useMarkedSignedOut(useSignedOut(), useRevoked());
 
   const leave = marked && sheet === null && !editing && pathname !== AMBIENT;
 
@@ -51,8 +51,10 @@ function useEditingField(): boolean {
   return editing;
 }
 
-function useMarkedSignedOut(signedOut: boolean): boolean {
+function useMarkedSignedOut(signedOut: boolean, revoked: boolean): boolean {
   const markSignedOut = useMarkSignedOut();
+
+  const markRevoked = useMarkRevoked();
 
   const [marked, setMarked] = useState(false);
 
@@ -61,14 +63,14 @@ function useMarkedSignedOut(signedOut: boolean): boolean {
 
     let live = true;
 
-    void markSignedOut().then(() => {
+    void (revoked ? markRevoked() : markSignedOut()).then(() => {
       if (live) setMarked(true);
     });
 
     return () => {
       live = false;
     };
-  }, [signedOut, markSignedOut]);
+  }, [signedOut, revoked, markSignedOut, markRevoked]);
 
   return marked;
 }

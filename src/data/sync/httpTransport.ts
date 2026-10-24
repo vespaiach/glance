@@ -69,31 +69,38 @@ export function createHttpTransport({
       name: (name) => send<Account>("/api/auth/name", jsonBody("POST", { name })),
       location: (request) => send<void>("/api/auth/location", jsonBody("POST", request)),
       signout: () => send<void>("/api/auth/signout", { method: "POST" }),
+      signoutAll: () => send<void>("/api/auth/signout-all", { method: "POST" }),
     },
     upload: uploadWith(createXhr),
   };
 }
 
-function transportError(status: number): TransportError {
-  if (status === 401) return "unauthorized";
+function transportError(status: number, body: string): TransportError {
+  if (status === 401) return isRevoked(body) ? "revoked" : "unauthorized";
 
   if (status === 426) return "outdated";
 
   return status >= 500 || status === 429 || status === 403 ? "server" : "invalid";
 }
 
-function uploadError(status: number): UploadError {
+function isRevoked(body: string): boolean {
+  const answer = readJson<{ error?: unknown }>(body);
+
+  return answer.ok && answer.value?.error === "revoked";
+}
+
+function uploadError(status: number, body: string): UploadError {
   if (status === 413) return "too-large";
 
   if (status === 415) return "not-a-photo";
 
   if (status === 507) return "storage-full";
 
-  return transportError(status);
+  return transportError(status, body);
 }
 
-function locateError(status: number): LocateError {
-  return status === 404 ? "outside" : transportError(status);
+function locateError(status: number, body: string): LocateError {
+  return status === 404 ? "outside" : transportError(status, body);
 }
 
 function readJson<T>(text: string): Result<T, TransportError> {
@@ -106,9 +113,9 @@ function readJson<T>(text: string): Result<T, TransportError> {
 
 async function readAnswer<T, E>(
   response: Response,
-  toError: (status: number) => E,
+  toError: (status: number, body: string) => E,
 ): Promise<Result<T, E | TransportError>> {
-  if (!response.ok) return err(toError(response.status));
+  if (!response.ok) return err(toError(response.status, await response.text()));
 
   if (response.status === 204) return ok(undefined as T);
 
@@ -117,7 +124,7 @@ async function readAnswer<T, E>(
 
 function sender<E>(
   fetch: typeof globalThis.fetch,
-  toError: (status: number) => E,
+  toError: (status: number, body: string) => E,
 ): Send<E | TransportError> {
   return async <T>(path: string, init: RequestInit = {}) => {
     const headers = new Headers(init.headers);
@@ -198,7 +205,11 @@ function sendFile(
     };
     xhr.onload = () => {
       const done = xhr.status >= 200 && xhr.status < 300;
-      resolve(done ? readJson<StoredPhoto>(xhr.responseText) : err(uploadError(xhr.status)));
+      resolve(
+        done
+          ? readJson<StoredPhoto>(xhr.responseText)
+          : err(uploadError(xhr.status, xhr.responseText)),
+      );
     };
     xhr.onerror = failed;
     xhr.onabort = failed;

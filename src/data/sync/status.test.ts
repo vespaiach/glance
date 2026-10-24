@@ -24,7 +24,7 @@ describe("nextStatus", () => {
     });
   });
 
-  it.each(["unauthorized", "outdated", "server"] as const)(
+  it.each(["unauthorized", "revoked", "outdated", "server"] as const)(
     "tech§4.6 a %s failure is recorded as the error while online",
     (error) => {
       expect(nextStatus({ ...SYNCED, online: false }, { type: "failed", error })).toEqual({
@@ -51,7 +51,7 @@ describe("nextStatus", () => {
     expect(nextStatus(failed, { type: "synced", at: AT })).toEqual(SYNCED);
   });
 
-  it.each(["unauthorized", "outdated"] as const)(
+  it.each(["unauthorized", "revoked", "outdated"] as const)(
     "SIGNIN-13 a restart clears the %s halt the last session left",
     (error) => {
       expect(nextStatus({ ...SYNCED, error }, { type: "restarted" })).toEqual(SYNCED);
