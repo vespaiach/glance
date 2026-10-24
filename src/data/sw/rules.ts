@@ -29,7 +29,7 @@ export const PHOTO_CACHE_ENTRIES = 300;
 
 export const WARM_PHOTOS = "WARM_PHOTOS";
 
-export type PhotoVariant = "display" | "thumb" | "orig";
+export type PhotoVariant = "display" | "thumb";
 
 export type WarmPhotosMessage = { type: typeof WARM_PHOTOS; ids: string[] };
 

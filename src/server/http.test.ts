@@ -195,11 +195,11 @@ describe("readVariant", () => {
     return new NextRequest(`https://glance.example.com/api/photos/x/file${query}`);
   }
 
-  it.each(["display", "thumb", "orig"])("tech§6.3 reads the %s variant", (variant) => {
+  it.each(["display", "thumb"])("tech§6.3 reads the %s variant", (variant) => {
     expect(readVariant(file(`?v=${variant}`))).toEqual({ ok: true, value: variant });
   });
 
-  it.each(["", "?v=", "?v=large"])("tech§6.3 rejects the variant query %s", (query) => {
+  it.each(["", "?v=", "?v=large", "?v=orig"])("tech§6.3 rejects the variant query %s", (query) => {
     expect(readVariant(file(query))).toEqual({ ok: false, error: "invalid" });
   });
 });

@@ -15,7 +15,7 @@ import { roundedPoint } from "./weather";
 
 export type SyncedPhoto = Synced<Photo>;
 
-export const PHOTO_VARIANTS = ["display", "thumb", "orig"] as const;
+export const PHOTO_VARIANTS = ["display", "thumb"] as const;
 
 export type PhotoVariant = (typeof PHOTO_VARIANTS)[number];
 
@@ -109,7 +109,11 @@ export async function photoFile(
 }
 
 export function photoKeys(filePath: string): string[] {
-  return PHOTO_VARIANTS.map((variant) => objectKey(filePath, variant));
+  return [...PHOTO_VARIANTS.map((variant) => objectKey(filePath, variant)), originalKey(filePath)];
+}
+
+export function originalKey(filePath: string): string {
+  return `${filePath}.orig`;
 }
 
 function editedPhoto(existing: SyncedPhoto, photo: Photo, stamped: Stamp): SyncedPhoto {
@@ -196,9 +200,7 @@ async function decodePhoto(
 async function decoded(original: Uint8Array<ArrayBuffer>): Promise<Result<Decoded, "not-a-photo">> {
   const metadata = await sharp(original).metadata();
 
-  const contentType = photoType(metadata.format);
-
-  if (!contentType) return err("not-a-photo");
+  if (!photoType(metadata.format)) return err("not-a-photo");
 
   const [display, thumb] = await Promise.all([
     webpCopy(original, COPY_MAX_PX.display),
@@ -207,7 +209,6 @@ async function decoded(original: Uint8Array<ArrayBuffer>): Promise<Result<Decode
 
   return ok({
     objects: {
-      orig: { body: original, contentType },
       display: { body: display, contentType: "image/webp" },
       thumb: { body: thumb, contentType: "image/webp" },
     },

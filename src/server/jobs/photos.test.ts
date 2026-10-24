@@ -6,7 +6,7 @@ import { uploadPhoto } from "../services/photos";
 import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
 import { createDiskStore } from "../storage/disk";
 import type { PhotoStore } from "../storage/store";
-import { removeDeletedPhotoFiles } from "./photos";
+import { removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
 
 const harness = serviceHarnessPerTest();
 
@@ -40,6 +40,10 @@ async function markDeleted(accountId: string, id: string): Promise<void> {
     await harness.deps().db.photos.save(accountId, { ...photo, deletedAt: photo.updatedAt });
 }
 
+async function withOriginal(accountId: string, id: string): Promise<void> {
+  await deps().store.put(`${accountId}/${id}.orig`, new Uint8Array([1, 2, 3]), "image/jpeg");
+}
+
 function storedFiles(): string[] {
   return readdirSync(photosDir(), { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
@@ -57,7 +61,7 @@ describe("removeDeletedPhotoFiles", () => {
 
     await removeDeletedPhotoFiles(deps());
 
-    expect(storedFiles()).toEqual([`${kept}.display`, `${kept}.orig`, `${kept}.thumb`]);
+    expect(storedFiles()).toEqual([`${kept}.display`, `${kept}.thumb`]);
   });
 
   it("PHOTO-13 removes a deleted photo's files once, not on every run", async () => {
@@ -89,6 +93,31 @@ describe("removeDeletedPhotoFiles", () => {
 
     await expect(removeDeletedPhotoFiles({ ...harness.deps(), store })).rejects.toThrow("EBUSY");
 
-    expect(storedFiles()).toEqual([`${stuck}.display`, `${stuck}.orig`, `${stuck}.thumb`]);
+    expect(storedFiles()).toEqual([`${stuck}.display`, `${stuck}.thumb`]);
+  });
+});
+
+describe("removePhotoOriginals", () => {
+  it("D12 removes every live photo's original in every account and keeps its copies", async () => {
+    const mine = await stored(MARIA);
+    const theirs = await stored(OMAR);
+    await withOriginal(MARIA, mine);
+    await withOriginal(OMAR, theirs);
+
+    await removePhotoOriginals(deps());
+
+    expect(storedFiles()).toEqual(
+      [`${mine}.display`, `${mine}.thumb`, `${theirs}.display`, `${theirs}.thumb`].sort(),
+    );
+  });
+
+  it("D12 is safe to run twice", async () => {
+    const mine = await stored(MARIA);
+    await withOriginal(MARIA, mine);
+
+    await removePhotoOriginals(deps());
+    await removePhotoOriginals(deps());
+
+    expect(storedFiles()).toEqual([`${mine}.display`, `${mine}.thumb`]);
   });
 });
