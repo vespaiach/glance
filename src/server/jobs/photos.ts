@@ -1,6 +1,12 @@
 import "server-only";
 import type { ServiceDeps } from "../services/deps";
-import { objectKey, originalKey, PHOTO_VARIANTS, photoKeys } from "../services/photos";
+import {
+  objectKey,
+  originalKey,
+  PHOTO_VARIANTS,
+  photoKeys,
+  removeAccountFiles,
+} from "../services/photos";
 import type { PhotoStore } from "../storage/store";
 
 type PhotoJobDeps = Pick<ServiceDeps, "db"> & { store: PhotoStore };
@@ -16,6 +22,8 @@ export async function removeDeletedPhotoFiles({ db, store }: PhotoJobDeps): Prom
       .then(() => db.photos.filesRemoved(filePath))
       .catch((error) => failures.push(error));
   }
+
+  failures.push(...(await removeAccountFiles({ db, store }, await db.photos.cleanupPaths())));
 
   if (failures.length > 0) throw failures[0];
 }

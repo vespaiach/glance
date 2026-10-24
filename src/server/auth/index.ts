@@ -5,6 +5,7 @@ import { syncBus } from "../bus";
 import { database } from "../db";
 import { env } from "../env";
 import { mailer } from "../mail";
+import { photoStore } from "../storage";
 import * as account from "./account";
 import * as codes from "./codes";
 import type { AuthDeps } from "./deps";
@@ -66,6 +67,14 @@ export async function signOutAll(accountId: string): Promise<void> {
   const { db } = deps();
 
   await sessions.signOutAll(deps(), accountId);
+
+  syncBus().publish(accountId, await db.versions.current());
+}
+
+export async function deleteAccount(accountId: string): Promise<void> {
+  const { db } = deps();
+
+  await account.deleteAccount({ ...deps(), store: photoStore() }, accountId);
 
   syncBus().publish(accountId, await db.versions.current());
 }

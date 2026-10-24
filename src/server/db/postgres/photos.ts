@@ -55,6 +55,16 @@ export function photosRepo(sql: Sql): Repos["photos"] {
     filesRemoved: async (filePath) => {
       await sql.run("UPDATE photos SET files_removed = true WHERE file_path = $1", [filePath]);
     },
+    cleanupPaths: async () => {
+      const rows = await sql.all<{ file_path: string }>(
+        "SELECT file_path FROM photo_file_cleanup ORDER BY created_at",
+      );
+
+      return rows.map((row) => row.file_path);
+    },
+    cleanedUp: async (filePath) => {
+      await sql.run("DELETE FROM photo_file_cleanup WHERE file_path = $1", [filePath]);
+    },
     usage: async (accountId) => {
       const row = await sql.one<{ used: number }>(
         "SELECT COALESCE(SUM(bytes), 0)::bigint AS used FROM photos WHERE account_id = $1 AND deleted_at IS NULL",

@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { GB } from "@/domain/storage";
 import { tempDirPerTest } from "../db/testDir";
 import { uploadPhoto } from "../services/photos";
-import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
+import { MARIA, OMAR, START, serviceHarnessPerTest } from "../services/testServices";
 import { createDiskStore } from "../storage/disk";
 import type { PhotoStore } from "../storage/store";
 import { backfillPhotoBytes, removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
@@ -108,6 +108,17 @@ describe("removeDeletedPhotoFiles", () => {
     await expect(removeDeletedPhotoFiles({ ...harness.deps(), store })).rejects.toThrow("EBUSY");
 
     expect(storedFiles()).toEqual([`${stuck}.display`, `${stuck}.thumb`]);
+  });
+
+  it("SET-14 removes the files a deleted account left behind and forgets each once removed", async () => {
+    await stored(MARIA);
+    const kept = await stored(OMAR);
+    await harness.deps().db.accounts.erase(MARIA, START.toISOString());
+
+    await removeDeletedPhotoFiles(deps());
+
+    expect(storedFiles()).toEqual([`${kept}.display`, `${kept}.thumb`]);
+    expect(await harness.deps().db.photos.cleanupPaths()).toEqual([]);
   });
 });
 
