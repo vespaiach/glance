@@ -1,7 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { type ReactNode, useEffect, useRef } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 import {
   type AppServiceWorker,
   appServiceWorker,
@@ -34,6 +42,10 @@ export type IdleUpdates = Pick<
 
 type UpdateState = { updates: IdleUpdates; outdated: boolean; outboxEmpty: boolean };
 
+type IdleListeners = Set<() => void>;
+
+const IdleListenersContext = createContext<IdleListeners>(new Set());
+
 type IdleProps = {
   reload?: (path: string) => void;
   updates?: IdleUpdates;
@@ -64,6 +76,8 @@ export function IdleProvider({
   const outboxEmpty = useOutboxEmpty() === true;
 
   const signedOut = useSignedOut();
+
+  const [listeners] = useState<IdleListeners>(() => new Set());
 
   const current = {
     pathname,
@@ -124,6 +138,8 @@ export function IdleProvider({
       if (idleDue(lastActivity, now, idleSeconds)) {
         lastActivity = now;
 
+        for (const listener of listeners) listener();
+
         const target = ambient ? AMBIENT : awake();
 
         go(target);
@@ -145,9 +161,25 @@ export function IdleProvider({
       stopWatching();
       unsubscribe();
     };
-  }, [store, idleSeconds, schedule, tz]);
+  }, [store, idleSeconds, schedule, tz, listeners]);
 
-  return children;
+  return <IdleListenersContext value={listeners}>{children}</IdleListenersContext>;
+}
+
+export function useOnIdle(listener: () => void) {
+  const listeners = useContext(IdleListenersContext);
+
+  const onIdle = useEffectEvent(listener);
+
+  useEffect(() => {
+    const call = () => onIdle();
+
+    listeners.add(call);
+
+    return () => {
+      listeners.delete(call);
+    };
+  }, [listeners]);
 }
 
 function watchActivity(store: NowStore, { onTouch, onFieldLeft }: Activity): () => void {

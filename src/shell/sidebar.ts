@@ -41,8 +41,8 @@ export function initialSidebar(view: View | undefined, small = false): SidebarSt
   return { mode: view === "today" || small ? "hidden" : "rail" };
 }
 
-export function sidebarInset(mode: SidebarMode, view: View | undefined, small: boolean): number {
-  if (small || mode === "hidden") return gripPad(view, small);
+export function sidebarInset(mode: SidebarMode, small: boolean): number {
+  if (small || mode === "hidden") return small ? GRIP_PAD.small : GRIP_PAD.large;
 
   return INSET[mode];
 }
@@ -63,10 +63,4 @@ function afterViewChange(mode: SidebarMode, view: View | undefined, small = fals
   if (mode === "hidden" && view === "today") return mode;
 
   return "rail";
-}
-
-function gripPad(view: View | undefined, small: boolean): number {
-  if (view === "today") return 0;
-
-  return small ? GRIP_PAD.small : GRIP_PAD.large;
 }

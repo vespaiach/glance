@@ -6,8 +6,11 @@ type RibbonEvent = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
 
 export type RibbonSegment = { start: number; width: number };
 
+export type RibbonLabel = "start" | "center" | "end";
+
 export type DayRibbon = {
   elapsed: number;
+  label: RibbonLabel;
   left: number;
   sunset?: number;
   ended: RibbonSegment[];
@@ -18,6 +21,10 @@ export const RIBBON_START = 5 * 60;
 export const RIBBON_END = 21 * 60;
 
 const MIN_SEGMENT = 20;
+
+const SUNSET_CLEARANCE = 120;
+
+const LABEL_EDGE = 20;
 
 const SPAN = RIBBON_END - RIBBON_START;
 
@@ -33,20 +40,31 @@ export function dayRibbon(
 
   const ended = events.flatMap((event) => endedSegment(event, now, day, tz));
 
+  const elapsed = percent(minutes);
+
   return {
-    elapsed: percent(minutes),
+    elapsed,
+    label: labelAlign(elapsed),
     left: Math.max(0, RIBBON_END - minutes),
-    ...sunsetTick(sunset, tz),
+    ...sunsetTick(sunset, minutes, tz),
     ended,
   };
 }
 
-function sunsetTick(sunset: Date | undefined, tz: string): { sunset?: number } {
+function labelAlign(elapsed: number): RibbonLabel {
+  if (elapsed < LABEL_EDGE) return "start";
+
+  return elapsed > 100 - LABEL_EDGE ? "end" : "center";
+}
+
+function sunsetTick(sunset: Date | undefined, now: number, tz: string): { sunset?: number } {
   if (sunset === undefined) return {};
 
   const minutes = minutesOfDay(sunset, tz);
 
   if (minutes < RIBBON_START || minutes > RIBBON_END) return {};
+
+  if (Math.abs(minutes - now) <= SUNSET_CLEARANCE) return {};
 
   return { sunset: percent(minutes) };
 }
