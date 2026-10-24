@@ -482,11 +482,13 @@ export const copy = {
       short: {
         "too-large": "Over 20 MB",
         "not-a-photo": "Not a photo",
+        "storage-full": "Storage full",
         network: "Failed",
       },
       failed: {
         "too-large": "Too large · 20 MB max",
         "not-a-photo": "Not a photo",
+        "storage-full": "Storage full · delete photos to make room",
         network: "Didn’t upload",
       },
     },
@@ -495,6 +497,7 @@ export const copy = {
       uploadingMany: (count: number) => `Uploading ${count} photos`,
       failed: (count: number) =>
         count === 1 ? "1 photo didn’t upload" : `${count} photos didn’t upload`,
+      storageFull: "Storage full",
       retryAll: "Try again",
       clear: "Clear",
       offline: "Offline · upload when back online",

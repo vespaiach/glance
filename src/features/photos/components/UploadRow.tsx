@@ -109,7 +109,9 @@ function rowText(summary: ShownSummary): string {
         ? copy.photos.row.offlinePaused(summary.paused)
         : copy.photos.row.offline;
     case "failed":
-      return copy.photos.row.failed(summary.failed);
+      return summary.storageFull
+        ? copy.photos.row.storageFull
+        : copy.photos.row.failed(summary.failed);
     case "uploading":
       return uploadingText(summary);
   }

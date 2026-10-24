@@ -123,12 +123,15 @@ export type Repos = {
   };
   photos: {
     find(accountId: string, id: string): Promise<StoredPhoto | undefined>;
-    insert(accountId: string, photo: StoredPhoto, filePath: string): Promise<void>;
+    insert(accountId: string, photo: StoredPhoto, filePath: string, bytes: number): Promise<void>;
     save(accountId: string, photo: StoredPhoto): Promise<void>;
     livePath(accountId: string, id: string): Promise<string | undefined>;
     livePaths(): Promise<string[]>;
     deletedPaths(): Promise<string[]>;
     filesRemoved(filePath: string): Promise<void>;
+    usage(accountId: string): Promise<number>;
+    unsizedPaths(): Promise<string[]>;
+    sized(filePath: string, bytes: number): Promise<void>;
     changedSince(accountId: string, version: number): Promise<StoredPhoto[]>;
   };
   settings: {

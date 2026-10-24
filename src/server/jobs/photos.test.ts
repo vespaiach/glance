@@ -1,12 +1,14 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
+import path from "node:path";
 import { Readable } from "node:stream";
 import sharp from "sharp";
+import { GB } from "@/domain/storage";
 import { tempDirPerTest } from "../db/testDir";
 import { uploadPhoto } from "../services/photos";
 import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
 import { createDiskStore } from "../storage/disk";
 import type { PhotoStore } from "../storage/store";
-import { removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
+import { backfillPhotoBytes, removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
 
 const harness = serviceHarnessPerTest();
 
@@ -21,7 +23,9 @@ async function stored(accountId: string): Promise<string> {
     .jpeg()
     .toBuffer();
 
-  const answer = await uploadPhoto({ ...deps(), locator: { placeAt: vi.fn() } }, accountId, {
+  const photoDeps = { ...deps(), locator: { placeAt: vi.fn() }, storageLimit: GB };
+
+  const answer = await uploadPhoto(photoDeps, accountId, {
     name: "Beach.jpg",
     type: "image/jpeg",
     size: bytes.length,
@@ -42,6 +46,16 @@ async function markDeleted(accountId: string, id: string): Promise<void> {
 
 async function withOriginal(accountId: string, id: string): Promise<void> {
   await deps().store.put(`${accountId}/${id}.orig`, new Uint8Array([1, 2, 3]), "image/jpeg");
+}
+
+async function unsized(accountId: string, id: string): Promise<void> {
+  await harness.deps().db.photos.sized(`${accountId}/${id}`, 0);
+}
+
+function storedBytes(accountId: string): number {
+  return readdirSync(path.join(photosDir(), accountId), { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .reduce((sum, entry) => sum + statSync(path.join(entry.parentPath, entry.name)).size, 0);
 }
 
 function storedFiles(): string[] {
@@ -119,5 +133,30 @@ describe("removePhotoOriginals", () => {
     await removePhotoOriginals(deps());
 
     expect(storedFiles()).toEqual([`${mine}.display`, `${mine}.thumb`]);
+  });
+});
+
+describe("backfillPhotoBytes", () => {
+  it("D32 sizes every live photo stored without a size from its copies, in every account", async () => {
+    const mine = await stored(MARIA);
+    const theirs = await stored(OMAR);
+    await unsized(MARIA, mine);
+    await unsized(OMAR, theirs);
+
+    await backfillPhotoBytes(deps());
+
+    expect(await harness.deps().db.photos.usage(MARIA)).toBe(storedBytes(MARIA));
+    expect(await harness.deps().db.photos.usage(OMAR)).toBe(storedBytes(OMAR));
+    expect(await harness.deps().db.photos.unsizedPaths()).toEqual([]);
+  });
+
+  it("D32 is safe to run twice", async () => {
+    const mine = await stored(MARIA);
+    await unsized(MARIA, mine);
+
+    await backfillPhotoBytes(deps());
+    await backfillPhotoBytes(deps());
+
+    expect(await harness.deps().db.photos.usage(MARIA)).toBe(storedBytes(MARIA));
   });
 });

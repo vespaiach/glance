@@ -5,7 +5,11 @@ import { uploadPhoto } from "@/server/services";
 
 export const runtime = "nodejs";
 
-const PROBLEM_STATUS: Record<UploadProblem, number> = { "too-large": 413, "not-a-photo": 415 };
+const PROBLEM_STATUS: Record<UploadProblem, number> = {
+  "too-large": 413,
+  "not-a-photo": 415,
+  "storage-full": 507,
+};
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const display = await syncWriter(request);

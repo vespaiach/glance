@@ -17,6 +17,7 @@ export type Harness = RepoStore & {
   places: Mock<Transport["places"]>;
   locate: Mock<Transport["locate"]>;
   displays: Mock<Transport["displays"]>;
+  photoUsage: Mock<Transport["photoUsage"]>;
   issueQr: Mock<Transport["issueQr"]>;
   voidQr: Mock<Transport["voidQr"]>;
   signOut: Mock<() => Promise<void>>;
@@ -40,6 +41,7 @@ export function openHarness(name: string): Harness {
     places: vi.fn<Transport["places"]>(async () => err("network")),
     locate: vi.fn<Transport["locate"]>(async () => err("network")),
     displays: vi.fn<Transport["displays"]>(async () => err("network")),
+    photoUsage: vi.fn<Transport["photoUsage"]>(async () => err("network")),
     issueQr: vi.fn<Transport["issueQr"]>(async () => err("network")),
     voidQr: vi.fn<Transport["voidQr"]>(async () => err("network")),
     signOut: vi.fn<() => Promise<void>>(async () => {}),

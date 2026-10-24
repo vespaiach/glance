@@ -6,6 +6,7 @@ import { type PhotoDetails, type PhotoFacts, photoDetails } from "@/domain/photo
 import { MAX_PHOTO_BYTES, type UploadProblem, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Photo, Synced } from "@/domain/schemas";
+import type { PhotoUsage } from "@/domain/storage";
 import { type PhotoStore, photoType, type StoredObject } from "../storage/store";
 import { placeLabel } from "../weather/places";
 import type { Coordinates, PlaceLocator, PlaceName } from "../weather/provider";
@@ -19,7 +20,11 @@ export const PHOTO_VARIANTS = ["display", "thumb"] as const;
 
 export type PhotoVariant = (typeof PHOTO_VARIANTS)[number];
 
-export type PhotoDeps = ServiceDeps & { store: PhotoStore; locator: PlaceLocator };
+export type PhotoDeps = ServiceDeps & {
+  store: PhotoStore;
+  locator: PlaceLocator;
+  storageLimit: number;
+};
 
 export type PhotoUpload = {
   name: string;
@@ -34,6 +39,8 @@ type FileMetadata = PhotoFacts["metadata"] & { gps?: Coordinates };
 type PhotoObjects = Record<PhotoVariant, { body: Uint8Array<ArrayBuffer>; contentType: string }>;
 
 type Decoded = { objects: PhotoObjects; metadata: FileMetadata };
+
+type SavedDetails = PhotoDetails & { fileName: string; bytes: number };
 
 const COPY_MAX_PX = { display: 2560, thumb: 640 } as const;
 
@@ -56,11 +63,24 @@ export async function uploadPhoto(
 
   if (!decoded.ok) return decoded;
 
+  const bytes = storedSize(decoded.value.objects);
+
+  const { used, limit } = await photoUsage(deps, accountId);
+
+  if (used + bytes > limit) return err("storage-full");
+
   const id = uuidv7(deps.now());
 
   const details = await detailsOf(deps, accountId, upload, decoded.value.metadata);
 
-  return ok(await savePhoto(deps, accountId, id, decoded.value.objects, details));
+  return ok(await savePhoto(deps, accountId, id, decoded.value.objects, { ...details, bytes }));
+}
+
+export async function photoUsage(
+  { db, storageLimit }: Pick<PhotoDeps, "db" | "storageLimit">,
+  accountId: string,
+): Promise<PhotoUsage> {
+  return { used: await db.photos.usage(accountId), limit: storageLimit };
 }
 
 export function putPhoto(
@@ -156,7 +176,7 @@ function photoPath(accountId: string, id: string): string {
   return `${accountId}/${id}`;
 }
 
-function objectKey(filePath: string, variant: PhotoVariant): string {
+export function objectKey(filePath: string, variant: PhotoVariant): string {
   return `${filePath}.${variant}`;
 }
 
@@ -247,7 +267,7 @@ async function savePhoto(
   accountId: string,
   id: string,
   objects: PhotoObjects,
-  details: PhotoDetails & { fileName: string },
+  details: SavedDetails,
 ): Promise<SyncedPhoto> {
   try {
     await putObjects(deps.store, photoPath(accountId, id), objects);
@@ -258,6 +278,10 @@ async function savePhoto(
 
     throw error;
   }
+}
+
+function storedSize(objects: PhotoObjects): number {
+  return PHOTO_VARIANTS.reduce((sum, variant) => sum + objects[variant].body.length, 0);
 }
 
 async function putObjects(store: PhotoStore, filePath: string, objects: PhotoObjects) {
@@ -364,7 +388,7 @@ function insertPhoto(
   { db, now }: PhotoDeps,
   accountId: string,
   id: string,
-  details: PhotoDetails & { fileName: string },
+  details: SavedDetails,
 ): Promise<SyncedPhoto> {
   return db.tx(async (tx): Promise<SyncedPhoto> => {
     const { updatedAt, version } = await stamp(tx, now());
@@ -382,7 +406,7 @@ function insertPhoto(
       version,
     };
 
-    await tx.photos.insert(accountId, photo, photoPath(accountId, id));
+    await tx.photos.insert(accountId, photo, photoPath(accountId, id), details.bytes);
 
     return photo;
   });

@@ -3,6 +3,7 @@ import type { QrOpens } from "@/domain/qrSignIn";
 import type { Result } from "@/domain/result";
 import type { Account, LocationRequest, Weather, WeatherLocation } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
+import type { PhotoUsage } from "@/domain/storage";
 import type {
   OutboxEntry,
   StoredEvent,
@@ -55,6 +56,7 @@ export interface Transport {
   places(query: string): Answer<WeatherLocation[]>;
   locate(position: Coordinates): Answer<WeatherLocation, LocateError>;
   displays(): Answer<SignedInScreen[]>;
+  photoUsage(): Answer<PhotoUsage>;
   issueQr(opens?: QrOpens): Answer<QrCode>;
   voidQr(url: string): Answer<void>;
   auth: {

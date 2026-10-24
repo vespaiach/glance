@@ -64,6 +64,7 @@ export {
   useSyncStatus,
   type WeatherStatus,
 } from "./status";
+export { type PhotoUsage, usePhotoUsage } from "./storage";
 export {
   type PhotoVariant,
   RepoProvider,

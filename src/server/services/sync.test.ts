@@ -54,6 +54,7 @@ async function insertPhoto(
       version,
     },
     "x",
+    0,
   );
 }
 

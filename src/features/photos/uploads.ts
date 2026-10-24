@@ -28,7 +28,7 @@ type ChosenFile = { name: string; type: string; size: number };
 export type UploadSummary =
   | { kind: "none" }
   | { kind: "offline"; paused: number }
-  | { kind: "failed"; failed: number; retryable: boolean }
+  | { kind: "failed"; failed: number; retryable: boolean; storageFull: boolean }
   | { kind: "uploading"; one?: string; count: number; percent: number; failed: number };
 
 export function uploadSummary(tiles: readonly UploadTile[], online: boolean): UploadSummary {
@@ -42,7 +42,12 @@ export function uploadSummary(tiles: readonly UploadTile[], online: boolean): Up
 
   if (running.length === 0)
     return failed > 0
-      ? { kind: "failed", failed, retryable: tiles.some(canRetry) }
+      ? {
+          kind: "failed",
+          failed,
+          retryable: tiles.some(canRetry),
+          storageFull: tiles.some(isStorageFull),
+        }
       : { kind: "none" };
 
   return {
@@ -58,6 +63,10 @@ export function canRetry(tile: UploadTile): boolean {
   return tile.state === "failed" && tile.reason === "network";
 }
 
+export function isStorageFull(tile: UploadTile): boolean {
+  return tile.state === "failed" && tile.reason === "storage-full";
+}
+
 export function chosenTile(id: string, file: ChosenFile, preview?: string): UploadTile {
   const title = nameFromFile(file.name) ?? photoTitle(file.name);
 
@@ -71,7 +80,9 @@ export function chosenTile(id: string, file: ChosenFile, preview?: string): Uplo
 }
 
 export function uploadFailure(error: UploadError): UploadFailure {
-  return error === "too-large" || error === "not-a-photo" ? error : "network";
+  return error === "too-large" || error === "not-a-photo" || error === "storage-full"
+    ? error
+    : "network";
 }
 
 export function uploads(tiles: readonly UploadTile[], action: UploadAction): UploadTile[] {
