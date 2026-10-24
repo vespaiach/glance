@@ -200,6 +200,8 @@ function NewEventSheet({ day, who = EVERYONE, times, tags, time, discard }: NewP
 
   const tz = useTimeZone();
 
+  const { defaultReminder } = useAccountSettings();
+
   const [id] = useState(() => uuidv7(now));
 
   return (
@@ -209,7 +211,7 @@ function NewEventSheet({ day, who = EVERYONE, times, tags, time, discard }: NewP
       id={id}
       tags={tags}
       initial={initialEventSheet(
-        newEventDraft(now, tz, whoIds(who, tagIds(tags)), times),
+        newEventDraft(now, tz, whoIds(who, tagIds(tags)), defaultReminder, times),
         time,
         discard,
       )}

@@ -180,6 +180,21 @@ test("tech§4.3 a note request renders no event sheet", () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
+test("NOTIF-08 a new event starts on the Settings default reminder and saves it", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" }, { defaultReminder: "start" });
+
+  expect(await screen.findByRole("button", { name: "At start" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
+
+  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+  expect((await store.db.events.toArray())[0]?.reminder).toBe("start");
+});
+
 test("EVT-07 Add event queues the new event on the request's day and closes the sheet", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-12" });
 

@@ -112,6 +112,7 @@ const LUNCH = {
   location: "Café Lumen",
   tagIds: FAMILY_IDS,
   notes: "",
+  reminder: "15min" as const,
 };
 
 const FOR_TWO = {
@@ -136,7 +137,7 @@ export function EventSheetGallery() {
 
   const close = () => setOpen(null);
 
-  const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ, FAMILY_IDS) : LUNCH;
+  const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ, FAMILY_IDS, "15min") : LUNCH;
 
   const allDay = open?.allDay && { allDay: open.allDay };
 
