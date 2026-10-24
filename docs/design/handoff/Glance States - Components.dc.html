@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:20px;max-width:1400px">
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20States.dc.html">All states →</a><a href="Glance%20Notes.dc.html">Notes →</a></nav>
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance states · components</span>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Every Kiosk Display library component and Glance pattern used in the app, live. Season follows the <strong>season</strong> tweak.</p>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">States pages</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><a href="Glance%20States%20-%20Account.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Sign in and account</a><a href="Glance%20States%20-%20Today.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Today</a><a href="Glance%20States%20-%20Calendar.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Calendar and events</a><a href="Glance%20States%20-%20Weather.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Weather</a><a href="Glance%20States%20-%20Notes.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Notes</a><a href="Glance%20States%20-%20Photos.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Photos</a><a href="Glance%20States%20-%20Settings.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Settings and quiet hours</a><a href="Glance%20States%20-%20System.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:rgba(0,0,0,.06);color:#1a1a1a;text-decoration:none">Loading, offline and navigation</a><a href="Glance%20States%20-%20Components.dc.html" style="font:500 15px var(--font-sans);padding:6px 12px;border-radius:9999px;background:#1a1a1a;color:#fff;text-decoration:none">Components</a></div>
+</div>
+</section>
+<section id="components" data-screen-label="Components" style="border-top:1px solid rgba(0,0,0,.08);background:#fff;color:#000">
+<div data-season="{{ season }}" style="max-width:1440px;margin:0 auto;padding:clamp(24px,4vw,48px);box-sizing:border-box;display:flex;flex-direction:column;gap:64px">
+
+<header style="display:flex;flex-direction:column;gap:16px;max-width:820px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="240px,20px">Component inventory · 17 library + 12 Glance patterns</x-import>
+<div style="font-size:clamp(44px,6vw,86px);font-weight:340;letter-spacing:-1.72px;line-height:1">Everything in this project</div>
+<div style="font-size:20px;font-weight:330;line-height:1.45;text-wrap:pretty">The first seven groups come from the Kiosk Display design system library. The last group lists patterns Glance builds inline, which aren’t library components yet.</div>
+</header>
+
+<section data-screen-label="Core" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Core</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">5 components</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;justify-content:center">
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" hint-size="110px,44px">Primary</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" hint-size="120px,44px">Secondary</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" hint-size="120px,44px">Ghost</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="accent" hint-size="100px,44px">Accent</x-import>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" size="lg" icon-right="arrow-right" hint-size="180px,64px">Large</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" disabled="{{ true }}" hint-size="110px,44px">Disabled</x-import>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Button</span><span style="font-size:16px;font-weight:330;line-height:1.45">Pill CTA. Variants primary, secondary, ghost, accent, inverse; sizes md and lg; leading or trailing icon.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="settings" label="Soft" variant="canvas" hint-size="40px,40px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="chevron-left" label="Touch" size="touch" variant="canvas" hint-size="56px,56px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="plus" label="Large" size="lg" variant="canvas" hint-size="72px,72px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="calendar-days" label="Active" size="touch" active="{{ true }}" hint-size="56px,56px"></x-import>
+<div style="background:#000;border-radius:9999px;padding:8px;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" label="Inverse" size="touch" variant="inverse" hint-size="56px,56px"></x-import></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">IconButton</span><span style="font-size:16px;font-weight:330;line-height:1.45">Circular icon-only button. Sizes 40, 56 (touch), 72; variants soft, canvas, solid, inverse; active state.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;align-items:flex-start;justify-content:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ tabOpts }}" value="{{ tab }}" on-change="{{ setTab }}" hint-size="320px,48px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" size="lg" options="{{ tabOptsLg }}" value="{{ tabLg }}" on-change="{{ setTabLg }}" hint-size="300px,64px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">PillTabs</span><span style="font-size:16px;font-weight:330;line-height:1.45">Segmented pill switch. Used for view tabs and settings modes. Sizes md and lg.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;justify-content:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">Today · 5 events</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="200px,16px">Updated 10:41 AM</x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Eyebrow</span><span style="font-size:16px;font-weight:330;line-height:1.45">Mono uppercase label naming a zone. Sizes eyebrow and caption.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:center">
+<sc-for list="{{ icons }}" as="i" hint-placeholder-count="16"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ i }}" size="28" hint-size="28px,28px"></x-import></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Icon</span><span style="font-size:16px;font-weight:330;line-height:1.45">Lucide glyphs at 1.75 stroke. Core set shown; any Lucide name works.</span></div>
+</div>
+
+</div>
+</section>
+
+<section data-screen-label="Forms" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Forms</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">1 component</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
+<div style="display:flex;flex-direction:column;gap:16px;grid-column:1 / -1">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;box-sizing:border-box;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:24px;align-items:start">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Email" placeholder="name@example.com" value="{{ email }}" on-change="{{ setEmail }}" hint-size="100%,90px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="City or ZIP code" value="Portlnd" error="No place matches that name" hint-size="100%,110px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Notes" multiline="{{ true }}" rows="3" placeholder="Anything to remember" hint-size="100%,140px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">TextInput</span><span style="font-size:16px;font-weight:330;line-height:1.45">Labelled field with 2px focus ring. Single line or multiline, sizes md and lg, error state in mono caption.</span></div>
+</div>
+</div>
+</section>
+
+<section data-screen-label="Surfaces" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Surfaces</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">3 components</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
+
+<div style="display:flex;flex-direction:column;gap:16px;grid-column:1 / -1">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:12px">
+<sc-for list="{{ tones }}" as="t" hint-placeholder-count="8"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="{{ t.tone }}" padding="20px" dc-props="{{ t.box }}" hint-size="100%,120px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">{{ t.label }}</x-import></x-import></sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">ColorBlock</span><span style="font-size:16px;font-weight:330;line-height:1.45">Seasonal flat panel, the main structural device. Tones 1–4, soft, deep, canvas, ink. Each screen zone gets one.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Card" eyebrow="Hairline" title="Room 2B" hint-size="100%,100px"><span style="font-size:16px;font-weight:330">Open until 3 PM</span></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Card" variant="canvas" eyebrow="Canvas" title="Room 3A" hint-size="100%,100px"><span style="font-size:16px;font-weight:330">Booked</span></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Card" variant="elevated" eyebrow="Elevated" title="Lobby" hint-size="100%,100px"><span style="font-size:16px;font-weight:330">Floating tile</span></x-import>
+<div style="background:#fff;border-radius:8px;padding:8px;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Card" variant="soft" eyebrow="Soft" title="Desk" dc-props="{{ flex1 }}" hint-size="100%,100px"><span style="font-size:16px;font-weight:330">Soft tile</span></x-import></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Card</span><span style="font-size:16px;font-weight:330;line-height:1.45">Container with optional eyebrow and title. Variants hairline, canvas, elevated, soft.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;justify-content:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="cloud-rain" title="Rain moving in after 4 PM" body="Umbrellas are available at the front desk." action-label="Details" hint-size="100%,80px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Banner" icon="wifi-off" tone="canvas" title="You’re offline" body="Changes save when the connection returns." hint-size="100%,80px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Banner</span><span style="font-size:16px;font-weight:330;line-height:1.45">Inline notice with icon, title, body and one optional accent action. Any block tone.</span></div>
+</div>
+
+</div>
+</section>
+
+<section data-screen-label="Navigation" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Navigation</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">2 components</x-import></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="border-radius:24px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--border-hairline);display:flex;flex-direction:column">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TopBar" brand="Glance" center="{{ topCenter }}" right="{{ topRight }}" hint-size="100%,88px"></x-import>
+<div style="height:96px;background:var(--surface-soft)"></div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Ticker" items="{{ tickerItems }}" hint-size="100%,48px"></x-import>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px">
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">TopBar</span><span style="font-size:16px;font-weight:330;line-height:1.45">88px header: wordmark, centered view tabs, right-side actions. Light or inverse.</span></div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Ticker</span><span style="font-size:16px;font-weight:330;line-height:1.45">48px black strip at the bottom that scrolls short announcements linearly.</span></div>
+</div>
+</div>
+</section>
+
+<section data-screen-label="Calendar" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Calendar</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">3 components</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:32px;justify-content:center;overflow:hidden">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Clock" time="2026-10-19T10:41:00" size="md" hint-size="100%,100px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Clock</span><span style="font-size:16px;font-weight:330;line-height:1.45">Date eyebrow and tabular time with blinking colon. Sizes xl (168px) and md; 12 or 24 hour.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;justify-content:center;overflow:auto">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.MonthGrid" year="2026" month="9" today="19" selected="{{ day }}" marked="{{ marked }}" on-select="{{ setDay }}" cell="{{ 44 }}" hint-size="344px,360px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">MonthGrid</span><span style="font-size:16px;font-weight:330;line-height:1.45">Tappable month with today ring, selected fill and accent dots for days with events.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;grid-column:1 / -1">
+<div style="background:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline);border-radius:24px;padding:16px;box-sizing:border-box;display:flex;flex-direction:column;overflow-x:auto">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.EventRow" start="8:00" end="8:30" title="Team stand-up" location="Room 2B" status="past" hint-size="100%,80px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.EventRow" start="10:30" end="11:15" title="Design review" location="Studio" status="now" hint-size="100%,80px"></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.EventRow" start="1:00" end="2:00" title="Lunch and learn" location="Lobby" hint-size="100%,80px"></x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">EventRow</span><span style="font-size:16px;font-weight:330;line-height:1.45">Time, color dot, title and place. Status past (struck through), now (block fill + NOW pill), upcoming.</span></div>
+</div>
+
+</div>
+</section>
+
+<section data-screen-label="Weather" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Weather</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">2 components</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.WeatherNow" location="Portland, OR" temp="58" condition="Light rain" icon="cloud-drizzle" high="61" low="49" feels-like="55" details="{{ wxDetails }}" hint-size="100%,360px"></x-import>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">WeatherNow</span><span style="font-size:16px;font-weight:330;line-height:1.45">Current conditions block: place, 144px temperature, condition, high/low and detail tiles.</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="3" padding="16px" hint-size="100%,240px">
+<div style="display:flex;justify-content:space-between;gap:8px;overflow-x:auto"><sc-for list="{{ forecast }}" as="f" hint-placeholder-count="4"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ForecastDay" day="{{ f.day }}" icon="{{ f.icon }}" high="{{ f.high }}" low="{{ f.low }}" precip="{{ f.precip }}" active="{{ f.active }}" on-click="{{ f.pick }}" hint-size="112px,220px"></x-import></sc-for></div>
+</x-import>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">ForecastDay</span><span style="font-size:16px;font-weight:330;line-height:1.45">One forecast column: day, icon, high, low, precipitation. Tap to select.</span></div>
+</div>
+</div>
+</section>
+
+<section data-screen-label="Notes" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Notes</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="80px,16px">1 component</x-import></div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:40px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:32px;justify-content:center">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="-2" author="Maya" time="9:12 AM" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">Soccer moved to 5 PM. Bring the orange cones.</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="1.5" author="Dad" time="Yesterday" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">Plumber coming Thursday morning.</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="-1" author="Leo" time="7:40 AM" width="{{ 240 }}" min-height="{{ 200 }}" hint-size="240px,200px">We’re out of milk.</x-import>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">StickyNote</span><span style="font-size:16px;font-weight:330;line-height:1.45">Paper note in the season soft tone (cream; frost in winter) with small rotation and level-2 shadow; author and time footer. Glance notes use this one tone only.</span></div>
+</div>
+</section>
+
+<section data-screen-label="Glance patterns" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;box-shadow:inset 0 -1px 0 var(--border-hairline);padding-bottom:16px"><span style="font-size:32px;font-weight:540;letter-spacing:-0.6px">Glance patterns</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" size="caption" hint-size="200px,16px">12 patterns · built inline, not in the library</x-import></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:24px">
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;align-items:center">
+<div style="flex:1;background:var(--surface-canvas);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:16px;align-items:flex-start">
+<span style="height:44px;border-radius:9999px;background:var(--surface-soft);display:flex;align-items:center;gap:10px;padding:0 14px;font-size:16px;font-weight:480"><span style="display:flex;align-items:center"><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-lilac);box-shadow:0 0 0 2px var(--surface-soft)"></span><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-sky);margin-left:-4px;box-shadow:0 0 0 2px var(--surface-soft)"></span><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-coral);margin-left:-4px;box-shadow:0 0 0 2px var(--surface-soft)"></span><span style="width:14px;height:14px;border-radius:9999px;background:var(--block-mint);margin-left:-4px;box-shadow:0 0 0 2px var(--surface-soft)"></span></span>Everyone<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="18" stroke-width="2" hint-size="18px,18px"></x-import></span>
+<span style="min-height:48px;display:flex;align-items:center;gap:12px;font-size:17px;font-weight:480"><span style="display:flex;align-items:center;padding-left:2px;isolation:isolate"><span style="position:relative;z-index:1;width:44px;height:44px;border-radius:9999px;background:var(--block-coral);box-shadow:0 0 0 2px var(--surface-canvas)"></span><span style="position:relative;z-index:2;width:44px;height:44px;border-radius:9999px;background:var(--block-pink);margin-left:-12px;box-shadow:0 0 0 2px var(--surface-canvas)"></span></span>Mom, Tin<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="18" stroke-width="2" hint-size="18px,18px"></x-import></span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Person filter</span><span style="font-size:16px;font-weight:330;line-height:1.45">Opens the “Show plans for” list. Avatar stack of color circles: Calendar uses 44 px circles with initials (up to 8 on large, 4 on small, then “+N”); Today uses 40 px circles without initials (up to 5). The label reads Everyone, one or two names, or “3 people”.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-wrap:wrap;gap:12px;align-items:center;align-content:center">
+<button type="button" onClick="{{ toggleSpan }}" aria-pressed="{{ span.on }}" style="height:48px;border:0;border-radius:9999px;background:{{ span.bg }};color:{{ span.fg }};display:flex;align-items:center;gap:8px;padding:0 18px 0 14px;font-family:inherit;font-size:var(--type-button-size);font-weight:480;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease,color 180ms ease" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" hint-size="20px,20px"></x-import>24 hours<span style="min-width:24px;height:24px;padding:0 7px;box-sizing:border-box;border-radius:9999px;background:{{ span.cBg }};color:{{ span.cFg }};display:grid;place-items:center;font-family:var(--font-mono);font-size:13px;letter-spacing:0.4px">3</span></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Toggle chip with count</span><span style="font-size:16px;font-weight:330;line-height:1.45">Icon chip that toggles a view option; mono badge shows hidden items.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;justify-content:center">
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Hour</span>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px"><sc-for list="{{ hours }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="height:48px;min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:20px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(.97)">{{ c.label }}</button></sc-for></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Time picker cells</span><span style="font-size:16px;font-weight:330;line-height:1.45">Pill grid for hour, minutes and length. Replaces native time inputs on touch.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;justify-content:center">
+<span style="font-size:18px;font-weight:330">Color</span>
+<div style="display:flex;gap:12px;flex-wrap:wrap"><sc-for list="{{ swatches }}" as="s" hint-placeholder-count="5"><button type="button" onClick="{{ s.pick }}" aria-label="{{ s.label }}" aria-pressed="{{ s.sel }}" style="width:44px;height:44px;border:0;padding:0;cursor:pointer;border-radius:9999px;background:{{ s.bg }};box-shadow:{{ s.ring }}"></button></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Color swatch picker</span><span style="font-size:16px;font-weight:330;line-height:1.45">44px circles; selected gets a white gap and black ring. Used for people.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;justify-content:center">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:var(--type-body-lg-size);font-weight:var(--type-body-lg-weight);letter-spacing:var(--type-body-lg-ls)">Dim at</span><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">9 h</span></div>
+<button type="button" onClick="{{ toggleField }}" aria-expanded="{{ fieldOpen }}" style="min-height:56px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 10px 14px;box-sizing:border-box;background:var(--surface-canvas);border:1px solid {{ field.border }};border-radius:var(--radius-md);box-shadow:{{ field.ring }};font-family:inherit;color:var(--text-primary);cursor:pointer;text-align:left;transition:transform 120ms ease-out,box-shadow 180ms" style-active="transform:scale(.97)"><span style="display:flex;align-items:baseline;gap:6px"><span style="font-size:24px;font-weight:340;letter-spacing:-0.2px;font-variant-numeric:tabular-nums">10:00</span><span style="font-family:var(--font-mono);font-size:15px;letter-spacing:0.5px">PM</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ field.chev }}" size="20" hint-size="20px,20px"></x-import></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Select field</span><span style="font-size:16px;font-weight:330;line-height:1.45">Input-styled button that opens a picker below it. Chevron flips and the ring shows while open.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;justify-content:center">
+<button type="button" style="min-height:64px;width:100%;border:0;border-radius:8px;background:var(--surface-soft);padding:12px 16px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Portland</span><span style="font-size:15px;font-weight:330">Oregon, US</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button>
+<button type="button" style="min-height:64px;width:100%;border:0;border-radius:8px;background:var(--surface-soft);padding:12px 16px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Portland</span><span style="font-size:15px;font-weight:330">Maine, US</span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Choice list row</span><span style="font-size:16px;font-weight:330;line-height:1.45">64px soft tile with title, subline and chevron. Used for place matches and settings lists.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;justify-content:center">
+<div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="mail" size="22" hint-size="22px,22px"></x-import><span style="font-size:16px;font-weight:330">Sending a link to <strong style="font-weight:540">sam@example.com</strong></span></div>
+<div role="status" style="display:flex;align-items:center;gap:12px;background:var(--surface-soft);border-radius:8px;padding:16px 20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="22" hint-size="22px,22px"></x-import><span style="font-size:16px;font-weight:330">Link sent. Check your inbox.</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Status row</span><span style="font-size:16px;font-weight:330;line-height:1.45">Soft 8px tile with icon and one line. Shows progress or results; the icon pulses while working.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;justify-content:center">
+<div style="position:relative;width:100%;aspect-ratio:16/7;border-radius:8px;overflow:hidden;background:var(--surface-soft)"><div role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100" style="position:absolute;left:12px;right:12px;bottom:12px;height:8px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden"><div style="height:100%;width:62%;border-radius:9999px;background:var(--action-primary)"></div></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Upload tile with progress</span><span style="font-size:16px;font-weight:330;line-height:1.45">Photo frame with an 8px pill progress bar; switches to an icon and reason if the upload fails.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:var(--season-block-1);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;align-items:center">
+<div style="position:relative;width:100%;padding:30px 0 26px">
+<span style="position:absolute;top:0;left:29.27%;transform:translateX(-50%);font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now 10:41 AM</span>
+<span style="position:absolute;top:-3px;left:76.25%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span>
+<div style="position:relative;height:14px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:29.27%;background:var(--action-primary)"></div><div style="position:absolute;top:4px;bottom:4px;left:12.5%;width:6.25%;border-radius:9999px;background:var(--surface-canvas)"></div></div>
+<div style="position:absolute;top:24px;left:76.25%;width:2px;height:26px;margin-left:-1px;background:var(--action-primary)"></div>
+<div style="position:absolute;top:21px;left:29.27%;width:32px;height:32px;margin-left:-16px;border-radius:50%;background:var(--action-primary);color:var(--on-action-primary);box-shadow:0 0 0 4px var(--surface-canvas);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="20" stroke-width="2" hint-size="20px,20px"></x-import></div>
+<span style="position:absolute;bottom:0;left:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">6 AM</span>
+<span style="position:absolute;bottom:0;right:0;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1">10 PM</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Day ribbon</span><span style="font-size:16px;font-weight:330;line-height:1.45">5 AM – 9 PM track in the Now panel when nothing is running or coming up. Elapsed part black, clock marker at now, sunset icon and tick; ended events show as white inset bars.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;align-items:center">
+<div style="display:flex;align-items:center;gap:12px;padding-top:24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);width:100%"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="lock" size="18" hint-size="18px,18px"></x-import><span style="font-size:15px;font-weight:330;line-height:1.45">Only your family can see its calendar, notes and photos.</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Footnote row</span><span style="font-size:16px;font-weight:330;line-height:1.45">Small icon and reassurance line under a divider at the end of a form.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;box-shadow:inset 0 0 0 1px var(--border-hairline);border-radius:24px;padding:32px;min-height:200px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;justify-content:center">
+<div role="alert" style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px;line-height:1.2">Discard changes?</span><span style="font-size:16px;font-weight:330">Your edits to this event won’t be saved.</span></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" dc-props="{{ ringBtn }}" hint-size="150px,44px">Keep editing</x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" hint-size="110px,44px">Discard</x-import>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Inline confirm</span><span style="font-size:16px;font-weight:330;line-height:1.45">Replaces a sheet’s footer when a destructive action needs a second tap.</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;grid-column:1 / -1">
+<div style="background:#000;border-radius:24px;padding:clamp(24px,4vw,48px);box-sizing:border-box;display:grid;place-items:center">
+<div role="dialog" aria-label="New event" style="width:100%;max-width:520px;background:#fff;border-radius:32px;padding:clamp(24px,3vw,40px);box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:20px;box-sizing:border-box">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+<div style="display:flex;flex-direction:column;gap:6px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Calendar · Monday, Oct 19</x-import><div style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">New event</div></div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" label="Close" size="touch" hint-size="56px,56px"></x-import>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.TextInput" label="Title" placeholder="What’s happening" hint-size="100%,90px"></x-import>
+<div style="display:flex;justify-content:flex-end;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" hint-size="100px,44px">Cancel</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" hint-size="100px,44px">Save</x-import></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:20px;font-weight:540">Sheet (modal)</span><span style="font-size:16px;font-weight:330;line-height:1.45">32px-radius dialog over a 60% scrim with eyebrow, title and close button. Hosts photo details and the date picker; note sheets take the paper note shape and event pages open full screen. Lifts above the on-screen keyboard.</span></div>
+</div>
+
+</div>
+</section>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;'spring'|'summer'|'fall'|'winter'&quot;}}">
+class Component extends DCLogic {
+  state = { size: 0, raw: '', tab: 'today', tabLg: 'fall', email: '', day: 22, fc: 1, people: { all: false, maya: true, leo: true, sam: false, dad: false }, span: true, hour: 4, sw: 1, fieldOpen: false };
+  invVals() {
+    const NS = window.KioskDisplayDesignSystem_21b0bf || {};
+    const h = React.createElement;
+    const s = this.state;
+    const set = (k, v) => () => this.setState({ [k]: v });
+    const ppl = [['all','Everyone','var(--black)'],['maya','Maya','var(--season-accent)'],['leo','Leo','var(--season-deep)'],['sam','Sam','var(--season-block-2)'],['dad','Dad','var(--season-block-3)']];
+    const sw = ['var(--season-block-1)','var(--season-block-2)','var(--season-block-3)','var(--season-block-4)','var(--season-soft)'];
+    const fc = [['Mon','cloud-drizzle',61,49,80],['Tue','cloud',59,47,30],['Wed','cloud-sun',63,48,10],['Thu','sun',66,50,0]];
+    return {
+      season: this.props.season ?? 'fall',
+      tabOpts: [{value:'today',label:'Today'},{value:'cal',label:'Calendar'},{value:'wx',label:'Weather'}],
+      tab: s.tab, setTab: v => this.setState({ tab: v }),
+      tabOptsLg: [{value:'spring',label:'Spring'},{value:'fall',label:'Fall'},{value:'auto',label:'Auto'}],
+      tabLg: s.tabLg, setTabLg: v => this.setState({ tabLg: v }),
+      icons: ['sun','cloud-sun','cloud','cloud-rain','cloud-drizzle','cloud-snow','cloud-lightning','wind','droplets','sunset','calendar-days','sticky-note','settings','plus','chevron-right','x'],
+      email: s.email, setEmail: v => this.setState({ email: v }),
+      tones: [['1','Block 1 · now'],['2','Block 2 · notes'],['3','Block 3 · weather'],['4','Block 4 · highlight'],['soft','Soft'],['deep','Deep'],['canvas','Canvas'],['ink','Ink']].map(([t,l]) => ({ tone: /^\d$/.test(t) ? Number(t) : t, label: l, box: { style: { minHeight: 120, boxShadow: t === 'canvas' ? 'inset 0 0 0 1px var(--border-hairline)' : 'none' } } })),
+      topCenter: NS.PillTabs ? h(NS.PillTabs, { options: ['Today','Calendar','Weather','Notes'], value: 'Today', style: { background: 'var(--surface-soft)' } }) : null,
+      topRight: NS.IconButton ? h(NS.IconButton, { icon: 'settings', label: 'Settings', size: 'touch' }) : null,
+      tickerItems: ['Rain moving in after 4 PM','Soccer moved to 5 PM','Umbrellas are available at the front desk','Library closes early Friday'],
+      day: s.day, setDay: d => this.setState({ day: d }), marked: [5, 12, 19, 22, 28],
+      wxDetails: [{ label: 'Rain', value: '80%' }, { label: 'Wind', value: '9 mph' }, { label: 'Humidity', value: '86%' }],
+      forecast: fc.map((f, i) => ({ day: f[0], icon: f[1], high: f[2], low: f[3], precip: f[4], active: i === s.fc, pick: set('fc', i) })),
+      people: ppl.map(([k, l, c]) => { const on = s.people[k]; return { label: l, c, on, bg: on ? 'var(--action-primary)' : 'var(--surface-canvas)', fg: on ? 'var(--on-action-primary)' : 'var(--text-primary)', dotBg: on ? c : 'transparent', pick: () => this.setState(st => ({ people: { ...st.people, [k]: !st.people[k] } })) }; }),
+      span: { on: s.span, bg: s.span ? 'var(--action-primary)' : 'var(--surface-canvas)', fg: s.span ? 'var(--on-action-primary)' : 'var(--text-primary)', cBg: s.span ? 'var(--white)' : 'var(--action-primary)', cFg: s.span ? 'var(--black)' : 'var(--on-action-primary)' },
+      toggleSpan: () => this.setState(st => ({ span: !st.span })),
+      hours: Array.from({ length: 12 }, (_, i) => { const sel = i === s.hour; return { label: String(i + 1), sel, bg: sel ? 'var(--action-primary)' : 'var(--surface-canvas)', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', w: sel ? 540 : 340, tap: set('hour', i) }; }),
+      swatches: sw.map((bg, i) => ({ bg, label: 'Color ' + (i + 1), sel: i === s.sw, ring: i === s.sw ? '0 0 0 3px var(--white), 0 0 0 5px var(--black)' : 'inset 0 0 0 1px var(--border-hairline)', pick: set('sw', i) })),
+      flex1: { style: { flex: 1 } }, ringBtn: { style: { boxShadow: 'inset 0 0 0 1px var(--border-hairline)' } },
+      fieldOpen: s.fieldOpen, toggleField: () => this.setState(st => ({ fieldOpen: !st.fieldOpen })),
+      field: { border: s.fieldOpen ? 'var(--black)' : 'var(--border-hairline)', ring: s.fieldOpen ? '0 0 0 2px var(--focus-ring)' : 'none', chev: s.fieldOpen ? 'chevron-up' : 'chevron-down' }
+    };
+  }
+
+  static SIZES = [['Large screen', 1920, 1080], ['Small screen', 390, 844], ['Normal screen', 1024, 768]];
+  static FEATURES = [];
+  componentDidMount() {
+    
+  }
+  renderVals() {
+    const S = Component.SIZES, size = this.state.size, k = this.props.frameScale ?? 0.5;
+    const frame = (label, w, h, src, screenLabel, sc) => ({ label, src, screenLabel, w: w + 'px', h: h + 'px', boxW: w * sc + 'px', boxH: h * sc + 'px', tf: 'scale(' + sc + ')' });
+    const g = {};
+    Component.FEATURES.forEach(f => {
+      g[f.slug] = f.screens.filter(([, , , only]) => !f.sizes || (only || (size === 2 ? [0, 1, 2] : [0, 1])).some(i => f.sizes.includes(i))).map(([id, name, q, only]) => {
+        let frames;
+        if (f.fixed) {
+          const sc = Math.min(1, k * 2);
+          frames = q.map(([l, qq]) => frame(l, 390, 844, 'Glance.dc.html?nav=left&' + qq, f.name + ' ' + id + ' · ' + l, sc));
+        } else {
+          const avail = (only || (size === 2 ? [0, 1, 2] : [0, 1])).filter(i => !f.sizes || f.sizes.includes(i));
+          const pick = size < 0 ? avail : [avail.includes(size) ? size : avail.reduce((a, b) => Math.abs(S[b][1] - S[size][1]) < Math.abs(S[a][1] - S[size][1]) ? b : a)];
+          frames = pick.map(i => { const [l, w, h] = S[i]; return frame(l + ' · ' + w + '×' + h, w, h, 'Glance.dc.html?' + f.pre + q, f.name + ' ' + id + ' · ' + w + '×' + h, k); });
+        }
+        const total = frames.reduce((a, fr) => a + parseFloat(fr.boxW), 0) + 32 * (frames.length - 1);
+        return { anchor: f.slug + '-' + id, badge: id, name, frames, maxW: Math.max(total, 280) + 'px' };
+      });
+    });
+    const opts = [['Both sizes', -1], ...S.map(([l, w, h], i) => [l + ' · ' + w + '×' + h, i])];
+    const seasons = { spring: ['#dceeb1', '#f4ecd6'], summer: ['#f6e3a1', '#f4ecd6'], fall: ['#f0c987', '#f4ecd6'], winter: ['#d5e4f1', '#e9edf3'] };
+    const [hero, page] = seasons[this.props.season ?? 'fall'] || seasons.fall;
+    const doc = this.state.raw.split('#dceeb1').join(hero).split('#f4ecd6').join(page).split('{{code}}').join('482913').split('{{email}}').join('maria@example.com');
+    return {
+      ...this.invVals(),
+      g,
+      sizeOpts: opts.map(([label, v]) => ({ label, bg: v === size ? '#1a1a1a' : 'rgba(0,0,0,.06)', fg: v === size ? '#fff' : '#1a1a1a', pick: () => this.setState({ size: v }) })),
+      doc, ph1: '{{email}}', ph2: '{{code}}',
+      fit: e => { const fr = e.target; try { fr.style.height = '0px'; fr.style.height = fr.contentDocument.body.scrollHeight + 'px'; } catch (_) {} },
+    };
+  }
+}
+</script>
+</body>
+</html>

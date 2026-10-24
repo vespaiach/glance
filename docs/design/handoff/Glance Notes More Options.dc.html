@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#000}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section data-season="fall" data-screen-label="More button options" style="padding:48px 56px 64px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-direction:column;gap:8px;max-width:900px">
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Today notes · “+3 more” options</span>
+<span style="font:500 13px ui-monospace,Menlo,monospace">Archived exploration. Decided: 1b (see <a href="Glance%20Notes.dc.html#today">Notes · Today</a>). Notes now use one paper tone, so the note colors here are out of date.</span>
+<span style="font:17px/1.5 var(--font-sans);text-wrap:pretty">Large-screen notes box, 5 notes, 2 shown. Hidden notes in order: Window cleaner (block-4), Welcome home (block-1), Bike lock (soft).</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="0" style="display:flex;flex-direction:column;gap:12px;width:460px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#fff;color:#000;border-radius:6px;padding:3px 8px;box-shadow:inset 0 0 0 1px #000">Now</span><span style="font:500 15px/1.3 var(--font-sans)">Current soft tile</span></div>
+<span style="font:14px/1.45 var(--font-sans);min-height:42px;text-wrap:pretty">Full-width 8 px tile. Reads as an empty input, and its square corners break the pill rule for text buttons.</span>
+<div style="background:var(--surface-canvas);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-left:8px;min-height:44px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="100px,20px">Notes · 5</x-import><div style="display:flex;gap:4px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" hint-size="120px,44px">Add note</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" hint-size="130px,44px">All notes</x-import></div></div>
+<div style="display:grid;gap:20px;padding:4px 8px 0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="3" rotate="-2" author="Dad" time="8:12 AM" width="100%" min-height="150px" hint-size="100%,150px">Wi-Fi password is on the fridge!</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="1.5" author="Mom" time="9:05 AM" width="100%" min-height="150px" hint-size="100%,150px">Package for Minh-Hy at the front door.</x-import></div>
+<div style="padding:0 8px"><div style="width:100%;min-height:48px;border-radius:8px;background:var(--surface-soft);box-shadow:inset 0 0 0 1px var(--border-hairline);display:flex;align-items:center;justify-content:center;gap:8px;box-sizing:border-box"><span style="font-size:18px;font-weight:540">+3</span><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">More</span></div></div>
+</div>
+</div>
+
+<div id="1a" style="display:flex;flex-direction:column;gap:12px;width:460px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">1a</span><span style="font:500 15px/1.3 var(--font-sans)">Peeking stack</span></div>
+<span style="font:14px/1.45 var(--font-sans);min-height:42px;text-wrap:pretty">The next two hidden notes peek out under the last one in their own colors. The whole stack plus label is one button.</span>
+<div style="background:var(--surface-canvas);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-left:8px;min-height:44px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="100px,20px">Notes · 5</x-import><div style="display:flex;gap:4px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" hint-size="120px,44px">Add note</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" hint-size="130px,44px">All notes</x-import></div></div>
+<div style="position:relative;z-index:1;display:grid;gap:20px;padding:4px 8px 0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="3" rotate="-2" author="Dad" time="8:12 AM" width="100%" min-height="150px" hint-size="100%,150px">Wi-Fi password is on the fridge!</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="1.5" author="Mom" time="9:05 AM" width="100%" min-height="150px" hint-size="100%,150px">Package for Minh-Hy at the front door.</x-import></div>
+<div style="position:relative;z-index:0;margin-top:-40px;padding:0 8px;display:flex;flex-direction:column">
+<span style="position:relative;height:46px"><span style="position:absolute;left:24px;right:24px;top:0;bottom:0;border-radius:6px;background:var(--season-block-1);transform:rotate(-1deg);box-shadow:var(--shadow-2)"></span><span style="position:absolute;left:10px;right:10px;top:0;bottom:9px;border-radius:6px;background:var(--season-block-4);transform:rotate(0.8deg);box-shadow:var(--shadow-2)"></span></span>
+<span style="height:48px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;font-weight:480">3 more notes<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-right" size="18" hint-size="18px,18px"></x-import></span>
+</div>
+</div>
+</div>
+
+<div id="1b" style="display:flex;flex-direction:column;gap:12px;width:460px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">1b</span><span style="font:500 15px/1.3 var(--font-sans)">Color dots row</span></div>
+<span style="font:14px/1.45 var(--font-sans);min-height:42px;text-wrap:pretty">No fill. A hairline divider, overlapping dots in the hidden notes’ colors, the count, and an arrow at the edge.</span>
+<div style="background:var(--surface-canvas);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-left:8px;min-height:44px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="100px,20px">Notes · 5</x-import><div style="display:flex;gap:4px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" hint-size="120px,44px">Add note</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" hint-size="130px,44px">All notes</x-import></div></div>
+<div style="display:grid;gap:20px;padding:4px 8px 0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="3" rotate="-2" author="Dad" time="8:12 AM" width="100%" min-height="150px" hint-size="100%,150px">Wi-Fi password is on the fridge!</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="1.5" author="Mom" time="9:05 AM" width="100%" min-height="150px" hint-size="100%,150px">Package for Minh-Hy at the front door.</x-import></div>
+<div style="padding:4px 8px 0"><div style="border-top:1px solid var(--border-hairline);min-height:52px;padding-top:4px;display:flex;align-items:center;gap:12px">
+<span style="display:flex"><span style="width:28px;height:28px;border-radius:50%;background:var(--season-block-4);box-shadow:0 0 0 2px var(--surface-canvas)"></span><span style="width:28px;height:28px;border-radius:50%;background:var(--season-block-1);box-shadow:0 0 0 2px var(--surface-canvas);margin-left:-8px"></span><span style="width:28px;height:28px;border-radius:50%;background:var(--season-soft);box-shadow:0 0 0 2px var(--surface-canvas);margin-left:-8px"></span></span>
+<span style="flex:1;font-size:17px;font-weight:480">3 more notes</span>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-right" size="20" hint-size="20px,20px"></x-import>
+</div></div>
+</div>
+</div>
+
+<div id="1c" style="display:flex;flex-direction:column;gap:12px;width:460px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">1c</span><span style="font:500 15px/1.3 var(--font-sans)">Season pill</span></div>
+<span style="font:14px/1.45 var(--font-sans);min-height:42px;text-wrap:pretty">A centered 48 px pill in the season’s soft color, sized to its label. Matches every other text button.</span>
+<div style="background:var(--surface-canvas);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-left:8px;min-height:44px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="100px,20px">Notes · 5</x-import><div style="display:flex;gap:4px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" hint-size="120px,44px">Add note</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" hint-size="130px,44px">All notes</x-import></div></div>
+<div style="display:grid;gap:20px;padding:4px 8px 0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="3" rotate="-2" author="Dad" time="8:12 AM" width="100%" min-height="150px" hint-size="100%,150px">Wi-Fi password is on the fridge!</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="1.5" author="Mom" time="9:05 AM" width="100%" min-height="150px" hint-size="100%,150px">Package for Minh-Hy at the front door.</x-import></div>
+<div style="display:flex;justify-content:center;padding-top:8px"><span style="display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px 0 24px;border-radius:9999px;background:var(--season-soft);font-size:17px;font-weight:480"><span style="font-variant-numeric:tabular-nums">+3</span>more notes<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-right" size="18" hint-size="18px,18px"></x-import></span></div>
+</div>
+</div>
+
+<div id="1d" style="display:flex;flex-direction:column;gap:12px;width:460px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#000;color:#fff;border-radius:6px;padding:3px 8px">1d</span><span style="font:500 15px/1.3 var(--font-sans)">Fold into the header</span></div>
+<span style="font:14px/1.45 var(--font-sans);min-height:42px;text-wrap:pretty">No bottom button. The header link reads “3 more” instead of “All notes”, and the notes get the freed height.</span>
+<div style="background:var(--surface-canvas);border-radius:24px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-left:8px;min-height:44px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="100px,20px">Notes · 5</x-import><div style="display:flex;gap:4px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="plus" hint-size="120px,44px">Add note</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" hint-size="120px,44px">3 more</x-import></div></div>
+<div style="display:grid;gap:20px;padding:4px 8px 8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="3" rotate="-2" author="Dad" time="8:12 AM" width="100%" min-height="150px" hint-size="100%,150px">Wi-Fi password is on the fridge!</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="2" rotate="1.5" author="Mom" time="9:05 AM" width="100%" min-height="150px" hint-size="100%,150px">Package for Minh-Hy at the front door.</x-import></div>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>
