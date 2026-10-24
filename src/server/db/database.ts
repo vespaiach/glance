@@ -94,11 +94,15 @@ export type Repos = {
     forAccount(accountId: string): Promise<DisplayRecord[]>;
     seen(id: string, at: string): Promise<void>;
     remove(id: string): Promise<void>;
+    removeForAccount(accountId: string): Promise<void>;
   };
   sessions: {
     insert(session: SessionRecord): Promise<void>;
     find(tokenHash: string): Promise<SessionDisplay | undefined>;
     removeForDisplay(displayId: string): Promise<void>;
+    revokeForAccount(accountId: string, at: string): Promise<void>;
+    revoked(tokenHash: string): Promise<boolean>;
+    removeRevokedBefore(before: string): Promise<void>;
   };
   signInCodes: {
     get(email: string): Promise<SignInCodeRecord | undefined>;

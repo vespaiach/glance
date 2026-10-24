@@ -18,7 +18,7 @@ import { newCode } from "./tokens";
 export type { CodeError } from "./codes";
 export { clientIp, isAllowedOrigin } from "./guards";
 export type { QrCode } from "./qr";
-export type { SignedInDisplay } from "./sessions";
+export type { SessionError, SignedInDisplay } from "./sessions";
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
@@ -60,6 +60,14 @@ export function requireDisplay(sessionToken: string | undefined) {
 
 export function signOut(sessionToken: string | undefined): Promise<void> {
   return sessions.signOut(deps().db, sessionToken);
+}
+
+export async function signOutAll(accountId: string): Promise<void> {
+  const { db } = deps();
+
+  await sessions.signOutAll(deps(), accountId);
+
+  syncBus().publish(accountId, await db.versions.current());
 }
 
 export async function saveName(accountId: string, name: string) {

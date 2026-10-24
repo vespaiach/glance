@@ -103,6 +103,9 @@ export function displaysRepo(sql: Sql): Repos["displays"] {
     remove: async (id) => {
       await sql.run("DELETE FROM displays WHERE id = $1", [id]);
     },
+    removeForAccount: async (accountId) => {
+      await sql.run("DELETE FROM displays WHERE account_id = $1", [accountId]);
+    },
   };
 }
 
@@ -126,6 +129,22 @@ export function sessionsRepo(sql: Sql): Repos["sessions"] {
     },
     removeForDisplay: async (displayId) => {
       await sql.run("DELETE FROM sessions WHERE display_id = $1", [displayId]);
+    },
+    revokeForAccount: async (accountId, at) => {
+      await sql.run(
+        "INSERT INTO revoked_sessions (token_hash, revoked_at) SELECT s.token_hash, $2 FROM sessions s JOIN displays d ON d.id = s.display_id WHERE d.account_id = $1",
+        [accountId, at],
+      );
+      await sql.run(
+        "DELETE FROM sessions s USING displays d WHERE d.id = s.display_id AND d.account_id = $1",
+        [accountId],
+      );
+    },
+    revoked: async (tokenHash) =>
+      (await sql.one("SELECT 1 FROM revoked_sessions WHERE token_hash = $1", [tokenHash])) !==
+      undefined,
+    removeRevokedBefore: async (before) => {
+      await sql.run("DELETE FROM revoked_sessions WHERE revoked_at < $1", [before]);
     },
   };
 }

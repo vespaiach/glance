@@ -1,10 +1,12 @@
 import { saveName } from "./account";
-import { requireDisplay, signOut } from "./sessions";
+import { issueQrLink } from "./qr";
+import { requireDisplay, type SignedInDisplay, signOut, signOutAll } from "./sessions";
 import { authHarnessPerTest, signIn as signInWithCode } from "./testAuth";
+import { hashToken } from "./tokens";
 
 const harness = authHarnessPerTest();
 
-function signIn(email: string): Promise<{ sessionToken: string; accountId: string }> {
+function signIn(email: string): Promise<SignedInDisplay & { sessionToken: string }> {
   return signInWithCode(harness, email);
 }
 
@@ -60,6 +62,79 @@ describe("signOut", () => {
 
   it("SIGNIN-11 does nothing without a session", async () => {
     await expect(signOut(harness.deps().db, undefined)).resolves.toBeUndefined();
+  });
+});
+
+async function subscribe(display: SignedInDisplay, endpoint: string): Promise<void> {
+  await harness.deps().db.pushSubscriptions.save({
+    id: endpoint,
+    accountId: display.accountId,
+    displayId: display.displayId,
+    endpoint,
+    keys: { p256dh: "p256dh-key", auth: "auth-secret" },
+    createdAt: "2026-10-09T14:00:00.000Z",
+  });
+}
+
+async function qrToken(display: SignedInDisplay): Promise<string> {
+  const issued = await issueQrLink(harness.deps(), display);
+
+  if (!issued.ok) throw new Error(issued.error);
+
+  return new URL(issued.value.url).searchParams.get("t") ?? "";
+}
+
+describe("signOutAll", () => {
+  it("SIGNIN-11 ends every session of the account and none of another", async () => {
+    const kitchen = await signIn("maria@example.com");
+    const hall = await signIn("maria@example.com");
+    const sam = await signIn("sam@example.com");
+
+    await signOutAll(harness.deps(), kitchen.accountId);
+
+    expect((await requireDisplay(harness.deps(), kitchen.sessionToken)).ok).toBe(false);
+    expect((await requireDisplay(harness.deps(), hall.sessionToken)).ok).toBe(false);
+    expect((await requireDisplay(harness.deps(), sam.sessionToken)).ok).toBe(true);
+  });
+
+  it("SIGNIN-18 a revoked session's next request is refused as revoked", async () => {
+    const kitchen = await signIn("maria@example.com");
+
+    await signOutAll(harness.deps(), kitchen.accountId);
+
+    expect(await requireDisplay(harness.deps(), kitchen.sessionToken)).toEqual({
+      ok: false,
+      error: "revoked",
+    });
+  });
+
+  it("SIGNIN-11 removes the account's screens, QR codes and push subscriptions and keeps another's", async () => {
+    const kitchen = await signIn("maria@example.com");
+    const sam = await signIn("sam@example.com");
+    await subscribe(kitchen, "https://push.example.com/kitchen");
+    await subscribe(sam, "https://push.example.com/sam");
+    const kitchenQr = await qrToken(kitchen);
+    const samQr = await qrToken(sam);
+
+    await signOutAll(harness.deps(), kitchen.accountId);
+
+    const { db } = harness.deps();
+    expect(await db.displays.forAccount(kitchen.accountId)).toEqual([]);
+    expect(await db.pushSubscriptions.forAccount(kitchen.accountId)).toEqual([]);
+    expect(await db.magicLinks.get(hashToken(kitchenQr))).toBeUndefined();
+    expect(await db.displays.forAccount(sam.accountId)).toHaveLength(1);
+    expect(await db.pushSubscriptions.forAccount(sam.accountId)).toHaveLength(1);
+    expect(await db.magicLinks.get(hashToken(samQr))).toBeDefined();
+  });
+
+  it("SIGNIN-12 the same email can sign in again after signing out everywhere", async () => {
+    const kitchen = await signIn("maria@example.com");
+    await signOutAll(harness.deps(), kitchen.accountId);
+
+    const again = await signIn("maria@example.com");
+
+    expect(again.accountId).toBe(kitchen.accountId);
+    expect((await requireDisplay(harness.deps(), again.sessionToken)).ok).toBe(true);
   });
 });
 
