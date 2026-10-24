@@ -35,6 +35,7 @@ describe("parseEnv", () => {
     expect(parseEnv({ ...VALID, OTHER: "x" })).toEqual({
       APP_URL: CORE.APP_URL,
       MAIL_FROM: CORE.MAIL_FROM,
+      PHOTO_STORAGE_GB: 5,
       database: { kind: "postgres", url: CORE.DATABASE_URL },
       mail: { provider: "resend", apiKey: "re_123" },
       storage: { kind: "disk", dataDir: "/data" },
@@ -249,4 +250,21 @@ describe("parseEnv", () => {
       "Invalid server config: MAIL_PROVIDER",
     );
   });
+
+  it("SET-13 reads PHOTO_STORAGE_GB as 5 when it's unset", () => {
+    expect(parseEnv(VALID).PHOTO_STORAGE_GB).toBe(5);
+  });
+
+  it("SET-13 reads PHOTO_STORAGE_GB as a number of GB", () => {
+    expect(parseEnv({ ...VALID, PHOTO_STORAGE_GB: " 12.5 " }).PHOTO_STORAGE_GB).toBe(12.5);
+  });
+
+  it.each(["0", "-1", "lots", "", "Infinity"])(
+    "SET-13 fails at boot on a PHOTO_STORAGE_GB of %j",
+    (value) => {
+      expect(() => parseEnv({ ...VALID, PHOTO_STORAGE_GB: value })).toThrow(
+        "Invalid server config: PHOTO_STORAGE_GB",
+      );
+    },
+  );
 });

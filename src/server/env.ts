@@ -8,6 +8,8 @@ const POSTGRES_URL = /^postgres(ql)?:\/\//;
 
 const PORT = /^\d{1,5}$/;
 
+const DECIMAL = /^\d+(\.\d+)?$/;
+
 const SMTP_CREDENTIALS = [["SMTP_USER"], ["SMTP_PASSWORD"]] as const;
 
 const Filled = v.pipe(v.string(), v.trim(), v.nonEmpty());
@@ -17,6 +19,10 @@ const BaseSchema = v.object({
   MAIL_FROM: v.pipe(
     Filled,
     v.check((from) => parseAddress(from) !== undefined),
+  ),
+  PHOTO_STORAGE_GB: v.optional(
+    v.pipe(v.string(), v.trim(), v.regex(DECIMAL), v.transform(Number), v.gtValue(0)),
+    "5",
   ),
 });
 
