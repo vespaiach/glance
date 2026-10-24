@@ -52,6 +52,7 @@ import { GalleryGroup } from "./GalleryGroup";
 import { NotesGallery } from "./NotesGallery";
 import { PersonFilterGallery } from "./PersonFilterGallery";
 import { PhotosGallery } from "./PhotosGallery";
+import { ReminderGallery } from "./ReminderGallery";
 import { SettingsGallery } from "./SettingsGallery";
 import { SidebarGallery } from "./SidebarGallery";
 import { SignInGallery } from "./SignInGallery";
@@ -151,6 +152,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <SettingsGallery season={season} />
       <AmbientGallery season={season} />
       <SignInGallery season={season} />
+      <ReminderGallery />
     </>
   );
 }
