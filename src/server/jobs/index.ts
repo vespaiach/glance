@@ -4,7 +4,7 @@ import { database } from "../db";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
 import { expireNotes } from "./notes";
-import { removeDeletedPhotoFiles } from "./photos";
+import { removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
 import { createJobTick } from "./schedule";
 import { cleanupSignIns } from "./signIns";
 
@@ -17,6 +17,8 @@ export function startJobs(): void {
   });
 
   void tick(new Date());
+
+  void runOriginalCleanup();
 
   setInterval(() => void tick(new Date()), HOUR_MS).unref();
 }
@@ -37,4 +39,8 @@ async function runSignInCleanup(): Promise<void> {
 
 async function runPhotoCleanup(): Promise<void> {
   await removeDeletedPhotoFiles({ ...deps(), store: photoStore() });
+}
+
+async function runOriginalCleanup(): Promise<void> {
+  await removePhotoOriginals({ ...deps(), store: photoStore() }).catch(console.error);
 }

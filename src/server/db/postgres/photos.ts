@@ -37,6 +37,13 @@ export function photosRepo(sql: Sql): Repos["photos"] {
 
       return row?.file_path;
     },
+    livePaths: async () => {
+      const rows = await sql.all<{ file_path: string }>(
+        "SELECT file_path FROM photos WHERE deleted_at IS NULL",
+      );
+
+      return rows.map((row) => row.file_path);
+    },
     deletedPaths: async () => {
       const rows = await sql.all<{ file_path: string }>(
         "SELECT file_path FROM photos WHERE deleted_at IS NOT NULL AND NOT files_removed",

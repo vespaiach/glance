@@ -283,6 +283,7 @@ export function databaseContract(open: () => Database): void {
       expect(await db().photos.find(OMAR, PHOTO.id)).toBeUndefined();
       expect(await db().photos.livePath(MARIA, PHOTO.id)).toBe(`${MARIA}/${PHOTO.id}`);
       expect(await db().photos.livePath(OMAR, PHOTO.id)).toBeUndefined();
+      expect(await db().photos.livePaths()).toEqual([`${MARIA}/${PHOTO.id}`]);
       expect(await db().photos.changedSince(MARIA, 0)).toEqual([PHOTO]);
     });
 
@@ -301,6 +302,7 @@ export function databaseContract(open: () => Database): void {
         deletedAt: LATER,
       });
       expect(await db().photos.livePath(MARIA, PHOTO.id)).toBeUndefined();
+      expect(await db().photos.livePaths()).toEqual([]);
       expect(await db().photos.deletedPaths()).toEqual([`${MARIA}/${PHOTO.id}`]);
     });
 

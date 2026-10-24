@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.85 |
+| Status | v0.86 |
 | Date | 2026-10-24 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) and the side pages (§2) |
@@ -257,7 +257,7 @@ interface Photo {
   checked: boolean; // saved once in Photo details; the guessed hint shows until then
   fileName?: string;
 }
-// Image URL: /api/photos/{id}/file?v=display|thumb|orig
+// Image URL: /api/photos/{id}/file?v=display|thumb
 
 interface Weather {
   location: string;
@@ -322,7 +322,7 @@ PostgreSQL, from `db-migrations/`:
 - IDs are UUIDv7 made on the client, so offline creates keep their id.
 - Timestamps are `timestamptz` and ISO-8601 UTC strings everywhere else; `taken_on` is `YYYY-MM-DD`.
 - The server stamps `updated_at` and `version`; every write bumps `sync_state.version` in the same transaction. Deletes are soft (`deleted_at`) so other screens receive them.
-- Photo files are stored as `{account}/{id}.{orig|display|thumb}` under `{DATA_DIR}/photos` or in an S3 or R2 bucket, served through an authenticated route. Deleting a photo deletes its files.
+- Photo files are stored as `{account}/{id}.{display|thumb}` (the uploaded original isn't kept) under `{DATA_DIR}/photos` or in an S3 or R2 bucket, served through an authenticated route. Deleting a photo deletes its files.
 
 ### 7.1 Event status (STATUS-01)
 For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcoming`. No end → `now` from its start to the end of its day. Recomputed every minute. Past days → `past`, future days → `upcoming`. **All-day events have no status:** never the hero, never now or next.

@@ -228,16 +228,15 @@ describe("uploadPhoto", () => {
     expect(photo.takenOn).toBe("2026-10-09");
   });
 
-  it("D12 keeps the original and makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies", async () => {
+  it("D12 makes WebP display (≤ 2560 px) and thumb (≤ 640 px) copies and doesn't keep the original", async () => {
     const bytes = await jpeg({ width: 3000, height: 1500 });
 
     const photo = await saved(bytes);
 
-    const orig = await photoFile(deps(), MARIA, photo.id, "orig");
     const display = await photoFile(deps(), MARIA, photo.id, "display");
     const thumb = await photoFile(deps(), MARIA, photo.id, "thumb");
-    if (!orig.ok || !display.ok || !thumb.ok) throw new Error("missing file");
-    expect(await bytesOf(orig.value)).toEqual(new Uint8Array(bytes));
+    if (!display.ok || !thumb.ok) throw new Error("missing file");
+    expect(await deps().store.get(`${MARIA}/${photo.id}.orig`)).toEqual(err("not-found"));
     expect(await sharp(await bytesOf(display.value)).metadata()).toMatchObject({
       format: "webp",
       width: 2560,
@@ -344,7 +343,7 @@ describe("uploadPhoto", () => {
     expect(await harness.globalVersion()).toBe(0);
   });
 
-  it("D12 stores the three objects under {account}/{id} with their content types", async () => {
+  it("D12 stores exactly the two copies under {account}/{id} with their content types", async () => {
     const put = vi.fn<PhotoStore["put"]>().mockResolvedValue();
 
     const photo = await uploadPhoto(
@@ -356,7 +355,6 @@ describe("uploadPhoto", () => {
     if (!photo.ok) throw new Error(photo.error);
     expect(put.mock.calls.map(([key, , type]) => [key, type]).sort()).toEqual([
       [`${MARIA}/${photo.value.id}.display`, "image/webp"],
-      [`${MARIA}/${photo.value.id}.orig`, "image/jpeg"],
       [`${MARIA}/${photo.value.id}.thumb`, "image/webp"],
     ]);
   });
@@ -371,23 +369,17 @@ describe("uploadPhoto", () => {
 });
 
 describe("photoFile", () => {
-  it("tech§6.3 serves the copies as WebP and the original with its own type", async () => {
+  it("tech§6.3 serves the copies as WebP", async () => {
     const photo = await saved(await jpeg());
 
     const display = await photoFile(deps(), MARIA, photo.id, "display");
     const thumb = await photoFile(deps(), MARIA, photo.id, "thumb");
-    const orig = await photoFile(deps(), MARIA, photo.id, "orig");
 
-    expect([display, thumb, orig]).toEqual([
+    expect([display, thumb]).toEqual([
       { ok: true, value: expect.objectContaining({ contentType: "image/webp" }) },
       { ok: true, value: expect.objectContaining({ contentType: "image/webp" }) },
-      { ok: true, value: expect.objectContaining({ contentType: "image/jpeg" }) },
     ]);
-    expect(storedFiles().sort()).toEqual([
-      `${photo.id}.display`,
-      `${photo.id}.orig`,
-      `${photo.id}.thumb`,
-    ]);
+    expect(storedFiles().sort()).toEqual([`${photo.id}.display`, `${photo.id}.thumb`]);
   });
 
   it("tech§5 answers not-found for another account's photo", async () => {
@@ -518,6 +510,19 @@ describe("deletePhoto", () => {
     expect(storedFiles()).toEqual([]);
   });
 
+  it("D12 removes the display, thumb and any original left from before", async () => {
+    const photo = await saved(await jpeg());
+    const remove = vi.fn<PhotoStore["remove"]>().mockResolvedValue();
+
+    await deletePhoto({ ...deps(), store: { ...deps().store, remove } }, MARIA, photo.id);
+
+    expect(remove.mock.calls[0]?.[0].sort()).toEqual([
+      `${MARIA}/${photo.id}.display`,
+      `${MARIA}/${photo.id}.orig`,
+      `${MARIA}/${photo.id}.thumb`,
+    ]);
+  });
+
   it("SYNC-02 other displays pull the tombstone", async () => {
     const photo = await saved(await jpeg());
 
@@ -549,7 +554,7 @@ describe("deletePhoto", () => {
     chmodSync(accountDir, 0o700);
     expect(answer).toMatchObject({ ok: true, value: { deletedAt: expect.any(String) } });
     expect(logged).toHaveBeenCalled();
-    expect(storedFiles()).toHaveLength(3);
+    expect(storedFiles()).toHaveLength(2);
     logged.mockRestore();
   });
 
@@ -564,7 +569,7 @@ describe("deletePhoto", () => {
     const photo = await saved(await jpeg());
 
     expect(await deletePhoto(deps(), OMAR, photo.id)).toEqual({ ok: false, error: "not-found" });
-    expect(storedFiles()).toHaveLength(3);
+    expect(storedFiles()).toHaveLength(2);
     expect((await pullChanges(harness.deps(), MARIA, undefined)).changes[0]?.row).toEqual(photo);
   });
 

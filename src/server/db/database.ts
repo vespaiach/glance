@@ -126,6 +126,7 @@ export type Repos = {
     insert(accountId: string, photo: StoredPhoto, filePath: string): Promise<void>;
     save(accountId: string, photo: StoredPhoto): Promise<void>;
     livePath(accountId: string, id: string): Promise<string | undefined>;
+    livePaths(): Promise<string[]>;
     deletedPaths(): Promise<string[]>;
     filesRemoved(filePath: string): Promise<void>;
     changedSince(accountId: string, version: number): Promise<StoredPhoto[]>;
