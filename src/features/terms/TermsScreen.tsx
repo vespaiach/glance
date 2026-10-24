@@ -211,7 +211,7 @@ export function TermsScreen() {
 
 function InShort() {
   return (
-    <ColorBlock tone="soft" aria-label={text.inShort}>
+    <ColorBlock tone="soft" padding={GUTTER} aria-label={text.inShort}>
       <div {...stylex.props(styles.stack)}>
         <Eyebrow>{text.inShort}</Eyebrow>
         <div {...stylex.props(styles.cards)}>
@@ -255,7 +255,7 @@ function TermsSection({
 
   if (highlighted) {
     return (
-      <ColorBlock id={section.id} tone="sage" xstyle={styles.highlighted}>
+      <ColorBlock id={section.id} tone="sage" padding={GUTTER} xstyle={styles.highlighted}>
         <div {...stylex.props(styles.row)}>{content}</div>
       </ColorBlock>
     );
