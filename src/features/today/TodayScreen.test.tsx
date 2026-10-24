@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createSettingsRepo } from "@/data/repos";
@@ -414,6 +414,24 @@ test("TODAY-07 PHOTO-03 on large the empty tile opens Add from your phone with a
   await userEvent.click(screen.getByRole("button", { name: "Done" }));
 
   expect(screen.getByText("A memory to share?")).toBeInTheDocument();
+});
+
+test("TODAY-07 Add from your phone closes when a photo arrives", async () => {
+  await store.db.photos.put(synced(SWING));
+
+  renderToday();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Add photo" }));
+
+  expect(screen.getByRole("group", { name: "Add photos from your phone" })).toBeInTheDocument();
+
+  await store.db.photos.put(synced(COAST));
+
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("group", { name: "Add photos from your phone" }),
+    ).not.toBeInTheDocument(),
+  );
 });
 
 test("TODAY-07 on small the empty tile opens the file picker", async () => {

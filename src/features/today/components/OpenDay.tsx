@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import { Clock, Sunset } from "lucide-react";
 import { copy } from "@/copy";
-import { type DayRibbon, RIBBON_END, RIBBON_START } from "@/domain/dayRibbon";
+import { type DayRibbon, RIBBON_END, RIBBON_START, type RibbonLabel } from "@/domain/dayRibbon";
 import {
   type Clock as ClockSetting,
   formatClock,
@@ -24,6 +24,12 @@ type OpenDayProps = {
 };
 
 const MARKER = 32;
+
+const LABEL_SHIFT: Record<RibbonLabel, string> = {
+  start: "translateX(0)",
+  center: "translateX(-50%)",
+  end: "translateX(-100%)",
+};
 
 const mono = {
   fontFamily: type.fontMono,
@@ -88,12 +94,12 @@ const styles = stylex.create({
     borderRadius: radii.full,
     backgroundColor: colors.surfaceCanvas,
   }),
-  nowLabel: (left: string) => ({
+  nowLabel: (left: string, transform: string) => ({
     ...mono,
     position: "absolute",
     top: 0,
     insetInlineStart: left,
-    transform: "translateX(-50%)",
+    transform,
     fontSize: 14,
     whiteSpace: "nowrap",
   }),
@@ -170,7 +176,7 @@ function Ribbon({ ribbon, now, clock, tz }: Pick<OpenDayProps, "ribbon" | "now" 
 
   return (
     <div aria-hidden="true" {...stylex.props(styles.ribbon)}>
-      <span {...stylex.props(styles.nowLabel(elapsed))}>
+      <span {...stylex.props(styles.nowLabel(elapsed, LABEL_SHIFT[ribbon.label]))}>
         {copy.today.open.now(formatClock(minutesOfDay(now, tz), clock))}
       </span>
       {ribbon.sunset !== undefined && (

@@ -2,7 +2,7 @@
 
 import * as stylex from "@stylexjs/stylex";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useEffectEvent, useRef } from "react";
 import {
   type ShownNote,
   useEventsAfter,
@@ -29,6 +29,7 @@ import type { ZoneState } from "@/domain/zoneState";
 import { newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
 import { useQrTile } from "@/features/settings";
 import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
+import { useOnIdle } from "@/shell/providers/idle";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -263,6 +264,10 @@ function Picture({ state, day, tz, large, onOpen, onOpenPhotos }: PictureProps) 
 
   const qr = useQrTile("photos");
 
+  useOnIdle(qr.close);
+
+  useOnPhotoArrival(photos.length, qr.close);
+
   const thisYear = Number(day.slice(0, 4));
 
   const chooseFiles = () => {
@@ -372,4 +377,16 @@ function shownPhoto({ state, pick, thisYear, photoSrc }: PickInput): ZoneState<S
 
 function qrUrl(tile: ReturnType<typeof useQrTile>["tile"]): string | undefined {
   return tile.kind === "open" ? tile.url : undefined;
+}
+
+function useOnPhotoArrival(count: number, onArrival: () => void) {
+  const seen = useRef(count);
+
+  const arrived = useEffectEvent(onArrival);
+
+  useEffect(() => {
+    if (count > seen.current) arrived();
+
+    seen.current = count;
+  }, [count]);
 }

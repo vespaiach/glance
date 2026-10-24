@@ -102,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const mode = small && sidebar.mode === "rail" ? "hidden" : sidebar.mode;
 
-  const inset = sidebarInset(mode, view, small);
+  const inset = sidebarInset(mode, small);
 
   const back = { type: "back", small } as const;
 

@@ -3,7 +3,7 @@ import { createSettingsRepo } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarness";
 import type { AccountSettings } from "@/domain/schemas";
 import { SheetHost, useSheetHost } from "../SheetHost";
-import { IdleProvider, type IdleUpdates } from "./idle";
+import { IdleProvider, type IdleUpdates, useOnIdle } from "./idle";
 import { shellWrapper } from "./testShell";
 
 const navigation = vi.hoisted(() => ({
@@ -29,6 +29,7 @@ beforeEach(() => {
 
   navigation.pathname = "/calendar";
   navigation.push.mockReset();
+  idleListener.mockReset();
 });
 
 afterEach(async () => {
@@ -37,8 +38,12 @@ afterEach(async () => {
   await store.close();
 });
 
+const idleListener = vi.fn();
+
 function SheetProbe() {
   const { sheet, open } = useSheetHost();
+
+  useOnIdle(idleListener);
 
   return (
     <>
@@ -114,6 +119,21 @@ describe("IdleProvider", () => {
 
     expect(navigation.push).toHaveBeenCalledWith("/today");
     expect(screen.getByText("no sheet")).toBeInTheDocument();
+  });
+
+  it("TODAY-07 IDLE-01 the idle timeout tells its listeners, on Today too", async () => {
+    navigation.pathname = "/today";
+
+    await renderIdle("10:41:00");
+
+    seconds(59);
+
+    expect(idleListener).not.toHaveBeenCalled();
+
+    seconds(1);
+
+    expect(idleListener).toHaveBeenCalledTimes(1);
+    expect(navigation.push).not.toHaveBeenCalled();
   });
 
   it("OFF-07 after a 426 the next idle reloads into the new version, even on Today", async () => {
