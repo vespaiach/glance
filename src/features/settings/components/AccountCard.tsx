@@ -1,5 +1,14 @@
 import * as stylex from "@stylexjs/stylex";
-import { Info, LogOut, type LucideIcon, Monitor, QrCode, Smartphone, Tablet } from "lucide-react";
+import {
+  Info,
+  LogOut,
+  type LucideIcon,
+  Monitor,
+  QrCode,
+  Smartphone,
+  Tablet,
+  Trash2,
+} from "lucide-react";
 import { copy } from "@/copy";
 import type { Account } from "@/domain/schemas";
 import { activeStamp, type DeviceKind, type SignedInScreen } from "@/domain/screens";
@@ -26,6 +35,7 @@ type AccountCardProps = {
   onShowQr: () => void;
   onCloseQr: () => void;
   onSignOut: () => void;
+  onDeleteAccount: () => void;
 };
 
 const DEVICE_ICONS: Record<DeviceKind, LucideIcon> = {
@@ -165,6 +175,29 @@ const styles = stylex.create({
   button: {
     boxShadow: shadows.shadow1,
   },
+  deleteText: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    minWidth: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 240,
+  },
+  deleteTitle: {
+    fontSize: 17,
+    fontWeight: 540,
+    letterSpacing: "-0.1px",
+  },
+  deleteCaption: {
+    fontSize: 15,
+    fontWeight: 330,
+    lineHeight: 1.4,
+    textWrap: "pretty",
+  },
+  danger: {
+    color: colors.danger,
+  },
 });
 
 export function AccountCard({
@@ -178,6 +211,7 @@ export function AccountCard({
   onShowQr,
   onCloseQr,
   onSignOut,
+  onDeleteAccount,
 }: AccountCardProps) {
   const shownName = account.name ?? account.email;
 
@@ -220,6 +254,21 @@ export function AccountCard({
         </div>
         <Button variant="secondary" icon={LogOut} onClick={onSignOut} xstyle={styles.button}>
           {text.signOut}
+        </Button>
+      </div>
+      <div {...stylex.props(styles.signOut)}>
+        <div {...stylex.props(styles.deleteText)}>
+          <span {...stylex.props(styles.deleteTitle)}>{text.deleteAccount.title}</span>
+          <span {...stylex.props(styles.deleteCaption)}>{text.deleteAccount.caption}</span>
+        </div>
+        <Button
+          variant="secondary"
+          icon={Trash2}
+          disabled={!online}
+          onClick={onDeleteAccount}
+          xstyle={[styles.button, styles.danger]}
+        >
+          {text.deleteAccount.title}
         </Button>
       </div>
     </section>

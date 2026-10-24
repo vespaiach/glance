@@ -636,6 +636,30 @@ export const copy = {
         cancel: "Cancel",
         failed: "Couldn’t sign out. Try again.",
       },
+      deleteAccount: {
+        title: "Delete account",
+        caption:
+          "Erases every event, note, photo and family member for everyone, and signs out all screens.",
+      },
+      deleteDialog: {
+        title: "Delete account?",
+        body: "Everything saved to this account is erased for the whole family. This can’t be undone.",
+        erased: "What gets erased",
+        events: "Events",
+        notes: "Notes",
+        photos: "Photos",
+        tags: "Family members",
+        screens: "Signed-in screens",
+        loading: "–",
+        understand: "I understand everything will be erased for good.",
+        erasing: "Erasing events, notes and photos. Keep this screen on.",
+        confirm: "Delete account",
+        deleting: "Deleting…",
+        keep: "Keep account",
+        failedTitle: "Couldn’t delete the account",
+        failedBody: "Nothing was erased. Try again.",
+        retry: "Try again",
+      },
       qr: {
         show: "Sign in another device",
         title: "Scan to sign in",
@@ -894,6 +918,7 @@ export const copy = {
   },
   signIn: {
     signedOutAll: "Signed out of all devices.",
+    accountDeleted: "Account deleted. Everything on it has been erased.",
     headline: "Your family’s day, at a glance.",
     tagline: "Calendar, weather, notes and photos for your family. Sign in to manage them.",
     shortDate: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,

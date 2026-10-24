@@ -1,14 +1,17 @@
 import * as stylex from "@stylexjs/stylex";
+import type { AccountCounts } from "@/data/repos";
 import type { ShownBackground } from "@/domain/background";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { AccountSettings, Season } from "@/domain/schemas";
 import type { SignedInScreen } from "@/domain/screens";
 import type { PhotoUsage } from "@/domain/storage";
 import { space } from "@/theme/tokens.stylex";
+import type { DeleteAccountDialog as DeleteAccountState } from "../deleteAccountDialog";
 import { settingsLayout } from "../layout";
 import type { SignOutDialog as SignOutDialogState } from "../signOutDialog";
 import type { ThisPhone } from "../thisPhone";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
+import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import type { QrTileShown } from "./QrSignInTile";
 import { ScreenOptions } from "./ScreenOptions";
 import { SettingsPanel } from "./SettingsPanel";
@@ -37,6 +40,12 @@ type SettingsViewProps = {
   onSignOutThisDevice: () => void;
   onSignOutAll: () => void;
   onCancelSignOut: () => void;
+  deleteAccount: DeleteAccountState;
+  counts: AccountCounts | undefined;
+  onDeleteAccount: () => void;
+  onToggleDeleteAccount: () => void;
+  onConfirmDeleteAccount: () => void;
+  onCancelDeleteAccount: () => void;
   phone: ThisPhone;
   onAllowPush: () => void;
   onTurnOffPush: () => void;
@@ -79,6 +88,12 @@ export function SettingsView({
   onSignOutThisDevice,
   onSignOutAll,
   onCancelSignOut,
+  deleteAccount,
+  counts,
+  onDeleteAccount,
+  onToggleDeleteAccount,
+  onConfirmDeleteAccount,
+  onCancelDeleteAccount,
   phone,
   onAllowPush,
   onTurnOffPush,
@@ -110,6 +125,7 @@ export function SettingsView({
           onShowQr={onShowQr}
           onCloseQr={onCloseQr}
           onSignOut={onSignOut}
+          onDeleteAccount={onDeleteAccount}
         />
       </div>
       {signOut.kind !== "closed" && (
@@ -120,6 +136,17 @@ export function SettingsView({
           onThisDevice={onSignOutThisDevice}
           onAllDevices={onSignOutAll}
           onCancel={onCancelSignOut}
+        />
+      )}
+      {deleteAccount.kind !== "closed" && (
+        <DeleteAccountDialog
+          email={account.email}
+          counts={counts}
+          screens={screens.length}
+          state={deleteAccount}
+          onToggle={onToggleDeleteAccount}
+          onConfirm={onConfirmDeleteAccount}
+          onCancel={onCancelDeleteAccount}
         />
       )}
     </div>

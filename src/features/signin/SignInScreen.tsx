@@ -19,7 +19,10 @@ import { SignInView } from "./components/SignInView";
 import { initialSignIn, openedLinkFrom, openedViewFrom } from "./signIn";
 import { useSignIn } from "./useSignIn";
 
-const TOAST_MS = 4000;
+const TOASTS: Partial<Record<string, { text: string; ms: number }>> = {
+  "signed-out-all": { text: copy.signIn.signedOutAll, ms: 4000 },
+  "account-deleted": { text: copy.signIn.accountDeleted, ms: 5000 },
+};
 
 export function SignInScreen() {
   const router = useRouter();
@@ -46,7 +49,7 @@ export function SignInScreen() {
 
   useAmbientRoot(root, usePathname());
 
-  const toast = useSignedOutAllToast();
+  const toast = useParamToast();
 
   return (
     <>
@@ -65,23 +68,23 @@ export function SignInScreen() {
         onAction={flow.act}
         rootRef={root}
       />
-      {toast && <Toast>{copy.signIn.signedOutAll}</Toast>}
+      {toast && <Toast>{toast}</Toast>}
     </>
   );
 }
 
-function useSignedOutAllToast(): boolean {
-  const [shown, setShown] = useState(
-    () => new URLSearchParams(window.location.search).get("toast") === "signed-out-all",
+function useParamToast(): string | undefined {
+  const [toast, setToast] = useState(
+    () => TOASTS[new URLSearchParams(window.location.search).get("toast") ?? ""],
   );
 
   useEffect(() => {
-    if (!shown) return;
+    if (!toast) return;
 
-    const timer = setTimeout(() => setShown(false), TOAST_MS);
+    const timer = setTimeout(() => setToast(undefined), toast.ms);
 
     return () => clearTimeout(timer);
-  }, [shown]);
+  }, [toast]);
 
-  return shown;
+  return toast?.text;
 }

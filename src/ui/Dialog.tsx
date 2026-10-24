@@ -7,6 +7,8 @@ import { dialogKeyDown, useFocusOnOpen } from "./dialogFocus";
 
 type DialogProps = {
   labelledBy: string;
+  alert?: boolean;
+  busy?: boolean;
   onClose: () => void;
   children: ReactNode;
 };
@@ -47,9 +49,12 @@ const styles = stylex.create({
     boxShadow: shadows.shadow3,
     outline: "none",
   },
+  alert: {
+    maxWidth: 520,
+  },
 });
 
-export function Dialog({ labelledBy, onClose, children }: DialogProps) {
+export function Dialog({ labelledBy, alert = false, busy, onClose, children }: DialogProps) {
   const dialog = useRef<HTMLDivElement>(null);
 
   useFocusOnOpen(dialog);
@@ -67,11 +72,13 @@ export function Dialog({ labelledBy, onClose, children }: DialogProps) {
       <div
         ref={dialog}
         role="dialog"
+        {...(alert && { role: "alertdialog" })}
         aria-modal="true"
         aria-labelledby={labelledBy}
+        aria-busy={busy}
         tabIndex={-1}
         onKeyDown={dialogKeyDown(onClose)}
-        {...stylex.props(styles.card)}
+        {...stylex.props(styles.card, alert && styles.alert)}
       >
         {children}
       </div>
