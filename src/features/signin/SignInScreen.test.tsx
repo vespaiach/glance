@@ -398,6 +398,24 @@ test("SIGNIN-11 after signing out every device the form shows the toast for 4 s"
   expect(screen.queryByText("Signed out of all devices.")).not.toBeInTheDocument();
 });
 
+test("SET-14 after deleting the account the form shows the toast for 5 s", async () => {
+  window.history.replaceState(null, "", "/signin?toast=account-deleted");
+
+  renderScreen();
+
+  const toast = "Account deleted. Everything on it has been erased.";
+
+  expect(await screen.findByText(toast)).toHaveAttribute("role", "status");
+
+  await advance(4900);
+
+  expect(screen.getByText(toast)).toBeInTheDocument();
+
+  await advance(200);
+
+  expect(screen.queryByText(toast)).not.toBeInTheDocument();
+});
+
 test("SIGNIN-11 the plain form shows no toast", async () => {
   renderScreen();
 

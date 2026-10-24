@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useReducer } from "react";
 import {
   useAccount,
+  useAccountCounts,
+  useDeleteAccount,
   usePhotos,
   usePhotoUsage,
   useSettingsRepo,
@@ -19,6 +21,7 @@ import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { SettingsView } from "./components/SettingsView";
+import { DELETE_CLOSED, deleteAccountDialog } from "./deleteAccountDialog";
 import { SIGN_OUT_CLOSED, signOutDialog } from "./signOutDialog";
 import { useQrTile } from "./useQrTile";
 import { useThisPhone } from "./useThisPhone";
@@ -32,6 +35,8 @@ const AMBIENT_PATH = "/settings/ambient";
 const SIGN_IN_PATH = "/signin";
 
 const SIGNED_OUT_ALL_PATH = "/signin?toast=signed-out-all";
+
+const ACCOUNT_DELETED_PATH = "/signin?toast=account-deleted";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -67,6 +72,21 @@ export function SettingsScreen() {
     else dispatchSignOut({ type: "failed" });
   };
 
+  const deleteAccount = useDeleteAccount();
+
+  const [deleteState, dispatchDelete] = useReducer(deleteAccountDialog, DELETE_CLOSED);
+
+  const eraseAccount = async () => {
+    dispatchDelete({ type: "confirm" });
+
+    const answer = await deleteAccount();
+
+    if (answer.ok) router.replace(ACCOUNT_DELETED_PATH);
+    else dispatchDelete({ type: "failed" });
+  };
+
+  const counts = useAccountCounts();
+
   const screens = useSignedInScreens();
 
   const storage = usePhotoUsage();
@@ -101,6 +121,12 @@ export function SettingsScreen() {
       onSignOutThisDevice={() => void signOut().then(() => router.replace(SIGN_IN_PATH))}
       onSignOutAll={() => void signOutEverywhere()}
       onCancelSignOut={() => dispatchSignOut({ type: "cancel" })}
+      deleteAccount={deleteState}
+      counts={counts}
+      onDeleteAccount={() => dispatchDelete({ type: "open" })}
+      onToggleDeleteAccount={() => dispatchDelete({ type: "toggle" })}
+      onConfirmDeleteAccount={() => void eraseAccount()}
+      onCancelDeleteAccount={() => dispatchDelete({ type: "cancel" })}
       phone={thisPhone.phone}
       onAllowPush={thisPhone.allow}
       onTurnOffPush={thisPhone.turnOff}

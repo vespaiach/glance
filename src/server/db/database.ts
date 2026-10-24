@@ -88,6 +88,7 @@ export type Repos = {
     insert(account: AccountRecord): Promise<void>;
     rename(id: string, name: string): Promise<void>;
     finishSetup(id: string, at: string): Promise<void>;
+    erase(id: string, at: string): Promise<string[]>;
   };
   displays: {
     insert(display: DisplayRecord): Promise<void>;
@@ -146,6 +147,8 @@ export type Repos = {
     livePaths(): Promise<string[]>;
     deletedPaths(): Promise<string[]>;
     filesRemoved(filePath: string): Promise<void>;
+    cleanupPaths(): Promise<string[]>;
+    cleanedUp(filePath: string): Promise<void>;
     usage(accountId: string): Promise<number>;
     unsizedPaths(): Promise<string[]>;
     sized(filePath: string, bytes: number): Promise<void>;

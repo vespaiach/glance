@@ -9,6 +9,19 @@ import type {
 } from "../database";
 import type { Sql } from "./sql";
 
+const ERASE_ACCOUNT = [
+  "DELETE FROM reminder_sends r USING events e WHERE e.id = r.event_id AND e.account_id = $1",
+  "DELETE FROM events WHERE account_id = $1",
+  "DELETE FROM notes WHERE account_id = $1",
+  "DELETE FROM tags WHERE account_id = $1",
+  "DELETE FROM photos WHERE account_id = $1",
+  "DELETE FROM settings WHERE account_id = $1",
+  "DELETE FROM weather_cache WHERE account_id = $1",
+  "DELETE FROM push_subscriptions WHERE account_id = $1",
+  "DELETE FROM magic_links WHERE account_id = $1",
+  "DELETE FROM accounts WHERE id = $1",
+];
+
 type AccountRow = {
   id: string;
   email: string;
@@ -77,6 +90,16 @@ export function accountsRepo(sql: Sql): Repos["accounts"] {
         "UPDATE accounts SET setup_done_at = $1 WHERE id = $2 AND setup_done_at IS NULL",
         [at, id],
       );
+    },
+    erase: async (id, at) => {
+      const files = await sql.all<{ file_path: string }>(
+        "INSERT INTO photo_file_cleanup (file_path, created_at) SELECT file_path, $2 FROM photos WHERE account_id = $1 AND NOT files_removed ON CONFLICT DO NOTHING RETURNING file_path",
+        [id, at],
+      );
+
+      for (const statement of ERASE_ACCOUNT) await sql.run(statement, [id]);
+
+      return files.map((row) => row.file_path);
     },
   };
 }

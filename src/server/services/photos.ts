@@ -128,6 +128,22 @@ export async function photoFile(
   return store.get(objectKey(filePath, variant));
 }
 
+export async function removeAccountFiles(
+  { db, store }: Pick<PhotoDeps, "db" | "store">,
+  filePaths: readonly string[],
+): Promise<unknown[]> {
+  const failures: unknown[] = [];
+
+  for (const filePath of filePaths) {
+    await store
+      .remove(photoKeys(filePath))
+      .then(() => db.photos.cleanedUp(filePath))
+      .catch((error) => failures.push(error));
+  }
+
+  return failures;
+}
+
 export function photoKeys(filePath: string): string[] {
   return [...PHOTO_VARIANTS.map((variant) => objectKey(filePath, variant)), originalKey(filePath)];
 }

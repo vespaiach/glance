@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
@@ -294,4 +294,79 @@ test("SIGNIN-15 offline Sign in another device is disabled", async () => {
   renderSettings();
 
   expect(await screen.findByRole("button", { name: "Sign in another device" })).toBeDisabled();
+});
+
+async function openDeleteAccount() {
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Delete account" }));
+}
+
+test("SET-14 Delete account opens the alert dialog and erases nothing yet", async () => {
+  await openDeleteAccount();
+
+  expect(screen.getByRole("alertdialog", { name: "Delete account?" })).toBeInTheDocument();
+  expect(store.deleteAccount).not.toHaveBeenCalled();
+});
+
+test("SET-14 the erase list counts this account's events, notes, photos and family members", async () => {
+  await store.db.photos.put(synced(COAST));
+  await openDeleteAccount();
+
+  const photos = screen
+    .getAllByRole("listitem")
+    .find((item) => item.textContent?.startsWith("Photos"));
+
+  await waitFor(() => expect(photos).toHaveTextContent("Photos1"));
+});
+
+test("SET-14 a checked delete erases the account and returns to the email form with the toast", async () => {
+  store.deleteAccount.mockResolvedValue(ok(undefined));
+  await openDeleteAccount();
+
+  await userEvent.click(screen.getByRole("checkbox", { name: /I understand/ }));
+  await userEvent.click(
+    within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete account" }),
+  );
+
+  expect(store.deleteAccount).toHaveBeenCalledOnce();
+  await waitFor(() =>
+    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/signin?toast=account-deleted"),
+  );
+});
+
+test("SET-14 a failed delete keeps the dialog with the error, and Try again deletes again", async () => {
+  store.deleteAccount.mockResolvedValue(err("server"));
+  await openDeleteAccount();
+
+  await userEvent.click(screen.getByRole("checkbox", { name: /I understand/ }));
+  await userEvent.click(
+    within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete account" }),
+  );
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t delete the account");
+
+  store.deleteAccount.mockResolvedValue(ok(undefined));
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(store.deleteAccount).toHaveBeenCalledTimes(2);
+  await waitFor(() =>
+    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/signin?toast=account-deleted"),
+  );
+});
+
+test("SET-14 Keep account closes the dialog", async () => {
+  await openDeleteAccount();
+
+  await userEvent.click(screen.getByRole("button", { name: "Keep account" }));
+
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+});
+
+test("SET-14 offline Delete account is disabled", async () => {
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+  renderSettings();
+
+  expect(await screen.findByRole("button", { name: "Delete account" })).toBeDisabled();
 });

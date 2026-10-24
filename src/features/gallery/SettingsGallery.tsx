@@ -165,7 +165,10 @@ export function SettingsGallery({ season }: { season: Season }) {
         {settingsDemos(season).map(({ key, small, ...demo }) => (
           <div
             key={key}
-            {...stylex.props(small ? styles.small : styles.view, demo.signOut && styles.dialog)}
+            {...stylex.props(
+              small ? styles.small : styles.view,
+              (demo.signOut || demo.deleteAccount) && styles.dialog,
+            )}
           >
             <SettingsView {...settingsBase(season)} {...demo} />
           </div>
@@ -248,6 +251,17 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "sign-out-signing-out", signOut: { kind: "signing-out" } },
     { key: "sign-out-failed", signOut: { kind: "failed" } },
     { key: "small-sign-out", small: true, breakpoint: "small", signOut: { kind: "open" } },
+    { key: "delete-account-ask", deleteAccount: { kind: "ask" } },
+    { key: "delete-account-ack", deleteAccount: { kind: "ack" } },
+    { key: "delete-account-deleting", deleteAccount: { kind: "deleting" } },
+    { key: "delete-account-failed", deleteAccount: { kind: "failed" } },
+    { key: "delete-account-offline", online: false },
+    {
+      key: "small-delete-account",
+      small: true,
+      breakpoint: "small",
+      deleteAccount: { kind: "ack" },
+    },
   ];
 }
 
@@ -275,6 +289,12 @@ function settingsBase(season: Season): SettingsProps {
     onSignOutThisDevice: ignore,
     onSignOutAll: ignore,
     onCancelSignOut: ignore,
+    deleteAccount: { kind: "closed" },
+    counts: { events: 12, notes: 3, photos: 48, tags: 4 },
+    onDeleteAccount: ignore,
+    onToggleDeleteAccount: ignore,
+    onConfirmDeleteAccount: ignore,
+    onCancelDeleteAccount: ignore,
     phone: { kind: "unsupported" },
     onAllowPush: ignore,
     onTurnOffPush: ignore,

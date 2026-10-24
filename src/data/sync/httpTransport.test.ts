@@ -498,6 +498,14 @@ describe("HttpTransport", () => {
     expect(await answer).toEqual({ ok: false, error: "revoked" });
   });
 
+  it("SET-14 deleteAccount sends DELETE /api/account", async () => {
+    const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
+
+    expect(await transport(fetch).auth.deleteAccount()).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/account");
+    expect(calls[0]?.init.method).toBe("DELETE");
+  });
+
   it("SIGNIN-11 signoutAll posts to signout-all", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
 

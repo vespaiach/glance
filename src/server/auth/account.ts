@@ -2,8 +2,11 @@ import "server-only";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
 import type { AccountRecord } from "../db";
+import { removeAccountFiles } from "../services/photos";
 import { addFirstTag, type SyncedTag } from "../services/tags";
+import type { PhotoStore } from "../storage/store";
 import type { Clocked } from "./deps";
+import { signOutAll } from "./sessions";
 
 export type NamedAccount = { account: Account; firstTag?: SyncedTag };
 
@@ -27,6 +30,21 @@ export function saveName(
 
     return ok({ account: toAccount(account), ...(firstTag && { firstTag }) });
   });
+}
+
+export async function deleteAccount(
+  { db, now, store }: Clocked & { store: PhotoStore },
+  accountId: string,
+): Promise<void> {
+  const filePaths = await db.tx(async (tx) => {
+    await signOutAll({ db: tx, now }, accountId);
+
+    return tx.accounts.erase(accountId, now().toISOString());
+  });
+
+  const failures = await removeAccountFiles({ db, store }, filePaths);
+
+  for (const failure of failures) console.error(failure);
 }
 
 export async function finishSetup({ db, now }: Clocked, accountId: string): Promise<void> {
