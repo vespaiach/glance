@@ -6,7 +6,7 @@ import { APP_URL, authHarnessPerTest, signIn as signInWithCode } from "./testAut
 
 const harness = authHarnessPerTest();
 
-const FIVE_MINUTES = 5 * 60 * 1000;
+const THREE_MINUTES = 3 * 60 * 1000;
 
 type Opened = SignedInDisplay & { sessionToken: string };
 
@@ -61,7 +61,7 @@ describe("issueQrLink", () => {
     expect(url.searchParams.get("to")).toBe("photos");
   });
 
-  it("SIGNIN-15 stores the account, the display and a 5-minute expiry", async () => {
+  it("SIGNIN-15 stores the account, the display and a 3-minute expiry", async () => {
     const maria = await signIn("maria@example.com");
 
     const token = await issue(maria);
@@ -72,7 +72,7 @@ describe("issueQrLink", () => {
       tokenHash: expect.any(String),
       accountId: maria.accountId,
       displayId: maria.displayId,
-      expiresAt: "2026-10-09T14:05:00.000Z",
+      expiresAt: "2026-10-09T14:03:00.000Z",
       usedAt: null,
     });
   });
@@ -127,18 +127,27 @@ describe("verifyQrLink", () => {
     expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 
-  it("SIGNIN-15 a code stops working after 5 minutes", async () => {
+  it("SIGNIN-15 two scans at the same moment sign in only one device", async () => {
     const maria = await signIn("maria@example.com");
     const token = await issue(maria);
-    harness.advance(FIVE_MINUTES);
+
+    const answers = await Promise.all([scan(token), scan(token)]);
+
+    expect(answers.filter((answer) => "accountId" in answer)).toHaveLength(1);
+  });
+
+  it("SIGNIN-15 a code stops working after 3 minutes", async () => {
+    const maria = await signIn("maria@example.com");
+    const token = await issue(maria);
+    harness.advance(THREE_MINUTES);
 
     expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 
-  it("SIGNIN-15 a code still works just before 5 minutes", async () => {
+  it("SIGNIN-15 a code still works just before 3 minutes", async () => {
     const maria = await signIn("maria@example.com");
     const token = await issue(maria);
-    harness.advance(FIVE_MINUTES - 1000);
+    harness.advance(THREE_MINUTES - 1000);
 
     expect(await scan(token)).toMatchObject({ accountId: maria.accountId });
   });

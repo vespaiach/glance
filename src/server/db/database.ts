@@ -43,7 +43,7 @@ export type DisplayRecord = {
   lastSeenAt: string;
 };
 
-export type SessionRecord = { tokenHash: string; displayId: string; createdAt: string };
+type SessionRecord = { tokenHash: string; displayId: string; createdAt: string };
 
 export type SessionDisplay = { displayId: string; accountId: string; createdAt: string };
 
@@ -63,7 +63,7 @@ export type MagicLinkRecord = {
   usedAt: string | null;
 };
 
-export type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
+type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
 
 export type Repos = {
   versions: {
@@ -127,6 +127,7 @@ export type Repos = {
     save(accountId: string, photo: StoredPhoto): Promise<void>;
     livePath(accountId: string, id: string): Promise<string | undefined>;
     deletedPaths(): Promise<string[]>;
+    filesRemoved(filePath: string): Promise<void>;
     changedSince(accountId: string, version: number): Promise<StoredPhoto[]>;
   };
   settings: {

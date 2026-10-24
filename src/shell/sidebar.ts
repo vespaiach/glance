@@ -1,4 +1,3 @@
-import type { FixtureParams } from "@/data/repos";
 import type { View } from "./routes";
 
 export type SidebarMode = "hidden" | "rail" | "expanded";
@@ -38,19 +37,8 @@ export function sidebarReducer(state: SidebarState, action: SidebarAction): Side
   return next && next !== state.mode ? { mode: next } : state;
 }
 
-export function initialSidebar(
-  fixture: FixtureParams["rail"],
-  view: View | undefined,
-  small = false,
-): SidebarState {
-  switch (fixture) {
-    case "1":
-      return { mode: small ? "hidden" : "rail" };
-    case "open":
-      return { mode: "expanded" };
-    default:
-      return { mode: view === "today" || small ? "hidden" : "rail" };
-  }
+export function initialSidebar(view: View | undefined, small = false): SidebarState {
+  return { mode: view === "today" || small ? "hidden" : "rail" };
 }
 
 export function sidebarInset(mode: SidebarMode, view: View | undefined, small: boolean): number {

@@ -1,4 +1,4 @@
-import type { FixtureParams, FixtureUpload, UploadError } from "@/data/repos";
+import type { UploadError } from "@/data/repos";
 import { nameFromFile } from "@/domain/photoName";
 import { photoTitle, type UploadProblem, uploadProblem } from "@/domain/photoUpload";
 
@@ -31,16 +31,6 @@ export type UploadSummary =
   | { kind: "failed"; failed: number; retryable: boolean }
   | { kind: "uploading"; one?: string; count: number; percent: number; failed: number };
 
-type UploadFixture = NonNullable<FixtureParams["upload"]>;
-
-export type FixtureUploads = Record<UploadFixture, readonly FixtureUpload[]>;
-
-const FAILURES: Record<NonNullable<FixtureUpload["error"]>, UploadFailure> = {
-  tooLarge: "too-large",
-  notPhoto: "not-a-photo",
-  network: "network",
-};
-
 export function uploadSummary(tiles: readonly UploadTile[], online: boolean): UploadSummary {
   const paused = tiles.filter((tile) => tile.state === "paused").length;
 
@@ -66,13 +56,6 @@ export function uploadSummary(tiles: readonly UploadTile[], online: boolean): Up
 
 export function canRetry(tile: UploadTile): boolean {
   return tile.state === "failed" && tile.reason === "network";
-}
-
-export function initialUploads(
-  fixture: FixtureParams["upload"],
-  fixtures: FixtureUploads,
-): UploadTile[] {
-  return fixture ? fixtures[fixture].map(tileFrom) : [];
 }
 
 export function chosenTile(id: string, file: ChosenFile, preview?: string): UploadTile {
@@ -108,19 +91,6 @@ function averagePercent(tiles: readonly { percent: number }[]): number {
   const total = tiles.reduce((sum, tile) => sum + tile.percent, 0);
 
   return Math.round(total / tiles.length);
-}
-
-function tileFrom(upload: FixtureUpload, index: number): UploadTile {
-  const base = {
-    id: `upload-${index}`,
-    title: upload.title,
-    ...(upload.preview && { preview: upload.preview }),
-  };
-
-  if (upload.status === "failed")
-    return { ...base, state: "failed", reason: FAILURES[upload.error ?? "network"] };
-
-  return { ...base, state: upload.status, percent: upload.progress };
 }
 
 function changed(tile: UploadTile, action: UploadAction): UploadTile {

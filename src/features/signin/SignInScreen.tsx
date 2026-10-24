@@ -2,16 +2,10 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import {
-  fixtureSignIn,
-  fixtureWeatherSearch,
-  useSignedOutAccount,
-  useSignInAuth,
-} from "@/data/repos";
+import { useSignedOutAccount, useSignInAuth } from "@/data/repos";
 import { initialWeatherSetup } from "@/features/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
-import { useFixtureFieldFocus, useKeyboardInset } from "@/shell/keyboard";
+import { useKeyboardInset } from "@/shell/keyboard";
 import { useBrowserOnline } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -26,8 +20,6 @@ import { useSignIn } from "./useSignIn";
 export function SignInScreen() {
   const router = useRouter();
 
-  const params = useFixtureParams();
-
   const [link] = useState(() => openedLinkFrom(window.location.search));
 
   const [opens] = useState(() => openedViewFrom(window.location.search));
@@ -37,16 +29,14 @@ export function SignInScreen() {
   const clock = useNowStore();
 
   const flow = useSignIn({
-    initial: initialSignIn(params, fixtureSignIn, clock.get(), link, signedOut),
-    initialSetup: () => initialWeatherSetup(params.wx, fixtureWeatherSearch),
+    initial: initialSignIn(link, signedOut),
+    initialSetup: initialWeatherSetup,
     auth: useSignInAuth(),
     clock,
     onSignedIn: () => router.replace(viewPath(opens)),
   });
 
-  const online = useBrowserOnline() && params.signin !== "offline";
-
-  useFixtureFieldFocus();
+  const online = useBrowserOnline();
 
   const root = useRef<HTMLDivElement>(null);
 
@@ -64,7 +54,6 @@ export function SignInScreen() {
       breakpoint={useBreakpoint()}
       keyboardInset={useKeyboardInset()}
       online={online}
-      guest={flow.guest}
       {...(opens !== "today" && { opens })}
       onAction={flow.act}
       rootRef={root}

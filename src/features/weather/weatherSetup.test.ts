@@ -13,14 +13,6 @@ const PORTLANDS: WeatherLocation[] = [
 
 const LOCATED = PORTLANDS[0] as WeatherLocation;
 
-const SEARCH = {
-  query: "Portland",
-  unknown: "Pordland",
-  matches: PORTLANDS,
-  located: { draft: "Portland, OR", place: LOCATED },
-  otherZone: PORTLANDS[1] as WeatherLocation,
-};
-
 const MAINE = PORTLANDS[1] as WeatherLocation;
 
 const confirming = (draft: string): WeatherSetupState => ({
@@ -39,7 +31,7 @@ const searching = (query: string): WeatherSetupState => ({
 
 describe("weather setup reducer", () => {
   it("WX-04 starts with an empty field and no error", () => {
-    expect(initialWeatherSetup(undefined, SEARCH)).toEqual(editing(""));
+    expect(initialWeatherSetup()).toEqual(editing(""));
   });
 
   it("WX-04 typing updates the draft", () => {
@@ -139,30 +131,6 @@ describe("weather setup reducer", () => {
     expect(placeQuery("  Austin, TX ")).toBe("Austin, TX");
   });
 
-  it("WX-07 wx=searching starts searching for the fixture query", () => {
-    expect(initialWeatherSetup("searching", SEARCH)).toEqual({
-      step: "searching",
-      draft: "Portland",
-      query: "Portland",
-    });
-  });
-
-  it("WX-08 wx=unknown starts on the unknown place with the error shown", () => {
-    expect(initialWeatherSetup("unknown", SEARCH)).toEqual({
-      step: "editing",
-      draft: "Pordland",
-      error: "unknown",
-    });
-  });
-
-  it("WX-09 wx=choose starts on the fixture matches", () => {
-    expect(initialWeatherSetup("choose", SEARCH)).toEqual({
-      step: "choosing",
-      draft: "Portland",
-      matches: PORTLANDS,
-    });
-  });
-
   it("LOC-02 Use my location starts locating and keeps the draft", () => {
     expect(weatherSetupReducer(editing("Port"), { type: "locate" })).toEqual({
       step: "locating",
@@ -246,30 +214,6 @@ describe("weather setup reducer", () => {
     );
   });
 
-  it("LOC-02 wx=locating starts locating with an empty field", () => {
-    expect(initialWeatherSetup("locating", SEARCH)).toEqual({ step: "locating", draft: "" });
-  });
-
-  it.each(["denied", "no-position", "outside", "lookup"] as const)(
-    "LOC-03 wx=%s starts on that failure's notice",
-    (reason) => {
-      expect(initialWeatherSetup(reason, SEARCH)).toEqual({
-        step: "editing",
-        draft: "",
-        notice: reason,
-      });
-    },
-  );
-
-  it("tech§4.4 wx=savefail starts on the failed save of the found place", () => {
-    expect(initialWeatherSetup("savefail", SEARCH)).toEqual({
-      step: "editing",
-      draft: "Portland, OR",
-      error: "save-failed",
-      place: LOCATED,
-    });
-  });
-
   it.each<WeatherSetupState>([
     searching("Portland"),
     { step: "choosing", draft: "Portland", matches: PORTLANDS },
@@ -296,16 +240,6 @@ describe("weather setup reducer", () => {
     expect(
       weatherSetupReducer(confirming("Portland"), { type: "save-failed", place: MAINE }),
     ).toEqual({ step: "editing", draft: "Portland", error: "save-failed", place: MAINE });
-  });
-
-  it("LOC-09 wx=tz starts on the confirm for Portland, ME on the Location page", () => {
-    expect(initialWeatherSetup("tz", SEARCH, { confirmsZone: true })).toEqual(
-      confirming("Portland"),
-    );
-  });
-
-  it("LOC-09 wx=tz is the plain card where no zone is asked", () => {
-    expect(initialWeatherSetup("tz", SEARCH)).toEqual(editing(""));
   });
 
   it.each<WeatherSetupState>([

@@ -37,16 +37,6 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     passWithNoTests: true,
-    projects: [
-      { extends: true, test: { name: "app", include: ["src/**/*.test.{ts,tsx}"] } },
-      {
-        extends: true,
-        test: {
-          name: "server-memory",
-          include: ["src/server/{services,auth,jobs}/**/*.test.ts"],
-          env: { TEST_DB: "memory" },
-        },
-      },
-    ],
+    projects: [{ extends: true, test: { name: "app", include: ["src/**/*.test.{ts,tsx}"] } }],
   },
 });

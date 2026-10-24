@@ -6,6 +6,6 @@ export { PhotoSheetScreen } from "./PhotoSheetScreen";
 export { PhotosScreen } from "./PhotosScreen";
 export { draftFromPhoto, initialPhotoSheet, type PhotoSheetState } from "./photoSheet";
 export { newestFirst, photoDate, photoMeta } from "./slideshow";
-export { initialUploads, type UploadTile } from "./uploads";
+export type { UploadTile } from "./uploads";
 export { usePhotoPicker } from "./usePhotoPicker";
 export { useUploads } from "./useUploads";

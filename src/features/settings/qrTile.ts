@@ -11,8 +11,6 @@ export type QrAction =
   | { type: "expire" }
   | { type: "close" };
 
-export type QrFixture = "open" | "failed";
-
 const ISSUING: QrTile = { kind: "issuing" };
 
 const CLOSED: QrTile = { kind: "closed" };
@@ -32,10 +30,4 @@ export function qrTile(tile: QrTile, action: QrAction): QrTile {
     case "close":
       return CLOSED;
   }
-}
-
-export function initialQrTile(fixture: QrFixture | undefined): QrTile {
-  if (fixture === "open") return ISSUING;
-
-  return fixture === "failed" ? { kind: "failed" } : CLOSED;
 }

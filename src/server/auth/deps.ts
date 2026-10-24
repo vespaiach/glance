@@ -8,14 +8,12 @@ export type AuthDeps = {
   now: () => Date;
   mailer: Mailer;
   appUrl: string;
-  guestEmail?: string;
   newCode: () => string;
   limits: {
     email: RateLimiter;
     ip: RateLimiter;
     verify: RateLimiter;
     qr: RateLimiter;
-    guest: RateLimiter;
   };
 };
 

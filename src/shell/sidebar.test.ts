@@ -66,14 +66,11 @@ test("SHELL-11 idle leaves a hidden sidebar as it is", () => {
 });
 
 test.each([
-  [undefined, "today", "hidden"],
-  [undefined, "calendar", "rail"],
-  [undefined, "settings", "rail"],
-  ["1", "today", "rail"],
-  ["open", "today", "expanded"],
-  ["open", "calendar", "expanded"],
-] as const)("SHELL-08 rail=%s on %s starts the sidebar %s", (rail, view, mode) => {
-  expect(initialSidebar(rail, view)).toEqual({ mode });
+  ["today", "hidden"],
+  ["calendar", "rail"],
+  ["settings", "rail"],
+] as const)("SHELL-08 on %s the sidebar starts %s", (view, mode) => {
+  expect(initialSidebar(view)).toEqual({ mode });
 });
 
 test.each([
@@ -116,14 +113,12 @@ test.each([
   },
 );
 
-test.each([
-  [undefined, "today", "hidden"],
-  [undefined, "calendar", "hidden"],
-  ["1", "calendar", "hidden"],
-  ["open", "calendar", "expanded"],
-] as const)("SHELL-08 on small rail=%s on %s starts the sidebar %s", (rail, view, mode) => {
-  expect(initialSidebar(rail, view, true)).toEqual({ mode });
-});
+test.each(["today", "calendar"] as const)(
+  "SHELL-08 on small %s starts the sidebar hidden",
+  (view) => {
+    expect(initialSidebar(view, true)).toEqual({ mode: "hidden" });
+  },
+);
 
 test.each([
   ["hidden", "calendar", 24],

@@ -57,10 +57,10 @@ export function startSlideshow(at: Date, index = 0): SettledSlideshow {
   return { kind: "playing", from: index, since: at };
 }
 
-export function openSlideshow(at: Date, photoId: string | null, play = true): Slideshow {
+export function openSlideshow(at: Date, photoId: string | null): Slideshow {
   if (photoId !== null) return { kind: "pinned", photoId, since: at };
 
-  return play ? startSlideshow(at) : { kind: "paused", index: 0 };
+  return startSlideshow(at);
 }
 
 export function settleSlideshow(show: Slideshow, ids: readonly string[]): SettledSlideshow {

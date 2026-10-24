@@ -39,7 +39,7 @@ const ACCOUNT = { name: "Maria", email: "maria@example.com" };
 
 const QR_OPEN = {
   tile: { kind: "open", url: QR_SAMPLE_URL, issuedAt: NOW.toISOString() },
-  secondsLeft: 245,
+  secondsLeft: 125,
 } as const;
 
 const PHOTO = { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST?.id } as const;
@@ -212,8 +212,8 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     },
     { key: "this-screen-only", screens: SCREEN_SAMPLES.slice(0, 1) },
     { key: "qr-open", qr: QR_OPEN },
-    { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 300 } },
-    { key: "qr-failed", qr: { tile: { kind: "failed" }, secondsLeft: 300 } },
+    { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 180 } },
+    { key: "qr-failed", qr: { tile: { kind: "failed" }, secondsLeft: 180 } },
     { key: "offline", online: false },
     { key: "small", small: true, breakpoint: "small" },
     { key: "small-qr-open", small: true, breakpoint: "small", qr: QR_OPEN },
@@ -231,7 +231,7 @@ function settingsBase(season: Season): SettingsProps {
     background: { mode: "season" },
     breakpoint: "large",
     online: true,
-    qr: { tile: { kind: "closed" }, secondsLeft: 300 },
+    qr: { tile: { kind: "closed" }, secondsLeft: 180 },
     onShowQr: ignore,
     onCloseQr: ignore,
     onChange: ignore,

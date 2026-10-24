@@ -8,7 +8,6 @@
   },
   "scripts": {
     "dev": "next dev",
-    "dev:demo": "NEXT_PUBLIC_DEMO=1 next dev",
     "build": "next build",
     "start": "next start",
     "check": "biome check",
@@ -17,6 +16,7 @@
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@serwist/turbopack": "9.5.13",
     "@stylexjs/stylex": "0.19.1",
     "aws4fetch": "1.0.20",
@@ -39,7 +39,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@electric-sql/pglite": "0.5.8",
     "@rolldown/plugin-babel": "0.2.4",
     "@stylexjs/babel-plugin": "0.19.1",
     "@stylexjs/postcss-plugin": "0.19.1",

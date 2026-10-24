@@ -30,7 +30,6 @@ import {
 } from "@/domain/week";
 import { addDays, dateKey, parseDateKey } from "@/domain/zone";
 import { useBreakpoint, useViewportWidth } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
@@ -64,11 +63,9 @@ export function CalendarScreen() {
 
   const searchParams = useSearchParams();
 
-  const fixture = useFixtureParams();
-
   const [view, dispatch] = useReducer(
     calendarView,
-    { date: readDateParam(searchParams.get("date")), fixture },
+    readDateParam(searchParams.get("date")),
     initialCalendarView,
   );
 
@@ -163,7 +160,6 @@ export function CalendarScreen() {
             tags={tags}
             filter={filter}
             small={small}
-            whoSheet={fixture.whosheet === true}
             onFilter={who.setFilter}
             {...(day !== today && { onToday: () => dispatch({ type: "select", day: today }) })}
           />

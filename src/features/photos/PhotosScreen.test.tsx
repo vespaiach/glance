@@ -1,7 +1,6 @@
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import type { FixtureParams } from "@/data/repos";
 import {
   type Harness,
   markSynced,
@@ -13,7 +12,6 @@ import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { MAX_PHOTO_BYTES } from "@/domain/photoUpload";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
-import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NetworkProvider } from "@/shell/providers/network";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { TimeZoneProvider } from "@/shell/providers/timeZone";
@@ -73,20 +71,14 @@ afterEach(async () => {
   await store.close();
 });
 
-function renderPhotos(
-  params: FixtureParams = {},
-  clock: "frozen" | "running" = "frozen",
-  timeZone?: string,
-) {
+function renderPhotos(clock: "frozen" | "running" = "frozen", timeZone?: string) {
   const Shell = shellWrapper(store, clock === "frozen" ? { frozenAt: NOW } : {});
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
       <TimeZoneProvider timeZone={timeZone}>
         <NetworkProvider>
-          <FixtureParamsProvider params={params}>
-            <SheetHost>{children}</SheetHost>
-          </FixtureParamsProvider>
+          <SheetHost>{children}</SheetHost>
         </NetworkProvider>
       </TimeZoneProvider>
     </Shell>
@@ -189,14 +181,6 @@ test("PHOTO-05 with no photos the view is empty", async () => {
   expect(await screen.findByText("No photos yet")).toBeInTheDocument();
 });
 
-test("PHOTO-08 upload=error opens with the three failed tiles", async () => {
-  await store.db.photos.bulkPut([synced(COAST)]);
-
-  renderPhotos({ upload: "error" });
-
-  expect(await screen.findAllByRole("alert")).toHaveLength(3);
-});
-
 test("PHOTO-11 the featured photo shows its year outside this year, and the guessed hint", async () => {
   await store.db.photos.put(
     synced({
@@ -237,7 +221,7 @@ test("PHOTO-02 the featured photo advances every 8 s while Photos is open", asyn
 
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
 
-  renderPhotos({}, "running");
+  renderPhotos("running");
 
   expect(await screen.findByRole("img", { name: "Cannon Beach" })).toBeInTheDocument();
 
@@ -255,31 +239,13 @@ test("PHOTO-02 a paused slideshow keeps its photo", async () => {
 
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
 
-  renderPhotos({}, "running");
+  renderPhotos("running");
 
   await screen.findByRole("img", { name: "Cannon Beach" });
 
   await userEvent.click(screen.getByRole("button", { name: "Pause slideshow" }));
 
   waitSeconds(20);
-
-  expect(featuredTitle()).toBe("Cannon Beach");
-});
-
-test("PHOTO-07 while photos upload the slideshow steps through finished photos only", async () => {
-  runningClock();
-
-  await store.db.photos.bulkPut([synced(COAST), synced(APPLES)]);
-
-  renderPhotos({ upload: "progress" }, "running");
-
-  await screen.findByRole("img", { name: "Cannon Beach" });
-
-  waitSeconds(8);
-
-  expect(featuredTitle()).toBe("Apple picking");
-
-  waitSeconds(8);
 
   expect(featuredTitle()).toBe("Cannon Beach");
 });
@@ -320,7 +286,7 @@ test("PHOTO-10 the upload tile shows the name guessed from the file and sends it
 
   pendingUpload();
 
-  renderPhotos({}, "frozen", "Pacific/Kiritimati");
+  renderPhotos("frozen", "Pacific/Kiritimati");
 
   await screen.findByText("Photos · 1");
 
@@ -376,7 +342,9 @@ test("PHOTO-03 on large Upload toggles Add from your phone with a code that open
 test("PHOTO-03 Choose files here opens the picker and closes the panel, Done closes it", async () => {
   await store.db.photos.bulkPut([synced(COAST)]);
 
-  renderPhotos({ phqr: true });
+  renderPhotos();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Upload" }));
 
   const picker = await screen.findByLabelText("Choose photos");
 
@@ -608,7 +576,7 @@ test("PHOTO-11 Edit details opens Photo details for the featured photo and pause
 
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
 
-  renderPhotos({}, "running");
+  renderPhotos("running");
 
   await screen.findByRole("img", { name: "Cannon Beach" });
 
@@ -671,7 +639,7 @@ test("PHOTO-14 the slideshow keeps its 8 s timer in full screen", async () => {
 
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
 
-  renderPhotos({}, "running");
+  renderPhotos("running");
 
   await screen.findByRole("img", { name: "Cannon Beach" });
 
@@ -682,37 +650,6 @@ test("PHOTO-14 the slideshow keeps its 8 s timer in full screen", async () => {
   waitSeconds(3);
 
   expect(fullScreen()).toHaveAccessibleName("Apple picking · full screen");
-});
-
-test("PHOTO-14 full=1 opens full screen with the rows, chrome=0 without them", async () => {
-  await store.db.photos.bulkPut([synced(COAST)]);
-
-  const { unmount } = renderPhotos({ full: true });
-
-  expect(
-    await screen.findByRole("dialog", { name: "Cannon Beach · full screen" }),
-  ).toBeInTheDocument();
-  expect(screen.getByText("1 of 1")).toBeInTheDocument();
-
-  unmount();
-
-  renderPhotos({ full: true, chrome: "0" });
-
-  expect(
-    await screen.findByRole("dialog", { name: "Cannon Beach · full screen" }),
-  ).toBeInTheDocument();
-  expect(screen.queryByText("1 of 1")).not.toBeInTheDocument();
-});
-
-test("PHOTO-14 full=1 opens nothing until a photo has finished uploading", async () => {
-  await markSynced(store);
-
-  renderPhotos({ full: true, upload: "one" });
-
-  expect(
-    await screen.findByText("Your photos show here once they finish uploading."),
-  ).toBeInTheDocument();
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
 test("PHOTO-15 Set as background makes the featured photo the Photo background, keeps the dim and pauses on it", async () => {
@@ -763,7 +700,7 @@ test("PHOTO-13 Delete pauses the slideshow and asks; Delete photo removes it and
 
   await store.db.photos.bulkPut([synced(FOREST), synced(COAST), synced(APPLES)]);
 
-  renderPhotos({}, "running");
+  renderPhotos("running");
 
   await screen.findByRole("img", { name: "Cannon Beach" });
 
@@ -808,9 +745,10 @@ test("PHOTO-13 deleting the Photo background turns the background back to Season
     }),
   );
 
-  renderPhotos({ phdel: true });
+  renderPhotos();
 
-  await userEvent.click(await screen.findByRole("button", { name: "Delete photo" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete photo" }));
 
   await vi.waitFor(async () =>
     expect((await store.db.settings.get(store.accountId))?.background.mode).toBe("season"),
@@ -823,30 +761,11 @@ test("PHOTO-13 deleting the Photo background turns the background back to Season
 test("PHOTO-13 offline there is no Delete", async () => {
   await store.db.photos.bulkPut([synced(COAST)]);
 
-  renderPhotos({ phdel: true });
+  renderPhotos();
 
   await screen.findByRole("img", { name: "Cannon Beach" });
 
   await goOffline();
 
   expect(screen.queryByRole("button", { name: /^Delete/ })).not.toBeInTheDocument();
-});
-
-test("PHOTO-13 phdel=1 opens with the confirm and the slideshow paused", async () => {
-  await store.db.photos.bulkPut([synced(COAST)]);
-
-  renderPhotos({ phdel: true });
-
-  expect(
-    await screen.findByRole("alertdialog", { name: "Delete this photo?" }),
-  ).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
-});
-
-test("PHOTO-01 play=0 opens the slideshow paused", async () => {
-  await store.db.photos.bulkPut([synced(COAST)]);
-
-  renderPhotos({ play: "0" });
-
-  expect(await screen.findByRole("button", { name: "Play slideshow" })).toBeInTheDocument();
 });

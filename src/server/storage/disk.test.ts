@@ -24,6 +24,19 @@ describe("createDiskStore", () => {
     });
   });
 
+  it("tech§6.3 serves the display and thumb copies as WebP without reading them", async () => {
+    const store = createDiskStore(root());
+    await store.put("maria/photo.display", new Uint8Array([1, 2, 3]), "image/webp");
+    await store.put("maria/photo.thumb", new Uint8Array([1, 2, 3]), "image/webp");
+
+    expect(await store.get("maria/photo.display")).toMatchObject({
+      value: { contentType: "image/webp" },
+    });
+    expect(await store.get("maria/photo.thumb")).toMatchObject({
+      value: { contentType: "image/webp" },
+    });
+  });
+
   it("tech§6.3 remove settles every key before it reports a failure", async () => {
     const store = createDiskStore(root());
     const keys = Array.from({ length: 20 }, (_, index) => `maria/photo-${index}.thumb`);

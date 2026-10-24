@@ -1,18 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  fixtureWeatherSearch,
-  type SettingsRepo,
-  useSettingsRepo,
-  useUpcomingEvent,
-  useWeatherRepo,
-} from "@/data/repos";
+import { type SettingsRepo, useSettingsRepo, useUpcomingEvent, useWeatherRepo } from "@/data/repos";
 import type { WeatherLocation } from "@/domain/schemas";
 import { asksZoneChange } from "@/domain/zoneName";
 import { initialWeatherSetup, useWeatherSetup } from "@/features/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { LocationView } from "./components/LocationView";
@@ -28,12 +21,10 @@ export function LocationScreen() {
 
   const now = useNow("minute");
 
-  const fixture = useFixtureParams();
-
   const saved = settings.weatherLocation;
 
   const setup = useWeatherSetup({
-    initial: () => initialWeatherSetup(fixture.wx, fixtureWeatherSearch, { confirmsZone: true }),
+    initial: initialWeatherSetup,
     source: useWeatherRepo(),
     save: saveThen(useSettingsRepo(), () => router.replace(SETTINGS_PATH)),
     asksZone: (place) => asksZoneChange(saved?.timeZone, place.timeZone),

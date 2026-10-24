@@ -4,6 +4,7 @@ import { accountsRepo, displaysRepo, magicLinksRepo, sessionsRepo, signInCodesRe
 import { eventsRepo } from "./events";
 import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
 import { notesRepo } from "./notes";
+import { newPglite, pgliteSql } from "./pglite";
 import { photosRepo } from "./photos";
 import { settingsRepo, weatherCacheRepo } from "./settings";
 import { openPgSql, type Sql } from "./sql";
@@ -13,6 +14,15 @@ const LOCK_VERSIONS = "SELECT version FROM sync_state WHERE id = 1 FOR UPDATE";
 
 export function openPostgresDatabase(url: string): OpenedDatabase {
   const sql = openPgSql(url);
+
+  return {
+    db: postgresDatabase(sql),
+    prepare: () => migrate(sql, readMigrations(MIGRATIONS_DIR)),
+  };
+}
+
+export function openPgliteDatabase(): OpenedDatabase {
+  const sql = pgliteSql(newPglite());
 
   return {
     db: postgresDatabase(sql),

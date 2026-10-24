@@ -4,13 +4,11 @@ import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 const PAGE_EXTENSIONS = ["tsx", "ts"];
 
-const DEMO_PAGE_EXTENSIONS = ["demo.tsx", ...PAGE_EXTENSIONS];
+const DEV_PAGE_EXTENSIONS = ["dev.tsx", ...PAGE_EXTENSIONS];
 
 export default function nextConfig(phase: string): NextConfig {
-  const demo = phase === PHASE_DEVELOPMENT_SERVER || process.env.NEXT_PUBLIC_DEMO === "1";
-
   return withSerwist({
-    pageExtensions: demo ? DEMO_PAGE_EXTENSIONS : PAGE_EXTENSIONS,
+    pageExtensions: phase === PHASE_DEVELOPMENT_SERVER ? DEV_PAGE_EXTENSIONS : PAGE_EXTENSIONS,
     redirects: async () => [{ source: "/", destination: "/today", permanent: false }],
   });
 }

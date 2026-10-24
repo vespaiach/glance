@@ -46,20 +46,10 @@ export { type QrCodes, type SignedInScreen, useQrCodes, useSignedInScreens } fro
 export { type AppServiceWorker, appServiceWorker } from "./serviceWorker";
 export {
   type DisplayBoot,
-  type FixtureParams,
-  type FixtureUpload,
-  fixtureLongPhotoTitle,
-  fixtureOtherEmail,
-  fixtureParamsFor,
-  fixtureSheetTargets,
-  fixtureSignIn,
-  fixtureTimeZone,
-  fixtureUploads,
-  fixtureWeatherSearch,
   type SignedOutAccount,
   type SignInAuth,
-  signedOutAccountFor,
-  signInAuthFor,
+  signedOutAccount,
+  signInAuth,
   useDisplayBoot,
 } from "./session";
 export { createSettingsRepo, type SettingsRepo, useSettings, useSettingsRepo } from "./settings";

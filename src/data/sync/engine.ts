@@ -1,7 +1,13 @@
 import { err, ok, type Result } from "@/domain/result";
 import { retryDelayMs } from "@/domain/retry";
 import type { WeatherLocation } from "@/domain/schemas";
-import { CURSOR_KEY, type GlanceDb, type OutboxEntry, type SyncedEntity } from "../db";
+import {
+  CURSOR_KEY,
+  type GlanceDb,
+  type OutboxEntry,
+  type StoredEvent,
+  type SyncedEntity,
+} from "../db";
 import { recordStatus, type StatusEvent, type SyncError } from "./status";
 import type { Change, PullResponse, Transport, TransportError } from "./transport";
 
@@ -302,11 +308,39 @@ async function applyChange(db: GlanceDb, change: Change): Promise<void> {
 }
 
 function settle(db: GlanceDb, entry: OutboxEntry, change: Change): Promise<void> {
-  return db.transaction("rw", db.outbox, db.table(entry.entity), async () => {
+  return db.transaction("rw", db.outbox, db.table(entry.entity), db.events, async () => {
     await db.outbox.delete(entry.seq);
+
+    if (change.entity === "tags" && change.row.id !== entry.entityId) {
+      await moveTag(db, entry.entityId, change.row.id);
+    }
 
     await applyChange(db, change);
   });
+}
+
+async function moveTag(db: GlanceDb, from: string, to: string): Promise<void> {
+  await db.tags.delete(from);
+
+  await db.events
+    .filter((event) => event.tagIds.includes(from))
+    .modify((event) => {
+      event.tagIds = movedIds(event.tagIds, from, to);
+    });
+
+  await db.outbox
+    .where("entity")
+    .equals("events")
+    .filter((entry) => (entry.payload as StoredEvent | undefined)?.tagIds.includes(from) ?? false)
+    .modify((entry) => {
+      const payload = entry.payload as StoredEvent;
+
+      entry.payload = { ...payload, tagIds: movedIds(payload.tagIds, from, to) };
+    });
+}
+
+function movedIds(ids: string[], from: string, to: string): string[] {
+  return [...new Set(ids.map((id) => (id === from ? to : id)))];
 }
 
 function discard(db: GlanceDb, entry: OutboxEntry): Promise<void> {

@@ -1,4 +1,3 @@
-import type { FixtureParams } from "@/data/repos";
 import { stepWeek } from "@/domain/week";
 
 export type CalendarView = {
@@ -14,17 +13,8 @@ export type CalendarViewAction =
   | { type: "openPicker" }
   | { type: "closePicker" };
 
-type CalendarStart = {
-  date?: string;
-  fixture?: Pick<FixtureParams, "day" | "span24" | "dp">;
-};
-
-export function initialCalendarView({ date, fixture = {} }: CalendarStart): CalendarView {
-  return {
-    day: date ?? fixture.day,
-    span24: fixture.span24 === true,
-    picker: fixture.dp === "open",
-  };
+export function initialCalendarView(date: string | undefined): CalendarView {
+  return { day: date, span24: false, picker: false };
 }
 
 export function calendarView(state: CalendarView, action: CalendarViewAction): CalendarView {

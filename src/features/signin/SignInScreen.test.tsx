@@ -3,8 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { type Mock, vi } from "vitest";
 import {
   type AuthStatus,
-  type FixtureParams,
-  fixtureSignIn,
   type SignedOutAccount,
   SignedOutAccountProvider,
   type SignInAuth,
@@ -12,7 +10,6 @@ import {
 } from "@/data/repos";
 import { err, ok } from "@/domain/result";
 import type { Account, WeatherLocation } from "@/domain/schemas";
-import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { NowProvider } from "@/shell/providers/now";
 import { SeasonProvider } from "@/shell/providers/season";
 import { DefaultSettingsProvider } from "@/shell/providers/settings";
@@ -30,16 +27,12 @@ vi.mock("next/navigation", () => ({
 
 const NOW = new Date(2026, 9, 9, 10, 41);
 
-const MARIA: Account = fixtureSignIn;
-
-const TRINH: Account = { id: "a-guest", email: "guests@takeaglance.app", name: "Trinh" };
+const MARIA: Account = { id: "a-maria", email: "maria@example.com", name: "Maria" };
 
 type FakeAuth = {
   sendCode: Mock<SignInAuth["sendCode"]>;
   verifyCode: Mock<SignInAuth["verifyCode"]>;
   status: Mock<SignInAuth["status"]>;
-  guestAvailable: Mock<SignInAuth["guestAvailable"]>;
-  guest: Mock<SignInAuth["guest"]>;
   name: Mock<SignInAuth["name"]>;
   location: Mock<SignInAuth["location"]>;
   searchPlaces: Mock<SignInAuth["searchPlaces"]>;
@@ -62,10 +55,6 @@ function fakeAuth(): FakeAuth {
       ok({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
     ),
     status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "signed-out" })),
-    guestAvailable: vi.fn<SignInAuth["guestAvailable"]>(async () => false),
-    guest: vi.fn<SignInAuth["guest"]>(async () =>
-      ok({ state: "signed-in", account: TRINH, returning: true, setupDone: true }),
-    ),
     name: vi.fn<SignInAuth["name"]>(async (name) => ok({ ...MARIA, name })),
     location: vi.fn<SignInAuth["location"]>(async () => ok(undefined)),
     searchPlaces: vi.fn<SignInAuth["searchPlaces"]>(async () => ok([PORTLAND])),
@@ -93,22 +82,16 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-function renderScreen(
-  params: FixtureParams = {},
-  auth: FakeAuth = fakeAuth(),
-  signedOut?: SignedOutAccount,
-) {
+function renderScreen(auth: FakeAuth = fakeAuth(), signedOut?: SignedOutAccount) {
   render(
     <NowProvider frozenAt={NOW}>
       <DefaultSettingsProvider>
         <SeasonProvider>
-          <FixtureParamsProvider params={params}>
-            <SignInAuthProvider auth={auth}>
-              <SignedOutAccountProvider account={signedOut}>
-                <SignInScreen />
-              </SignedOutAccountProvider>
-            </SignInAuthProvider>
-          </FixtureParamsProvider>
+          <SignInAuthProvider auth={auth}>
+            <SignedOutAccountProvider account={signedOut}>
+              <SignInScreen />
+            </SignedOutAccountProvider>
+          </SignInAuthProvider>
         </SeasonProvider>
       </DefaultSettingsProvider>
     </NowProvider>,
@@ -132,6 +115,46 @@ async function sendCode(email: string) {
 
 const codeField = () => screen.getByRole("textbox", { name: "Code" });
 
+async function renderAtCode(auth: FakeAuth = fakeAuth()) {
+  renderScreen(auth);
+
+  await sendCode(MARIA.email);
+
+  await screen.findByRole("heading", { name: "Enter the code" });
+
+  return auth;
+}
+
+async function renderAtName(auth: FakeAuth = fakeAuth()) {
+  const ana = { ...MARIA, email: "ana@example.com", name: null };
+
+  auth.verifyCode.mockResolvedValue(
+    ok({ state: "signed-in", account: ana, returning: false, setupDone: false }),
+  );
+
+  await renderAtCode(auth);
+
+  await user().type(codeField(), "482913");
+
+  await screen.findByLabelText("Your name");
+
+  return auth;
+}
+
+async function renderAtLocation(auth: FakeAuth = fakeAuth()) {
+  auth.verifyCode.mockResolvedValue(
+    ok({ state: "signed-in", account: MARIA, returning: false, setupDone: false }),
+  );
+
+  await renderAtCode(auth);
+
+  await user().type(codeField(), "482913");
+
+  await screen.findByRole("heading", { name: "Where is this screen?" });
+
+  return auth;
+}
+
 test("SIGNIN-01 opens on the empty email form", () => {
   renderScreen();
 
@@ -140,7 +163,7 @@ test("SIGNIN-01 opens on the empty email form", () => {
 });
 
 test("SIGNIN-13 a screen signed out by the server opens the form with its email and waiting count", () => {
-  renderScreen({}, fakeAuth(), { email: MARIA.email, pending: 2 });
+  renderScreen(fakeAuth(), { email: MARIA.email, pending: 2 });
 
   expect(screen.getByRole("heading", { name: "Sign in again" })).toBeInTheDocument();
   expect(screen.getByLabelText("Email")).toHaveValue(MARIA.email);
@@ -148,7 +171,7 @@ test("SIGNIN-13 a screen signed out by the server opens the form with its email 
 });
 
 test("SIGNIN-13 Use a different email from Enter the code keeps the signed-out notice", async () => {
-  renderScreen({}, fakeAuth(), { email: MARIA.email, pending: 0 });
+  renderScreen(fakeAuth(), { email: MARIA.email, pending: 0 });
 
   await user().click(screen.getByRole("button", { name: "Send code" }));
   await advance(10_000);
@@ -175,7 +198,7 @@ test("SIGNIN-03 a valid email moves to Sending", async () => {
 
   auth.sendCode.mockReturnValue(new Promise(() => {}));
 
-  renderScreen({}, auth);
+  renderScreen(auth);
 
   await sendCode("maria@example.com");
 
@@ -203,7 +226,7 @@ test("SIGNIN-04 the server accepting the send opens Enter the code with focus in
 });
 
 test("SIGNIN-04 the 6th digit checks the code for the email and signs in", async () => {
-  const auth = renderScreen({ signin: "sent" });
+  const auth = await renderAtCode();
 
   await user().type(codeField(), "482913");
 
@@ -216,7 +239,7 @@ test("SIGNIN-04 the 6th digit checks the code for the email and signs in", async
 });
 
 test('SIGNIN-04 pasting "482 913" checks 482913', async () => {
-  const auth = renderScreen({ signin: "sent" });
+  const auth = await renderAtCode();
 
   await user().click(codeField());
   await user().paste("482 913");
@@ -232,7 +255,7 @@ test("SIGNIN-04 Checking… holds the field while the code is checked", async ()
 
   auth.verifyCode.mockReturnValue(new Promise(() => {}));
 
-  renderScreen({ signin: "sent" }, auth);
+  await renderAtCode(auth);
 
   await user().type(codeField(), "482913");
 
@@ -245,7 +268,7 @@ test("SIGNIN-17 a wrong code clears the field until the next digit", async () =>
 
   auth.verifyCode.mockResolvedValueOnce(err("wrong-code"));
 
-  renderScreen({ signin: "sent" }, auth);
+  await renderAtCode(auth);
 
   await user().type(codeField(), "000000");
 
@@ -265,7 +288,7 @@ test("SIGNIN-17 the 5th wrong try locks the field", async () => {
 
   auth.verifyCode.mockResolvedValueOnce(err("code-locked"));
 
-  renderScreen({ signin: "sent", backin: 8 }, auth);
+  await renderAtCode(auth);
 
   await user().type(codeField(), "000000");
 
@@ -279,7 +302,7 @@ test("SIGNIN-08 a code the server finds expired opens This code has expired", as
 
   auth.verifyCode.mockResolvedValueOnce(err("code-expired"));
 
-  renderScreen({ signin: "sent" }, auth);
+  await renderAtCode(auth);
 
   await user().type(codeField(), "482913");
 
@@ -287,7 +310,7 @@ test("SIGNIN-08 a code the server finds expired opens This code has expired", as
 });
 
 test("SIGNIN-08 Enter the code expires after 10 minutes", async () => {
-  renderScreen({ signin: "sent" });
+  await renderAtCode();
 
   await user().click(codeField());
   await advance(10 * 60_000);
@@ -296,9 +319,10 @@ test("SIGNIN-08 Enter the code expires after 10 minutes", async () => {
 });
 
 test("SIGNIN-10 offline the 6th digit never submits, and Sign in works after reconnecting", async () => {
-  const offline = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  const auth = await renderAtCode();
 
-  const auth = renderScreen({ signin: "sent" });
+  const offline = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  await act(() => window.dispatchEvent(new Event("offline")));
 
   await user().type(codeField(), "482913");
 
@@ -319,7 +343,7 @@ test("SIGNIN-03 a failed send returns to the form with the email kept", async ()
 
   auth.sendCode.mockResolvedValue(err("server"));
 
-  renderScreen({}, auth);
+  renderScreen(auth);
 
   await sendCode("maria@example.com");
 
@@ -329,18 +353,20 @@ test("SIGNIN-03 a failed send returns to the form with the email kept", async ()
 });
 
 test("SIGNIN-08 Send a new code sends again from the expired screen", async () => {
-  const auth = renderScreen({ signin: "expired" });
+  const auth = await renderAtCode();
 
+  await advance(10 * 60_000);
   await user().click(screen.getByRole("button", { name: "Send a new code" }));
 
-  expect(auth.sendCode).toHaveBeenCalledWith(
+  expect(auth.sendCode).toHaveBeenCalledTimes(2);
+  expect(auth.sendCode).toHaveBeenLastCalledWith(
     expect.objectContaining({ email: "maria@example.com" }),
   );
   expect(await screen.findByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
 });
 
 test("SIGNIN-09 signing in saves the account to glance-meta and opens Today after 2.2 s", async () => {
-  const auth = renderScreen({ signin: "sent" });
+  const auth = await renderAtCode();
 
   await user().type(codeField(), "482913");
 
@@ -369,7 +395,7 @@ test("SIGNIN-15 the device that opened a returning account's QR link signs in an
 
   openLink("opened");
 
-  renderScreen({}, auth);
+  renderScreen(auth);
 
   expect(await screen.findByRole("heading", { name: "Welcome back, Maria" })).toBeInTheDocument();
   expect(auth.status).toHaveBeenCalledOnce();
@@ -389,7 +415,7 @@ test("SIGNIN-06 a new account's right code asks for the name first", async () =>
     ok({ state: "signed-in", account: ana, returning: false, setupDone: false }),
   );
 
-  renderScreen({ signin: "sent" }, auth);
+  await renderAtCode(auth);
 
   await user().type(codeField(), "482913");
   await user().type(await screen.findByLabelText("Your name"), "Ana");
@@ -411,7 +437,7 @@ test("SIGNIN-14 a returning sign-in whose location step never ended asks where t
 
   openLink("opened");
 
-  renderScreen({}, auth);
+  renderScreen(auth);
 
   expect(await screen.findByRole("heading", { name: "Where is this screen?" })).toBeInTheDocument();
   expect(auth.remember).not.toHaveBeenCalled();
@@ -435,23 +461,15 @@ test("SIGNIN-10 a link check that can't reach the server opens the email form", 
 
   openLink("opened");
 
-  renderScreen({}, auth);
+  renderScreen(auth);
 
   expect(
     await screen.findByRole("heading", { name: "Sign in or get started" }),
   ).toBeInTheDocument();
 });
 
-test("SIGNIN-09 signin=done is a snapshot and stays put", async () => {
-  renderScreen({ signin: "done" });
-
-  await advance(5_000);
-
-  expect(navigation.replace).not.toHaveBeenCalled();
-});
-
 test("SIGNIN-06 Continue saves the trimmed name and asks where the screen is", async () => {
-  const auth = renderScreen({ signin: "name" });
+  const auth = await renderAtName();
 
   const person = user();
 
@@ -463,8 +481,8 @@ test("SIGNIN-06 Continue saves the trimmed name and asks where the screen is", a
   expect(auth.remember).not.toHaveBeenCalled();
 });
 
-test("SIGNIN-14 signin=location opens Where is this screen? with Skip for now", () => {
-  renderScreen({ signin: "location" });
+test("SIGNIN-14 a set-up step opens Where is this screen? with Skip for now", async () => {
+  await renderAtLocation();
 
   expect(screen.getByRole("heading", { name: "Where is this screen?" })).toBeInTheDocument();
   expect(screen.getByLabelText("City or ZIP code")).toHaveValue("");
@@ -472,7 +490,7 @@ test("SIGNIN-14 signin=location opens Where is this screen? with Skip for now", 
 });
 
 test("SIGNIN-14 a found place is saved to the account, then Welcome opens Today", async () => {
-  const auth = renderScreen({ signin: "location" });
+  const auth = await renderAtLocation();
 
   const person = user();
 
@@ -490,7 +508,7 @@ test("SIGNIN-14 a found place is saved to the account, then Welcome opens Today"
 });
 
 test("SIGNIN-14 Skip for now ends the step and welcomes the account", async () => {
-  const auth = renderScreen({ signin: "location" });
+  const auth = await renderAtLocation();
 
   await user().click(screen.getByRole("button", { name: "Skip for now" }));
 
@@ -504,7 +522,7 @@ test("SIGNIN-14 a failed save keeps the place and Continue saves it again", asyn
 
   auth.location.mockResolvedValueOnce(err("network"));
 
-  renderScreen({ signin: "location" }, auth);
+  await renderAtLocation(auth);
 
   const person = user();
 
@@ -528,7 +546,7 @@ test("SIGNIN-14 a failed skip says so and Skip for now tries again", async () =>
 
   auth.location.mockResolvedValueOnce(err("network"));
 
-  renderScreen({ signin: "location" }, auth);
+  await renderAtLocation(auth);
 
   const person = user();
 
@@ -549,7 +567,7 @@ test("SIGNIN-06 a failed name save keeps the name step and says so", async () =>
 
   auth.name.mockResolvedValue(err("network"));
 
-  renderScreen({ signin: "name" }, auth);
+  await renderAtName(auth);
 
   const person = user();
 
@@ -579,35 +597,13 @@ test("SIGNIN-04 Send a new code and Use a different email appear 10 s after the 
 });
 
 test("SIGNIN-04 Send a new code sends again and restarts the countdown", async () => {
-  const auth = renderScreen({ signin: "sent", backin: 0 });
+  const auth = await renderAtCode();
 
-  await user().click(screen.getByRole("button", { name: "Send a new code" }));
+  await advance(10_000);
+  await user().click(await screen.findByRole("button", { name: "Send a new code" }));
 
-  expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith(
-    expect.objectContaining({ email: "maria@example.com" }),
-  );
+  expect(auth.sendCode).toHaveBeenCalledTimes(2);
   expect(await screen.findByRole("timer")).toHaveTextContent("New code or different email in 0:10");
-});
-
-test("SIGNIN-04 signin=sent&backin=8 holds at 0:08 on a frozen clock", () => {
-  renderScreen({ signin: "sent", backin: 8 });
-
-  expect(screen.getByRole("timer")).toHaveTextContent("New code or different email in 0:08");
-});
-
-test("SIGNIN-04 signin=sent&code=482 opens Enter the code with 3 digits typed", () => {
-  renderScreen({ signin: "sent", code: "482" });
-
-  expect(screen.getByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
-  expect(codeField()).toHaveValue("482");
-  expect(screen.getByText("maria@example.com")).toBeInTheDocument();
-});
-
-test("SIGNIN-10 signin=offline shows the offline form", () => {
-  renderScreen({ signin: "offline" });
-
-  expect(screen.getByText("You’re offline")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Send code" })).toBeDisabled();
 });
 
 test("SIGNIN-10 the browser going offline disables sending", () => {
@@ -620,10 +616,18 @@ test("SIGNIN-10 the browser going offline disables sending", () => {
   vi.restoreAllMocks();
 });
 
-test("SIGNIN-03 signin=sendfail clears on the next keystroke and Send retries", async () => {
-  const auth = renderScreen({ signin: "sendfail" });
+test("SIGNIN-03 Couldn’t send clears on the next keystroke and Send retries", async () => {
+  const auth = fakeAuth();
 
-  expect(screen.getByLabelText("Email")).toHaveAccessibleDescription("Couldn’t send. Try again.");
+  auth.sendCode.mockResolvedValueOnce(err("server"));
+
+  renderScreen(auth);
+
+  await sendCode("maria@example.com");
+
+  expect(await screen.findByLabelText("Email")).toHaveAccessibleDescription(
+    "Couldn’t send. Try again.",
+  );
 
   await user().type(screen.getByLabelText("Email"), "{Backspace}m");
 
@@ -631,54 +635,9 @@ test("SIGNIN-03 signin=sendfail clears on the next keystroke and Send retries", 
 
   await user().click(screen.getByRole("button", { name: "Send code" }));
 
-  expect(auth.sendCode).toHaveBeenCalledExactlyOnceWith(
+  expect(auth.sendCode).toHaveBeenCalledTimes(2);
+  expect(auth.sendCode).toHaveBeenLastCalledWith(
     expect.objectContaining({ email: "maria@example.com" }),
   );
   expect(await screen.findByRole("heading", { name: "Enter the code" })).toBeInTheDocument();
-});
-
-const GUEST_BUTTON = { name: "Sign-in as guests" };
-
-test("SIGNIN-16 the form asks once whether guest sign-in is on and hides the button when off", async () => {
-  const auth = renderScreen();
-
-  await advance(0);
-
-  expect(auth.guestAvailable).toHaveBeenCalledOnce();
-  expect(screen.queryByRole("button", GUEST_BUTTON)).not.toBeInTheDocument();
-});
-
-test("SIGNIN-16 Sign-in as guests welcomes the guest account back and opens Today", async () => {
-  const auth = fakeAuth();
-
-  auth.guestAvailable.mockResolvedValue(true);
-
-  renderScreen({}, auth);
-
-  await user().click(await screen.findByRole("button", GUEST_BUTTON));
-
-  expect(await screen.findByRole("heading", { name: "Welcome back, Trinh" })).toBeInTheDocument();
-  expect(auth.guest).toHaveBeenCalledOnce();
-  expect(auth.remember).toHaveBeenCalledExactlyOnceWith(TRINH);
-
-  await advance(2_200);
-
-  expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/today");
-});
-
-test("SIGNIN-16 a failed guest sign-in shows Couldn’t sign in and can be tried again", async () => {
-  const auth = fakeAuth();
-
-  auth.guestAvailable.mockResolvedValue(true);
-  auth.guest.mockResolvedValueOnce(err("server"));
-
-  renderScreen({}, auth);
-
-  await user().click(await screen.findByRole("button", GUEST_BUTTON));
-
-  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t sign in. Try again.");
-
-  await user().click(screen.getByRole("button", GUEST_BUTTON));
-
-  expect(await screen.findByRole("heading", { name: "Welcome back, Trinh" })).toBeInTheDocument();
 });

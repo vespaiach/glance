@@ -303,6 +303,14 @@ export function databaseContract(open: () => Database): void {
       expect(await db().photos.livePath(MARIA, PHOTO.id)).toBeUndefined();
       expect(await db().photos.deletedPaths()).toEqual([`${MARIA}/${PHOTO.id}`]);
     });
+
+    it("PHOTO-13 stops listing a deleted photo's files once they are removed", async () => {
+      await db().photos.insert(MARIA, { ...PHOTO, deletedAt: LATER }, `${MARIA}/${PHOTO.id}`);
+
+      await db().photos.filesRemoved(`${MARIA}/${PHOTO.id}`);
+
+      expect(await db().photos.deletedPaths()).toEqual([]);
+    });
   });
 
   describe("settings and weather", () => {

@@ -10,7 +10,7 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 - Screens never fetch or touch Dexie. They read via `data` hooks and write via repos (tech-design §4.2).
 - Business rules are pure functions of (data, now, settings) in `src/domain`. Time comes only from `useNow()` or an injected `now`, never `new Date()` in components.
 - Never store derived values (event status, counts, pending, hero state). Compute them.
-- Multi-state flows (sign-in, upload tile, weather setup, sync status) are a discriminated union + a reducer. A URL fixture param is the reducer's initial state.
+- Multi-state flows (sign-in, upload tile, weather setup, sync status) are a discriminated union + a reducer.
 - Every data zone renders through `ZoneState<T>` + `<Zone>` (loading / empty / ready / failed) with its own error boundary (LOAD-*, FAIL-*, OFF-*).
 - Services and the sync worker return `Result<T, ErrorCode>`. A 401 never drops outbox entries (tech-design §5).
 - Server services take `accountId` first and scope every query and write by it. Exceptions: `server/auth` before a session exists, and `server/jobs`, which run across accounts.

@@ -1,5 +1,5 @@
 import Dexie from "dexie";
-import { accountDbName, deleteGlanceDb, FIXTURE_DB_NAME, openGlanceDb } from "./db";
+import { accountDbName, deleteGlanceDb, openGlanceDb } from "./db";
 
 const ACCOUNT_A = "0195f0a0-0000-7000-8000-00000000000a";
 
@@ -51,9 +51,8 @@ afterEach(async () => {
 });
 
 describe("account database", () => {
-  it("tech§4.1 names one database per account and one for fixture mode", () => {
+  it("tech§4.1 names one database per account", () => {
     expect(accountDbName(ACCOUNT_A)).toBe(`glance-${ACCOUNT_A}`);
-    expect(FIXTURE_DB_NAME).toBe("glance-fixture");
   });
 
   it("tech§4.1 opens with the entity, outbox and meta tables", async () => {

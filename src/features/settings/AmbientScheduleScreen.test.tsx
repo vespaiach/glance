@@ -1,10 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import type { FixtureParams } from "@/data/repos";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import { FixtureParamsProvider } from "@/shell/fixtureOptions";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { AmbientScheduleScreen } from "./AmbientScheduleScreen";
 
@@ -42,16 +39,10 @@ afterEach(async () => {
   await store.close();
 });
 
-function renderScreen(params: FixtureParams = {}) {
+function renderScreen() {
   const Shell = shellWrapper(store, { frozenAt: NOW });
 
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <Shell>
-      <FixtureParamsProvider params={params}>{children}</FixtureParamsProvider>
-    </Shell>
-  );
-
-  return render(<AmbientScheduleScreen />, { wrapper });
+  return render(<AmbientScheduleScreen />, { wrapper: Shell });
 }
 
 async function savedAmbient() {
@@ -65,12 +56,6 @@ test("SET-10 a change to the schedule is saved at once", async () => {
 
   await waitFor(async () => expect((await savedAmbient())?.mode).toBe("split"));
   expect(await screen.findByRole("group", { name: "Fri & Sat nights" })).toBeInTheDocument();
-});
-
-test("SET-10 pick= opens that field's picker", async () => {
-  renderScreen({ pick: "all.s" });
-
-  expect(await screen.findByRole("group", { name: "Dim time" })).toBeInTheDocument();
 });
 
 test("SET-10 Preview opens Ambient and ‹ Settings goes back to Settings", async () => {

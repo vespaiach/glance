@@ -70,7 +70,7 @@ function renderView(overrides: Partial<Props> = {}) {
     now: NOW,
     tz: TZ,
     online: true,
-    qr: { tile: { kind: "closed" }, secondsLeft: 300 },
+    qr: { tile: { kind: "closed" }, secondsLeft: 180 },
     onShowQr: vi.fn(),
     onCloseQr: vi.fn(),
     ...overrides,
@@ -471,16 +471,16 @@ test("SIGNIN-15 the open tile shows the code, the email and the countdown in pla
   expect(props.onCloseQr).toHaveBeenCalled();
 });
 
-test("SIGNIN-15 while the code is made the tile shows an empty code at 5:00", () => {
-  renderView({ qr: { tile: { kind: "issuing" }, secondsLeft: 300 } });
+test("SIGNIN-15 while the code is made the tile shows an empty code at 3:00", () => {
+  renderView({ qr: { tile: { kind: "issuing" }, secondsLeft: 180 } });
 
   const card = accountCard();
   expect(card.getByRole("img", { name: "Sign-in code" }).querySelector("path")).toBeNull();
-  expect(card.getByText("Code expires in 5:00")).toBeInTheDocument();
+  expect(card.getByText("Code expires in 3:00")).toBeInTheDocument();
 });
 
 test("SIGNIN-15 a code that can't be made says so and Try again asks again", async () => {
-  const props = renderView({ qr: { tile: { kind: "failed" }, secondsLeft: 300 } });
+  const props = renderView({ qr: { tile: { kind: "failed" }, secondsLeft: 180 } });
 
   const card = accountCard();
   expect(card.getByText("Couldn’t make a code. Try again.")).toBeInTheDocument();
@@ -492,7 +492,7 @@ test("SIGNIN-15 a code that can't be made says so and Try again asks again", asy
 });
 
 test("SIGNIN-15 offline Try again is disabled", () => {
-  renderView({ online: false, qr: { tile: { kind: "failed" }, secondsLeft: 300 } });
+  renderView({ online: false, qr: { tile: { kind: "failed" }, secondsLeft: 180 } });
 
   expect(accountCard().getByRole("button", { name: "Try again" })).toBeDisabled();
 });

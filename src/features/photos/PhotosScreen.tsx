@@ -2,13 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent, useReducer, useState } from "react";
-import { fixtureUploads, usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
+import { usePhotoSrc, usePhotos, useSettingsRepo } from "@/data/repos";
 import { changeBackground } from "@/domain/background";
 import type { AccountSettings, Photo } from "@/domain/schemas";
 import { dateKey } from "@/domain/zone";
 import { useQrTile } from "@/features/settings";
 import { useBreakpoint } from "@/shell/breakpoint";
-import { useFixtureParams } from "@/shell/fixtureOptions";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
@@ -17,7 +16,7 @@ import { useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone } from "@/shell/sourceZone";
 import { FullScreenPhoto } from "./components/FullScreenPhoto";
 import { PhotosView } from "./components/PhotosView";
-import { fullScreen, initialFullScreen } from "./fullScreen";
+import { fullScreen } from "./fullScreen";
 import {
   newestFirst,
   openSlideshow,
@@ -26,7 +25,6 @@ import {
   slideshow,
   wrapIndex,
 } from "./slideshow";
-import { initialUploads } from "./uploads";
 import { useDeletePhoto } from "./useDeletePhoto";
 import { usePhotoPicker } from "./usePhotoPicker";
 import { useUploads } from "./useUploads";
@@ -41,8 +39,6 @@ export function PhotosScreen() {
   const photoParam = useSearchParams().get("photo");
 
   const { online } = useNetwork();
-
-  const fixture = useFixtureParams();
 
   const photoSrc = usePhotoSrc();
 
@@ -61,20 +57,20 @@ export function PhotosScreen() {
   const clock = useNowStore();
 
   const [pinned, dispatch] = useReducer(slideshow, clock, (store) =>
-    openSlideshow(store.get(), photoParam, fixture.play !== "0" && !fixture.phdel),
+    openSlideshow(store.get(), photoParam),
   );
 
-  const [deleting, setDeleting] = useState(fixture.phdel === true);
+  const [deleting, setDeleting] = useState(false);
 
-  const [qrOpen, setQrOpen] = useState(fixture.phqr === true);
+  const [qrOpen, setQrOpen] = useState(false);
 
-  const [full, dispatchFull] = useReducer(fullScreen, fixture, initialFullScreen);
+  const [full, dispatchFull] = useReducer(fullScreen, { kind: "closed" });
 
-  const uploads = useUploads(() => initialUploads(fixture.upload, fixtureUploads), online);
+  const uploads = useUploads(online);
 
   const picker = usePhotoPicker(uploads.choose);
 
-  const qr = useQrTile(undefined, "photos");
+  const qr = useQrTile("photos");
 
   const deletePhoto = useDeletePhoto();
 

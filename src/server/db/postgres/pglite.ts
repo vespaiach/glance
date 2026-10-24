@@ -9,6 +9,10 @@ export async function openPglite(): Promise<PGlite> {
   return PGlite.create({ extensions: { citext } });
 }
 
+export function newPglite(): PGlite {
+  return new PGlite({ extensions: { citext } });
+}
+
 export function pgliteSql(client: PGlite): Sql {
   return clientSql(client, (fn) => client.transaction((tx) => fn(txSql(tx))));
 }

@@ -154,13 +154,7 @@
       }
     },
     {
-      "includes": [
-        "src/data/**",
-        "!src/data/**/*.test.ts",
-        "!src/data/**/*.test.tsx",
-        "!src/data/sync/fixtureTransport.ts",
-        "!src/data/repos/session.ts"
-      ],
+      "includes": ["src/data/**", "!src/data/**/*.test.ts", "!src/data/**/*.test.tsx"],
       "linter": {
         "rules": {
           "style": {
@@ -192,7 +186,7 @@
                       "@/fixtures/**",
                       "**/fixtures/**"
                     ],
-                    "message": "data may import only domain; fixtures only in fixtureTransport.ts, session.ts and tests (tech §3)."
+                    "message": "data may import only domain; fixtures only in tests (tech §3)."
                   },
                   {
                     "group": ["@/features/*/**"],
@@ -206,12 +200,7 @@
       }
     },
     {
-      "includes": [
-        "src/data/**/*.test.ts",
-        "src/data/**/*.test.tsx",
-        "src/data/sync/fixtureTransport.ts",
-        "src/data/repos/session.ts"
-      ],
+      "includes": ["src/data/**/*.test.ts", "src/data/**/*.test.tsx"],
       "linter": {
         "rules": {
           "style": {
@@ -240,7 +229,7 @@
                       "@/copy/**",
                       "**/copy/**"
                     ],
-                    "message": "data may import only domain; fixtures only in fixtureTransport.ts, session.ts and tests (tech §3)."
+                    "message": "data may import only domain; fixtures only in tests (tech §3)."
                   },
                   {
                     "group": ["@/features/*/**"],
@@ -421,11 +410,7 @@
                       "@/server/db/postgres",
                       "@/server/db/postgres/**",
                       "**/db/postgres",
-                      "**/db/postgres/**",
-                      "@/server/db/memory",
-                      "@/server/db/memory/**",
-                      "**/db/memory",
-                      "**/db/memory/**"
+                      "**/db/postgres/**"
                     ],
                     "message": "Server code reaches storage only through the server/db port, never an adapter (tech §3, D7)."
                   },

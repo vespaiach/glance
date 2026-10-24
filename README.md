@@ -20,7 +20,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Client data | [Dexie](https://dexie.org) (IndexedDB) as the local store, sync engine in a Web Worker via Comlink |
 | Offline | [Serwist](https://serwist.pages.dev) service worker (PWA) |
 | Validation | [Valibot](https://valibot.dev) schemas shared by client and server |
-| Server | Next.js Route Handlers; storage behind a `Database` port: PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) or in memory (`DB=memory`) |
+| Server | Next.js Route Handlers; storage behind a `Database` port: PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) or PGlite in the process (`DB=memory`) |
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
 | Email | Sign-in links through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, any SMTP server via `nodemailer`, or a local Mailpit |
@@ -55,7 +55,7 @@ src/ui/         shared design-system components
 src/shell/      app shell, nav bar, providers (now, settings, season, network, idle)
 src/theme/      StyleX tokens, season themes, fonts
 src/server/     server-only: db, auth, services, weather, mail, jobs, SSE bus
-src/fixtures/   demo data for development
+src/fixtures/   shared test data
 src/copy.ts     every user-facing string
 db-migrations/  PostgreSQL schema
 docs/           spec, technical design, plan, design handoff and prompts
@@ -66,7 +66,7 @@ docs/           spec, technical design, plan, design handoff and prompts
 ### Requirements
 
 - **Node 24** (see `.nvmrc`) and npm
-- **PostgreSQL** (any recent version) running locally, with a `glance` database: `createdb glance`. Tests don't need it (they run on PGlite and in memory). Without it, set `DB=memory` in `.env.development.local`: the data lives in the server process and is gone on restart
+- **PostgreSQL** (any recent version) running locally, with a `glance` database: `createdb glance`. Tests don't need it (they run on PGlite). Without it, set `DB=memory` in `.env.development.local`: an in-process PGlite holds the data, gone on restart
 - [Mailpit](https://mailpit.axllent.org) (`brew install mailpit`, then `mailpit`): the dev server sends sign-in emails to it over SMTP on port 1025; read them at <http://localhost:8025>
 
 ### Get started
@@ -81,7 +81,7 @@ npm run dev
 
 Open <http://localhost:3000>. The dev server reads `.env.development` (committed: `DATABASE_URL=postgres://localhost:5432/glance`, photos in `.data/`, git-ignored, mail to Mailpit with `MAIL_PROVIDER=mailpit`), then `.env.development.local` (git-ignored) for a different `DATABASE_URL` or mail provider (`.env.example` lists every variable). Migrations run on boot; without a reachable database the server logs the error and stops.
 
-The dev server runs the real app: sign in on `/signin` and read the code in Mailpit at <http://localhost:8025>. **`/dev/gallery`** shows every component in all four seasons. `npm run dev:demo` is a **demo build** instead: it opens Today on seeded fixture data with no backend and no sign-in, and fixture URL params reproduce any design state, e.g. `/today?season=winter&net=offline` or `/notes?sheet=newnote` (full list in [product spec §6](docs/product-spec.md)). The server still checks its config at boot; a missing or bad variable stops it with `Invalid server config:` and the variable names.
+The dev server runs the real app: sign in on `/signin` and read the code in Mailpit at <http://localhost:8025>. **`/dev/gallery`** shows every component in all four seasons. The server still checks its config at boot; a missing or bad variable stops it with `Invalid server config:` and the variable names.
 
 ### Real sign-in and offline
 
@@ -92,7 +92,6 @@ The service worker and the offline cold start only run in a production build. Ru
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server (real sign-in and sync, no service worker) |
-| `npm run dev:demo` | Dev server as a demo build (fixture data, no sign-in) |
 | `npm run check` | Biome lint and format check |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest (unit, component, data and sync tests) |
