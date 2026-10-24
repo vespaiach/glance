@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
-import type { AuthStatus, SignInAuth } from "@/data/repos";
+import type { AuthStatus, SignedIn, SignInAuth } from "@/data/repos";
 import type { Account, LocationRequest, WeatherLocation } from "@/domain/schemas";
 import { useWeatherSetup, type WeatherSetupFlow, type WeatherSetupState } from "@/features/weather";
 import type { NowStore } from "@/shell/providers/now";
@@ -19,6 +19,7 @@ export type SignInFlow = {
   state: SignInState;
   setup: WeatherSetupFlow;
   act(action: SignInAction): void;
+  scanned(status: SignedIn): void;
 };
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -36,12 +37,22 @@ export function useSignIn({ initial, initialSetup, auth, clock, onSignedIn }: Op
     });
   };
 
-  const statusAnswered = (status: AuthStatus) => {
-    dispatch({ type: "status", status });
-
+  const finishSetUp = (status: AuthStatus) => {
     if (status.state !== "signed-in" || !status.setupDone) return;
 
     if (status.account.name !== null) finish(status.account);
+  };
+
+  const statusAnswered = (status: AuthStatus) => {
+    dispatch({ type: "status", status });
+
+    finishSetUp(status);
+  };
+
+  const scanned = (status: SignedIn) => {
+    dispatch({ type: "scanned", status });
+
+    finishSetUp(status);
   };
 
   const endSetup = async (account: Account, request: LocationRequest) => {
@@ -118,7 +129,7 @@ export function useSignIn({ initial, initialSetup, auth, clock, onSignedIn }: Op
     if (next.step === "location" && next.skipping) skip(next.account);
   };
 
-  return { state, setup, act };
+  return { state, setup, act, scanned };
 }
 
 function useCodeExpiry(open: boolean, clock: NowStore, onTick: (now: Date) => void) {

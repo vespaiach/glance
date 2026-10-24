@@ -8,6 +8,7 @@ import {
   Info,
   LogOut,
   Mail,
+  QrCode,
   RotateCw,
   Undo2,
   WifiOff,
@@ -20,7 +21,7 @@ import type { Season } from "@/domain/schemas";
 import { CODE_LENGTH, differentEmailIn, firstName, isSwitchingEmail } from "@/domain/signIn";
 import type { Clock as ClockSetting } from "@/domain/time";
 import { PlaceForm, type WeatherSetupFlow } from "@/features/weather";
-import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
+import { colors, motion, shadows, sizes, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { Button } from "@/ui/Button";
@@ -29,7 +30,10 @@ import { useFieldInView } from "@/ui/fieldInView";
 import { Icon } from "@/ui/Icon";
 import { TextInput } from "@/ui/TextInput";
 import { signInLayout } from "../layout";
+import type { ScanControls } from "../scan";
 import type { SignInAction, SignInState } from "../signIn";
+import { Scanner } from "./Scanner";
+import { ScanSheet } from "./ScanSheet";
 import { SignInHero } from "./SignInHero";
 import { Actions, Email, Heading, LockFooter, StatusTile, SwitchTile } from "./SignInParts";
 
@@ -48,6 +52,7 @@ type SignInViewProps = {
   breakpoint: Breakpoint;
   online: boolean;
   opens?: QrOpens;
+  scan?: ScanControls;
   onAction: (action: SignInAction) => void;
   keyboardInset?: number;
   rootRef?: Ref<HTMLDivElement>;
@@ -108,6 +113,12 @@ const styles = stylex.create({
     paddingTop: space.lg,
     boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
   },
+  scanEntry: {
+    display: "flex",
+  },
+  ring: {
+    boxShadow: shadows.shadow1,
+  },
   waitTimer: {
     display: "flex",
     alignItems: "center",
@@ -131,6 +142,7 @@ export function SignInView({
   keyboardInset = 0,
   rootRef,
   xstyle,
+  scan,
   ...step
 }: SignInViewProps) {
   const tall = breakpoint !== "small";
@@ -151,9 +163,10 @@ export function SignInView({
           xstyle={tall && styles.heroTall}
         />
         <div {...stylex.props(styles.panel)}>
-          <SignInStep {...step} time={time} />
+          <SignInStep {...step} {...(breakpoint !== "large" && scan && { scan })} time={time} />
         </div>
       </main>
+      {scan && <ScanLayer scan={scan} />}
     </div>
   );
 }
@@ -191,7 +204,44 @@ function EndedBanner({ signedOut, switching }: { signedOut: SignedOut; switching
   );
 }
 
-function FormStep({ state, signedOut, online, onAction }: StepProps) {
+function ScanLayer({ scan: { state, stream, act } }: { scan: ScanControls }) {
+  switch (state.step) {
+    case "ask":
+    case "blocked":
+    case "nocam":
+      return <ScanSheet sheet={state.step} asking={false} onAction={act} />;
+    case "asking":
+      return state.sheet ? (
+        <ScanSheet sheet={state.sheet} asking onAction={act} />
+      ) : (
+        <Scanner step="asking" onAction={act} />
+      );
+    case "scanning":
+    case "wrong":
+    case "found":
+      return <Scanner step={state.step} {...(stream && { stream })} onAction={act} />;
+    default:
+      return null;
+  }
+}
+
+function ScanEntry({ scan, disabled }: { scan: ScanControls; disabled: boolean }) {
+  return (
+    <div {...stylex.props(styles.scanEntry)}>
+      <Button
+        variant="secondary"
+        icon={QrCode}
+        disabled={disabled}
+        onClick={scan.open}
+        xstyle={styles.ring}
+      >
+        {copy.signIn.scan.entry}
+      </Button>
+    </div>
+  );
+}
+
+function FormStep({ state, signedOut, online, scan, onAction }: StepProps) {
   const sending = state.step === "sending";
 
   const email = state.step === "form" || sending ? state.email : "";
@@ -247,6 +297,9 @@ function FormStep({ state, signedOut, online, onAction }: StepProps) {
             body={copy.signIn.form.offlineBody}
           />
         )}
+        {scan?.state.step === "expired" && (
+          <StatusTile icon={Info}>{copy.signIn.scan.stale}</StatusTile>
+        )}
         <Actions>
           <Button
             type="submit"
@@ -256,6 +309,7 @@ function FormStep({ state, signedOut, online, onAction }: StepProps) {
             {sending ? copy.signIn.form.sending : copy.signIn.form.send}
           </Button>
         </Actions>
+        {scan && !signedOut && <ScanEntry scan={scan} disabled={!online || sending} />}
       </form>
       {sending && (
         <StatusTile icon={Mail} pulsing>

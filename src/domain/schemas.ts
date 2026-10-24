@@ -269,6 +269,9 @@ export const CodeVerifySchema = v.object({
 });
 export type CodeVerify = v.InferOutput<typeof CodeVerifySchema>;
 
+export const LinkVerifySchema = v.object({ t: v.pipe(v.string(), v.minLength(1)) });
+export type LinkVerify = v.InferOutput<typeof LinkVerifySchema>;
+
 export const QrIssueRequestSchema = v.optional(
   v.object({ opens: v.optional(v.picklist(QR_OPENS)) }),
   {},

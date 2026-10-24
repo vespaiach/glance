@@ -32,6 +32,7 @@ const MARIA: Account = { id: "a-maria", email: "maria@example.com", name: "Maria
 type FakeAuth = {
   sendCode: Mock<SignInAuth["sendCode"]>;
   verifyCode: Mock<SignInAuth["verifyCode"]>;
+  verifyLink: Mock<SignInAuth["verifyLink"]>;
   status: Mock<SignInAuth["status"]>;
   name: Mock<SignInAuth["name"]>;
   location: Mock<SignInAuth["location"]>;
@@ -52,6 +53,9 @@ function fakeAuth(): FakeAuth {
   return {
     sendCode: vi.fn<SignInAuth["sendCode"]>(async () => ok(undefined)),
     verifyCode: vi.fn<SignInAuth["verifyCode"]>(async () =>
+      ok({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
+    ),
+    verifyLink: vi.fn<SignInAuth["verifyLink"]>(async () =>
       ok({ state: "signed-in", account: MARIA, returning: true, setupDone: true }),
     ),
     status: vi.fn<SignInAuth["status"]>(async () => ok({ state: "signed-out" })),

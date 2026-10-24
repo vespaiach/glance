@@ -1,4 +1,4 @@
-import type { AuthStatus, CodeError, TransportError } from "@/data/repos";
+import type { AuthStatus, CodeError, SignedIn, TransportError } from "@/data/repos";
 import { QR_OPENS, type QrOpens } from "@/domain/qrSignIn";
 import type { Account } from "@/domain/schemas";
 import { CODE_LENGTH, codeDigits, codeExpired, isValidEmail } from "@/domain/signIn";
@@ -28,6 +28,7 @@ export type SignInAction =
   | { type: "rejected"; error: CodeError | TransportError }
   | { type: "tick"; now: Date }
   | { type: "status"; status: AuthStatus }
+  | { type: "scanned"; status: SignedIn }
   | { type: "status-failed" }
   | { type: "named"; account: Account }
   | { type: "name-failed" }
@@ -69,6 +70,8 @@ export function signInReducer(state: SignInState, action: SignInAction): SignInS
       return tick(state, action.now);
     case "status":
       return statusAnswered(state, action.status);
+    case "scanned":
+      return state.step === "form" ? linkChecked(action.status) : state;
     case "status-failed":
       return state.step === "opening" ? EMPTY_FORM : state;
     case "named":

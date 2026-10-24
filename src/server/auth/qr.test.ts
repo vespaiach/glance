@@ -119,6 +119,19 @@ describe("verifyQrLink", () => {
     ).toMatchObject({ kind: "smartphone", browser: "Safari" });
   });
 
+  it("SIGNIN-22 answers the code's account as a returning sign-in", async () => {
+    const maria = await signIn("maria@example.com");
+    const token = await issue(maria);
+
+    const verified = await verifyQrLink(harness.deps(), { token });
+
+    expect(verified.ok && verified.value.status).toMatchObject({
+      state: "signed-in",
+      account: { id: maria.accountId, email: "maria@example.com" },
+      returning: true,
+    });
+  });
+
   it("SIGNIN-15 a code works once", async () => {
     const maria = await signIn("maria@example.com");
     const token = await issue(maria);

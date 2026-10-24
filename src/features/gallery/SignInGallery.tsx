@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
 import type { Season } from "@/domain/schemas";
-import { SignInView } from "@/features/signin";
+import { type ScanState, SignInView } from "@/features/signin";
 import { GalleryGroup } from "./GalleryGroup";
 import { GALLERY_TZ, gallery, gallerySetup, NOW, PLACES } from "./samples";
 
@@ -29,7 +29,12 @@ const [PORTLAND] = PLACES;
 
 const CODE = { step: "sent", email: EMAIL, sentAt: secondsBefore(10), code: "" } as const;
 
+const scan = (state: ScanState) => ({ state, open: ignore, act: ignore });
+
 const styles = stylex.create({
+  contained: {
+    contain: "layout paint",
+  },
   view: {
     width: 1280,
     height: 720,
@@ -42,7 +47,27 @@ const styles = stylex.create({
     width: 390,
     height: 1100,
   },
+  phone: {
+    width: 390,
+    height: 844,
+  },
 });
+
+const SCAN_STATES: readonly ScanState[] = [
+  { step: "closed" },
+  { step: "ask" },
+  { step: "blocked" },
+  { step: "nocam" },
+  { step: "scanning" },
+  { step: "found", token: "gallery" },
+  { step: "wrong" },
+  { step: "expired" },
+];
+
+const SCAN_DEMOS: readonly Demo[] = SCAN_STATES.flatMap((state) => [
+  { key: `scan-${state.step}-small`, small: true, breakpoint: "small", scan: scan(state) },
+  { key: `scan-${state.step}-normal`, normal: true, breakpoint: "normal", scan: scan(state) },
+]);
 
 const DEMOS: readonly Demo[] = [
   { key: "form" },
@@ -109,6 +134,14 @@ export function SignInGallery({ season }: { season: Season }) {
     <GalleryGroup title={gallery.groups.signInView}>
       {DEMOS.map(({ key, small, normal, ...demo }) => (
         <SignInView key={key} {...signInBase(season)} {...demo} xstyle={demoSize(small, normal)} />
+      ))}
+      {SCAN_DEMOS.map(({ key, small, ...demo }) => (
+        <SignInView
+          key={key}
+          {...signInBase(season)}
+          {...demo}
+          xstyle={[small ? styles.phone : styles.normal, styles.contained]}
+        />
       ))}
     </GalleryGroup>
   );

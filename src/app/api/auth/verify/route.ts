@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { QR_OPENS, type QrOpens } from "@/domain/qrSignIn";
+import { LinkVerifySchema } from "@/domain/schemas";
 import { appUrl, verifyQrLink } from "@/server/auth";
-import { setCookie } from "@/server/http";
+import { crossOrigin, errorJson, readBody, setCookie } from "@/server/http";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,29 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.redirect(signInUrl(verified.ok ? "opened" : "stale", opens), 303);
 
   if (verified.ok) setCookie(response, "session", verified.value.sessionToken);
+
+  return response;
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const forbidden = crossOrigin(request);
+
+  if (forbidden) return forbidden;
+
+  const body = await readBody(request, LinkVerifySchema);
+
+  if (!body.ok) return errorJson(body.error, 400);
+
+  const verified = await verifyQrLink({
+    token: body.value.t,
+    userAgent: request.headers.get("user-agent") ?? undefined,
+  });
+
+  if (!verified.ok) return errorJson("link-stale", 400);
+
+  const response = NextResponse.json(verified.value.status);
+
+  setCookie(response, "session", verified.value.sessionToken);
 
   return response;
 }

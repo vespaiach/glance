@@ -31,7 +31,7 @@ export type SignedOutAccount = {
 
 export type SignInAuth = Pick<
   Transport["auth"],
-  "sendCode" | "verifyCode" | "status" | "name" | "location"
+  "sendCode" | "verifyCode" | "verifyLink" | "status" | "name" | "location"
 > &
   Pick<WeatherRepo, "searchPlaces" | "locate"> & {
     remember(account: Account): Promise<void>;
@@ -54,6 +54,7 @@ export function signInAuth(): SignInAuth {
   return {
     sendCode: auth.sendCode,
     verifyCode: auth.verifyCode,
+    verifyLink: auth.verifyLink,
     status: auth.status,
     name: auth.name,
     location: auth.location,

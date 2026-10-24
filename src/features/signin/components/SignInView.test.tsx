@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { deviceTimeZone } from "@/domain/zone";
 import type { WeatherSetupFlow } from "@/features/weather";
+import type { ScanControls, ScanState } from "../scan";
 import type { SignInState } from "../signIn";
 import { SignInView } from "./SignInView";
 
@@ -415,4 +416,152 @@ test("SIGNIN-13 the notice stays while the code is sending", () => {
 
   expect(screen.getByText("This screen was signed out")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
+});
+
+const SCAN_ENTRY = { name: "Scan code from another screen" };
+
+function scanControls(state: ScanState = { step: "closed" }): ScanControls {
+  return { state, open: vi.fn(), act: vi.fn() };
+}
+
+function renderScan(state: ScanState, props: Partial<Props> = {}) {
+  const scan = scanControls(state);
+
+  renderView({ step: "form", email: "" }, { breakpoint: "small", scan, ...props });
+
+  return scan;
+}
+
+test.each(["small", "normal"] as const)(
+  "SIGNIN-20 the installed app on %s offers Scan code from another screen",
+  (breakpoint) => {
+    renderView({ step: "form", email: "" }, { breakpoint, scan: scanControls() });
+
+    expect(screen.getByRole("button", SCAN_ENTRY)).toBeEnabled();
+  },
+);
+
+test("SIGNIN-20 never on large", () => {
+  renderView({ step: "form", email: "" }, { breakpoint: "large", scan: scanControls() });
+
+  expect(screen.queryByRole("button", SCAN_ENTRY)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-20 hidden outside the installed app", () => {
+  renderView({ step: "form", email: "" }, { breakpoint: "small" });
+
+  expect(screen.queryByRole("button", SCAN_ENTRY)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-20 hidden on the signed-out form", () => {
+  renderView(
+    { step: "form", email: EMAIL },
+    { breakpoint: "small", scan: scanControls(), signedOut: { email: EMAIL, pending: 0 } },
+  );
+
+  expect(screen.queryByRole("button", SCAN_ENTRY)).not.toBeInTheDocument();
+});
+
+test("SIGNIN-20 disabled while a code is sending", () => {
+  renderView({ step: "sending", email: EMAIL }, { breakpoint: "small", scan: scanControls() });
+
+  expect(screen.getByRole("button", SCAN_ENTRY)).toBeDisabled();
+});
+
+test("SIGNIN-20 disabled offline", () => {
+  renderView(
+    { step: "form", email: "" },
+    { breakpoint: "small", scan: scanControls(), online: false },
+  );
+
+  expect(screen.getByRole("button", SCAN_ENTRY)).toBeDisabled();
+});
+
+test("SIGNIN-20 a tap opens the scan", async () => {
+  const scan = renderScan({ step: "closed" });
+
+  await userEvent.click(screen.getByRole("button", SCAN_ENTRY));
+
+  expect(scan.open).toHaveBeenCalled();
+});
+
+test("SIGNIN-22 an expired or used code shows the info tile on the form", () => {
+  renderScan({ step: "expired" });
+
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "That code has expired or was already used. Sign in with your email instead.",
+  );
+});
+
+test("SIGNIN-21 the ask sheet explains the camera; Continue and Cancel go out", async () => {
+  const scan = renderScan({ step: "ask" });
+
+  expect(screen.getByRole("dialog", { name: "Glance needs the camera" })).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(scan.act).toHaveBeenCalledWith({ type: "continue" });
+  expect(scan.act).toHaveBeenCalledWith({ type: "close" });
+});
+
+test("SIGNIN-21 the sheet stays with Continue disabled while the phone asks", () => {
+  renderScan({ step: "asking", sheet: "ask" });
+
+  expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+});
+
+test("SIGNIN-21 Blocked offers Try again", async () => {
+  const scan = renderScan({ step: "blocked" });
+
+  expect(
+    screen.getByRole("dialog", { name: "Allow camera access in Settings" }),
+  ).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  expect(scan.act).toHaveBeenCalledWith({ type: "continue" });
+});
+
+test("SIGNIN-21 No camera offers only Use email, which closes it", async () => {
+  const scan = renderScan({ step: "nocam" });
+
+  expect(screen.getByRole("dialog", { name: "No camera on this device" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Use email" }));
+
+  expect(scan.act).toHaveBeenCalledWith({ type: "close" });
+});
+
+test("SIGNIN-22 the scanner asks to point at the code; Cancel closes it", async () => {
+  const scan = renderScan({ step: "scanning" });
+
+  expect(screen.getByRole("dialog", { name: "Scan to sign in" })).toBeInTheDocument();
+  expect(screen.getByText("Point at the code on your Glance screen")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(scan.act).toHaveBeenCalledWith({ type: "close" });
+});
+
+test("SIGNIN-22 the scanner shows while the camera starts", () => {
+  renderScan({ step: "asking" });
+
+  expect(screen.getByRole("dialog", { name: "Scan to sign in" })).toBeInTheDocument();
+});
+
+test("SIGNIN-22 another code says it isn't a Glance code", () => {
+  renderScan({ step: "wrong" });
+
+  expect(screen.getByRole("alert")).toHaveTextContent("That isn’t a Glance code. Keep scanning.");
+  expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+});
+
+test("SIGNIN-22 a found code reads Signing in and hides Cancel", () => {
+  renderScan({ step: "found", token: "abc123" });
+
+  expect(screen.getByText("Code found")).toBeInTheDocument();
+  expect(screen.getByText("Signing in…")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
 });
