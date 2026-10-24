@@ -60,7 +60,6 @@ export {
   type SyncStatus,
   useOutboxEmpty,
   useRetry,
-  useRevoked,
   useSignedOut,
   useSourceStatus,
   useSyncStatus,

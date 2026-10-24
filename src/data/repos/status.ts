@@ -29,10 +29,6 @@ export function useSignedOut(): boolean {
   return error === "unauthorized" || error === "revoked";
 }
 
-export function useRevoked(): boolean {
-  return useSyncStatus()?.error === "revoked";
-}
-
 export function useOutboxEmpty(): boolean | undefined {
   const { db } = useRepoStore();
 

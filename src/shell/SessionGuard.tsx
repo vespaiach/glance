@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-import { useMarkRevoked, useMarkSignedOut, useRevoked, useSignedOut } from "@/data/repos";
+import { type SyncStatus, useMarkRevoked, useMarkSignedOut, useSyncStatus } from "@/data/repos";
 import { isTextField } from "./keyboard";
 import { useSheetHost } from "./SheetHost";
 
@@ -19,7 +19,7 @@ export function SessionGuard({ children }: { children: ReactNode }) {
 
   const editing = useEditingField();
 
-  const marked = useMarkedSignedOut(useSignedOut(), useRevoked());
+  const marked = useMarkedSignedOut(useSyncStatus()?.error);
 
   const leave = marked && sheet === null && !editing && pathname !== AMBIENT;
 
@@ -51,7 +51,7 @@ function useEditingField(): boolean {
   return editing;
 }
 
-function useMarkedSignedOut(signedOut: boolean, revoked: boolean): boolean {
+function useMarkedSignedOut(error: SyncStatus["error"]): boolean {
   const markSignedOut = useMarkSignedOut();
 
   const markRevoked = useMarkRevoked();
@@ -59,18 +59,18 @@ function useMarkedSignedOut(signedOut: boolean, revoked: boolean): boolean {
   const [marked, setMarked] = useState(false);
 
   useEffect(() => {
-    if (!signedOut) return;
+    if (error !== "unauthorized" && error !== "revoked") return;
 
     let live = true;
 
-    void (revoked ? markRevoked() : markSignedOut()).then(() => {
+    void (error === "revoked" ? markRevoked() : markSignedOut()).then(() => {
       if (live) setMarked(true);
     });
 
     return () => {
       live = false;
     };
-  }, [signedOut, revoked, markSignedOut, markRevoked]);
+  }, [error, markSignedOut, markRevoked]);
 
   return marked;
 }
