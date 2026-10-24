@@ -6,7 +6,13 @@ import { BUILD_HEADER, isSupportedBuild } from "@/domain/build";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import { IsoDateSchema, WeatherLocationSchema } from "@/domain/schemas";
-import { appUrl, isAllowedOrigin, requireDisplay, type SignedInDisplay } from "./auth";
+import {
+  appUrl,
+  isAllowedOrigin,
+  requireDisplay,
+  type SessionError,
+  type SignedInDisplay,
+} from "./auth";
 import { PHOTO_VARIANTS, type PhotoUpload, type PhotoVariant } from "./services/photos";
 import type { StoredObject } from "./storage/store";
 import type { Coordinates } from "./weather/provider";
@@ -53,7 +59,7 @@ export function outdatedClient(request: NextRequest): NextResponse | undefined {
 
 export function signedInDisplay(
   request: NextRequest,
-): Promise<Result<SignedInDisplay, "unauthorized">> {
+): Promise<Result<SignedInDisplay, SessionError>> {
   return requireDisplay(request.cookies.get("session")?.value);
 }
 

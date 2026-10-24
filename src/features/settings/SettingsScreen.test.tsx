@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import { ok } from "@/domain/result";
+import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
 import { SeasonProvider } from "@/shell/providers/season";
@@ -178,13 +178,57 @@ test("SET-06 the Ambient screen tile opens the Ambient screen page", async () =>
   expect(navigation.push).toHaveBeenCalledWith("/settings/ambient");
 });
 
-test("SIGNIN-11 Sign out signs this screen out and returns to the email form", async () => {
+test("SIGNIN-11 Sign out opens the dialog and changes nothing yet", async () => {
   renderSettings();
 
   await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
 
+  expect(screen.getByRole("dialog", { name: "Sign out" })).toBeInTheDocument();
+  expect(store.signOut).not.toHaveBeenCalled();
+});
+
+test("SIGNIN-11 Sign out this device signs this screen out and returns to the email form", async () => {
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sign out this device" }));
+
   expect(store.signOut).toHaveBeenCalledOnce();
   await waitFor(() => expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/signin"));
+});
+
+test("SIGNIN-11 Sign out all devices returns to the email form with the toast", async () => {
+  store.signOutAll.mockResolvedValue(ok(undefined));
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sign out all devices" }));
+
+  expect(store.signOutAll).toHaveBeenCalledOnce();
+  await waitFor(() =>
+    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/signin?toast=signed-out-all"),
+  );
+});
+
+test("SIGNIN-11 a failed Sign out all devices keeps the dialog open with the error", async () => {
+  store.signOutAll.mockResolvedValue(err("server"));
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+  await userEvent.click(screen.getByRole("button", { name: "Sign out all devices" }));
+
+  expect(await screen.findByRole("alert")).toHaveTextContent("Couldn’t sign out. Try again.");
+  expect(screen.getByRole("dialog", { name: "Sign out" })).toBeInTheDocument();
+  expect(navigation.replace).not.toHaveBeenCalled();
+});
+
+test("SIGNIN-11 Cancel closes the dialog", async () => {
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(screen.queryByRole("dialog", { name: "Sign out" })).not.toBeInTheDocument();
 });
 
 test("SET-12 the account card lists the screens read from the server", async () => {

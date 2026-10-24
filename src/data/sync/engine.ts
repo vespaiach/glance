@@ -32,7 +32,7 @@ type Options = {
   photosChanged?: (ids: string[]) => void;
 };
 
-type Halt = Extract<SyncError, "unauthorized" | "outdated">;
+type Halt = Exclude<SyncError, "server">;
 
 const DONE: SyncResult = ok(undefined);
 
@@ -264,7 +264,7 @@ export function createSyncEngine({
 }
 
 function isHalt(error: TransportError): error is Halt {
-  return error === "unauthorized" || error === "outdated";
+  return error === "unauthorized" || error === "revoked" || error === "outdated";
 }
 
 function reported(error: TransportError): Exclude<TransportError, "invalid"> {

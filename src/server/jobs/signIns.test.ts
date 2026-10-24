@@ -59,6 +59,10 @@ function hoursAgo(hours: number): Date {
   return new Date(START.getTime() - hours * HOUR_MS);
 }
 
+function daysAgo(days: number): Date {
+  return hoursAgo(days * 24);
+}
+
 describe("cleanupSignIns", () => {
   it("SIGNIN-12 removes codes that expired more than a day ago", async () => {
     await storeCode("a@example.com", hoursAgo(25));
@@ -85,6 +89,19 @@ describe("cleanupSignIns", () => {
     await cleanupSignIns(harness.deps());
 
     expect(await linkHashes()).toEqual(["c-live"]);
+  });
+
+  it("SIGNIN-18 forgets revoked sessions after 400 days and keeps newer ones", async () => {
+    const { db } = harness.deps();
+    await db.sessions.insert({ tokenHash: "old", displayId: "d1", createdAt: START.toISOString() });
+    await db.sessions.revokeForAccount(MARIA, daysAgo(401).toISOString());
+    await db.sessions.insert({ tokenHash: "new", displayId: "d1", createdAt: START.toISOString() });
+    await db.sessions.revokeForAccount(MARIA, daysAgo(399).toISOString());
+
+    await cleanupSignIns(harness.deps());
+
+    expect(await db.sessions.revoked("old")).toBe(false);
+    expect(await db.sessions.revoked("new")).toBe(true);
   });
 
   it("SIGNIN-12 leaves accounts alone", async () => {

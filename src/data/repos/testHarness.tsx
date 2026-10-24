@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { type Mock, vi } from "vitest";
-import { err } from "@/domain/result";
+import { err, type Result } from "@/domain/result";
 import { CURSOR_KEY, deleteGlanceDb, type GlanceDb, openGlanceDb } from "../db";
 import { STATUS_KEY, type SyncStatus } from "../sync/status";
-import type { Transport } from "../sync/transport";
+import type { Transport, TransportError } from "../sync/transport";
 import { RepoProvider, type RepoStore } from "./store";
 
 export const TEST_ACCOUNT = "0195f0a0-0000-7000-8000-00000000000a";
@@ -26,7 +26,9 @@ export type Harness = RepoStore & {
     unsubscribe: Mock<Transport["webPush"]["unsubscribe"]>;
   };
   signOut: Mock<() => Promise<void>>;
+  signOutAll: Mock<() => Promise<Result<void, TransportError>>>;
   markSignedOut: Mock<() => Promise<void>>;
+  markRevoked: Mock<() => Promise<void>>;
   close(): Promise<void>;
 };
 
@@ -55,7 +57,9 @@ export function openHarness(name: string): Harness {
       unsubscribe: vi.fn<Transport["webPush"]["unsubscribe"]>(async () => err("network")),
     },
     signOut: vi.fn<() => Promise<void>>(async () => {}),
+    signOutAll: vi.fn<() => Promise<Result<void, TransportError>>>(async () => err("network")),
     markSignedOut: vi.fn<() => Promise<void>>(async () => {}),
+    markRevoked: vi.fn<() => Promise<void>>(async () => {}),
     close: async () => {
       db.close();
 

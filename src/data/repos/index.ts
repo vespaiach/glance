@@ -72,8 +72,10 @@ export {
   type RepoStore,
   type StoreAccount,
   useAccount,
+  useMarkRevoked,
   useMarkSignedOut,
   useSignOut,
+  useSignOutAll,
 } from "./store";
 export {
   createTagsRepo,

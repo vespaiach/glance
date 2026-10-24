@@ -24,7 +24,9 @@ export function useSyncStatus(): SyncStatus | undefined {
 }
 
 export function useSignedOut(): boolean {
-  return useSyncStatus()?.error === "unauthorized";
+  const error = useSyncStatus()?.error;
+
+  return error === "unauthorized" || error === "revoked";
 }
 
 export function useOutboxEmpty(): boolean | undefined {

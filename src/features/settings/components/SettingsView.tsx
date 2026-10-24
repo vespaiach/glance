@@ -6,11 +6,13 @@ import type { SignedInScreen } from "@/domain/screens";
 import type { PhotoUsage } from "@/domain/storage";
 import { space } from "@/theme/tokens.stylex";
 import { settingsLayout } from "../layout";
+import type { SignOutDialog as SignOutDialogState } from "../signOutDialog";
 import type { ThisPhone } from "../thisPhone";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
 import type { QrTileShown } from "./QrSignInTile";
 import { ScreenOptions } from "./ScreenOptions";
 import { SettingsPanel } from "./SettingsPanel";
+import { SignOutDialog } from "./SignOutDialog";
 
 type SettingsViewProps = {
   account: SettingsAccount;
@@ -30,7 +32,11 @@ type SettingsViewProps = {
   onOpenBackground: () => void;
   onOpenLocation: () => void;
   onOpenAmbient: () => void;
+  signOut: SignOutDialogState;
   onSignOut: () => void;
+  onSignOutThisDevice: () => void;
+  onSignOutAll: () => void;
+  onCancelSignOut: () => void;
   phone: ThisPhone;
   onAllowPush: () => void;
   onTurnOffPush: () => void;
@@ -68,7 +74,11 @@ export function SettingsView({
   onOpenBackground,
   onOpenLocation,
   onOpenAmbient,
+  signOut,
   onSignOut,
+  onSignOutThisDevice,
+  onSignOutAll,
+  onCancelSignOut,
   phone,
   onAllowPush,
   onTurnOffPush,
@@ -102,6 +112,16 @@ export function SettingsView({
           onSignOut={onSignOut}
         />
       </div>
+      {signOut.kind !== "closed" && (
+        <SignOutDialog
+          email={account.email}
+          online={online}
+          state={signOut}
+          onThisDevice={onSignOutThisDevice}
+          onAllDevices={onSignOutAll}
+          onCancel={onCancelSignOut}
+        />
+      )}
     </div>
   );
 }

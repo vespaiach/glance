@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { copy } from "@/copy";
 import { useSignedOutAccount, useSignInAuth } from "@/data/repos";
 import { initialWeatherSetup } from "@/features/weather";
 import { useBreakpoint } from "@/shell/breakpoint";
@@ -13,9 +14,12 @@ import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { viewPath } from "@/shell/routes";
 import { useAmbientRoot } from "@/shell/useAmbientNavigate";
+import { Toast } from "@/ui/Toast";
 import { SignInView } from "./components/SignInView";
 import { initialSignIn, openedLinkFrom, openedViewFrom } from "./signIn";
 import { useSignIn } from "./useSignIn";
+
+const TOAST_MS = 4000;
 
 export function SignInScreen() {
   const router = useRouter();
@@ -42,21 +46,42 @@ export function SignInScreen() {
 
   useAmbientRoot(root, usePathname());
 
+  const toast = useSignedOutAllToast();
+
   return (
-    <SignInView
-      state={flow.state}
-      signedOut={signedOut}
-      setup={flow.setup}
-      season={useSeason()}
-      time={useNow(flow.state.step === "sent" ? "second" : "minute")}
-      clock={useAccountSettings().clock}
-      tz={useTimeZone()}
-      breakpoint={useBreakpoint()}
-      keyboardInset={useKeyboardInset()}
-      online={online}
-      {...(opens !== "today" && { opens })}
-      onAction={flow.act}
-      rootRef={root}
-    />
+    <>
+      <SignInView
+        state={flow.state}
+        signedOut={signedOut}
+        setup={flow.setup}
+        season={useSeason()}
+        time={useNow(flow.state.step === "sent" ? "second" : "minute")}
+        clock={useAccountSettings().clock}
+        tz={useTimeZone()}
+        breakpoint={useBreakpoint()}
+        keyboardInset={useKeyboardInset()}
+        online={online}
+        {...(opens !== "today" && { opens })}
+        onAction={flow.act}
+        rootRef={root}
+      />
+      {toast && <Toast>{copy.signIn.signedOutAll}</Toast>}
+    </>
   );
+}
+
+function useSignedOutAllToast(): boolean {
+  const [shown, setShown] = useState(
+    () => new URLSearchParams(window.location.search).get("toast") === "signed-out-all",
+  );
+
+  useEffect(() => {
+    if (!shown) return;
+
+    const timer = setTimeout(() => setShown(false), TOAST_MS);
+
+    return () => clearTimeout(timer);
+  }, [shown]);
+
+  return shown;
 }

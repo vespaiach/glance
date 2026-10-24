@@ -146,6 +146,39 @@ describe("SessionGuard", () => {
     expect(navigation.replace).not.toHaveBeenCalled();
   });
 
+  it("SIGNIN-18 a revoked screen is marked revoked, not signed out, then returns to Sign in", async () => {
+    let markedFirst = false;
+
+    navigation.replace.mockImplementation(() => {
+      markedFirst = store.markRevoked.mock.calls.length > 0;
+    });
+
+    renderGuard();
+
+    await act(() => putSyncStatus(store, failedWith("revoked")));
+
+    await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/signin"));
+
+    expect(markedFirst).toBe(true);
+    expect(store.markSignedOut).not.toHaveBeenCalled();
+  });
+
+  it("SIGNIN-18 a revoked screen waits for an open sheet to close", async () => {
+    renderGuard();
+
+    fireEvent.click(await screen.findByRole("button", { name: "open" }));
+
+    await act(() => putSyncStatus(store, failedWith("revoked")));
+
+    await waitFor(() => expect(store.markRevoked).toHaveBeenCalled());
+
+    expect(navigation.replace).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "close" }));
+
+    await waitFor(() => expect(navigation.replace).toHaveBeenCalledWith("/signin"));
+  });
+
   it.each(["server", "outdated"] as const)(
     "tech§4.6 a %s failure keeps the view",
     async (error) => {

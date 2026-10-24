@@ -3,7 +3,7 @@ import type { TransportError } from "./transport";
 
 export const STATUS_KEY = "status";
 
-export type SyncError = "unauthorized" | "outdated" | "server";
+export type SyncError = "unauthorized" | "revoked" | "outdated" | "server";
 
 export type WeatherStatus =
   | { state: "idle" }
@@ -48,9 +48,7 @@ export function nextStatus(status: SyncStatus, event: StatusEvent): SyncStatus {
     case "weather-failed":
       return { ...status, weather: { state: "failed", retryAt: event.retryAt } };
     case "restarted":
-      return status.error === "unauthorized" || status.error === "outdated"
-        ? withoutError(status)
-        : status;
+      return status.error === "server" ? status : withoutError(status);
   }
 }
 

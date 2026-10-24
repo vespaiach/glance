@@ -19,7 +19,13 @@ import type {
   StoredTag,
 } from "../db";
 
-export type TransportError = "network" | "unauthorized" | "invalid" | "outdated" | "server";
+export type TransportError =
+  | "network"
+  | "unauthorized"
+  | "revoked"
+  | "invalid"
+  | "outdated"
+  | "server";
 
 export type UploadError = TransportError | UploadProblem;
 
@@ -77,6 +83,7 @@ export interface Transport {
     name(name: string): Answer<Account>;
     location(request: LocationRequest): Answer<void>;
     signout(): Answer<void>;
+    signoutAll(): Answer<void>;
   };
   upload(
     file: File,

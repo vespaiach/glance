@@ -160,6 +160,12 @@ describe("HttpTransport", () => {
     expect(answer).toEqual({ ok: false, error });
   });
 
+  it("SIGNIN-18 maps a 401 revoked to revoked", async () => {
+    const { fetch } = fakeFetch(json({ error: "revoked" }, 401));
+
+    expect(await transport(fetch).pull(undefined)).toEqual({ ok: false, error: "revoked" });
+  });
+
   it("tech§4.2 answers network when the request can't reach the server", async () => {
     const { fetch } = fakeFetch(new TypeError("Failed to fetch"));
 
@@ -483,6 +489,21 @@ describe("HttpTransport", () => {
     sentXhr().answer(status, { error: "x" });
 
     expect(await answer).toEqual({ ok: false, error });
+  });
+
+  it("SIGNIN-18 upload maps a 401 revoked to revoked", async () => {
+    const answer = transport(fakeFetch().fetch).upload(photoFile(), "2026-08-16", () => {});
+    sentXhr().answer(401, { error: "revoked" });
+
+    expect(await answer).toEqual({ ok: false, error: "revoked" });
+  });
+
+  it("SIGNIN-11 signoutAll posts to signout-all", async () => {
+    const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
+
+    expect(await transport(fetch).auth.signoutAll()).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/auth/signout-all");
+    expect(calls[0]?.init.method).toBe("POST");
   });
 
   it.each(["onerror", "onabort", "ontimeout"] as const)(

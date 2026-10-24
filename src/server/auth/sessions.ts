@@ -8,6 +8,8 @@ import { hashToken, newToken } from "./tokens";
 
 export type SignedInDisplay = { displayId: string; accountId: string };
 
+export type SessionError = "unauthorized" | "revoked";
+
 export async function openDisplay(
   db: Database,
   accountId: string,
@@ -36,10 +38,10 @@ export async function findDisplay(
 export async function requireDisplay(
   { db, now }: Clocked,
   sessionToken: string | undefined,
-): Promise<Result<SignedInDisplay, "unauthorized">> {
+): Promise<Result<SignedInDisplay, SessionError>> {
   const display = await findDisplay(db, sessionToken);
 
-  if (display === undefined) return err("unauthorized");
+  if (display === undefined) return err(await refusal(db, sessionToken));
 
   await db.displays.seen(display.displayId, now().toISOString());
 
@@ -55,6 +57,19 @@ export async function signOut(db: Database, sessionToken: string | undefined): P
     await tx.sessions.removeForDisplay(display.displayId);
     await tx.displays.remove(display.displayId);
   });
+}
+
+export async function signOutAll({ db, now }: Clocked, accountId: string): Promise<void> {
+  await db.tx(async (tx) => {
+    await tx.sessions.revokeForAccount(accountId, now().toISOString());
+    await tx.displays.removeForAccount(accountId);
+  });
+}
+
+async function refusal(db: Database, sessionToken: string | undefined): Promise<SessionError> {
+  if (sessionToken === undefined) return "unauthorized";
+
+  return (await db.sessions.revoked(hashToken(sessionToken))) ? "revoked" : "unauthorized";
 }
 
 async function createSession(db: Database, displayId: string, at: string): Promise<string> {

@@ -1,8 +1,9 @@
 import { createContext, type ReactNode, useContext } from "react";
+import type { Result } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
 import type { GlanceDb } from "../db";
 import type { PhotoVariant } from "../sw/rules";
-import type { Transport } from "../sync/transport";
+import type { Transport, TransportError } from "../sync/transport";
 
 export type { PhotoVariant };
 
@@ -26,7 +27,9 @@ export type RepoStore = {
   voidQr: Transport["voidQr"];
   webPush: Transport["webPush"];
   signOut: () => Promise<void>;
+  signOutAll: () => Promise<Result<void, TransportError>>;
   markSignedOut: () => Promise<void>;
+  markRevoked: () => Promise<void>;
 };
 
 const RepoContext = createContext<RepoStore | undefined>(undefined);
@@ -51,6 +54,14 @@ export function useSignOut(): RepoStore["signOut"] {
   return useRepoStore().signOut;
 }
 
+export function useSignOutAll(): RepoStore["signOutAll"] {
+  return useRepoStore().signOutAll;
+}
+
 export function useMarkSignedOut(): RepoStore["markSignedOut"] {
   return useRepoStore().markSignedOut;
+}
+
+export function useMarkRevoked(): RepoStore["markRevoked"] {
+  return useRepoStore().markRevoked;
 }
