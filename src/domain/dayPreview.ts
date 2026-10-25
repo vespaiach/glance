@@ -11,7 +11,15 @@ export type PreviewWeather =
   | { kind: "day"; point: DailyPoint }
   | { kind: "hours"; hours: HourlyPoint[] };
 
+export type AlsoPlans<T> = { scope: "time" | "day"; plans: T[] };
+
+export type PlannedDraft = { id?: string; day: string; times: PreviewTimes };
+
+export type Clash<T> = { event: T; tagIds: string[] };
+
 type Planned = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
+
+type PlannedWho = Planned & Pick<CalendarEvent, "id" | "everyone" | "tagIds">;
 
 const MINUTE_MS = 60_000;
 
@@ -47,6 +55,37 @@ export function overlappingEvents<T extends Planned>(
   return events.filter(touches).sort(byAllDayThenStart);
 }
 
+export function alsoPlans<T extends Planned & { id: string }>(
+  events: readonly T[],
+  draft: PlannedDraft,
+  tz: string,
+): AlsoPlans<T> {
+  const others = events.filter((event) => event.id !== draft.id);
+
+  const [start, end] = previewWindow(draft.day, draft.times, tz);
+
+  return {
+    scope: draft.times.allDay ? "day" : "time",
+    plans: overlappingEvents(others, start, end, tz),
+  };
+}
+
+export function sameTimeClashes<T extends PlannedWho>(
+  events: readonly T[],
+  draft: PlannedDraft & { tagIds: readonly string[] },
+  { allIds, tz }: { allIds: readonly string[]; tz: string },
+): Clash<T>[] {
+  const timed = events.filter((event) => !event.allDay);
+
+  const { plans } = alsoPlans(timed, draft, tz);
+
+  const shared = (event: T) => allIds.filter((id) => draft.tagIds.includes(id) && isOn(event, id));
+
+  return plans
+    .map((event) => ({ event, tagIds: shared(event) }))
+    .filter((clash) => clash.tagIds.length > 0);
+}
+
 export function previewWeather(
   weather: Pick<Weather, "hourly" | "daily"> | null | undefined,
   day: string,
@@ -73,6 +112,10 @@ export function previewRain(hours: readonly HourlyPoint[]): number | undefined {
 
 function previewMinutes({ start, end }: EventTimes): number {
   return end !== undefined && end > start ? end - start : NO_END_MINUTES;
+}
+
+function isOn(event: PlannedWho, tagId: string): boolean {
+  return event.everyone || event.tagIds.includes(tagId);
 }
 
 function withinDays(key: string, first: string, last: string): boolean {

@@ -1,4 +1,5 @@
-import { detailsStatus, eventStatus } from "./eventStatus";
+import { allDayStart } from "./allDay";
+import { detailsStatus, eventStatus, statusTitle } from "./eventStatus";
 import { deviceTimeZone } from "./zone";
 
 const tz = deviceTimeZone();
@@ -71,5 +72,35 @@ describe("detailsStatus", () => {
     ["on a later day", "2026-10-16T00:00:00.000Z", null],
   ] as const)("EVT-09 an all-day event %s shows %s", (_, startAt, expected) => {
     expect(detailsStatus({ startAt, allDay: true }, now, tz)).toBe(expected);
+  });
+});
+
+describe("statusTitle", () => {
+  it.each([
+    ["running", { startAt: iso(9, 10, 0), endAt: iso(9, 11, 0) }, { kind: "now" }],
+    ["started with no end", { startAt: iso(9, 9, 0) }, { kind: "now" }],
+    [
+      "later today",
+      { startAt: iso(9, 13, 30), endAt: iso(9, 14, 0) },
+      { kind: "in", minutes: 169 },
+    ],
+    ["all day today", { startAt: allDayStart("2026-10-09"), allDay: true }, { kind: "today" }],
+    ["tomorrow", { startAt: iso(10, 8, 0) }, { kind: "tomorrow" }],
+    [
+      "all day tomorrow",
+      { startAt: allDayStart("2026-10-10"), allDay: true },
+      { kind: "tomorrow" },
+    ],
+    ["in five days", { startAt: iso(14, 8, 0) }, { kind: "inDays", days: 5 }],
+    [
+      "all day in three days",
+      { startAt: allDayStart("2026-10-12"), allDay: true },
+      { kind: "inDays", days: 3 },
+    ],
+    ["over today", { startAt: iso(9, 8, 0), endAt: iso(9, 9, 0) }, { kind: "ended" }],
+    ["yesterday with no end", { startAt: iso(8, 8, 0) }, { kind: "ended" }],
+    ["all day yesterday", { startAt: allDayStart("2026-10-08"), allDay: true }, { kind: "ended" }],
+  ] as const)("EVT-09 an event %s is titled %o", (_, event, expected) => {
+    expect(statusTitle(event, now, tz)).toEqual(expected);
   });
 });
