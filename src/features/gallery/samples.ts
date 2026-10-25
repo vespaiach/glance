@@ -266,14 +266,6 @@ export const gallery = {
     backgroundBody: "Cannon Beach · dim 30%",
   },
   zone: { ready: "Ready" },
-  nav: {
-    today: "Today",
-    calendar: "Calendar",
-    weather: "Weather",
-    notes: "Notes",
-    photos: "Photos",
-    settings: "Settings",
-  },
 };
 
 export type SampleNote = {

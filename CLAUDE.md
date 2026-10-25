@@ -26,11 +26,11 @@ npm ci · npm run dev · npm run check (biome) · npm run typecheck · npm test 
 ## Building UI (bottom up)
 1. Pure component in `src/ui` or `src/features/*/components`: props in, callbacks out, local UI state only (open, focus, draft).
 2. Show it in `/dev/gallery` in all four seasons and every state the feature's States page (`Glance States - …`) shows. Components built before the gallery (F11) are added in F11.
-3. Features only: compose it into the screen layout and compare with the feature's States page (`Glance States - Today`, `- Settings`, …) and the screen's side page (`Glance Today Layout`, `Glance Notice Board`, …) at the three sizes: large 1920×1080, normal 1024×768, small 390×844.
+3. Features only: compose it into the screen layout and compare with the feature's States page (`Glance States - Today`, `- Settings`, …) (the event page: `Glance New Event`) at the three sizes: large 1920×1080, normal 1024×768, small 390×844.
 4. Features only: connect it last. `src/features/*/XScreen.tsx` reads `data` hooks and `useNow()` and passes plain props down.
 
 ## Testing (TDD)
-- Applies to `src/domain`, reducers, repos, the sync engine, server services and component behavior (clicks, validation, ARIA). Styling and layout are checked in the gallery and against the feature's States page and the side pages, not in tests.
+- Applies to `src/domain`, reducers, repos, the sync engine, server services and component behavior (clicks, validation, ARIA). Styling and layout are checked in the gallery and against the feature's States page, not in tests.
 - Each server service that touches account data has a test proving another account's rows can't be read or written.
 - Test names start with the spec ID (`TPK-07 rejects an end before the start`), or the tech-design ID when there is none (`D10 …`, `tech§5 …`).
 - Order, no steps skipped:

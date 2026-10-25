@@ -8,7 +8,6 @@
 <body>
 <x-dc>
 <helmet>
-<meta name="design_doc_mode" content="canvas">
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
 <link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
@@ -21,73 +20,9 @@
 <style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
 <section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:20px;max-width:1400px">
-<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20States.dc.html">States and variants →</a><a href="Glance%20Notes.dc.html#calendar">Notes →</a><a href="#members">Member list options ↓</a></nav>
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20States.dc.html">States and variants →</a><a href="Glance%20Notes.dc.html#calendar">Notes · Calendar →</a></nav>
 <span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · phone calendar and events</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Calendar and events on the small screen (390×844), shown at full size. Large-screen versions are on the <a href="Glance%20States.dc.html#calendar">states page</a>. Frames are the live app, opened by URL. Other calendar states are reached by tapping in the <a href="Glance.dc.html">clickable mockup</a> or by URL (day=, who=, sheet=). On small screens the day shows as a list (earlier, happening now, later today) instead of the hour timeline.</p>
-</section>
-<section id="members" data-season="fall" data-screen-label="Member list options" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
-<div style="display:flex;flex-direction:column;gap:8px;max-width:900px">
-<span style="font:600 24px/1.2 var(--font-sans);letter-spacing:-0.3px">Member list options · phone header</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);text-wrap:pretty">Five ways to show the 9-member filter in the small-screen calendar header. These are mockups, not the live app. Each one works: tap members to filter the day, and tap the +N pill, the summary pill or the stack to open the full list. <strong>Decided: 1c on small screens, 1d on large screens</strong>, now in the clickable mockup (the list opens as a centered modal, like the date picker).</p>
-</div>
-<div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
-<sc-for list="{{ mopts }}" as="o" hint-placeholder-count="5">
-<div id="{{ o.id }}" style="display:flex;flex-direction:column;gap:10px;width:{{ o.boxW }}">
-<div style="display:flex;align-items:baseline;gap:10px"><a href="#{{ o.id }}" style="font:600 14px ui-monospace,Menlo,monospace;padding:4px 9px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none;flex:none">{{ o.id }}</a><span style="font:500 18px/1.35 var(--font-sans);color:#1a1a1a;text-wrap:pretty">{{ o.name }}</span></div>
-<p style="margin:0;font:15px/1.45 var(--font-sans);color:#1a1a1a;text-wrap:pretty;min-height:66px">{{ o.note }}</p>
-<div style="width:{{ o.boxW }};height:{{ o.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
-<div data-screen-label="Member option {{ o.id }}" style="position:relative;width:390px;height:844px;transform:{{ o.tf }};transform-origin:0 0;overflow:hidden;background:var(--surface-canvas);color:var(--text-primary);font-family:var(--font-sans);display:flex;flex-direction:column">
-<div style="flex:none;position:relative;z-index:2;background:var(--surface-canvas);box-shadow:0 1px 0 var(--border-hairline-soft),0 4px 12px rgba(0,0,0,.04);display:flex;flex-direction:column;gap:12px;padding:12px 0 14px">
-<div style="display:flex;align-items:center;gap:16px;padding:0 20px">
-<div style="flex:1;min-width:0;min-height:56px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:4px"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;line-height:1.2">Today</span><span style="display:flex;align-items:center;gap:6px"><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1;white-space:nowrap">Friday, Oct 9</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="20" stroke-width="2" hint-size="20px,20px"></x-import></span></div>
-<span style="flex:none;display:flex;align-items:center;gap:6px;font-size:20px;font-weight:340;letter-spacing:-0.2px;font-variant-numeric:tabular-nums;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="24" stroke-width="1.5" hint-size="24px,24px"></x-import>64°</span>
-<span aria-hidden="true" style="flex:none;width:48px;height:48px;border-radius:9999px;background:var(--action-primary);color:var(--on-action-primary);display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="plus" size="22" hint-size="22px,22px"></x-import></span>
-</div>
-<sc-if value="{{ o.isA }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;padding:0 20px">
-<div ref="{{ o.rowRef }}" onScroll="{{ o.onScroll }}" role="group" aria-label="Show plans for" style="position:relative;flex:1;min-width:0;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;mask-image:{{ o.mask }}">
-<sc-for list="{{ o.pills }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.pressed }}" style="flex:none;height:44px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;padding:0 18px;font-family:inherit;font-size:16px;font-weight:480;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease,color 180ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for>
-</div>
-<sc-if value="{{ o.hasMore }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ o.openSheet }}" aria-haspopup="dialog" aria-label="{{ o.moreAria }}" style="flex:none;height:44px;min-width:56px;border:0;border-radius:9999px;background:var(--surface-soft);color:var(--text-primary);padding:0 16px;font-family:inherit;font-size:16px;font-weight:480;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)">{{ o.moreLabel }}</button></sc-if>
-</div></sc-if>
-<sc-if value="{{ o.isB }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:8px">
-<div ref="{{ o.rowRef }}" onScroll="{{ o.onScroll }}" role="group" aria-label="Show plans for" style="position:relative;display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 20px;mask-image:{{ o.mask }}">
-<sc-for list="{{ o.pills }}" as="c" hint-placeholder-count="7"><button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.pressed }}" aria-label="{{ c.label }}" style="flex:none;width:44px;height:44px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:grid;place-items:center;padding:0;font-family:inherit;font-size:15px;font-weight:540;letter-spacing:-0.2px;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease" style-active="transform:scale(0.95)">{{ c.ini }}</button></sc-for>
-</div>
-<span style="padding:0 20px;font-family:var(--font-mono);font-size:13px;letter-spacing:0.54px;text-transform:uppercase;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.showing }}</span>
-</div></sc-if>
-<sc-if value="{{ o.isC }}" hint-placeholder-val="{{ false }}"><div style="display:flex;padding:0 20px">
-<button type="button" onClick="{{ o.openSheet }}" aria-haspopup="dialog" aria-label="{{ o.sumAria }}" style="height:44px;max-width:100%;border:0;border-radius:9999px;background:var(--surface-soft);color:var(--text-primary);display:flex;align-items:center;gap:10px;padding:0 14px 0 14px;font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="display:flex;align-items:center;flex:none"><sc-for list="{{ o.dots }}" as="d" hint-placeholder-count="4"><span style="width:14px;height:14px;border-radius:9999px;background:{{ d.c }};margin-left:{{ d.ml }};box-shadow:0 0 0 2px var(--surface-soft)"></span></sc-for></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.sumLabel }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="18" stroke-width="2" hint-size="18px,18px"></x-import></button>
-</div></sc-if>
-<sc-if value="{{ o.isD }}" hint-placeholder-val="{{ false }}"><div style="display:flex;padding:0 20px">
-<button type="button" onClick="{{ o.openSheet }}" aria-haspopup="dialog" aria-label="{{ o.sumAria }}" style="min-height:48px;max-width:100%;border:0;background:transparent;color:var(--text-primary);display:flex;align-items:center;gap:12px;padding:0;font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out;transform-origin:left center" style-active="transform:scale(0.97)"><span style="display:flex;align-items:center;flex:none;padding-left:2px"><sc-for list="{{ o.stack }}" as="a" hint-placeholder-count="5"><span style="position:relative;z-index:{{ a.z }};width:40px;height:40px;border-radius:9999px;background:{{ a.bg }};box-shadow:0 0 0 2px var(--surface-canvas);margin-left:{{ a.ml }};display:grid;place-items:center;font-size:14px;font-weight:540;letter-spacing:-0.2px;font-variant-numeric:tabular-nums">{{ a.ini }}</span></sc-for></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.sumLabel }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-down" size="18" stroke-width="2" hint-size="18px,18px"></x-import></button>
-</div></sc-if>
-<sc-if value="{{ o.isE }}" hint-placeholder-val="{{ false }}"><div ref="{{ o.rowRef }}" onScroll="{{ o.onScroll }}" role="group" aria-label="Show plans for" style="position:relative;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;padding:0 20px;mask-image:{{ o.mask }}">
-<sc-for list="{{ o.pills }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.pick }}" aria-pressed="{{ c.pressed }}" style="flex:none;height:44px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;padding:0 18px;font-family:inherit;font-size:16px;font-weight:480;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms ease,color 180ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for>
-</div></sc-if>
-</div>
-<div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding:24px 20px 32px;box-sizing:border-box">
-<sc-if value="{{ o.empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0 0 20px;font-size:16px;font-weight:330;line-height:1.4">No one selected, so no plans show.</p></sc-if>
-<div style="position:relative;height:1008px">
-<sc-for list="{{ hours }}" as="h" hint-placeholder-count="15"><div style="position:absolute;left:0;right:0;top:{{ h.top }};display:flex;align-items:center;gap:8px;transform:translateY(-50%)"><span style="width:44px;flex:none;font-family:var(--font-mono);font-size:12px;letter-spacing:0.4px;text-transform:uppercase;white-space:nowrap">{{ h.label }}</span><span style="flex:1;height:1px;background:var(--border-hairline-soft)"></span></div></sc-for>
-<sc-for list="{{ o.events }}" as="e" hint-placeholder-count="6"><div style="position:absolute;left:52px;right:0;top:{{ e.top }};height:{{ e.h }};border-radius:8px;background:{{ e.fill }};box-shadow:{{ e.ring }};padding:6px 12px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;gap:2px"><span style="font-size:16px;font-weight:{{ e.tw }};letter-spacing:-0.1px;line-height:1.25;text-decoration:{{ e.deco }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.title }}</span><span style="font-size:14px;font-weight:330;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.meta }}</span></div></sc-for>
-<div aria-hidden="true" style="position:absolute;left:48px;right:0;top:{{ nowTop }};height:2px;margin-top:-1px;background:var(--black);z-index:1"><span style="position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:9999px;background:var(--black)"></span></div>
-</div>
-</div>
-<sc-if value="{{ o.sheetOpen }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:flex-end">
-<div onClick="{{ o.closeSheet }}" style="position:absolute;inset:0;background:var(--scrim)"></div>
-<div role="dialog" aria-modal="true" aria-label="Show plans for" style="position:relative;min-height:0;max-height:calc(100% - 40px);background:var(--surface-canvas);border-radius:32px 32px 0 0;box-shadow:0 24px 64px rgba(0,0,0,.18);display:flex;flex-direction:column">
-<div style="flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:24px 20px 12px 24px"><div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase">{{ o.sheetEyebrow }}</span><span style="font-size:28px;font-weight:340;letter-spacing:-0.4px;line-height:1.1">Show plans for</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" label="Close" on-click="{{ o.closeSheet }}" hint-size="40px,40px"></x-import></div>
-<div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding:0 20px 8px">
-<sc-for list="{{ o.rows }}" as="r" hint-placeholder-count="10"><button type="button" role="checkbox" aria-checked="{{ r.checked }}" onClick="{{ r.toggle }}" style="width:100%;min-height:56px;border:0;background:transparent;box-shadow:{{ r.bd }};display:flex;align-items:center;gap:14px;padding:0 4px;font-family:inherit;color:var(--text-primary);text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.98)"><span style="flex:none;width:32px;height:32px;border-radius:9999px;background:{{ r.c }};display:grid;place-items:center;font-size:12px;font-weight:540"><sc-if value="{{ r.isAll }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="16" stroke-width="1.75" hint-size="16px,16px"></x-import></sc-if>{{ r.ini }}</span><span style="flex:1;min-width:0;font-size:18px;font-weight:{{ r.fw }};letter-spacing:-0.2px">{{ r.name }}</span><span style="flex:none;width:28px;height:28px;border-radius:8px;background:{{ r.cbBg }};box-shadow:{{ r.cbRing }};color:var(--on-action-primary);display:grid;place-items:center"><sc-if value="{{ r.on }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="18" stroke-width="2.5" hint-size="18px,18px"></x-import></sc-if></span></button></sc-for>
-</div>
-<div style="flex:none;display:flex;padding:16px 20px 24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" full-width="{{ true }}" on-click="{{ o.closeSheet }}" hint-size="100%,56px">Done</x-import></div>
-</div>
-</div></sc-if>
-</div>
-</div>
-</div>
-</sc-for>
-</div>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Calendar and events on the small screen (390×844), shown at full size. Large-screen versions are on the <a href="Glance%20States%20-%20Calendar.dc.html">Calendar states page</a>. Frames are the live app, opened by URL. Other calendar states are reached by tapping in the <a href="Glance.dc.html">clickable mockup</a> or by URL (day=, who=, sheet=). On small screens the day shows as a list (earlier, happening now, later today) instead of the hour timeline.</p>
 </section>
 <section id="calendar" data-screen-label="Phone calendar and events" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
 <div style="display:flex;flex-wrap:wrap;gap:40px 56px;align-items:flex-start">
@@ -102,78 +37,12 @@
 </div>
 </section>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.5,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;},&quot;openSheets&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Member list options&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.5,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;}}">
 class Component extends DCLogic {
   static SCREENS = [["A","Calendar · today, everyone","view=calendar"],["B","Calendar · date picker open","view=calendar&dp=open"],["C","New event · Who field","view=calendar&sheet=newevent"]];
-  static PEOPLE = [['an', 'Minh-An', 'var(--block-lilac)', 'MA'], ['hy', 'Minh-Hy', 'var(--block-sky)', 'MH'], ['mom', 'Mom', 'var(--block-coral)', 'Mom'], ['dad', 'Dad', 'var(--block-mint)', 'Dad'], ['thang', 'Thang', 'var(--block-sun)', 'Th'], ['tin', 'Tin', 'var(--block-pink)', 'Tin'], ['nghe', 'Nghe', 'var(--block-lime)', 'Ng'], ['an2', 'An', 'var(--block-rust)', 'An'], ['nga', 'Nga', 'var(--block-glacier)', 'Nga']];
-  static EVENTS = [[465, 510, 'School drop-off', ['an', 'hy', 'dad']], [540, 600, 'Swim practice', ['tin']], [615, 675, 'Dentist', ['mom', 'an']], [720, 780, 'Lunch with Bà', ['nga', 'an2']], [810, 900, 'Soccer practice', ['thang']], [930, 990, 'Piano lesson', ['hy']], [1020, 1080, 'Groceries', ['dad', 'nghe']], [1110, 1170, 'Family dinner', null]];
-  static OPTS = [
-    ['1a', 'Pills with an overflow cue', 'pills', 'The current pills. The right edge fades while more are off-screen, and a +N pill says how many and opens the full list.'],
-    ['1b', 'Initials circles', 'ini', 'Color circles, 44 px, about 7 across. A line underneath names who is shown, since initials alone can be unclear.'],
-    ['1c', 'Summary pill and sheet', 'sum', 'One pill names the filter and opens the full list in a sheet. Fits any family size, but each change takes one more tap.'],
-    ['1d', 'Avatar stack', 'stack', 'Overlapping color circles (no initials) for the people shown, opening the same sheet. Most visual, but hidden members are harder to scan.'],
-    ['1e', 'Everyone plus single pick', 'one', 'Everyone is the default. Tapping a name shows only that person; tap it again to go back. People can’t be combined.']];
-  static NOW = 641;
-  state = { sel: {}, sheet: {}, ov: {} };
-  _els = {}; _rf = {};
-  componentDidUpdate(pp) { if (pp.openSheets !== this.props.openSheets) this.setState({ sheet: {} }); }
-  componentWillUnmount() { Object.values(this._els).forEach((x) => x.ro.disconnect()); }
-  rowRef(id) {
-    return this._rf[id] || (this._rf[id] = (el) => {
-      const old = this._els[id]; if (old) old.ro.disconnect();
-      if (!el) { delete this._els[id]; return; }
-      const ro = new ResizeObserver(() => this.measure(id)); ro.observe(el);
-      this._els[id] = { el, ro }; requestAnimationFrame(() => this.measure(id));
-      if (document.fonts) document.fonts.ready.then(() => this.measure(id));
-    });
-  }
-  measure(id) {
-    const x = this._els[id]; if (!x) return; const el = x.el, R = el.scrollLeft + el.clientWidth;
-    const n = [...el.querySelectorAll('button')].filter((b) => b.offsetLeft + b.offsetWidth > R - 24).length;
-    const more = R < el.scrollWidth - 2, cur = this.state.ov[id];
-    if (!cur || cur.n !== n || cur.more !== more) this.setState((s) => ({ ov: { ...s.ov, [id]: { n, more } } }));
-  }
-  members(k) {
-    const P = Component.PEOPLE, ALL = P.map((p) => p[0]), PM = {}, S = this.state, NOW = Component.NOW;
-    P.forEach(([key, name, c, ini]) => { PM[key] = { name, c, ini }; });
-    const box = { boxW: 390 * k + 'px', boxH: 844 * k + 'px', tf: 'scale(' + k + ')' };
-    const Y = (m) => (m - 420) * 1.2 + 'px';
-    const fm = (m) => { const h = Math.floor(m / 60); return { t: `${h % 12 || 12}:${String(m % 60).padStart(2, '0')}`, mer: h < 12 ? 'AM' : 'PM' }; };
-    const rg = (a, b) => { const x = fm(a), y = fm(b); return x.mer === y.mer ? `${x.t} – ${y.t} ${y.mer}` : `${x.t} ${x.mer} – ${y.t} ${y.mer}`; };
-    const names = (w) => (w.length === ALL.length ? 'Everyone' : w.map((x) => PM[x].name).join(', '));
-    const summary = (sel) => (sel.length === ALL.length ? 'Everyone' : !sel.length ? 'No one' : sel.length <= 2 ? names(sel) : `${sel.length} people`);
-    const mopts = Component.OPTS.map(([id, name, kind, note]) => {
-      const sel = S.sel[id] || ALL, all = sel.length === ALL.length, on = (x) => sel.includes(x);
-      const setSel = (nx) => this.setState((s) => ({ sel: { ...s.sel, [id]: ALL.filter((x) => nx.includes(x)) } }));
-      const toggle = (x) => setSel(on(x) ? sel.filter((y) => y !== x) : sel.concat(x));
-      const ov = S.ov[id] || { n: 0, more: false };
-      const hasSheet = kind === 'pills' || kind === 'sum' || kind === 'stack';
-      const sheetOpen = hasSheet && (S.sheet[id] ?? !!this.props.openSheets);
-      const openSheet = () => this.setState((s) => ({ sheet: { ...s.sheet, [id]: true } })), closeSheet = () => this.setState((s) => ({ sheet: { ...s.sheet, [id]: false } }));
-      const pills = kind === 'one'
-        ? [{ label: 'Everyone', bg: all ? 'var(--action-primary)' : 'var(--hairline)', fg: all ? 'var(--on-action-primary)' : 'var(--text-primary)', pressed: String(all), pick: () => setSel(ALL) }].concat(P.map(([x, label, c]) => { const me = !all && sel.length === 1 && sel[0] === x; return { label, bg: me ? c : 'var(--hairline)', fg: 'var(--text-primary)', pressed: String(me), pick: () => setSel(me ? ALL : [x]) }; }))
-        : P.map(([x, label, c, ini]) => ({ label, ini, bg: on(x) ? c : 'var(--hairline)', fg: 'var(--text-primary)', pressed: String(on(x)), pick: () => toggle(x) }));
-      const sc = sel.map((x) => PM[x]), st = sc.length > 5 ? sc.slice(0, 4) : sc;
-      const stack = !sc.length ? [{ bg: 'var(--hairline)', ini: '', ml: '0', z: '1' }] : st.map((p, i) => ({ bg: p.c, ini: '', ml: i ? '-12px' : '0', z: String(i + 1) })).concat(sc.length > 5 ? [{ bg: 'var(--surface-soft)', ini: '+' + (sc.length - 4), ml: '-12px', z: '10' }] : []);
-      const rows = [{ isAll: true, name: 'Everyone', ini: '', c: 'var(--surface-soft)', on: all, fw: '540', toggle: () => setSel(all ? [] : ALL) }]
-        .concat(P.map(([x, nm, c, ini]) => ({ isAll: false, name: nm, ini, c, on: on(x), fw: '480', toggle: () => toggle(x) })))
-        .map((r, i) => ({ ...r, checked: String(r.on), bd: i ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'none', cbBg: r.on ? 'var(--action-primary)' : 'transparent', cbRing: r.on ? 'none' : 'inset 0 0 0 1.5px var(--text-primary)' }));
-      const events = Component.EVENTS.filter((e) => (e[3] || ALL).some(on)).map(([a, b, title, w0]) => {
-        const w = w0 || ALL, past = b <= NOW, now = a <= NOW && NOW < b;
-        return { top: Y(a), h: (b - a) * 1.2 - 4 + 'px', title, meta: `${rg(a, b)} · ${names(w)}`, fill: past ? 'var(--surface-canvas)' : w.length === 1 ? PM[w[0]].c : 'var(--season-soft)', ring: past ? 'inset 0 0 0 1px var(--border-hairline)' : now ? 'inset 0 0 0 2px var(--black)' : 'none', deco: past ? 'line-through' : 'none', tw: past ? '340' : '540' };
-      });
-      return { id, name, note, ...box, isA: kind === 'pills', isB: kind === 'ini', isC: kind === 'sum', isD: kind === 'stack', isE: kind === 'one',
-        rowRef: this.rowRef(id), onScroll: () => this.measure(id), mask: ov.more ? 'linear-gradient(to right,#000 calc(100% - 56px),transparent)' : 'none', pills,
-        hasMore: kind === 'pills' && ov.n > 0, moreLabel: '+' + ov.n, moreAria: `${ov.n} more. Show all ${ALL.length} members`,
-        showing: all ? 'Showing everyone' : !sel.length ? 'No one selected' : 'Showing ' + names(sel), sumLabel: summary(sel), sumAria: `Show plans for: ${summary(sel)}. Change`,
-        dots: sc.slice(0, 4).map((p, i) => ({ c: p.c, ml: i ? '-4px' : '0' })), stack, rows, sheetOpen, openSheet, closeSheet, sheetEyebrow: `${ALL.length} members`, events, empty: !sel.length };
-    });
-    return { mopts, hours: Array.from({ length: 15 }, (_, i) => { const h = 7 + i; return { top: Y(h * 60), label: `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}` }; }), nowTop: Y(NOW) };
-  }
   renderVals() {
     const k = this.props.frameScale ?? 1;
     return {
-      ...this.members(k),
       screens: Component.SCREENS.map(([id, name, q]) => ({ anchor: 'calendar-' + id, badge: id, name, src: 'Glance.dc.html?' + q, screenLabel: 'Phone calendar ' + id + ' · 390×844', boxW: 390 * k + 'px', boxH: 844 * k + 'px', tf: 'scale(' + k + ')' }))
     };
   }

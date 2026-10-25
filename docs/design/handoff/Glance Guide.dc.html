@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#fff;font-family:var(--font-sans);color:#000}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}html{scroll-behavior:smooth}</style>
+</helmet>
+<div data-season="{{ season }}" style="background:#fff;color:#000;font:var(--type-body-weight) var(--type-body-size)/var(--type-body-lh) var(--font-sans)">
+
+<header style="max-width:1200px;margin:0 auto;padding:24px clamp(20px,4vw,48px);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap">
+<span style="font:540 28px/1 var(--font-sans);letter-spacing:-0.5px">Glance</span>
+<nav style="display:flex;flex-wrap:wrap;gap:8px 24px;font:480 17px/44px var(--font-sans)"><a href="#start" style="text-decoration:none">Get started</a><a href="#today" style="text-decoration:none">Using Glance</a><a href="#sizes" style="text-decoration:none">Screen sizes</a><a href="#faq" style="text-decoration:none">FAQ</a></nav>
+</header>
+
+<section data-screen-label="Intro" style="max-width:1200px;margin:0 auto;padding:0 clamp(20px,4vw,48px)">
+<div style="background:var(--season-block-1);border-radius:24px;padding:clamp(28px,5vw,64px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">Guide for families</x-import>
+<h1 style="margin:0;font:340 clamp(44px,6.5vw,86px)/1 var(--font-sans);letter-spacing:-1.72px;text-wrap:balance">Your family’s day, at a glance.</h1>
+<p style="margin:0;font:330 20px/1.4 var(--font-sans);max-width:520px;text-wrap:pretty">Glance turns a screen at home into one shared board for your family’s calendar, weather, notes and photos. This guide covers setup and the everyday basics.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<span style="display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:10px 18px;font:480 17px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="calendar-days" size="20" hint-size="20px,20px"></x-import>Calendar</span>
+<span style="display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:10px 18px;font:480 17px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="20" hint-size="20px,20px"></x-import>Weather</span>
+<span style="display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:10px 18px;font:480 17px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sticky-note" size="20" hint-size="20px,20px"></x-import>Notes</span>
+<span style="display:inline-flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:10px 18px;font:480 17px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image" size="20" hint-size="20px,20px"></x-import>Photos</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;align-items:center">
+<div style="width:100%;background:#000;border-radius:20px;padding:10px;box-sizing:border-box">
+<div style="aspect-ratio:16/10;background:var(--season-soft);border-radius:12px;padding:10px 10px 10px 18px;box-sizing:border-box;display:grid;grid-template-columns:0.8fr 1.6fr 1fr;gap:8px;position:relative;overflow:hidden;container-type:inline-size">
+<span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:10px;height:40px;background:#fff;border-radius:0 8px 8px 0"></span>
+<div style="background:var(--season-block-1);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px;min-width:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)">
+<span style="font:400 max(8px,1.7cqi)/1 var(--font-mono);text-transform:uppercase">Fri, Oct 9</span>
+<span style="font:300 7.5cqi/0.9 var(--font-sans);letter-spacing:-0.04em;font-variant-numeric:tabular-nums">10:41</span>
+<span style="height:1px;background:#fff;margin:2px 0"></span>
+<span style="display:flex;align-items:center;gap:4px;font:300 5cqi/1 var(--font-sans)">64°<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="18" stroke-width="1.5" hint-size="18px,18px"></x-import></span>
+<span style="font:330 max(8px,1.6cqi)/1.3 var(--font-sans)">Rain from 4 PM</span>
+<span style="height:1px;background:#fff;margin:2px 0"></span>
+<span style="font:400 max(8px,1.5cqi)/1 var(--font-mono);text-transform:uppercase">Happening now</span>
+<span style="font:340 2.8cqi/1.1 var(--font-sans)">Piano lesson</span>
+<span style="align-self:flex-start;background:#000;color:#fff;border-radius:999px;padding:2px 6px;font:400 max(8px,1.4cqi)/1.2 var(--font-mono)">34 MIN LEFT</span>
+</div>
+<div style="background:#fff;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:0">
+<span style="font:400 max(8px,1.5cqi)/1 var(--font-mono);text-transform:uppercase;margin-bottom:2px">Today · 4 of 5 left</span>
+<span style="border-radius:5px;box-shadow:inset 0 0 0 1px var(--border-hairline);padding:4px 6px;font:340 max(8px,1.7cqi)/1.2 var(--font-sans)">8:00 School drop-off</span>
+<span style="border-radius:5px;box-shadow:inset 0 0 0 1.5px #000;background:var(--season-block-2);padding:4px 6px;font:540 max(8px,1.7cqi)/1.2 var(--font-sans);flex:1.4">10:30 Piano lesson</span>
+<span style="border-radius:5px;background:var(--season-block-4);padding:4px 6px;font:540 max(8px,1.7cqi)/1.2 var(--font-sans);flex:1">12:30 Lunch with Grandma</span>
+<span style="border-radius:5px;background:var(--season-block-3);padding:4px 6px;font:540 max(8px,1.7cqi)/1.2 var(--font-sans);flex:1.4">4:30 Soccer practice</span>
+<span style="border-radius:5px;background:var(--season-soft);padding:4px 6px;font:540 max(8px,1.7cqi)/1.2 var(--font-sans);flex:1">6:30 Family dinner</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="background:#fff;border-radius:10px;padding:8px;flex:1;display:flex;flex-direction:column;gap:6px">
+<span style="font:400 max(8px,1.5cqi)/1 var(--font-mono);text-transform:uppercase">Notes · 3</span>
+<span style="background:var(--season-soft);border-radius:3px;padding:6px;transform:rotate(-2deg);box-shadow:0 2px 8px rgba(0,0,0,.08);font:400 max(8px,1.8cqi)/1.2 var(--font-sans);flex:1">Soccer cleats are by the door</span>
+</div>
+<div style="background:#fff;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:5px">
+<span style="font:400 max(8px,1.5cqi)/1 var(--font-mono);text-transform:uppercase">Today’s photo</span>
+<span style="aspect-ratio:4/3;background:var(--season-block-4);border-radius:5px;display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image" size="20" hint-size="20px,20px"></x-import></span>
+</div>
+</div>
+</div>
+</div>
+<span style="width:18px;height:56px;background:#000"></span>
+<span style="width:46%;height:12px;background:#000;border-radius:999px"></span>
+</div>
+</div>
+</section>
+
+<main style="max-width:1200px;margin:0 auto;padding:0 clamp(20px,4vw,48px)">
+
+<article id="start" data-screen-label="Get started" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:96px 0 64px">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">01 · Sign in and account</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Get started with one email</h2>
+<p style="margin:0;text-wrap:pretty;max-width:520px">One family, one account, one email address. Every screen signed in with it shows the same calendar, notes and photos. There are no passwords.</p>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">Open Glance on the screen, enter your family’s email and tap <strong style="font-weight:540">Send code</strong>.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">Type the 6-digit code from the email. It works once, for 10 minutes.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">New to Glance? Add your first name, then the city or ZIP where the screen is. That sets the weather and the clock’s time zone.</span></li>
+</ol>
+</div>
+<div style="background:var(--season-block-1);border-radius:24px;padding:clamp(24px,4vw,48px);display:grid;place-items:center">
+<div style="background:#fff;border-radius:24px;padding:32px;width:100%;max-width:400px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px">
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase;letter-spacing:0.54px">Sign in</span>
+<span style="font:340 32px/1.1 var(--font-sans);letter-spacing:-0.5px">Enter the code</span>
+<span style="font:330 16px/1.45 var(--font-sans)">We sent a 6-digit code to maria@example.com. It works once, for 10 minutes.</span>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px">
+<span style="height:52px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);display:grid;place-items:center;font:400 24px/1 var(--font-mono)">4</span>
+<span style="height:52px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);display:grid;place-items:center;font:400 24px/1 var(--font-mono)">8</span>
+<span style="height:52px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);display:grid;place-items:center;font:400 24px/1 var(--font-mono)">2</span>
+<span style="height:52px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);display:grid;place-items:center;font:400 24px/1 var(--font-mono)">9</span>
+<span style="height:52px;border-radius:8px;box-shadow:inset 0 0 0 2px #000;display:grid;place-items:center;font:400 24px/1 var(--font-mono)"></span>
+<span style="height:52px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);display:grid;place-items:center;font:400 24px/1 var(--font-mono)"></span>
+</div>
+<span style="height:52px;border-radius:999px;background:var(--surface-soft);color:var(--text-disabled,#6b6b6b);display:grid;place-items:center;font:480 18px/1 var(--font-sans)">Sign in</span>
+</div>
+</div>
+</article>
+
+<article id="today" data-screen-label="Today" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">02 · Today</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">The whole day on one screen</h2>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:var(--season-block-1);display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty"><strong style="font-weight:540">Now panel.</strong> The clock, today’s weather and what’s happening now or up next. Tap the weather or the event for more.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:var(--season-block-3);display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty"><strong style="font-weight:540">Schedule.</strong> Today’s plans in time order. Tap a plan for details, or a dashed free slot to add an event then. Tap the faces at the top to show one person’s plans. Plans that have ended fold away; tap <strong style="font-weight:540">Earlier</strong> to see them.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:var(--season-block-4);display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty"><strong style="font-weight:540">Notes and today’s photo.</strong> The newest family notes and one photo. Tap either to open it.</span></li>
+</ol>
+<div style="background:var(--surface-soft);border-radius:8px;padding:16px 20px;display:flex;gap:12px;align-items:flex-start"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="panel-left-open" size="22" hint-size="22px,22px" style="margin-top:2px"></x-import><span style="font:330 16px/1.45 var(--font-sans);text-wrap:pretty">The menu hides after 15 seconds without a touch. Tap the white tab on the left edge to bring it back. After a few idle minutes, the screen returns to Today on its own.</span></div>
+</div>
+<div style="background:var(--season-soft);border-radius:24px;padding:clamp(16px,3vw,32px);display:grid;grid-template-columns:0.8fr 1.6fr 1fr;gap:12px;min-height:380px">
+<div style="background:var(--season-block-1);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative">
+<span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span>
+<span style="height:28px;width:80%;border-radius:6px;background:#fff"></span>
+<span style="height:1px;background:#fff"></span>
+<span style="height:18px;width:55%;border-radius:6px;background:#fff"></span>
+<span style="height:1px;background:#fff"></span>
+<span style="height:12px;width:70%;border-radius:6px;background:#fff"></span>
+<span style="height:12px;width:50%;border-radius:6px;background:#fff"></span>
+</div>
+<div style="background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px">
+<span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span>
+<span style="display:flex;margin:4px 0"><span style="width:22px;height:22px;border-radius:50%;background:var(--season-block-2);box-shadow:0 0 0 2px #fff"></span><span style="width:22px;height:22px;border-radius:50%;background:var(--season-block-3);box-shadow:0 0 0 2px #fff;margin-left:-6px"></span><span style="width:22px;height:22px;border-radius:50%;background:var(--season-block-4);box-shadow:0 0 0 2px #fff;margin-left:-6px"></span></span>
+<span style="flex:0.8;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline)"></span>
+<span style="flex:1.2;border-radius:8px;background:var(--season-block-2);box-shadow:inset 0 0 0 2px #000"></span>
+<span style="flex:0.6;border-radius:8px;border:1.5px dashed var(--border-hairline)"></span>
+<span style="flex:1;border-radius:8px;background:var(--season-block-3)"></span>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="background:#fff;border-radius:16px;padding:16px;flex:1;display:flex;flex-direction:column;gap:12px">
+<span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span>
+<span style="flex:1;background:var(--season-soft);border-radius:6px;transform:rotate(-2deg);box-shadow:0 4px 16px rgba(0,0,0,.06)"></span>
+</div>
+<div style="background:#fff;border-radius:16px;padding:12px"><span style="display:block;aspect-ratio:4/3;background:var(--season-block-4);border-radius:8px"></span></div>
+</div>
+</div>
+</article>
+
+<article id="calendar" data-screen-label="Calendar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">03 · Calendar</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Add an event</h2>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">Open <strong style="font-weight:540">Calendar</strong> from the menu and pick a day in the week strip. The arrows move a week at a time.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">Tap <strong style="font-weight:540">Add event</strong>, or tap a dashed free slot on the timeline to start at that time.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">The event reads as one sentence. Tap a word to change it: what, which day, start and end, who and where. <strong style="font-weight:540">Next</strong> moves to the next part.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">4</span><span style="padding-top:3px;text-wrap:pretty">Tap <strong style="font-weight:540">Save event</strong>. Each person’s plans show in their own color.</span></li>
+</ol>
+<div style="background:var(--surface-soft);border-radius:8px;padding:16px 20px;display:flex;gap:12px;align-items:flex-start"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="pencil" size="22" hint-size="22px,22px" style="margin-top:2px"></x-import><span style="font:330 16px/1.45 var(--font-sans);text-wrap:pretty">Tap any event to see its details, the forecast for that day and what else is on at that time. Tap <strong style="font-weight:540">Edit</strong> to change or delete it. Events that have ended can’t be changed.</span></div>
+</div>
+<div style="background:var(--season-soft);border-radius:24px;padding:clamp(16px,3vw,32px);display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><span style="display:flex;flex-direction:column;gap:2px"><span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Oct 4 – 10</span><span style="font:540 20px/1.2 var(--font-sans)">October</span></span><span style="display:flex;gap:4px"><span style="width:36px;height:36px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-left" size="18" hint-size="18px,18px"></x-import></span><span style="width:36px;height:36px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="18" hint-size="18px,18px"></x-import></span></span></div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px">
+<sc-for list="{{ days }}" as="d" hint-placeholder-count="7">
+<span style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px 0"><span style="font:400 12px/1 var(--font-mono);text-transform:uppercase">{{ d.wd }}</span><span style="width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:480 17px/1 var(--font-sans);font-variant-numeric:tabular-nums;background:{{ d.bg }};color:{{ d.fg }}">{{ d.n }}</span><span style="width:6px;height:6px;border-radius:50%;background:{{ d.dot }}"></span></span>
+</sc-for>
+</div>
+</div>
+<div style="background:var(--season-block-1);border-radius:24px;padding:20px 24px 24px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:44px;height:44px;border-radius:50%;background:#fff;display:grid;place-items:center;flex-shrink:0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-left" size="20" hint-size="20px,20px"></x-import></span><span style="font:540 22px/1.1 var(--font-sans);flex:1">New event</span><span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:#000;color:#fff;padding:12px 18px;font:480 16px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="18" hint-size="18px,18px"></x-import>Save event</span></div>
+<p style="margin:0;font:340 clamp(22px,2.6vw,30px)/1.3 var(--font-sans);letter-spacing:-0.3px;text-wrap:pretty"><span style="font-weight:540;text-decoration:underline;text-underline-offset:5px">Soccer practice</span> on <span style="font-weight:540;text-decoration:underline;text-underline-offset:5px;white-space:nowrap">Fri, Oct 9</span> from <span style="font-weight:540;text-decoration:underline;text-underline-offset:5px;white-space:nowrap">4:30 PM</span> to <span style="font-weight:540;text-decoration:underline;text-underline-offset:5px;white-space:nowrap">6:00 PM</span> for <span style="background:#fff;border-radius:6px;padding:0 0.15em;font-weight:540;white-space:nowrap">Mia</span> at <span style="text-decoration:underline;text-underline-offset:5px">a place</span>.</p>
+</div>
+<div style="background:#fff;border-radius:24px;padding:20px 24px 24px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font:400 14px/1 var(--font-mono);text-transform:uppercase">Who</span><span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:var(--surface-soft);padding:12px 16px;font:480 15px/1 var(--font-sans)">Next: Where<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-right" size="16" hint-size="16px,16px"></x-import></span></div>
+<span style="display:flex;gap:8px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:var(--surface-soft);padding:12px 16px;font:480 15px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="16" hint-size="16px,16px"></x-import>Everyone</span><span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:#000;color:#fff;padding:12px 16px 12px 12px;font:480 15px/1 var(--font-sans)"><span style="width:16px;height:16px;border-radius:50%;background:var(--season-block-3)"></span>Mia</span><span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:var(--surface-soft);padding:12px 16px 12px 12px;font:480 15px/1 var(--font-sans)"><span style="width:16px;height:16px;border-radius:50%;background:var(--season-block-2)"></span>Leo</span><span style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;background:var(--surface-soft);padding:12px 16px 12px 12px;font:480 15px/1 var(--font-sans)"><span style="width:16px;height:16px;border-radius:50%;background:var(--season-block-4)"></span>Maria</span></span>
+</div>
+</div>
+</article>
+
+<article id="weather" data-screen-label="Weather" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">04 · Weather and location</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Set where the screen is</h2>
+<p style="margin:0;text-wrap:pretty;max-width:520px">Weather shows conditions now, the next 8 hours and a 7-day forecast. One place per family sets both the weather and the clock’s time zone.</p>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">Go to <strong style="font-weight:540">Settings › Location</strong>.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">Type a city or ZIP code, or tap <strong style="font-weight:540">Use my location</strong> and choose Allow. US places only for now.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">If several places match, tap the right one. It saves straight away.</span></li>
+</ol>
+</div>
+<div style="background:var(--season-block-3);border-radius:24px;padding:clamp(24px,4vw,40px);display:flex;flex-direction:column;gap:20px">
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase;letter-spacing:0.54px">Portland, OR · Now</span>
+<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap"><span style="font:300 clamp(80px,10vw,128px)/0.9 var(--font-sans);letter-spacing:-5px;font-variant-numeric:tabular-nums">64°</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="cloud-sun" size="88" stroke-width="1.25" hint-size="88px,88px"></x-import></div>
+<span style="font:330 20px/1.4 var(--font-sans)">Partly cloudy · High 68° · Low 51° · Rain moving in after 4 PM</span>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">
+<sc-for list="{{ forecast }}" as="f" hint-placeholder-count="7">
+<span style="background:{{ f.bg }};color:{{ f.fg }};border-radius:12px;padding:12px 4px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0"><span style="font:400 12px/1 var(--font-mono);text-transform:uppercase">{{ f.d }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ f.icon }}" size="22" hint-size="22px,22px"></x-import><span style="font:480 16px/1 var(--font-sans);font-variant-numeric:tabular-nums">{{ f.hi }}</span><span style="font:330 14px/1 var(--font-sans);font-variant-numeric:tabular-nums">{{ f.lo }}</span></span>
+</sc-for>
+</div>
+</div>
+</article>
+
+<article id="notes" data-screen-label="Notes" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">05 · Notes</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Leave a note for the family</h2>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">Tap <strong style="font-weight:540">Add note</strong> on Today or on the Notes board.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">Write your message, up to 280 characters. Add your name under From if you like.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">Tap <strong style="font-weight:540">Post note</strong>. It shows on every screen, newest first.</span></li>
+</ol>
+<p style="margin:0;font:330 16px/1.45 var(--font-sans);text-wrap:pretty">Tap a note to read it in full. From there, Edit changes it and Delete removes it.</p>
+<div style="background:var(--surface-soft);border-radius:8px;padding:16px 20px;display:flex;gap:12px;align-items:flex-start"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="timer" size="22" hint-size="22px,22px" style="margin-top:2px"></x-import><span style="font:330 16px/1.45 var(--font-sans);text-wrap:pretty">Notes clear themselves after 7 days. Change this, or turn it off, in Settings › Remove notes after.</span></div>
+</div>
+<div style="background:var(--season-block-2);border-radius:24px;padding:clamp(24px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:28px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="-2" width="100%" min-height="170" author="Mom" time="8:12 AM" hint-size="100%,170px"><span style="font:400 22px/1.25 var(--font-sans)">Soccer cleats are by the door</span></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="1.5" width="100%" min-height="170" author="Leo" time="7:50 AM" hint-size="100%,170px"><span style="font:400 22px/1.25 var(--font-sans)">We’re out of milk</span></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="1" width="100%" min-height="170" author="Dad" time="Thu 6:40 PM" hint-size="100%,170px"><span style="font:400 22px/1.25 var(--font-sans)">Library books due Saturday</span></x-import>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.StickyNote" tone="soft" rotate="-1.5" width="100%" min-height="170" author="Mia" time="Thu 4:05 PM" hint-size="100%,170px"><span style="font:400 22px/1.25 var(--font-sans)">Can we have tacos Friday?</span></x-import>
+</div>
+</article>
+
+<article id="photos" data-screen-label="Photos" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">06 · Photos</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Share photos on the screen</h2>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">Add photos from a phone or tablet signed in to Glance: open <strong style="font-weight:540">Photos</strong> and tap Upload.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">Photos play as a slideshow. Use Play/Pause and the arrows, or tap a thumbnail to show it.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">Tap <strong style="font-weight:540">Set as background</strong> to put a photo behind every screen, or <strong style="font-weight:540">Edit details</strong> to fix its name, date or place.</span></li>
+</ol>
+<p style="margin:0;font:330 16px/1.45 var(--font-sans);text-wrap:pretty">Each family has 5 GB of photo space, shared by every screen. Settings › Account shows what’s left.</p>
+</div>
+<div style="background:var(--season-soft);border-radius:24px;padding:clamp(16px,3vw,32px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px">
+<div style="background:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;grid-column:span 2;min-width:0">
+<span style="aspect-ratio:16/10;background:var(--season-block-1);border-radius:8px;display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image" size="48" stroke-width="1.25" hint-size="48px,48px"></x-import></span>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+<span style="display:flex;flex-direction:column;gap:4px"><span style="font:540 18px/1.2 var(--font-sans)">Pumpkin patch</span><span style="font:400 14px/1 var(--font-mono)">OCT 4</span></span>
+<span style="display:flex;gap:6px"><span style="width:44px;height:44px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-left" size="20" hint-size="20px,20px"></x-import></span><span style="width:44px;height:44px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="pause" size="20" hint-size="20px,20px"></x-import></span><span style="width:44px;height:44px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="20" hint-size="20px,20px"></x-import></span><span style="width:44px;height:44px;border-radius:50%;background:var(--surface-soft);display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="maximize" size="20" hint-size="20px,20px"></x-import></span></span>
+</div>
+<span style="display:inline-flex;align-items:center;gap:8px;font:480 16px/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image" size="18" hint-size="18px,18px"></x-import>Set as background</span>
+</div>
+<div style="grid-column:span 2;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+<span style="aspect-ratio:4/3;border-radius:8px;background:var(--season-block-1);box-shadow:0 0 0 2px #fff,0 0 0 4px #000"></span>
+<span style="aspect-ratio:4/3;border-radius:8px;background:var(--season-block-2)"></span>
+<span style="aspect-ratio:4/3;border-radius:8px;background:var(--season-block-3)"></span>
+<span style="aspect-ratio:4/3;border-radius:8px;background:var(--season-block-4)"></span>
+</div>
+</div>
+</article>
+
+<article id="settings" data-screen-label="Settings" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">07 · Settings and seasons</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Make it yours</h2>
+<p style="margin:0;text-wrap:pretty;max-width:520px">Changes apply as soon as you tap. There is no Save button.</p>
+<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="leaf" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty"><strong style="font-weight:540">Season</strong> sets the screen’s colors. Auto follows the month: spring from March, summer from June, fall from September, winter from December.</span></li>
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="image" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty"><strong style="font-weight:540">Background</strong> can be the season color, one photo or a slideshow.</span></li>
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty"><strong style="font-weight:540">Clock and temperature:</strong> 12- or 24-hour, Fahrenheit or Celsius.</span></li>
+</ul>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="background:#fff;border-radius:24px;box-shadow:inset 0 0 0 1px var(--border-hairline);padding:24px;display:flex;flex-direction:column;gap:4px">
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase;margin-bottom:8px">Season · {{ seasonSub }}</span>
+<sc-for list="{{ seasonRows }}" as="r" hint-placeholder-count="5">
+<span style="display:flex;align-items:center;gap:14px;min-height:52px"><span style="width:24px;height:24px;border-radius:50%;box-shadow:inset 0 0 0 2px #000;display:grid;place-items:center;flex-shrink:0"><span style="width:12px;height:12px;border-radius:50%;background:{{ r.dot }}"></span></span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ r.icon }}" size="20" hint-size="20px,20px"></x-import><span style="font:{{ r.weight }} 18px/1 var(--font-sans)">{{ r.label }}</span></span>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+<div data-season="spring" style="display:flex;flex-direction:column;gap:6px"><span style="display:grid;grid-template-columns:1fr 1fr;gap:3px;border-radius:12px;overflow:hidden;aspect-ratio:1"><span style="background:var(--season-block-1)"></span><span style="background:var(--season-block-2)"></span><span style="background:var(--season-block-3)"></span><span style="background:var(--season-block-4)"></span></span><span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Spring</span></div>
+<div data-season="summer" style="display:flex;flex-direction:column;gap:6px"><span style="display:grid;grid-template-columns:1fr 1fr;gap:3px;border-radius:12px;overflow:hidden;aspect-ratio:1"><span style="background:var(--season-block-1)"></span><span style="background:var(--season-block-2)"></span><span style="background:var(--season-block-3)"></span><span style="background:var(--season-block-4)"></span></span><span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Summer</span></div>
+<div data-season="fall" style="display:flex;flex-direction:column;gap:6px"><span style="display:grid;grid-template-columns:1fr 1fr;gap:3px;border-radius:12px;overflow:hidden;aspect-ratio:1"><span style="background:var(--season-block-1)"></span><span style="background:var(--season-block-2)"></span><span style="background:var(--season-block-3)"></span><span style="background:var(--season-block-4)"></span></span><span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Fall</span></div>
+<div data-season="winter" style="display:flex;flex-direction:column;gap:6px"><span style="display:grid;grid-template-columns:1fr 1fr;gap:3px;border-radius:12px;overflow:hidden;aspect-ratio:1"><span style="background:var(--season-block-1)"></span><span style="background:var(--season-block-2)"></span><span style="background:var(--season-block-3)"></span><span style="background:var(--season-block-4)"></span></span><span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Winter</span></div>
+</div>
+</div>
+</article>
+
+<article id="ambient" data-screen-label="Ambient" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">08 · Ambient</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">A calm screen for quiet hours</h2>
+<p style="margin:0;text-wrap:pretty;max-width:520px">Ambient dims the screen to a large clock, the weather and the next event. Good for evenings and overnight.</p>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">In <strong style="font-weight:540">Settings › Ambient screen</strong>, set the hours, for example 6:00 PM – 7:30 AM, and the brightness.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">To start it any time, tap the moon in the menu.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">Tap anywhere on the screen to wake it.</span></li>
+</ol>
+</div>
+<div style="background:var(--season-deep);color:#dcdcdc;border-radius:24px;aspect-ratio:16/10;padding:clamp(20px,4vw,40px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:12px">
+<span style="display:flex;align-items:center;gap:8px;font:400 14px/1 var(--font-mono);text-transform:uppercase"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="map-pin" size="18" hint-size="18px,18px"></x-import>Portland, OR</span>
+<span style="display:flex;align-items:baseline;gap:24px;flex-wrap:wrap"><span style="font:300 clamp(64px,10vw,128px)/0.9 var(--font-sans);letter-spacing:-0.04em;font-variant-numeric:tabular-nums">9:48</span><span style="display:inline-flex;align-items:center;gap:10px;font:300 clamp(28px,3.5vw,44px)/1 var(--font-sans)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="moon" size="32" stroke-width="1.5" hint-size="32px,32px"></x-import>52°</span></span>
+<span style="display:flex;flex-direction:column;gap:6px"><span style="font:400 14px/1 var(--font-mono);text-transform:uppercase">Next · Tomorrow · 8:00 AM</span><span style="font:340 clamp(22px,2.5vw,32px)/1.15 var(--font-sans)">School drop-off</span></span>
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase">Tap anywhere to wake</span>
+</div>
+</article>
+
+<article id="notifications" data-screen-label="Notifications" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">09 · Reminders</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Never miss the next thing</h2>
+<ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="bell" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty">Choose when reminders come in <strong style="font-weight:540">Settings › Notifications</strong>: 15 minutes before, at the start, both, or off.</span></li>
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="monitor" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty">A black strip appears at the top of every screen for 30 seconds. Tap it to see the event.</span></li>
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="smartphone" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty">Phones and tablets with Glance closed get a push notification instead.</span></li>
+<li style="display:grid;grid-template-columns:24px minmax(0,1fr);gap:16px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="volume-2" size="24" hint-size="24px,24px" style="margin-top:2px"></x-import><span style="text-wrap:pretty">Turn the chime on or off in Settings. It never plays during quiet hours.</span></li>
+</ul>
+</div>
+<div style="background:var(--season-soft);border-radius:24px;padding:clamp(16px,3vw,32px);display:flex;flex-direction:column;gap:12px;min-height:340px">
+<div style="background:#000;color:#fff;border-radius:24px;box-shadow:0 24px 64px rgba(0,0,0,.18);padding:16px 20px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="bell" size="28" hint-size="28px,28px"></x-import>
+<span style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px"><span style="display:flex;align-items:center;gap:8px;font:400 13px/1.2 var(--font-mono);text-transform:uppercase"><span style="width:10px;height:10px;border-radius:50%;background:var(--season-block-3);flex-shrink:0"></span>In 15 min · 4:30 PM · Mia</span><span style="font:540 24px/1.15 var(--font-sans)">Soccer practice</span></span>
+<span style="display:inline-flex;align-items:center;gap:8px;background:#fff;color:#000;border-radius:999px;padding:12px 18px;font:480 16px/1 var(--font-sans)">Details<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-right" size="18" hint-size="18px,18px"></x-import></span>
+<span style="position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.16)"><span style="display:block;width:62%;height:100%;background:#fff"></span></span>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:0.8fr 1.6fr;gap:12px">
+<span style="background:var(--season-block-1);border-radius:16px"></span>
+<span style="background:#fff;border-radius:16px"></span>
+</div>
+</div>
+</article>
+
+<article id="phone" data-screen-label="Phone and tablet" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:48px;align-items:center;padding:64px 0;border-top:1px solid var(--border-hairline)">
+<div style="display:flex;flex-direction:column;gap:24px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">10 · Phone and tablet</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">Take Glance with you</h2>
+<p style="margin:0;text-wrap:pretty;max-width:520px">Glance runs on phones and tablets too, with the same calendar, notes and photos. Add it to your home screen, then sign in one of two ways.</p>
+<ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px">
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">1</span><span style="padding-top:3px;text-wrap:pretty">On the big screen, open <strong style="font-weight:540">Settings › Account › Sign in another device</strong>. A code appears.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">2</span><span style="padding-top:3px;text-wrap:pretty">On the phone, tap <strong style="font-weight:540">Scan code from another screen</strong> and point the camera at it. The code lasts 5 minutes.</span></li>
+<li style="display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px"><span style="width:32px;height:32px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font:400 14px/1 var(--font-mono)">3</span><span style="padding-top:3px;text-wrap:pretty">Or sign in with your family’s email and a code, as on the big screen.</span></li>
+</ol>
+</div>
+<div style="background:var(--season-block-4);border-radius:24px;padding:clamp(24px,4vw,40px);display:flex;justify-content:center;align-items:center;gap:24px;flex-wrap:wrap">
+<div style="background:#fff;border-radius:20px;padding:20px;width:200px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+<span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Scan to sign in</span>
+<span style="width:120px;height:120px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-hairline);display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="qr-code" size="88" stroke-width="1.25" hint-size="88px,88px"></x-import></span>
+<span style="font:400 13px/1 var(--font-mono);text-transform:uppercase">Code expires in 4:52</span>
+</div>
+<div style="width:200px;aspect-ratio:9/19;background:#000;border-radius:32px;padding:8px;box-sizing:border-box">
+<div style="height:100%;border-radius:24px;background:#1a1a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px;box-sizing:border-box;color:#fff;text-align:center">
+<span style="width:120px;height:120px;border-radius:16px;box-shadow:inset 0 0 0 3px #fff;display:grid;place-items:center"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="qr-code" size="64" stroke-width="1.25" hint-size="64px,64px"></x-import></span>
+<span style="font:540 15px/1.25 var(--font-sans)">Point at the code on your Glance screen</span>
+<span style="background:#fff;color:#000;border-radius:999px;padding:10px 18px;font:480 14px/1 var(--font-sans)">Cancel</span>
+</div>
+</div>
+</div>
+</article>
+
+<section id="sizes" data-screen-label="Screen sizes" style="padding:96px 0 64px;border-top:1px solid var(--border-hairline);display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px;max-width:720px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">Screen sizes</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px;text-wrap:balance">One app, any screen</h2>
+<p style="margin:0;text-wrap:pretty">Glance rearranges itself to fit the width of the screen. Nothing to set up.</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px">
+<div style="background:var(--surface-soft);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:20px">
+<div style="height:180px;display:grid;place-items:center"><span style="width:100%;max-width:260px;aspect-ratio:16/9;border:3px solid #000;border-radius:12px;padding:8px;box-sizing:border-box;display:grid;grid-template-columns:0.8fr 1.8fr 0.95fr;gap:6px"><span style="background:var(--season-block-1);border-radius:4px"></span><span style="background:#fff;border-radius:4px"></span><span style="background:#fff;border-radius:4px"></span></span></div>
+<span style="font:540 24px/1.2 var(--font-sans)">Large</span>
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase">Wider than 1200 px</span>
+<span style="text-wrap:pretty">Wall and kiosk displays, TVs and laptops. Today fits in three columns with no scrolling.</span>
+</div>
+<div style="background:var(--surface-soft);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:20px">
+<div style="height:180px;display:grid;place-items:center"><span style="width:170px;aspect-ratio:4/3;border:3px solid #000;border-radius:14px;padding:8px;box-sizing:border-box;display:grid;grid-template-columns:0.8fr 1.2fr;grid-template-rows:1.4fr 1fr;gap:6px"><span style="background:var(--season-block-1);border-radius:4px"></span><span style="background:#fff;border-radius:4px"></span><span style="background:#fff;border-radius:4px"></span><span style="background:#fff;border-radius:4px"></span></span></div>
+<span style="font:540 24px/1.2 var(--font-sans)">Normal</span>
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase">769 – 1200 px</span>
+<span style="text-wrap:pretty">Tablets and small laptops. Two columns: the Now panel and schedule first, then notes and the photo.</span>
+</div>
+<div style="background:var(--surface-soft);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:20px">
+<div style="height:180px;display:grid;place-items:center"><span style="width:84px;height:172px;border:3px solid #000;border-radius:18px;padding:7px;box-sizing:border-box;display:flex;flex-direction:column;gap:5px"><span style="flex:0.7;background:var(--season-block-1);border-radius:4px"></span><span style="flex:1.4;background:#fff;border-radius:4px"></span><span style="flex:0.8;background:#fff;border-radius:4px"></span></span></div>
+<span style="font:540 24px/1.2 var(--font-sans)">Small</span>
+<span style="font:400 14px/1 var(--font-mono);text-transform:uppercase">768 px and below</span>
+<span style="text-wrap:pretty">Phones. One scrolling column, and the menu opens from the edge.</span>
+</div>
+</div>
+</section>
+
+<section id="faq" data-screen-label="FAQ" style="padding:64px 0 96px;border-top:1px solid var(--border-hairline);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:48px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,24px">FAQ</x-import>
+<h2 style="margin:0;font:340 clamp(36px,5vw,64px)/1.1 var(--font-sans);letter-spacing:-0.96px">Questions</h2>
+</div>
+<div style="display:flex;flex-direction:column;grid-column:span 2;min-width:min(100%,320px)">
+<sc-for list="{{ faq }}" as="q" hint-placeholder-count="7">
+<div style="border-bottom:1px solid var(--border-hairline-soft)">
+<button type="button" onClick="{{ q.toggle }}" aria-expanded="{{ q.open }}" style="all:unset;box-sizing:border-box;width:100%;min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;cursor:pointer;font:540 20px/1.3 var(--font-sans)"><span>{{ q.q }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ q.icon }}" size="24" hint-size="24px,24px"></x-import></button>
+<sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}"><p style="margin:0 0 24px;max-width:680px;text-wrap:pretty">{{ q.a }}</p></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</main>
+
+<footer style="background:var(--season-deep);color:#fff">
+<div style="max-width:1200px;margin:0 auto;padding:40px clamp(20px,4vw,48px);display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap">
+<span style="font:540 24px/1 var(--font-sans)">Glance</span>
+<a href="Glance%20Terms%20of%20Service.dc.html" style="color:#fff;font:480 17px/44px var(--font-sans)">Terms of Service</a>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Look&quot;},&quot;expandFaq&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;FAQ&quot;}}">
+class Component extends DCLogic {
+  state = { open: { 0: true } };
+  season() {
+    const s = this.props.season ?? 'auto';
+    if (s !== 'auto') return s;
+    const m = new Date().getMonth();
+    return m >= 2 && m <= 4 ? 'spring' : m >= 5 && m <= 7 ? 'summer' : m >= 8 && m <= 10 ? 'fall' : 'winter';
+  }
+  renderVals() {
+    const season = this.season();
+    const auto = (this.props.season ?? 'auto') === 'auto';
+    const cap = season[0].toUpperCase() + season.slice(1);
+    const days = [['Sun',4,0],['Mon',5,1],['Tue',6,1],['Wed',7,0],['Thu',8,1],['Fri',9,1],['Sat',10,1]].map(([wd,n,ev]) => ({
+      wd, n, bg: n === 9 ? '#000' : 'transparent', fg: n === 9 ? '#fff' : '#000', dot: ev ? 'var(--season-accent)' : 'transparent'
+    }));
+    const forecast = [['Fri','cloud-sun','68°','51°'],['Sat','cloud-rain','61°','49°'],['Sun','cloud-drizzle','59°','47°'],['Mon','cloud','62°','48°'],['Tue','sun','66°','50°'],['Wed','sun','69°','52°'],['Thu','cloud-sun','65°','50°']].map(([d,icon,hi,lo],i) => ({
+      d, icon, hi, lo, bg: i === 0 ? '#000' : '#fff', fg: i === 0 ? '#fff' : '#000'
+    }));
+    const rows = [['auto','Auto','calendar-days'],['spring','Spring','flower-2'],['summer','Summer','sun'],['fall','Fall','leaf'],['winter','Winter','snowflake']];
+    const sel = auto ? 'auto' : season;
+    const seasonRows = rows.map(([k,label,icon]) => ({ label, icon, dot: k === sel ? '#000' : 'transparent', weight: k === sel ? 540 : 330 }));
+    const seasonSub = auto ? 'Follows the month · now ' + cap : 'Fixed to ' + cap;
+    const all = !!this.props.expandFaq;
+    const items = [
+      ['Does everyone need their own account?', 'No. Glance uses one account per family, tied to one email address. Everyone shares the same calendar, notes and photos, and anyone can sign a new screen in with that email.'],
+      ['Where did the menu go?', 'It hides after 15 seconds without a touch so the screen stays clear. Tap the white tab on the left edge to bring it back. To keep it on screen, turn off Settings › Hide sidebar when idle.'],
+      ['How do I change or delete an event?', 'Tap the event to open its details, then tap Edit, or tap the word you want to change. Delete is on the Edit page: tap it once, then tap Delete event to confirm. Events that have ended can’t be changed.'],
+      ['What happens if the internet drops?', 'The screen keeps showing what it already has. Events and notes you add are saved on the screen as “Waiting to post” and sent once it reconnects.'],
+      ['How do I sign a screen out?', 'Go to Settings › Account › Sign out. You can sign out this screen only, or every phone, tablet and screen on the account. Calendars, notes and photos stay saved.'],
+      ['Why is the clock in the wrong time zone?', 'The clock follows the place set in Settings › Location, not the device’s own clock. Change the location and every time on the screen updates.'],
+      ['How much photo space do we have?', '5 GB per family, shared by every screen. Settings › Account shows how much is left. Delete photos in Photos to make room.'],
+      ['Why does the screen go back to Today?', 'After a few minutes without a touch, Glance returns to Today so the day is always showing. Set the time, from 1 to 15 minutes, or turn it off in Settings › Back to Today after.']
+    ];
+    const faq = items.map(([q,a],i) => {
+      const open = all || !!this.state.open[i];
+      return { q, a, open, icon: open ? 'chevron-up' : 'chevron-down', toggle: () => this.setState(s => ({ open: { ...s.open, [i]: !s.open[i] } })) };
+    });
+    return { season, days, forecast, seasonRows, seasonSub, faq };
+  }
+}
+</script>
+</body>
+</html>

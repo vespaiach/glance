@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>html,body{margin:0;height:100%;background:#fff;font-family:var(--font-sans)}a{color:#000}a:hover{color:#000}</style>
+</helmet>
+<div data-season="{{ season }}" data-screen-label="{{ scrLbl }}" style="position:relative;width:100%;height:100%;box-sizing:border-box;padding:{{ L.pad }};background:var(--surface-soft);display:flex;flex-direction:column;gap:{{ L.gap }};font-family:var(--font-sans);color:var(--text-primary);overflow:hidden">
+
+
+
+<sc-if value="{{ bar.top }}" hint-placeholder-val="{{ true }}"><div data-ds-new="TaskBar" style="flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;min-height:{{ L.barH }};min-width:0">
+<sc-if value="{{ top.title }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:12px;min-width:0;font-size:{{ L.hdFs }};font-weight:540;letter-spacing:-0.4px;line-height:1.1;white-space:nowrap"><sc-if value="{{ sv.on }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="circle-check" size="{{ sv.ic }}" hint-size="28px,28px"></x-import></sc-if><sc-if value="{{ sv.clock }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="clock" size="{{ sv.ic }}" hint-size="28px,28px"></x-import></sc-if>{{ pageTitle }}</span><span style="flex:1"></span></sc-if>
+<sc-if value="{{ top.ask }}" hint-placeholder-val="{{ false }}"><span style="flex:1 1 auto;font-size:{{ L.askFs }};font-weight:540;white-space:nowrap">Discard changes?</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" size="{{ L.btn }}" on-click="{{ keep }}" hint-size="130px,44px">Keep editing</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" size="{{ L.btn }}" on-click="{{ discard }}" hint-size="100px,44px">Discard</x-import></sc-if>
+<sc-if value="{{ top.del }}" hint-placeholder-val="{{ false }}"><sc-if value="{{ delIdle }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" size="{{ L.btn }}" icon="trash-2" on-click="{{ askDel }}" hint-size="110px,44px">Delete</x-import></sc-if><sc-if value="{{ delAsk }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" size="{{ L.btn }}" on-click="{{ keepDel }}" hint-size="90px,44px">Keep</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" size="{{ L.btn }}" icon="trash-2" dc-props="{{ dangerBtn }}" on-click="{{ doDel }}" hint-size="160px,44px">Delete event</x-import></sc-if></sc-if>
+<sc-if value="{{ top.save }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" size="{{ L.btn }}" icon="check" disabled="{{ noSave }}" full-width="{{ saveFull }}" on-click="{{ save }}" hint-size="150px,44px">{{ saveLbl }}</x-import></sc-if>
+<sc-if value="{{ top.edit }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" size="{{ L.btn }}" icon="pencil" on-click="{{ toEdit }}" hint-size="100px,44px">Edit</x-import></sc-if><sc-if value="{{ top.another }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" size="{{ L.btn }}" icon="plus" on-click="{{ reset }}" hint-size="160px,44px">Add another</x-import></sc-if><sc-if value="{{ xOn }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="x" variant="canvas" size="touch" label="{{ closeAria }}" on-click="{{ back }}" hint-size="56px,56px"></x-import></sc-if>
+</div></sc-if>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:{{ bodyCols }};gap:{{ L.gap }}">
+<div style="min-width:0;min-height:0;display:flex;flex-direction:column;gap:{{ L.gap }}">
+
+<section data-ds-new="EventSentence" aria-label="Event summary" style="position:relative;z-index:3;flex:none;background:var(--surface-hero);transition:background 600ms ease-in-out;border-radius:24px;padding:{{ L.sp }};display:flex;flex-direction:column;gap:{{ L.pillGap }}">
+
+<p style="margin:0;font-size:{{ L.fs }};font-weight:340;line-height:1.42;letter-spacing:{{ L.ls }};text-wrap:pretty"><sc-for list="{{ parts }}" as="p" hint-placeholder-count="12"><sc-if value="{{ p.w }}" hint-placeholder-val="{{ true }}"><span>{{ p.text }}</span></sc-if><sc-if value="{{ p.t }}" hint-placeholder-val="{{ false }}"><span role="{{ p.role }}" tabIndex="{{ p.ti }}" onClick="{{ p.tap }}" onKeyDown="{{ p.key }}" aria-pressed="{{ p.sel }}" aria-label="{{ p.aria }}" style="display:inline;white-space:{{ p.ws }};margin:0 -0.1em;padding:0.04em 0.1em;border:0;border-radius:6px;background:{{ p.bg }};outline:none;color:{{ p.fg }};font:inherit;font-weight:{{ p.fw }};letter-spacing:inherit;text-decoration-line:{{ p.dl }};text-decoration-style:{{ p.deco }};text-decoration-color:{{ p.fg }};text-decoration-thickness:{{ L.ul }};text-underline-offset:0.16em;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:{{ p.cur }};transition:background 180ms"><sc-if value="{{ p.dot }}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display:inline-block;width:0.36em;height:0.36em;margin-right:0.22em;border-radius:9999px;background:{{ p.dc }};box-shadow:0 0 0 2px var(--surface-canvas);vertical-align:0.1em"></span></sc-if>{{ p.text }}</span></sc-if></sc-for></p>
+<sc-if value="{{ vw.notes }}" hint-placeholder-val="{{ false }}"><p data-ds-new="EventNotesText" style="margin:4px 0 0;max-width:56ch;font-size:{{ L.noteFs }};font-weight:330;line-height:1.4;letter-spacing:-0.2px;white-space:pre-line;text-wrap:pretty">{{ vw.text }}</p></sc-if>
+<sc-if value="{{ vw.rem }}" hint-placeholder-val="{{ false }}"><div style="min-height:44px;display:flex;align-items:center;gap:12px;font-size:18px;font-weight:480"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ vw.remIcon }}" size="18" hint-size="18px,18px"></x-import>{{ vw.remTxt }}</div></sc-if>
+<sc-if value="{{ vw.locked }}" hint-placeholder-val="{{ false }}"><div style="min-height:44px;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:480"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="lock" size="18" hint-size="18px,18px"></x-import>This event has ended and can’t be changed.</div></sc-if>
+<sc-if value="{{ edRow }}" hint-placeholder-val="{{ true }}">
+<div style="position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px 28px;margin:0 -6px">
+<button type="button" onClick="{{ pill.notesTap }}" aria-pressed="{{ pill.notesSel }}" style="min-height:44px;max-width:100%;display:inline-flex;align-items:center;gap:8px;padding:0 6px;border:0;border-radius:6px;background:{{ pill.notesBg }};color:var(--text-primary);font-size:18px;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:5px;font-family:inherit;font-weight:480;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(0.97)"><sc-if value="{{ pill.notesEmpty }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="plus" size="18" hint-size="18px,18px"></x-import></sc-if>{{ pill.notesLbl }}</button>
+<sc-if value="{{ pill.addEnd }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ pill.addEndTap }}" style="min-height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 6px;border:0;border-radius:6px;background:transparent;font-size:18px;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:5px;color:var(--text-primary);font-family:inherit;font-weight:480;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="plus" size="18" hint-size="18px,18px"></x-import>Add end time</button></sc-if>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 28px;margin:0 -6px"><sc-if value="{{ clash.on }}" hint-placeholder-val="{{ false }}"><span data-ds-new="ClashNote" role="status" style="display:inline-flex;align-items:center;gap:12px;min-height:44px;min-width:0;padding:0 6px;font-size:18px;font-weight:330;line-height:1.35"><span aria-hidden="true" style="width:12px;height:12px;border-radius:9999px;background:var(--action-accent);flex:none"></span><span><span style="font-weight:540">Same time:</span> {{ clash.text }}</span></span></sc-if><sc-if value="{{ ntfBell }}" hint-placeholder-val="{{ false }}"><button data-ds-new="NotifyBell" type="button" aria-pressed="{{ ntf.sel }}" aria-label="{{ ntf.aria }}" onClick="{{ ntf.tap }}" style="margin-left:auto;width:44px;height:44px;flex:none;display:grid;place-items:center;padding:0;border:0;border-radius:9999px;background:transparent;color:var(--text-primary);cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ ntf.icon }}" size="24" hint-size="24px,24px"></x-import></button></sc-if><sc-if value="{{ ntfSw }}" hint-placeholder-val="{{ true }}"><button data-ds-new="NotifySwitch" type="button" role="switch" aria-checked="{{ ntf.sel }}" onClick="{{ ntf.tap }}" style="margin-left:auto;min-height:44px;display:inline-flex;align-items:center;gap:12px;padding:0 6px;border:0;border-radius:8px;background:transparent;color:var(--text-primary);font-family:inherit;font-size:18px;font-weight:480;white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span aria-hidden="true" style="position:relative;width:40px;height:24px;border-radius:9999px;background:{{ ntfUi.bg }};box-shadow:inset 0 0 0 1px var(--black);transition:background 180ms;flex:none"><span style="position:absolute;top:4px;left:4px;width:16px;height:16px;border-radius:9999px;background:{{ ntfUi.knob }};transform:{{ ntfUi.x }};transition:transform 180ms var(--ease-out),background 180ms"></span></span>Notification</button></sc-if>
+</div>
+</sc-if>
+</section>
+
+<section data-ds-new="EventPicker" aria-label="{{ pk.label }}" style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:var(--surface-canvas);border-radius:24px;padding:{{ L.pkP }};box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<sc-if value="{{ viewing }}" hint-placeholder-val="{{ false }}">
+<div data-ds-new="EventFacts" style="display:grid;grid-template-columns:{{ L.factCols }};gap:{{ L.factGap }};align-items:start">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="220px,20px">{{ vf.wxLbl }}</x-import>
+<sc-if value="{{ pv.wx.has }}" hint-placeholder-val="{{ true }}"><div style="background:var(--surface-weather);border-radius:16px;padding:{{ L.wxP }};display:flex;align-items:center;gap:20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ pv.wx.icon }}" size="{{ L.wxI }}" stroke-width="1.25" hint-size="48px,48px"></x-import><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:{{ L.wxT }};font-weight:300;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums">{{ pv.wx.temp }}</span><span style="font-size:18px;font-weight:330">{{ pv.wx.cond }}</span></div></div></sc-if>
+<sc-if value="{{ pv.wx.none }}" hint-placeholder-val="{{ false }}"><span style="font-size:18px;font-weight:330;line-height:1.45">No forecast for this date yet.</span></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="220px,20px">{{ vf.also }}</x-import>
+<sc-for list="{{ pv.rows }}" as="r" hint-placeholder-count="1"><div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ r.time }}</span><span style="font-size:{{ L.rowFs }};line-height:1.35;text-wrap:pretty"><span style="font-weight:540">{{ r.title }}</span> <span style="font-weight:330">{{ r.who }}</span></span></div></sc-for>
+<sc-if value="{{ vf.empty }}" hint-placeholder-val="{{ false }}"><span style="font-size:18px;font-weight:330">{{ vf.emptyTxt }}</span></sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ editing }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:16px;min-height:44px;flex:none">
+<span style="white-space:nowrap;flex:none;display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">{{ pk.label }}</x-import></span>
+<sc-if value="{{ is.mer }}" hint-placeholder-val="{{ false }}"><div data-ds-new="MeridiemToggle" role="radiogroup" aria-label="AM or PM" style="position:relative;display:grid;grid-template-columns:1fr 1fr;width:128px;height:44px;padding:4px;box-sizing:border-box;border-radius:9999px;background:var(--surface-soft)"><span aria-hidden="true" style="position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:9999px;background:{{ tp.thumb }};transform:{{ tp.merX }};transition:transform 220ms cubic-bezier(.3,.7,.2,1),background 180ms"></span><button type="button" role="radio" aria-checked="{{ tp.isAm }}" disabled="{{ tp.merDis }}" onClick="{{ tp.toAm }}" style="position:relative;border:0;background:transparent;padding:0;font-family:var(--font-mono);font-size:14px;letter-spacing:0.5px;color:{{ tp.amFg }};cursor:pointer;transition:color 220ms">AM</button><button type="button" role="radio" aria-checked="{{ tp.isPm }}" disabled="{{ tp.merDis }}" onClick="{{ tp.toPm }}" style="position:relative;border:0;background:transparent;padding:0;font-family:var(--font-mono);font-size:14px;letter-spacing:0.5px;color:{{ tp.pmFg }};cursor:pointer;transition:color 220ms">PM</button></div></sc-if>
+<sc-if value="{{ is.start }}" hint-placeholder-val="{{ false }}"><button data-ds-new="AllDayToggle" type="button" role="switch" aria-checked="{{ allDay.sel }}" onClick="{{ toggleAllDay }}" style="height:44px;display:inline-flex;align-items:center;gap:8px;padding:0 20px 0 14px;border:0;border-radius:9999px;background:{{ allDay.bg }};color:{{ allDay.fg }};font-family:inherit;font-size:16px;font-weight:{{ allDay.w }};white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(0.97)"><span style="display:flex;transform:{{ allDay.rot }};transition:transform 420ms cubic-bezier(.2,.7,.2,1)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sun" size="18" hint-size="18px,18px"></x-import></span>All day</button></sc-if>
+<span style="flex:1"></span>
+<sc-if value="{{ pk.hasNext }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon-right="arrow-right" dc-props="{{ softBtn }}" on-click="{{ next }}" hint-size="140px,44px">{{ pk.nextLbl }}</x-import></sc-if>
+</div>
+
+<sc-if value="{{ is.title }}" hint-placeholder-val="{{ true }}">
+<textarea ref="{{ titleRef }}" aria-label="Title" value="{{ d.title }}" onChange="{{ on.title }}" onKeyDown="{{ on.enter }}" placeholder="What’s happening" maxlength="140" rows="2" style="width:100%;min-height:{{ L.inH }};flex:none;box-sizing:border-box;padding:14px 20px;line-height:1.3;resize:none;border:1px solid var(--border-hairline);border-radius:8px;background:var(--surface-canvas);font-family:var(--font-sans);font-size:{{ L.inFs }};font-weight:400;letter-spacing:-0.3px;color:var(--text-primary);outline:none" style-focus="border-color:var(--black);box-shadow:0 0 0 1px var(--black)"></textarea>
+<div style="display:flex;flex-direction:column;gap:12px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="80px,20px">Recent</x-import><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ pk.recent }}" as="c" hint-placeholder-count="6"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="min-height:48px;padding:0 20px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out,background 240ms ease,color 240ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for></div></div>
+</sc-if>
+
+<sc-if value="{{ is.date }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:{{ dateColsX }};gap:{{ L.dateGap }};align-items:start">
+<div style="display:flex;flex-direction:{{ L.qDir }};flex-wrap:wrap;gap:8px"><sc-for list="{{ dp.quick }}" as="q" hint-placeholder-count="3"><button type="button" onClick="{{ q.tap }}" aria-pressed="{{ q.sel }}" style="min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;border:0;border-radius:9999px;background:{{ q.bg }};color:{{ q.fg }};font-family:inherit;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(0.97)"><span style="font-size:17px;font-weight:540">{{ q.label }}</span><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ q.sub }}</span></button></sc-for></div>
+<div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="chevron-left" label="Previous month" on-click="{{ dp.prev }}" hint-size="44px,44px"></x-import><span aria-live="polite" style="font-size:17px;font-weight:540">{{ dp.month }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="chevron-right" label="Next month" on-click="{{ dp.next }}" hint-size="44px,44px"></x-import></div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px"><sc-for list="{{ dp.wds }}" as="w" hint-placeholder-count="7"><span aria-hidden="true" style="text-align:center;font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase;padding-bottom:4px">{{ w }}</span></sc-for><sc-for list="{{ dp.cells }}" as="c" hint-placeholder-count="35"><button type="button" onClick="{{ c.tap }}" disabled="{{ c.dis }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:44px;min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.ring }};visibility:{{ c.vis }};font-family:inherit;font-size:16px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:{{ c.cur }};transition:background 180ms">{{ c.label }}</button></sc-for></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.time }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="display:grid;grid-template-columns:{{ L.rowCols }};gap:8px 16px;align-items:center"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Hour</span><div style="display:grid;grid-template-columns:{{ L.hCols }};gap:6px"><sc-for list="{{ tp.hours }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" disabled="{{ c.dis }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ L.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:17px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:{{ c.cur }};transition:transform 120ms ease-out,background 240ms ease,color 240ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for></div></div>
+<div style="display:grid;grid-template-columns:{{ L.rowCols }};gap:8px 16px;align-items:center"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Minutes</span><div style="display:grid;grid-template-columns:{{ L.hCols }};gap:6px"><sc-for list="{{ tp.mins }}" as="c" hint-placeholder-count="12"><button type="button" onClick="{{ c.tap }}" disabled="{{ c.dis }}" aria-pressed="{{ c.sel }}" aria-label="{{ c.aria }}" style="height:{{ L.cellH }};min-width:0;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:17px;font-weight:{{ c.w }};font-variant-numeric:tabular-nums;cursor:{{ c.cur }};transition:transform 120ms ease-out,background 240ms ease,color 240ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for></div></div>
+<sc-if value="{{ is.end }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:{{ L.rowCols }};gap:8px 16px;align-items:center"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">Length</span><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ tp.lens }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="height:{{ L.cellH }};padding:0 20px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:16px;font-weight:{{ c.w }};white-space:nowrap;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="x" on-click="{{ tp.noEnd }}" hint-size="150px,44px">No end time</x-import></div></div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ is.who }}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="Who it’s for" style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ who }}" as="c" hint-placeholder-count="10"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="min-height:52px;display:inline-flex;align-items:center;gap:10px;padding:0 22px 0 16px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:17px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out,background 180ms" style-active="transform:scale(0.97)"><sc-if value="{{ c.all }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="18" hint-size="18px,18px"></x-import></sc-if><sc-if value="{{ c.dot }}" hint-placeholder-val="{{ true }}"><span style="width:14px;height:14px;border-radius:9999px;background:{{ c.c }};flex:none"></span></sc-if>{{ c.label }}</button></sc-for></div>
+</sc-if>
+
+<sc-if value="{{ is.place }}" hint-placeholder-val="{{ false }}">
+<input ref="{{ placeRef }}" type="text" aria-label="Where" value="{{ d.place }}" onChange="{{ on.place }}" onKeyDown="{{ on.enter }}" placeholder="Home, school, park…" maxlength="60" style="width:100%;height:{{ L.inH }};flex:none;box-sizing:border-box;padding:0 20px;border:1px solid var(--border-hairline);border-radius:8px;background:var(--surface-canvas);font-family:var(--font-sans);font-size:{{ L.inFs }};font-weight:400;letter-spacing:-0.3px;color:var(--text-primary);outline:none" style-focus="border-color:var(--black);box-shadow:0 0 0 1px var(--black)">
+<div style="display:flex;flex-direction:column;gap:12px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Recent places</x-import><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ pk.places }}" as="c" hint-placeholder-count="5"><button type="button" onClick="{{ c.tap }}" aria-pressed="{{ c.sel }}" style="min-height:48px;padding:0 20px;border:0;border-radius:9999px;background:{{ c.bg }};color:{{ c.fg }};font-family:inherit;font-size:16px;font-weight:480;cursor:pointer;transition:transform 120ms ease-out,background 240ms ease,color 240ms ease" style-active="transform:scale(0.97)">{{ c.label }}</button></sc-for></div></div>
+</sc-if>
+
+<sc-if value="{{ is.notes }}" hint-placeholder-val="{{ false }}">
+<textarea ref="{{ notesRef }}" aria-label="Notes" value="{{ d.notes }}" onChange="{{ on.notes }}" placeholder="Anything to remember" maxlength="280" rows="4" style="width:100%;flex:none;box-sizing:border-box;padding:16px 20px;border:1px solid var(--border-hairline);border-radius:8px;background:var(--surface-canvas);font-family:var(--font-sans);font-size:20px;font-weight:400;line-height:1.4;color:var(--text-primary);outline:none;resize:none" style-focus="border-color:var(--black);box-shadow:0 0 0 1px var(--black)"></textarea>
+</sc-if>
+</sc-if>
+</section>
+</div>
+
+<sc-if value="{{ asideOn }}" hint-placeholder-val="{{ false }}">
+<aside data-ds-new="DayPreview" aria-label="{{ pv.when }}" style="min-height:0;overflow-y:auto;overscroll-behavior:contain;background:var(--surface-canvas);border-radius:24px;padding:32px;box-sizing:border-box;display:flex;flex-direction:column;gap:32px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="240px,20px">{{ pv.when }}</x-import>
+<sc-if value="{{ pv.wx.has }}" hint-placeholder-val="{{ true }}"><div style="background:var(--surface-weather);border-radius:16px;padding:24px;display:flex;align-items:center;gap:20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ pv.wx.icon }}" size="48" stroke-width="1.25" hint-size="48px,48px"></x-import><div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:56px;font-weight:300;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums">{{ pv.wx.temp }}</span><span style="font-size:18px;font-weight:330">{{ pv.wx.cond }}</span></div></div></sc-if>
+<sc-if value="{{ pv.wx.none }}" hint-placeholder-val="{{ false }}"><span style="font-size:18px;font-weight:330;line-height:1.45">No forecast for this date yet.</span></sc-if>
+<div style="display:flex;flex-direction:column;gap:20px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="200px,20px">{{ pv.also }}</x-import><sc-for list="{{ pv.rows }}" as="r" hint-placeholder-count="2"><div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:var(--font-mono);font-size:var(--type-caption-size);letter-spacing:var(--type-caption-ls);text-transform:uppercase">{{ r.time }}</span><span style="font-size:18px;line-height:1.35"><span style="font-weight:540">{{ r.title }}</span> <span style="font-weight:330">{{ r.who }}</span></span></div></sc-for><sc-if value="{{ pv.empty }}" hint-placeholder-val="{{ false }}"><span style="font-size:18px;font-weight:330">Nothing else at this time.</span></sc-if></div>
+</aside>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;size&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;small&quot;,&quot;normal&quot;,&quot;large&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;'auto'|'small'|'normal'|'large'&quot;},&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;act&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;title&quot;,&quot;date&quot;,&quot;start&quot;,&quot;end&quot;,&quot;who&quot;,&quot;place&quot;,&quot;notes&quot;],&quot;default&quot;:&quot;title&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;filled&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;new&quot;,&quot;edit&quot;,&quot;view&quot;],&quot;default&quot;:&quot;new&quot;,&quot;tsType&quot;:&quot;'new'|'edit'|'view'&quot;}}">
+class Component extends DCLogic {
+  static TODAY = new Date(2026, 9, 9);
+  static PEOPLE = [['an', 'Minh-An', 'var(--block-lilac)'], ['hy', 'Minh-Hy', 'var(--block-sky)'], ['mom', 'Mom', 'var(--block-coral)'], ['dad', 'Dad', 'var(--block-mint)'], ['thang', 'Thang', 'var(--block-sun)'], ['tin', 'Tin', 'var(--block-pink)'], ['nghe', 'Nghe', 'var(--block-lime)'], ['an2', 'An', 'var(--block-rust)'], ['nga', 'Nga', 'var(--block-glacier)']];
+  static EVENTS = [[465, 510, 'School drop-off', ['an', 'hy', 'dad']], [540, 600, 'Swim practice', ['tin']], [615, 675, 'Dentist', ['mom', 'an']], [720, 780, 'Lunch with Bà', ['nga', 'an2']], [810, 900, 'Soccer practice', ['thang']], [930, 990, 'Piano lesson', ['hy']], [1020, 1080, 'Groceries', ['dad', 'nghe']], [1110, 1170, 'Family dinner', null]];
+  static DAILY = { 9: ['cloud-sun', 68], 10: ['cloud-rain', 59], 11: ['cloud', 61], 12: ['sun', 66], 13: ['sun', 69], 14: ['cloud-sun', 65], 15: ['cloud-lightning', 58] };
+  static COND = { 'sun': 'Sunny', 'cloud-sun': 'Partly cloudy', 'cloud': 'Cloudy', 'cloud-rain': 'Rain · 80%', 'cloud-lightning': 'Storms · 70%' };
+  static ORDER = ['title', 'date', 'start', 'end', 'who', 'place', 'notes'];
+  static LABEL = { title: 'What’s happening', date: 'Day', start: 'Starts', end: 'Ends', who: 'Who it’s for', place: 'Where', notes: 'Notes' };
+  static RECENT = ['Soccer practice', 'Swim practice', 'Piano lesson', 'Dentist', 'Family dinner', 'Groceries'];
+  static PLACES = ['Home', 'School', 'Riverside Park', 'Community pool', 'Grandma’s'];
+  static DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  static MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  static MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  static draft(filled) { return { title: filled ? 'Soccer practice' : '', y: 2026, m: 9, day: 9, start: 660, end: 720, allDay: false, who: filled ? ['thang', 'an'] : [], place: filled ? 'Riverside Park' : '', notes: '', notify: true }; }
+  static fromEvent(e, ppl) { const all = (e.who || []).length >= ppl.length; return { title: e.title || '', y: Math.floor(e.ym / 12), m: e.ym % 12, day: e.day, start: e.start ?? 660, end: e.end === undefined ? Math.min((e.start ?? 660) + 60, 1435) : e.end, allDay: !!e.allDay, who: all ? [] : [...(e.who || [])], place: e.location || '', notes: e.notes || '', notify: e.notify !== false }; }
+  static init(p) { const ppl = p.people || Component.PEOPLE, ev = p.event, V = p.mode === 'view', ed = p.mode === 'edit' || V, f = !!p.filled || ed, d = ev ? Component.fromEvent(ev, ppl) : Component.draft(!!p.filled || V); return { d, orig: JSON.stringify(d), ask: false, delAsk: false, set: { date: f, start: f, end: f, who: f }, act: Component.ORDER.includes(p.act) ? p.act : 'title', vy: d.y * 12 + d.m, pv: false, saved: false, view: V, done: false }; }
+  state = { ...Component.init(this.props || {}), vw: window.innerWidth };
+  componentDidMount() { this.onResize = () => this.setState({ vw: window.innerWidth }); window.addEventListener('resize', this.onResize); }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); }
+  componentDidUpdate(pp) { const p = this.props || {}; if (pp.act !== p.act || pp.filled !== p.filled || pp.mode !== p.mode) this.setState(Component.init(p), () => { if (pp.mode === 'view' && p.mode !== 'view') this.focusText(this.state.act); }); }
+  reset() { const d = Component.draft(false); this.setState({ d, orig: JSON.stringify(d), ask: false, delAsk: false, set: { date: false, start: false, end: false, who: false }, act: 'title', vy: 2026 * 12 + 9, pv: false, saved: false, view: false, done: false }); }
+  toView() { this.setState((s) => ({ d: JSON.parse(s.orig), view: true, ask: false, delAsk: false, pv: false, saved: false })); }
+  patch(o) { this.setState((s) => { const set = { ...s.set }; if ('start' in o || 'allDay' in o) set.start = true; if ('end' in o && o.end != null && !('start' in o)) set.end = true; if ('who' in o) set.who = true; return { d: { ...s.d, ...o }, saved: false, set }; }); }
+  titleRef = (el) => { this._titleEl = el; };
+  placeRef = (el) => { this._placeEl = el; };
+  notesRef = (el) => { this._notesEl = el; };
+  focusField(k) { const t = { title: this._titleEl, place: this._placeEl, notes: this._notesEl }[k]; if (!t) return; const n = t.value.length; t.focus({ preventScroll: true }); try { t.setSelectionRange(n, n); } catch (e) {} }
+  focusText(k) { if (k === 'place' || k === 'notes') this.focusField(k); }
+  go(k, focus) { this.setState((s) => ({ act: k, pv: false, saved: false, set: k in s.set ? { ...s.set, [k]: true } : s.set }), () => { if (focus) this.focusField(k); }); }
+  setStart(m) { const d = this.state.d, dur = d.end != null ? d.end - d.start : null; this.patch({ start: m, end: dur != null ? Math.min(m + dur, 1435) : null, allDay: false }); }
+  steps(d) { return Component.ORDER.filter((k) => !(d.allDay && k === 'end') && !(k === 'end' && d.end == null)); }
+  renderVals() {
+    const S = this.state, P = this.props || {}, C = Component, d = S.d;
+    const size = ['small', 'normal', 'large'].includes(P.size) ? P.size : S.vw <= 768 ? 'small' : S.vw <= 1200 ? 'normal' : 'large';
+    const sm = size === 'small', lg = size === 'large', VA = 'a';
+    const L = sm ? { pad: '12px', gap: '12px', hdP: '12px 16px 12px 12px', ib: 'md', hdFs: '22px', cols: 'minmax(0,1fr)', sp: '16px 20px 12px', hdMb: '8px', fs: '28px', ls: '-0.4px', ul: '2px', pillGap: '12px', pkP: '20px', cellH: '44px', hCols: 'repeat(6,minmax(0,1fr))', rowCols: 'minmax(0,1fr)', aside: false, cancel: false, dateCols: 'minmax(0,1fr)', dateGap: '20px', qDir: 'row', inH: '56px', inFs: '22px', popL: '0', popR: '0', popW: 'auto', noteFs: '18px', factCols: 'minmax(0,1fr)', factGap: '28px', wxI: 40, wxT: '44px', wxP: '20px', rowFs: '17px', barH: '56px', btn: 'md', tabs: 'md', stripP: '16px 20px', chipH: '48px', chipFs: '18px', clFs: '18px', askFs: '18px', dateCols3: 'minmax(0,1fr)' }
+      : lg ? { pad: '48px', gap: '24px', hdP: '20px 24px', ib: 'touch', hdFs: '32px', cols: 'minmax(0,1fr) minmax(400px,30%)', sp: '32px 48px 24px', hdMb: '28px', fs: '52px', ls: '-1.1px', ul: '3px', pillGap: '16px', pkP: '28px 48px 36px', cellH: '56px', hCols: 'repeat(12,minmax(0,1fr))', rowCols: '96px minmax(0,1fr)', aside: true, cancel: true, dateCols: '300px minmax(0,480px)', dateGap: '56px', qDir: 'column', inH: '72px', inFs: '32px', popL: 'auto', popR: '0', popW: '420px', noteFs: '26px', factCols: '420px minmax(0,1fr)', factGap: '64px', wxI: 48, wxT: '56px', wxP: '24px', rowFs: '20px', barH: '72px', btn: 'lg', tabs: 'lg', stripP: '24px 32px', chipH: '64px', chipFs: '20px', clFs: '24px', askFs: '24px', dateCols3: '300px minmax(0,480px) minmax(0,1fr)' }
+      : { pad: '24px', gap: '16px', hdP: '16px 20px', ib: 'touch', hdFs: '28px', cols: 'minmax(0,1fr)', sp: '24px 32px 16px', hdMb: '20px', fs: '40px', ls: '-0.8px', ul: '3px', pillGap: '12px', pkP: '24px 32px 32px', cellH: '52px', hCols: 'repeat(12,minmax(0,1fr))', rowCols: '96px minmax(0,1fr)', aside: false, cancel: true, dateCols: '260px minmax(0,440px)', dateGap: '48px', qDir: 'column', inH: '64px', inFs: '28px', popL: 'auto', popR: '0', popW: '420px', noteFs: '22px', factCols: '320px minmax(0,1fr)', factGap: '48px', wxI: 44, wxT: '48px', wxP: '20px', rowFs: '18px', barH: '56px', btn: 'md', tabs: 'md', stripP: '16px 24px', chipH: '52px', chipFs: '18px', clFs: '20px', askFs: '20px', dateCols3: '260px minmax(0,440px) minmax(0,1fr)' };
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const fmtT = (m) => { const h = Math.floor(m / 60) % 24; return `${h % 12 || 12}:${pad2(m % 60)} ${h < 12 ? 'AM' : 'PM'}`; };
+    const durT = (m) => m < 60 ? `${m} min` : m % 60 ? `${Math.floor(m / 60)} hr ${m % 60} min` : `${m / 60} hr`;
+    const short = (dt) => `${C.DOW[dt.getDay()]}, ${C.MON[dt.getMonth()]} ${dt.getDate()}`;
+    const same = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    const cur = new Date(d.y, d.m, d.day), dateTxt = short(cur), VIEW = !!S.view, FROMV = P.mode === 'view' || !!S.done, SV = VIEW && !!S.done, act = VIEW ? null : S.act;
+    const PEOPLE = P.people || C.PEOPLE, ED = P.mode === 'edit' || FROMV, EMB = typeof P.onSave === 'function';
+    const nameOf = (k) => (PEOPLE.find((p) => p[0] === k) || [k, k])[1];
+    const colorOf = (k) => (PEOPLE.find((p) => p[0] === k) || [k, k, 'var(--surface-soft)'])[2];
+    const NOW = P.now ?? 641, dd = Math.round((cur - C.TODAY) / 864e5), vEnd = d.end != null ? d.end : d.start + 30;
+    const vst = dd < 0 || (dd === 0 && !d.allDay && vEnd <= NOW) ? 'past' : dd === 0 && !d.allDay && d.start <= NOW ? 'now' : 'up', LOCK = VIEW && vst === 'past';
+    const rel = vst === 'past' ? 'Ended' : vst === 'now' ? 'Happening now' : dd === 0 ? (d.allDay ? 'Today' : 'In ' + durT(d.start - NOW)) : dd === 1 ? 'Tomorrow' : `In ${dd} days`;
+    const toEdit = (k) => { if (LOCK) return; if (P.onEdit) return P.onEdit(k || 'title'); this.setState({ view: false, act: k || 'title', set: { date: true, start: true, end: true, who: true }, pv: false, ask: false, delAsk: false, saved: false }, () => this.focusText(k)); };
+    const names = d.who.map(nameOf);
+    const whoTxt = !names.length ? 'everyone' : names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : names.length === 3 ? `${names[0]}, ${names[1]} and ${names[2]}` : `${names[0]}, ${names[1]} and ${names.length - 2} others`;
+    const parts = [], w = (text) => parts.push({ w: true, t: false, text });
+    const tok = (key, text, empty, dc) => { const sel = act === key, fire = () => (VIEW ? toEdit(key) : this.go(key, true)); parts.push({ w: false, t: true, key, text, sel: sel ? 'true' : 'false', aria: VIEW ? `${C.LABEL[key]}: ${text}${LOCK ? '' : '. Edit'}` : `${C.LABEL[key]}: ${empty ? 'not set' : text}. Change`, bg: sel ? 'var(--surface-canvas)' : 'transparent', fg: empty ? '#6b6b6b' : 'var(--text-primary)', fw: empty ? 400 : 540, deco: empty ? 'dashed' : 'solid', dl: VIEW ? 'none' : 'underline', role: LOCK ? 'presentation' : 'button', ti: LOCK ? -1 : 0, cur: LOCK ? 'default' : 'pointer', dot: !!dc, dc: dc || 'transparent', ws: !empty && !dc && (key === 'title' || key === 'place' || key === 'who') ? 'normal' : 'nowrap', tap: fire, key: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); } } }); };
+    tok('title', d.title.trim() || 'What’s happening', !d.title.trim());
+    w(' on '); tok('date', dateTxt, !S.set.date);
+    if (d.allDay) { w(', '); tok('start', 'all day', !S.set.start); w(','); }
+    else if (d.end != null) { w(' from '); tok('start', fmtT(d.start), !S.set.start); w(' to '); tok('end', fmtT(d.end), !S.set.end); }
+    else { w(' at '); tok('start', fmtT(d.start), !S.set.start); }
+    w(' for ');
+    if (VIEW && d.who.length) { const ks = d.who, many = ks.length > 3, show = many ? ks.slice(0, 2) : ks; show.forEach((k, i) => { if (i) w(i === show.length - 1 && !many ? ' and ' : ', '); tok('who', nameOf(k), false, colorOf(k)); }); if (many) { w(' and '); tok('who', `${ks.length - 2} others`, false); } }
+    else tok('who', whoTxt, !S.set.who);
+    if (!VIEW || d.place.trim()) { w(' at '); tok('place', d.place.trim() || 'a place', !d.place.trim()); }
+    w('.');
+    const steps = this.steps(d), nk = act ? steps[steps.indexOf(act) + 1] : null;
+    const next = () => { if (nk) this.go(nk, true); };
+    const chipC = (sel) => ({ sel: sel ? 'true' : 'false', bg: sel ? 'var(--action-primary)' : 'var(--surface-soft)', fg: sel ? 'var(--on-action-primary)' : 'var(--text-primary)', w: sel ? 540 : 480 });
+    const cellC = (sel, dis) => ({ sel: sel ? 'true' : 'false', dis, bg: sel ? 'var(--action-primary)' : dis ? 'transparent' : 'var(--surface-soft)', fg: sel ? 'var(--on-action-primary)' : dis ? '#6b6b6b' : 'var(--text-primary)', w: sel ? 540 : 400, cur: dis ? 'default' : 'pointer' });
+    const pk = { label: VIEW ? 'Forecast and other plans' : act ? (act === 'end' && d.end != null && !sm ? `Ends · ${durT(d.end - d.start)}` : C.LABEL[act]) : '', hasNext: !!nk, nextLbl: nk ? (sm ? 'Next' : `Next: ${C.LABEL[nk]}`) : '',
+      recent: C.RECENT.map((t) => ({ label: t, ...chipC(d.title === t), tap: () => { this.patch({ title: t }); this.go('date'); } })),
+      places: C.PLACES.map((t) => ({ label: t, ...chipC(d.place === t), tap: () => this.patch({ place: t }) })) };
+    let tp = { hours: [], mins: [], lens: [] };
+    if (act === 'start' || act === 'end') {
+      const k = act, v = k === 'start' ? d.start : (d.end ?? Math.min(d.start + 60, 1435)), H = Math.floor(v / 60), M = v % 60, pm = H >= 12, minEnd = d.start + 5;
+      const setT = (m) => k === 'start' ? this.setStart(m) : this.patch({ end: Math.max(m, minEnd) });
+      const AD = k === 'start' && d.allDay;
+      const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => { const hr = (x % 12) + (pm ? 12 : 0), dis = k === 'end' && hr * 60 + 55 < minEnd; return { label: String(x), aria: `${x} ${pm ? 'PM' : 'AM'}`, ...cellC(!AD && hr === H, dis || AD), tap: () => setT(hr * 60 + M) }; });
+      const mins = Array.from({ length: 12 }, (_, i) => { const m = i * 5, dis = k === 'end' && H * 60 + m < minEnd; return { label: ':' + pad2(m), aria: `${pad2(m)} minutes`, ...cellC(!AD && m === M, dis || AD), tap: () => setT(H * 60 + m) }; });
+      const lens = [[30, '30 min'], [60, '1 hr'], [90, '1 hr 30'], [120, '2 hr']].map(([n, label]) => ({ label, ...chipC(d.end != null && d.end - d.start === n), tap: () => this.patch({ end: Math.min(d.start + n, 1435) }) }));
+      const off = 'var(--text-primary)', on = 'var(--on-action-primary)', dim = '#6b6b6b';
+      tp = { hours, mins, lens, merX: pm ? 'translateX(100%)' : 'none', merDis: AD, thumb: AD ? 'transparent' : 'var(--action-primary)', isAm: pm ? 'false' : 'true', isPm: pm ? 'true' : 'false', amFg: AD ? dim : pm ? off : on, pmFg: AD ? dim : pm ? on : off,
+        toAm: () => { if (pm && !AD) setT(v - 720); }, toPm: () => { if (!pm && !AD) setT(v + 720); }, noEnd: () => { this.patch({ end: null }); this.go('who'); } };
+    }
+    let dp = { quick: [], cells: [], wds: [] };
+    if (act === 'date') {
+      const T = C.TODAY, vy = S.vy, Y = Math.floor(vy / 12), Mo = vy % 12;
+      const setDate = (dt) => { this.patch({ y: dt.getFullYear(), m: dt.getMonth(), day: dt.getDate() }); this.setState((s) => ({ vy: dt.getFullYear() * 12 + dt.getMonth(), set: { ...s.set, date: true } })); };
+      const quick = [['Today', 0], ['Tomorrow', 1], ['Next week', 7]].map(([label, n]) => { const dt = new Date(2026, 9, 9 + n), sel = same(dt, cur); return { label, sub: short(dt), ...chipC(sel), tap: () => setDate(dt) }; });
+      const lead = new Date(Y, Mo, 1).getDay(), nD = new Date(Y, Mo + 1, 0).getDate();
+      const cells = Array.from({ length: lead }, () => ({ label: '', dis: true, vis: 'hidden', sel: 'false', aria: '', bg: 'transparent', fg: 'inherit', ring: 'none', w: 400, cur: 'default', tap: null }))
+        .concat(Array.from({ length: nD }, (_, i) => { const dt = new Date(Y, Mo, i + 1), sel = same(dt, cur), td = same(dt, T), dis = dt < T;
+          return { label: String(i + 1), dis, vis: 'visible', sel: sel ? 'true' : 'false', aria: `${C.DOW[dt.getDay()]}, ${C.MONTHS[Mo]} ${i + 1}${td ? ', today' : ''}`, bg: sel ? 'var(--action-primary)' : 'transparent', fg: sel ? 'var(--on-action-primary)' : dis ? '#6b6b6b' : 'var(--text-primary)', ring: td && !sel ? 'inset 0 0 0 2px var(--black)' : 'none', w: sel || td ? 540 : 400, cur: dis ? 'default' : 'pointer', tap: () => setDate(dt) }; }));
+      dp = { quick, cells, wds: ['S', 'M', 'T', 'W', 'T', 'F', 'S'], month: `${C.MONTHS[Mo]} ${Y}`, prev: () => this.setState({ vy: Math.max(vy - 1, 2026 * 12 + 9) }), next: () => this.setState({ vy: vy + 1 }) };
+    }
+    const toggleWho = (k) => { const has = d.who.includes(k), nx = has ? d.who.filter((x) => x !== k) : d.who.concat(k); this.patch({ who: nx.length === PEOPLE.length ? [] : nx }); };
+    const who = [{ label: 'Everyone', all: true, dot: false, c: '', ...chipC(!d.who.length), tap: () => this.patch({ who: [] }) }]
+      .concat(PEOPLE.map(([k, n, c]) => ({ label: n, all: false, dot: true, c, ...chipC(d.who.includes(k)), tap: () => toggleWho(k) })));
+    const isToday9 = d.y === 2026 && d.m === 9 && d.day === 9, s0 = d.allDay ? 0 : d.start, e0 = d.allDay ? 1440 : (d.end ?? d.start + 30);
+    const pool = P.events ? P.events.filter((e) => e.ym === d.y * 12 + d.m && e.day === d.day && (!P.event || e.id !== P.event.id)).map((e) => [e.allDay ? 0 : e.start, e.allDay ? 1440 : Math.max(e.end ?? e.start + 30, e.start + 1), e.title, !e.who || e.who.length >= PEOPLE.length ? null : e.who, !!e.allDay]).sort((a, b) => a[0] - b[0]) : isToday9 ? C.EVENTS : [];
+    const others = pool.filter(([s, e]) => s < e0 && e > s0);
+    const ALLK = PEOPLE.map((p) => p[0]), mineK = d.who.length ? d.who : ALLK, hits = (wh) => (wh || ALLK).some((k) => mineK.includes(k)), busyK = new Set();
+    others.forEach((o) => (o[3] || ALLK).forEach((k) => busyK.add(k)));
+    who.forEach((c, i) => { c.busy = VA === 'c' && i > 0 && busyK.has(PEOPLE[i - 1][0]); });
+    const clashes = others.map(([s, e, t, wh]) => ({ s, e, t, sh: mineK.filter((k) => (wh || ALLK).includes(k)) })).filter((c) => c.sh.length);
+    const nmL = (ks) => ks.length >= ALLK.length ? 'Everyone' : ks.length <= 2 ? ks.map(nameOf).join(' and ') : `${nameOf(ks[0])}, ${nameOf(ks[1])} and ${ks.length - 2} others`;
+    const c0 = clashes[0], clash = { on: (VA === 'b' || (VA === 'a' && size === 'normal')) && !VIEW && !!c0, text: c0 ? `${nmL(c0.sh)} ${c0.sh.length === 1 || c0.sh.length >= ALLK.length ? 'is' : 'are'} also at ${c0.t}, ${fmtT(c0.s)} – ${fmtT(c0.e)}${clashes.length > 1 ? ` · ${clashes.length - 1} more` : ''}` : '', fix: () => this.go('start', false) };
+    const wxD = d.y === 2026 && d.m === 9 ? C.DAILY[d.day] : null;
+    const pv = { when: `${dateTxt} · ${d.allDay ? 'All day' : d.end != null ? `${fmtT(d.start)} – ${fmtT(d.end)}` : fmtT(d.start)}`,
+      wx: wxD ? { has: true, none: false, icon: wxD[0], temp: wxD[1] + '°', cond: C.COND[wxD[0]] } : { has: false, none: true, icon: 'cloud', temp: '', cond: '' },
+      also: others.length ? `Also at this time · ${others.length}` : 'Also at this time', empty: !others.length,
+      rows: others.map(([s, e, t, wh, ad]) => ({ time: ad ? 'All day' : `${fmtT(s)} – ${fmtT(e)}`, title: t, who: '· ' + (wh ? wh.map(nameOf).join(', ') : 'Everyone'), dot: hits(wh) ? 'var(--action-accent)' : 'var(--border-hairline)' })) };
+    const oTxt = others.length ? `${others.length} other plan${others.length > 1 ? 's' : ''}` : 'No other plans';
+    const chip = { icon: wxD ? wxD[0] : 'calendar-days', text: wxD ? `${wxD[1]}° · ${oTxt}` : oTxt, rot: S.pv ? 'rotate(180deg)' : 'none' };
+    const notesHas = !!d.notes.trim();
+    const pill = { allDay: d.allDay ? 'true' : 'false', boxIcon: d.allDay ? 'circle-check' : 'circle',
+      notesSel: act === 'notes' ? 'true' : 'false', notesBg: act === 'notes' ? 'var(--surface-canvas)' : 'transparent', notesEmpty: !notesHas,
+      notesLbl: notesHas ? 'Notes: ' + (d.notes.length > 26 ? d.notes.slice(0, 25).trim() + '…' : d.notes) : 'Add notes', notesTap: () => this.go('notes', true),
+      addEnd: !d.allDay && d.end == null, addEndTap: () => { this.patch({ end: Math.min(d.start + 60, 1435) }); this.go('end'); } };
+    return {
+      season: P.season || 'fall', size, L, titleRef: this.titleRef, placeRef: this.placeRef, notesRef: this.notesRef, d, parts, pk, tp, dp, who, pv, chip, pill,
+      is: { mer: act === 'start' || act === 'end', start: act === 'start', title: act === 'title', date: act === 'date', time: act === 'start' || act === 'end', end: act === 'end', who: act === 'who', place: act === 'place', notes: act === 'notes' },
+      chipInline: false, pvLink: false, asideOn: lg && !VIEW && VA === 'a', bodyCols: lg && !VIEW && VA === 'a' ? L.cols : 'minmax(0,1fr)', pvLinkBg: S.pv ? 'var(--surface-canvas)' : 'transparent', pvLinkIcon: S.pv ? 'x' : 'arrow-right', chipBelow: false, pvOpen: false, pvExp: S.pv ? 'true' : 'false', chipAria: `${pv.when}. ${chip.text}. Show details`,
+      togglePv: () => this.setState((s) => ({ pv: !s.pv })),
+      editing: !VIEW, viewing: VIEW, edRow: !VIEW, sv: { on: SV, clock: VIEW && !SV, edit: SV && !LOCK && !sm, ic: sm ? 22 : lg ? 32 : 28 },
+      vw: { notes: VIEW && !!d.notes.trim(), text: d.notes.trim(), locked: LOCK, mute: false, rem: VIEW && d.notify === false, remIcon: 'bell-off', remTxt: 'Notification off' },
+      ntf: { sel: d.notify !== false ? 'true' : 'false', icon: d.notify !== false ? 'bell' : 'bell-off', aria: d.notify !== false ? 'Notification on. Turn off' : 'Notification off. Turn on', tap: () => this.patch({ notify: d.notify === false }) },
+      vf: { wxLbl: `Forecast · ${dateTxt}`, also: d.allDay ? (others.length ? `Also that day · ${others.length}` : 'Also that day') : pv.also, empty: !others.length, emptyTxt: d.allDay ? 'Nothing else that day.' : 'Nothing else at this time.' },
+      scrLbl: (SV ? 'Event saved · ' : VIEW ? 'Event details · ' : ED ? 'Edit event · ' : 'New event · ') + size,
+      noSave: !d.title.trim(), saveLbl: sm || ED ? 'Save' : 'Save event', pageTitle: SV ? 'Saved' : VIEW ? rel : ED ? 'Edit event' : 'New event', toEdit: () => toEdit('title'), edActs: !S.ask && !VIEW, viewActs: VIEW && !LOCK && !SV,
+      save: () => { if (!d.title.trim()) return; if (EMB) { const base = P.event || {}; P.onSave({ ...base, title: d.title.trim(), start: d.start, end: d.end, allDay: d.allDay, who: d.who.length ? [...d.who] : PEOPLE.map((p) => p[0]), location: d.place.trim(), notes: d.notes.trim(), notify: d.notify !== false, day: d.day, ym: d.y * 12 + d.m }); } else this.setState({ view: true, done: !!S.done || P.mode !== 'view', orig: JSON.stringify(d), ask: false, delAsk: false, pv: false }); },
+      back: () => { if (VIEW) { if (SV) this.reset(); else if (P.onClose) P.onClose(); else if (P.onCancel) P.onCancel(); return; } if (P.onClose) P.onClose(); else if (P.onCancel) P.onCancel(); else if (FROMV) this.toView(); else this.reset(); },
+      discard: () => { if (P.onCancel) P.onCancel(); else if (FROMV) this.toView(); else this.reset(); }, keep: () => this.setState({ ask: false }),
+      asking: S.ask, notAsking: !S.ask, canDelete: ED && typeof P.onDelete === 'function' && !S.ask, delAsk: S.delAsk, delIdle: !S.delAsk,
+      askDel: () => this.setState({ delAsk: true }), keepDel: () => this.setState({ delAsk: false }),
+      ...(() => { const EA = !S.ask && !VIEW, CD = ED && typeof P.onDelete === 'function' && EA, VE = VIEW && !LOCK;
+        const on = d.notify !== false;
+        const dayRows = pool.map(([s, e, t, wh, ad]) => { const ov = s < e0 && e > s0; return { time: ad ? 'All day' : fmtT(s), title: t, dot: ov && hits(wh) ? 'var(--action-accent)' : 'transparent', w: ov ? 540 : 330 }; });
+        return { hdrIn: VA === 'b', bar: { top: VA !== 'b', bottom: VA !== 'a' },
+          top: { title: !(S.ask && VA !== 'b' && sm), ask: S.ask && VA !== 'b', del: VA !== 'b' && CD, save: VA === 'a' && EA, edit: VA === 'a' && VE, another: VA === 'a' && SV },
+          bot: { cancel: VA === 'b' && !S.ask, ask: VA === 'b' && S.ask, del: VA === 'b' && CD, save: VA !== 'a' && EA, edit: VA !== 'a' && VE, another: VA !== 'a' && SV },
+          closeAria: 'Close', xOn: !(S.ask && VA !== 'b' && sm) && !S.ask && VA !== 'b', cancelLbl: VIEW ? 'Close' : 'Cancel', saveFull: false, clash,
+          ntfSw: !VIEW && !sm, ntfBell: !VIEW && sm, ntfUi: {  bg: on ? 'var(--black)' : 'var(--surface-canvas)', knob: on ? 'var(--white)' : 'var(--black)', x: on ? 'translateX(16px)' : 'none' },
+          ctx: { date: VA === 'c' && act === 'date', time: VA === 'c' && (act === 'start' || act === 'end'), dayLbl: pool.length ? `${dateTxt} · ${pool.length} plan${pool.length > 1 ? 's' : ''}` : dateTxt, day: dayRows, dayEmpty: !pool.length },
+          dateColsX: VA === 'c' ? L.dateCols3 : L.dateCols };
+      })(), doDel: () => P.onDelete && P.onDelete(), dangerBtn: { style: { background: 'var(--danger)', color: 'var(--white)' } },
+      reset: () => this.reset(),
+      next, softBtn: { style: { background: 'var(--surface-soft)' } },
+      toggleAllDay: () => this.patch({ allDay: !d.allDay }), allDay: { sel: d.allDay ? 'true' : 'false', bg: d.allDay ? 'var(--action-primary)' : 'var(--surface-soft)', fg: d.allDay ? 'var(--on-action-primary)' : 'var(--text-primary)', w: d.allDay ? 540 : 480, rot: d.allDay ? 'rotate(180deg) scale(1.15)' : 'none' },
+      on: { title: (e) => this.patch({ title: e.target.value }), place: (e) => this.patch({ place: e.target.value }), notes: (e) => this.patch({ notes: e.target.value }), enter: (e) => { if (e.key === 'Enter') { e.preventDefault(); next(); } } },
+    };
+  }
+}
+</script>
+</body>
+</html>
