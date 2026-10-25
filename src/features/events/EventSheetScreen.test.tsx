@@ -511,6 +511,60 @@ describe("Event details", () => {
     expect(screen.getByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Where" })).toHaveValue("Café Lumen");
   });
+
+  test("EVT-10 Edit opens Edit event on the title picker", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+
+    expect(screen.getByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "What’s happening" })).toHaveValue(LUNCH.title);
+  });
+
+  test("EVT-09 an ended event's values are not tappable", async () => {
+    await store.db.events.put(synced(DROP_OFF));
+    renderSheet({ kind: "event", id: DROP_OFF.id });
+
+    await screen.findByRole("dialog", { name: "Ended" });
+
+    expect(screen.queryByRole("button", { name: /Edit$/ })).not.toBeInTheDocument();
+    expect(screen.getByText("School drop-off")).toBeInTheDocument();
+  });
+
+  test("EVT-10 Discard returns to details without saving", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    await typeTitle("!");
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+    expect(screen.getByRole("dialog", { name: "In 1 hr 19 min" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "What’s happening: Lunch with Aunt Rosa. Edit" }),
+    ).toBeInTheDocument();
+  });
+
+  test("EVT-10 × with no changes returns to details", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.getByRole("dialog", { name: "In 1 hr 19 min" })).toBeInTheDocument();
+  });
+
+  test("EVT-09 × on details closes the page", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Close" }));
+
+    await waitFor(() => expect(openSheet()).toBeEmptyDOMElement());
+  });
 });
 
 describe("day preview and Same time", () => {
@@ -533,16 +587,16 @@ describe("day preview and Same time", () => {
     notify: true,
   };
 
-  async function openLunch(width: number) {
+  async function openLunch(width: number, edit = true) {
     setWidth(width);
     await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
     await store.db.weather.put({ ...FORECAST, accountId: store.accountId });
     await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
     await store.db.events.bulkPut([LUNCH, PIANO].map(synced));
 
-    renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+    renderSheet({ kind: "event", id: LUNCH.id, edit: edit || undefined });
 
-    await screen.findByRole("dialog", { name: "Edit event" });
+    await screen.findByRole("dialog", { name: edit ? "Edit event" : "In 1 hr 19 min" });
   }
 
   test("EVT-13 large shows the day preview with the other plans at this time", async () => {
@@ -562,6 +616,29 @@ describe("day preview and Same time", () => {
       "Same time: Dad is also at Piano lesson, 12:30 PM – 1:30 PM",
     );
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+  });
+
+  test("EVT-09 details show the forecast and the plans at this time below the sentence", async () => {
+    await openLunch(1024, false);
+
+    const facts = await screen.findByRole("region", { name: "Forecast and other plans" });
+
+    expect(within(facts).getByText("Forecast · Fri, Oct 9")).toBeInTheDocument();
+    expect(await within(facts).findByText("52°")).toBeInTheDocument();
+    expect(within(facts).getByText("Also at this time · 1")).toBeInTheDocument();
+    expect(within(facts).getByText("Piano lesson")).toBeInTheDocument();
+  });
+
+  test("EVT-09 all-day details read Also that day", async () => {
+    setWidth(390);
+    await store.db.events.put(synced(NO_SCHOOL));
+
+    renderSheet({ kind: "event", id: NO_SCHOOL.id });
+
+    const facts = await screen.findByRole("region", { name: "Forecast and other plans" });
+
+    expect(within(facts).getByText("Also that day")).toBeInTheDocument();
+    expect(within(facts).getByText("Nothing else that day.")).toBeInTheDocument();
   });
 
   test("EVT-13 small shows neither", async () => {

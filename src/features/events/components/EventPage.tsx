@@ -31,6 +31,7 @@ type EventPageProps = {
   recentTitles: readonly string[];
   recentPlaces: readonly string[];
   preview?: ReactNode;
+  facts?: ReactNode;
   keyboardInset?: number;
   dispatch: (action: EventPageAction) => void;
   onSave: () => void;
@@ -105,23 +106,26 @@ export function EventPage(props: EventPageProps) {
   );
 }
 
-function ViewBody({ breakpoint, draft, tags, clock, status, dispatch }: ViewProps) {
+function ViewBody({ breakpoint, draft, tags, clock, status, facts, dispatch }: ViewProps) {
   const ended = isEnded(status);
 
   return (
-    <EventSentence
-      breakpoint={breakpoint}
-      mode="view"
-      draft={draft}
-      tags={tags}
-      touched={[]}
-      word={null}
-      clock={clock}
-      locked={ended}
-      onSelect={(word) => dispatch({ type: "edit", word, ended })}
-      onAddEnd={() => {}}
-      onNotify={() => {}}
-    />
+    <div {...stylex.props(styles.column, gaps[breakpoint])}>
+      <EventSentence
+        breakpoint={breakpoint}
+        mode="view"
+        draft={draft}
+        tags={tags}
+        touched={[]}
+        word={null}
+        clock={clock}
+        locked={ended}
+        onSelect={(word) => dispatch({ type: "edit", word, ended })}
+        onAddEnd={() => {}}
+        onNotify={() => {}}
+      />
+      {facts}
+    </div>
   );
 }
 

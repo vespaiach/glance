@@ -376,6 +376,10 @@ export const copy = {
       rain: (percent: number) => `${percent}% rain`,
       also: (count: number) => (count > 0 ? `Also at this time · ${count}` : "Also at this time"),
       nothing: "Nothing else at this time.",
+      alsoDay: (count: number) => (count > 0 ? `Also that day · ${count}` : "Also that day"),
+      nothingDay: "Nothing else that day.",
+      forecast: (day: string) => `Forecast · ${day}`,
+      facts: "Forecast and other plans",
       hourly: "Hourly forecast",
       hour: (time: string, condition: string, temp: string) =>
         `${time}, ${condition}, ${temp} degrees`,

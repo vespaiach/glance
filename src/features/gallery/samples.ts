@@ -227,6 +227,8 @@ export const gallery = {
     view: "Event details",
     past: "Event details · ended",
     previewLabel: "Fri, Oct 9 · 12:00 PM – 1:00 PM",
+    viewAllDay: "Event details · all day",
+    factsDay: "Fri, Oct 9",
   },
   switchLabel: "All day",
   button: "Add event",

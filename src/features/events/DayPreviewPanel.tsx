@@ -2,13 +2,8 @@
 
 import { copy } from "@/copy";
 import { useEventsOnDay, useWeather } from "@/data/repos";
-import {
-  overlappingEvents,
-  type PreviewTimes,
-  previewRain,
-  previewWeather,
-  previewWindow,
-} from "@/domain/dayPreview";
+import type { Breakpoint } from "@/domain/breakpoint";
+import { alsoPlans, type PreviewTimes, previewRain, previewWeather } from "@/domain/dayPreview";
 import type { CalendarEvent, Tag, Weather } from "@/domain/schemas";
 import { whoLabel } from "@/domain/tags";
 import { displayTemp } from "@/domain/temperature";
@@ -16,8 +11,9 @@ import {
   type Clock,
   clockAt,
   formatClock,
-  formatDayTitle,
   formatHour,
+  formatMonthDay,
+  formatWeekday,
   minutesOfDay,
 } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
@@ -25,6 +21,7 @@ import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { DayPreview, type PreviewPlan, type PreviewTile } from "./components/DayPreview";
+import { EventFacts } from "./components/EventFacts";
 
 type PanelProps = {
   day: string;
@@ -44,9 +41,35 @@ type TileInput = {
   clock: Clock;
 };
 
+type DayPreviewData = {
+  day: string;
+  label: string;
+  scope: "time" | "day";
+  weather: PreviewTile | "none" | undefined;
+  plans: PreviewPlan[];
+};
+
 const words = copy.events.preview;
 
-export function DayPreviewPanel({ day, id, tags, times }: PanelProps) {
+export function DayPreviewPanel(props: PanelProps) {
+  const preview = useDayPreview(props);
+
+  if (!preview) return null;
+
+  const { label, weather, plans } = preview;
+
+  return <DayPreview label={label} weather={weather} plans={plans} />;
+}
+
+export function EventFactsPanel({ breakpoint, ...props }: PanelProps & { breakpoint: Breakpoint }) {
+  const preview = useDayPreview(props);
+
+  if (!preview) return null;
+
+  return <EventFacts breakpoint={breakpoint} {...preview} />;
+}
+
+function useDayPreview({ day, id, tags, times }: PanelProps): DayPreviewData | undefined {
   const tz = useTimeZone();
 
   const now = useNow("minute");
@@ -57,30 +80,30 @@ export function DayPreviewPanel({ day, id, tags, times }: PanelProps) {
 
   const events = useEventsOnDay(day, tz);
 
-  if (!events) return null;
+  if (!events) return undefined;
 
-  const [start, end] = previewWindow(day, times, tz);
+  const { scope, plans } = alsoPlans(events, { id, day, times }, tz);
 
-  const others = events.filter((event) => event.id !== id);
+  const date = parseDateKey(day);
 
-  return (
-    <DayPreview
-      label={words.label(formatDayTitle(parseDateKey(day), "UTC"), whenLabel(times, clock))}
-      weather={previewTile({
-        weather,
-        located: weatherLocation !== undefined,
-        day,
-        times,
-        now,
-        tz,
-        tempUnit,
-        clock,
-      })}
-      plans={overlappingEvents(others, start, end, tz).map((event) =>
-        previewPlan(event, tags, clock, tz),
-      )}
-    />
-  );
+  const dayTitle = `${formatWeekday(date, "UTC")}, ${formatMonthDay(date, "UTC")}`;
+
+  return {
+    day: dayTitle,
+    label: words.label(dayTitle, whenLabel(times, clock)),
+    scope,
+    weather: previewTile({
+      weather,
+      located: weatherLocation !== undefined,
+      day,
+      times,
+      now,
+      tz,
+      tempUnit,
+      clock,
+    }),
+    plans: plans.map((event) => previewPlan(event, tags, clock, tz)),
+  };
 }
 
 function whenLabel({ start, end, allDay }: PreviewTimes, clock: Clock): string {
