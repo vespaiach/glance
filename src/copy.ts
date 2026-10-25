@@ -258,6 +258,13 @@ export const copy = {
       sage: "Sage",
       ice: "Ice",
     } satisfies Record<TagColor, string>,
+    removal: {
+      deleted: (count: number) =>
+        `Their ${count} ${count === 1 ? "plan is" : "plans are"} deleted.`,
+      stripped: (count: number) =>
+        `They’re taken off ${count} ${count === 1 ? "plan" : "plans"} shared with others.`,
+      none: "They have no plans.",
+    },
   },
   reminder: {
     strip: {

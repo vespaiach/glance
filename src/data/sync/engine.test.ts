@@ -77,6 +77,8 @@ const DELETED_PHOTO: StoredPhoto = {
   deletedAt: "2026-10-01T10:00:00.000Z",
 };
 
+const TAG_DELETE = { entity: "tags", entityId: MEMBER.id, op: "delete", attempts: 0 } as const;
+
 let db: GlanceDb;
 
 beforeEach(() => {
@@ -266,6 +268,32 @@ describe("push", () => {
     expect(await db.tags.get(MEMBER.id)).toEqual(MEMBER);
     expect(pushed[1]?.payload).toMatchObject({ tagIds: [MEMBER.id] });
     expect((await db.events.get(EVENT.id))?.tagIds).toEqual([MEMBER.id]);
+  });
+
+  it("D24 pushes a tag delete and saves the tombstone the server answers", async () => {
+    const tombstone = { ...MEMBER, deletedAt: NOW.toISOString(), version: 9 };
+    const transport = fakeTransport({
+      push: vi.fn(async () => ok({ entity: "tags", row: tombstone } as Change)),
+    });
+    await db.tags.put({ ...MEMBER, deletedAt: NOW.toISOString() });
+    await db.outbox.add(TAG_DELETE as OutboxEntry);
+
+    await engine(transport).nudge();
+
+    expect(transport.push).toHaveBeenCalledWith(expect.objectContaining(TAG_DELETE));
+    expect(await db.outbox.count()).toBe(0);
+    expect(await db.tags.get(MEMBER.id)).toEqual(tombstone);
+  });
+
+  it("tech§5 a 401 on a tag delete keeps the entry", async () => {
+    const transport = fakeTransport({
+      push: vi.fn(async () => err<TransportError>("unauthorized")),
+    });
+    await db.outbox.add(TAG_DELETE as OutboxEntry);
+
+    await engine(transport).nudge();
+
+    expect(await db.outbox.toArray()).toEqual([{ ...TAG_DELETE, seq: 1 }]);
   });
 
   it("tech§4.6 overlapping nudges never push an entry twice", async () => {

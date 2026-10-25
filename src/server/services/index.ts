@@ -32,6 +32,10 @@ export async function putTag(accountId: string, tag: Tag) {
   return announce(syncBus(), accountId, await tags.putTag(deps(), accountId, tag));
 }
 
+export async function removeTag(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await tags.removeTag(deps(), accountId, id));
+}
+
 export async function putEvent(accountId: string, event: CalendarEvent) {
   return announce(syncBus(), accountId, await events.putEvent(deps(), accountId, event));
 }

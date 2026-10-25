@@ -41,6 +41,14 @@ export function eventsRepo(sql: Sql): Repos["events"] {
 
       return rows.map(owned);
     },
+    liveWithTag: async (accountId, tagId) => {
+      const rows = await sql.all<EventRow>(
+        "SELECT * FROM events WHERE account_id = $1 AND deleted_at IS NULL AND $2 = ANY(tag_ids)",
+        [accountId, tagId],
+      );
+
+      return rows.map(toEvent);
+    },
   };
 }
 

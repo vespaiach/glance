@@ -12,6 +12,16 @@ export type FilterLabels = {
 
 export type StackCircles = { shown: readonly Tag[]; more: number };
 
+export type MemberRemoval = { deleted: string[]; stripped: string[] };
+
+export type RemovalLabels = {
+  deleted: (count: number) => string;
+  stripped: (count: number) => string;
+  none: string;
+};
+
+type RemovableEvent = EventWho & { id: string; deletedAt?: string };
+
 export const EVERYONE: EventWho = { everyone: true, tagIds: [] };
 
 const WORD_BREAK = /[\s-]+/;
@@ -114,7 +124,9 @@ export function stackCircles(shown: readonly Tag[], max: number): StackCircles {
 export function liveFilter(filter: TagFilter, allIds: readonly string[]): ReadonlySet<string> {
   if (filter === "all") return new Set(allIds);
 
-  return new Set(allIds.filter((id) => filter.has(id)));
+  const kept = allIds.filter((id) => filter.has(id));
+
+  return kept.length === 0 && filter.size > 0 ? new Set(allIds) : new Set(kept);
 }
 
 export function filterTagIds(selected: ReadonlySet<string>, allIds: readonly string[]): EventWho {
@@ -162,6 +174,28 @@ export function exactTag(tags: readonly Tag[], input: string): Tag | undefined {
   const name = input.trim().toLowerCase();
 
   return tags.find((tag) => tag.name.toLowerCase() === name);
+}
+
+export function memberRemoval(events: readonly RemovableEvent[], tagId: string): MemberRemoval {
+  const named = events.filter((event) => namesTag(event, tagId));
+
+  return {
+    deleted: named.filter((event) => event.tagIds.length === 1).map((event) => event.id),
+    stripped: named.filter((event) => event.tagIds.length > 1).map((event) => event.id),
+  };
+}
+
+export function removalLine({ deleted, stripped }: MemberRemoval, labels: RemovalLabels): string {
+  const parts = [
+    ...(deleted.length > 0 ? [labels.deleted(deleted.length)] : []),
+    ...(stripped.length > 0 ? [labels.stripped(stripped.length)] : []),
+  ];
+
+  return parts.length === 0 ? labels.none : parts.join(" ");
+}
+
+function namesTag(event: RemovableEvent, tagId: string): boolean {
+  return event.deletedAt === undefined && !event.everyone && event.tagIds.includes(tagId);
 }
 
 function firstLetter(word: string): string {
