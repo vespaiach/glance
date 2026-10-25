@@ -1124,6 +1124,7 @@ export const copy = {
     wordmark: "Glance",
     source: "Source on GitHub",
     sourceHref: GITHUB,
+    back: "Back to Glance",
     eyebrow: "Legal",
     title: "Terms of service",
     effective: "Effective October 24, 2026",
@@ -1323,6 +1324,7 @@ export const copy = {
       { href: "#sizes", label: "Screen sizes" },
       { href: "#faq", label: "FAQ" },
     ],
+    back: "Back to Glance",
     hero: {
       eyebrow: "Guide for families",
       title: "Your family’s day, at a glance.",

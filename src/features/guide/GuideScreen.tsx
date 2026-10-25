@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import {
+  ArrowLeft,
   Bell,
   CalendarDays,
   Clock,
@@ -22,6 +23,7 @@ import { colors } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { Icon } from "@/ui/Icon";
+import { PillLink } from "@/ui/PillLink";
 import {
   GuideArt,
   type GuideSectionId,
@@ -86,6 +88,7 @@ const styles = stylex.create({
   nav: {
     display: "flex",
     flexWrap: "wrap",
+    alignItems: "center",
     gap: "8px 24px",
     fontSize: 17,
     fontWeight: 480,
@@ -259,6 +262,9 @@ export function GuideScreen({ season }: { season: Season }) {
               {item.label}
             </a>
           ))}
+          <PillLink href="/" icon={ArrowLeft}>
+            {text.back}
+          </PillLink>
         </nav>
       </header>
       <section {...stylex.props(styles.column)}>

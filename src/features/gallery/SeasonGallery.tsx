@@ -1,5 +1,14 @@
 import * as stylex from "@stylexjs/stylex";
-import { ArrowRight, CalendarDays, CloudOff, Plus, Sun, Trash2, Umbrella } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  CloudOff,
+  Plus,
+  Sun,
+  Trash2,
+  Umbrella,
+} from "lucide-react";
 import { useState } from "react";
 import { copy } from "@/copy";
 import { IDLE_MINUTES, type Season, type Tone } from "@/domain/schemas";
@@ -18,6 +27,7 @@ import { ForecastDay } from "@/ui/ForecastDay";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
 import { OfflinePill } from "@/ui/OfflinePill";
+import { PillLink } from "@/ui/PillLink";
 import { PillTabs } from "@/ui/PillTabs";
 import { Radio } from "@/ui/Radio";
 import { SettingsRow } from "@/ui/SettingsRow";
@@ -444,6 +454,9 @@ function SharedGroup() {
         xstyle={styles.tile}
       />
       <OfflinePill label={gallery.offline.label} meta={gallery.offline.meta} />
+      <PillLink href="/" icon={ArrowLeft}>
+        {copy.guide.back}
+      </PillLink>
       <div {...stylex.props(styles.wide)}>
         <SettingsRow title={gallery.settings.clock} description={gallery.settings.clockBody}>
           <PillTabs options={["12h", "24h"] as const} value="12h" onChange={ignore} />
