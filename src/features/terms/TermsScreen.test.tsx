@@ -6,6 +6,7 @@ const SECTIONS = [
   "Eligibility",
   "The service",
   "Open source",
+  "Weather data",
   "Your account",
   "Your content",
   "Acceptable use",
@@ -36,7 +37,7 @@ test("TERMS-01 shows the title, the effective date and the In short cards", () =
   }
 });
 
-test("TERMS-01 lists the 16 numbered sections in order", () => {
+test("TERMS-01 lists the 17 numbered sections in order", () => {
   render(<TermsScreen />);
 
   const headings = screen
@@ -44,7 +45,32 @@ test("TERMS-01 lists the 16 numbered sections in order", () => {
     .map((heading) => heading.textContent);
 
   expect(headings).toEqual(SECTIONS);
-  expect(screen.getByText("16")).toBeInTheDocument();
+  expect(screen.getByText("17")).toBeInTheDocument();
+});
+
+test("TERMS-01 §05 Weather data credits Open-Meteo under CC BY 4.0", () => {
+  render(<TermsScreen />);
+
+  expect(screen.getByText("05")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Open-Meteo" })).toHaveAttribute(
+    "href",
+    "https://open-meteo.com/",
+  );
+  expect(
+    screen.getByRole("link", {
+      name: "Creative Commons Attribution 4.0 International License (CC BY 4.0)",
+    }),
+  ).toHaveAttribute("href", "https://creativecommons.org/licenses/by/4.0/");
+  expect(screen.getByRole("link", { name: "open-meteo.com/en/terms" })).toHaveAttribute(
+    "href",
+    "https://open-meteo.com/en/terms",
+  );
+});
+
+test("TERMS-01 Termination points at the renumbered sections", () => {
+  render(<TermsScreen />);
+
+  expect(screen.getByText(/Sections 7, 9 and 12–16 continue to apply/)).toBeInTheDocument();
 });
 
 test("TERMS-01 links Source on GitHub and shows the footer", () => {

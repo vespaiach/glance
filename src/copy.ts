@@ -14,6 +14,7 @@ export type TermsPart = string | { text: string; href: string } | { strong: stri
 export type TermsBlock = string | readonly TermsPart[] | { list: readonly string[] };
 
 const GITHUB = "https://github.com/vespaiach/glance";
+const OPEN_METEO = "https://open-meteo.com/";
 
 const CONTACT = { text: "nta.toan@gmail.com", href: "mailto:nta.toan@gmail.com" };
 
@@ -871,6 +872,7 @@ export const copy = {
     percent: (value: number) => `${value}%`,
     hourly: "Next 8 hours",
     daily: "7-day forecast",
+    attribution: { text: "Weather data by Open-Meteo.com", href: OPEN_METEO },
     today: "Today",
     rain: {
       title: (time: string) => `Rain moving in after ${time}`,
@@ -1173,6 +1175,30 @@ export const copy = {
         ],
       },
       {
+        id: "weather-data",
+        title: "Weather data",
+        body: [
+          [
+            "Weather forecasts and current conditions in the Service come from ",
+            { text: "Open-Meteo", href: OPEN_METEO },
+            ", a third-party weather API. The Operator does not produce, check or control this data.",
+          ],
+          [
+            "Open-Meteo data is licensed under the ",
+            {
+              text: "Creative Commons Attribution 4.0 International License (CC BY 4.0)",
+              href: "https://creativecommons.org/licenses/by/4.0/",
+            },
+            '. As required by that license, the Service credits the source as "Weather data by Open-Meteo.com" with a link to open-meteo.com wherever weather is shown. Weather values may be rounded, converted between units or summarized for display.',
+          ],
+          [
+            "Open-Meteo combines forecasts from national weather services. Its terms and the full list of data sources are at ",
+            { text: "open-meteo.com/en/terms", href: "https://open-meteo.com/en/terms" },
+            ". If you reuse weather data shown in Glance, you must give the same attribution.",
+          ],
+        ],
+      },
+      {
         id: "account",
         title: "Your account",
         body: [
@@ -1235,7 +1261,7 @@ export const copy = {
         id: "termination",
         title: "Termination",
         body: [
-          "The Operator may suspend or close any account, or remove any content, at any time and for any reason, with or without notice. Sections 6, 8 and 11–15 continue to apply after your account ends.",
+          "The Operator may suspend or close any account, or remove any content, at any time and for any reason, with or without notice. Sections 7, 9 and 12–16 continue to apply after your account ends.",
         ],
       },
       {

@@ -33,7 +33,7 @@ type WeatherNowProps = {
   details?: readonly WeatherDetail[];
   labels: WeatherNowLabels;
   tone?: WeatherNowTone;
-  compact?: boolean;
+  grid?: boolean;
   xstyle?: stylex.StyleXStyles;
 };
 
@@ -84,7 +84,7 @@ const styles = stylex.create({
     rowGap: space.lg,
     borderTopColor: colors.surfaceCanvas,
   },
-  detailValueCompact: {
+  detailValueGrid: {
     lineHeight: 1.1,
   },
   detailsOnDeep: { borderTopColor: "rgba(255,255,255,.2)" },
@@ -116,7 +116,7 @@ export function WeatherNow({
   details = [],
   labels,
   tone = 3,
-  compact = false,
+  grid = false,
   xstyle,
 }: WeatherNowProps) {
   const range = rangeText({ high, low, feelsLike }, labels);
@@ -136,7 +136,7 @@ export function WeatherNow({
         <div
           {...stylex.props(
             styles.details(details.length),
-            compact && styles.detailsGrid,
+            grid && styles.detailsGrid,
             tone === "deep" && styles.detailsOnDeep,
           )}
         >
@@ -146,7 +146,7 @@ export function WeatherNow({
                 {detail.icon && <Icon icon={detail.icon} size={16} />}
                 {detail.label}
               </Eyebrow>
-              <div {...stylex.props(styles.detailValue, compact && styles.detailValueCompact)}>
+              <div {...stylex.props(styles.detailValue, grid && styles.detailValueGrid)}>
                 {detail.value}
               </div>
             </div>
