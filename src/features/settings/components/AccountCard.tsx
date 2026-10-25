@@ -283,6 +283,10 @@ export function AccountCard({
           {text.deleteAccount.title}
         </Button>
       </div>
+      <a href="/guide" target="_blank" rel="noopener" {...stylex.props(styles.terms)}>
+        <span {...stylex.props(styles.deleteTitle)}>{text.guide}</span>
+        <Icon icon={ArrowUpRight} size={20} />
+      </a>
       <a href="/terms" target="_blank" rel="noopener" {...stylex.props(styles.terms)}>
         <span {...stylex.props(styles.deleteTitle)}>{text.terms}</span>
         <Icon icon={ArrowUpRight} size={20} />

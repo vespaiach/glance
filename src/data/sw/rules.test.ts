@@ -32,8 +32,8 @@ function rsc(url: string, headers: Record<string, string> = {}) {
 }
 
 describe("offline pages", () => {
-  it("OFF-06 lists every static page the app builds except the public /terms (D34)", () => {
-    const pages = appPagePaths().filter((page) => page !== "/terms");
+  it("OFF-06 lists every static page the app builds except the public /terms and /guide (D34, D35)", () => {
+    const pages = appPagePaths().filter((page) => page !== "/terms" && page !== "/guide");
 
     expect([...OFFLINE_PAGES].sort()).toEqual(pages.sort());
   });
