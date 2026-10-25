@@ -3,8 +3,11 @@ import {
   defaultTimes,
   endForLength,
   endsAfterStart,
+  isEndHourDisabled,
+  isEndMinuteDisabled,
   moveStart,
-  nextHalfHour,
+  nextWholeHour,
+  pickEnd,
   pickerHours,
   pickerMinutes,
   slotTimes,
@@ -22,22 +25,59 @@ const today = (h: number, m: number) => new Date(2026, 9, 9, h, m);
 describe("eventTimes", () => {
   it.each([
     [today(10, 41), at(11, 0)],
-    [today(11, 0), at(11, 30)],
-    [today(11, 29), at(11, 30)],
-    [today(0, 0), at(0, 30)],
-    [today(23, 0), at(23, 30)],
-    [today(23, 30), at(23, 30)],
-    [today(23, 59), at(23, 30)],
-  ])("TPK-05 next half hour after %s is minute %i, capped at 11:30 PM", (now, expected) => {
-    expect(nextHalfHour(now, tz)).toBe(expected);
+    [today(11, 0), at(12, 0)],
+    [today(11, 59), at(12, 0)],
+    [today(0, 0), at(1, 0)],
+    [today(22, 0), at(23, 0)],
+    [today(23, 0), at(23, 0)],
+    [today(23, 59), at(23, 0)],
+  ])("TPK-05 next whole hour after %s is minute %i, capped at 11:00 PM", (now, expected) => {
+    expect(nextWholeHour(now, tz)).toBe(expected);
   });
 
   it.each([
     [today(10, 41), { start: at(11, 0), end: at(12, 0) }],
-    [today(23, 10), { start: at(23, 30), end: at(23, 55) }],
-    [today(23, 45), { start: at(23, 30), end: at(23, 55) }],
+    [today(22, 10), { start: at(23, 0), end: at(23, 55) }],
+    [today(23, 45), { start: at(23, 0), end: at(23, 55) }],
   ])("TPK-05 a new event at %s defaults to %o", (now, expected) => {
     expect(defaultTimes(now, tz)).toEqual(expected);
+  });
+
+  it.each([
+    [{ start: at(11, 0), end: at(12, 0) }, at(23, 55), { start: at(23, 50), end: at(23, 55) }],
+    [{ start: at(11, 0) }, at(23, 55), { start: at(23, 55) }],
+  ])("TPK-07 moving %o to start %i leaves room for the end: %o", (times, start, expected) => {
+    expect(moveStart(times, start)).toEqual(expected);
+  });
+
+  it.each([
+    [at(11, 0), at(12, 0), at(12, 0)],
+    [at(11, 0), at(10, 30), at(11, 5)],
+    [at(11, 0), at(11, 0), at(11, 5)],
+    [at(23, 0), at(23, 55), at(23, 55)],
+  ])("TPK-07 an end pick after start %i of %i lands on %i", (start, end, expected) => {
+    expect(pickEnd(start, end)).toBe(expected);
+  });
+
+  it.each([
+    [at(11, 0), 10, true],
+    [at(11, 0), 11, false],
+    [at(11, 50), 11, false],
+    [at(11, 55), 11, true],
+    [at(11, 55), 12, false],
+  ])("TPK-07 with start %i the end hour %i is disabled: %s", (start, hour, expected) => {
+    expect(isEndHourDisabled(start, hour)).toBe(expected);
+  });
+
+  it.each([
+    [at(11, 0), 11, 0, true],
+    [at(11, 0), 11, 5, false],
+    [at(11, 30), 11, 30, true],
+    [at(11, 30), 11, 35, false],
+    [at(11, 30), 12, 0, false],
+    [at(11, 30), 10, 55, true],
+  ])("TPK-07 with start %i the end cell %i:%i is disabled: %s", (start, hour, minute, expected) => {
+    expect(isEndMinuteDisabled(start, hour, minute)).toBe(expected);
   });
 
   it.each([
@@ -108,9 +148,12 @@ describe("eventTimes", () => {
     ["12h", "AM", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]],
     ["12h", "PM", [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]],
     ["24h", undefined, Array.from({ length: 24 }, (_, hour) => hour)],
-  ] as const)("TPK-03 the %s hour grid for %s holds the hours %o", (clock, meridiem, expected) => {
-    expect(pickerHours(clock, meridiem)).toEqual(expected);
-  });
+  ] as const)(
+    "TPK-03 TPK-09 the %s hour grid for %s holds the hours %o",
+    (clock, meridiem, expected) => {
+      expect(pickerHours(clock, meridiem)).toEqual(expected);
+    },
+  );
 
   it("TPK-03 the minute grid steps by 5 from 00 to 55", () => {
     expect(pickerMinutes(5)).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
@@ -125,11 +168,11 @@ describe("default times in a zone", () => {
   const LA = "America/Los_Angeles";
   const morning = new Date("2026-10-09T17:41:00Z");
 
-  it("TPK-05 the next half hour is read in the given zone", () => {
-    expect(nextHalfHour(morning, LA)).toBe(11 * 60);
+  it("TPK-05 the next whole hour is read in the given zone", () => {
+    expect(nextWholeHour(morning, LA)).toBe(11 * 60);
   });
 
-  it("TPK-05 default times start at the next half hour in the given zone", () => {
+  it("TPK-05 default times start at the next whole hour in the given zone", () => {
     expect(defaultTimes(morning, LA)).toEqual({ start: 11 * 60, end: 12 * 60 });
   });
 });

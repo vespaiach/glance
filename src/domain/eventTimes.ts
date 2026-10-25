@@ -5,16 +5,20 @@ export interface EventTimes {
   end?: number;
 }
 
-export const LATEST_START = 23 * 60 + 30;
+export const LATEST_START = 23 * 60;
 
 export const LATEST_END = 23 * 60 + 55;
+
+export const END_GAP = 5;
+
+const LATEST_TIMED_START = LATEST_END - END_GAP;
 
 export type Meridiem = NonNullable<TimeParts["meridiem"]>;
 
 export type MinuteStep = 5 | 15;
 
-export function nextHalfHour(now: Date, tz: string): number {
-  const next = (Math.floor(minutesOfDay(now, tz) / 30) + 1) * 30;
+export function nextWholeHour(now: Date, tz: string): number {
+  const next = (Math.floor(minutesOfDay(now, tz) / 60) + 1) * 60;
 
   return Math.min(next, LATEST_START);
 }
@@ -24,7 +28,7 @@ export function defaultEnd(start: number): number {
 }
 
 export function defaultTimes(now: Date, tz: string): EventTimes {
-  const start = nextHalfHour(now, tz);
+  const start = nextWholeHour(now, tz);
 
   return { start, end: defaultEnd(start) };
 }
@@ -38,9 +42,25 @@ export function endsAfterStart({ start, end }: EventTimes): boolean {
 }
 
 export function moveStart(times: EventTimes, start: number): EventTimes {
-  if (times.end === undefined || !endsAfterStart(times)) return { ...times, start };
+  if (times.end === undefined) return { start };
 
-  return { start, end: Math.min(start + times.end - times.start, LATEST_END) };
+  if (!endsAfterStart(times)) return { ...times, start };
+
+  const capped = Math.min(start, LATEST_TIMED_START);
+
+  return { start: capped, end: Math.min(capped + times.end - times.start, LATEST_END) };
+}
+
+export function pickEnd(start: number, end: number): number {
+  return Math.min(Math.max(end, start + END_GAP), LATEST_END);
+}
+
+export function isEndHourDisabled(start: number, hour: number): boolean {
+  return hour * 60 + 55 < start + END_GAP;
+}
+
+export function isEndMinuteDisabled(start: number, hour: number, minute: number): boolean {
+  return hour * 60 + minute < start + END_GAP;
 }
 
 export function pickerMinutes(step: MinuteStep): number[] {

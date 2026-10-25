@@ -1,5 +1,12 @@
 import { allDayStart } from "./allDay";
-import { overlappingEvents, previewRain, previewWeather, previewWindow } from "./dayPreview";
+import {
+  alsoPlans,
+  overlappingEvents,
+  previewRain,
+  previewWeather,
+  previewWindow,
+  sameTimeClashes,
+} from "./dayPreview";
 import type { CalendarEvent, Weather } from "./schemas";
 
 const TZ = "America/Los_Angeles";
@@ -236,5 +243,85 @@ describe("previewRain", () => {
         ]),
       ),
     ).toBeUndefined();
+  });
+});
+
+describe("alsoPlans", () => {
+  const events = [
+    allDay("fair", DAY),
+    timed("swim", at(16), at(17)),
+    timed("piano", at(20), at(21)),
+    timed("self", at(16), at(17)),
+  ];
+
+  it("EVT-09 a timed event lists the plans overlapping its time, without itself", () => {
+    const also = alsoPlans(
+      events,
+      { id: "self", day: DAY, times: { start: 9 * 60, end: 10 * 60 } },
+      TZ,
+    );
+
+    expect(also.scope).toBe("time");
+    expect(ids(also.plans)).toEqual(["fair", "swim"]);
+  });
+
+  it("EVT-09 an all-day event lists every plan that day as Also that day", () => {
+    const also = alsoPlans(events, { id: "self", day: DAY, times: { start: 0, allDay: true } }, TZ);
+
+    expect(also.scope).toBe("day");
+    expect(ids(also.plans)).toEqual(["fair", "swim", "piano"]);
+  });
+});
+
+describe("sameTimeClashes", () => {
+  const MOM = "m";
+  const DAD = "d";
+  const KID = "k";
+  const FAMILY = [MOM, DAD, KID];
+  const who = (event: CalendarEvent, tagIds: string[]) => ({ ...event, everyone: false, tagIds });
+  const draft = (tagIds: string[], id?: string) => ({
+    id,
+    day: DAY,
+    times: { start: 9 * 60, end: 10 * 60 },
+    tagIds,
+  });
+  const clashes = (events: CalendarEvent[], tagIds: string[], id?: string) =>
+    sameTimeClashes(events, draft(tagIds, id), { allIds: FAMILY, tz: TZ }).map((clash) => [
+      clash.event.id,
+      clash.tagIds,
+    ]);
+
+  it("EVT-13 a plan at the same time that shares a person clashes, with the shared people", () => {
+    expect(clashes([who(timed("swim", at(16), at(17)), [DAD, KID])], [MOM, KID])).toEqual([
+      ["swim", [KID]],
+    ]);
+  });
+
+  it("EVT-13 a plan with nobody shared does not clash", () => {
+    expect(clashes([who(timed("swim", at(16), at(17)), [DAD])], [MOM])).toEqual([]);
+  });
+
+  it("EVT-13 an everyone plan clashes with everyone on this event, in tag order", () => {
+    expect(clashes([timed("swim", at(16), at(17))], [KID, MOM])).toEqual([["swim", [MOM, KID]]]);
+  });
+
+  it("EVT-13 a plan at another time, an all-day plan and the event itself never clash", () => {
+    const events = [
+      timed("late", at(18), at(19)),
+      allDay("fair", DAY),
+      timed("self", at(16), at(17)),
+    ];
+
+    expect(clashes(events, FAMILY, "self")).toEqual([]);
+  });
+
+  it("EVT-13 clashes come in start order", () => {
+    const events = [timed("b", at(16, 30), at(17)), timed("a", at(15, 30), at(16, 15))];
+
+    expect(clashes(events, [MOM]).map(([id]) => id)).toEqual(["a", "b"]);
+  });
+
+  it("EVT-13 a nobody event has no clashes", () => {
+    expect(clashes([timed("swim", at(16), at(17))], [])).toEqual([]);
   });
 });
