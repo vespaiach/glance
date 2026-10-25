@@ -1,17 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import {
   useAccount,
   useAccountCounts,
   useDeleteAccount,
+  useLiveEvents,
   usePhotos,
   usePhotoUsage,
   useSettingsRepo,
   useSignedInScreens,
   useSignOut,
   useSignOutAll,
+  useTags,
+  useTagsRepo,
 } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
 import { useBreakpoint } from "@/shell/breakpoint";
@@ -22,6 +25,7 @@ import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { SettingsView } from "./components/SettingsView";
 import { DELETE_CLOSED, deleteAccountDialog } from "./deleteAccountDialog";
+import { members } from "./members";
 import { SIGN_OUT_CLOSED, signOutDialog } from "./signOutDialog";
 import { useQrTile } from "./useQrTile";
 import { useThisPhone } from "./useThisPhone";
@@ -97,6 +101,20 @@ export function SettingsScreen() {
 
   const thisPhone = useThisPhone();
 
+  const tags = useTags();
+
+  const events = useLiveEvents();
+
+  const tagsRepo = useTagsRepo();
+
+  const [askingMember, setAskingMember] = useState<string | null>(null);
+
+  const removeMember = (id: string) => {
+    setAskingMember(null);
+
+    void tagsRepo.remove(id);
+  };
+
   return (
     <SettingsView
       account={account}
@@ -130,6 +148,11 @@ export function SettingsScreen() {
       phone={thisPhone.phone}
       onAllowPush={thisPhone.allow}
       onTurnOffPush={thisPhone.turnOff}
+      members={tags && events && members(tags, events)}
+      askingMember={askingMember}
+      onAskRemoveMember={setAskingMember}
+      onCancelRemoveMember={() => setAskingMember(null)}
+      onRemoveMember={removeMember}
     />
   );
 }

@@ -6,10 +6,11 @@ import type { Season } from "@/domain/schemas";
 import { DEFAULT_AMBIENT } from "@/domain/schemas";
 import { GB } from "@/domain/storage";
 import { BackgroundView } from "@/features/background";
-import { AmbientScheduleView, LocationView, SettingsView } from "@/features/settings";
+import { AmbientScheduleView, LocationView, members, SettingsView } from "@/features/settings";
 import type { WeatherSetupState } from "@/features/weather";
 import { GalleryGroup } from "./GalleryGroup";
 import {
+  GALLERY_FAMILY,
   GALLERY_PHOTOS,
   GALLERY_TZ,
   gallery,
@@ -44,6 +45,21 @@ const QR_OPEN = {
 } as const;
 
 const STORAGE_LIMIT = 5 * GB;
+
+const [AN, HY, MOM, DAD] = GALLERY_FAMILY;
+
+const FAMILY_PLANS = [[AN], [AN], [AN, HY], [HY, DAD], [DAD]].map((who, index) => ({
+  id: `family-plan-${index}`,
+  everyone: false,
+  tagIds: who.flatMap((tag) => (tag ? [tag.id] : [])),
+}));
+
+const FAMILY = members(
+  [AN, HY, MOM, DAD].filter((tag) => tag !== undefined),
+  FAMILY_PLANS,
+);
+
+const ONE_MEMBER = FAMILY.slice(0, 1);
 
 const PHOTO = { ...DEFAULT_SETTINGS.background, mode: "photo", photoId: COAST?.id } as const;
 
@@ -268,6 +284,12 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "delete-account-deleting", deleteAccount: { kind: "deleting" } },
     { key: "delete-account-failed", deleteAccount: { kind: "failed" } },
     { key: "delete-account-offline", online: false },
+    { key: "member-asking-only", askingMember: AN?.id ?? null },
+    { key: "member-asking-shared", askingMember: HY?.id ?? null },
+    { key: "member-asking-none", askingMember: MOM?.id ?? null },
+    { key: "member-one", members: ONE_MEMBER },
+    { key: "small-member-asking", small: true, breakpoint: "small", askingMember: AN?.id ?? null },
+    { key: "small-member-one", small: true, breakpoint: "small", members: ONE_MEMBER },
     {
       key: "small-delete-account",
       small: true,
@@ -310,5 +332,10 @@ function settingsBase(season: Season): SettingsProps {
     phone: { kind: "unsupported" },
     onAllowPush: ignore,
     onTurnOffPush: ignore,
+    members: FAMILY,
+    askingMember: null,
+    onAskRemoveMember: ignore,
+    onCancelRemoveMember: ignore,
+    onRemoveMember: ignore,
   };
 }

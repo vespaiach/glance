@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.95 |
+| Status | v2.96 |
 | Date | 2026-10-25 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.95) · [`design/handoff/`](design/handoff/README.md) (v17) |
 
@@ -172,7 +172,7 @@ db.version(7).stores({
 ### 4.2 Repository pattern
 Each repo has a small interface and one Dexie implementation (`createXRepo(store)` + a `useXRepo()` hook). A write is **one Dexie transaction** — the row plus an outbox entry — then `nudge()` once it commits. A put keeps the stored server fields (a new row gets version 0); a remove sets `deletedAt` locally and queues a delete. Settings are one row keyed by `accountId`, merged over defaults. Photo uploads skip the outbox (§6.3); photo edits and deletes use it.
 
-Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day, week or span (`useEventsOnDay`, `useEventsInWeek`, `useEventsBetween`) in `tz`, `useEvent`, `useNextEventAfter`, `useEventsAfter(day, tz, limit)` (the first `limit` all-day and the first `limit` timed events after the day), `useUpcomingEvent`, `useHasEvents`, `useEventRecents` (`recentTitles` / `recentPlaces` of the live events, EVT-12), `useTags` (oldest first), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePhotoSrc`, `useTodaysPhoto(day, tz, skip)`, `useSettings`, `useWeather`, `useSyncStatus`, `useSourceStatus`, `useRetry`, `useSignedOut`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `TagsRepo.add(tag)` and `TagsRepo.remove(id)` (D24) are the tag writes; `outbox.ts` `queued(store, tables, write)` runs several row writes and their outbox entries together.
+Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day, week or span (`useEventsOnDay`, `useEventsInWeek`, `useEventsBetween`) in `tz`, `useEvent`, `useNextEventAfter`, `useEventsAfter(day, tz, limit)` (the first `limit` all-day and the first `limit` timed events after the day), `useUpcomingEvent`, `useHasEvents`, `useLiveEvents` (every live event, past ones too; the Settings member counts, FAM-08), `useEventRecents` (`recentTitles` / `recentPlaces` of the live events, EVT-12), `useTags` (oldest first), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePhotoSrc`, `useTodaysPhoto(day, tz, skip)`, `useSettings`, `useWeather`, `useSyncStatus`, `useSourceStatus`, `useRetry`, `useSignedOut`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `TagsRepo.add(tag)` and `TagsRepo.remove(id)` (D24) are the tag writes; Settings builds the FAM-08 rows with `features/settings/members.ts` (`memberRemoval` + `removalLine` per tag) for the pure `MemberList`, and keeps which row asks in local state; `outbox.ts` `queued(store, tables, write)` runs several row writes and their outbox entries together.
 
 `RepoProvider` takes a `RepoStore` (`db`, `accountId`, `account`, `now`, `startedAt`, `nudge`, `refreshWeather`, `photoSrc`, `upload`, `places`, `locate`, `displays`, `issueQr`/`voidQr`, `signOut`, `markSignedOut`). The shell builds it; tests inject one.
 
