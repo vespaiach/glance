@@ -33,7 +33,7 @@ import { WeatherNow } from "@/ui/WeatherNow";
 import { Zone } from "@/ui/Zone";
 import { AmbientGallery } from "./AmbientGallery";
 import { CalendarGallery } from "./CalendarGallery";
-import { EventPageGallery } from "./EventPageGallery";
+import { EventPageGallery, EventPickerGallery } from "./EventPageGallery";
 import { EventSheetGallery } from "./EventSheetGallery";
 import { GalleryGroup } from "./GalleryGroup";
 import { NotesGallery } from "./NotesGallery";
@@ -129,6 +129,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <PersonFilterGallery />
       <TimelineGallery />
       <EventPageGallery />
+      <EventPickerGallery />
       <EventSheetGallery />
       <WeatherGallery />
       <NotesGallery />

@@ -356,7 +356,7 @@ function Pill({ name, removeLabel, xstyle, onRemove, children }: PillProps) {
   );
 }
 
-function NewMember({ name, color, onColor, onCreate }: NewMemberProps) {
+export function NewMember({ name, color, onColor, onCreate }: NewMemberProps) {
   return (
     <div {...stylex.props(styles.tile)}>
       <div {...stylex.props(styles.tileTop)}>
@@ -389,7 +389,7 @@ function NewMember({ name, color, onColor, onCreate }: NewMemberProps) {
   );
 }
 
-function Suggestions({ tags, onAdd }: SuggestionsProps) {
+export function Suggestions({ tags, onAdd }: SuggestionsProps) {
   if (tags.length === 0) return null;
 
   return (

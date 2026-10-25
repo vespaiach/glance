@@ -4,6 +4,7 @@ export {
   type PreviewPlan,
   type PreviewTile,
 } from "./components/DayPreview";
+export { EventPicker } from "./components/EventPicker";
 export { EventSentence, type SameTime } from "./components/EventSentence";
 export { EventSheet, type SheetForecast } from "./components/EventSheet";
 export { EventTaskBar } from "./components/EventTaskBar";

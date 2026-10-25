@@ -18,6 +18,8 @@ const LONG_DATE: Intl.DateTimeFormatOptions = { weekday: "long", month: "long", 
 
 const DAY_TITLE: Intl.DateTimeFormatOptions = { weekday: "long", month: "short", day: "numeric" };
 
+const DAY_NAME: Intl.DateTimeFormatOptions = { weekday: "short", month: "long", day: "numeric" };
+
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -113,6 +115,10 @@ export function formatMonth(date: Date, tz: string): string {
 
 export function formatDayTitle(date: Date, tz: string): string {
   return formatIn(DAY_TITLE, tz).format(date);
+}
+
+export function formatDayName(date: Date, tz: string): string {
+  return formatIn(DAY_NAME, tz).format(date);
 }
 
 function formatIn(options: Intl.DateTimeFormatOptions, tz: string): Intl.DateTimeFormat {

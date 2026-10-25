@@ -144,6 +144,20 @@ export function whoIds(event: EventWho, allIds: readonly string[]): readonly str
   return event.everyone ? allIds : event.tagIds;
 }
 
+export function pickWho(
+  tagIds: readonly string[],
+  allIds: readonly string[],
+  tagId?: string,
+): string[] {
+  if (tagId === undefined) return [...allIds];
+
+  if (allIds.every((id) => tagIds.includes(id))) return [tagId];
+
+  const next = tagIds.includes(tagId) ? tagIds.filter((id) => id !== tagId) : [...tagIds, tagId];
+
+  return next.length === 0 ? [...allIds] : allIds.filter((id) => next.includes(id));
+}
+
 export function exactTag(tags: readonly Tag[], input: string): Tag | undefined {
   const name = input.trim().toLowerCase();
 
