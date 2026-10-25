@@ -6,6 +6,7 @@ import type { StatusTitle } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
 import {
   DayPreview,
+  EventFacts,
   EventPage,
   eventPageReducer,
   initialEventPage,
@@ -58,6 +59,12 @@ const DEMOS: readonly Demo[] = [
   { label: words.offline, mode: "new", draft: BLANK, offline: true },
   { label: words.view, mode: "view", draft: LUNCH, status: { kind: "in", minutes: 169 } },
   { label: words.past, mode: "view", draft: LUNCH, status: { kind: "ended" } },
+  {
+    label: words.viewAllDay,
+    mode: "view",
+    draft: { ...LUNCH, allDay: true },
+    status: { kind: "inDays", days: 7 },
+  },
 ];
 
 const PREVIEW_WEATHER: PreviewTile = {
@@ -132,6 +139,15 @@ function DemoPage({ demo, onLeft }: { demo: Demo; onLeft: () => void }) {
       recentPlaces={picks.recentPlaces}
       preview={
         <DayPreview label={words.previewLabel} weather={PREVIEW_WEATHER} plans={PREVIEW_PLANS} />
+      }
+      facts={
+        <EventFacts
+          breakpoint={breakpoint}
+          day={words.factsDay}
+          scope={shown.mode === "view" && shown.opened.allDay ? "day" : "time"}
+          weather={PREVIEW_WEATHER}
+          plans={shown.mode === "view" && shown.opened.allDay ? [] : PREVIEW_PLANS}
+        />
       }
       dispatch={dispatch}
       onSave={() => dispatch({ type: "saved" })}

@@ -27,7 +27,7 @@ import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSheetHost } from "@/shell/SheetHost";
 import { EventPage } from "./components/EventPage";
 import type { SameTime } from "./components/EventSentence";
-import { DayPreviewPanel } from "./DayPreviewPanel";
+import { DayPreviewPanel, EventFactsPanel } from "./DayPreviewPanel";
 import { draftFromEvent, eventFromDraft, newEventDraft } from "./eventDraft";
 import {
   type EventPageState,
@@ -158,9 +158,11 @@ function EventPageFrame({ id, initial, tags }: FrameProps) {
     return tag.id;
   };
 
+  const breakpoint = useBreakpoint();
+
   return (
     <EventPage
-      breakpoint={useBreakpoint()}
+      breakpoint={breakpoint}
       state={shown}
       leaving={state.mode === "closed"}
       tags={tags}
@@ -172,6 +174,15 @@ function EventPageFrame({ id, initial, tags }: FrameProps) {
       recentTitles={recents?.titles ?? []}
       recentPlaces={recents?.places ?? []}
       preview={<DayPreviewPanel day={draft.day} id={id} tags={tags} times={draft} />}
+      facts={
+        <EventFactsPanel
+          breakpoint={breakpoint}
+          day={draft.day}
+          id={id}
+          tags={tags}
+          times={draft}
+        />
+      }
       keyboardInset={useKeyboardInset()}
       dispatch={dispatch}
       onSave={onSave}

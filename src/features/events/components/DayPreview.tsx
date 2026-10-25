@@ -165,7 +165,7 @@ export function DayPreview({ label, weather, plans }: DayPreviewProps) {
   );
 }
 
-function WeatherTile({ icon, temp, condition, hours }: PreviewTile) {
+export function WeatherTile({ icon, temp, condition, hours }: PreviewTile) {
   return (
     <div {...stylex.props(styles.tile)}>
       <div {...stylex.props(styles.now)}>
@@ -190,7 +190,7 @@ function WeatherTile({ icon, temp, condition, hours }: PreviewTile) {
   );
 }
 
-function PlanRow({ time, title, who }: PreviewPlan) {
+export function PlanRow({ time, title, who }: PreviewPlan) {
   return (
     <li {...stylex.props(styles.plan)}>
       <span {...stylex.props(styles.mono)}>{time}</span>
