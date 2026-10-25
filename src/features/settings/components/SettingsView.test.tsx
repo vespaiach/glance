@@ -116,7 +116,7 @@ function notesSlider() {
 
 function rowsText() {
   return screen.getAllByText(
-    /^(Location|Season|Background|Clock|Temperature|Hide sidebar when idle)$/,
+    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle)$/,
   );
 }
 
@@ -202,7 +202,7 @@ test("SET-05 the temperature radios save Fahrenheit or Celsius", async () => {
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
 
-test("SET-05 Hide sidebar when idle is the last row, after Temperature", () => {
+test("SET-05 NOTIF-08 the Notifications rows sit between Temperature and Hide sidebar when idle, the last row", () => {
   renderView();
 
   expect(rowsText().map((row) => row.textContent)).toEqual([
@@ -211,6 +211,8 @@ test("SET-05 Hide sidebar when idle is the last row, after Temperature", () => {
     "Background",
     "Clock",
     "Temperature",
+    "Notifications",
+    "Chime",
     "Hide sidebar when idle",
   ]);
 });
@@ -235,25 +237,47 @@ test("SET-05 the Hide sidebar when idle switch says it hides after 15 seconds", 
   ).toHaveAccessibleDescription("After 15 seconds without a touch. Any tap brings it back.");
 });
 
-test("NOTIF-08 Notifications follows Hide sidebar when idle with Default reminder and Chime", () => {
+test("NOTIF-08 Notifications for everyone offers Off, 15 and 30 min before, on 15 by default", () => {
   renderView();
 
-  const section = screen.getByRole("region", { name: "Notifications" });
-
-  expect(within(section).getByRole("group", { name: "Default reminder" })).toBeInTheDocument();
-  expect(within(section).getByRole("switch", { name: "Chime" })).toHaveAccessibleDescription(
-    "Plays once when a reminder shows. Never during quiet hours.",
-  );
+  expect(
+    radios("Notifications for everyone")
+      .getAllByRole("radio")
+      .map((radio) => radio.textContent),
+  ).toEqual(["Off", "15 min before", "30 min before"]);
+  expect(checkedRadio("Notifications for everyone")).toBe("15 min before");
+  expect(screen.getByText("15 min before each event, on this screen and on phones")).toBeVisible();
 });
 
-test("NOTIF-08 Default reminder shows and saves the setting", async () => {
-  const props = renderView({ settings: { ...DEFAULT_SETTINGS, defaultReminder: "start" } });
+test.each([
+  [30, "30 min before", "30 min before each event, on this screen and on phones"],
+  ["off", "Off", "Off for everyone, whatever each event is set to"],
+] as const)("NOTIF-08 the %s lead time is checked with its sub-line", (notifyLead, label, sub) => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, notifyLead } });
 
-  expect(screen.getByRole("button", { name: "At start" })).toHaveAttribute("aria-pressed", "true");
+  expect(checkedRadio("Notifications for everyone")).toBe(label);
+  expect(screen.getByText(sub)).toBeVisible();
+});
 
-  await userEvent.click(screen.getByRole("button", { name: "Both" }));
+test.each([
+  ["Off", "off"],
+  ["30 min before", 30],
+] as const)("NOTIF-08 picking %s saves the lead time", async (label, notifyLead) => {
+  const props = renderView();
 
-  expect(props.onChange).toHaveBeenCalledWith({ defaultReminder: "both" });
+  await userEvent.click(radios("Notifications for everyone").getByRole("radio", { name: label }));
+
+  expect(props.onChange).toHaveBeenCalledWith({ notifyLead });
+});
+
+test("NOTIF-08 Chime and This phone keep their values while Notifications is Off", () => {
+  renderView({ settings: { ...DEFAULT_SETTINGS, notifyLead: "off" }, phone: { kind: "on" } });
+
+  expect(screen.getByRole("switch", { name: "Chime" })).toHaveAttribute("aria-checked", "true");
+  expect(screen.getByRole("switch", { name: "Chime" })).toHaveAccessibleDescription(
+    "Plays once when a reminder shows. Never during quiet hours.",
+  );
+  expect(screen.getByRole("button", { name: "Turn off" })).toBeInTheDocument();
 });
 
 test("NOTIF-08 the Chime switch shows and saves the setting", async () => {

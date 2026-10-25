@@ -8,9 +8,9 @@ import { type } from "@/theme/type.stylex";
 import { Icon } from "./Icon";
 import { press } from "./press";
 
-type RadioOption<T extends string> = { value: T; label: string; icon?: LucideIcon };
+type RadioOption<T extends string | number> = { value: T; label: string; icon?: LucideIcon };
 
-type RadioProps<T extends string> = {
+type RadioProps<T extends string | number> = {
   label: string;
   options: readonly RadioOption<T>[];
   value: T;
@@ -94,7 +94,7 @@ const styles = stylex.create({
   },
 });
 
-export function Radio<T extends string>({
+export function Radio<T extends string | number>({
   label,
   options,
   value,

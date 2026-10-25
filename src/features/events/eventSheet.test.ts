@@ -93,7 +93,7 @@ describe("event sheet drafts", () => {
   });
 
   it("EVT-02 a new event is blank at the TPK-05 default times", () => {
-    expect(newEventDraft(new Date(2026, 9, 9, 10, 41), tz, FAMILY, "15min")).toEqual({
+    expect(newEventDraft(new Date(2026, 9, 9, 10, 41), tz, FAMILY)).toEqual({
       title: "",
       start: 660,
       end: 720,
@@ -104,12 +104,16 @@ describe("event sheet drafts", () => {
     });
   });
 
-  it("NOTIF-09 a new event starts on the Settings default reminder", () => {
-    expect(newEventDraft(NOW, tz, FAMILY, "both").reminder).toBe("both");
+  it("NOTIF-09 a new event starts with its notification on", () => {
+    expect(newEventDraft(NOW, tz, FAMILY).notify).toBe(true);
   });
 
-  it("NOTIF-09 an existing event opens with its own reminder", () => {
-    expect(draftFromEvent({ ...LUNCH, notify: false }, tz, NOW, FAMILY).reminder).toBe("off");
+  it("NOTIF-09 an existing event opens with its own notification, missing reading on", () => {
+    expect(draftFromEvent({ ...LUNCH, notify: false }, tz, NOW, FAMILY).notify).toBe(false);
+
+    const { notify: _, ...older } = LUNCH;
+
+    expect(draftFromEvent(older, tz, NOW, FAMILY).notify).toBe(true);
   });
 
   it("EVT-11 an everyone event opens with every tag on it", () => {
@@ -117,14 +121,14 @@ describe("event sheet drafts", () => {
   });
 
   it("TL-08 a new event from a free slot starts and ends at the slot", () => {
-    expect(newEventDraft(NOW, tz, FAMILY, "15min", { start: 675, end: 735 })).toMatchObject({
+    expect(newEventDraft(NOW, tz, FAMILY, { start: 675, end: 735 })).toMatchObject({
       start: 675,
       end: 735,
     });
   });
 
   it("EVT-11 a new event starts with the given tags", () => {
-    expect(newEventDraft(NOW, tz, [MOM], "15min").tagIds).toEqual([MOM]);
+    expect(newEventDraft(NOW, tz, [MOM]).tagIds).toEqual([MOM]);
   });
 });
 
@@ -358,8 +362,8 @@ describe("event from draft", () => {
     });
   });
 
-  it("NOTIF-09 the saved event keeps the draft's reminder", () => {
-    expect(eventFromDraft({ ...DRAFT, notify: true }, DAY, ID, tz, FAMILY).reminder).toBe("start");
+  it("NOTIF-09 the saved event keeps the draft's notification", () => {
+    expect(eventFromDraft({ ...DRAFT, notify: false }, DAY, ID, tz, FAMILY).notify).toBe(false);
   });
 
   it("D24 the saved event keeps the opened event's tags and trimmed notes", () => {
@@ -432,16 +436,16 @@ describe("event sheet in a zone", () => {
   });
 
   it("LOC-06 a new event's default times read the given zone", () => {
-    expect(newEventDraft(new Date("2026-10-09T17:41:00Z"), LA, FAMILY, "15min")).toMatchObject({
+    expect(newEventDraft(new Date("2026-10-09T17:41:00Z"), LA, FAMILY)).toMatchObject({
       start: 660,
       end: 720,
     });
   });
 });
 
-describe("event sheet reminder", () => {
-  it("NOTIF-09 picking a reminder changes the draft", () => {
-    expect(reduce(closed, { type: "reminder", value: "off" }).draft.reminder).toBe("off");
+describe("event sheet notification", () => {
+  it("NOTIF-09 turning the notification off changes the draft", () => {
+    expect(reduce(closed, { type: "notify", value: false }).draft.notify).toBe(false);
   });
 });
 
@@ -466,7 +470,7 @@ describe("event sheet discard", () => {
     ["place", { location: "Park" }],
     ["notes", { notes: "Bring a gift" }],
     ["who", { tagIds: [MOM] }],
-    ["reminder", { notify: true }],
+    ["notification", { notify: false }],
   ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
     expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
   });

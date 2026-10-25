@@ -137,7 +137,7 @@ export function EventSheetGallery() {
 
   const close = () => setOpen(null);
 
-  const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ, FAMILY_IDS, "15min") : LUNCH;
+  const draft = open?.mode === "new" ? newEventDraft(NOW, GALLERY_TZ, FAMILY_IDS) : LUNCH;
 
   const allDay = open?.allDay && { allDay: open.allDay };
 

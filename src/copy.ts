@@ -259,12 +259,6 @@ export const copy = {
     } satisfies Record<TagColor, string>,
   },
   reminder: {
-    options: [
-      { value: "off", label: "Off" },
-      { value: "start", label: "At start" },
-      { value: "15min", label: "15 min" },
-      { value: "both", label: "Both" },
-    ],
     strip: {
       label: "Reminder",
       in: (minutes: number) => `In ${minutes} min`,
@@ -307,8 +301,6 @@ export const copy = {
       who: "Who",
       notes: "Notes",
       notesPlaceholder: "Anything to remember",
-      reminder: "Reminder",
-      reminderDefault: "Default from Settings",
       add: "Save event",
       save: "Save",
       saveOffline: "Save for later",
@@ -591,7 +583,16 @@ export const copy = {
     },
     notifications: {
       title: "Notifications",
-      defaultReminder: "Default reminder",
+      group: "Notifications for everyone",
+      options: [
+        { value: "off" as const, label: "Off" },
+        { value: 15 as const, label: "15 min before" },
+        { value: 30 as const, label: "30 min before" },
+      ],
+      sub: (lead: "off" | 15 | 30) =>
+        lead === "off"
+          ? "Off for everyone, whatever each event is set to"
+          : `${lead} min before each event, on this screen and on phones`,
       chime: "Chime",
       chimeBody: "Plays once when a reminder shows. Never during quiet hours.",
       thisPhone: "This phone",

@@ -223,6 +223,18 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
         hideSidebarWhenIdle: false,
       },
     },
+    { key: "notifications-30", settings: { ...DEFAULT_SETTINGS, notifyLead: 30 } },
+    {
+      key: "notifications-off",
+      settings: { ...DEFAULT_SETTINGS, notifyLead: "off" },
+      phone: { kind: "on" },
+    },
+    {
+      key: "small-notifications-off",
+      small: true,
+      breakpoint: "small",
+      settings: { ...DEFAULT_SETTINGS, notifyLead: "off" },
+    },
     { key: "this-screen-only", screens: SCREEN_SAMPLES.slice(0, 1) },
     { key: "qr-open", qr: QR_OPEN },
     { key: "qr-issuing", qr: { tile: { kind: "issuing" }, secondsLeft: 180 } },

@@ -180,19 +180,14 @@ test("tech§4.3 a note request renders no event sheet", () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
-test("NOTIF-08 a new event starts on the Settings default reminder and saves it", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-12" }, { defaultReminder: "start" });
+test("NOTIF-09 a new event saves with its notification on, whatever the lead time", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" }, { notifyLead: "off" });
 
-  expect(await screen.findByRole("button", { name: "At start" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-
-  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
   await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
-  expect((await store.db.events.toArray())[0]?.reminder).toBe("start");
+  expect((await store.db.events.toArray())[0]?.notify).toBe(true);
 });
 
 test("EVT-07 Add event queues the new event on the request's day and closes the sheet", async () => {
@@ -231,6 +226,19 @@ test("EVT-07 Save keeps the event's id and day", async () => {
       title: "Lunch with Aunt Rosa!",
       version: 1,
     }),
+  );
+});
+
+test("NOTIF-09 saving an edited event keeps its notification off", async () => {
+  await store.db.events.put(synced({ ...LUNCH, notify: false }));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.type(await screen.findByLabelText("Title"), "!");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.get(LUNCH.id)).toMatchObject({ notify: false, version: 1 }),
   );
 });
 
