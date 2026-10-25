@@ -21,7 +21,6 @@ import {
   minutesOfDay,
 } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
-import { useBreakpoint } from "@/shell/breakpoint";
 import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
@@ -47,13 +46,7 @@ type TileInput = {
 
 const words = copy.events.preview;
 
-export function DayPreviewPanel(props: PanelProps) {
-  if (useBreakpoint() === "small") return null;
-
-  return <LoadedPanel {...props} />;
-}
-
-function LoadedPanel({ day, id, tags, times }: PanelProps) {
+export function DayPreviewPanel({ day, id, tags, times }: PanelProps) {
   const tz = useTimeZone();
 
   const now = useNow("minute");

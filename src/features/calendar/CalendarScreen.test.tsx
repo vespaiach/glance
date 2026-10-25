@@ -556,7 +556,7 @@ test("EVT-07 an event added on the Calendar shows on its day", async () => {
   );
 
   await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
-  await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
+  await userEvent.type(await screen.findByRole("textbox", { name: "What’s happening" }), "Picnic");
   await userEvent.click(
     within(screen.getByRole("dialog")).getByRole("button", { name: "Save event" }),
   );

@@ -89,7 +89,7 @@ export function EventTaskBar(props: EventTaskBarProps) {
       {!(asksDiscard && breakpoint === "small") && (
         <span {...stylex.props(styles.title, titleSizes[breakpoint])}>
           {mode === "view" && <Icon icon={Clock} size={ICON_SIZE[breakpoint]} />}
-          {titleText(mode, status)}
+          {taskBarTitle(mode, status)}
         </span>
       )}
       {asksDiscard ? <DiscardAsk {...props} /> : <Actions {...props} />}
@@ -98,6 +98,14 @@ export function EventTaskBar(props: EventTaskBarProps) {
       )}
     </div>
   );
+}
+
+export function taskBarTitle(mode: EventPageMode, status: StatusTitle | undefined): string {
+  if (mode === "new") return words.newTitle;
+
+  if (mode === "edit" || !status) return words.editTitle;
+
+  return words.status(status, formatLength);
 }
 
 function DiscardAsk({ breakpoint, onKeepEditing, onDiscard }: EventTaskBarProps) {
@@ -162,14 +170,6 @@ function DeleteActions({ breakpoint, asking, onAskDelete, onKeep, onDelete }: Ev
       </Button>
     </>
   );
-}
-
-function titleText(mode: EventPageMode, status: StatusTitle | undefined): string {
-  if (mode === "new") return words.newTitle;
-
-  if (mode === "edit" || !status) return words.editTitle;
-
-  return words.status(status, formatLength);
 }
 
 function saveLabel({ breakpoint, mode, online }: EventTaskBarProps): string {

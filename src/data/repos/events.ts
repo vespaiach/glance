@@ -1,6 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import { allDayStart, eventDayKey } from "@/domain/allDay";
+import { recentPlaces, recentTitles } from "@/domain/recent";
 import type { CalendarEvent } from "@/domain/schemas";
 import { addDays, dayStart } from "@/domain/zone";
 import type { GlanceDb, StoredEvent } from "../db";
@@ -8,6 +9,8 @@ import { isLive, putQueued, removeQueued } from "./outbox";
 import { type RepoStore, useRepoStore } from "./store";
 
 const WEEK = 7;
+
+export type EventRecents = { titles: string[]; places: string[] };
 
 export interface EventsRepo {
   put(event: CalendarEvent): Promise<void>;
@@ -105,6 +108,16 @@ export function useHasEvents(): boolean | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(async () => (await db.events.filter(isLive).first()) !== undefined, [db]);
+}
+
+export function useEventRecents(): EventRecents | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(async () => {
+    const events = await db.events.filter(isLive).toArray();
+
+    return { titles: recentTitles(events), places: recentPlaces(events) };
+  }, [db]);
 }
 
 function isKind(allDay: boolean) {

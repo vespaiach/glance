@@ -1,6 +1,6 @@
 import { type DefaultWord, type EventWord, nextWord } from "@/domain/eventSentence";
 import { defaultEnd, endForLength, moveStart, pickEnd } from "@/domain/eventTimes";
-import { type EventDraft, isDirty } from "./eventSheet";
+import { type EventDraft, isDirty } from "./eventDraft";
 
 export type PageDraft = EventDraft & { day: string };
 
@@ -23,6 +23,8 @@ export type EventPageState =
   | { mode: "closed" };
 
 export type EventPageEditState = Extract<EventPageState, { mode: "new" | "edit" }>;
+
+export type OpenEventPage = Exclude<EventPageState, { mode: "closed" }>;
 
 export type EventPageAction =
   | { type: "select"; word: EventWord }

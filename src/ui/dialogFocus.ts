@@ -1,20 +1,18 @@
-import { type KeyboardEvent, type RefObject, useEffect } from "react";
+import { type KeyboardEvent, type RefObject, useEffect, useState } from "react";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function useFocusOnOpen(dialog: RefObject<HTMLElement | null>) {
+  const [opener] = useState(currentFocus);
+
   useEffect(() => {
-    const opener = document.activeElement;
-
-    const first = dialog.current?.querySelector<HTMLElement>("[data-autofocus]");
-
-    (first ?? dialog.current)?.focus();
+    if (!dialog.current?.contains(document.activeElement)) focusFirst(dialog.current);
 
     return () => {
       if (opener instanceof HTMLElement) opener.focus();
     };
-  }, [dialog]);
+  }, [dialog, opener]);
 }
 
 export function dialogKeyDown(onClose: () => void) {
@@ -44,4 +42,14 @@ function wrapTarget(event: KeyboardEvent<HTMLElement>) {
   }
 
   return document.activeElement === last ? first : undefined;
+}
+
+function currentFocus(): Element | null {
+  return typeof document === "undefined" ? null : document.activeElement;
+}
+
+function focusFirst(dialog: HTMLElement | null) {
+  const first = dialog?.querySelector<HTMLElement>("[data-autofocus]");
+
+  (first ?? dialog)?.focus();
 }

@@ -1,43 +1,18 @@
 import * as stylex from "@stylexjs/stylex";
-import { Plus, Users, X } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useId } from "react";
+import { Plus } from "lucide-react";
 import { copy } from "@/copy";
 import { type Tag, type TagColor, TagColorSchema } from "@/domain/schemas";
-import { suggestTags } from "@/domain/tagMatch";
-import { exactTag } from "@/domain/tags";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
-import { Icon } from "@/ui/Icon";
 import { PersonDot } from "@/ui/PersonDot";
 import { press } from "@/ui/press";
-
-type WhoFieldProps = {
-  tags: readonly Tag[];
-  tagIds: readonly string[];
-  input: string;
-  newColor: TagColor;
-  onInput: (value: string) => void;
-  onAdd: (id: string) => void;
-  onRemove: (id: string) => void;
-  onClear: () => void;
-  onColor: (color: TagColor) => void;
-  onCreate: () => void;
-};
 
 type NewMemberProps = {
   name: string;
   color: TagColor;
   onColor: (color: TagColor) => void;
   onCreate: () => void;
-};
-
-type PillProps = {
-  name: string;
-  removeLabel: string;
-  xstyle: stylex.StyleXStyles;
-  onRemove: () => void;
-  children?: ReactNode;
 };
 
 type SuggestionsProps = {
@@ -47,96 +22,9 @@ type SuggestionsProps = {
 
 const words = copy.events.who;
 
-const MAX_NAME = 32;
+const _MAX_NAME = 32;
 
 const styles = stylex.create({
-  root: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  label: {
-    fontSize: type.bodyLgSize,
-    fontWeight: type.bodyLgWeight,
-    letterSpacing: type.bodyLgLs,
-  },
-  field: {
-    minHeight: 56,
-    minWidth: 0,
-    boxSizing: "border-box",
-    margin: 0,
-    padding: 5,
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: {
-      default: colors.borderHairline,
-      ":focus-within": colors.black,
-    },
-    borderRadius: radii.md,
-    boxShadow: {
-      default: "none",
-      ":focus-within": `0 0 0 2px ${colors.focusRing}`,
-    },
-    backgroundColor: colors.surfaceCanvas,
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 6,
-    transitionProperty: "box-shadow",
-    transitionDuration: motion.durFast,
-  },
-  pill: {
-    height: 44,
-    boxSizing: "border-box",
-    display: "flex",
-    alignItems: "center",
-    gap: 2,
-    paddingInlineStart: 16,
-    paddingInlineEnd: 4,
-    borderRadius: radii.full,
-    fontSize: 16,
-    fontWeight: 480,
-    whiteSpace: "nowrap",
-  },
-  everyone: {
-    backgroundColor: colors.surfaceSoft,
-  },
-  everyoneIcon: {
-    display: "flex",
-    marginInlineEnd: 6,
-  },
-  remove: {
-    width: 36,
-    height: 36,
-    borderWidth: 0,
-    padding: 0,
-    borderRadius: radii.full,
-    backgroundColor: "transparent",
-    color: colors.textPrimary,
-    display: "grid",
-    placeItems: "center",
-    cursor: "pointer",
-    transitionProperty: "transform",
-    transitionDuration: motion.durPress,
-    transitionTimingFunction: motion.easeOut,
-  },
-  input: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 160,
-    minWidth: 140,
-    height: 44,
-    borderWidth: 0,
-    outline: "none",
-    backgroundColor: "transparent",
-    paddingBlock: 0,
-    paddingInline: 10,
-    fontFamily: type.fontSans,
-    fontSize: type.bodySize,
-    fontWeight: type.bodyWeight,
-    letterSpacing: type.bodyLs,
-    color: colors.textPrimary,
-  },
   tile: {
     backgroundColor: colors.surfaceCanvas,
     borderRadius: 24,
@@ -253,108 +141,6 @@ const fills = stylex.create({
   sage: { backgroundColor: colors.blockSage },
   ice: { backgroundColor: colors.blockIce },
 });
-
-export function WhoField({
-  tags,
-  tagIds,
-  input,
-  newColor,
-  onInput,
-  onAdd,
-  onRemove,
-  onClear,
-  onColor,
-  onCreate,
-}: WhoFieldProps) {
-  const inputId = useId();
-
-  const selected = tagIds.flatMap((id) => tags.filter((tag) => tag.id === id));
-
-  const everyone = tags.length > 0 && selected.length === tags.length;
-
-  const exact = exactTag(tags, input);
-
-  const name = input.trim();
-
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    const last = selected.at(-1);
-
-    if (event.key === "Backspace" && input === "" && everyone) return onClear();
-
-    if (event.key === "Backspace" && input === "" && last) return onRemove(last.id);
-
-    if (event.key !== "Enter") return;
-
-    event.preventDefault();
-
-    if (exact) onAdd(exact.id);
-    else if (name !== "") onCreate();
-  };
-
-  return (
-    <div {...stylex.props(styles.root)}>
-      <label htmlFor={inputId} {...stylex.props(styles.label)}>
-        {copy.events.sheet.who}
-      </label>
-      <fieldset aria-label={words.people} {...stylex.props(styles.field)}>
-        {everyone ? (
-          <Pill
-            name={copy.events.everyone}
-            removeLabel={words.removeEveryone}
-            xstyle={styles.everyone}
-            onRemove={onClear}
-          >
-            <span {...stylex.props(styles.everyoneIcon)}>
-              <Icon icon={Users} size={16} />
-            </span>
-          </Pill>
-        ) : (
-          selected.map((tag) => (
-            <Pill
-              key={tag.id}
-              name={tag.name}
-              removeLabel={words.remove(tag.name)}
-              xstyle={fills[tag.color]}
-              onRemove={() => onRemove(tag.id)}
-            />
-          ))
-        )}
-        <input
-          id={inputId}
-          type="text"
-          autoComplete="off"
-          value={input}
-          maxLength={MAX_NAME}
-          placeholder={selected.length > 0 ? words.addSomeoneElse : words.addPerson}
-          onChange={(event) => onInput(event.target.value)}
-          onKeyDown={onKeyDown}
-          {...stylex.props(styles.input)}
-        />
-      </fieldset>
-      {name !== "" && !exact && (
-        <NewMember name={name} color={newColor} onColor={onColor} onCreate={onCreate} />
-      )}
-      <Suggestions tags={suggestTags(tags, input, tagIds)} onAdd={onAdd} />
-    </div>
-  );
-}
-
-function Pill({ name, removeLabel, xstyle, onRemove, children }: PillProps) {
-  return (
-    <span {...stylex.props(styles.pill, xstyle)}>
-      {children}
-      {name}
-      <button
-        type="button"
-        aria-label={removeLabel}
-        onClick={onRemove}
-        {...stylex.props(styles.remove, press.scale)}
-      >
-        <Icon icon={X} size={16} />
-      </button>
-    </span>
-  );
-}
 
 export function NewMember({ name, color, onColor, onCreate }: NewMemberProps) {
   return (

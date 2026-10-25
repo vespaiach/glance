@@ -15,8 +15,10 @@ export {
 export { type AllowAnswer, type DevicePush, type PushCheck, useDevicePush } from "./devicePush";
 export {
   createEventsRepo,
+  type EventRecents,
   type EventsRepo,
   useEvent,
+  useEventRecents,
   useEventsAfter,
   useEventsBetween,
   useEventsInWeek,

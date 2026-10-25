@@ -1,76 +1,54 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Button } from "./Button";
 import { Page } from "./Page";
 
 type Options = {
-  compact?: boolean;
   leaving?: boolean;
-  onBack?: () => void;
+  onEscape?: () => void;
   onLeft?: () => void;
 };
 
-function renderPage({ compact, leaving, onBack = vi.fn(), onLeft = vi.fn() }: Options = {}) {
+function Focused() {
+  return <input aria-label="Title" ref={(input) => input?.focus()} />;
+}
+
+function renderPage({ leaving, onEscape = vi.fn(), onLeft = vi.fn() }: Options = {}) {
   render(
     <>
       <button type="button">Opener</button>
       <Page
-        eyebrow="Friday, Oct 9"
-        title="Soccer practice"
-        backLabel="Back"
-        compact={compact}
+        label="New event"
+        breakpoint="large"
         leaving={leaving}
-        onBack={onBack}
+        onEscape={onEscape}
         onLeft={onLeft}
-        endActions={<Button>Save</Button>}
       >
         <p>Body</p>
       </Page>
     </>,
   );
 
-  return { onBack, onLeft };
+  return { onEscape, onLeft };
 }
 
-test("EVT-01 the page is a modal dialog labelled by its title, with the eyebrow", () => {
+test("EVT-01 the page is a modal dialog named by its label", () => {
   renderPage();
 
-  expect(screen.getByRole("dialog", { name: "Soccer practice" })).toHaveAttribute(
-    "aria-modal",
-    "true",
-  );
-  expect(screen.getByText("Friday, Oct 9")).toBeInTheDocument();
+  expect(screen.getByRole("dialog", { name: "New event" })).toHaveAttribute("aria-modal", "true");
 });
 
-test("EVT-01 Back and Escape both ask to go back", async () => {
-  const { onBack } = renderPage();
+test("EVT-05 Escape asks to close", async () => {
+  const { onEscape } = renderPage();
 
-  await userEvent.click(screen.getByRole("button", { name: "Back" }));
   await userEvent.keyboard("{Escape}");
 
-  expect(onBack).toHaveBeenCalledTimes(2);
+  expect(onEscape).toHaveBeenCalledTimes(1);
 });
 
 test("EVT-01 there is no scrim to tap", () => {
   renderPage();
 
-  expect(screen.getAllByRole("button", { hidden: true })).toHaveLength(3);
-});
-
-test("EVT-01 the actions sit in the header, and in the bottom bar on small", () => {
-  renderPage();
-
-  expect(screen.getByRole("button", { name: "Save" }).closest("[data-page-header]")).not.toBeNull();
-});
-
-test("EVT-01 on small the header holds only Back and the title", () => {
-  renderPage({ compact: true });
-
-  const save = screen.getByRole("button", { name: "Save" });
-
-  expect(save.closest("[data-page-header]")).toBeNull();
-  expect(save.closest("[data-page-bar]")).not.toBeNull();
-  expect(screen.getByRole("button", { name: "Back" }).closest("[data-page-header]")).not.toBeNull();
+  expect(screen.getAllByRole("button", { hidden: true })).toHaveLength(1);
 });
 
 test("EVT-01 focus moves into the page when it opens and back to the opener when it goes", () => {
@@ -80,7 +58,7 @@ test("EVT-01 focus moves into the page when it opens and back to the opener when
   opener.focus();
 
   const { unmount } = render(
-    <Page eyebrow="Day" title="Title" backLabel="Back" onBack={() => {}} onLeft={() => {}}>
+    <Page label="Title" breakpoint="normal" onEscape={() => {}} onLeft={() => {}}>
       <p>Body</p>
     </Page>,
   );
@@ -91,6 +69,16 @@ test("EVT-01 focus moves into the page when it opens and back to the opener when
 
   expect(opener).toHaveFocus();
   opener.remove();
+});
+
+test("EVT-12 a field that takes focus as the page opens keeps it", () => {
+  render(
+    <Page label="New event" breakpoint="small" onEscape={() => {}} onLeft={() => {}}>
+      <Focused />
+    </Page>,
+  );
+
+  expect(screen.getByLabelText("Title")).toHaveFocus();
 });
 
 test("EVT-01 a page that is leaving reports it has left once", () => {
@@ -115,22 +103,20 @@ test("EVT-01 the page slides in from the right and out to the right, reporting o
   try {
     const onLeft = vi.fn();
 
-    const view = render(
-      <Page eyebrow="Day" title="Title" backLabel="Back" onBack={() => {}} onLeft={onLeft}>
+    const page = (leaving: boolean) => (
+      <Page label="Title" breakpoint="large" onEscape={() => {}} leaving={leaving} onLeft={onLeft}>
         <p>Body</p>
-      </Page>,
+      </Page>
     );
+
+    const view = render(page(false));
 
     expect(animate).toHaveBeenLastCalledWith(
       { transform: ["translateX(100%)", "none"] },
       expect.objectContaining({ duration: 280 }),
     );
 
-    view.rerender(
-      <Page eyebrow="Day" title="Title" backLabel="Back" onBack={() => {}} leaving onLeft={onLeft}>
-        <p>Body</p>
-      </Page>,
-    );
+    view.rerender(page(true));
 
     expect(animate).toHaveBeenLastCalledWith(
       { transform: ["none", "translateX(100%)"] },
