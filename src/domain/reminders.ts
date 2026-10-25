@@ -1,12 +1,11 @@
-import type { CalendarEvent } from "./schemas";
+import type { AccountSettings, CalendarEvent } from "./schemas";
 import { addDays, dateKey, dayStart } from "./zone";
 
-export type ReminderKind = "15min" | "start";
+export type NotifyLead = AccountSettings["notifyLead"];
 
-export type ReminderEvent = Pick<CalendarEvent, "id" | "title" | "startAt" | "allDay" | "reminder">;
+export type ReminderEvent = Pick<CalendarEvent, "id" | "title" | "startAt" | "allDay" | "notify">;
 
 export type ReminderGroup<T extends ReminderEvent = ReminderEvent> = {
-  kind: ReminderKind;
   fireAt: number;
   startAt: string;
   events: T[];
@@ -17,38 +16,30 @@ export type ReminderGroup<T extends ReminderEvent = ReminderEvent> = {
 
 export type AmbientReminder<T> = { event: T; atStart: boolean };
 
-type Fire<T> = { event: T; kind: ReminderKind; fireAt: number; start: number };
+type Fire<T> = { event: T; fireAt: number; start: number };
 
 const MINUTE = 60_000;
-
-const LEAD = 15 * MINUTE;
 
 const SHOWN_TITLES = 2;
 
 const MAX_TITLES = 3;
 
-const KINDS: Record<CalendarEvent["reminder"], readonly ReminderKind[]> = {
-  off: [],
-  start: ["start"],
-  "15min": ["15min"],
-  both: ["15min", "start"],
-};
-
 export function remindersDue<T extends ReminderEvent>(
   events: readonly T[],
+  lead: NotifyLead,
   now: Date,
   seen: ReadonlySet<string>,
 ): ReminderGroup<T>[] {
   const due = events
-    .flatMap(fires)
+    .flatMap((event) => fires(event, lead))
     .filter((fire) => isDue(fire, now.getTime()))
     .filter((fire) => !seen.has(fireKey(fire)));
 
   return groupByMinute(due);
 }
 
-export function reminderKey(eventId: string, kind: ReminderKind, fireAt: number): string {
-  return `${eventId}:${kind}:${fireAt}`;
+export function reminderKey(eventId: string, fireAt: number): string {
+  return `${eventId}:${fireAt}`;
 }
 
 export function minutesLeft(group: Pick<ReminderGroup, "startAt">, now: Date): number {
@@ -57,20 +48,26 @@ export function minutesLeft(group: Pick<ReminderGroup, "startAt">, now: Date): n
 
 export function ambientReminder<T extends ReminderEvent & Pick<CalendarEvent, "endAt">>(
   events: readonly T[],
+  lead: NotifyLead,
   now: Date,
   tz: string,
 ): AmbientReminder<T> | undefined {
   const time = now.getTime();
 
   const [latest] = events
-    .filter((event) => holdsSlot(event, time, tz))
+    .filter((event) => holdsSlot(event, lead, time, tz))
     .sort((a, b) => Date.parse(b.startAt) - Date.parse(a.startAt));
 
   return latest && { event: latest, atStart: time >= Date.parse(latest.startAt) };
 }
 
-function holdsSlot(event: ReminderEvent & Pick<CalendarEvent, "endAt">, time: number, tz: string) {
-  const [first] = fires(event);
+function holdsSlot(
+  event: ReminderEvent & Pick<CalendarEvent, "endAt">,
+  lead: NotifyLead,
+  time: number,
+  tz: string,
+) {
+  const [first] = fires(event, lead);
 
   return first !== undefined && time >= first.fireAt && time < slotEnd(event, tz);
 }
@@ -81,17 +78,12 @@ function slotEnd({ startAt, endAt }: Pick<CalendarEvent, "startAt" | "endAt">, t
   return dayStart(addDays(dateKey(new Date(startAt), tz), 1), tz).getTime();
 }
 
-function fires<T extends ReminderEvent>(event: T): Fire<T>[] {
-  if (event.allDay) return [];
+function fires<T extends ReminderEvent>(event: T, lead: NotifyLead): Fire<T>[] {
+  if (lead === "off" || event.allDay || event.notify === false) return [];
 
   const start = Date.parse(event.startAt);
 
-  return KINDS[event.reminder].map((kind) => ({
-    event,
-    kind,
-    start,
-    fireAt: kind === "15min" ? start - LEAD : start,
-  }));
+  return [{ event, start, fireAt: start - lead * MINUTE }];
 }
 
 function isDue({ fireAt, start }: Fire<unknown>, time: number): boolean {
@@ -100,15 +92,15 @@ function isDue({ fireAt, start }: Fire<unknown>, time: number): boolean {
   return time - fireAt < MINUTE || time < start;
 }
 
-function fireKey({ event, kind, fireAt }: Fire<ReminderEvent>): string {
-  return reminderKey(event.id, kind, fireAt);
+function fireKey({ event, fireAt }: Fire<ReminderEvent>): string {
+  return reminderKey(event.id, fireAt);
 }
 
 function groupByMinute<T extends ReminderEvent>(due: Fire<T>[]): ReminderGroup<T>[] {
-  const groups = new Map<string, Fire<T>[]>();
+  const groups = new Map<number, Fire<T>[]>();
 
   for (const fire of due) {
-    const key = `${fire.kind}:${Math.floor(fire.fireAt / MINUTE)}`;
+    const key = Math.floor(fire.fireAt / MINUTE);
 
     groups.set(key, [...(groups.get(key) ?? []), fire]);
   }
@@ -126,7 +118,6 @@ function toGroup<T extends ReminderEvent>(fires: Fire<T>[]): ReminderGroup<T> {
   const shown = titles.length > MAX_TITLES ? titles.slice(0, SHOWN_TITLES) : titles;
 
   return {
-    kind: first.kind,
     fireAt: first.fireAt,
     startAt: first.event.startAt,
     events: ordered.map((fire) => fire.event),

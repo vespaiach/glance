@@ -34,9 +34,6 @@ export const TagColorSchema = v.picklist([
 ]);
 export type TagColor = v.InferOutput<typeof TagColorSchema>;
 
-export const ReminderSchema = v.picklist(["off", "start", "15min", "both"]);
-export type Reminder = v.InferOutput<typeof ReminderSchema>;
-
 export const SeasonSchema = v.picklist(["spring", "summer", "fall", "winter"]);
 export type Season = v.InferOutput<typeof SeasonSchema>;
 
@@ -59,7 +56,7 @@ const eventEntries = {
   everyone: v.boolean(),
   tagIds: v.array(IdSchema),
   notes: v.optional(v.string()),
-  reminder: v.optional(ReminderSchema, "15min"),
+  notify: v.optional(v.boolean()),
 };
 
 type EventSpan = { startAt: string; endAt?: string; allDay?: true };
@@ -187,7 +184,7 @@ export const AccountSettingsSchema = v.object({
   hideSidebarWhenIdle: v.optional(v.boolean(), true),
   ambientBrightness: v.optional(v.picklist(["full", "medium", "low"]), "medium"),
   ambient: v.optional(AmbientSchema, DEFAULT_AMBIENT),
-  defaultReminder: v.optional(ReminderSchema, "15min"),
+  notifyLead: v.optional(v.picklist(["off", 15, 30]), 15),
   chime: v.optional(v.boolean(), true),
   weatherLocation: v.optional(WeatherLocationSchema),
 });

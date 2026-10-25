@@ -11,9 +11,8 @@ import {
 } from "@/data/repos";
 import { ambientDim } from "@/domain/ambient";
 import { ambientReminder } from "@/domain/reminders";
-import type { CalendarEvent } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent } from "@/domain/schemas";
 import { whoLabel } from "@/domain/tags";
-import type { Clock } from "@/domain/time";
 import { addDays, dateKey } from "@/domain/zone";
 import { placeLabel } from "@/features/settings";
 import { useBackgroundPhoto } from "@/shell/background";
@@ -56,7 +55,7 @@ export function AmbientScreen() {
 
   const nextEvent = useSyncedZone(eventRows(useNextEventAfter(today, tz)));
 
-  const reminder = useReminderLines(today, time, settings.clock, tz);
+  const reminder = useReminderLines(today, time, settings, tz);
 
   const photo = useBackgroundPhoto();
 
@@ -87,14 +86,14 @@ export function AmbientScreen() {
 function useReminderLines(
   today: string,
   time: Date,
-  clock: Clock,
+  { clock, notifyLead }: Pick<AccountSettings, "clock" | "notifyLead">,
   tz: string,
 ): NextEventLines | undefined {
   const events = useEventsBetween(today, addDays(today, 2), tz);
 
   const tags = useTags() ?? [];
 
-  const reminder = events && ambientReminder(events, time, tz);
+  const reminder = events && ambientReminder(events, notifyLead, time, tz);
 
   if (reminder === undefined) return undefined;
 

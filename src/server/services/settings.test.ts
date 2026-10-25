@@ -43,6 +43,23 @@ describe("putSettings", () => {
     });
   });
 
+  it("NOTIF-08 saves the account's lead time, and another account keeps its own", async () => {
+    await putSettings(harness.deps(), MARIA, MARIA, { ...DEFAULT_SETTINGS, notifyLead: "off" });
+    await putSettings(harness.deps(), OMAR, OMAR, { ...DEFAULT_SETTINGS, notifyLead: 30 });
+
+    expect(await harness.deps().db.settings.get(MARIA)).toMatchObject({ notifyLead: "off" });
+    expect(await harness.deps().db.settings.get(OMAR)).toMatchObject({ notifyLead: 30 });
+  });
+
+  it("NOTIF-08 refuses to change another account's lead time", async () => {
+    await putSettings(harness.deps(), MARIA, MARIA, DEFAULT_SETTINGS);
+
+    expect(
+      await putSettings(harness.deps(), OMAR, MARIA, { ...DEFAULT_SETTINGS, notifyLead: "off" }),
+    ).toEqual({ ok: false, error: "not-found" });
+    expect(await harness.deps().db.settings.get(MARIA)).toMatchObject({ notifyLead: 15 });
+  });
+
   it("tech§5 refuses to write another account's settings", async () => {
     await putSettings(harness.deps(), MARIA, MARIA, DEFAULT_SETTINGS);
 

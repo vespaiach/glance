@@ -11,7 +11,7 @@ const EVENT = {
   title: "Soccer practice",
   everyone: true,
   tagIds: [],
-  reminder: "15min" as const,
+  notify: true as const,
   updatedAt: "2026-10-09T10:00:00.000Z",
   version: 1,
 };
@@ -192,6 +192,7 @@ describe("account database", () => {
         idleTimeout,
         noteExpiry,
         hideSidebarWhenIdle: true,
+        notifyLead: 15,
       });
       db.close();
     },
@@ -262,25 +263,50 @@ describe("account database", () => {
     db.close();
   });
 
-  it("D29 the v6 upgrade gives stored events without a reminder 15 min", async () => {
+  it("D29 the v6 and v7 upgrades turn stored events without a reminder into notification on", async () => {
     const name = accountDbName(ACCOUNT_A);
     const old = tagsDexie(name, 5);
-    const { reminder: _, ...v5Event } = EVENT;
-    await old.table("events").bulkPut([v5Event, { ...EVENT, id: GONE.id, reminder: "off" }]);
+    const { notify: _, ...v5Event } = EVENT;
+    await old.table("events").put(v5Event);
     old.close();
 
     const db = openGlanceDb(name);
 
-    expect(await db.events.toArray()).toEqual([EVENT, { ...EVENT, id: GONE.id, reminder: "off" }]);
+    expect(await db.events.toArray()).toEqual([EVENT]);
     db.close();
   });
 
-  it("D29 the v6 upgrade gives waiting event puts without a reminder 15 min", async () => {
+  it("D29 the v7 upgrade turns stored reminders into notifications: off is off, the rest on", async () => {
     const name = accountDbName(ACCOUNT_A);
-    const old = tagsDexie(name, 5);
-    const { reminder: _, ...v5Event } = EVENT;
+    const old = tagsDexie(name, 6);
+    const { notify: _, ...v6Event } = EVENT;
+    await old.table("events").bulkPut([
+      { ...v6Event, reminder: "off" },
+      { ...v6Event, id: GONE.id, reminder: "both" },
+    ]);
+    old.close();
+
+    const db = openGlanceDb(name);
+
+    expect(await db.events.toArray()).toEqual([
+      { ...EVENT, notify: false },
+      { ...EVENT, id: GONE.id, notify: true },
+    ]);
+    db.close();
+  });
+
+  it("D29 the v7 upgrade rewrites waiting event puts' reminders as notifications", async () => {
+    const name = accountDbName(ACCOUNT_A);
+    const old = tagsDexie(name, 6);
+    const { notify: _, ...v6Event } = EVENT;
     await old.table("outbox").bulkAdd([
-      { entity: "events", entityId: EVENT.id, op: "put", payload: v5Event, attempts: 0 },
+      {
+        entity: "events",
+        entityId: EVENT.id,
+        op: "put",
+        payload: { ...v6Event, reminder: "off" },
+        attempts: 0,
+      },
       { entity: "events", entityId: GONE.id, op: "delete", attempts: 0 },
       { entity: "notes", entityId: NOTE.id, op: "put", payload: NOTE, attempts: 0 },
     ]);
@@ -289,12 +315,50 @@ describe("account database", () => {
     const db = openGlanceDb(name);
 
     expect(await db.outbox.toArray()).toEqual([
-      { seq: 1, entity: "events", entityId: EVENT.id, op: "put", payload: EVENT, attempts: 0 },
+      {
+        seq: 1,
+        entity: "events",
+        entityId: EVENT.id,
+        op: "put",
+        payload: { ...EVENT, notify: false },
+        attempts: 0,
+      },
       { seq: 2, entity: "events", entityId: GONE.id, op: "delete", attempts: 0 },
       { seq: 3, entity: "notes", entityId: NOTE.id, op: "put", payload: NOTE, attempts: 0 },
     ]);
     db.close();
   });
+
+  it.each([
+    ["off", "off"],
+    ["both", 15],
+    [undefined, 15],
+  ])(
+    "NOTIF-08 the v7 upgrade turns the default reminder %s into the lead time %s, stored and waiting",
+    async (defaultReminder, notifyLead) => {
+      const name = accountDbName(ACCOUNT_A);
+      const old = tagsDexie(name, 6);
+      const settings = { ...OLD_SETTINGS, defaultReminder };
+      await old.table("settings").put(settings);
+      await old.table("outbox").add({
+        entity: "settings",
+        entityId: ACCOUNT_A,
+        op: "put",
+        payload: settings,
+        attempts: 0,
+      });
+      old.close();
+
+      const db = openGlanceDb(name);
+
+      expect(await db.settings.get(ACCOUNT_A)).toEqual({ ...OLD_SETTINGS, notifyLead });
+      expect(await db.outbox.toArray()).toMatchObject([
+        { payload: { ...OLD_SETTINGS, notifyLead } },
+      ]);
+      expect((await db.outbox.toArray())[0]?.payload).not.toHaveProperty("defaultReminder");
+      db.close();
+    },
+  );
 
   it("tech§4.1 deleting one account's database leaves another account's rows", async () => {
     const a = openGlanceDb(accountDbName(ACCOUNT_A));

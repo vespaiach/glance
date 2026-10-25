@@ -27,7 +27,7 @@ const event = {
   location: "Living room",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const tagId = "0192f1a0-7c2e-7a3b-9c4d-1e2f3a4b5c6e";
@@ -56,7 +56,7 @@ const settings = {
   noteExpiry: { on: true, days: 7 },
   hideSidebarWhenIdle: true,
   ambientBrightness: "medium",
-  defaultReminder: "15min",
+  notifyLead: 15,
   chime: true,
   ambient: {
     mode: "same",
@@ -169,19 +169,23 @@ describe("CalendarEventSchema", () => {
   });
 });
 
-describe("CalendarEventSchema reminder", () => {
-  it.each(["off", "start", "15min", "both"])("NOTIF-09 accepts the %s reminder", (reminder) => {
-    expect(accepts(CalendarEventSchema, { ...event, reminder })).toBe(true);
+describe("CalendarEventSchema notify", () => {
+  it.each([true, false])("NOTIF-09 accepts the notification %s", (notify) => {
+    expect(accepts(CalendarEventSchema, { ...event, notify })).toBe(true);
   });
 
-  it("NOTIF-09 rejects an unknown reminder", () => {
-    expect(accepts(CalendarEventSchema, { ...event, reminder: "1h" })).toBe(false);
+  it("NOTIF-09 rejects a notification that isn't on or off", () => {
+    expect(accepts(CalendarEventSchema, { ...event, notify: "15min" })).toBe(false);
   });
 
-  it("D29 an event stored without a reminder reads 15 min", () => {
-    const { reminder: _, ...stored } = event;
+  it("D29 an event stored without a notification parses without one, which reads on", () => {
+    const { notify: _, ...stored } = event;
 
-    expect(v.parse(CalendarEventSchema, stored)).toEqual(event);
+    expect(v.parse(CalendarEventSchema, stored)).toEqual(stored);
+  });
+
+  it("D29 drops the old reminder an older client still sends", () => {
+    expect(v.parse(CalendarEventSchema, { ...event, notify: true })).toEqual(event);
   });
 });
 
@@ -395,14 +399,18 @@ describe("AccountSettingsSchema", () => {
     expect(v.parse(AccountSettingsSchema, saved)).toEqual(settings);
   });
 
-  it("NOTIF-08 a settings row without defaultReminder and chime reads 15 min with the chime on", () => {
-    const { defaultReminder: _, chime: __, ...saved } = settings;
+  it("NOTIF-08 a settings row without notifyLead and chime reads 15 min with the chime on", () => {
+    const { notifyLead: _, chime: __, ...saved } = settings;
 
     expect(v.parse(AccountSettingsSchema, saved)).toEqual(settings);
   });
 
-  it("NOTIF-08 rejects an unknown default reminder", () => {
-    expect(accepts(AccountSettingsSchema, { ...settings, defaultReminder: "1h" })).toBe(false);
+  it.each(["off", 15, 30])("NOTIF-08 accepts the %s lead time", (notifyLead) => {
+    expect(accepts(AccountSettingsSchema, { ...settings, notifyLead })).toBe(true);
+  });
+
+  it.each([0, 60, "15min"])("NOTIF-08 rejects the %s lead time", (notifyLead) => {
+    expect(accepts(AccountSettingsSchema, { ...settings, notifyLead })).toBe(false);
   });
 
   it("LOC-05 accepts a weather location with its IANA time zone", () => {

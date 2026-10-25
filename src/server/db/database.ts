@@ -1,5 +1,4 @@
 import "server-only";
-import type { ReminderKind } from "@/domain/reminders";
 import type {
   AccountSettings,
   CalendarEvent,
@@ -73,7 +72,7 @@ export type PushSubscriptionRecord = {
   createdAt: string;
 };
 
-export type ReminderSendRecord = { eventId: string; kind: ReminderKind; fireAt: string };
+export type ReminderSendRecord = { eventId: string; kind: "15min" | "30min"; fireAt: string };
 
 type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
 

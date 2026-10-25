@@ -16,7 +16,7 @@ const plan = (id: string, title: string, day: number, from: number, to: number):
   endAt: at(day, to),
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 });
 
 const DROP_OFF = plan("drop-off", "School drop-off", 9, 8, 9);
@@ -35,7 +35,7 @@ const GRANDPA: CalendarEvent = {
   location: "Guest room",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const NOW = new Date(2026, 9, 9, 10, 41);

@@ -26,7 +26,7 @@ function event(n: number, startAt: string, title = `Event ${n}`): CalendarEvent 
     title,
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
   };
 }
 

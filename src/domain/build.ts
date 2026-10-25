@@ -1,6 +1,6 @@
 export const BUILD_HEADER = "x-glance-build";
 
-export const CLIENT_BUILD = 11;
+export const CLIENT_BUILD = 12;
 
 export function isSupportedBuild(header: string | null, minimum: number): boolean {
   if (header === null || !/^\d+$/.test(header)) return false;

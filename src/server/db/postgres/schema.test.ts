@@ -508,7 +508,7 @@ describe("010_settings_values", () => {
       );
       await insertOldSettings(old, "a1", idle, expiry);
 
-      await migrate(old, readMigrations(MIGRATIONS_DIR));
+      await migrate(old, migrationsThrough(10));
 
       expect(await old.one("SELECT json FROM settings")).toEqual({
         json: { ...OLD_SETTINGS, idleTimeout, noteExpiry, hideSidebarWhenIdle: true },
@@ -529,7 +529,7 @@ describe("010_settings_values", () => {
     await insertOldSettings(old, "a1", 180, "1w");
     await insertOldSettings(old, "a2", null, null);
 
-    await migrate(old, readMigrations(MIGRATIONS_DIR));
+    await migrate(old, migrationsThrough(10));
 
     expect(await old.all("SELECT account_id, version FROM settings ORDER BY account_id")).toEqual([
       { account_id: "a1", version: 11 },
@@ -576,19 +576,100 @@ describe("011_note_tone", () => {
   });
 });
 
-describe("013_event_reminder", () => {
-  it("D29 an event without a reminder stores 15 min", async () => {
+describe("017_notify", () => {
+  it("D29 an event saved without a notification stores it on", async () => {
     await insertAccount("a1");
     await insertEvent(NOW, null);
 
-    expect(await db().one("SELECT reminder FROM events")).toEqual({ reminder: "15min" });
+    expect(await db().one("SELECT notify FROM events")).toEqual({ notify: true });
   });
 
-  it("D29 rejects an unknown reminder", async () => {
-    await insertAccount("a1");
-    await insertEvent(NOW, null);
+  it("D29 turns an event's reminder off into notification off and every other reminder into on", async () => {
+    const { client, old } = await migratedTo(17);
+    await old.run(
+      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+      [NOW],
+    );
+    for (const [id, reminder] of [
+      ["e1", "off"],
+      ["e2", "start"],
+      ["e3", "15min"],
+      ["e4", "both"],
+    ]) {
+      await old.run(
+        "INSERT INTO events (id, account_id, title, start_at, reminder, updated_at, version) VALUES ($1, 'a1', 'Swim', $2, $3, $2, 1)",
+        [id, NOW, reminder],
+      );
+    }
 
-    await expect(db().run("UPDATE events SET reminder = '1h'")).rejects.toThrow(/check constraint/);
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    expect(await old.all("SELECT id, notify FROM events ORDER BY id")).toEqual([
+      { id: "e1", notify: false },
+      { id: "e2", notify: true },
+      { id: "e3", notify: true },
+      { id: "e4", notify: true },
+    ]);
+    expect(await old.one("SELECT * FROM events")).not.toHaveProperty("reminder");
+    await client.close();
+  });
+
+  it("NOTIF-08 rewrites the default reminder as the lead time and bumps one version per account", async () => {
+    const { client, old } = await migratedTo(17);
+    await old.run(
+      `INSERT INTO accounts (id, email, time_zone, created_at) VALUES
+         ('a1', 'a1@example.com', 'America/New_York', $1),
+         ('a2', 'a2@example.com', 'America/New_York', $1),
+         ('a3', 'a3@example.com', 'America/New_York', $1)`,
+      [NOW],
+    );
+    await old.run("UPDATE sync_state SET version = 10");
+    for (const [accountId, defaultReminder] of [
+      ["a1", "off"],
+      ["a2", "both"],
+      ["a3", undefined],
+    ]) {
+      await old.run(
+        "INSERT INTO settings (account_id, json, updated_at, version) VALUES ($1, $2, $3, 1)",
+        [accountId, JSON.stringify({ ...OLD_SETTINGS, defaultReminder }), NOW],
+      );
+    }
+
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    expect(
+      await old.all("SELECT account_id, json, version FROM settings ORDER BY account_id"),
+    ).toEqual([
+      { account_id: "a1", json: { ...OLD_SETTINGS, notifyLead: "off" }, version: 11 },
+      { account_id: "a2", json: { ...OLD_SETTINGS, notifyLead: 15 }, version: 12 },
+      { account_id: "a3", json: { ...OLD_SETTINGS, notifyLead: 15 }, version: 13 },
+    ]);
+    expect(await old.one("SELECT version FROM sync_state")).toEqual({ version: 13 });
+    await client.close();
+  });
+
+  it("D30 drops at-start sends and accepts sends at the 15 or 30 min lead only", async () => {
+    const { client, old } = await migratedTo(17);
+    await old.run(
+      "INSERT INTO accounts (id, email, time_zone, created_at) VALUES ('a1', 'a1@example.com', 'America/New_York', $1)",
+      [NOW],
+    );
+    await old.run(
+      "INSERT INTO events (id, account_id, title, start_at, updated_at, version) VALUES ('e1', 'a1', 'Swim', $1, $1, 1)",
+      [NOW],
+    );
+    const send =
+      "INSERT INTO reminder_sends (event_id, kind, fire_at, sent_at) VALUES ('e1', $1, $2, $2)";
+    await old.run(send, ["start", NOW]);
+
+    await migrate(old, readMigrations(MIGRATIONS_DIR));
+
+    expect(await old.all("SELECT kind FROM reminder_sends")).toEqual([]);
+    await old.run(send, ["30min", NOW]);
+    await expect(old.run(send, ["start", "2026-10-09T15:00:00.000Z"])).rejects.toThrow(
+      /check constraint/,
+    );
+    await client.close();
   });
 });
 
@@ -610,7 +691,7 @@ describe("014_push", () => {
     await insertAccount("a1");
     await insertEvent(NOW, null);
     const send =
-      "INSERT INTO reminder_sends (event_id, kind, fire_at, sent_at) VALUES ('e1', 'start', $1, $1)";
+      "INSERT INTO reminder_sends (event_id, kind, fire_at, sent_at) VALUES ('e1', '15min', $1, $1)";
     await db().run(send, [NOW]);
 
     await expect(db().run(send, [NOW])).rejects.toThrow(/duplicate key/);
@@ -684,6 +765,10 @@ async function insertOldSettings(
     "INSERT INTO settings (account_id, json, updated_at, version) VALUES ($1, $2, $3, 1)",
     [accountId, JSON.stringify({ ...OLD_SETTINGS, idleTimeout, noteExpiry }), NOW],
   );
+}
+
+function migrationsThrough(version: number) {
+  return readMigrations(MIGRATIONS_DIR).filter((migration) => migration.version <= version);
 }
 
 async function migratedTo(version: number) {

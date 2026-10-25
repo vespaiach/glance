@@ -66,7 +66,7 @@ const TODAY_EVENT: CalendarEvent = {
   title: "Movie night",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const CONFERENCE: CalendarEvent = {
@@ -76,7 +76,7 @@ const CONFERENCE: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const TOMORROW_EVENT: CalendarEvent = {
@@ -85,7 +85,7 @@ const TOMORROW_EVENT: CalendarEvent = {
   title: "Farmers market",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 let store: Harness;
@@ -224,4 +224,25 @@ test("NOTIF-06 once the event ends the slot returns to the next event", async ()
 
   expect(await screen.findByText("Next · Wed, Oct 14 · 4:00 PM")).toBeInTheDocument();
   expect(screen.queryByText("Movie night")).not.toBeInTheDocument();
+});
+
+test("NOTIF-06 with a 30 min lead the reminder takes the slot 30 min before", async () => {
+  await seed([MOVIE, CONFERENCE]);
+  await store.db.settings.put(synced({ ...LOCATED, notifyLead: 30, accountId: store.accountId }));
+
+  renderAmbient(new Date(2026, 9, 9, 19, 0));
+
+  expect(await screen.findByText("In 30 min · 7:30 PM")).toBeInTheDocument();
+});
+
+test("NOTIF-06 with the lead time off the slot keeps the next event", async () => {
+  await seed([MOVIE, CONFERENCE]);
+  await store.db.settings.put(
+    synced({ ...LOCATED, notifyLead: "off", accountId: store.accountId }),
+  );
+
+  renderAmbient(new Date(2026, 9, 9, 19, 45));
+
+  expect(await screen.findByText("Next · Wed, Oct 14 · 4:00 PM")).toBeInTheDocument();
+  expect(screen.queryByText(/^Now ·/)).not.toBeInTheDocument();
 });

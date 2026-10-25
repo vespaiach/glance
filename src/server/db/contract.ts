@@ -18,7 +18,7 @@ const EVENT: StoredEvent = {
   location: "Rec center",
   everyone: false,
   tagIds: ["0192f3a0-3333-7000-8000-000000000001"],
-  reminder: "both",
+  notify: true,
   notes: "Bring goggles",
   updatedAt: NOW,
   version: 1,
@@ -218,6 +218,16 @@ export function databaseContract(open: () => Database): void {
         accountId: MARIA,
         value: { ...bare, allDay: true },
       });
+    });
+
+    it("NOTIF-09 keeps an event's notification off, and reads one saved without it as on", async () => {
+      const { notify: _, ...older } = EVENT;
+
+      await db().events.save(MARIA, { ...EVENT, notify: false });
+      await db().events.save(MARIA, { ...older, id: "e2" });
+
+      expect(await db().events.find(EVENT.id)).toMatchObject({ value: { notify: false } });
+      expect(await db().events.find("e2")).toMatchObject({ value: { notify: true } });
     });
 
     it("SYNC-03 replaces an event and keeps its tombstone", async () => {

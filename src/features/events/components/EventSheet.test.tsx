@@ -28,7 +28,7 @@ const KID = tag(3, "Kid", "sky");
 
 const FAMILY_OF_THREE = [MOM, DAD, KID];
 
-const WHO = { tagIds: [MOM.id, DAD.id], notes: "", reminder: "15min" as const };
+const WHO = { tagIds: [MOM.id, DAD.id], notes: "", notify: true as const };
 
 const DRAFT: EventDraft = {
   title: "Lunch with Aunt Rosa",
@@ -391,7 +391,7 @@ async function tabOrder(count: number) {
 test("A11Y-04 Tab moves through Back, the header actions, the fields in visual order, and wraps", async () => {
   renderSheet();
 
-  expect(await tabOrder(17)).toEqual([
+  expect(await tabOrder(13)).toEqual([
     screen.getByRole("button", { name: "Back" }),
     screen.getByRole("button", { name: "Delete" }),
     screen.getByRole("button", { name: "Cancel" }),
@@ -400,10 +400,6 @@ test("A11Y-04 Tab moves through Back, the header actions, the fields in visual o
     screen.getByRole("button", { name: /^Starts/ }),
     screen.getByRole("button", { name: /^Ends/ }),
     screen.getByRole("switch", { name: "All day" }),
-    screen.getByRole("button", { name: "Off" }),
-    screen.getByRole("button", { name: "At start" }),
-    screen.getByRole("button", { name: "15 min" }),
-    screen.getByRole("button", { name: "Both" }),
     screen.getByRole("button", { name: "Remove everyone" }),
     screen.getByLabelText("Who"),
     screen.getByLabelText("Where"),
@@ -1096,47 +1092,9 @@ function scrollableBody() {
   return document.querySelector("[data-sheet-body]") as HTMLElement;
 }
 
-test("NOTIF-09 a new event shows the Reminder tabs on the Settings default with its caption", () => {
+test("NOTIF-09 the event page has no Reminder tabs: the lead time comes from Settings", () => {
   renderSheet({ mode: "new" });
-
-  const reminder = screen.getByRole("group", { name: "Reminder" });
-
-  expect(within(reminder).getByRole("button", { name: "15 min" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  expect(screen.getByText("Default from Settings")).toBeInTheDocument();
-});
-
-test("NOTIF-09 the Default from Settings caption goes once the reminder changes", async () => {
-  renderSheet({ mode: "new" });
-
-  await userEvent.click(screen.getByRole("button", { name: "Both" }));
-
-  expect(screen.getByRole("button", { name: "Both" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.queryByText("Default from Settings")).not.toBeInTheDocument();
-});
-
-test("NOTIF-09 an edited event shows its reminder without the caption", () => {
-  renderSheet({ initial: initialEventSheet({ ...DRAFT, reminder: "start" }) });
-
-  expect(screen.getByRole("button", { name: "At start" })).toHaveAttribute("aria-pressed", "true");
-  expect(screen.queryByText("Default from Settings")).not.toBeInTheDocument();
-});
-
-test("NOTIF-09 the Reminder field hides while All day is on", async () => {
-  renderSheet({ mode: "new" });
-
-  await userEvent.click(screen.getByRole("switch", { name: "All day" }));
 
   expect(screen.queryByRole("group", { name: "Reminder" })).not.toBeInTheDocument();
-});
-
-test("NOTIF-09 a changed reminder asks Discard changes? on Cancel", async () => {
-  renderSheet();
-
-  await userEvent.click(screen.getByRole("button", { name: "Off" }));
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-
-  expect(screen.getByText("Discard changes?")).toBeInTheDocument();
+  expect(screen.queryByText("Default from Settings")).not.toBeInTheDocument();
 });

@@ -111,6 +111,14 @@ export function openGlanceDb(name: string): GlanceDb {
     await addEventOutboxReminder(tx);
   });
 
+  db.version(7).upgrade(async (tx) => {
+    await tx.table("events").toCollection().modify(withNotify);
+
+    await tx.table("settings").toCollection().modify(withNotifyLead);
+
+    await mapNotifyOutbox(tx);
+  });
+
   return db;
 }
 
@@ -175,6 +183,29 @@ async function addEventOutboxReminder(tx: Transaction): Promise<void> {
     .modify((entry) => {
       if (isRecord(entry.payload)) withReminder(entry.payload);
     });
+}
+
+async function mapNotifyOutbox(tx: Transaction): Promise<void> {
+  await tx
+    .table<OutboxEntry, number>("outbox")
+    .where("entity")
+    .anyOf("events", "settings")
+    .modify((entry) => {
+      if (!isRecord(entry.payload)) return;
+
+      if (entry.entity === "events") withNotify(entry.payload);
+      else withNotifyLead(entry.payload);
+    });
+}
+
+function withNotify(event: Record<string, unknown>): void {
+  event.notify = event.reminder !== "off";
+  delete event.reminder;
+}
+
+function withNotifyLead(settings: Record<string, unknown>): void {
+  settings.notifyLead = settings.defaultReminder === "off" ? "off" : 15;
+  delete settings.defaultReminder;
 }
 
 function withReminder(event: Record<string, unknown>): void {

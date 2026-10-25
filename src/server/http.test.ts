@@ -22,7 +22,7 @@ const EVENT = {
   startAt: "2026-10-09T21:00:00.000Z",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 function request(headers: Record<string, string>, body?: unknown): NextRequest {

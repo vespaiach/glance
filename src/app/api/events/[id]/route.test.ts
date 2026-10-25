@@ -11,7 +11,7 @@ const EVENT = {
   startAt: "2026-10-09T21:00:00.000Z",
   everyone: true,
   tagIds: [],
-  reminder: "both",
+  notify: true,
 };
 
 const services = vi.hoisted(() => ({ putEvent: vi.fn(), deleteEvent: vi.fn() }));
@@ -40,24 +40,24 @@ beforeEach(() => {
 });
 
 describe("PUT /api/events/{id}", () => {
-  it("NOTIF-09 saves and answers the event's reminder", async () => {
-    const response = await route.PUT(...put(EVENT));
+  it("NOTIF-09 saves and answers the event's notification", async () => {
+    const response = await route.PUT(...put({ ...EVENT, notify: false }));
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ reminder: "both", version: 1 });
-    expect(services.putEvent).toHaveBeenCalledWith("a1", EVENT);
+    expect(await response.json()).toMatchObject({ notify: false, version: 1 });
+    expect(services.putEvent).toHaveBeenCalledWith("a1", { ...EVENT, notify: false });
   });
 
-  it("D29 saves an older client's event without a reminder as 15 min", async () => {
-    const { reminder: _, ...older } = EVENT;
+  it("D29 saves an older client's event with a reminder and no notification, dropping the reminder", async () => {
+    const { notify: _, ...older } = EVENT;
 
-    expect((await route.PUT(...put(older))).status).toBe(200);
+    expect((await route.PUT(...put({ ...older, reminder: "both" }))).status).toBe(200);
 
-    expect(services.putEvent).toHaveBeenCalledWith("a1", { ...EVENT, reminder: "15min" });
+    expect(services.putEvent).toHaveBeenCalledWith("a1", older);
   });
 
-  it("NOTIF-09 answers 400 for an unknown reminder", async () => {
-    expect((await route.PUT(...put({ ...EVENT, reminder: "1h" }))).status).toBe(400);
+  it("NOTIF-09 answers 400 for a notification that isn't on or off", async () => {
+    expect((await route.PUT(...put({ ...EVENT, notify: "15min" }))).status).toBe(400);
     expect(services.putEvent).not.toHaveBeenCalled();
   });
 

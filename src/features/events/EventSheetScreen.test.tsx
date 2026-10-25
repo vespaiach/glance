@@ -23,7 +23,7 @@ const LUNCH: CalendarEvent = {
   location: "Café Lumen",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 let store: Harness;
@@ -180,19 +180,14 @@ test("tech§4.3 a note request renders no event sheet", () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 
-test("NOTIF-08 a new event starts on the Settings default reminder and saves it", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-12" }, { defaultReminder: "start" });
+test("NOTIF-09 a new event saves with its notification on, whatever the lead time", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" }, { notifyLead: "off" });
 
-  expect(await screen.findByRole("button", { name: "At start" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-
-  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
   await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
-  expect((await store.db.events.toArray())[0]?.reminder).toBe("start");
+  expect((await store.db.events.toArray())[0]?.notify).toBe(true);
 });
 
 test("EVT-07 Add event queues the new event on the request's day and closes the sheet", async () => {
@@ -234,6 +229,19 @@ test("EVT-07 Save keeps the event's id and day", async () => {
   );
 });
 
+test("NOTIF-09 saving an edited event keeps its notification off", async () => {
+  await store.db.events.put(synced({ ...LUNCH, notify: false }));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.type(await screen.findByLabelText("Title"), "!");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.get(LUNCH.id)).toMatchObject({ notify: false, version: 1 }),
+  );
+});
+
 test("EVT-03 a failed Save keeps the sheet open and writes nothing", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-12" });
 
@@ -251,7 +259,7 @@ const NO_SCHOOL: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
@@ -504,7 +512,7 @@ describe("day preview", () => {
     endAt: new Date(2026, 9, 9, 15, 0).toISOString(),
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
   };
 
   const HOLIDAY: CalendarEvent = {
@@ -514,7 +522,7 @@ describe("day preview", () => {
     allDay: true,
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
   };
 
   const EARLY: CalendarEvent = {
@@ -524,7 +532,7 @@ describe("day preview", () => {
     endAt: new Date(2026, 9, 9, 8, 0).toISOString(),
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
   };
 
   const setWidth = (width: number) => {
