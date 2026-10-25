@@ -1,3 +1,5 @@
+import type { EventWord, SentenceJoin } from "@/domain/eventSentence";
+import type { StatusTitle } from "@/domain/eventStatus";
 import type { AmbientRange, AmbientSummary } from "@/domain/idle";
 import type { AccountSettings, Season, TagColor, WeatherIcon } from "@/domain/schemas";
 import type { ActiveStamp, Device, DeviceKind } from "@/domain/screens";
@@ -279,6 +281,65 @@ export const copy = {
     now: "Now",
     allDay: "All day",
     everyone: "Everyone",
+    page: {
+      summary: "Event summary",
+      fields: {
+        title: "What’s happening",
+        day: "Day",
+        start: "Starts",
+        end: "Ends",
+        who: "Who it’s for",
+        where: "Where",
+        notes: "Notes",
+      } satisfies Record<EventWord, string>,
+      joins: {
+        on: " on ",
+        from: " from ",
+        at: " at ",
+        to: " to ",
+        for: " for ",
+        comma: ", ",
+        commaFor: ", for ",
+      } satisfies Record<SentenceJoin, string>,
+      period: ".",
+      titlePlaceholder: "What’s happening",
+      wherePlaceholder: "a place",
+      allDay: "all day",
+      everyone: "everyone",
+      nobody: "no one",
+      people: (names: readonly string[], others: number) => peopleText(names, others),
+      others: (count: number) => `${count} others`,
+      and: " and ",
+      comma: ", ",
+      notSet: "not set",
+      change: (field: string, value: string) => `${field}: ${value}. Change`,
+      edit: (field: string, value: string) => `${field}: ${value}. Edit`,
+      addNotes: "Add notes",
+      notesPreview: (notes: string) =>
+        `Notes: ${notes.length > 26 ? `${notes.slice(0, 25).trim()}…` : notes}`,
+      addEnd: "Add end time",
+      sameTime: "Same time:",
+      sameTimeText: (names: string, one: boolean, title: string, range: string, more: number) =>
+        `${names} ${one ? "is" : "are"} also at ${title}, ${range}${more > 0 ? ` · ${more} more` : ""}`,
+      sameTimeEveryone: "Everyone",
+      notification: "Notification",
+      notificationName: (on: boolean) =>
+        on ? "Notification on. Turn off" : "Notification off. Turn on",
+      notificationOff: "Notification off",
+      ended: "This event has ended and can’t be changed.",
+      newTitle: "New event",
+      editTitle: "Edit event",
+      status: (status: StatusTitle, length: (minutes: number) => string) =>
+        statusText(status, length),
+      save: "Save",
+      saveNew: "Save event",
+      saveOffline: "Save for later",
+      delete: "Delete",
+      deleteEvent: "Delete event",
+      keep: "Keep",
+      editAction: "Edit",
+      close: "Close",
+    },
     preview: {
       noForecast: "No forecast for this date yet.",
       dayHigh: "High for the day",
@@ -1274,5 +1335,30 @@ function activeText(stamp: ActiveStamp): string {
       return "Active yesterday";
     case "on":
       return `Active ${stamp.date}`;
+  }
+}
+
+function peopleText(names: readonly string[], others: number): string {
+  const all = others > 0 ? [...names, `${others} others`] : names;
+
+  if (all.length < 2) return all.join("");
+
+  return `${all.slice(0, -1).join(", ")} and ${all.at(-1)}`;
+}
+
+function statusText(status: StatusTitle, length: (minutes: number) => string): string {
+  switch (status.kind) {
+    case "now":
+      return "Happening now";
+    case "in":
+      return `In ${length(status.minutes)}`;
+    case "today":
+      return "Today";
+    case "tomorrow":
+      return "Tomorrow";
+    case "inDays":
+      return `In ${status.days} days`;
+    case "ended":
+      return "Ended";
   }
 }
