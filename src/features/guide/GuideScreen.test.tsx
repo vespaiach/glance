@@ -38,7 +38,17 @@ test("GUIDE-01 the header links to the page's sections", () => {
     ["Using Glance", "#today"],
     ["Screen sizes", "#sizes"],
     ["FAQ", "#faq"],
+    ["Back to Glance", "/"],
   ]);
+});
+
+test("GUIDE-01 the header ends with Back to Glance, opening / in the same tab", () => {
+  render(<GuideScreen season="fall" />);
+
+  const back = screen.getByRole("link", { name: "Back to Glance" });
+
+  expect(back).toHaveAttribute("href", "/");
+  expect(back).not.toHaveAttribute("target");
 });
 
 test("GUIDE-01 lists the 11 sections and Questions in order", () => {

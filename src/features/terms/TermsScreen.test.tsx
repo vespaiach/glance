@@ -37,6 +37,15 @@ test("TERMS-01 shows the title, the effective date and the In short cards", () =
   }
 });
 
+test("TERMS-01 the header has Back to Glance, opening / in the same tab", () => {
+  render(<TermsScreen />);
+
+  const back = screen.getByRole("link", { name: "Back to Glance" });
+
+  expect(back).toHaveAttribute("href", "/");
+  expect(back).not.toHaveAttribute("target");
+});
+
 test("TERMS-01 lists the 17 numbered sections in order", () => {
   render(<TermsScreen />);
 

@@ -1,9 +1,11 @@
 import * as stylex from "@stylexjs/stylex";
+import { ArrowLeft } from "lucide-react";
 import { copy, type TermsBlock, type TermsPart } from "@/copy";
 import { colors } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { ColorBlock } from "@/ui/ColorBlock";
 import { Eyebrow } from "@/ui/Eyebrow";
+import { PillLink } from "@/ui/PillLink";
 
 type Section = (typeof copy.terms.sections)[number];
 
@@ -35,6 +37,12 @@ const styles = stylex.create({
     flexWrap: "wrap",
     gap: 24,
     paddingBlock: 24,
+  },
+  actions: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "16px 24px",
   },
   link: {
     color: colors.textPrimary,
@@ -179,9 +187,14 @@ export function TermsScreen() {
         <a href="/" {...stylex.props(styles.link, styles.wordmark)}>
           {text.wordmark}
         </a>
-        <a href={text.sourceHref} {...stylex.props(styles.link, styles.bodySm)}>
-          {text.source}
-        </a>
+        <div {...stylex.props(styles.actions)}>
+          <a href={text.sourceHref} {...stylex.props(styles.link, styles.bodySm)}>
+            {text.source}
+          </a>
+          <PillLink href="/" icon={ArrowLeft}>
+            {text.back}
+          </PillLink>
+        </div>
       </header>
       <main {...stylex.props(styles.column, styles.main)}>
         <div {...stylex.props(styles.intro)}>
