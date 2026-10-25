@@ -1,13 +1,8 @@
 import "server-only";
 import { copy } from "@/copy";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
-import {
-  type ReminderGroup,
-  type ReminderKind,
-  reminderKey,
-  remindersDue,
-} from "@/domain/reminders";
-import type { Tag } from "@/domain/schemas";
+import { type NotifyLead, type ReminderGroup, reminderKey, remindersDue } from "@/domain/reminders";
+import type { AccountSettings, Tag } from "@/domain/schemas";
 import { whoLabel } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
 import type { Database, Owned, ReminderSendRecord, StoredEvent } from "../db";
@@ -17,11 +12,13 @@ import { accountTimeZone } from "../services/rows";
 
 export type ReminderJobDeps = ServiceDeps & { push: PushSender };
 
-type Wording = { tags: Tag[]; clock: Clock; tz: string };
+type Wording = { tags: Tag[]; clock: Clock; tz: string; lead: number };
+
+type Lead = Exclude<NotifyLead, "off">;
 
 const MINUTE = 60_000;
 
-const LEAD = 15 * MINUTE;
+const LEADS: readonly Lead[] = [15, 30];
 
 const KEEP_SENDS_MS = 24 * 60 * MINUTE;
 
@@ -44,11 +41,11 @@ export async function cleanupReminderSends({ db, now }: ServiceDeps): Promise<vo
 }
 
 async function eventsFiringNow(db: Database, at: Date): Promise<Owned<StoredEvent>[]> {
-  const starting = await db.events.liveStarting(isoAt(at, -MINUTE), isoAt(at, 0));
+  const windows = LEADS.map((lead) =>
+    db.events.liveStarting(isoAt(at, (lead - 1) * MINUTE), isoAt(at, lead * MINUTE)),
+  );
 
-  const soon = await db.events.liveStarting(isoAt(at, LEAD - MINUTE), isoAt(at, LEAD));
-
-  return [...starting, ...soon];
+  return (await Promise.all(windows)).flat();
 }
 
 async function sendAccountReminders(
@@ -57,15 +54,26 @@ async function sendAccountReminders(
   events: StoredEvent[],
   at: Date,
 ): Promise<void> {
-  const due = remindersDue(events, at, new Set());
+  const settings = await db.settings.get(accountId);
 
-  const fresh = await db.reminderSends.insert(due.flatMap(sendsOf), at.toISOString());
+  const lead = settings?.notifyLead ?? DEFAULT_SETTINGS.notifyLead;
 
-  const groups = remindersDue(events, at, alreadySent(due, fresh));
+  if (lead === "off") return;
+
+  const firing = events.filter((event) => startsAtLead(event, lead, at));
+
+  const due = remindersDue(firing, lead, at, new Set());
+
+  const fresh = await db.reminderSends.insert(
+    due.flatMap((group) => sendsOf(group, lead)),
+    at.toISOString(),
+  );
+
+  const groups = remindersDue(firing, lead, at, alreadySent(due, fresh));
 
   if (groups.length === 0) return;
 
-  const wording = await accountWording(db, accountId);
+  const wording = await accountWording(db, accountId, settings, lead);
 
   const messages = groups.map((group) => pushMessage(group, wording));
 
@@ -81,22 +89,29 @@ async function sendAccountReminders(
   }
 }
 
-async function accountWording(db: Database, accountId: string): Promise<Wording> {
+async function accountWording(
+  db: Database,
+  accountId: string,
+  settings: AccountSettings | undefined,
+  lead: Lead,
+): Promise<Wording> {
   const tags = await db.tags.changedSince(accountId, 0);
-
-  const settings = await db.settings.get(accountId);
 
   return {
     tags: tags.filter((tag) => tag.deletedAt === undefined),
     clock: settings?.clock ?? DEFAULT_SETTINGS.clock,
     tz: await accountTimeZone(db, accountId),
+    lead,
   };
 }
 
-function pushMessage(group: ReminderGroup<StoredEvent>, { tags, clock, tz }: Wording): PushMessage {
+function pushMessage(
+  group: ReminderGroup<StoredEvent>,
+  { tags, clock, tz, lead }: Wording,
+): PushMessage {
   const start = clockAt(group.startAt, clock, tz);
 
-  const title = group.kind === "start" ? words.now : words.soon;
+  const title = (what: string) => words.soon(what, lead);
 
   const [only, ...others] = group.events;
 
@@ -125,20 +140,24 @@ function byAccount(events: Owned<StoredEvent>[]): Map<string, StoredEvent[]> {
   return accounts;
 }
 
-function sendsOf(group: ReminderGroup): ReminderSendRecord[] {
+function sendsOf(group: ReminderGroup, lead: Lead): ReminderSendRecord[] {
   return group.keys.map((key) => {
-    const [eventId = "", kind, fireAt] = key.split(":");
+    const [eventId = "", fireAt] = key.split(":");
 
-    return { eventId, kind: kind as ReminderKind, fireAt: new Date(Number(fireAt)).toISOString() };
+    return { eventId, kind: `${lead}min`, fireAt: new Date(Number(fireAt)).toISOString() };
   });
 }
 
 function alreadySent(due: ReminderGroup[], fresh: ReminderSendRecord[]): Set<string> {
-  const sent = new Set(
-    fresh.map((send) => reminderKey(send.eventId, send.kind, Date.parse(send.fireAt))),
-  );
+  const sent = new Set(fresh.map((send) => reminderKey(send.eventId, Date.parse(send.fireAt))));
 
   return new Set(due.flatMap((group) => group.keys).filter((key) => !sent.has(key)));
+}
+
+function startsAtLead({ startAt }: StoredEvent, lead: Lead, at: Date): boolean {
+  const ahead = Date.parse(startAt) - at.getTime();
+
+  return ahead > (lead - 1) * MINUTE && ahead <= lead * MINUTE;
 }
 
 function isoAt(at: Date, offsetMs: number): string {

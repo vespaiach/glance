@@ -112,7 +112,7 @@ const LUNCH = {
   location: "Café Lumen",
   tagIds: FAMILY_IDS,
   notes: "",
-  reminder: "15min" as const,
+  notify: true as const,
 };
 
 const FOR_TWO = {

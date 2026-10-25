@@ -1,8 +1,10 @@
+import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { err, ok, type Result } from "@/domain/result";
-import type { CalendarEvent, Tag } from "@/domain/schemas";
+import type { AccountSettings, CalendarEvent, Tag } from "@/domain/schemas";
 import type { PushMessage, PushSender, PushTarget } from "../push";
 import { deleteEvent, putEvent } from "../services/events";
 import { subscribePush } from "../services/push";
+import { putSettings } from "../services/settings";
 import { putTag } from "../services/tags";
 import { MARIA, OMAR, serviceHarnessPerTest } from "../services/testServices";
 import { cleanupReminderSends, sendReminderPushes } from "./reminders";
@@ -37,7 +39,7 @@ function event(n: number, overrides: Partial<CalendarEvent> = {}): CalendarEvent
     startAt: "2026-10-09T14:15:00.000Z",
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
     ...overrides,
   };
 }
@@ -59,6 +61,10 @@ async function subscribe(accountId: string, displayId: string): Promise<void> {
     endpoint: `https://push.example.com/${displayId}`,
     keys: { p256dh: "p", auth: "a" },
   });
+}
+
+async function setLead(accountId: string, notifyLead: AccountSettings["notifyLead"]) {
+  await putSettings(harness.deps(), accountId, accountId, { ...DEFAULT_SETTINGS, notifyLead });
 }
 
 async function run(): Promise<void> {
@@ -101,16 +107,37 @@ describe("sendReminderPushes", () => {
     ]);
   });
 
-  it("NOTIF-07 pushes a start reminder as starting now and leaves out empty parts", async () => {
+  it("NOTIF-07 pushes a 30-min reminder with the account's 30 min lead and leaves out empty parts", async () => {
+    await setLead(MARIA, 30);
     await addEvents(MARIA, [
-      event(1, { title: "Dentist", startAt: "2026-10-09T14:00:00.000Z", reminder: "start" }),
+      event(1, { title: "Dentist", startAt: "2026-10-09T14:30:00.000Z" }),
+      event(2),
     ]);
 
     await run();
 
     expect(messages()).toEqual([
-      expect.objectContaining({ title: "Dentist starting now", body: "10:00 AM · Everyone" }),
+      expect.objectContaining({ title: "Dentist in 30 min", body: "10:30 AM · Everyone" }),
     ]);
+  });
+
+  it("NOTIF-01 pushes nothing at the start", async () => {
+    await addEvents(MARIA, [event(1, { startAt: "2026-10-09T14:00:00.000Z" })]);
+
+    await run();
+
+    expect(sent).toEqual([]);
+  });
+
+  it("NOTIF-08 pushes nothing for an account whose lead time is off, and still for others", async () => {
+    await subscribe(OMAR, "omar-phone");
+    await setLead(MARIA, "off");
+    await addEvents(MARIA, [event(1)]);
+    await addEvents(OMAR, [event(2)]);
+
+    await run();
+
+    expect(sent.map(({ endpoint }) => endpoint)).toEqual(["https://push.example.com/omar-phone"]);
   });
 
   it("NOTIF-07 pushes each reminder once", async () => {
@@ -145,23 +172,22 @@ describe("sendReminderPushes", () => {
   it("NOTIF-04 names the first two of a group over three and counts the rest", async () => {
     await addEvents(
       MARIA,
-      [1, 2, 3, 4].map((n) => event(n, { reminder: "start" })),
+      [1, 2, 3, 4].map((n) => event(n)),
     );
-    harness.advance(15 * MINUTE);
 
     await run();
 
     expect(messages()).toEqual([
       expect.objectContaining({
-        title: "4 events starting now",
+        title: "4 events in 15 min",
         body: "10:15 AM · Event 1, Event 2, +2 more",
       }),
     ]);
   });
 
-  it("NOTIF-01 skips events with the reminder off, all-day events and deleted events", async () => {
+  it("NOTIF-09 skips events with the notification off, all-day events and deleted events", async () => {
     await addEvents(MARIA, [
-      event(1, { reminder: "off" }),
+      event(1, { notify: false }),
       event(2, { allDay: true, startAt: "2026-10-09T14:15:00.000Z" }),
       event(3),
     ]);

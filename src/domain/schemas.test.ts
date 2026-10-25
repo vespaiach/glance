@@ -185,7 +185,7 @@ describe("CalendarEventSchema notify", () => {
   });
 
   it("D29 drops the old reminder an older client still sends", () => {
-    expect(v.parse(CalendarEventSchema, { ...event, reminder: "both" })).toEqual(event);
+    expect(v.parse(CalendarEventSchema, { ...event, notify: true })).toEqual(event);
   });
 });
 

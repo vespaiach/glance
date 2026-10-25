@@ -14,7 +14,7 @@ const EVENT: CalendarEvent = {
   location: "Rec center",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const tag = (n: number, name: string): Tag => ({
@@ -109,19 +109,29 @@ describe("putEvent", () => {
 });
 
 describe("putEvent tags", () => {
-  it("NOTIF-09 saves the event's reminder", async () => {
-    const saved = await putEvent(harness.deps(), MARIA, { ...EVENT, reminder: "both" });
+  it("NOTIF-09 saves the event's notification off", async () => {
+    const saved = await putEvent(harness.deps(), MARIA, { ...EVENT, notify: false });
 
     expect(saved).toEqual({
       ok: true,
-      value: { ...EVENT, reminder: "both", updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
+      value: { ...EVENT, notify: false, updatedAt: "2026-10-09T14:00:00.000Z", version: 1 },
     });
   });
 
-  it("NOTIF-09 refuses to change another account's event reminder", async () => {
+  it("D29 saves an event without a notification as on", async () => {
+    const { notify: _, ...older } = EVENT;
+
+    await putEvent(harness.deps(), MARIA, older);
+
+    expect(await harness.deps().db.events.find(EVENT.id)).toMatchObject({
+      value: { notify: true },
+    });
+  });
+
+  it("NOTIF-09 refuses to change another account's event notification", async () => {
     await putEvent(harness.deps(), MARIA, EVENT);
 
-    expect(await putEvent(harness.deps(), OMAR, { ...EVENT, reminder: "off" })).toEqual({
+    expect(await putEvent(harness.deps(), OMAR, { ...EVENT, notify: false })).toEqual({
       ok: false,
       error: "not-found",
     });

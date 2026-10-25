@@ -58,7 +58,7 @@ function event(
     endAt: new Date(new Date(startAt).getTime() + 3_600_000).toISOString(),
     everyone: who === "everyone",
     tagIds: who === "everyone" ? [] : who.map((one) => one.id),
-    reminder: "15min",
+    notify: true,
     ...extra,
   };
 }

@@ -24,7 +24,7 @@ const SHIFT: CalendarEvent = {
   location: "Food bank",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const PIANO: CalendarEvent = {
@@ -122,7 +122,7 @@ describe("ReminderHost", () => {
   });
 
   it("NOTIF-01 at the start the strip reads Now with the event's span and place", async () => {
-    await renderHost(at(10, 59, 59), [{ ...SHIFT, reminder: "start" }]);
+    await renderHost(at(10, 59, 59), [{ ...SHIFT, notify: true }]);
 
     await seconds(1);
 

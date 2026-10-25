@@ -32,7 +32,7 @@ const plan = (
   ...(end !== undefined && { endAt: october(day, end).toISOString() }),
   everyone: false,
   tagIds: [MOM.id],
-  reminder: "15min",
+  notify: true,
 });
 
 const hourly = (day: number, rows: [hour: number, temp: number, precip: number][]) =>

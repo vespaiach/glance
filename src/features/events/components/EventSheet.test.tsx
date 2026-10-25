@@ -28,7 +28,7 @@ const KID = tag(3, "Kid", "sky");
 
 const FAMILY_OF_THREE = [MOM, DAD, KID];
 
-const WHO = { tagIds: [MOM.id, DAD.id], notes: "", reminder: "15min" as const };
+const WHO = { tagIds: [MOM.id, DAD.id], notes: "", notify: true as const };
 
 const DRAFT: EventDraft = {
   title: "Lunch with Aunt Rosa",
@@ -1118,7 +1118,7 @@ test("NOTIF-09 the Default from Settings caption goes once the reminder changes"
 });
 
 test("NOTIF-09 an edited event shows its reminder without the caption", () => {
-  renderSheet({ initial: initialEventSheet({ ...DRAFT, reminder: "start" }) });
+  renderSheet({ initial: initialEventSheet({ ...DRAFT, notify: true }) });
 
   expect(screen.getByRole("button", { name: "At start" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.queryByText("Default from Settings")).not.toBeInTheDocument();

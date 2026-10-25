@@ -16,7 +16,7 @@ const timed = (id: string, start: Date, end?: Date) =>
     ...(end && { endAt: end.toISOString() }),
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
   }) satisfies CalendarEvent;
 
 const allDay = (id: string, day: string) =>
@@ -27,7 +27,7 @@ const allDay = (id: string, day: string) =>
     allDay: true,
     everyone: true,
     tagIds: [],
-    reminder: "15min",
+    notify: true,
   }) satisfies CalendarEvent;
 
 const ids = (events: readonly CalendarEvent[]) => events.map((event) => event.id);

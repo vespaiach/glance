@@ -28,7 +28,7 @@ const EVENT: CalendarEvent = {
   endAt: "2026-10-09T22:00:00.000Z",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const NOTE: Note = {
@@ -105,7 +105,7 @@ async function fillAccount(email: string): Promise<SignedInDisplay & { sessionTo
   const event = await putEvent(deps, display.accountId, { ...EVENT, id: randomUUID() });
   if (!event.ok) throw new Error(event.error);
   await db.reminderSends.insert(
-    [{ eventId: event.value.id, kind: "start", fireAt: EVENT.startAt }],
+    [{ eventId: event.value.id, kind: "15min", fireAt: EVENT.startAt }],
     START.toISOString(),
   );
   await putNote(deps, display.accountId, { ...NOTE, id: randomUUID() });

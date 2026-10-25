@@ -11,7 +11,7 @@ const EVENT = {
   title: "Soccer practice",
   everyone: true,
   tagIds: [],
-  reminder: "15min" as const,
+  notify: true as const,
   updatedAt: "2026-10-09T10:00:00.000Z",
   version: 1,
 };
@@ -266,12 +266,12 @@ describe("account database", () => {
     const name = accountDbName(ACCOUNT_A);
     const old = tagsDexie(name, 5);
     const { reminder: _, ...v5Event } = EVENT;
-    await old.table("events").bulkPut([v5Event, { ...EVENT, id: GONE.id, reminder: "off" }]);
+    await old.table("events").bulkPut([v5Event, { ...EVENT, id: GONE.id, notify: false }]);
     old.close();
 
     const db = openGlanceDb(name);
 
-    expect(await db.events.toArray()).toEqual([EVENT, { ...EVENT, id: GONE.id, reminder: "off" }]);
+    expect(await db.events.toArray()).toEqual([EVENT, { ...EVENT, id: GONE.id, notify: false }]);
     db.close();
   });
 

@@ -66,7 +66,7 @@ const TODAY_EVENT: CalendarEvent = {
   title: "Movie night",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const CONFERENCE: CalendarEvent = {
@@ -76,7 +76,7 @@ const CONFERENCE: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const TOMORROW_EVENT: CalendarEvent = {
@@ -85,7 +85,7 @@ const TOMORROW_EVENT: CalendarEvent = {
   title: "Farmers market",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 let store: Harness;

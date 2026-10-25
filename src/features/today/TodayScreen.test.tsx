@@ -50,7 +50,7 @@ const CALL: CalendarEvent = {
   endAt: iso(11, 15),
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const DAD_RUN: CalendarEvent = {
@@ -60,7 +60,7 @@ const DAD_RUN: CalendarEvent = {
   endAt: iso(16, 0),
   everyone: false,
   tagIds: [DAD.id],
-  reminder: "15min",
+  notify: true,
 };
 
 const COAST: Photo = {
@@ -99,7 +99,7 @@ const GRANDPA: CalendarEvent = {
   allDay: true,
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const TOMORROW: CalendarEvent = {
@@ -110,7 +110,7 @@ const TOMORROW: CalendarEvent = {
   endAt: new Date(2026, 9, 10, 10, 0).toISOString(),
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const WEATHER: Weather = {

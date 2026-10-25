@@ -278,8 +278,7 @@ export const copy = {
       seeAll: "See all",
     },
     push: {
-      soon: (what: string) => `${what} in 15 min`,
-      now: (what: string) => `${what} starting now`,
+      soon: (what: string, minutes: number) => `${what} in ${minutes} min`,
     },
   },
   events: {

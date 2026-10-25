@@ -30,7 +30,7 @@ const LUNCH: CalendarEvent = {
   location: "Café Lumen",
   everyone: false,
   tagIds: [MOM],
-  reminder: "15min",
+  notify: true,
   notes: "Bring a gift",
 };
 
@@ -44,7 +44,7 @@ const NO_SCHOOL: CalendarEvent = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
-  reminder: "15min",
+  notify: true,
 };
 
 const DRAFT: EventDraft = {
@@ -54,7 +54,7 @@ const DRAFT: EventDraft = {
   location: "Café",
   tagIds: [MOM, DAD],
   notes: "",
-  reminder: "15min",
+  notify: true,
 };
 
 const closed = opening(DRAFT);
@@ -82,7 +82,7 @@ describe("event sheet drafts", () => {
       location: "Café Lumen",
       tagIds: [MOM],
       notes: "Bring a gift",
-      reminder: "15min",
+      notify: true,
     });
   });
 
@@ -100,7 +100,7 @@ describe("event sheet drafts", () => {
       location: "",
       tagIds: FAMILY,
       notes: "",
-      reminder: "15min",
+      notify: true,
     });
   });
 
@@ -109,7 +109,7 @@ describe("event sheet drafts", () => {
   });
 
   it("NOTIF-09 an existing event opens with its own reminder", () => {
-    expect(draftFromEvent({ ...LUNCH, reminder: "off" }, tz, NOW, FAMILY).reminder).toBe("off");
+    expect(draftFromEvent({ ...LUNCH, notify: false }, tz, NOW, FAMILY).reminder).toBe("off");
   });
 
   it("EVT-11 an everyone event opens with every tag on it", () => {
@@ -354,14 +354,12 @@ describe("event from draft", () => {
       location: "Café",
       everyone: true,
       tagIds: [],
-      reminder: "15min",
+      notify: true,
     });
   });
 
   it("NOTIF-09 the saved event keeps the draft's reminder", () => {
-    expect(eventFromDraft({ ...DRAFT, reminder: "start" }, DAY, ID, tz, FAMILY).reminder).toBe(
-      "start",
-    );
+    expect(eventFromDraft({ ...DRAFT, notify: true }, DAY, ID, tz, FAMILY).reminder).toBe("start");
   });
 
   it("D24 the saved event keeps the opened event's tags and trimmed notes", () => {
@@ -468,7 +466,7 @@ describe("event sheet discard", () => {
     ["place", { location: "Park" }],
     ["notes", { notes: "Bring a gift" }],
     ["who", { tagIds: [MOM] }],
-    ["reminder", { reminder: "both" }],
+    ["reminder", { notify: true }],
   ])("§8.9 a changed %s makes the draft dirty", (_, change) => {
     expect(isDirty({ ...DRAFT, ...change }, DRAFT)).toBe(true);
   });
@@ -540,7 +538,7 @@ describe("event sheet all day", () => {
       location: "Lincoln Elementary",
       tagIds: FAMILY,
       notes: "",
-      reminder: "15min",
+      notify: true,
     });
   });
 
@@ -597,7 +595,7 @@ describe("event sheet all day", () => {
       location: "Café",
       everyone: true,
       tagIds: [],
-      reminder: "15min",
+      notify: true,
     });
   });
 });

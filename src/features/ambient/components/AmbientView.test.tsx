@@ -27,7 +27,7 @@ const CONFERENCE = {
   location: "Lincoln Elementary",
   everyone: true,
   tagIds: [],
-  reminder: "15min" as const,
+  notify: true as const,
 };
 
 const WEATHER = {
@@ -149,7 +149,7 @@ test("AMB-03 an all-day event reads All day on its own date in any zone", () => 
     location: "Lincoln Elementary",
     everyone: true,
     tagIds: [],
-    reminder: "15min" as const,
+    notify: true as const,
   };
 
   render(
