@@ -122,7 +122,9 @@ const styles = stylex.create({
     paddingBlock: 32,
   },
   ruled: {
-    borderTop: `1px solid ${colors.borderHairlineSoft}`,
+    borderTopWidth: 1,
+    borderTopStyle: "solid",
+    borderTopColor: colors.borderHairlineSoft,
   },
   highlighted: {
     marginBlock: 16,
