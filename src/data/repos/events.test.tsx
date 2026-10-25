@@ -4,6 +4,7 @@ import { deviceTimeZone } from "@/domain/zone";
 import {
   createEventsRepo,
   useEvent,
+  useEventRecents,
   useEventsAfter,
   useEventsBetween,
   useEventsInWeek,
@@ -157,6 +158,26 @@ describe("event hooks", () => {
     await act(() => createEventsRepo(store).remove(SOCCER.id));
 
     await waitFor(() => expect(result.current).toBeNull());
+  });
+
+  it("EVT-12 useEventRecents lists live titles and places, most recently changed first", async () => {
+    await store.db.events.bulkPut([
+      {
+        ...synced({ ...SOCCER, location: "Riverside Park" }),
+        updatedAt: "2026-10-02T09:00:00.000Z",
+      },
+      { ...synced({ ...DENTIST, location: "Main St" }), updatedAt: "2026-10-03T09:00:00.000Z" },
+      { ...synced(NEXT_DAY), deletedAt: TEST_NOW.toISOString() },
+    ]);
+
+    const { result } = renderHook(() => useEventRecents(), { wrapper: wrapperFor(store) });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        titles: ["Dentist", "Soccer practice"],
+        places: ["Main St", "Riverside Park"],
+      }),
+    );
   });
 
   it("CAL-04 useHasEvents is false with no live events and true once one is saved", async () => {

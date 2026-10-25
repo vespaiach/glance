@@ -575,7 +575,7 @@ test("EVT-07 an event added from Today shows in the schedule at once", async () 
   );
 
   await userEvent.click(await screen.findByRole("button", { name: "Add event" }));
-  await userEvent.type(screen.getByLabelText("Title"), "Picnic");
+  await userEvent.type(await screen.findByRole("textbox", { name: "What’s happening" }), "Picnic");
   await userEvent.click(
     within(screen.getByRole("dialog")).getByRole("button", { name: "Save event" }),
   );

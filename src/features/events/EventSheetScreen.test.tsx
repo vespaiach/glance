@@ -85,202 +85,6 @@ function renderSheet(
   );
 }
 
-test("EVT-01 an edit request opens Edit event filled from the event", async () => {
-  await store.db.events.put(synced(LUNCH));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  expect(await screen.findByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
-  expect(screen.getByText("Friday, Oct 9")).toBeInTheDocument();
-  expect(screen.getByLabelText("Title")).toHaveValue("Lunch with Aunt Rosa");
-  expect(screen.getByRole("button", { name: "Starts, 12:00 PM. Change" })).toBeInTheDocument();
-});
-
-test("TPK-05 a new event request opens New event on its day at the next half hour", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-12" });
-
-  expect(await screen.findByRole("dialog", { name: "New event" })).toBeInTheDocument();
-  expect(screen.getByText("Monday, Oct 12")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Starts, 11:00 AM. Change" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Ends, 12:00 PM. Change" })).toBeInTheDocument();
-});
-
-test("TL-08 a new event request from a free slot opens at the slot's times", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-09", times: { start: 675, end: 735 } });
-
-  expect(
-    await screen.findByRole("button", { name: "Starts, 11:15 AM. Change" }),
-  ).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Ends, 12:15 PM. Change" })).toBeInTheDocument();
-});
-
-test("TPK-02 the time fixture is the sheet's first state", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-09", time: "end" });
-
-  expect(await screen.findByRole("group", { name: "End time" })).toBeInTheDocument();
-});
-
-test("TPK-09 the Clock setting drives the time fields", async () => {
-  await store.db.events.put(synced(LUNCH));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true }, { clock: "24h" });
-
-  expect(await screen.findByRole("button", { name: "Starts, 12:00. Change" })).toBeInTheDocument();
-});
-
-test("EVT-05 offline the sheet saves for later", async () => {
-  await putSyncStatus(store, { online: false, weather: { state: "idle" } });
-
-  renderSheet({ kind: "newevent", day: "2026-10-09" });
-
-  expect(await screen.findByRole("button", { name: "Save for later" })).toBeInTheDocument();
-});
-
-test("EVT-06 Delete event removes the event and closes the sheet", async () => {
-  await store.db.events.put(synced(LUNCH));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
-  await userEvent.click(screen.getByRole("button", { name: "Delete event?" }));
-
-  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
-  await waitFor(async () => expect((await store.db.events.get(LUNCH.id))?.deletedAt).toBeDefined());
-});
-
-test("SHEET Cancel closes the sheet", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-09" });
-
-  await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
-
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-});
-
-test("§8.9 a request with discard opens on Discard changes?", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-09", discard: true });
-
-  expect(await screen.findByRole("alert")).toHaveTextContent("This event won’t be added.");
-});
-
-test("§8.9 Cancel on a changed event asks, and Discard closes the sheet without saving", async () => {
-  await store.db.events.put(synced(LUNCH));
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  await userEvent.type(await screen.findByLabelText("Title"), "!");
-  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
-
-  expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent("");
-  expect((await store.db.events.get(LUNCH.id))?.title).toBe(LUNCH.title);
-});
-
-test("tech§4.3 a note request renders no event sheet", () => {
-  renderSheet({ kind: "newnote" });
-
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-});
-
-test("NOTIF-09 a new event saves with its notification on, whatever the lead time", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-12" }, { notifyLead: "off" });
-
-  await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
-  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
-
-  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
-  expect((await store.db.events.toArray())[0]?.notify).toBe(true);
-});
-
-test("EVT-07 Add event queues the new event on the request's day and closes the sheet", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-12" });
-
-  await userEvent.type(await screen.findByLabelText("Title"), "Picnic");
-  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
-
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
-
-  const [saved] = await store.db.events.toArray();
-
-  expect(saved).toMatchObject({
-    title: "Picnic",
-    startAt: new Date(2026, 9, 12, 11, 0).toISOString(),
-    endAt: new Date(2026, 9, 12, 12, 0).toISOString(),
-    everyone: true,
-    tagIds: [],
-  });
-  expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
-});
-
-test("EVT-07 Save keeps the event's id and day", async () => {
-  await store.db.events.put(synced(LUNCH));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  await userEvent.type(await screen.findByLabelText("Title"), "!");
-  await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  await waitFor(async () =>
-    expect(await store.db.events.get(LUNCH.id)).toMatchObject({
-      ...LUNCH,
-      title: "Lunch with Aunt Rosa!",
-      version: 1,
-    }),
-  );
-});
-
-test("NOTIF-09 saving an edited event keeps its notification off", async () => {
-  await store.db.events.put(synced({ ...LUNCH, notify: false }));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  await userEvent.type(await screen.findByLabelText("Title"), "!");
-  await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-  await waitFor(async () =>
-    expect(await store.db.events.get(LUNCH.id)).toMatchObject({ notify: false, version: 1 }),
-  );
-});
-
-test("EVT-03 a failed Save keeps the sheet open and writes nothing", async () => {
-  renderSheet({ kind: "newevent", day: "2026-10-12" });
-
-  await userEvent.click(await screen.findByRole("button", { name: "Save event" }));
-
-  expect(screen.getByRole("dialog", { name: "New event" })).toBeInTheDocument();
-  expect(await store.db.events.count()).toBe(0);
-});
-
-const NO_SCHOOL: CalendarEvent = {
-  id: "0195f0a0-0000-7000-8000-000000000010",
-  title: "No school · teacher planning day",
-  startAt: "2026-10-16T00:00:00.000Z",
-  allDay: true,
-  location: "Lincoln Elementary",
-  everyone: true,
-  tagIds: [],
-  notify: true,
-};
-
-test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
-  await store.db.events.put(synced(NO_SCHOOL));
-
-  renderSheet({ kind: "event", id: NO_SCHOOL.id, edit: true }, {}, "America/Los_Angeles");
-
-  expect(await screen.findByText("Friday, Oct 16")).toBeInTheDocument();
-  expect(screen.getByRole("switch", { name: "All day" })).toHaveAttribute("aria-checked", "true");
-
-  await userEvent.type(screen.getByLabelText("Title"), "!");
-  await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-  await waitFor(async () =>
-    expect(await store.db.events.get(NO_SCHOOL.id)).toMatchObject({
-      ...NO_SCHOOL,
-      title: "No school · teacher planning day!",
-    }),
-  );
-});
-
 const MOM: Tag = {
   id: "0195f0a0-0000-7000-8000-000000000501",
   name: "Mom",
@@ -295,40 +99,278 @@ const DAD: Tag = {
   createdAt: "2026-10-02T15:00:00.000Z",
 };
 
-test("EVT-11 a new event request for some tags starts with them and saves their ids", async () => {
+const NO_SCHOOL: CalendarEvent = {
+  id: "0195f0a0-0000-7000-8000-000000000010",
+  title: "No school · teacher planning day",
+  startAt: "2026-10-16T00:00:00.000Z",
+  allDay: true,
+  location: "Lincoln Elementary",
+  everyone: true,
+  tagIds: [],
+  notify: true,
+};
+
+function setWidth(width: number) {
+  vi.stubGlobal("innerWidth", width);
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: width >= Number(query.match(/\d+/)?.[0]),
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
+function word(name: string) {
+  return screen.getByRole("button", { name });
+}
+
+function openSheet() {
+  return screen.getByRole("status", { name: "Open sheet" });
+}
+
+async function typeTitle(text: string) {
+  await userEvent.type(await screen.findByRole("textbox", { name: "What’s happening" }), text);
+}
+
+test("EVT-01 an edit request opens Edit event filled from the event, on the title", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  expect(await screen.findByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+  expect(word("Day: Fri, Oct 9. Change")).toBeInTheDocument();
+  expect(word("Starts: 12:00 PM. Change")).toBeInTheDocument();
+  expect(word("Where: Café Lumen. Change")).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "What’s happening" })).toHaveValue(LUNCH.title);
+});
+
+test("EVT-03 a new event opens on its day with the TPK-05 defaults as placeholders", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" });
+
+  expect(await screen.findByRole("dialog", { name: "New event" })).toBeInTheDocument();
+  expect(word("Day: not set. Change")).toHaveTextContent("Mon, Oct 12");
+  expect(word("Starts: not set. Change")).toHaveTextContent("11:00 AM");
+  expect(word("Ends: not set. Change")).toHaveTextContent("12:00 PM");
+});
+
+test("TL-08 a new event from a free slot opens at the slot's times", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-09", times: { start: 675, end: 735 } });
+
+  expect(await screen.findByRole("button", { name: "Starts: not set. Change" })).toHaveTextContent(
+    "11:15 AM",
+  );
+  expect(word("Ends: not set. Change")).toHaveTextContent("12:15 PM");
+});
+
+test("EVT-03 Save is disabled until the title has text", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" });
+
+  expect(await screen.findByRole("button", { name: "Save event" })).toBeDisabled();
+
+  await typeTitle("  ");
+
+  expect(screen.getByRole("button", { name: "Save event" })).toBeDisabled();
+
+  await typeTitle("Picnic");
+
+  expect(screen.getByRole("button", { name: "Save event" })).toBeEnabled();
+});
+
+test("EVT-07 Save event queues the new event on its day and closes the page", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" });
+
+  await typeTitle("Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
+
+  expect(openSheet()).toHaveTextContent("");
+  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+
+  const [saved] = await store.db.events.toArray();
+
+  expect(saved).toMatchObject({
+    title: "Picnic",
+    startAt: new Date(2026, 9, 12, 11, 0).toISOString(),
+    endAt: new Date(2026, 9, 12, 12, 0).toISOString(),
+    everyone: true,
+    tagIds: [],
+    notify: true,
+  });
+  expect(saved?.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
+});
+
+test("EVT-07 Save keeps the event's id and closes the page", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await typeTitle("!");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  expect(openSheet()).toHaveTextContent("");
+  await waitFor(async () =>
+    expect(await store.db.events.get(LUNCH.id)).toMatchObject({
+      ...LUNCH,
+      title: "Lunch with Aunt Rosa!",
+    }),
+  );
+});
+
+test("EVT-12 a day picked in the Day picker moves the event and keeps its times", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Day: Fri, Oct 9. Change" }));
+  await userEvent.click(screen.getByRole("button", { name: /Tomorrow/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () => {
+    const saved = await store.db.events.get(LUNCH.id);
+
+    expect(saved?.startAt).toBe(new Date(2026, 9, 10, 12, 0).toISOString());
+    expect(saved?.endAt).toBe(new Date(2026, 9, 10, 13, 0).toISOString());
+  });
+});
+
+test("EVT-06 Delete, then Delete event, removes the event and closes the page", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Delete event" }));
+
+  expect(openSheet()).toHaveTextContent("");
+  await waitFor(async () => expect((await store.db.events.get(LUNCH.id))?.deletedAt).toBeDefined());
+});
+
+test("EVT-05 × with no changes closes the page at once", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-09" });
+
+  await userEvent.click(await screen.findByRole("button", { name: "Close" }));
+
+  expect(openSheet()).toHaveTextContent("");
+});
+
+test("EVT-05 × with changes asks, and Keep editing brings the actions back", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-09" });
+
+  await typeTitle("Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(screen.getByText("Discard changes?")).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+
+  expect(screen.getByRole("button", { name: "Save event" })).toBeEnabled();
+  expect(screen.getByRole("textbox", { name: "What’s happening" })).toHaveValue("Picnic");
+});
+
+test("EVT-05 Discard closes the page without saving", async () => {
+  await store.db.events.put(synced(LUNCH));
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await typeTitle("!");
+  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+
+  expect(openSheet()).toHaveTextContent("");
+  expect((await store.db.events.get(LUNCH.id))?.title).toBe(LUNCH.title);
+});
+
+test("EVT-05 Escape is the ×", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-09" });
+
+  await typeTitle("Picnic");
+  await userEvent.keyboard("{Escape}");
+
+  expect(screen.getByText("Discard changes?")).toBeInTheDocument();
+});
+
+test("tech§4.3 a note request renders no event page", () => {
+  renderSheet({ kind: "newnote" });
+
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("NOTIF-09 the Notification switch saves with the event and reads back off", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  const first = renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.click(await screen.findByRole("switch", { name: "Notification on. Turn off" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () => expect((await store.db.events.get(LUNCH.id))?.notify).toBe(false));
+
+  first.unmount();
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  expect(await screen.findByRole("switch", { name: "Notification off. Turn on" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
+});
+
+test("NOTIF-09 a new event saves with its notification on, whatever the lead time", async () => {
+  renderSheet({ kind: "newevent", day: "2026-10-12" }, { notifyLead: "off" });
+
+  await typeTitle("Picnic");
+  await userEvent.click(screen.getByRole("button", { name: "Save event" }));
+
+  await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+  expect((await store.db.events.toArray())[0]?.notify).toBe(true);
+});
+
+test("TPK-09 offline Save reads Save for later", async () => {
+  await putSyncStatus(store, { online: false, weather: { state: "idle" } });
+
+  renderSheet({ kind: "newevent", day: "2026-10-09" });
+
+  expect(await screen.findByRole("button", { name: "Save for later" })).toBeInTheDocument();
+});
+
+test("TPK-09 the Clock setting drives the sentence", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true }, { clock: "24h" });
+
+  expect(await screen.findByRole("button", { name: "Starts: 12:00. Change" })).toBeInTheDocument();
+});
+
+test("D21 an all-day event opens and saves on its own date in a zone behind UTC", async () => {
+  await store.db.events.put(synced(NO_SCHOOL));
+
+  renderSheet({ kind: "event", id: NO_SCHOOL.id, edit: true }, {}, "America/Los_Angeles");
+
+  expect(await screen.findByRole("button", { name: "Day: Fri, Oct 16. Change" })).toBeVisible();
+  expect(word("Starts: all day. Change")).toBeInTheDocument();
+
+  await typeTitle("!");
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.get(NO_SCHOOL.id)).toMatchObject({
+      ...NO_SCHOOL,
+      title: "No school · teacher planning day!",
+    }),
+  );
+});
+
+test("EVT-11 a new event for some tags starts with them and saves their ids", async () => {
   await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
 
-  renderSheet({
-    kind: "newevent",
-    day: "2026-10-12",
-    who: { everyone: false, tagIds: [DAD.id] },
-  });
+  renderSheet({ kind: "newevent", day: "2026-10-12", who: { everyone: false, tagIds: [DAD.id] } });
 
-  await waitFor(() => expect(pills()).toEqual(["Remove Dad"]));
+  expect(
+    await screen.findByRole("button", { name: "Who it’s for: not set. Change" }),
+  ).toHaveTextContent("Dad");
 
-  await userEvent.type(screen.getByLabelText("Title"), "Haircut");
+  await typeTitle("Haircut");
   await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
   await waitFor(async () =>
     expect(await store.db.events.toArray()).toMatchObject([{ everyone: false, tagIds: [DAD.id] }]),
   );
-});
-
-function pills() {
-  return within(screen.getByRole("group", { name: "People on this event" }))
-    .queryAllByRole("button", { name: /^Remove / })
-    .map((button) => button.getAttribute("aria-label"));
-}
-
-test("EVT-11 an everyone event opens with one Everyone chip", async () => {
-  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
-  await store.db.events.put(synced(LUNCH));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  await screen.findByRole("dialog", { name: "Edit event" });
-
-  expect(pills()).toEqual(["Remove everyone"]);
 });
 
 test("EVT-11 saving with every tag on it stores everyone", async () => {
@@ -337,7 +379,8 @@ test("EVT-11 saving with every tag on it stores everyone", async () => {
 
   renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
-  await userEvent.type(await screen.findByLabelText("Who"), "mom{Enter}");
+  await userEvent.click(await screen.findByRole("button", { name: "Who it’s for: Dad. Change" }));
+  await userEvent.click(screen.getByRole("button", { name: "Mom" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   await waitFor(async () =>
@@ -345,20 +388,24 @@ test("EVT-11 saving with every tag on it stores everyone", async () => {
   );
 });
 
-test("FAM-04 Add member writes the tag through the outbox and puts it on the event", async () => {
+test("FAM-04 a member added in Who is written through the tags repo and saved with the event", async () => {
   await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
 
   renderSheet({ kind: "newevent", day: "2026-10-12", who: { everyone: false, tagIds: [DAD.id] } });
 
-  await userEvent.type(await screen.findByLabelText("Title"), "Haircut");
-  await userEvent.type(screen.getByLabelText("Who"), "Grandma");
+  await typeTitle("Haircut");
+  await userEvent.click(screen.getByRole("button", { name: "Who it’s for: not set. Change" }));
+  await userEvent.type(screen.getByRole("textbox", { name: "Add a person" }), "Grandma");
   await userEvent.click(screen.getByRole("button", { name: "Add member" }));
 
-  await waitFor(() => expect(pills()).toEqual(["Remove Dad", "Remove Grandma"]));
+  const grandma = await waitFor(async () => {
+    const tag = await store.db.tags.filter((one) => one.name === "Grandma").first();
 
-  const grandma = await store.db.tags.filter((one) => one.name === "Grandma").first();
+    expect(tag).toMatchObject({ createdAt: NOW.toISOString() });
 
-  expect(grandma).toMatchObject({ color: "lilac", createdAt: NOW.toISOString() });
+    return tag;
+  });
+
   expect(await store.db.outbox.filter((one) => one.entity === "tags").count()).toBe(1);
 
   await userEvent.click(screen.getByRole("button", { name: "Save event" }));
@@ -370,17 +417,28 @@ test("FAM-04 Add member writes the tag through the outbox and puts it on the eve
   );
 });
 
-test("EVT-02 Notes save trimmed", async () => {
+test("EVT-12 Notes save trimmed", async () => {
   await store.db.events.put(synced(LUNCH));
 
   renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
-  await userEvent.type(await screen.findByLabelText("Notes"), "  Bring a gift  ");
+  await userEvent.click(await screen.findByRole("button", { name: "Add notes" }));
+  await userEvent.type(screen.getByRole("textbox", { name: "Notes" }), "  Bring a gift  ");
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   await waitFor(async () =>
     expect((await store.db.events.get(LUNCH.id))?.notes).toBe("Bring a gift"),
   );
+});
+
+test("EVT-12 the title picker offers recent titles from the local events", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  renderSheet({ kind: "newevent", day: "2026-10-12" });
+
+  await userEvent.click(await screen.findByRole("button", { name: LUNCH.title }));
+
+  expect(screen.getByRole("button", { name: "Save event" })).toBeEnabled();
 });
 
 describe("Event details", () => {
@@ -400,15 +458,13 @@ describe("Event details", () => {
     endAt: new Date(2026, 9, 9, 8, 15).toISOString(),
   };
 
-  test("EVT-09 tapping an event opens Event details with Edit", async () => {
+  test("EVT-09 tapping an event opens its details with the status title and Edit", async () => {
     await store.db.events.put(synced(LUNCH));
 
     renderSheet({ kind: "event", id: LUNCH.id });
 
-    expect(await screen.findByRole("dialog", { name: "Lunch with Aunt Rosa" })).toBeInTheDocument();
-    expect(screen.getByText("Friday, Oct 9")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "In 1 hr 19 min" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
-    expect(screen.queryByText("Happening now")).not.toBeInTheDocument();
   });
 
   test("EVT-09 a running event today shows Happening now", async () => {
@@ -416,17 +472,17 @@ describe("Event details", () => {
 
     renderSheet({ kind: "event", id: CALL.id });
 
-    expect(await screen.findByText("Happening now")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Happening now" })).toBeInTheDocument();
   });
 
-  test("EVT-09 an ended event opens read-only details even on an edit request", async () => {
+  test("EVT-09 an ended event opens locked details even on an edit request", async () => {
     await store.db.events.put(synced(DROP_OFF));
 
     renderSheet({ kind: "event", id: DROP_OFF.id, edit: true });
 
-    expect(await screen.findByRole("dialog", { name: "School drop-off" })).toBeInTheDocument();
-    expect(screen.getByText("Ended")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Ended" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.getByText("This event has ended and can’t be changed.")).toBeInTheDocument();
   });
 
   test("EVT-07 Save from details writes the event and returns to its details", async () => {
@@ -434,227 +490,84 @@ describe("Event details", () => {
     renderSheet({ kind: "event", id: LUNCH.id });
 
     await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
-    await userEvent.type(screen.getByLabelText("Title"), "!");
+    await typeTitle("!");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(screen.getByRole("dialog", { name: "Lunch with Aunt Rosa!" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "In 1 hr 19 min" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "What’s happening: Lunch with Aunt Rosa!. Edit" }),
+    ).toBeInTheDocument();
     await waitFor(async () =>
       expect((await store.db.events.get(LUNCH.id))?.title).toBe("Lunch with Aunt Rosa!"),
     );
   });
-});
 
-const FORECAST = {
-  location: "Portland, OR",
-  fetchedAt: new Date(2026, 9, 9, 10, 0).toISOString(),
-  daily: [{ date: "2026-10-09", icon: "cloud-sun", high: 68, low: 51 }],
-  hourly: [] as Weather["hourly"],
-} as Weather;
+  test("EVT-10 tapping a value opens Edit event on that word's picker", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id });
 
-const PORTLAND = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
+    await userEvent.click(await screen.findByRole("button", { name: "Where: Café Lumen. Edit" }));
 
-test("EVT-01 a located screen shows the day's forecast after the eyebrow in the °F/°C setting", async () => {
-  await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
-  await store.db.weather.put({ ...FORECAST, accountId: store.accountId });
-
-  renderSheet({ kind: "newevent", day: "2026-10-09" }, { tempUnit: "C" });
-
-  const title = await screen.findByRole("heading", { name: "New event" });
-  const header = within(title.closest<HTMLElement>("[data-page-header]") ?? document.body);
-
-  expect(await header.findByRole("img", { name: "Partly cloudy" })).toBeInTheDocument();
-  expect(header.getByText("20°")).toBeInTheDocument();
-});
-
-test("EVT-01 with no location the sheet shows no forecast", async () => {
-  await store.db.weather.put({ ...FORECAST, accountId: store.accountId });
-
-  renderSheet({ kind: "newevent", day: "2026-10-09" });
-
-  expect(await screen.findByRole("dialog", { name: "New event" })).toBeInTheDocument();
-  expect(screen.queryByRole("img", { name: "Partly cloudy" })).not.toBeInTheDocument();
-});
-
-describe("day preview", () => {
-  const hour = (h: number, icon: string, temp: number, precip?: number) => ({
-    time: new Date(2026, 9, 9, h).toISOString(),
-    icon,
-    temp,
-    ...(precip !== undefined && { precip }),
+    expect(screen.getByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Where" })).toHaveValue("Café Lumen");
   });
+});
 
-  const WEEK = Array.from({ length: 7 }, (_, index) => ({
-    date: `2026-10-${String(9 + index).padStart(2, "0")}`,
-    icon: "sun",
-    high: 70 + index,
-    low: 50,
-  }));
-
-  const WITH_HOURS = {
-    ...FORECAST,
-    hourly: [
-      hour(12, "cloud-rain", 52, 40),
-      hour(13, "cloud", 54, 10),
-      hour(14, "cloud", 55),
-      hour(15, "sun", 57),
-      hour(16, "sun", 58),
-      hour(17, "sun", 59),
-      hour(18, "sun", 60),
-      hour(19, "moon", 58),
-    ],
-    daily: WEEK,
+describe("day preview and Same time", () => {
+  const FORECAST = {
+    location: "Portland, OR",
+    fetchedAt: new Date(2026, 9, 9, 10, 0).toISOString(),
+    daily: [{ date: "2026-10-09", icon: "cloud-sun", high: 68, low: 51 }],
+    hourly: [{ time: new Date(2026, 9, 9, 12).toISOString(), icon: "cloud", temp: 52 }],
   } as Weather;
 
-  const FIELD_TRIP: CalendarEvent = {
+  const PORTLAND = { name: "Portland", region: "Oregon", lat: 45.5, lon: -122.7 };
+
+  const PIANO: CalendarEvent = {
     id: "0195f0a0-0000-7000-8000-000000000011",
-    title: "Field trip",
-    startAt: new Date(2026, 9, 9, 8, 15).toISOString(),
-    endAt: new Date(2026, 9, 9, 15, 0).toISOString(),
-    everyone: true,
-    tagIds: [],
+    title: "Piano lesson",
+    startAt: new Date(2026, 9, 9, 12, 30).toISOString(),
+    endAt: new Date(2026, 9, 9, 13, 30).toISOString(),
+    everyone: false,
+    tagIds: [DAD.id],
     notify: true,
   };
 
-  const HOLIDAY: CalendarEvent = {
-    id: "0195f0a0-0000-7000-8000-000000000012",
-    title: "School holiday",
-    startAt: new Date(Date.UTC(2026, 9, 9)).toISOString(),
-    allDay: true,
-    everyone: true,
-    tagIds: [],
-    notify: true,
-  };
-
-  const EARLY: CalendarEvent = {
-    id: "0195f0a0-0000-7000-8000-000000000013",
-    title: "Breakfast",
-    startAt: new Date(2026, 9, 9, 7, 0).toISOString(),
-    endAt: new Date(2026, 9, 9, 8, 0).toISOString(),
-    everyone: true,
-    tagIds: [],
-    notify: true,
-  };
-
-  const setWidth = (width: number) => {
-    vi.stubGlobal("innerWidth", width);
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: width >= Number(query.match(/\d+/)?.[0]),
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    }));
-  };
-
-  async function openLunch(width = 1280, weather = WITH_HOURS) {
+  async function openLunch(width: number) {
     setWidth(width);
     await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
-    await store.db.weather.put({ ...weather, accountId: store.accountId });
-    await store.db.events.bulkPut([LUNCH, FIELD_TRIP, HOLIDAY, EARLY].map(synced));
+    await store.db.weather.put({ ...FORECAST, accountId: store.accountId });
+    await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
+    await store.db.events.bulkPut([LUNCH, PIANO].map(synced));
 
     renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+    await screen.findByRole("dialog", { name: "Edit event" });
   }
 
-  test("EVT-13 shows the weather at the start hour with the rain suffix from 30%", async () => {
-    await openLunch();
+  test("EVT-13 large shows the day preview with the other plans at this time", async () => {
+    await openLunch(1920);
 
     const preview = await screen.findByRole("complementary");
 
-    expect(within(preview).getByText("52°")).toBeInTheDocument();
-    expect(within(preview).getByText("Rain · 40% rain")).toBeInTheDocument();
+    expect(await within(preview).findByText("52°")).toBeInTheDocument();
+    expect(within(preview).getByText("Piano lesson")).toBeInTheDocument();
+    expect(screen.queryByText("Same time:")).not.toBeInTheDocument();
   });
 
-  test("EVT-13 omits the rain suffix below 30%", async () => {
-    const calm = {
-      ...WITH_HOURS,
-      hourly: WITH_HOURS.hourly.map((point) => ({ ...point, precip: 29 })),
-    } as Weather;
+  test("EVT-13 normal shows the Same time line instead of the day preview", async () => {
+    await openLunch(1024);
 
-    await openLunch(1280, calm);
-
-    const preview = await screen.findByRole("complementary");
-
-    expect(within(preview).getByText("Rain")).toBeInTheDocument();
-  });
-
-  test("EVT-13 lists the other plans overlapping the event, all-day first", async () => {
-    await openLunch();
-
-    const preview = await screen.findByRole("complementary");
-
-    const list = await within(preview).findByRole("list", { name: "Also at this time · 2" });
-
-    const rows = within(list).getAllByRole("listitem");
-
-    expect(rows[0]).toHaveTextContent("All day");
-    expect(rows[0]).toHaveTextContent("School holiday · Everyone");
-    expect(rows[1]).toHaveTextContent("Field trip");
-    expect(rows[1]).toHaveTextContent("8:15 AM – 3:00 PM");
-    expect(within(preview).queryByText("Breakfast")).not.toBeInTheDocument();
-  });
-
-  test("EVT-13 follows the All day switch: the day high and every plan that day", async () => {
-    await openLunch();
-    await userEvent.click(await screen.findByRole("switch", { name: "All day" }));
-
-    const preview = await screen.findByRole("complementary");
-
-    expect(
-      await within(preview).findByText("High for the day", { exact: false }),
-    ).toBeInTheDocument();
-    expect(within(preview).getByText("Also at this time · 3")).toBeInTheDocument();
-  });
-
-  test("EVT-13 shows the day preview at 769 px, the narrowest normal width", async () => {
-    await openLunch(769);
-
-    expect(await screen.findByRole("complementary")).toBeInTheDocument();
-  });
-
-  test("EVT-13 is hidden on small at 768 px", async () => {
-    await openLunch(768);
-
-    expect(await screen.findByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+    expect(await screen.findByRole("status", { name: "" })).toHaveTextContent(
+      "Same time: Dad is also at Piano lesson, 12:30 PM – 1:30 PM",
+    );
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   });
 
-  test("EVT-13 says there is no forecast for a date past the forecast", async () => {
-    setWidth(1280);
-    await createSettingsRepo(store).update({ weatherLocation: PORTLAND });
-    await store.db.weather.put({ ...WITH_HOURS, accountId: store.accountId });
+  test("EVT-13 small shows neither", async () => {
+    await openLunch(390);
 
-    renderSheet({ kind: "newevent", day: "2026-10-20" });
-
-    expect(await screen.findByText("No forecast for this date yet.")).toBeInTheDocument();
-    expect(screen.getByText("Nothing else at this time.")).toBeInTheDocument();
-  });
-
-  test("EVT-13 shows no weather tile without a location", async () => {
-    setWidth(1280);
-    await store.db.weather.put({ ...WITH_HOURS, accountId: store.accountId });
-
-    renderSheet({ kind: "newevent", day: "2026-10-09" });
-
-    expect(await screen.findByRole("complementary")).toBeInTheDocument();
-    expect(screen.queryByText("No forecast for this date yet.")).not.toBeInTheDocument();
-    expect(screen.queryByText("52°")).not.toBeInTheDocument();
-  });
-});
-
-test("EVT-12 Tomorrow moves a saved event to the next day at the same times", async () => {
-  await store.db.events.put(synced(LUNCH));
-
-  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
-
-  await userEvent.click(await screen.findByRole("button", { name: "Friday, Oct 9. Change date" }));
-  await userEvent.click(screen.getByRole("button", { name: "Tomorrow" }));
-
-  expect(screen.getByRole("button", { name: "Saturday, Oct 10. Change date" })).toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole("button", { name: "Save" }));
-
-  await waitFor(async () => {
-    const saved = await store.db.events.get(LUNCH.id);
-
-    expect(saved?.startAt).toBe(new Date(2026, 9, 10, 12, 0).toISOString());
-    expect(saved?.endAt).toBe(new Date(2026, 9, 10, 13, 0).toISOString());
+    expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Same time:")).not.toBeInTheDocument();
   });
 });

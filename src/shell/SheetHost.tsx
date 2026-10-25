@@ -5,16 +5,13 @@ import { createContext, type ReactNode, useContext, useMemo, useState } from "re
 import type { EventTimes } from "@/domain/eventTimes";
 import type { EventWho } from "@/domain/tags";
 
-export type TimeFixture = "start" | "end" | "error" | "noend";
-
 export type SheetRequest = (
-  | { kind: "event"; id: string; time?: TimeFixture; edit?: true }
+  | { kind: "event"; id: string; edit?: true }
   | {
       kind: "newevent";
       day: string;
       who?: EventWho;
       times?: EventTimes;
-      time?: TimeFixture;
     }
   | { kind: "note"; id: string; edit?: true }
   | { kind: "newnote"; draft?: { text: string } }

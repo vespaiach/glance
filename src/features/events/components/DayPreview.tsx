@@ -30,9 +30,12 @@ const words = copy.events.preview;
 
 const styles = stylex.create({
   root: {
-    flexBasis: "34%",
+    flexBasis: "30%",
     flexShrink: 0,
-    minWidth: 380,
+    minWidth: 400,
+    minHeight: 0,
+    overflowY: "auto",
+    overscrollBehavior: "contain",
     boxSizing: "border-box",
     padding: 32,
     display: "flex",
