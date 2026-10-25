@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.93 |
+| Status | v0.94 |
 | Date | 2026-10-25 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -589,7 +589,7 @@ Reminders for upcoming events: a strip on the screen over any view, quietly on A
 
 | ID | Requirement |
 |---|---|
-| GUIDE-01 | **`/guide`** renders `Glance Guide` for everyone, signed in or not, with no sidebar: the header ("Glance" wordmark and the page's section links Get started · Using Glance · Screen sizes · FAQ), the hero ("Guide for families", "Your family’s day, at a glance." and its static preview), the 11 numbered sections from "Get started with one email" to "One app, any screen", then "Questions". Words exactly as the page, from `copy.ts`. One readable column at the three sizes; the page scrolls. Linked from the sign-in form (SIGNIN-19) and Settings › Account (SET-15), both opening it in a new tab. |
+| GUIDE-01 | **`/guide`** renders `Glance Guide` for everyone, signed in or not, with no sidebar: the header ("Glance" wordmark and the page's section links Get started · Using Glance · Screen sizes · FAQ), the hero ("Guide for families", "Your family’s day, at a glance." and its static preview), the 11 numbered sections from "Get started with one email" to "One app, any screen", then "Questions" (the first question open; each question is a button with `aria-expanded` that shows or hides its answer), and the season-deep footer ("Glance" and a "Terms of Service" link to `/terms`). Words exactly as the page, from `copy.ts`, except that 09 Reminders' first line reads "Choose when reminders come in Settings › Notifications: 15 or 30 minutes before, or off." (NOTIF-08; the page still has the old choices). Colors follow the month's season (Auto, by the UTC date), and 07's Season card shows Auto selected with "Follows the month · now {Season}". Text uses the app's type scale (§4.3), so body copy is 16 px and eyebrows 14 px where the page has 18. One readable column at the three sizes; the page scrolls. Linked from the sign-in form (SIGNIN-19) and Settings › Account (SET-15), both opening it in a new tab. |
 
 ---
 
