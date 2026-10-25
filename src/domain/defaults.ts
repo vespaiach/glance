@@ -10,6 +10,6 @@ export const DEFAULT_SETTINGS: AccountSettings = {
   hideSidebarWhenIdle: true,
   ambientBrightness: "medium",
   ambient: DEFAULT_AMBIENT,
-  defaultReminder: "15min",
+  notifyLead: 15,
   chime: true,
 };

@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from "./defaults";
 import { AccountSettingsSchema } from "./schemas";
 
 describe("DEFAULT_SETTINGS", () => {
-  it("spec§7.0 are Auto, 12-hour, Fahrenheit, Season color (Light, Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle, Medium ambient brightness, every night 6:00 PM – 7:30 AM, default reminder 15 min, chime on", () => {
+  it("spec§7.0 are Auto, 12-hour, Fahrenheit, Season color (Light, Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle, Medium ambient brightness, every night 6:00 PM – 7:30 AM, notifications 15 min before, chime on", () => {
     expect(DEFAULT_SETTINGS).toEqual({
       season: "auto",
       clock: "12h",
@@ -18,7 +18,7 @@ describe("DEFAULT_SETTINGS", () => {
         all: { start: "18:00", end: "07:30" },
         wknd: { start: "21:00", end: "09:00" },
       },
-      defaultReminder: "15min",
+      notifyLead: 15,
       chime: true,
     });
   });
