@@ -1,7 +1,7 @@
 import * as stylex from "@stylexjs/stylex";
 import type { ComponentProps } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
-import { EventSentence, EventTaskBar, type PageDraft } from "@/features/events";
+import { EventPicker, EventSentence, EventTaskBar, type PageDraft } from "@/features/events";
 import { colors, radii } from "@/theme/tokens.stylex";
 import { Eyebrow } from "@/ui/Eyebrow";
 import { GalleryGroup } from "./GalleryGroup";
@@ -10,6 +10,10 @@ import { GALLERY_FAMILY, gallery } from "./samples";
 type SentenceProps = ComponentProps<typeof EventSentence>;
 
 type BarProps = ComponentProps<typeof EventTaskBar>;
+
+type PickerProps = ComponentProps<typeof EventPicker>;
+
+type PickerDemo = { label: string; picker: Partial<PickerProps> & Pick<PickerProps, "word"> };
 
 type Demo = {
   label: string;
@@ -89,6 +93,25 @@ const DEMOS: readonly Demo[] = [
   { label: words.offline, draft: LUNCH, bar: { mode: "new", online: false } },
 ];
 
+const picks = gallery.eventPicker;
+
+const EVERYONE = GALLERY_FAMILY.map((tag) => tag.id);
+
+const PICKER_DEMOS: readonly PickerDemo[] = [
+  { label: picks.titleEmpty, picker: { word: "title", draft: BLANK } },
+  { label: picks.title, picker: { word: "title" } },
+  { label: picks.day, picker: { word: "day" } },
+  { label: picks.start, picker: { word: "start" } },
+  { label: picks.allDay, picker: { word: "start", draft: { ...LUNCH, allDay: true } } },
+  { label: picks.start24, picker: { word: "start", clock: "24h" } },
+  { label: picks.end, picker: { word: "end" } },
+  { label: picks.endNear, picker: { word: "end", draft: { ...LUNCH, start: 750, end: 765 } } },
+  { label: picks.who, picker: { word: "who" } },
+  { label: picks.everyone, picker: { word: "who", draft: { ...LUNCH, tagIds: EVERYONE } } },
+  { label: picks.where, picker: { word: "where" } },
+  { label: picks.notes, picker: { word: "notes", draft: { ...LUNCH, notes: picks.notesText } } },
+];
+
 const styles = stylex.create({
   demo: {
     display: "flex",
@@ -125,6 +148,36 @@ export function EventPageGallery() {
           <div {...stylex.props(styles.frames)}>
             {BREAKPOINTS.map((breakpoint) => (
               <Frame key={breakpoint} demo={demo} breakpoint={breakpoint} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </GalleryGroup>
+  );
+}
+
+export function EventPickerGallery() {
+  return (
+    <GalleryGroup title={gallery.groups.eventPicker} column>
+      {PICKER_DEMOS.map((demo) => (
+        <div key={demo.label} {...stylex.props(styles.demo)}>
+          <Eyebrow>{demo.label}</Eyebrow>
+          <div {...stylex.props(styles.frames)}>
+            {BREAKPOINTS.map((breakpoint) => (
+              <div key={breakpoint} {...stylex.props(styles.frame, frames[breakpoint])}>
+                <EventPicker
+                  breakpoint={breakpoint}
+                  draft={LUNCH}
+                  today={LUNCH.day}
+                  clock="12h"
+                  tags={GALLERY_FAMILY}
+                  recentTitles={picks.recentTitles}
+                  recentPlaces={picks.recentPlaces}
+                  onAction={ignore}
+                  onCreateTag={() => ""}
+                  {...demo.picker}
+                />
+              </div>
             ))}
           </div>
         </div>

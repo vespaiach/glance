@@ -1,3 +1,5 @@
+"use client";
+
 import * as stylex from "@stylexjs/stylex";
 import {
   ArrowRight,
@@ -116,8 +118,9 @@ const styles = stylex.create({
     flexShrink: 0,
     minHeight: 44,
     display: "flex",
+    flexWrap: "wrap",
     alignItems: "center",
-    gap: 16,
+    gap: "8px 16px",
   },
   eyebrow: {
     flexShrink: 0,
@@ -126,6 +129,7 @@ const styles = stylex.create({
   spacer: { flexGrow: 1 },
   soft: { backgroundColor: colors.surfaceSoft },
   meridiem: {
+    flexShrink: 0,
     width: 128,
     backgroundColor: colors.surfaceSoft,
     boxShadow: "none",
