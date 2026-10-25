@@ -7,6 +7,8 @@ type MeridiemToggleProps = {
   label: string;
   value: Meridiem;
   onChange: (meridiem: Meridiem) => void;
+  disabled?: boolean;
+  xstyle?: stylex.StyleXStyles;
 };
 
 const MERIDIEMS: readonly Meridiem[] = ["AM", "PM"];
@@ -36,7 +38,7 @@ const styles = stylex.create({
     borderRadius: radii.pill,
     backgroundColor: colors.actionPrimary,
     transform: "translateX(0)",
-    transitionProperty: "transform",
+    transitionProperty: "transform, opacity",
     transitionDuration: {
       default: "220ms",
       "@media (prefers-reduced-motion: reduce)": "0ms",
@@ -45,6 +47,9 @@ const styles = stylex.create({
   },
   knobPm: {
     transform: "translateX(100%)",
+  },
+  knobOff: {
+    opacity: 0,
   },
   option: {
     position: "relative",
@@ -64,19 +69,37 @@ const styles = stylex.create({
   chosen: {
     color: colors.onActionPrimary,
   },
+  off: {
+    color: colors.textPlaceholder,
+    cursor: "default",
+  },
 });
 
-export function MeridiemToggle({ label, value, onChange }: MeridiemToggleProps) {
+export function MeridiemToggle({
+  label,
+  value,
+  onChange,
+  disabled = false,
+  xstyle,
+}: MeridiemToggleProps) {
   return (
-    <fieldset aria-label={label} {...stylex.props(styles.track)}>
-      <span aria-hidden="true" {...stylex.props(styles.knob, value === "PM" && styles.knobPm)} />
+    <fieldset aria-label={label} {...stylex.props(styles.track, xstyle)}>
+      <span
+        aria-hidden="true"
+        {...stylex.props(styles.knob, value === "PM" && styles.knobPm, disabled && styles.knobOff)}
+      />
       {MERIDIEMS.map((meridiem) => (
         <button
           key={meridiem}
           type="button"
-          aria-pressed={meridiem === value}
+          aria-pressed={!disabled && meridiem === value}
+          disabled={disabled}
           onClick={() => onChange(meridiem)}
-          {...stylex.props(styles.option, meridiem === value && styles.chosen)}
+          {...stylex.props(
+            styles.option,
+            meridiem === value && styles.chosen,
+            disabled && styles.off,
+          )}
         >
           {meridiem}
         </button>

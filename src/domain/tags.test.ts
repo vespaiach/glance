@@ -9,6 +9,7 @@ import {
   liveFilter,
   matchesFilter,
   nextFreeColor,
+  pickWho,
   stackCircles,
   toggleEveryone,
   toggleFilter,
@@ -284,5 +285,29 @@ describe("filterScope", () => {
     expect(filterScope(new Set(ALL_IDS), ALL_IDS)).toBe("everyone");
     expect(filterScope(new Set([MOM.id]), ALL_IDS)).toBe("some");
     expect(filterScope(new Set(), ALL_IDS)).toBe("none");
+  });
+});
+
+describe("pickWho", () => {
+  const ALL = ["a", "b", "c"];
+
+  it("EVT-11 Everyone picks every tag", () => {
+    expect(pickWho(["b"], ALL)).toEqual(ALL);
+  });
+
+  it("EVT-11 picking a tag adds it in tag order", () => {
+    expect(pickWho(["c"], ALL, "a")).toEqual(["a", "c"]);
+  });
+
+  it("EVT-11 a tag picked while everyone is on keeps only that tag", () => {
+    expect(pickWho(ALL, ALL, "b")).toEqual(["b"]);
+  });
+
+  it("EVT-11 unpicking the last tag selects everyone", () => {
+    expect(pickWho(["b"], ALL, "b")).toEqual(ALL);
+  });
+
+  it("EVT-11 a nobody event picks the tapped tag", () => {
+    expect(pickWho([], ALL, "c")).toEqual(["c"]);
   });
 });
