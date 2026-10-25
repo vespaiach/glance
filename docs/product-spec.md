@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v0.92 |
+| Status | v0.93 |
 | Date | 2026-10-25 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -583,7 +583,7 @@ Reminders for upcoming events: a strip on the screen over any view, quietly on A
 
 | ID | Requirement |
 |---|---|
-| TERMS-01 | **`/terms`** renders `Glance Terms of Service` for everyone, signed in or not, with no sidebar: a header with the "Glance" wordmark and "Source on GitHub" (→ `https://github.com/vespaiach/glance`), the eyebrow "Legal", title "Terms of service", "Effective October 24, 2026", the "In short" cards (Free and open source, Your data, not encrypted, Provided as is, 18 and over), the 17 numbered sections (§05 "Weather data": the forecasts come from Open-Meteo under CC BY 4.0, credited wherever weather shows, WX-10), and the footer "Glance · takeaglance.app" · "MIT License". Words exactly as the page, from `copy.ts`. One readable column at the three sizes; the page scrolls. Linked from the sign-in form (SIGNIN-19) and Settings (SET-15), both opening it in a new tab. |
+| TERMS-01 | **`/terms`** renders `Glance Terms of Service` for everyone, signed in or not, with no sidebar: a header with the "Glance" wordmark and "Source on GitHub" (→ `https://github.com/vespaiach/glance`), the eyebrow "Legal", title "Terms of service", "Effective October 24, 2026", the "In short" cards (Free and open source, Your data, not encrypted, Provided as is, 18 and over), the 17 numbered sections (§05 "Weather data": the forecasts come from Open-Meteo under CC BY 4.0, credited wherever weather shows, WX-10), and the footer "Glance · takeaglance.app" · "MIT License". Words exactly as the page, from `copy.ts`, except that §11 Termination's cross-reference reads "Sections 7, 9 and 12–16" (the page still has the pre-§05 numbers). One readable column at the three sizes; the page scrolls. Linked from the sign-in form (SIGNIN-19) and Settings (SET-15), both opening it in a new tab. |
 
 ### 8.12 Guide — `GUIDE`
 
