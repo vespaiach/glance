@@ -26,7 +26,7 @@ type Showing = { group: ReminderGroup<CalendarEvent>; shownAt: number };
 
 type StripText = Pick<
   Parameters<typeof ReminderStrip>[0],
-  "atStart" | "color" | "eyebrow" | "title" | "actionLabel"
+  "color" | "eyebrow" | "title" | "actionLabel"
 >;
 
 const SHOW_MS = 30_000;
@@ -72,7 +72,7 @@ export function ReminderHost({ chime = playChime }: ReminderHostProps) {
 
   const tz = useTimeZone();
 
-  const { ambient, chime: chimeOn, clock } = useAccountSettings();
+  const { ambient, chime: chimeOn, clock, notifyLead } = useAccountSettings();
 
   const today = dateKey(now, tz);
 
@@ -92,7 +92,7 @@ export function ReminderHost({ chime = playChime }: ReminderHostProps) {
 
   const quiet = inAmbient(ambient, now, tz);
 
-  const due = events ? remindersDue(events, now, seen) : [];
+  const due = events ? remindersDue(events, notifyLead, now, seen) : [];
 
   const latest = due.at(-1);
 
@@ -165,17 +165,14 @@ function stripText(
   tz: string,
   tags: readonly Tag[],
 ): StripText {
-  const atStart = group.kind === "start";
-
   const start = clockAt(group.startAt, clock, tz);
 
-  const when = atStart ? words.now : words.in(minutesLeft(group, now));
+  const when = words.in(minutesLeft(group, now));
 
   const [only, ...others] = group.events;
 
   if (only === undefined || others.length > 0) {
     return {
-      atStart,
       color: "soft",
       eyebrow: words.eyebrow([when, start, words.count(group.events.length)]),
       title: words.titles(group.titles, group.more),
@@ -183,14 +180,11 @@ function stripText(
     };
   }
 
-  const time = atStart && only.endAt ? words.span(start, clockAt(only.endAt, clock, tz)) : start;
-
-  const who = atStart ? undefined : whoLabel(only, tags, copy.events.everyone);
+  const who = whoLabel(only, tags, copy.events.everyone);
 
   return {
-    atStart,
     color: eventColor(only, tags),
-    eyebrow: words.eyebrow([when, time, who, only.location]),
+    eyebrow: words.eyebrow([when, start, who, only.location]),
     title: only.title,
     actionLabel: words.details,
   };

@@ -121,12 +121,36 @@ describe("ReminderHost", () => {
     expect(strip()).not.toBeInTheDocument();
   });
 
-  it("NOTIF-01 at the start the strip reads Now with the event's span and place", async () => {
-    await renderHost(at(10, 59, 59), [{ ...SHIFT, notify: true }]);
+  it("NOTIF-01 nothing shows at the start", async () => {
+    await renderHost(at(10, 59, 59), [SHIFT]);
+
+    await seconds(2);
+
+    expect(strip()).not.toBeInTheDocument();
+  });
+
+  it("NOTIF-08 with a 30 min lead the strip shows 30 min before", async () => {
+    await renderHost(at(10, 29, 59), [SHIFT], { notifyLead: 30 });
 
     await seconds(1);
 
-    expect(await screen.findByText("Now · 11:00 AM – 12:00 PM · Food bank")).toBeInTheDocument();
+    expect(await screen.findByText("In 30 min · 11:00 AM · Everyone · Food bank")).toBeVisible();
+  });
+
+  it("NOTIF-08 nothing shows with the lead time off", async () => {
+    await renderHost(at(10, 44, 59), [SHIFT], { notifyLead: "off" });
+
+    await seconds(2);
+
+    expect(strip()).not.toBeInTheDocument();
+  });
+
+  it("NOTIF-09 an event with its notification off shows no strip", async () => {
+    await renderHost(at(10, 44, 59), [{ ...SHIFT, notify: false }]);
+
+    await seconds(2);
+
+    expect(strip()).not.toBeInTheDocument();
   });
 
   it("NOTIF-05 a new reminder replaces the one showing", async () => {

@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { ReminderStrip } from "./ReminderStrip";
 
 const strip = {
-  atStart: false,
   color: "lime",
   eyebrow: "In 15 min · 11:00 AM · Nghe · Food bank",
   title: "Volunteer shift",

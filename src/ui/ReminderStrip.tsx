@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { ArrowRight, Bell, BellRing } from "lucide-react";
+import { ArrowRight, Bell } from "lucide-react";
 import type { MouseEvent } from "react";
 import type { TagColor } from "@/domain/schemas";
 import { colors, radii, shadows } from "@/theme/tokens.stylex";
@@ -9,7 +9,6 @@ import { Icon } from "./Icon";
 import { PersonDot } from "./PersonDot";
 
 type ReminderStripProps = {
-  atStart: boolean;
   color: TagColor | "soft";
   eyebrow: string;
   title: string;
@@ -84,7 +83,6 @@ const styles = stylex.create({
 });
 
 export function ReminderStrip({
-  atStart,
   color,
   eyebrow,
   title,
@@ -104,7 +102,7 @@ export function ReminderStrip({
       {...stylex.props(styles.root, xstyle)}
     >
       <div {...stylex.props(styles.row)}>
-        <Icon icon={atStart ? BellRing : Bell} size={28} />
+        <Icon icon={Bell} size={28} />
         <div {...stylex.props(styles.text)}>
           <span {...stylex.props(styles.eyebrow)}>
             <PersonDot color={color} />
