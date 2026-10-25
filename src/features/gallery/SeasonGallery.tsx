@@ -1,18 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import {
-  ArrowRight,
-  CalendarDays,
-  CloudOff,
-  CloudSun,
-  House,
-  Image,
-  Plus,
-  Settings,
-  StickyNote as StickyNoteGlyph,
-  Sun,
-  Trash2,
-  Umbrella,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, CloudOff, Plus, Sun, Trash2, Umbrella } from "lucide-react";
 import { useState } from "react";
 import { copy } from "@/copy";
 import { IDLE_MINUTES, type Season, type Tone } from "@/domain/schemas";
@@ -42,7 +29,6 @@ import { StickyNote } from "@/ui/StickyNote";
 import { Switch } from "@/ui/Switch";
 import { seasonIcons } from "@/ui/seasonIcons";
 import { TextInput } from "@/ui/TextInput";
-import { TopBar } from "@/ui/TopBar";
 import { WeatherNow } from "@/ui/WeatherNow";
 import { Zone } from "@/ui/Zone";
 import { AmbientGallery } from "./AmbientGallery";
@@ -118,10 +104,6 @@ const styles = stylex.create({
     overflowX: "auto",
   },
   inverse: {
-    display: "flex",
-    gap: space.xs,
-  },
-  nav: {
     display: "flex",
     gap: space.xs,
   },
@@ -405,30 +387,10 @@ function NotesGroup() {
   );
 }
 
-function NavBar({ inverse }: { inverse?: boolean }) {
-  const nav = gallery.nav;
-
-  return (
-    <div {...stylex.props(styles.nav)}>
-      <IconButton icon={House} label={nav.today} size="touch" active={!inverse} />
-      <IconButton icon={CalendarDays} label={nav.calendar} size="touch" />
-      <IconButton icon={CloudSun} label={nav.weather} size="touch" />
-      <IconButton icon={StickyNoteGlyph} label={nav.notes} size="touch" />
-      <IconButton icon={Image} label={nav.photos} size="touch" />
-    </div>
-  );
-}
-
 function NavigationGroup() {
-  const settings = (
-    <IconButton icon={Settings} label={gallery.nav.settings} size="touch" variant="canvas" />
-  );
-
   return (
     <GalleryGroup title={gallery.groups.navigation} column>
       <SidebarGallery />
-      <TopBar brand={copy.appName} right={settings} />
-      <TopBar brand={copy.appName} center={<NavBar inverse />} inverse />
     </GalleryGroup>
   );
 }
