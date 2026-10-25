@@ -45,6 +45,7 @@ const styles = stylex.create({
   },
   title: {
     minWidth: 0,
+    marginRight: "auto",
     display: "flex",
     alignItems: "center",
     gap: 12,
@@ -53,7 +54,6 @@ const styles = stylex.create({
     lineHeight: 1.1,
     whiteSpace: "nowrap",
   },
-  spacer: { flexGrow: 1 },
   ask: {
     flexGrow: 1,
     fontWeight: 540,
@@ -87,13 +87,10 @@ export function EventTaskBar(props: EventTaskBarProps) {
   return (
     <div {...stylex.props(styles.bar, barSizes[breakpoint])}>
       {!(asksDiscard && breakpoint === "small") && (
-        <>
-          <span {...stylex.props(styles.title, titleSizes[breakpoint])}>
-            {mode === "view" && <Icon icon={Clock} size={ICON_SIZE[breakpoint]} />}
-            {titleText(mode, status)}
-          </span>
-          <span {...stylex.props(styles.spacer)} />
-        </>
+        <span {...stylex.props(styles.title, titleSizes[breakpoint])}>
+          {mode === "view" && <Icon icon={Clock} size={ICON_SIZE[breakpoint]} />}
+          {titleText(mode, status)}
+        </span>
       )}
       {asksDiscard ? <DiscardAsk {...props} /> : <Actions {...props} />}
       {!asksDiscard && (
