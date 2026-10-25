@@ -676,6 +676,16 @@ export const copy = {
       off: "Off · notes stay until deleted",
       slider: "Days before notes are removed",
     },
+    family: {
+      eyebrow: (count: number) => `Family · ${count} ${count === 1 ? "member" : "members"}`,
+      list: "Family members",
+      plans: (count: number) =>
+        count === 0 ? "No plans" : `${count} ${count === 1 ? "plan" : "plans"}`,
+      remove: "Remove",
+      removeName: (name: string) => `Remove ${name}`,
+      cancel: "Cancel",
+      lastMember: "The last member can’t be removed.",
+    },
     account: {
       title: "Account",
       screensSignedIn: (count: number) =>

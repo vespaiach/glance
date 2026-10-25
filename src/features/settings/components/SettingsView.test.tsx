@@ -88,6 +88,11 @@ function renderView(overrides: Partial<Props> = {}) {
     phone: { kind: "unsupported" },
     onAllowPush: vi.fn(),
     onTurnOffPush: vi.fn(),
+    members: undefined,
+    askingMember: null,
+    onAskRemoveMember: vi.fn(),
+    onCancelRemoveMember: vi.fn(),
+    onRemoveMember: vi.fn(),
     ...overrides,
   };
 

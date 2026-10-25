@@ -370,3 +370,38 @@ test("SET-14 offline Delete account is disabled", async () => {
 
   expect(await screen.findByRole("button", { name: "Delete account" })).toBeDisabled();
 });
+
+test("FAM-08 removing a member deletes their only plans and takes them off shared ones", async () => {
+  const tag = (n: number, name: string) => ({
+    id: `0195f0a0-0000-7000-8001-00000000000${n}`,
+    name,
+    color: "coral" as const,
+    createdAt: `2026-10-0${n}T09:00:00.000Z`,
+  });
+  const plan = (n: number, tagIds: string[]) => ({
+    id: `0195f0a0-0000-7000-8002-00000000000${n}`,
+    title: `Plan ${n}`,
+    startAt: "2026-10-01T16:00:00.000Z",
+    everyone: false,
+    tagIds,
+    notify: true,
+  });
+  const mom = tag(1, "Mom");
+  const tin = tag(2, "Tin");
+  const only = plan(1, [mom.id]);
+  const shared = plan(2, [tin.id, mom.id]);
+  await store.db.tags.bulkPut([synced(mom), synced(tin)]);
+  await store.db.events.bulkPut([synced(only), synced(shared)]);
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Remove Mom" }));
+  expect(
+    screen.getByText("Their 1 plan is deleted. They’re taken off 1 plan shared with others."),
+  ).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Remove Mom" }));
+
+  await waitFor(async () => expect((await store.db.tags.get(mom.id))?.deletedAt).toBeDefined());
+  expect((await store.db.events.get(only.id))?.deletedAt).toBeDefined();
+  expect((await store.db.events.get(shared.id))?.tagIds).toEqual([tin.id]);
+  expect(await screen.findByText("Family · 1 member")).toBeInTheDocument();
+});

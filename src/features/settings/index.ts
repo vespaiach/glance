@@ -5,5 +5,6 @@ export { SettingsView } from "./components/SettingsView";
 export { LocationScreen } from "./LocationScreen";
 export { settingsLayout } from "./layout";
 export { placeLabel } from "./location";
+export { members } from "./members";
 export { SettingsScreen } from "./SettingsScreen";
 export { useQrTile } from "./useQrTile";

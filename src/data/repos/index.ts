@@ -25,6 +25,7 @@ export {
   useEventsOnDay,
   useEventsRepo,
   useHasEvents,
+  useLiveEvents,
   useNextEventAfter,
   useUpcomingEvent,
 } from "./events";

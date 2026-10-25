@@ -110,6 +110,12 @@ export function useHasEvents(): boolean | undefined {
   return useLiveQuery(async () => (await db.events.filter(isLive).first()) !== undefined, [db]);
 }
 
+export function useLiveEvents(): StoredEvent[] | undefined {
+  const { db } = useRepoStore();
+
+  return useLiveQuery(() => db.events.filter(isLive).toArray(), [db]);
+}
+
 export function useEventRecents(): EventRecents | undefined {
   const { db } = useRepoStore();
 

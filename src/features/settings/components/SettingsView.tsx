@@ -12,6 +12,7 @@ import type { SignOutDialog as SignOutDialogState } from "../signOutDialog";
 import type { ThisPhone } from "../thisPhone";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
+import { type Member, MemberList } from "./MemberList";
 import type { QrTileShown } from "./QrSignInTile";
 import { ScreenOptions } from "./ScreenOptions";
 import { SettingsPanel } from "./SettingsPanel";
@@ -49,6 +50,11 @@ type SettingsViewProps = {
   phone: ThisPhone;
   onAllowPush: () => void;
   onTurnOffPush: () => void;
+  members: readonly Member[] | undefined;
+  askingMember: string | null;
+  onAskRemoveMember: (id: string) => void;
+  onCancelRemoveMember: () => void;
+  onRemoveMember: (id: string) => void;
 };
 
 const styles = stylex.create({
@@ -97,6 +103,11 @@ export function SettingsView({
   phone,
   onAllowPush,
   onTurnOffPush,
+  members,
+  askingMember,
+  onAskRemoveMember,
+  onCancelRemoveMember,
+  onRemoveMember,
 }: SettingsViewProps) {
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
@@ -114,6 +125,15 @@ export function SettingsView({
       />
       <div {...stylex.props(styles.side)}>
         <ScreenOptions settings={settings} onChange={onChange} onOpenAmbient={onOpenAmbient} />
+        {members && members.length > 0 && (
+          <MemberList
+            members={members}
+            asking={askingMember}
+            onAsk={onAskRemoveMember}
+            onCancel={onCancelRemoveMember}
+            onRemove={onRemoveMember}
+          />
+        )}
         <AccountCard
           account={account}
           screens={screens}
