@@ -279,6 +279,26 @@ export function databaseContract(open: () => Database): void {
       expect(await db().tags.changedSince(OMAR, 0)).toEqual([tag("t3", "Leo")]);
     });
 
+    it("FAM-08 lists an account's live events that name a tag", async () => {
+      await db().events.save(MARIA, EVENT);
+      await db().events.save(MARIA, { ...EVENT, id: "e2", tagIds: [...EVENT.tagIds, "t2"] });
+      await db().events.save(MARIA, { ...EVENT, id: "e3", deletedAt: NOW });
+      await db().events.save(MARIA, { ...EVENT, id: "e4", tagIds: ["t2"] });
+      await db().events.save(OMAR, { ...EVENT, id: "e5" });
+
+      const named = await db().events.liveWithTag(MARIA, EVENT.tagIds[0] as string);
+
+      expect(named.map((event) => event.id).sort()).toEqual([EVENT.id, "e2"].sort());
+    });
+
+    it("FAM-08 counts an account's live tags only", async () => {
+      await db().tags.save(MARIA, tag("t1", "Leo"));
+      await db().tags.save(MARIA, { ...tag("t2", "Ana"), deletedAt: NOW });
+      await db().tags.save(OMAR, tag("t3", "Mia"));
+
+      expect(await db().tags.liveCount(MARIA)).toBe(1);
+    });
+
     it("FAM-05 rejects a second live tag with the same name in one account", async () => {
       await db().tags.save(MARIA, tag("t1", "Leo"));
 

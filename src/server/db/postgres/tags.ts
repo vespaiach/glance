@@ -22,6 +22,14 @@ export function tagsRepo(sql: Sql): Repos["tags"] {
     save: (accountId, tag) => saveTag(sql, accountId, tag),
     hasAny: async (accountId) =>
       (await sql.one("SELECT 1 FROM tags WHERE account_id = $1", [accountId])) !== undefined,
+    liveCount: async (accountId) => {
+      const row = await sql.one<{ count: number }>(
+        "SELECT count(*)::int AS count FROM tags WHERE account_id = $1 AND deleted_at IS NULL",
+        [accountId],
+      );
+
+      return row?.count ?? 0;
+    },
     liveIds: async (accountId, ids) => {
       const rows = await sql.all<{ id: string }>(
         "SELECT id FROM tags WHERE account_id = $1 AND deleted_at IS NULL AND id = ANY($2)",

@@ -8,8 +8,10 @@ import {
   initials,
   liveFilter,
   matchesFilter,
+  memberRemoval,
   nextFreeColor,
   pickWho,
+  removalLine,
   stackCircles,
   toggleEveryone,
   toggleFilter,
@@ -153,6 +155,10 @@ describe("liveFilter", () => {
 
   it("CAL-05 nobody stays nobody", () => {
     expect(liveFilter(new Set(), ALL_IDS)).toEqual(new Set());
+  });
+
+  it("CAL-05 removing the only selected member resets the filter to everyone", () => {
+    expect(liveFilter(selected(MOM), [AN.id, HY.id])).toEqual(selected(AN, HY));
   });
 });
 
@@ -309,5 +315,68 @@ describe("pickWho", () => {
 
   it("EVT-11 a nobody event picks the tapped tag", () => {
     expect(pickWho([], ALL, "c")).toEqual(["c"]);
+  });
+});
+
+describe("memberRemoval", () => {
+  const plan = (n: number, who: { everyone: boolean; tagIds: string[] }, deletedAt?: string) => ({
+    id: `e${n}`,
+    ...who,
+    ...(deletedAt ? { deletedAt } : {}),
+  });
+
+  it("FAM-08 deletes the plans whose only tag it is", () => {
+    expect(memberRemoval([plan(1, forTags(MOM)), plan(2, forTags(AN))], MOM.id)).toEqual({
+      deleted: ["e1"],
+      stripped: [],
+    });
+  });
+
+  it("FAM-08 takes the tag off plans shared with others", () => {
+    expect(memberRemoval([plan(1, forTags(AN, MOM))], MOM.id)).toEqual({
+      deleted: [],
+      stripped: ["e1"],
+    });
+  });
+
+  it("FAM-08 leaves everyone and nobody plans untouched", () => {
+    expect(memberRemoval([plan(1, everyone), plan(2, nobody)], MOM.id)).toEqual({
+      deleted: [],
+      stripped: [],
+    });
+  });
+
+  it("FAM-08 counts past plans too but skips deleted ones", () => {
+    const past = { ...plan(1, forTags(MOM)), startAt: "2020-01-01T10:00:00.000Z" };
+
+    const gone = plan(2, forTags(MOM), "2026-10-01T10:00:00.000Z");
+
+    expect(memberRemoval([past, gone], MOM.id)).toEqual({ deleted: ["e1"], stripped: [] });
+  });
+});
+
+describe("removalLine", () => {
+  const labels = {
+    deleted: (count: number) => `Their ${count} ${count === 1 ? "plan is" : "plans are"} deleted.`,
+    stripped: (count: number) =>
+      `They’re taken off ${count} ${count === 1 ? "plan" : "plans"} shared with others.`,
+    none: "They have no plans.",
+  };
+
+  it("FAM-08 names the deleted and the shared plans, joined by a space", () => {
+    expect(removalLine({ deleted: ["a", "b"], stripped: ["c", "d", "e"] }, labels)).toBe(
+      "Their 2 plans are deleted. They’re taken off 3 plans shared with others.",
+    );
+  });
+
+  it("FAM-08 uses the singular for one plan", () => {
+    expect(removalLine({ deleted: ["a"], stripped: [] }, labels)).toBe("Their 1 plan is deleted.");
+    expect(removalLine({ deleted: [], stripped: ["a"] }, labels)).toBe(
+      "They’re taken off 1 plan shared with others.",
+    );
+  });
+
+  it("FAM-08 says they have no plans with neither", () => {
+    expect(removalLine({ deleted: [], stripped: [] }, labels)).toBe("They have no plans.");
   });
 });

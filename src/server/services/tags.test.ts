@@ -1,5 +1,6 @@
-import type { Tag } from "@/domain/schemas";
-import { addFirstTag, putTag } from "./tags";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
+import { putEvent } from "./events";
+import { addFirstTag, putTag, removeTag } from "./tags";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
 const harness = serviceHarnessPerTest();
@@ -116,5 +117,106 @@ describe("addFirstTag", () => {
     await putTag(harness.deps(), OMAR, MOM);
 
     expect(await addFirstTag(harness.deps(), MARIA, "Maria")).toMatchObject({ name: "Maria" });
+  });
+});
+
+describe("removeTag", () => {
+  const KID: Tag = { ...DAD, id: "0192f3a0-3333-7000-8000-000000000003", name: "Kid" };
+
+  const plan = (n: number, tagIds: string[], everyone = false): CalendarEvent => ({
+    id: `0192f3a0-1111-7000-8000-00000000000${n}`,
+    title: `Plan ${n}`,
+    startAt: "2026-10-01T16:00:00.000Z",
+    everyone,
+    tagIds,
+    notify: true,
+  });
+
+  const ONLY_MOM = plan(1, [MOM.id]);
+
+  const SHARED = plan(2, [MOM.id, DAD.id]);
+
+  const EVERYONE = plan(3, [], true);
+
+  const ONLY_DAD = plan(4, [DAD.id]);
+
+  async function family(accountId = MARIA) {
+    for (const tag of [MOM, DAD]) await putTag(harness.deps(), accountId, tag);
+
+    for (const event of [ONLY_MOM, SHARED, EVERYONE, ONLY_DAD])
+      await putEvent(harness.deps(), accountId, event);
+  }
+
+  async function storedEvent(id: string) {
+    return (await harness.deps().db.events.find(id))?.value;
+  }
+
+  it("D24 soft-deletes the tag and its only-tag plans, and takes it off shared plans", async () => {
+    await family();
+    harness.advance(60_000);
+
+    const removed = await removeTag(harness.deps(), MARIA, MOM.id);
+
+    expect(removed).toEqual({
+      ok: true,
+      value: {
+        ...MOM,
+        updatedAt: "2026-10-09T14:01:00.000Z",
+        deletedAt: "2026-10-09T14:01:00.000Z",
+        version: 9,
+      },
+    });
+    expect(await storedEvent(ONLY_MOM.id)).toMatchObject({ deletedAt: "2026-10-09T14:01:00.000Z" });
+    expect(await storedEvent(SHARED.id)).toMatchObject({ tagIds: [DAD.id] });
+    expect((await storedEvent(SHARED.id))?.deletedAt).toBeUndefined();
+  });
+
+  it("D24 bumps one version per changed row and leaves everyone and other plans alone", async () => {
+    await family();
+
+    await removeTag(harness.deps(), MARIA, MOM.id);
+
+    expect(await harness.globalVersion()).toBe(9);
+    expect(await storedEvent(EVERYONE.id)).toMatchObject({ version: 5 });
+    expect(await storedEvent(ONLY_DAD.id)).toMatchObject({ version: 6 });
+  });
+
+  it("FAM-08 refuses removing the last live tag", async () => {
+    await putTag(harness.deps(), MARIA, MOM);
+    await putTag(harness.deps(), MARIA, DAD);
+    await removeTag(harness.deps(), MARIA, DAD.id);
+
+    expect(await removeTag(harness.deps(), MARIA, MOM.id)).toEqual({
+      ok: false,
+      error: "last-tag",
+    });
+    expect(await harness.globalVersion()).toBe(3);
+  });
+
+  it("SYNC-03 removing a removed tag again answers the stored tag and bumps nothing", async () => {
+    await family();
+    const first = await removeTag(harness.deps(), MARIA, MOM.id);
+
+    expect(await removeTag(harness.deps(), MARIA, MOM.id)).toEqual(first);
+    expect(await harness.globalVersion()).toBe(9);
+  });
+
+  it("tech§6.1 an unknown tag is not found", async () => {
+    expect(await removeTag(harness.deps(), MARIA, KID.id)).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+  });
+
+  it("tech§6.1 another account's tag is not found and its tag and plans stay unchanged", async () => {
+    await family(OMAR);
+
+    expect(await removeTag(harness.deps(), MARIA, MOM.id)).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+    expect((await harness.deps().db.tags.find(MOM.id))?.value.deletedAt).toBeUndefined();
+    expect(await storedEvent(ONLY_MOM.id)).toMatchObject({ tagIds: [MOM.id], version: 3 });
+    expect(await harness.globalVersion()).toBe(6);
   });
 });

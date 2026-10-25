@@ -123,6 +123,7 @@ export type Repos = {
     save(accountId: string, event: StoredEvent): Promise<void>;
     changedSince(accountId: string, version: number): Promise<StoredEvent[]>;
     liveStarting(after: string, until: string): Promise<Owned<StoredEvent>[]>;
+    liveWithTag(accountId: string, tagId: string): Promise<StoredEvent[]>;
   };
   notes: {
     find(id: string): Promise<Owned<StoredNote> | undefined>;
@@ -134,6 +135,7 @@ export type Repos = {
     find(id: string): Promise<Owned<StoredTag> | undefined>;
     save(accountId: string, tag: StoredTag): Promise<void>;
     hasAny(accountId: string): Promise<boolean>;
+    liveCount(accountId: string): Promise<number>;
     liveIds(accountId: string, ids: readonly string[]): Promise<Set<string>>;
     liveByName(accountId: string, name: string): Promise<StoredTag | undefined>;
     changedSince(accountId: string, version: number): Promise<StoredTag[]>;
