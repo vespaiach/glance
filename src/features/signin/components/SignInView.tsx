@@ -38,6 +38,7 @@ import { SignInHero } from "./SignInHero";
 import {
   Actions,
   Email,
+  GuideLine,
   Heading,
   LockFooter,
   StatusTile,
@@ -326,6 +327,7 @@ function FormStep({ state, signedOut, online, scan, onAction }: StepProps) {
       )}
       <LockFooter />
       <TermsLine />
+      <GuideLine />
     </>
   );
 }

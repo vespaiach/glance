@@ -697,6 +697,7 @@ export const copy = {
         cancel: "Cancel",
         failed: "Couldn’t sign out. Try again.",
       },
+      guide: "Guide",
       terms: "Terms of Service",
       deleteAccount: {
         title: "Delete account",
@@ -1000,6 +1001,7 @@ export const copy = {
     },
     lock: "Only your family can see its calendar, notes and photos.",
     terms: { before: "By continuing, you agree to the ", link: "Terms of Service", after: "." },
+    guide: { before: "New to Glance? Read the ", link: "guide", after: "." },
     form: {
       eyebrow: "One account per family",
       title: "Sign in or get started",
@@ -1311,6 +1313,388 @@ export const copy = {
     ],
     footer: "Glance · takeaglance.app",
     license: "MIT License",
+  },
+  guide: {
+    title: "Guide",
+    wordmark: "Glance",
+    nav: [
+      { href: "#start", label: "Get started" },
+      { href: "#today", label: "Using Glance" },
+      { href: "#sizes", label: "Screen sizes" },
+      { href: "#faq", label: "FAQ" },
+    ],
+    hero: {
+      eyebrow: "Guide for families",
+      title: "Your family’s day, at a glance.",
+      body: "Glance turns a screen at home into one shared board for your family’s calendar, weather, notes and photos. This guide covers setup and the everyday basics.",
+      chips: { calendar: "Calendar", weather: "Weather", notes: "Notes", photos: "Photos" },
+      preview: {
+        date: "Fri, Oct 9",
+        time: "10:41",
+        temp: "64°",
+        sky: "Rain from 4 PM",
+        nowEyebrow: "Happening now",
+        nowTitle: "Piano lesson",
+        left: "34 min left",
+        schedule: "Today · 4 of 5 left",
+        events: [
+          "8:00 School drop-off",
+          "10:30 Piano lesson",
+          "12:30 Lunch with Grandma",
+          "4:30 Soccer practice",
+          "6:30 Family dinner",
+        ],
+        notes: "Notes · 3",
+        note: "Soccer cleats are by the door",
+        photo: "Today’s photo",
+      },
+    },
+    sections: [
+      {
+        id: "start",
+        eyebrow: "01 · Sign in and account",
+        title: "Get started with one email",
+        intro:
+          "One family, one account, one email address. Every screen signed in with it shows the same calendar, notes and photos. There are no passwords.",
+        steps: [
+          [
+            "Open Glance on the screen, enter your family’s email and tap ",
+            { strong: "Send code" },
+            ".",
+          ],
+          ["Type the 6-digit code from the email. It works once, for 10 minutes."],
+          [
+            "New to Glance? Add your first name, then the city or ZIP where the screen is. That sets the weather and the clock’s time zone.",
+          ],
+        ],
+      },
+      {
+        id: "today",
+        eyebrow: "02 · Today",
+        title: "The whole day on one screen",
+        steps: [
+          [
+            { strong: "Now panel." },
+            " The clock, today’s weather and what’s happening now or up next. Tap the weather or the event for more.",
+          ],
+          [
+            { strong: "Schedule." },
+            " Today’s plans in time order. Tap a plan for details, or a dashed free slot to add an event then. Tap the faces at the top to show one person’s plans. Plans that have ended fold away; tap ",
+            { strong: "Earlier" },
+            " to see them.",
+          ],
+          [
+            { strong: "Notes and today’s photo." },
+            " The newest family notes and one photo. Tap either to open it.",
+          ],
+        ],
+        tip: [
+          "The menu hides after 15 seconds without a touch. Tap the white tab on the left edge to bring it back. After a few idle minutes, the screen returns to Today on its own.",
+        ],
+      },
+      {
+        id: "calendar",
+        eyebrow: "03 · Calendar",
+        title: "Add an event",
+        steps: [
+          [
+            "Open ",
+            { strong: "Calendar" },
+            " from the menu and pick a day in the week strip. The arrows move a week at a time.",
+          ],
+          [
+            "Tap ",
+            { strong: "Add event" },
+            ", or tap a dashed free slot on the timeline to start at that time.",
+          ],
+          [
+            "The event reads as one sentence. Tap a word to change it: what, which day, start and end, who and where. ",
+            { strong: "Next" },
+            " moves to the next part.",
+          ],
+          ["Tap ", { strong: "Save event" }, ". Each person’s plans show in their own color."],
+        ],
+        tip: [
+          "Tap any event to see its details, the forecast for that day and what else is on at that time. Tap ",
+          { strong: "Edit" },
+          " to change or delete it. Events that have ended can’t be changed.",
+        ],
+      },
+      {
+        id: "weather",
+        eyebrow: "04 · Weather and location",
+        title: "Set where the screen is",
+        intro:
+          "Weather shows conditions now, the next 8 hours and a 7-day forecast. One place per family sets both the weather and the clock’s time zone.",
+        steps: [
+          ["Go to ", { strong: "Settings › Location" }, "."],
+          [
+            "Type a city or ZIP code, or tap ",
+            { strong: "Use my location" },
+            " and choose Allow. US places only for now.",
+          ],
+          ["If several places match, tap the right one. It saves straight away."],
+        ],
+      },
+      {
+        id: "notes",
+        eyebrow: "05 · Notes",
+        title: "Leave a note for the family",
+        steps: [
+          ["Tap ", { strong: "Add note" }, " on Today or on the Notes board."],
+          ["Write your message, up to 280 characters. Add your name under From if you like."],
+          ["Tap ", { strong: "Post note" }, ". It shows on every screen, newest first."],
+        ],
+        after: "Tap a note to read it in full. From there, Edit changes it and Delete removes it.",
+        tip: [
+          "Notes clear themselves after 7 days. Change this, or turn it off, in Settings › Remove notes after.",
+        ],
+      },
+      {
+        id: "photos",
+        eyebrow: "06 · Photos",
+        title: "Share photos on the screen",
+        steps: [
+          [
+            "Add photos from a phone or tablet signed in to Glance: open ",
+            { strong: "Photos" },
+            " and tap Upload.",
+          ],
+          [
+            "Photos play as a slideshow. Use Play/Pause and the arrows, or tap a thumbnail to show it.",
+          ],
+          [
+            "Tap ",
+            { strong: "Set as background" },
+            " to put a photo behind every screen, or ",
+            { strong: "Edit details" },
+            " to fix its name, date or place.",
+          ],
+        ],
+        after:
+          "Each family has 5 GB of photo space, shared by every screen. Settings › Account shows what’s left.",
+      },
+      {
+        id: "settings",
+        eyebrow: "07 · Settings and seasons",
+        title: "Make it yours",
+        intro: "Changes apply as soon as you tap. There is no Save button.",
+        steps: [
+          [
+            { strong: "Season" },
+            " sets the screen’s colors. Auto follows the month: spring from March, summer from June, fall from September, winter from December.",
+          ],
+          [{ strong: "Background" }, " can be the season color, one photo or a slideshow."],
+          [{ strong: "Clock and temperature:" }, " 12- or 24-hour, Fahrenheit or Celsius."],
+        ],
+      },
+      {
+        id: "ambient",
+        eyebrow: "08 · Ambient",
+        title: "A calm screen for quiet hours",
+        intro:
+          "Ambient dims the screen to a large clock, the weather and the next event. Good for evenings and overnight.",
+        steps: [
+          [
+            "In ",
+            { strong: "Settings › Ambient screen" },
+            ", set the hours, for example 6:00 PM – 7:30 AM, and the brightness.",
+          ],
+          ["To start it any time, tap the moon in the menu."],
+          ["Tap anywhere on the screen to wake it."],
+        ],
+      },
+      {
+        id: "notifications",
+        eyebrow: "09 · Reminders",
+        title: "Never miss the next thing",
+        steps: [
+          [
+            "Choose when reminders come in ",
+            { strong: "Settings › Notifications" },
+            ": 15 or 30 minutes before, or off.",
+          ],
+          [
+            "A black strip appears at the top of every screen for 30 seconds. Tap it to see the event.",
+          ],
+          ["Phones and tablets with Glance closed get a push notification instead."],
+          ["Turn the chime on or off in Settings. It never plays during quiet hours."],
+        ],
+      },
+      {
+        id: "phone",
+        eyebrow: "10 · Phone and tablet",
+        title: "Take Glance with you",
+        intro:
+          "Glance runs on phones and tablets too, with the same calendar, notes and photos. Add it to your home screen, then sign in one of two ways.",
+        steps: [
+          [
+            "On the big screen, open ",
+            { strong: "Settings › Account › Sign in another device" },
+            ". A code appears.",
+          ],
+          [
+            "On the phone, tap ",
+            { strong: "Scan code from another screen" },
+            " and point the camera at it. The code lasts 5 minutes.",
+          ],
+          ["Or sign in with your family’s email and a code, as on the big screen."],
+        ],
+      },
+    ],
+    art: {
+      code: {
+        eyebrow: "Sign in",
+        title: "Enter the code",
+        body: "We sent a 6-digit code to maria@example.com. It works once, for 10 minutes.",
+        digits: ["4", "8", "2", "9", "", ""],
+        submit: "Sign in",
+      },
+      week: {
+        range: "Oct 4 – 10",
+        month: "October",
+        days: [
+          { weekday: "Sun", day: "4", events: false },
+          { weekday: "Mon", day: "5", events: true },
+          { weekday: "Tue", day: "6", events: true },
+          { weekday: "Wed", day: "7", events: false },
+          { weekday: "Thu", day: "8", events: true },
+          { weekday: "Fri", day: "9", events: true },
+          { weekday: "Sat", day: "10", events: true },
+        ],
+        today: "9",
+      },
+      sentence: {
+        title: "New event",
+        save: "Save event",
+        what: "Soccer practice",
+        day: "Fri, Oct 9",
+        start: "4:30 PM",
+        end: "6:00 PM",
+        who: "Mia",
+        where: "a place",
+        joins: { on: " on ", from: " from ", to: " to ", for: " for ", at: " at ", end: "." },
+      },
+      who: {
+        eyebrow: "Who",
+        next: "Next: Where",
+        everyone: "Everyone",
+        people: ["Mia", "Leo", "Maria"],
+      },
+      weather: {
+        eyebrow: "Portland, OR · Now",
+        temp: "64°",
+        summary: "Partly cloudy · High 68° · Low 51° · Rain moving in after 4 PM",
+        days: [
+          { day: "Fri", high: "68°", low: "51°" },
+          { day: "Sat", high: "61°", low: "49°" },
+          { day: "Sun", high: "59°", low: "47°" },
+          { day: "Mon", high: "62°", low: "48°" },
+          { day: "Tue", high: "66°", low: "50°" },
+          { day: "Wed", high: "69°", low: "52°" },
+          { day: "Thu", high: "65°", low: "50°" },
+        ],
+      },
+      notes: [
+        { text: "Soccer cleats are by the door", author: "Mom", time: "8:12 AM" },
+        { text: "We’re out of milk", author: "Leo", time: "7:50 AM" },
+        { text: "Library books due Saturday", author: "Dad", time: "Thu 6:40 PM" },
+        { text: "Can we have tacos Friday?", author: "Mia", time: "Thu 4:05 PM" },
+      ],
+      photo: {
+        title: "Pumpkin patch",
+        date: "Oct 4",
+        background: "Set as background",
+      },
+      season: {
+        eyebrow: (sub: string) => `Season · ${sub}`,
+        following: (season: string) => `Follows the month · now ${season}`,
+        auto: "Auto",
+      },
+      ambient: {
+        place: "Portland, OR",
+        time: "9:48",
+        temp: "52°",
+        next: "Next · Tomorrow · 8:00 AM",
+        title: "School drop-off",
+        wake: "Tap anywhere to wake",
+      },
+      reminder: {
+        eyebrow: "In 15 min · 4:30 PM · Mia",
+        title: "Soccer practice",
+        action: "Details",
+      },
+      phone: {
+        scan: "Scan to sign in",
+        expires: "Code expires in 4:52",
+        point: "Point at the code on your Glance screen",
+        cancel: "Cancel",
+      },
+    },
+    sizes: {
+      eyebrow: "Screen sizes",
+      title: "One app, any screen",
+      body: "Glance rearranges itself to fit the width of the screen. Nothing to set up.",
+      items: [
+        {
+          id: "large",
+          title: "Large",
+          range: "Wider than 1200 px",
+          body: "Wall and kiosk displays, TVs and laptops. Today fits in three columns with no scrolling.",
+        },
+        {
+          id: "normal",
+          title: "Normal",
+          range: "769 – 1200 px",
+          body: "Tablets and small laptops. Two columns: the Now panel and schedule first, then notes and the photo.",
+        },
+        {
+          id: "small",
+          title: "Small",
+          range: "768 px and below",
+          body: "Phones. One scrolling column, and the menu opens from the edge.",
+        },
+      ],
+    },
+    faq: {
+      eyebrow: "FAQ",
+      title: "Questions",
+      items: [
+        {
+          q: "Does everyone need their own account?",
+          a: "No. Glance uses one account per family, tied to one email address. Everyone shares the same calendar, notes and photos, and anyone can sign a new screen in with that email.",
+        },
+        {
+          q: "Where did the menu go?",
+          a: "It hides after 15 seconds without a touch so the screen stays clear. Tap the white tab on the left edge to bring it back. To keep it on screen, turn off Settings › Hide sidebar when idle.",
+        },
+        {
+          q: "How do I change or delete an event?",
+          a: "Tap the event to open its details, then tap Edit, or tap the word you want to change. Delete is on the Edit page: tap it once, then tap Delete event to confirm. Events that have ended can’t be changed.",
+        },
+        {
+          q: "What happens if the internet drops?",
+          a: "The screen keeps showing what it already has. Events and notes you add are saved on the screen as “Waiting to post” and sent once it reconnects.",
+        },
+        {
+          q: "How do I sign a screen out?",
+          a: "Go to Settings › Account › Sign out. You can sign out this screen only, or every phone, tablet and screen on the account. Calendars, notes and photos stay saved.",
+        },
+        {
+          q: "Why is the clock in the wrong time zone?",
+          a: "The clock follows the place set in Settings › Location, not the device’s own clock. Change the location and every time on the screen updates.",
+        },
+        {
+          q: "How much photo space do we have?",
+          a: "5 GB per family, shared by every screen. Settings › Account shows how much is left. Delete photos in Photos to make room.",
+        },
+        {
+          q: "Why does the screen go back to Today?",
+          a: "After a few minutes without a touch, Glance returns to Today so the day is always showing. Set the time, from 1 to 15 minutes, or turn it off in Settings › Back to Today after.",
+        },
+      ],
+    },
+    footer: { wordmark: "Glance", terms: "Terms of Service" },
   },
 } as const;
 

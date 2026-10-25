@@ -82,6 +82,17 @@ test("SIGNIN-19 under the lock footer the Terms of Service link opens /terms in 
   expect(link.getAttribute("rel")).toContain("noopener");
 });
 
+test("SIGNIN-19 under the Terms line the guide link opens /guide in a new tab", () => {
+  renderView({ step: "form", email: "" });
+
+  const link = screen.getByRole("link", { name: "guide" });
+
+  expect(link.parentElement?.textContent).toBe("New to Glance? Read the guide.");
+  expect(link).toHaveAttribute("href", "/guide");
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link.getAttribute("rel")).toContain("noopener");
+});
+
 test("SIGNIN-01 on small the hero shows the short date and no preview", () => {
   renderView({ step: "form", email: "" }, { breakpoint: "small" });
 

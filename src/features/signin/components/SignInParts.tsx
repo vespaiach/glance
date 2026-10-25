@@ -217,3 +217,15 @@ export function TermsLine() {
     </div>
   );
 }
+
+export function GuideLine() {
+  return (
+    <div {...stylex.props(styles.terms)}>
+      {copy.signIn.guide.before}
+      <a href="/guide" target="_blank" rel="noopener" {...stylex.props(styles.termsLink)}>
+        {copy.signIn.guide.link}
+      </a>
+      {copy.signIn.guide.after}
+    </div>
+  );
+}

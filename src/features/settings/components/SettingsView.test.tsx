@@ -509,6 +509,19 @@ test("SET-15 the account card ends with a Terms of Service link that opens /term
   expect(terms?.getAttribute("rel")).toContain("noopener");
 });
 
+test("SET-15 a Guide row above Terms of Service opens /guide in a new tab", () => {
+  renderView();
+
+  const links = within(screen.getByRole("region", { name: "Account" })).getAllByRole("link");
+
+  const guide = links.at(-2);
+
+  expect(guide).toHaveAccessibleName("Guide");
+  expect(guide).toHaveAttribute("href", "/guide");
+  expect(guide).toHaveAttribute("target", "_blank");
+  expect(guide?.getAttribute("rel")).toContain("noopener");
+});
+
 test("SET-08 with no name yet the card falls back to the email", () => {
   renderView({ account: { name: null, email: "maria@example.com" } });
 
