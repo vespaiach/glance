@@ -42,6 +42,7 @@ export const colors = stylex.defineVars({
   onInverseSoft: "rgba(255,255,255,.16)",
   textPrimary: black,
   textInverse: white,
+  textPlaceholder: "#6b6b6b",
   surfaceCanvas: white,
   surfaceInverse: black,
   surfaceSoft: surfaceSoftBase,
