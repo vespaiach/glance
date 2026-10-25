@@ -354,7 +354,7 @@ function WeatherGroup() {
         {...WEATHER}
         condition={condition}
         labels={copy.weather.range}
-        compact
+        grid
         xstyle={styles.small}
       />
       <div {...stylex.props(styles.forecast)}>

@@ -7,7 +7,7 @@ import { displayTemp, displayWind } from "@/domain/temperature";
 import { type Clock, clockAt, formatHour, formatWeekday, minutesOfDay } from "@/domain/time";
 import { rainStart } from "@/domain/weather";
 import { dateKey, parseDateKey } from "@/domain/zone";
-import { colors, radii, space } from "@/theme/tokens.stylex";
+import { colors, radii, sizes, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Banner } from "@/ui/Banner";
 import { ColorBlock } from "@/ui/ColorBlock";
@@ -105,6 +105,17 @@ const styles = stylex.create({
     paddingBlock: space.md,
     paddingInline: space.xxs,
   },
+  attribution: {
+    alignSelf: "center",
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: sizes.touchMin,
+    fontFamily: type.fontMono,
+    fontSize: 12,
+    color: colors.textPrimary,
+    textDecorationLine: "underline",
+    textUnderlineOffset: 3,
+  },
 });
 
 type NoticeProps = { weather: Weather; clock: Clock; tz: string; stale: boolean };
@@ -152,7 +163,7 @@ export function WeatherForecast({
         feelsLike={temp(current.feelsLike)}
         details={details(current, unit, clock, tz)}
         labels={copy.weather.range}
-        compact={breakpoint === "small"}
+        grid
         xstyle={styles.now}
       />
       <div {...stylex.props(styles.panel)}>
@@ -259,6 +270,14 @@ function Daily({ daily, unit, today, xstyle }: DailyProps) {
           ))}
         </ul>
       </ColorBlock>
+      <a
+        href={copy.weather.attribution.href}
+        target="_blank"
+        rel="noopener"
+        {...stylex.props(styles.attribution)}
+      >
+        {copy.weather.attribution.text}
+      </a>
     </div>
   );
 }

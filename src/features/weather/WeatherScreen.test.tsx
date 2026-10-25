@@ -107,6 +107,26 @@ test("WX-01 with a location and a saved forecast the view shows it", async () =>
   expect(screen.getByRole("list", { name: "7-day forecast" })).toBeInTheDocument();
 });
 
+test("WX-10 the forecast credits Open-Meteo with a link that opens in a new tab", async () => {
+  await locate();
+  await store.db.weather.put({ ...WEATHER, accountId: store.accountId });
+
+  renderWeather();
+
+  const link = await screen.findByRole("link", { name: "Weather data by Open-Meteo.com" });
+
+  expect(link).toHaveAttribute("href", "https://open-meteo.com/");
+  expect(link).toHaveAttribute("target", "_blank");
+  expect(link.getAttribute("rel")).toContain("noopener");
+});
+
+test("WX-10 the setup state shows no Open-Meteo credit", async () => {
+  renderWeather();
+
+  expect(await screen.findByText("Where is this screen?")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Weather data by Open-Meteo.com" })).toBeNull();
+});
+
 test("WX-05 with a location and no forecast yet the view is loading", async () => {
   await locate();
 
@@ -129,6 +149,19 @@ test("WX-05 a failed fetch with no forecast shows the retry countdown", async ()
     screen.getByText("The forecast service isn’t responding. Trying again in 2 min."),
   ).toBeInTheDocument();
   expect(screen.getByText("Portland, Oregon")).toBeInTheDocument();
+});
+
+test("WX-10 the failed state shows no Open-Meteo credit", async () => {
+  await locate();
+  await putSyncStatus(store, {
+    online: true,
+    weather: { state: "failed", retryAt: new Date(2026, 9, 9, 10, 42).toISOString() },
+  });
+
+  renderWeather();
+
+  expect(await screen.findByText("Weather unavailable")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Weather data by Open-Meteo.com" })).toBeNull();
 });
 
 test("WX-05 Try again refreshes the weather now", async () => {
