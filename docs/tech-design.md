@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.96 |
+| Status | v2.97 |
 | Date | 2026-10-25 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.95) · [`design/handoff/`](design/handoff/README.md) (v17) |
 
@@ -49,6 +49,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D33 | QR scanning | **`jsqr`** (1.4.0) decodes Scan to sign in (SIGNIN-22), since iOS Safari has no `BarcodeDetector`: pure JS with no WASM or CDN fetch, so it works in the offline PWA. The scanner draws the frame's square of the rear-camera `getUserMedia` video to a canvas about every 150 ms and passes its `ImageData` to `jsQR` (`inversionAttempts: "dontInvert"`), so only codes inside the frame are read. `domain/qrSignIn.ts` `linkToken(text, origin)` accepts only this origin's `/api/auth/verify?t=` links (else `wrong`). The token goes to `POST /api/auth/verify { t }`, which shares `verifyLink` with the GET and answers `signed-in` like the code verify, or 400 `link-stale`. The flow is a reducer in `features/signin/scan.ts` (`ask \| asking \| blocked \| nocam \| scanning \| wrong \| found \| expired \| closed`; `asking` keeps the sheet it came from while the phone prompts, or shows the scanner when access was already granted); `useScan` reads the access with `navigator.permissions.query({ name: "camera" })` (no `getUserMedia` = `nocam`), owns the rear-camera stream (live only in `asking`, `scanning`, `wrong`), clears `wrong` after 3 s, sends `found` to `Transport.auth.verifyLink(t)` (400 → `expired`, other failures → `closed`) and closes on `offline` and `visibilitychange` to hidden. A scanner sign-in reaches the sign-in reducer as `scanned`, which leaves the form for Signed in. `useQrReader` crops the frame with `frameCrop` (object-fit cover). "Installed app" = `shell/installed.ts` `isInstalledApp()`: `matchMedia("(display-mode: fullscreen)")` or `"(display-mode: standalone)"`, or `navigator.standalone` on iOS. The camera sheets are `ui/Dialog` with `bottom`. |
 | D34 | Terms page | `/terms` is a static page outside `(display)`, so it needs no session or providers: `app/terms/page.tsx` renders `features/terms/TermsScreen`, every word in `copy.terms`. Not in `OFFLINE_PAGES`. |
 | D35 | Guide page | `/guide` is built like `/terms` (D34): a static page outside `(display)` with no session or providers, `app/guide/page.tsx` rendering `features/guide/GuideScreen`, every word in `copy.guide`. The page passes `season={seasonFor("auto", new Date(), "UTC")}` and is regenerated daily (`revalidate = 86400`), so its colors follow the month without a client clock; `GuideScreen` applies that season's theme. The illustrations are decorative (`aria-hidden`) in `features/guide/components/GuideArt`; the FAQ (`GuideFaq`) is the only client component, with the open questions as local state (the first open). Not in `OFFLINE_PAGES`. The sign-in Guide line (`GuideLine`) and the Settings › Account Guide row link to it with `target="_blank"` and `rel="noopener"`. |
+| D36 | Analytics | The root layout loads the Google tag (`gtag.js`, `next/script` `afterInteractive`) on every page when `NEXT_PUBLIC_GOOGLE_TAG_ID` is set at build time; unset (dev, tests) means no tag. Only Google's automatic page views are collected; no custom events, and no app content is ever passed to `gtag`. Disclosed in the Terms (TERMS-01, §"How your data is stored"). |
 
 ---
 

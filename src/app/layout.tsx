@@ -1,5 +1,6 @@
 import * as stylex from "@stylexjs/stylex";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import type { ReactNode } from "react";
 import { copy } from "@/copy";
 import { ServiceWorker } from "@/shell/ServiceWorker";
@@ -21,6 +22,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#000000" };
 
+const GOOGLE_TAG_ID = process.env.NEXT_PUBLIC_GOOGLE_TAG_ID;
+
 const styles = stylex.create({
   body: {
     margin: 0,
@@ -36,7 +39,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body {...stylex.props(styles.body)}>
         {children}
         <ServiceWorker />
+        {GOOGLE_TAG_ID && <GoogleTag id={GOOGLE_TAG_ID} />}
       </body>
     </html>
+  );
+}
+
+function GoogleTag({ id }: { id: string }) {
+  return (
+    <>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${id}`}
+        strategy="afterInteractive"
+      />
+      <Script id="google-tag" strategy="afterInteractive">
+        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","${id}");`}
+      </Script>
+    </>
   );
 }
