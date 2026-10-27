@@ -8,11 +8,13 @@ export type RibbonSegment = { start: number; width: number };
 
 export type RibbonLabel = "start" | "center" | "end";
 
+export type RibbonSunset = { at: number; below: boolean };
+
 export type DayRibbon = {
   elapsed: number;
   label: RibbonLabel;
   left: number;
-  sunset?: number;
+  sunset?: RibbonSunset;
   ended: RibbonSegment[];
 };
 
@@ -22,9 +24,19 @@ export const RIBBON_END = 21 * 60;
 
 const MIN_SEGMENT = 20;
 
-const SUNSET_CLEARANCE = 120;
+const SUNSET_CLEARANCE = 15;
 
 const LABEL_EDGE = 20;
+
+const LABEL_WIDTH = 42;
+
+const LABEL_MARGIN = 4;
+
+const LABEL_SPAN: Record<RibbonLabel, [number, number]> = {
+  start: [0, LABEL_WIDTH],
+  center: [-LABEL_WIDTH / 2, LABEL_WIDTH / 2],
+  end: [-LABEL_WIDTH, 0],
+};
 
 const SPAN = RIBBON_END - RIBBON_START;
 
@@ -42,11 +54,13 @@ export function dayRibbon(
 
   const elapsed = percent(minutes);
 
+  const label = labelAlign(elapsed);
+
   return {
     elapsed,
-    label: labelAlign(elapsed),
+    label,
     left: Math.max(0, RIBBON_END - minutes),
-    ...sunsetTick(sunset, minutes, tz),
+    ...sunsetTick(sunset, minutes, tz, label),
     ended,
   };
 }
@@ -57,7 +71,12 @@ function labelAlign(elapsed: number): RibbonLabel {
   return elapsed > 100 - LABEL_EDGE ? "end" : "center";
 }
 
-function sunsetTick(sunset: Date | undefined, now: number, tz: string): { sunset?: number } {
+function sunsetTick(
+  sunset: Date | undefined,
+  now: number,
+  tz: string,
+  label: RibbonLabel,
+): { sunset?: RibbonSunset } {
   if (sunset === undefined) return {};
 
   const minutes = minutesOfDay(sunset, tz);
@@ -66,7 +85,18 @@ function sunsetTick(sunset: Date | undefined, now: number, tz: string): { sunset
 
   if (Math.abs(minutes - now) <= SUNSET_CLEARANCE) return {};
 
-  return { sunset: percent(minutes) };
+  const at = percent(minutes);
+
+  const elapsed = percent(now);
+
+  const [from, to] = LABEL_SPAN[label];
+
+  return {
+    sunset: {
+      at,
+      below: at > elapsed + from - LABEL_MARGIN && at < elapsed + to + LABEL_MARGIN,
+    },
+  };
 }
 
 function endedSegment(
