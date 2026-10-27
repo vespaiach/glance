@@ -1,10 +1,13 @@
 import "server-only";
+import { logError } from "../log";
 import type { ServiceDeps } from "../services/deps";
 import {
   objectKey,
   originalKey,
   PHOTO_VARIANTS,
+  photoIdOf,
   photoKeys,
+  type RemoveFailure,
   removeAccountFiles,
 } from "../services/photos";
 import type { PhotoStore } from "../storage/store";
@@ -14,18 +17,19 @@ type PhotoJobDeps = Pick<ServiceDeps, "db"> & { store: PhotoStore };
 export async function removeDeletedPhotoFiles({ db, store }: PhotoJobDeps): Promise<void> {
   const filePaths = await db.photos.deletedPaths();
 
-  const failures: unknown[] = [];
+  const failures: RemoveFailure[] = [];
 
   for (const filePath of filePaths) {
     await store
       .remove(photoKeys(filePath))
       .then(() => db.photos.filesRemoved(filePath))
-      .catch((error) => failures.push(error));
+      .catch((error) => failures.push({ photoId: photoIdOf(filePath), error }));
   }
 
   failures.push(...(await removeAccountFiles({ db, store }, await db.photos.cleanupPaths())));
 
-  if (failures.length > 0) throw failures[0];
+  for (const { photoId, error } of failures)
+    logError("job", "cleanup-failed", error, { job: "removeDeletedPhotoFiles", photoId });
 }
 
 export async function removePhotoOriginals({ db, store }: PhotoJobDeps): Promise<void> {

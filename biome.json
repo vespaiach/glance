@@ -533,6 +533,14 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/server/**", "src/app/api/**"],
+      "linter": { "rules": { "suspicious": { "noConsole": "error" } } }
+    },
+    {
+      "includes": ["src/server/log.ts"],
+      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     }
   ]
 }

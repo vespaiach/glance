@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v2.98 |
+| Status | v2.99 |
 | Date | 2026-10-26 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.97) · [`design/handoff/`](design/handoff/README.md) (v17) |
 
@@ -130,8 +130,8 @@ src/
   features/<view>/                # XScreen.tsx (container), components/, reducers, layout.ts
   features/gallery/               # /dev/gallery
   fixtures/   # shared test data
-  server/     # 'server-only': db/ (Database port; postgres/ adapter, on `pg` or PGlite), auth/, services/, weather/, mail/, storage/, jobs/, http.ts, env.ts, bus.ts, sse.ts, boot.ts
-instrumentation.ts                # register() → bootServer() on the nodejs runtime
+  server/     # 'server-only': db/ (Database port; postgres/ adapter, on `pg` or PGlite), auth/, services/, weather/, mail/, storage/, jobs/, http.ts, env.ts, bus.ts, sse.ts, boot.ts, log.ts (logError, §6.6)
+instrumentation.ts                # register() → bootServer() on the nodejs runtime; onRequestError → logError (§6.6)
 db-migrations/NNN_*.sql
 ```
 
@@ -374,7 +374,7 @@ type PhotoStore = {
 - **Tests**: one contract suite (`contract.ts`: put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch` (`fakeS3.ts`, an in-memory bucket); the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
-`bootServer()` (from `instrumentation.ts`) prepares the database (`prepareDatabase()`: PostgreSQL migrates), exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day; a second `unref` timer runs the reminder job every minute. A failing job is logged with its name (`job/job-failed`, §6.6) and doesn't stop the others: `createJobTick({ hourly, daily: [signIns, photos] })` guards each one. Jobs run across accounts.
+`bootServer()` (from `instrumentation.ts`) prepares the database (`prepareDatabase()`: PostgreSQL migrates), exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day; a second `unref` timer runs the reminder job every minute. A failing job is logged with its name (`job/job-failed`, §6.6) and doesn't stop the others: `createJobTick({ hourly: { expireNotes }, daily: { cleanupSignIns, removeDeletedPhotoFiles, cleanupReminderSends } })` guards each one, and each job's name is its key there (the production server bundle is minified, so function names aren't kept). The start-up photo jobs (`removePhotoOriginals`, `backfillPhotoBytes`) and the minute's `sendReminderPushes` log failures the same way. Jobs run across accounts.
 - **Note expiry** (hourly): tombstones notes older than the account's `noteExpiry.days` while it is on, using the screens' `noteExpired` rule, then publishes each account's version on the bus.
 - **Code and link cleanup** (daily, `cleanupSignIns`): deletes `sign_in_codes` and `magic_links` expired more than 24 h ago, and `revoked_sessions` older than 400 days (the cookie's life).
 - **Deleted photo files** (daily): removes the stored objects of tombstoned photos not yet marked `files_removed`, and marks each one removed, then the files listed in `photo_file_cleanup` (deleted accounts, D31), deleting each row once removed; one photo's failure doesn't stop the rest and is logged on its own (`job/cleanup-failed` with the `photoId`, §6.6).
@@ -411,7 +411,7 @@ Bad config names the variables (not their values) and exits. `next build` needs 
 ### 6.6 Error logging
 Every error, on the server or on a screen, is **one JSON line on stderr**, written only by `logError(source, event, error, context?)` in `server/log.ts`; screens send theirs to the server (**Client errors** below). It is the only file in `src/server` and `src/app/api` that may use `console` (Biome `noConsole`, with an override for `log.ts`). No log service: the server runs under systemd, so the journal stores, stamps and rotates the lines.
 
-**Where errors are logged.** Once, at the step that turns a thrown error or a bad answer into a `Result` error code (`getJson`, `mailFailed`, the push sender, the photo store calls); code that only passes the `Result` on never logs it again. Uncaught throws are logged by three catch points only: `onRequestError` in `instrumentation.ts` (Route Handlers), `runSafely` in `jobs/schedule.ts` (jobs, with the job function's `name`) and `bootServer` (start-up, then exit). The `pg.Pool` has an `error` listener (`db/pool-error`), so a dropped idle connection is logged instead of ending the process, and a failed `ROLLBACK` is logged (`db/rollback-failed`) while the original error is rethrown. Next.js also prints its own plain-text line for an uncaught route error; the `jq` recipes below skip it.
+**Where errors are logged.** Once, at the step that turns a thrown error or a bad answer into a `Result` error code (`getJson`, `mailFailed`, the push sender, the photo store calls); code that only passes the `Result` on never logs it again. Uncaught throws are logged by three catch points only: `onRequestError` in `instrumentation.ts` (every request error Next reports: Route Handlers, and server renders too), `runSafely` in `jobs/schedule.ts` (jobs, with the job's name from `createJobTick`, §6.4) and `bootServer` (start-up, then exit). The `pg.Pool` has an `error` listener (`db/pool-error`), so a dropped idle connection is logged instead of ending the process, and a failed `ROLLBACK` is logged (`db/rollback-failed`) while the original error is rethrown. `getJson` logs a throw (network, timeout, a body that isn't JSON) as `fetch-failed`, a non-2xx answer as `bad-status` with an `Error` `status {n}`, and a body that fails its schema as `bad-response` with `bad body at {paths}` (the failing dot paths, never the values, which can echo the coordinates); Open-Meteo's forecast that `toForecast` can't map (it answers the Valibot issues) and a time zone `isTimeZone` rejects (`unknown time zone {zone}`) are `bad-response` too. A photo's place lookup that throws is `weather/fetch-failed` without a `host`; one that answers `weather-failed` was already logged by `getJson`. A file `sharp` can't decode is `photos/decode-failed`; one it reads but that isn't a photo type is a quiet `not-a-photo`. A failed photo object remove is `storage/remove-failed` on delete or account deletion and `job/cleanup-failed` in the daily job, one line per photo. Next.js also prints its own plain-text line for an uncaught route error; the `jq` recipes below skip it.
 
 **Line format.** Keys in this order:
 
@@ -480,7 +480,7 @@ journalctl -u glance -o cat --since today | jq -Rr 'fromjson? | select(.source =
 
 How long the journal keeps lines is set by `SystemMaxUse=` (size) or `MaxRetentionSec=` (age) in `/etc/systemd/journald.conf`.
 
-**Tests**: `log.ts` has one suite: key order, the error fields copied and nothing else, `cause` depth, emails masked, the 500-character cut, a string error. The reporter's tests cover one report per error, the cap of 20, waiting while offline, never throwing and a non-`Error` value. `logClientError` has tests for the session's ids winning over the body, the IP limit for signed-out screens and the rate limit. A `Zone` test checks that a crashing child reports `zone-crashed` and still shows the failed state.
+**Tests**: `log.ts` has one suite: key order, the error fields copied and nothing else, `cause` depth, emails masked, the 500-character cut, a string error, a plain-object error. Server tests read the lines through `spyOnLoggedErrors()` (`server/testLog.ts`): `getJson` logs the host and status but never the coordinates, the push sender never logs the endpoint or keys, the photo cleanup job logs each failure, the pool listener logs, and a failed `ROLLBACK` is logged while the original error is rethrown. The reporter's tests cover one report per error, the cap of 20, waiting while offline, never throwing and a non-`Error` value. `logClientError` has tests for the session's ids winning over the body, the IP limit for signed-out screens and the rate limit. A `Zone` test checks that a crashing child reports `zone-crashed` and still shows the failed state.
 
 ---
 

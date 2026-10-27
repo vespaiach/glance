@@ -10,6 +10,7 @@ import { tempDirPerTest } from "../db/testDir";
 import { bytesOf } from "../storage/contract";
 import { createDiskStore } from "../storage/disk";
 import type { PhotoStore } from "../storage/store";
+import { spyOnLoggedErrors } from "../testLog";
 import type { PlaceLocator } from "../weather/provider";
 import {
   deletePhoto,
@@ -203,22 +204,27 @@ describe("uploadPhoto", () => {
     logged.mockRestore();
   });
 
-  it.each([
-    ["answers weather-failed", () => placeAt.mockResolvedValue(err("weather-failed"))],
-    ["throws", () => placeAt.mockRejectedValue(new Error("socket hang up"))],
-  ])(
-    "D22 logs a lookup that %s, leaves the place empty and still saves the photo",
-    async (_, fail) => {
-      const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-      fail();
+  it("D22 leaves the place empty when the lookup fails and still saves the photo, logging nothing more", async () => {
+    const logged = spyOnLoggedErrors();
+    placeAt.mockResolvedValue(err("weather-failed"));
 
-      const photo = await saved(await jpeg({ exif: CANNON_BEACH_GPS }));
+    const photo = await saved(await jpeg({ exif: CANNON_BEACH_GPS }));
 
-      expect(photo.sources.place).toBe("none");
-      expect(logged).toHaveBeenCalled();
-      logged.mockRestore();
-    },
-  );
+    expect(photo.sources.place).toBe("none");
+    expect(logged()).toEqual([]);
+  });
+
+  it("tech§6.6 logs a lookup that throws, leaves the place empty and still saves the photo", async () => {
+    const logged = spyOnLoggedErrors();
+    placeAt.mockRejectedValue(new Error("socket hang up"));
+
+    const photo = await saved(await jpeg({ exif: CANNON_BEACH_GPS }));
+
+    expect(photo.sources.place).toBe("none");
+    expect(logged()).toMatchObject([
+      { source: "weather", event: "fetch-failed", error: { message: "socket hang up" } },
+    ]);
+  });
 
   it("PHOTO-03 dates a photo with no EXIF date or file date by the upload day in the account's time zone", async () => {
     harness.advance(12 * 60 * 60 * 1000);
@@ -316,10 +322,15 @@ describe("uploadPhoto", () => {
     expect(answer).toEqual({ ok: false, error: "not-a-photo" });
   });
 
-  it("PHOTO-04 refuses image bytes it can't decode and keeps nothing", async () => {
+  it("PHOTO-04 refuses image bytes it can't decode, keeps nothing and logs it", async () => {
+    const logged = spyOnLoggedErrors();
+
     const answer = await uploadPhoto(deps(), MARIA, upload(Buffer.from("not really a jpeg")));
 
     expect(answer).toEqual({ ok: false, error: "not-a-photo" });
+    expect(logged()).toMatchObject([
+      { source: "photos", event: "decode-failed", accountId: MARIA, error: { name: "Error" } },
+    ]);
     expect(storedFiles()).toEqual([]);
     expect(await harness.globalVersion()).toBe(0);
   });
@@ -556,7 +567,7 @@ describe("deletePhoto", () => {
   });
 
   it("PHOTO-13 still deletes the photo when its files can't be removed, and logs it", async () => {
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const logged = spyOnLoggedErrors();
     const photo = await saved(await jpeg());
 
     const accountDir = path.join(photosDir(), MARIA);
@@ -566,9 +577,10 @@ describe("deletePhoto", () => {
 
     chmodSync(accountDir, 0o700);
     expect(answer).toMatchObject({ ok: true, value: { deletedAt: expect.any(String) } });
-    expect(logged).toHaveBeenCalled();
+    expect(logged()).toMatchObject([
+      { source: "storage", event: "remove-failed", accountId: MARIA, photoId: photo.id },
+    ]);
     expect(storedFiles()).toHaveLength(2);
-    logged.mockRestore();
   });
 
   it("tech§5 answers not-found for a photo the server never had", async () => {

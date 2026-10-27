@@ -2,6 +2,7 @@ import "server-only";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account } from "@/domain/schemas";
 import type { AccountRecord } from "../db";
+import { logError } from "../log";
 import { removeAccountFiles } from "../services/photos";
 import { addFirstTag, type SyncedTag } from "../services/tags";
 import type { PhotoStore } from "../storage/store";
@@ -44,7 +45,8 @@ export async function deleteAccount(
 
   const failures = await removeAccountFiles({ db, store }, filePaths);
 
-  for (const failure of failures) console.error(failure);
+  for (const { photoId, error } of failures)
+    logError("storage", "remove-failed", error, { accountId, photoId });
 }
 
 export async function finishSetup({ db, now }: Clocked, accountId: string): Promise<void> {

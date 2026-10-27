@@ -1,6 +1,8 @@
 import type { PGlite } from "@electric-sql/pglite";
+import pg from "pg";
+import { spyOnLoggedErrors } from "../../testLog";
 import { openPglite, pgliteSql } from "./pglite";
-import { pgTypes, type Sql } from "./sql";
+import { pgSql, pgTypes, type Sql } from "./sql";
 
 const TIMESTAMPTZ = 1184;
 
@@ -101,5 +103,46 @@ describe("pgTypes", () => {
 
   it("D7 keeps a date as its YYYY-MM-DD text", () => {
     expect(pgTypes.getTypeParser(DATE, "text")("2026-10-09")).toBe("2026-10-09");
+  });
+});
+
+describe("pgSql", () => {
+  it("tech§6.6 logs an error from an idle pool connection instead of crashing", () => {
+    const logged = spyOnLoggedErrors();
+    const pool = new pg.Pool();
+    pgSql(pool);
+
+    pool.emit("error", new Error("terminating connection due to administrator command"));
+
+    expect(logged()).toMatchObject([
+      {
+        source: "db",
+        event: "pool-error",
+        error: { message: "terminating connection due to administrator command" },
+      },
+    ]);
+  });
+
+  it("tech§6.6 logs a failed ROLLBACK and rethrows the original error", async () => {
+    const logged = spyOnLoggedErrors();
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        if (sql === "ROLLBACK") throw new Error("connection lost");
+
+        return { rows: [], rowCount: 0 };
+      }),
+      release: vi.fn(),
+    };
+    const pool = { on: vi.fn(), connect: async () => client } as unknown as pg.Pool;
+
+    const run = pgSql(pool).tx(async () => {
+      throw new Error("insert failed");
+    });
+
+    await expect(run).rejects.toThrow("insert failed");
+    expect(logged()).toMatchObject([
+      { source: "db", event: "rollback-failed", error: { message: "connection lost" } },
+    ]);
+    expect(client.release).toHaveBeenCalled();
   });
 });

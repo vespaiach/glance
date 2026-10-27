@@ -14,7 +14,7 @@ export function createSmtpMailer(transport: SmtpTransport, from: string): Mailer
 
         return ok(undefined);
       } catch (error) {
-        return mailFailed("smtp", error instanceof Error ? error.message : "unknown error");
+        return mailFailed("smtp", error);
       }
     },
   };

@@ -8,6 +8,7 @@ import { uploadPhoto } from "../services/photos";
 import { MARIA, OMAR, START, serviceHarnessPerTest } from "../services/testServices";
 import { createDiskStore } from "../storage/disk";
 import type { PhotoStore } from "../storage/store";
+import { spyOnLoggedErrors } from "../testLog";
 import { backfillPhotoBytes, removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
 
 const harness = serviceHarnessPerTest();
@@ -90,24 +91,55 @@ describe("removeDeletedPhotoFiles", () => {
     expect(remove).toHaveBeenCalledTimes(1);
   });
 
-  it("PHOTO-13 removes the other deleted photos' files when one photo's removal fails, then throws", async () => {
+  it("PHOTO-13 removes the other deleted photos' files when some removals fail, and logs each failure", async () => {
+    const logged = spyOnLoggedErrors();
     const stuck = await stored(MARIA);
+    const alsoStuck = await stored(MARIA);
     const gone = await stored(MARIA);
-    await markDeleted(MARIA, stuck);
-    await markDeleted(MARIA, gone);
+    for (const id of [stuck, alsoStuck, gone]) await markDeleted(MARIA, id);
     const disk = createDiskStore(photosDir());
     const store: PhotoStore = {
       ...disk,
       remove: async (keys) => {
-        if (keys.some((key) => key.includes(stuck))) throw new Error("EBUSY");
+        if (keys.some((key) => key.includes(stuck) || key.includes(alsoStuck)))
+          throw new Error("EBUSY");
 
         await disk.remove(keys);
       },
     };
 
-    await expect(removeDeletedPhotoFiles({ ...harness.deps(), store })).rejects.toThrow("EBUSY");
+    await removeDeletedPhotoFiles({ ...harness.deps(), store });
 
-    expect(storedFiles()).toEqual([`${stuck}.display`, `${stuck}.thumb`]);
+    expect(storedFiles()).toHaveLength(4);
+    expect(storedFiles()).not.toContain(`${gone}.display`);
+    expect(logged()).toEqual(
+      [stuck, alsoStuck].map((photoId) => ({
+        level: "error",
+        time: expect.any(String),
+        source: "job",
+        event: "cleanup-failed",
+        job: "removeDeletedPhotoFiles",
+        photoId,
+        error: expect.objectContaining({ message: "EBUSY" }),
+      })),
+    );
+  });
+
+  it("tech§6.6 logs a deleted account's file that fails to remove and keeps it listed", async () => {
+    const logged = spyOnLoggedErrors();
+    const stuck = await stored(MARIA);
+    await harness.deps().db.accounts.erase(MARIA, START.toISOString());
+    const store: PhotoStore = {
+      ...createDiskStore(photosDir()),
+      remove: async () => Promise.reject(new Error("EACCES")),
+    };
+
+    await removeDeletedPhotoFiles({ ...harness.deps(), store });
+
+    expect(await harness.deps().db.photos.cleanupPaths()).toEqual([`${MARIA}/${stuck}`]);
+    expect(logged()).toMatchObject([
+      { source: "job", event: "cleanup-failed", photoId: stuck, error: { message: "EACCES" } },
+    ]);
   });
 
   it("SET-14 removes the files a deleted account left behind and forgets each once removed", async () => {

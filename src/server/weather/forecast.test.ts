@@ -51,7 +51,7 @@ function response(overrides: Partial<ForecastResponse> = {}): ForecastResponse {
 function forecast(overrides: Partial<ForecastResponse> = {}) {
   const answer = toForecast(response(overrides), NOW);
 
-  if (!answer.ok) throw new Error(answer.error);
+  if (!answer.ok) throw new Error("bad forecast");
 
   return answer.value;
 }
@@ -120,21 +120,27 @@ describe("toForecast", () => {
   it("D13 fails on a weather code the app has no icon for", () => {
     const current = { ...response().current, weather_code: 42 };
 
-    expect(toForecast(response({ current }), NOW)).toEqual({
+    expect(toForecast(response({ current }), NOW)).toMatchObject({
       ok: false,
-      error: "weather-failed",
+      error: [
+        { path: [{ key: "current" }, { key: "condition" }] },
+        { path: [{ key: "current" }, { key: "icon" }] },
+      ],
     });
   });
 
   it("D13 fails when fewer than 8 hours are left in the forecast", () => {
     expect(
       toForecast(response({ hourly: hours(24) }), new Date("2026-10-10T00:30:00.000Z")),
-    ).toEqual({ ok: false, error: "weather-failed" });
+    ).toMatchObject({ ok: false, error: [{ path: [{ key: "hourly" }] }] });
   });
 
   it("D13 fails when fewer than 7 days come back", () => {
     const daily = { ...response().daily, time: response().daily.time.slice(0, 6) };
 
-    expect(toForecast(response({ daily }), NOW)).toEqual({ ok: false, error: "weather-failed" });
+    expect(toForecast(response({ daily }), NOW)).toMatchObject({
+      ok: false,
+      error: [{ path: [{ key: "daily" }] }],
+    });
   });
 });
