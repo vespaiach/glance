@@ -4,7 +4,7 @@
 |---|---|
 | Status | v2.98 |
 | Date | 2026-10-26 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.95) · [`design/handoff/`](design/handoff/README.md) (v17) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.97) · [`design/handoff/`](design/handoff/README.md) (v17) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -50,6 +50,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D34 | Terms page | `/terms` is a static page outside `(display)`, so it needs no session or providers: `app/terms/page.tsx` renders `features/terms/TermsScreen`, every word in `copy.terms`. Not in `OFFLINE_PAGES`. |
 | D35 | Guide page | `/guide` is built like `/terms` (D34): a static page outside `(display)` with no session or providers, `app/guide/page.tsx` rendering `features/guide/GuideScreen`, every word in `copy.guide`. The page passes `season={seasonFor("auto", new Date(), "UTC")}` and is regenerated daily (`revalidate = 86400`), so its colors follow the month without a client clock; `GuideScreen` applies that season's theme. The illustrations are decorative (`aria-hidden`) in `features/guide/components/GuideArt`; the FAQ (`GuideFaq`) is the only client component, with the open questions as local state (the first open). Not in `OFFLINE_PAGES`. The sign-in Guide line (`GuideLine`) and the Settings › Account Guide row link to it with `target="_blank"` and `rel="noopener"`. |
 | D36 | Analytics | The root layout loads the Google tag (`gtag.js`, `next/script` `afterInteractive`) on every page when `NEXT_PUBLIC_GOOGLE_TAG_ID` is set at build time; unset (dev, tests) means no tag. Only Google's automatic page views are collected; no custom events, and no app content is ever passed to `gtag`. Disclosed in the Terms (TERMS-01, §"How your data is stored"). |
+| D37 | Client error reporting | Screens never log to the console. Five catch points (a zone's boundary, `app/error.tsx` and `app/global-error.tsx`, the window's `error` and `unhandledrejection`, the sync worker's) call `reportError`, which sends the error to `POST /api/client-errors`; the server logs it as `source: "client"` in the same journal and format as its own errors (§6.6). No third-party error service and no SDK in the bundle. A crash outside a zone shows the crash screen, which reloads on its own (FAIL-04). |
 
 ---
 
@@ -113,16 +114,17 @@ src/
     guide/page.tsx                # public Guide, no providers (D35)
     signin/                       # SignedOutProviders + SignInScreen
     dev/gallery/page.dev.tsx      # next dev only (§6.5)
+    error.tsx  global-error.tsx   # CrashScreen (FAIL-04)
     sw.ts  serwist/[path]/route.ts  manifest.ts
     api/                          # route handlers (§6)
   domain/     # pure rules, Valibot schemas, Result, ids, time and zone helpers
   theme/      # StyleX tokens, seasons, themes, fonts
-  ui/         # design-system components and shared pieces (Sheet, Page, Zone, TimePicker, …); no data access
+  ui/         # design-system components and shared pieces (Sheet, Page, Zone, crashReport, TimePicker, …); no data access
   copy.ts     # every user-facing string
-  shell/      # AppShell, sidebar, providers/, SheetHost, SessionGuard, OfflineNotice, routes
+  shell/      # AppShell, sidebar, providers/, SheetHost, SessionGuard, OfflineNotice, ErrorReporter, CrashScreen, routes
   data/
     db.ts  meta.ts                # account Dexie DB, glance-meta DB
-    repos/                        # RepoProvider, repos + hooks, session boot, service worker client
+    repos/                        # RepoProvider, repos + hooks, session boot, service worker client, error reporter
     sync/                         # engine, status, worker, host, transport, httpTransport
     sw/rules.ts                   # SW rules shared with the page
   features/<view>/                # XScreen.tsx (container), components/, reducers, layout.ts
@@ -192,7 +194,7 @@ Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered
 | `WhoFilterProvider` | The person filter (CAL-05, TODAY-04) for this tab: `"all" \| Set<id>` (`"all"` = every tag, also ones added later; else the selected tags, empty = nobody), starting at `"all"` (tests pass `initial`). `useWhoFilter()` → `{ filter, setFilter }`; Today and Calendar read and change the same value, always through `liveFilter` (FAM-05), and it lives as long as the tab |
 | `IdleProvider` | Touch timer (`idleTimeout.minutes` while `idleTimeout.on`; off = never) → `/today`, or `/ambient` during ambient hours; enters and leaves Ambient on the schedule; paused while a text field is focused; applies a waiting update when idle (§4.5); `useOnIdle(listener)` runs the listener at each idle timeout, also when already on Today |
 
-Nesting: Now → Repo → Settings → TimeZone → Season → Network → SheetHost → WhoFilter → Idle → SessionGuard. `DisplayProviders` wraps the views and `/ambient`, so moving to Ambient keeps the clock, DB and sync host. `/signin` uses `SignedOutProviders` (no account DB).
+Nesting: Now → Repo → Settings → TimeZone → Season → Network → SheetHost → WhoFilter → Idle → SessionGuard. `DisplayProviders` wraps the views and `/ambient`, so moving to Ambient keeps the clock, DB and sync host. `/signin` uses `SignedOutProviders` (no account DB). `ErrorReporter` wraps every page in the root layout, outside both (§6.6).
 
 **Boot** (`useDisplayBoot`) reads `glance-meta`: no entry or `signedOut` → `/signin`; else open `glance-{accountId}`, clear a halt left by the last session (`restarted` status event) and start the worker host.
 
@@ -308,7 +310,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 ## 6. Server design
 
 ### 6.1 Route handlers
-`runtime = 'nodejs'`. Steps: Origin check (writes only) → build check (426; the sign-in routes `code`, `code/verify`, `verify`, `status`, `name` and `signout` skip it) → session (`requireDisplay`, 401) → Valibot parse (400) → service → map the `Result` to JSON. Errors are `{ error: code }` with 400/401/403/404/409/413/415/426/429/502/507. No middleware for auth. Helpers in `server/http.ts`; handlers import service indexes, never `server/db`. Body schemas live in `domain/schemas.ts`; query and header parsers (cursor, `q`, lat/lon, `v=`, upload headers) are in `server/http.ts`.
+`runtime = 'nodejs'`. Steps: Origin check (writes only) → build check (426; the sign-in routes `code`, `code/verify`, `verify`, `status`, `name` and `signout`, and `client-errors`, skip it) → session (`requireDisplay`, 401; `client-errors` doesn't need one) → Valibot parse (400) → service → map the `Result` to JSON. Errors are `{ error: code }` with 400/401/403/404/409/413/415/426/429/502/507. No middleware for auth. Helpers in `server/http.ts`; handlers import service indexes, never `server/db`. Body schemas live in `domain/schemas.ts`; query and header parsers (cursor, `q`, lat/lon, `v=`, upload headers) are in `server/http.ts`.
 
 | Route | Notes |
 |---|---|
@@ -323,6 +325,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 | `GET /api/push/key`, `PUT/DELETE /api/push/subscription` | VAPID public key (404 when push is off); this display's subscription `{ endpoint, keys: { p256dh, auth } }` (D30) |
 | `DELETE /api/account` | Deletes the account and revokes every device (D31); 204 |
 | `/api/auth/*` | §6.2 |
+| `POST /api/client-errors` | A screen's error report, logged as `client` (§6.6); 204, also when rate-limited |
 
 Every accepted write is announced on the sync bus. A tag `PUT` with a name already used by a live tag of the account (ignoring case), or changing an existing tag, → 409. Event tag ids are filtered as D24. Settings (`AccountSettingsSchema`): `idleTimeout { on, minutes 1–15 }`, `noteExpiry { on, days 1–30 }`, `hideSidebarWhenIdle`, `notifyLead` (D29); migration `010_settings_values.sql` rewrites each row (60/180/300 → on with 1/3/5 min, `null` → off with 3; `1d`/`1w` → on with 1/7 days, `null` → off with 7; adds `hideSidebarWhenIdle: true`) with one new version per account, and raises `CLIENT_BUILD` and `MIN_CLIENT_BUILD`. TPK-07 (at least 5 minutes, same day) is a client rule; the server checks only `endAt > startAt` and a span under 24 h for timed events.
 
@@ -406,7 +409,7 @@ Bad config names the variables (not their values) and exits. `next build` needs 
 **`next dev`** signs in, syncs and sends mail through the server like production, without the service worker. Dev-only routes are `page.dev.tsx` (`/dev/gallery`), added to `pageExtensions` for `next dev` only.
 
 ### 6.6 Error logging
-Every server error is **one JSON line on stderr**, written only by `logError(source, event, error, context?)` in `server/log.ts`. It is the only file in `src/server` and `src/app/api` that may use `console` (Biome `noConsole`, with an override for `log.ts`). No log service: the server runs under systemd, so the journal stores, stamps and rotates the lines.
+Every error, on the server or on a screen, is **one JSON line on stderr**, written only by `logError(source, event, error, context?)` in `server/log.ts`; screens send theirs to the server (**Client errors** below). It is the only file in `src/server` and `src/app/api` that may use `console` (Biome `noConsole`, with an override for `log.ts`). No log service: the server runs under systemd, so the journal stores, stamps and rotates the lines.
 
 **Where errors are logged.** Once, at the step that turns a thrown error or a bad answer into a `Result` error code (`getJson`, `mailFailed`, the push sender, the photo store calls); code that only passes the `Result` on never logs it again. Uncaught throws are logged by three catch points only: `onRequestError` in `instrumentation.ts` (Route Handlers), `runSafely` in `jobs/schedule.ts` (jobs, with the job function's `name`) and `bootServer` (start-up, then exit). The `pg.Pool` has an `error` listener (`db/pool-error`), so a dropped idle connection is logged instead of ending the process, and a failed `ROLLBACK` is logged (`db/rollback-failed`) while the original error is rethrown. Next.js also prints its own plain-text line for an uncaught route error; the `jq` recipes below skip it.
 
@@ -432,14 +435,22 @@ Every server error is **one JSON line on stderr**, written only by `logError(sou
 | `push` | `send-failed` | `status` |
 | `storage` | `remove-failed` | `accountId`, `photoId` |
 | `photos` | `decode-failed` | `accountId` |
+| `client` | `zone-crashed`, `page-crashed`, `uncaught`, `worker-crashed`, `outbox-watch-failed` | `page`, `build`, `component`, `accountId`, `displayId` |
 
-A new failure kind adds its row here first. Context keys (the `logError` type allows no others): `method`; `route` (Next's `routePath`, `/api/events/[id]`, never the real path, whose query can hold a sign-in token); `job`; `provider`; `host` (never the full URL, which holds the family's coordinates); `status` (the upstream HTTP status); `accountId`, `photoId` (UUIDs).
+A new failure kind adds its row here first. Context keys (the `logError` type allows no others): `method`; `route` (Next's `routePath`, `/api/events/[id]`, never the real path, whose query can hold a sign-in token); `job`; `provider`; `host` (never the full URL, which holds the family's coordinates); `status` (the upstream HTTP status); `accountId`, `photoId`, `displayId` (UUIDs); `page` (a screen's `location.pathname`, never its query); `build` (the screen's `CLIENT_BUILD`); `component` (the React component that crashed).
 
 **Privacy.** `error` is copied field by field from the list above, so pg's `detail` (row values), a `WebPushError`'s `endpoint`, `headers` and `body`, and provider answers never reach the log. Email addresses in `message` and `stack` become `[email]` (SMTP errors name the recipient), and `message` is cut at 500 characters. Never logged: emails, sign-in codes, session or QR tokens, push endpoints or keys, mail content, coordinates, event, note or photo text, request bodies, query strings.
+
+**Client errors** (D37). Nothing on a screen logs to the console; it reports to the server, which logs the report as `source: "client"`.
+- **Reporter** (`data/repos/clientErrors.ts`): `reportError(event, error, extra?)` builds `{ event, error: { name, message, stack? }, page?, build, component? }` (a thrown non-`Error` becomes `{ name: "Error", message: String(value) }`) and sends it with `fetch("/api/client-errors", { method: "POST", keepalive: true })`, so a report sent just before a reload still goes out. Per page load (and per worker): one report per error (same `message` and first stack line) and at most 20. Offline, reports wait in memory and go on `online`; reports still waiting are lost on reload. It never throws, and a failed send is dropped without a report of its own.
+- **Catch points** (only these): `ZoneBoundary.componentDidCatch` → `zone-crashed` with the first line of React's `componentStack` (the zone still shows its failed state, FAIL-01). `ui` can't import `data`, so `ui/crashReport.ts` holds a context with a no-op default, and `shell/ErrorReporter` provides `reportError` in it. `app/error.tsx` and `app/global-error.tsx` render `shell/CrashScreen` (FAIL-04), which reports `page-crashed` once on mount. `shell/ErrorReporter`, wrapped around everything in the root layout, listens to `window` `error` and `unhandledrejection` → `uncaught`. `sync.worker.ts` listens to `self` `error` and `unhandledrejection` → `worker-crashed`, and `watchOutbox`'s `liveQuery` error → `outbox-watch-failed`; the worker gets the reporter through `WorkerDeps.report` and sends no `page`. Expected failures (network, permissions, the service worker's cache steps) are `Result`s or quiet catches, not reports.
+- **Route** `POST /api/client-errors` (§6.1): `Origin` check, no build check (old builds are the ones that crash) and no session needed, so `/signin` reports too. `ClientErrorSchema` (`domain/schemas.ts`) caps every string (`name` 100, `message` 500, `stack` 4,000, `page` and `component` 200 characters, `page` starting with `/`). `server/services/clientErrors.ts` `logClientError(sender, report)` takes `{ accountId, displayId }` from the session, else `{ ip }` (`clientIp`), allows 30 reports per 10 min per display or IP (`createRateLimiter`), and calls `logError("client", report.event, report.error, …)`, which applies the same privacy rules. The answer is 204 whether logged or limited (400 for a bad body, 403 for a bad `Origin`), so the screen never retries. `accountId` and `displayId` come only from the session, never from the body.
+- **Stacks**: `productionBrowserSourceMaps` is on (the source is public on GitHub), and `*.map` files stay out of the service worker precache. To read a minified stack, check out the commit for the line's `build` and resolve it with `npx source-map-cli`.
 
 ```json
 {"level":"error","time":"2026-10-26T14:03:11.482Z","source":"route","event":"request-failed","method":"PUT","route":"/api/events/[id]","error":{"name":"Error","message":"Connection terminated unexpectedly","stack":"Error: Connection terminated…"}}
 {"level":"error","time":"2026-10-26T14:05:00.019Z","source":"weather","event":"bad-status","host":"api.open-meteo.com","status":503,"error":{"name":"Error","message":"status 503"}}
+{"level":"error","time":"2026-10-26T14:07:42.120Z","source":"client","event":"zone-crashed","page":"/today","build":13,"component":"TodaySchedule","accountId":"0192…","displayId":"0192…","error":{"name":"TypeError","message":"Cannot read properties of undefined (reading 'startAt')","stack":"TypeError: …"}}
 ```
 
 **Reading the log** on the server (the unit is called `glance` here; use yours). systemd sends stdout and stderr to the journal; `-o cat` drops the journal's own prefix, and `jq -R 'fromjson?'` keeps only the JSON lines, so Next's plain-text lines and anything else are skipped. Pick the time with `--since` / `--until` (`"1 hour ago"`, `"2026-10-26 08:00"`, `today`) or `-b` for since the last boot.
@@ -462,11 +473,14 @@ journalctl -u glance -o cat --since "7 days ago" | jq -Rn '[inputs | fromjson? |
 
 # One household's errors
 journalctl -u glance -o cat --since today | jq -R --arg id "<accountId>" 'fromjson? | select(.level == "error" and .accountId == $id)'
+
+# Screen errors only, with page, build and component
+journalctl -u glance -o cat --since today | jq -Rr 'fromjson? | select(.source == "client") | "\(.time)  \(.event)  \(.page // "worker")  b\(.build)  \(.component // "-")  \(.error.message)"'
 ```
 
 How long the journal keeps lines is set by `SystemMaxUse=` (size) or `MaxRetentionSec=` (age) in `/etc/systemd/journald.conf`.
 
-**Tests**: `log.ts` has one suite: key order, the error fields copied and nothing else, `cause` depth, emails masked, the 500-character cut, a string error.
+**Tests**: `log.ts` has one suite: key order, the error fields copied and nothing else, `cause` depth, emails masked, the 500-character cut, a string error. The reporter's tests cover one report per error, the cap of 20, waiting while offline, never throwing and a non-`Error` value. `logClientError` has tests for the session's ids winning over the body, the IP limit for signed-out screens and the rate limit. A `Zone` test checks that a crashing child reports `zone-crashed` and still shows the failed state.
 
 ---
 
