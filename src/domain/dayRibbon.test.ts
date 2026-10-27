@@ -30,26 +30,38 @@ describe("dayRibbon", () => {
   });
 
   it("TODAY-13 the sunset tick sits at its place on the 5 AM to 9 PM scale", () => {
-    expect(dayRibbon([], at(12), sunset, tz).sunset).toBeCloseTo(85.625, 3);
+    expect(dayRibbon([], at(12), sunset, tz).sunset?.at).toBeCloseTo(85.625, 3);
   });
 
   it("TODAY-13 after sunset the elapsed part passes the tick", () => {
     const ribbon = dayRibbon([], at(20, 43), sunset, tz);
 
-    expect(ribbon.elapsed).toBeGreaterThan(ribbon.sunset ?? 100);
+    expect(ribbon.elapsed).toBeGreaterThan(ribbon.sunset?.at ?? 100);
+  });
+
+  it("TODAY-13 the sunset tick shows 20 minutes from now", () => {
+    expect(dayRibbon([], at(18, 22), sunset, tz).sunset).toBeDefined();
+    expect(dayRibbon([], at(19, 2), sunset, tz).sunset).toBeDefined();
   });
 
   it.each([
-    ["two hours before", at(16, 42)],
-    ["just before", at(18, 30)],
-    ["two hours after", at(20, 42)],
+    ["10 minutes before", at(18, 32)],
+    ["at", at(18, 42)],
+    ["10 minutes after", at(18, 52)],
   ])("TODAY-13 the sunset tick is hidden %s sunset", (_name, now) => {
     expect(dayRibbon([], now, sunset, tz).sunset).toBeUndefined();
   });
 
-  it("TODAY-13 the sunset tick shows a minute more than two hours away", () => {
-    expect(dayRibbon([], at(16, 41), sunset, tz).sunset).toBeDefined();
-    expect(dayRibbon([], at(20, 43), sunset, tz).sunset).toBeDefined();
+  it.each([
+    ["centered", at(16), sunset],
+    ["start-aligned", at(6, 36), at(9)],
+    ["end-aligned", at(19, 24), sunset],
+  ])("TODAY-13 a sunset under the %s Now label moves below the bar", (_name, now, sun) => {
+    expect(dayRibbon([], now, sun, tz).sunset?.below).toBe(true);
+  });
+
+  it("TODAY-13 a sunset far from the Now label stays above the bar", () => {
+    expect(dayRibbon([], at(9), sunset, tz).sunset?.below).toBe(false);
   });
 
   it.each([

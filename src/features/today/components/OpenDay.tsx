@@ -25,6 +25,10 @@ type OpenDayProps = {
 
 const MARKER = 32;
 
+const SUNSET_ABOVE = -3;
+
+const SUNSET_BELOW = 54;
+
 const LABEL_SHIFT: Record<RibbonLabel, string> = {
   start: "translateX(0)",
   center: "translateX(-50%)",
@@ -69,7 +73,7 @@ const styles = stylex.create({
   },
   ribbon: {
     position: "relative",
-    paddingBlock: "30px 26px",
+    paddingBlock: 30,
   },
   track: {
     position: "relative",
@@ -103,9 +107,9 @@ const styles = stylex.create({
     fontSize: 14,
     whiteSpace: "nowrap",
   }),
-  sunsetIcon: (left: string) => ({
+  sunsetIcon: (left: string, top: number) => ({
     position: "absolute",
-    top: -3,
+    top,
     insetInlineStart: left,
     transform: "translateX(-50%)",
     display: "flex",
@@ -181,10 +185,17 @@ function Ribbon({ ribbon, now, clock, tz }: Pick<OpenDayProps, "ribbon" | "now" 
       </span>
       {ribbon.sunset !== undefined && (
         <>
-          <span {...stylex.props(styles.sunsetIcon(percentText(ribbon.sunset)))}>
+          <span
+            {...stylex.props(
+              styles.sunsetIcon(
+                percentText(ribbon.sunset.at),
+                ribbon.sunset.below ? SUNSET_BELOW : SUNSET_ABOVE,
+              ),
+            )}
+          >
             <Icon icon={Sunset} size={18} />
           </span>
-          <div {...stylex.props(styles.sunsetTick(percentText(ribbon.sunset)))} />
+          <div {...stylex.props(styles.sunsetTick(percentText(ribbon.sunset.at)))} />
         </>
       )}
       <div {...stylex.props(styles.track)}>
