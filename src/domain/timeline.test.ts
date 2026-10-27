@@ -631,6 +631,18 @@ describe("Today timeline", () => {
     expect(layout.now?.top).toBeGreaterThan(0);
   });
 
+  it("TODAY-11 a last hour of 24 runs the rows and the now line to midnight with no free slot after 9 PM", () => {
+    const late = { ...onOct9, now: october(9, 22 * 60 + 30) };
+
+    const layout = timelineLayout([], late, { ...TODAY, firstHour: 20, lastHour: 24 });
+
+    expect(layout.rows.map((row) => row.hour)).toEqual([20, 21, 22, 23]);
+    expect(layout.marks.at(-1)).toMatchObject({ hour: 24, top: 536 });
+    expect(layout.now?.minutes).toBe(22 * 60 + 30);
+    expect(layout.freeSlots).toEqual([]);
+    expect(weightOf(layout, 22)).toBe(weightOf(layout, 23));
+  });
+
   it("TODAY-11 with the now dot, hour labels hide only within 10 px of it", () => {
     const options = { ...TODAY, height: 550, firstHour: 10 };
 

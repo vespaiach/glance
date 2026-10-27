@@ -376,6 +376,12 @@ export function TodayGallery({ season }: { season: Season }) {
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "empty" }} {...schedule} upcoming={[]} />
       <TodaySchedule
         tz={GALLERY_TZ}
+        state={{ kind: "ready", data: TODAY_EVENTS }}
+        {...schedule}
+        now={octoberAt(9, 20, 30)}
+      />
+      <TodaySchedule
+        tz={GALLERY_TZ}
         state={{ kind: "ready", data: [ALL_DAY_EVENTS.grandpa] }}
         {...schedule}
         iconActions

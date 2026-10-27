@@ -196,9 +196,21 @@ export function TodaySchedule({
 
   const shown = shownBy(schedule.selected, schedule.tags);
 
-  const comingUp = upcoming && (
+  const ahead = upcoming && shown(upcoming);
+
+  const scheduleOf = (events: readonly CalendarEvent[]) => (
+    <Schedule
+      events={events}
+      nowDot={width < TINY_CARD}
+      showEarlier={showEarlier}
+      onToggleEarlier={() => setShowEarlier((open) => !open)}
+      {...schedule}
+    />
+  );
+
+  const comingUp = ahead && ahead.length > 0 && (
     <ComingUp
-      events={shown(upcoming)}
+      events={ahead}
       tags={schedule.tags}
       now={schedule.now}
       clock={schedule.clock}
@@ -237,7 +249,7 @@ export function TodaySchedule({
       <Zone
         state={state}
         loading={<ScheduleSkeleton />}
-        empty={comingUp}
+        empty={comingUp || (ahead && scheduleOf([]))}
         failed={
           <SourceFailure
             icon={CalendarX2}
@@ -249,15 +261,7 @@ export function TodaySchedule({
           />
         }
       >
-        {(events) => (
-          <Schedule
-            events={shown(events)}
-            nowDot={width < TINY_CARD}
-            showEarlier={showEarlier}
-            onToggleEarlier={() => setShowEarlier((open) => !open)}
-            {...schedule}
-          />
-        )}
+        {(events) => scheduleOf(shown(events))}
       </Zone>
     </section>
   );
@@ -392,7 +396,7 @@ function Schedule({
 
   const timed = events.filter((event) => !event.allDay);
 
-  const fold = earlierFold(timed, now, tz);
+  const fold = earlierFold(timed, now, tz, showEarlier);
 
   const plans = !showEarlier
     ? timed.filter((event) => eventStatus(event, now, tz) !== "past")
@@ -429,7 +433,8 @@ function Schedule({
         breakpoint={breakpoint}
         free={free}
         weather={weather}
-        firstHour={showEarlier ? undefined : fold.fromHour}
+        firstHour={fold.fromHour}
+        lastHour={fold.toHour}
         grow={breakpoint !== "large"}
         nowDot={nowDot}
         labels={LABELS}
