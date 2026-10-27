@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v0.96 |
-| Date | 2026-10-25 |
+| Status | v0.97 |
+| Date | 2026-10-26 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
 
@@ -616,6 +616,7 @@ Reminders for upcoming events: a strip on the screen over any view, quietly on A
 - FAIL-01: only the failing zone changes: icon, "{Source} unavailable", "The Glance server isn’t responding. Trying again in {n} min." (weather: WX-05), "Try again". On a calendar failure the Now panel shows the clock and weather only. Ambient's failed zones stay blank.
 - FAIL-02: with saved data, keep showing it and add "Updated {time}".
 - FAIL-03: retry after 1, 2 and 5 min, then every 5 min.
+- FAIL-04: **Crash screen:** when a view, Ambient, Sign in, the Guide or the Terms crashes outside a zone, the whole screen shows "Something went wrong", "Glance will reload in {n} s." (counting down from 60) and a "Reload" button, and it reloads on its own at 0. A crash inside a zone shows only that zone's failure (FAIL-01). Every crash is reported to the Glance server with no content the family entered.
 
 ### 9.5 Offline — `OFF`
 - OFF-01: black pill bottom-left, 24 px up, at the gutter plus the sidebar inset: wifi-off "Offline · showing saved data" + "Saved {time}" (time hidden on small and on Weather). Appears after 30 s offline.
