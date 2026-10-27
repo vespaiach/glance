@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import type { ReactNode } from "react";
 import { copy } from "@/copy";
+import { ErrorReporter } from "@/shell/ErrorReporter";
 import { ServiceWorker } from "@/shell/ServiceWorker";
 import { geistMono, geistSans } from "@/theme/fonts";
 import { type } from "@/theme/type.stylex";
@@ -37,9 +38,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body {...stylex.props(styles.body)}>
-        {children}
-        <ServiceWorker />
-        {GOOGLE_TAG_ID && <GoogleTag id={GOOGLE_TAG_ID} />}
+        <ErrorReporter>
+          {children}
+          <ServiceWorker />
+          {GOOGLE_TAG_ID && <GoogleTag id={GOOGLE_TAG_ID} />}
+        </ErrorReporter>
       </body>
     </html>
   );

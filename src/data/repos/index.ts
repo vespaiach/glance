@@ -12,6 +12,7 @@ export {
   useSignedOutAccount,
   useSignInAuth,
 } from "./auth";
+export { createErrorReporter, type ReportError } from "./clientErrors";
 export { type AllowAnswer, type DevicePush, type PushCheck, useDevicePush } from "./devicePush";
 export {
   createEventsRepo,

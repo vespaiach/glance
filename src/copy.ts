@@ -26,6 +26,11 @@ export const copy = {
       `The Glance server isn’t responding. Trying again in ${minutes} min.`,
     retry: "Try again",
   },
+  crash: {
+    title: "Something went wrong",
+    body: (seconds: number) => `Glance will reload in ${seconds} s.`,
+    reload: "Reload",
+  },
   season: {
     spring: "Spring",
     summer: "Summer",
@@ -1263,6 +1268,7 @@ export const copy = {
           "Do not store passwords, financial, health, government ID or other sensitive information in Glance.",
           "The Operator does not sell or share anything you enter in Glance (events, notes, photos, names, settings) with anyone, except the hosting provider that runs the servers, or when required by law.",
           "The Service uses Google Analytics to count visits and see which pages are used. Google receives this usage data (pages viewed, browser, device type, approximate location), never what you enter in Glance.",
+          "When Glance runs into an error, it sends an error report to the Glance server, where it is kept in the server’s logs. A report holds the error, the page and the app version, never what you enter in Glance.",
           "Backups are not guaranteed. Keep your own copies of anything you care about.",
         ],
       },

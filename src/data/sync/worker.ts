@@ -1,5 +1,6 @@
 import { liveQuery } from "dexie";
 import { accountDbName, type GlanceDb, openGlanceDb } from "../db";
+import { createErrorReporter, type ReportError } from "../repos/clientErrors";
 import { createSyncEngine, type SyncEngine } from "./engine";
 import { createHttpTransport } from "./httpTransport";
 import type { Transport } from "./transport";
@@ -31,6 +32,7 @@ export type WorkerDeps = {
   locks: LockManager | undefined;
   openStream: ((url: string, handlers: StreamHandlers) => SyncStream) | undefined;
   events: EventTarget;
+  report: ReportError;
 };
 
 type Session = { engine(): SyncEngine | undefined; stop(): void };
@@ -73,6 +75,7 @@ export function liveWorkerDeps(events: EventTarget): WorkerDeps {
     locks: navigator.locks,
     openStream: typeof EventSource === "undefined" ? undefined : openEventSource,
     events,
+    report: createErrorReporter({ events }),
   };
 }
 
@@ -90,7 +93,7 @@ function holdLock(locks: LockManager | undefined, signal: AbortSignal, onHeld: (
   });
 }
 
-function watchOutbox(db: GlanceDb, onQueued: () => void, signal: AbortSignal) {
+function watchOutbox(deps: WorkerDeps, db: GlanceDb, onQueued: () => void, signal: AbortSignal) {
   let highest: number | undefined;
 
   const subscription = liveQuery(() => db.outbox.orderBy("seq").last()).subscribe({
@@ -101,7 +104,7 @@ function watchOutbox(db: GlanceDb, onQueued: () => void, signal: AbortSignal) {
 
       highest = Math.max(highest ?? 0, seq);
     },
-    error: () => {},
+    error: (error: unknown) => deps.report("outbox-watch-failed", error),
   });
 
   signal.addEventListener("abort", () => subscription.unsubscribe());
@@ -141,7 +144,7 @@ function activate(deps: WorkerDeps, { db, accountId, page, signal }: Activation)
 
   void quietly(engine.start());
 
-  watchOutbox(db, sync, signal);
+  watchOutbox(deps, db, sync, signal);
 
   const stream = openTriggers(deps, { sync, retrying: engine.retrying }, signal);
 

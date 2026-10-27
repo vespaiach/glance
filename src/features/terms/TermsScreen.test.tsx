@@ -92,3 +92,13 @@ test("TERMS-01 links Source on GitHub and shows the footer", () => {
   expect(screen.getByText("Glance · takeaglance.app")).toBeInTheDocument();
   expect(screen.getByText("MIT License")).toBeInTheDocument();
 });
+
+test("TERMS-01 How your data is stored says error reports never hold what you enter", () => {
+  render(<TermsScreen />);
+
+  expect(
+    screen.getByText(
+      /A report holds the error, the page and the app version, never what you enter/,
+    ),
+  ).toBeInTheDocument();
+});

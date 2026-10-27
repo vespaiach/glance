@@ -305,6 +305,36 @@ export const DisplaySchema = v.object({
 });
 export type Display = v.InferOutput<typeof DisplaySchema>;
 
+export const CLIENT_ERROR_LIMITS = {
+  name: 100,
+  message: 500,
+  stack: 4000,
+  page: 200,
+  component: 200,
+} as const;
+
+const ClientErrorEventSchema = v.picklist([
+  "zone-crashed",
+  "page-crashed",
+  "uncaught",
+  "worker-crashed",
+  "outbox-watch-failed",
+]);
+export type ClientErrorEvent = v.InferOutput<typeof ClientErrorEventSchema>;
+
+export const ClientErrorSchema = v.object({
+  event: ClientErrorEventSchema,
+  error: v.object({
+    name: cappedText(CLIENT_ERROR_LIMITS.name),
+    message: cappedText(CLIENT_ERROR_LIMITS.message),
+    stack: v.optional(cappedText(CLIENT_ERROR_LIMITS.stack)),
+  }),
+  page: v.optional(v.pipe(cappedText(CLIENT_ERROR_LIMITS.page), v.startsWith("/"))),
+  build: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  component: v.optional(cappedText(CLIENT_ERROR_LIMITS.component)),
+});
+export type ClientError = v.InferOutput<typeof ClientErrorSchema>;
+
 function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
   if (allDay) return endAt === undefined && Date.parse(startAt) % DAY_MS === 0;
 
@@ -317,4 +347,8 @@ function spanIsValid({ startAt, endAt, allDay }: EventSpan) {
 
 function whoIsValid({ everyone, tagIds }: EventWho) {
   return !everyone || tagIds.length === 0;
+}
+
+function cappedText(max: number) {
+  return v.pipe(v.string(), v.maxLength(max));
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { Component, type ReactNode } from "react";
+import { Component, type ContextType, type ErrorInfo, type ReactNode } from "react";
 import type { ZoneState } from "@/domain/zoneState";
+import { CrashReportContext } from "./crashReport";
 
 type ZoneProps<T> = {
   state: ZoneState<T>;
@@ -18,10 +19,18 @@ type BoundaryProps = {
 };
 
 class ZoneBoundary extends Component<BoundaryProps, { crashed: boolean }> {
+  static contextType = CrashReportContext;
+
+  declare context: ContextType<typeof CrashReportContext>;
+
   state = { crashed: false };
 
   static getDerivedStateFromError() {
     return { crashed: true };
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo) {
+    this.context("zone-crashed", error, { component: crashedComponent(info.componentStack) });
   }
 
   componentDidUpdate(previous: BoundaryProps) {
@@ -54,4 +63,11 @@ function zoneContent<T>({ state, loading, empty, failed, children }: ZoneProps<T
     case "ready":
       return children(state.data, state.updatedAt);
   }
+}
+
+function crashedComponent(componentStack: string | null | undefined): string | undefined {
+  return componentStack
+    ?.trim()
+    .split("\n")[0]
+    ?.match(/^(?:at\s+)?([^\s(@]+)/)?.[1];
 }

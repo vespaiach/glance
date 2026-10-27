@@ -133,6 +133,7 @@ function setup(overrides: Partial<WorkerDeps> & { transport?: FakeTransport } = 
     locks: fakeLocks(),
     openStream: streams.openStream,
     events,
+    report: vi.fn(),
     ...overrides,
   };
 
@@ -382,5 +383,32 @@ describe("stop and restart", () => {
 
     expect(restart).toHaveBeenCalledTimes(1);
     expect(streams.opened[0]?.close).toHaveBeenCalled();
+  });
+});
+
+describe("errors", () => {
+  it("tech§6.6 reports a failed outbox watch as outbox-watch-failed", async () => {
+    const db = openGlanceDb(DB_NAME);
+
+    const orderBy = db.outbox.orderBy.bind(db.outbox);
+
+    vi.spyOn(db.outbox, "orderBy").mockImplementation((index) => {
+      const collection = orderBy(index);
+
+      collection.last = () => Dexie.Promise.reject(new Error("outbox broken"));
+
+      return collection;
+    });
+
+    const report = vi.fn();
+
+    await started({ openDb: () => db, report });
+
+    await vi.waitFor(() =>
+      expect(report).toHaveBeenCalledWith(
+        "outbox-watch-failed",
+        expect.objectContaining({ message: "outbox broken" }),
+      ),
+    );
   });
 });
