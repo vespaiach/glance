@@ -12,6 +12,7 @@ export type TimelineOptions = {
   minColumn: number;
   longStrips: boolean;
   firstHour?: number;
+  lastHour?: number;
   nowDot?: boolean;
 };
 
@@ -364,8 +365,10 @@ export function hourWeather(
   return shown;
 }
 
-function spanOf({ span, firstHour = 0 }: TimelineOptions): [number, number] {
-  return span === "24h" ? [0, 24 * 60] : [Math.max(DAY_START, firstHour * 60), DAY_END];
+function spanOf({ span, firstHour = 0, lastHour }: TimelineOptions): [number, number] {
+  if (span === "24h") return [0, 24 * 60];
+
+  return [Math.max(DAY_START, firstHour * 60), lastHour === undefined ? DAY_END : lastHour * 60];
 }
 
 function minutesToday(day: string, now: Date, tz: string): number | null {

@@ -95,7 +95,6 @@ export const copy = {
       earlier: (done: number) => `Earlier · ${done} done`,
       hideEarlier: "Hide earlier",
       comingUp: "Coming up",
-      nothingAhead: "Nothing else on the calendar yet.",
       tomorrow: "Tomorrow",
       day: (weekday: string, monthDay: string) => `${weekday}, ${monthDay}`,
       allDay: "All day",

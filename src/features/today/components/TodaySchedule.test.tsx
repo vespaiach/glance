@@ -330,10 +330,20 @@ test("TODAY-06 tapping a coming-up plan opens it", async () => {
   expect(onOpenEvent).toHaveBeenCalledWith("dentist");
 });
 
-test("TODAY-06 with nothing ahead it says so", () => {
+test("TODAY-06 with nothing ahead it shows the empty timeline", () => {
   renderSchedule({ kind: "empty" });
 
-  expect(screen.getByText("Nothing else on the calendar yet.")).toBeInTheDocument();
+  expect(screen.queryByText("Coming up")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Nothing else/)).not.toBeInTheDocument();
+  expect(screen.getByText("10:41")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Free 10:41/ })).toBeInTheDocument();
+});
+
+test("TODAY-06 on small with nothing ahead it shows the empty day list", () => {
+  renderSchedule({ kind: "empty" }, { breakpoint: "small" });
+
+  expect(screen.queryByText("Coming up")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /^Free / })).toBeInTheDocument();
 });
 
 test("TODAY-06 an empty day keeps Add event in the header", async () => {

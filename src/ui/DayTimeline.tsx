@@ -81,6 +81,7 @@ type DayTimelineProps = {
   free: TimelineFree;
   weather?: TimelineWeather;
   firstHour?: number;
+  lastHour?: number;
   grow?: boolean;
   nowDot?: boolean;
   labels: DayTimelineLabels;
@@ -537,6 +538,7 @@ export function DayTimeline({
   free,
   weather,
   firstHour,
+  lastHour,
   grow = false,
   nowDot = false,
   labels,
@@ -568,6 +570,7 @@ export function DayTimeline({
     passedFactor: PASSED_FACTOR[variant],
     minPlanHeight: MIN_PLAN_HEIGHT[record],
     firstHour,
+    lastHour,
     nowDot,
     ...RULES[variant][record],
   };

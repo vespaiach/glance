@@ -46,7 +46,7 @@ describe("scheduleCount", () => {
 
 describe("earlierFold", () => {
   test("TODAY-11 the folded timeline starts at the current hour and counts ended plans", () => {
-    expect(earlierFold(TODAY, NOW, tz)).toEqual({ done: 1, fromHour: 10 });
+    expect(earlierFold(TODAY, NOW, tz)).toEqual({ done: 1, fromHour: 10, toHour: 21 });
   });
 
   test("TODAY-11 the fold starts no earlier than 5 AM", () => {
@@ -54,7 +54,31 @@ describe("earlierFold", () => {
   });
 
   test("TODAY-11 the fold starts no later than 8 PM", () => {
-    expect(earlierFold(TODAY, october(9, 22 * 60 + 30), tz)).toEqual({ done: 3, fromHour: 20 });
+    expect(earlierFold(TODAY, october(9, 22 * 60 + 30), tz)).toEqual({
+      done: 3,
+      fromHour: 20,
+      toHour: 24,
+    });
+  });
+
+  test("TODAY-11 the timeline ends at 9 PM while that is at least 4 hours away", () => {
+    expect(earlierFold(TODAY, october(9, 10 * 60), tz).toHour).toBe(21);
+  });
+
+  test("TODAY-11 from 6 PM the timeline runs 4 hours past its first hour", () => {
+    expect(earlierFold(TODAY, october(9, 18 * 60), tz).toHour).toBe(22);
+  });
+
+  test("TODAY-11 at 8:30 PM the timeline runs to midnight", () => {
+    expect(earlierFold(TODAY, october(9, 20 * 60 + 30), tz).toHour).toBe(24);
+  });
+
+  test("TODAY-11 the opened fold shows the whole day from 5 AM to 9 PM", () => {
+    expect(earlierFold(TODAY, october(9, 20 * 60 + 30), tz, true)).toEqual({
+      done: 3,
+      fromHour: 5,
+      toHour: 21,
+    });
   });
 });
 

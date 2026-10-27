@@ -111,32 +111,22 @@ const styles = stylex.create({
     textOverflow: "ellipsis",
     minWidth: 0,
   },
-  nothing: {
-    fontSize: 17,
-    fontWeight: 330,
-    lineHeight: 1.45,
-    paddingTop: space.xs,
-  },
 });
 
 export function ComingUp({ events, small, ...row }: ComingUpProps) {
   return (
     <div {...stylex.props(styles.root)}>
       <Eyebrow>{copy.today.schedule.comingUp}</Eyebrow>
-      {events.length === 0 ? (
-        <span {...stylex.props(styles.nothing)}>{copy.today.schedule.nothingAhead}</span>
-      ) : (
-        <div {...stylex.props(styles.list)}>
-          {events.map((event) => (
-            <ComingUpRow
-              key={event.id}
-              event={event}
-              column={DAY_COLUMN[small ? "small" : "wide"]}
-              {...row}
-            />
-          ))}
-        </div>
-      )}
+      <div {...stylex.props(styles.list)}>
+        {events.map((event) => (
+          <ComingUpRow
+            key={event.id}
+            event={event}
+            column={DAY_COLUMN[small ? "small" : "wide"]}
+            {...row}
+          />
+        ))}
+      </div>
     </div>
   );
 }
