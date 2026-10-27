@@ -1,10 +1,11 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { type ReactNode, type RefObject, useEffect, useRef } from "react";
+import { type ReactNode, type RefObject, type UIEvent, useEffect, useRef } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { colors, motion } from "@/theme/tokens.stylex";
 import { dialogKeyDown, useFocusOnOpen } from "./dialogFocus";
+import { useFieldInView } from "./fieldInView";
 
 type PageProps = {
   label: string;
@@ -13,12 +14,15 @@ type PageProps = {
   leaving?: boolean;
   onLeft: () => void;
   keyboardInset?: number;
+  onScroll?: (event: UIEvent<HTMLDivElement>) => void;
   children: ReactNode;
 };
 
 type Direction = "in" | "out";
 
 const SLIDE_MS = 280;
+
+const PADDING: Record<Breakpoint, number> = { large: 48, normal: 24, small: 12 };
 
 const SLIDE_IN_EASING = "cubic-bezier(.2,.7,.2,1)";
 
@@ -30,28 +34,30 @@ const styles = stylex.create({
     top: 0,
     left: 0,
     right: 0,
+    bottom: 0,
     zIndex: 20,
-    overflow: "hidden",
+    overflowX: "hidden",
+    overflowY: "auto",
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",
     backgroundColor: colors.surfaceSoft,
     color: colors.textPrimary,
     outline: "none",
-    transitionProperty: "bottom",
+    transitionProperty: "padding-bottom",
     transitionDuration: motion.durBase,
     transitionTimingFunction: motion.easeOut,
   },
-  aboveKeyboard: (inset: number) => ({ bottom: inset }),
+  aboveKeyboard: (padding: number, inset: number) => ({ paddingBottom: padding + inset }),
   leaving: {
     pointerEvents: "none",
   },
 });
 
 const sizes = stylex.create({
-  large: { padding: 48, gap: 24 },
-  normal: { padding: 24, gap: 16 },
-  small: { padding: 12, gap: 12 },
+  large: { paddingInline: 48, gap: 24, scrollPaddingTop: 64 },
+  normal: { paddingInline: 24, gap: 16, scrollPaddingTop: 56 },
+  small: { paddingInline: 12, gap: 12, scrollPaddingTop: 54 },
 });
 
 export function Page({
@@ -61,6 +67,7 @@ export function Page({
   leaving = false,
   onLeft,
   keyboardInset = 0,
+  onScroll,
   children,
 }: PageProps) {
   const page = useRef<HTMLDivElement>(null);
@@ -68,6 +75,8 @@ export function Page({
   useFocusOnOpen(page);
 
   useSlide(page, leaving, onLeft);
+
+  useFieldInView(page, keyboardInset);
 
   return (
     <div
@@ -77,10 +86,11 @@ export function Page({
       aria-label={label}
       tabIndex={-1}
       onKeyDown={dialogKeyDown(onEscape)}
+      onScroll={onScroll}
       {...stylex.props(
         styles.root,
         sizes[breakpoint],
-        styles.aboveKeyboard(keyboardInset),
+        styles.aboveKeyboard(PADDING[breakpoint], keyboardInset),
         leaving && styles.leaving,
       )}
     >

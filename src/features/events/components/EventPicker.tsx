@@ -103,9 +103,7 @@ const WEEK = 7;
 const styles = stylex.create({
   card: {
     flexGrow: 1,
-    minHeight: 0,
-    overflowY: "auto",
-    overscrollBehavior: "contain",
+    flexShrink: 0,
     boxSizing: "border-box",
     display: "flex",
     flexDirection: "column",

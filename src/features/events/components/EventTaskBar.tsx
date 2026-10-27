@@ -4,7 +4,7 @@ import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { StatusTitle } from "@/domain/eventStatus";
 import { formatLength } from "@/domain/time";
-import { colors } from "@/theme/tokens.stylex";
+import { colors, motion, shadows } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
@@ -15,6 +15,7 @@ type EventTaskBarProps = {
   mode: EventPageMode;
   status?: StatusTitle;
   asking: Asking;
+  scrolled?: boolean;
   canSave: boolean;
   online: boolean;
   onSave: () => void;
@@ -35,13 +36,31 @@ const ICON_SIZE: Record<Breakpoint, number> = { large: 32, normal: 28, small: 22
 
 const styles = stylex.create({
   bar: {
+    position: "sticky",
+    top: 0,
+    zIndex: 20,
     flexShrink: 0,
     minWidth: 0,
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
     gap: "12px 16px",
+    backgroundColor: colors.surfaceSoft,
     color: colors.textPrimary,
+    boxShadow: shadows.shadow0,
+    transitionProperty: "box-shadow",
+    transitionDuration: motion.durFast,
+    transitionTimingFunction: "ease-out",
+  },
+  scrolled: {
+    boxShadow: shadows.shadow2,
+  },
+  save: {
+    gap: 6,
+    paddingBlock: 8,
+    paddingInline: 16,
+    fontSize: 16,
+    minHeight: 40,
   },
   title: {
     minWidth: 0,
@@ -62,15 +81,15 @@ const styles = stylex.create({
 });
 
 const barSizes = stylex.create({
-  large: { minHeight: 72 },
-  normal: { minHeight: 56 },
-  small: { minHeight: 56 },
+  large: { minHeight: 48, margin: "0 -48px -20px", padding: "8px 48px" },
+  normal: { minHeight: 44, margin: "0 -24px -12px", padding: "6px 24px" },
+  small: { minHeight: 40, margin: "2px -12px -10px", padding: "6px 12px" },
 });
 
 const titleSizes = stylex.create({
-  large: { fontSize: 32 },
-  normal: { fontSize: 28 },
-  small: { fontSize: 22 },
+  large: { fontSize: 26 },
+  normal: { fontSize: 24 },
+  small: { fontSize: 20 },
 });
 
 const askSizes = stylex.create({
@@ -80,12 +99,12 @@ const askSizes = stylex.create({
 });
 
 export function EventTaskBar(props: EventTaskBarProps) {
-  const { breakpoint, mode, status, asking, onClose } = props;
+  const { breakpoint, mode, status, asking, scrolled, onClose } = props;
 
   const asksDiscard = asking === "discard";
 
   return (
-    <div {...stylex.props(styles.bar, barSizes[breakpoint])}>
+    <div {...stylex.props(styles.bar, barSizes[breakpoint], scrolled && styles.scrolled)}>
       {!(asksDiscard && breakpoint === "small") && (
         <span {...stylex.props(styles.title, titleSizes[breakpoint])}>
           {mode === "view" && <Icon icon={Clock} size={ICON_SIZE[breakpoint]} />}
@@ -94,7 +113,7 @@ export function EventTaskBar(props: EventTaskBarProps) {
       )}
       {asksDiscard ? <DiscardAsk {...props} /> : <Actions {...props} />}
       {!asksDiscard && (
-        <IconButton icon={X} label={words.close} variant="canvas" size="touch" onClick={onClose} />
+        <IconButton icon={X} label={words.close} variant="canvas" onClick={onClose} />
       )}
     </div>
   );
@@ -109,15 +128,13 @@ export function taskBarTitle(mode: EventPageMode, status: StatusTitle | undefine
 }
 
 function DiscardAsk({ breakpoint, onKeepEditing, onDiscard }: EventTaskBarProps) {
-  const size = buttonSize(breakpoint);
-
   return (
     <>
       <span {...stylex.props(styles.ask, askSizes[breakpoint])}>{discard.title}</span>
-      <Button variant="secondary" size={size} onClick={onKeepEditing}>
+      <Button variant="secondary" onClick={onKeepEditing}>
         {discard.keepEditing}
       </Button>
-      <Button variant="danger" size={size} onClick={onDiscard}>
+      <Button variant="danger" onClick={onDiscard}>
         {discard.discard}
       </Button>
     </>
@@ -125,15 +142,13 @@ function DiscardAsk({ breakpoint, onKeepEditing, onDiscard }: EventTaskBarProps)
 }
 
 function Actions(props: EventTaskBarProps) {
-  const { breakpoint, mode, status, canSave, onSave, onEdit } = props;
-
-  const size = buttonSize(breakpoint);
+  const { mode, status, canSave, onSave, onEdit } = props;
 
   if (mode === "view") {
     if (status?.kind === "ended") return null;
 
     return (
-      <Button variant="secondary" size={size} icon={Pencil} onClick={onEdit}>
+      <Button variant="secondary" icon={Pencil} onClick={onEdit}>
         {words.editAction}
       </Button>
     );
@@ -142,19 +157,17 @@ function Actions(props: EventTaskBarProps) {
   return (
     <>
       {mode === "edit" && <DeleteActions {...props} />}
-      <Button size={size} icon={Check} disabled={!canSave} onClick={onSave}>
+      <Button icon={Check} disabled={!canSave} onClick={onSave} xstyle={styles.save}>
         {saveLabel(props)}
       </Button>
     </>
   );
 }
 
-function DeleteActions({ breakpoint, asking, onAskDelete, onKeep, onDelete }: EventTaskBarProps) {
-  const size = buttonSize(breakpoint);
-
+function DeleteActions({ asking, onAskDelete, onKeep, onDelete }: EventTaskBarProps) {
   if (asking !== "delete") {
     return (
-      <Button variant="ghost" size={size} icon={Trash2} onClick={onAskDelete}>
+      <Button variant="ghost" icon={Trash2} onClick={onAskDelete}>
         {words.delete}
       </Button>
     );
@@ -162,10 +175,10 @@ function DeleteActions({ breakpoint, asking, onAskDelete, onKeep, onDelete }: Ev
 
   return (
     <>
-      <Button variant="ghost" size={size} onClick={onKeep}>
+      <Button variant="ghost" onClick={onKeep}>
         {words.keep}
       </Button>
-      <Button variant="danger" size={size} icon={Trash2} onClick={onDelete}>
+      <Button variant="danger" icon={Trash2} onClick={onDelete}>
         {words.deleteEvent}
       </Button>
     </>
@@ -176,8 +189,4 @@ function saveLabel({ breakpoint, mode, online }: EventTaskBarProps): string {
   if (!online) return words.saveOffline;
 
   return mode === "new" && breakpoint !== "small" ? words.saveNew : words.save;
-}
-
-function buttonSize(breakpoint: Breakpoint) {
-  return breakpoint === "large" ? "lg" : "md";
 }

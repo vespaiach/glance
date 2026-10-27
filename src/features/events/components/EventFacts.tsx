@@ -19,9 +19,7 @@ const words = copy.events.preview;
 const styles = stylex.create({
   card: {
     flexGrow: 1,
-    minHeight: 0,
-    overflowY: "auto",
-    overscrollBehavior: "contain",
+    flexShrink: 0,
     boxSizing: "border-box",
     display: "grid",
     alignItems: "start",

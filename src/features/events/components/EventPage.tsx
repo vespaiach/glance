@@ -1,7 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { StatusTitle } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
@@ -47,7 +47,8 @@ type ViewProps = EventPageProps & { draft: PageDraft };
 const styles = stylex.create({
   body: {
     flexGrow: 1,
-    minHeight: 0,
+    flexShrink: 0,
+    flexBasis: "auto",
     display: "flex",
   },
   column: {
@@ -72,6 +73,8 @@ export function EventPage(props: EventPageProps) {
 
   const draft = state.mode === "view" ? state.opened : state.draft;
 
+  const [scrolled, setScrolled] = useState(false);
+
   return (
     <Page
       label={taskBarTitle(state.mode, status)}
@@ -80,12 +83,14 @@ export function EventPage(props: EventPageProps) {
       leaving={leaving}
       onLeft={onLeft}
       keyboardInset={keyboardInset}
+      onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
     >
       <EventTaskBar
         breakpoint={breakpoint}
         mode={state.mode}
         status={status}
         asking={state.mode === "view" ? "none" : state.asking}
+        scrolled={scrolled}
         canSave={canSave(draft)}
         online={online}
         onSave={props.onSave}
@@ -110,7 +115,7 @@ function ViewBody({ breakpoint, draft, tags, clock, status, facts, dispatch }: V
   const ended = isEnded(status);
 
   return (
-    <div {...stylex.props(styles.column, gaps[breakpoint])}>
+    <div {...stylex.props(styles.body, styles.column, gaps[breakpoint])}>
       <EventSentence
         breakpoint={breakpoint}
         mode="view"

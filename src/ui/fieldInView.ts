@@ -34,5 +34,9 @@ function reveal(area: HTMLElement) {
 
   const offset = target.getBoundingClientRect().top - area.getBoundingClientRect().top;
 
-  area.scrollTop += offset - FIELD_GAP;
+  area.scrollTop += offset - FIELD_GAP - scrollPaddingTop(area);
+}
+
+function scrollPaddingTop(area: HTMLElement): number {
+  return Number.parseFloat(getComputedStyle(area).scrollPaddingTop) || 0;
 }
