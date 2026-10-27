@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v3.00 |
+| Status | v3.01 |
 | Date | 2026-10-26 |
-| Inputs | [`product-spec.md`](product-spec.md) (v0.98) · [`design/handoff/`](design/handoff/README.md) (v17) |
+| Inputs | [`product-spec.md`](product-spec.md) (v0.99) · [`design/handoff/`](design/handoff/README.md) (v18) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -224,7 +224,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 - **Photos actions** (PHOTO-03, PHOTO-08, PHOTO-11, PHOTO-13). `PhotosScreen` keeps two local flags: `deleting` (the inline confirm; set by Delete, which also pauses; cleared by Cancel, Delete photo, a step, a pick or Edit details; hidden offline by `FeaturedPhoto`) and `qrOpen` (the Upload toggle on large and normal; Choose files here and Done close it). Its `useQrTile(undefined, "photos")` is shown and closed by an effect following `!small && online && (qrOpen || no photos and no uploads)`, so the empty card and the panel share one code. Deleting goes through `features/photos/useDeletePhoto` (also used by Photo details): `PhotosRepo.remove`, then `domain/background.backgroundAfterDelete(background, id)`, which turns a Photo-mode background on that photo back to Season color (Slideshow keeps rotating). The paused index stays, so the next photo takes the deleted one's place. The upload row's Try again calls `retry` for each network failure (`canRetry`) and Clear dispatches `clear` (every failed tile); `uploadSummary`'s `failed` kind carries `retryable`.
 - **Ambient transition** (AMB-10). `shell/ambientTransition.ts` holds the keyframes as pure `leaveHalf(from)` / `enterHalf(to)` (a root motion and/or a per-row motion; Ambient's rows are the wake button's children other than the `data-backdrop` layers). Every navigation to or from `/ambient` (idle, schedule, sidebar, Preview, wake tap) goes through `shell/useAmbientNavigate.ts`: `useAmbientNavigate()` runs the leave half on the current root with Web Animations (fill `forwards`, so it stays dimmed), then `router.push`es; the arriving root (the `AppShell` root, Ambient's wake button, the sign-in root) registers with `useAmbientRoot(ref, pathname)` and runs the enter half when it is the pushed path. The state is module-level, like `usePageTransition`, so it survives the layout change. While either half runs a `transitioning` flag adds window capture listeners that drop `pointerdown` and `click`, and further navigations are ignored; if no root claims the push within 1 s the flag clears. `pageMotion` returns no fade for these hops. Reduced motion or no `Element.animate` → push at once.
 - **Uploads** run one XHR per file through `PhotosRepo.upload`; tiles live in memory, pause offline and resume or restart on reconnect.
-- **Keyboard** (KB-*): `useKeyboardInset()` reads `visualViewport`; sheets and pages pad by it and `useFieldInView` scrolls the focused field into view. Return in a single-line input moves to the next field or submits.
+- **Keyboard** (KB-*): `useKeyboardInset()` reads `visualViewport`; sheets pad by it, the event page pads its scrolling page (not the picker card), and `useFieldInView` scrolls the focused field into view. Return in a single-line input moves to the next field or submits.
 - **Accessibility**: `PillTabs` is a `<fieldset>` of `aria-pressed` buttons; `Sheet` and the date picker are `role="dialog"` with focus trap and return (`ui/dialogFocus.ts`: `useFocusOnOpen`, `dialogKeyDown` for Escape and Tab wrap); `onAccent` is black except in Winter (4.5:1, checked by `theme/contrast.test.ts`); reduced motion zeroes `durBase` and `durSeason`.
 - **Gallery** (`/dev/gallery`) shows every `ui` component in the four seasons and every state the States pages show, at the three sizes.
 

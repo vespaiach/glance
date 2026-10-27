@@ -252,9 +252,9 @@
 <span style="font-size:var(--nh-title);font-weight:340;line-height:1.05;letter-spacing:-0.8px;text-wrap:pretty">{{ nh.open.title }}</span>
 <span style="font-size:18px;font-weight:330;line-height:1.3;text-wrap:pretty">{{ nh.open.body }}</span>
 </div>
-<div aria-hidden="true" style="position:relative;padding:30px 0 26px">
+<div aria-hidden="true" style="position:relative;padding:30px 0 30px">
 <span style="position:absolute;top:0;left:{{ nh.open.nowPct }};transform:translateX({{ nh.open.nowTx }});font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1">Now {{ nh.open.nowL }}</span>
-<sc-if value="{{ nh.open.sunOn }}" hint-placeholder-val="{{ true }}"><span title="Sunset {{ nh.open.sunL }}" style="position:absolute;top:-3px;left:{{ nh.open.sunPct }};transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span></sc-if>
+<sc-if value="{{ nh.open.sunOn }}" hint-placeholder-val="{{ true }}"><span title="Sunset {{ nh.open.sunL }}" style="position:absolute;top:{{ nh.open.sunTop }};left:{{ nh.open.sunPct }};transform:translateX(-50%);display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.54px;text-transform:uppercase;white-space:nowrap;line-height:1"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="sunset" size="18" hint-size="18px,18px"></x-import></span></sc-if>
 <div style="position:relative;height:14px;border-radius:9999px;background:var(--surface-canvas);overflow:hidden">
 <div style="position:absolute;left:0;top:0;bottom:0;width:{{ nh.open.nowPct }};background:var(--action-primary)"></div>
 <sc-for list="{{ nh.open.segs }}" as="g" hint-placeholder-count="0"><div style="position:absolute;top:4px;bottom:4px;left:{{ g.l }};width:{{ g.w }};border-radius:9999px;background:var(--surface-canvas)"></div></sc-for>
@@ -2330,9 +2330,9 @@ class Component extends DCLogic {
       return { on: PH1, secs, msg: noOne || none, msgText: noOne ? 'No one selected, so no plans show.' : 'Nothing scheduled.', ad: { has: dayADl.length > 0, list: dayADl } };
     };
     const ag = mkAg(S.selDay, dayTimed, dayADl, dayGaps, selT, 'pastOpen');
-    const todPastN = todShown.filter((e) => evE(e) <= NOWL).length, todH0 = S.todPastOpen ? 5 : Math.max(5, Math.min(20, Math.floor(NOWL / 60))), TLG = bp === 'large' ? { tmF: 16, tmH: 20, mF: 16, hF: 16, xsF: 18 } : {};
+    const todPastN = todShown.filter((e) => evE(e) <= NOWL).length, todH0 = S.todPastOpen ? 5 : Math.max(5, Math.min(20, Math.floor(NOWL / 60))), todH1 = Math.min(24, Math.max(21, todH0 + 4)), TLG = bp === 'large' ? { tmF: 16, tmH: 20, mF: 16, hF: 16, xsF: 18 } : {};
     const tag = mkAg(9, todShown, todayADl, S.who.length ? gapsOf(todShown, true) : [], true, 'todPastOpen');
-    const todE0 = todShown.length === 0, todGR = bp !== 'large', todT = tlBuild(S.todPastOpen ? todShown : todShown.filter((e) => evE(e) > NOWL), { ...TLG, h0: todH0, wxSparse: true, grow: todGR, isT: true, nowDot: !!S.schedTiny, day: 9, hr: null, gwx: wxOn ? Component.HOURLY[9] : null, who: S.who, gaps: S.who.length ? gapsOf(todShown, true) : [], H: todGR ? (this._todGrew ? 536 : Math.max(536, ts0.h - 24)) : ts0.h - 24, W: ts0.w - DP[0], minCol: 120, gut: DP[0], lane: DP[1], ts: DP[2], minPx: 48, minGap: 44, longOut: true, pastW: 0.3, laneN: PH1 });
+    const todE0 = todShown.length === 0, todGR = bp !== 'large', todT = tlBuild(S.todPastOpen ? todShown : todShown.filter((e) => evE(e) > NOWL), { ...TLG, h0: todH0, h1: todH1, wxSparse: true, grow: todGR, isT: true, nowDot: !!S.schedTiny, day: 9, hr: null, gwx: wxOn ? Component.HOURLY[9] : null, who: S.who, gaps: S.who.length ? gapsOf(todShown, true) : [], H: todGR ? (this._todGrew ? 536 : Math.max(536, ts0.h - 24)) : ts0.h - 24, W: ts0.w - DP[0], minCol: 120, gut: DP[0], lane: DP[1], ts: DP[2], minPx: 48, minGap: 44, longOut: true, pastW: 0.3, laneN: PH1 });
     Object.assign(todT, SM ? { wxI: 16, wxF: '15px' } : { wxI: 20, wxF: '17px' });
     if (todGR) { this._todGrew = todT.Hn > (this._todGrew ? 536 : Math.max(536, ts0.h - 24)); FL.todTlMin = Math.max(560, todT.Hn + 24) + 'px'; }
     const sdD = new Date(2026, 9, S.selDay), w0 = S.selDay - sdD.getDay(), M3 = (d) => MONTHS[d.getMonth()].slice(0, 3);
@@ -2893,7 +2893,7 @@ class Component extends DCLogic {
           return {
             title: n ? 'That’s a wrap for today' : 'The day is wide open',
             body: n ? `${n} event${n > 1 ? 's' : ''} done · free until ${fmtT(lt(D1), true)}` : `Free until ${fmtT(lt(D1), true)} · ${dur(left)}`,
-            nowPct: P(NOWL), nowTx: (() => { const f = (NOWL - D0) / (D1 - D0); return f > 0.8 ? '-100%' : f < 0.2 ? '0%' : '-50%'; })(), sunOn: Math.abs(NOWL - SUN) > 120, nowL: fmtT(NOWL, true), sunPct: P(SUN), sunL: fmtT(lt(SUN), true), startL: fmtT(lt(D0), true), endL: fmtT(lt(D1), true),
+            nowPct: P(NOWL), nowTx: (() => { const f = (NOWL - D0) / (D1 - D0); return f > 0.8 ? '-100%' : f < 0.2 ? '0%' : '-50%'; })(), sunOn: Math.abs(NOWL - SUN) > 15, sunTop: (() => { const f = (NOWL - D0) / (D1 - D0), s = (SUN - D0) / (D1 - D0), w = 0.42; const [a, b] = f > 0.8 ? [f - w, f] : f < 0.2 ? [f, f + w] : [f - w / 2, f + w / 2]; return s > a - 0.04 && s < b + 0.04 ? '54px' : '-3px'; })(), nowL: fmtT(NOWL, true), sunPct: P(SUN), sunL: fmtT(lt(SUN), true), startL: fmtT(lt(D0), true), endL: fmtT(lt(D1), true),
             segs: done.map((e) => ({ l: P(evS(e)), w: `calc(${P(Math.max(evE(e), evS(e) + 20))} - ${P(evS(e))})` })),
             hasNext: false, next: out.ambientNext, goNext: go.calendar,
           };
@@ -2906,10 +2906,11 @@ class Component extends DCLogic {
       const dLbl = (e) => { if (ymOf(e) === OCT && e.day === 10) return 'Tomorrow'; const m = ymOf(e) % 12, dt = new Date(Math.floor(ymOf(e) / 12), m, e.day); return DOW[dt.getDay()].slice(0, 3) + ', ' + MONTHS[m].slice(0, 3) + ' ' + e.day; };
       const rows = upE.map((e, i) => { const w = e.who || [], dots = w.length && w.length < PPL.length ? w.slice(0, 4).map((k, j) => ({ c: (PM[k] || {}).c, ml: j ? '-4px' : '0' })) : [], tm = e.allDay ? 'All day' : fmtT(evS(e), true);
         return { day: dLbl(e), time: tm, title: e.title, meta: [names(w), e.location].filter(Boolean).join(' · '), dots, hasDots: dots.length > 0, bd: i ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'none', aria: `${e.title}, ${dLbl(e)}, ${tm}${w.length ? ', ' + names(w) : ''}`, open: () => this.openEvent(e) }; });
+      const tList = tOpen && rows.length > 0;
       Object.assign(out, {
-        todOpen: { on: tOpen, rows, none: tOpen && !rows.length, col: SM ? '112px' : '128px' },
-        tag: { ...tag, on: PH1 && NH && !ld && !tOpen },
-        todayTl: out.todayTl && !PH1 && !tOpen,
+        todOpen: { on: tList, rows, none: false, col: SM ? '112px' : '128px' },
+        tag: { ...tag, on: PH1 && NH && !ld && !tList },
+        todayTl: out.todayTl && !PH1 && !tList,
         todPast: { has: !PH1 && NH && !ld && !tOpen && todPastN > 0, label: S.todPastOpen ? 'Hide earlier' : `Earlier · ${todPastN} done`, icon: S.todPastOpen ? 'chevron-up' : 'chevron-down', exp: String(!!S.todPastOpen), tap: () => this.setState((st) => ({ todPastOpen: !st.todPastOpen })) },
       });
     }
