@@ -22,8 +22,10 @@ export async function postMail(
 
     await response.body?.cancel();
 
-    return response.ok ? ok(undefined) : mailFailed(provider, `status ${response.status}`);
+    if (response.ok) return ok(undefined);
+
+    return mailFailed(provider, new Error(`status ${response.status}`), response.status);
   } catch (error) {
-    return mailFailed(provider, error instanceof Error ? error.message : "unknown error");
+    return mailFailed(provider, error);
   }
 }

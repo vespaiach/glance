@@ -2,6 +2,7 @@ import "server-only";
 import { syncBus } from "../bus";
 import { database } from "../db";
 import { env } from "../env";
+import { logError } from "../log";
 import { createWebPush } from "../push";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
@@ -17,8 +18,12 @@ const HOUR_MS = 60 * MINUTE_MS;
 
 export function startJobs(): void {
   const tick = createJobTick({
-    hourly: runHourly,
-    daily: [runSignInCleanup, runPhotoCleanup, runReminderSendCleanup],
+    hourly: { expireNotes: runHourly },
+    daily: {
+      cleanupSignIns: runSignInCleanup,
+      removeDeletedPhotoFiles: runPhotoCleanup,
+      cleanupReminderSends: runReminderSendCleanup,
+    },
   });
 
   void tick(new Date());
@@ -39,7 +44,8 @@ function startReminderPushes(): void {
 
   const push = createWebPush(config);
 
-  const run = () => void sendReminderPushes({ ...deps(), push }).catch(console.error);
+  const run = () =>
+    void sendReminderPushes({ ...deps(), push }).catch(jobFailed("sendReminderPushes"));
 
   setInterval(run, MINUTE_MS).unref();
 }
@@ -67,9 +73,17 @@ async function runReminderSendCleanup(): Promise<void> {
 }
 
 async function runOriginalCleanup(): Promise<void> {
-  await removePhotoOriginals({ ...deps(), store: photoStore() }).catch(console.error);
+  await removePhotoOriginals({ ...deps(), store: photoStore() }).catch(
+    jobFailed("removePhotoOriginals"),
+  );
 }
 
 async function runPhotoBytesBackfill(): Promise<void> {
-  await backfillPhotoBytes({ ...deps(), store: photoStore() }).catch(console.error);
+  await backfillPhotoBytes({ ...deps(), store: photoStore() }).catch(
+    jobFailed("backfillPhotoBytes"),
+  );
+}
+
+function jobFailed(job: string): (error: unknown) => void {
+  return (error) => logError("job", "job-failed", error, { job });
 }

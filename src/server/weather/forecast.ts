@@ -3,7 +3,7 @@ import * as v from "valibot";
 import { err, ok, type Result } from "@/domain/result";
 import { WeatherSchema } from "@/domain/schemas";
 import { wmo } from "@/domain/wmo";
-import type { Forecast, WeatherFailure } from "./provider";
+import type { Forecast } from "./provider";
 
 const numbers = v.array(v.number());
 
@@ -55,7 +55,7 @@ const COMPASS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
 export function toForecast(
   response: ForecastResponse,
   now: Date,
-): Result<Forecast, WeatherFailure> {
+): Result<Forecast, v.BaseIssue<unknown>[]> {
   const built = {
     fetchedAt: now.toISOString(),
     current: currentConditions(response),
@@ -65,7 +65,7 @@ export function toForecast(
 
   const parsed = v.safeParse(ForecastSchema, built);
 
-  return parsed.success ? ok(parsed.output) : err("weather-failed");
+  return parsed.success ? ok(parsed.output) : err(parsed.issues);
 }
 
 function currentConditions({ current, daily }: ForecastResponse) {

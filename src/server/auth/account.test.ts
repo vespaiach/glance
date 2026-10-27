@@ -15,6 +15,7 @@ import { putSettings } from "../services/settings";
 import { newAccount } from "../services/testServices";
 import { createDiskStore } from "../storage/disk";
 import type { PhotoStore } from "../storage/store";
+import { spyOnLoggedErrors } from "../testLog";
 import { deleteAccount, finishSetup, saveName } from "./account";
 import { requireDisplay, type SignedInDisplay } from "./sessions";
 import { authHarnessPerTest, START, signIn } from "./testAuth";
@@ -211,9 +212,19 @@ describe("deleteAccount", () => {
   it("SET-14 files that fail to remove stay listed for the daily job", async () => {
     const maria = await fillAccount("maria@example.com");
     const failing = { ...store(), remove: vi.fn(async () => Promise.reject(new Error("down"))) };
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    const logged = spyOnLoggedErrors();
 
     await deleteAccount({ ...harness.deps(), store: failing }, maria.accountId);
+
+    expect(logged()).toMatchObject(
+      Array.from({ length: 2 }, () => ({
+        source: "storage",
+        event: "remove-failed",
+        accountId: maria.accountId,
+        photoId: expect.any(String),
+        error: { message: "down" },
+      })),
+    );
 
     expect(await savedRows(maria.accountId)).toMatchObject({ account: undefined, photos: [] });
     expect(await harness.deps().db.photos.cleanupPaths()).toHaveLength(2);

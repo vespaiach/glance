@@ -2,6 +2,7 @@ import "server-only";
 import { copy } from "@/copy";
 import { err, type Result } from "@/domain/result";
 import type { Season } from "@/domain/schemas";
+import { logError } from "../log";
 import { signInHtml } from "./signInHtml";
 
 export type MailMessage = { to: string; subject: string; text: string; html?: string };
@@ -48,8 +49,8 @@ export function parseAddress(sender: string): MailAddress | undefined {
   return BARE_ADDRESS.test(trimmed) ? { email: trimmed } : undefined;
 }
 
-export function mailFailed(provider: string, reason: string): MailResult {
-  console.error(`Mail via ${provider} failed: ${reason}`);
+export function mailFailed(provider: string, error: unknown, status?: number): MailResult {
+  logError("mail", "send-failed", error, { provider, ...(status !== undefined && { status }) });
 
   return err("mail-failed");
 }

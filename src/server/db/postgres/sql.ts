@@ -1,5 +1,6 @@
 import "server-only";
 import pg from "pg";
+import { logError } from "../../log";
 
 export type Sql = {
   all<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
@@ -49,6 +50,8 @@ export function openPgSql(connectionString: string): Sql {
 }
 
 export function pgSql(pool: pg.Pool): Sql {
+  pool.on("error", (error) => logError("db", "pool-error", error));
+
   return driverSql({
     query: (sql, params) => pgQuery(pool, sql, params),
     exec: (sql) => pool.query(sql),
@@ -86,7 +89,9 @@ async function inPgTx<T>(client: pg.PoolClient, fn: (db: Sql) => Promise<T>): Pr
     await client.query("COMMIT");
     return result;
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client
+      .query("ROLLBACK")
+      .catch((rollbackError) => logError("db", "rollback-failed", rollbackError));
     throw error;
   }
 }

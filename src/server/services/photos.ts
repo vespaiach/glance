@@ -7,6 +7,7 @@ import { MAX_PHOTO_BYTES, type UploadProblem, uploadProblem } from "@/domain/pho
 import { err, ok, type Result } from "@/domain/result";
 import type { Photo, Synced } from "@/domain/schemas";
 import type { PhotoUsage } from "@/domain/storage";
+import { logError } from "../log";
 import { type PhotoStore, photoType, type StoredObject } from "../storage/store";
 import { placeLabel } from "../weather/places";
 import type { Coordinates, PlaceLocator, PlaceName } from "../weather/provider";
@@ -25,6 +26,8 @@ export type PhotoDeps = ServiceDeps & {
   locator: PlaceLocator;
   storageLimit: number;
 };
+
+export type RemoveFailure = { photoId: string; error: unknown };
 
 export type PhotoUpload = {
   name: string;
@@ -59,7 +62,7 @@ export async function uploadPhoto(
 
   if (!original) return err("too-large");
 
-  const decoded = await decodePhoto(original);
+  const decoded = await decodePhoto(original, accountId);
 
   if (!decoded.ok) return decoded;
 
@@ -110,7 +113,7 @@ export async function deletePhoto(
 ): Promise<Result<SyncedPhoto, "not-found">> {
   const deleted = await tombstonePhoto(deps, accountId, id);
 
-  if (deleted.ok) await removeObjectsLogged(deps.store, photoPath(accountId, id));
+  if (deleted.ok) await removeObjectsLogged(deps.store, accountId, id);
 
   return deleted;
 }
@@ -131,17 +134,21 @@ export async function photoFile(
 export async function removeAccountFiles(
   { db, store }: Pick<PhotoDeps, "db" | "store">,
   filePaths: readonly string[],
-): Promise<unknown[]> {
-  const failures: unknown[] = [];
+): Promise<RemoveFailure[]> {
+  const failures: RemoveFailure[] = [];
 
   for (const filePath of filePaths) {
     await store
       .remove(photoKeys(filePath))
       .then(() => db.photos.cleanedUp(filePath))
-      .catch((error) => failures.push(error));
+      .catch((error) => failures.push({ photoId: photoIdOf(filePath), error }));
   }
 
   return failures;
+}
+
+export function photoIdOf(filePath: string): string {
+  return filePath.slice(filePath.lastIndexOf("/") + 1);
 }
 
 export function photoKeys(filePath: string): string[] {
@@ -196,11 +203,15 @@ export function objectKey(filePath: string, variant: PhotoVariant): string {
   return `${filePath}.${variant}`;
 }
 
-async function removeObjectsLogged(store: PhotoStore, filePath: string): Promise<void> {
+async function removeObjectsLogged(
+  store: PhotoStore,
+  accountId: string,
+  id: string,
+): Promise<void> {
   try {
-    await store.remove(photoKeys(filePath));
+    await store.remove(photoKeys(photoPath(accountId, id)));
   } catch (error) {
-    console.error(error);
+    logError("storage", "remove-failed", error, { accountId, photoId: id });
   }
 }
 
@@ -225,10 +236,13 @@ async function readLimited(
 
 async function decodePhoto(
   original: Uint8Array<ArrayBuffer>,
+  accountId: string,
 ): Promise<Result<Decoded, "not-a-photo">> {
   try {
     return await decoded(original);
-  } catch {
+  } catch (error) {
+    logError("photos", "decode-failed", error, { accountId });
+
     return err("not-a-photo");
   }
 }
@@ -290,7 +304,7 @@ async function savePhoto(
 
     return await insertPhoto(deps, accountId, id, details);
   } catch (error) {
-    await removeObjectsLogged(deps.store, photoPath(accountId, id));
+    await removeObjectsLogged(deps.store, accountId, id);
 
     throw error;
   }
@@ -381,11 +395,9 @@ async function lookUpPlace(
   try {
     const found = await locator.placeAt(roundedPoint(gps));
 
-    if (!found.ok && found.error === "weather-failed") console.error("Photo place lookup failed");
-
     return found.ok ? found.value : undefined;
   } catch (error) {
-    console.error(error);
+    logError("weather", "fetch-failed", error);
 
     return undefined;
   }

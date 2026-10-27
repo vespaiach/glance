@@ -1,9 +1,9 @@
 import "server-only";
 import * as v from "valibot";
-import { err, ok } from "@/domain/result";
+import { ok } from "@/domain/result";
 import { isTimeZone } from "@/domain/signIn";
 import { ForecastResponseSchema, toForecast } from "./forecast";
-import { type Fetch, getJson } from "./getJson";
+import { badBody, badResponse, type Fetch, getJson } from "./getJson";
 import { GeocodingResponseSchema, placeQuery, toPlaces } from "./places";
 import type { Coordinates, WeatherProvider } from "./provider";
 
@@ -44,9 +44,15 @@ const FORECAST_PARAMS = {
 export function createOpenMeteo(fetchFn: Fetch): WeatherProvider {
   return {
     forecast: async (place, now) => {
-      const response = await getJson(fetchFn, forecastUrl(place), ForecastResponseSchema);
+      const url = forecastUrl(place);
 
-      return response.ok ? toForecast(response.value, now) : response;
+      const response = await getJson(fetchFn, url, ForecastResponseSchema);
+
+      if (!response.ok) return response;
+
+      const forecast = toForecast(response.value, now);
+
+      return forecast.ok ? forecast : badBody(url, forecast.error);
     },
     places: async (query) => {
       const parsed = placeQuery(query);
@@ -56,13 +62,17 @@ export function createOpenMeteo(fetchFn: Fetch): WeatherProvider {
       return response.ok ? ok(toPlaces(response.value.results, parsed)) : response;
     },
     timeZoneAt: async (place) => {
-      const response = await getJson(fetchFn, zoneUrl(place), ZoneResponseSchema);
+      const url = zoneUrl(place);
+
+      const response = await getJson(fetchFn, url, ZoneResponseSchema);
 
       if (!response.ok) return response;
 
-      return isTimeZone(response.value.timezone)
-        ? ok(response.value.timezone)
-        : err("weather-failed");
+      const { timezone } = response.value;
+
+      return isTimeZone(timezone)
+        ? ok(timezone)
+        : badResponse(url, `unknown time zone ${timezone}`);
     },
   };
 }

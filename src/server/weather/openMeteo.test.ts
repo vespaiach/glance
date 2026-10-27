@@ -1,3 +1,4 @@
+import { spyOnLoggedErrors } from "../testLog";
 import { createOpenMeteo } from "./openMeteo";
 
 const NOW = new Date("2026-10-09T17:30:00.000Z");
@@ -94,6 +95,26 @@ describe("createOpenMeteo forecast", () => {
       ok: false,
       error: "weather-failed",
     });
+  });
+
+  it("tech§6.6 logs a forecast it can't map with the host and the bad path", async () => {
+    const logged = spyOnLoggedErrors();
+    const current = { ...FORECAST_BODY.current, weather_code: 42 };
+
+    const answer = await createOpenMeteo(answering({ ...FORECAST_BODY, current })).forecast(
+      PORTLAND,
+      NOW,
+    );
+
+    expect(answer).toEqual({ ok: false, error: "weather-failed" });
+    expect(logged()).toMatchObject([
+      {
+        source: "weather",
+        event: "bad-response",
+        host: "api.open-meteo.com",
+        error: { message: "bad body at current.condition, current.icon" },
+      },
+    ]);
   });
 
   it("WX-05 fails on an answer of the wrong shape", async () => {
@@ -202,5 +223,20 @@ describe("createOpenMeteo timeZoneAt", () => {
       await createOpenMeteo(answering({ timezone: "Mars/Olympus" })).timeZoneAt(PORTLAND),
     ).toEqual(failed);
     expect(await createOpenMeteo(answering({}, 500)).timeZoneAt(PORTLAND)).toEqual(failed);
+  });
+
+  it("tech§6.6 logs a time zone it doesn't know with the host", async () => {
+    const logged = spyOnLoggedErrors();
+
+    await createOpenMeteo(answering({ timezone: "Mars/Olympus" })).timeZoneAt(PORTLAND);
+
+    expect(logged()).toMatchObject([
+      {
+        source: "weather",
+        event: "bad-response",
+        host: "api.open-meteo.com",
+        error: { message: "unknown time zone Mars/Olympus" },
+      },
+    ]);
   });
 });

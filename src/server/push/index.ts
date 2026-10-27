@@ -1,6 +1,7 @@
 import "server-only";
 import { sendNotification, WebPushError } from "web-push";
 import { err, ok, type Result } from "@/domain/result";
+import { logError } from "../log";
 
 export type PushConfig = { publicKey: string; privateKey: string; subject: string };
 
@@ -34,7 +35,7 @@ export function createWebPush(config: PushConfig): PushSender {
     } catch (error) {
       if (isGone(error)) return err("gone");
 
-      console.error(error);
+      logError("push", "send-failed", error, statusOf(error));
 
       return err("failed");
     }
@@ -43,4 +44,8 @@ export function createWebPush(config: PushConfig): PushSender {
 
 function isGone(error: unknown): boolean {
   return error instanceof WebPushError && GONE.has(error.statusCode);
+}
+
+function statusOf(error: unknown): { status?: number } {
+  return error instanceof WebPushError ? { status: error.statusCode } : {};
 }

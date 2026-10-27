@@ -1,4 +1,5 @@
-import { parseAddress, signInMessage } from "./mailer";
+import { spyOnLoggedErrors } from "../testLog";
+import { mailFailed, parseAddress, signInMessage } from "./mailer";
 
 describe("parseAddress", () => {
   it("tech§6.2 splits a Name <address> sender", () => {
@@ -87,5 +88,33 @@ describe("signInMessage", () => {
       expect(text).toContain(words);
     }
     expect(text).not.toContain("http");
+  });
+});
+
+describe("mailFailed", () => {
+  it("tech§6.6 logs the provider and the status, and answers mail-failed", () => {
+    const logged = spyOnLoggedErrors();
+
+    expect(mailFailed("resend", new Error("status 422"), 422)).toEqual({
+      ok: false,
+      error: "mail-failed",
+    });
+    expect(logged()).toMatchObject([
+      {
+        source: "mail",
+        event: "send-failed",
+        provider: "resend",
+        status: 422,
+        error: { message: "status 422" },
+      },
+    ]);
+  });
+
+  it("tech§6.6 masks the recipient an SMTP error names", () => {
+    const logged = spyOnLoggedErrors();
+
+    mailFailed("smtp", new Error("550 5.1.1 <maria@example.com>: Recipient address rejected"));
+
+    expect(JSON.stringify(logged())).not.toContain("maria@example.com");
   });
 });
