@@ -394,6 +394,15 @@ export function TodayGallery({ season }: { season: Season }) {
         iconActions
         xstyle={[styles.zone, styles.small]}
       />
+      <TodaySchedule
+        tz={GALLERY_TZ}
+        state={{ kind: "empty" }}
+        {...schedule}
+        upcoming={[]}
+        breakpoint="small"
+        iconActions
+        xstyle={[styles.zone, styles.small]}
+      />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "loading" }} {...schedule} />
       <TodaySchedule tz={GALLERY_TZ} state={{ kind: "failed" }} {...schedule} />
       <TodaySchedule
