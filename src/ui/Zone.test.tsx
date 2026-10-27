@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import type { ZoneState } from "@/domain/zoneState";
+import { CrashReportContext } from "./crashReport";
 import { Zone } from "./Zone";
 
 function renderZone(state: ZoneState<string>) {
@@ -69,6 +70,33 @@ test("tech§4.4 Zone shows its failed state when its content throws", () => {
 
   expect(screen.getByText("Unavailable")).toBeInTheDocument();
   expect(screen.getByText("Other zone")).toBeInTheDocument();
+});
+
+test("tech§6.6 a crashing zone reports zone-crashed with the component and still shows its failed state", () => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+
+  const report = vi.fn();
+
+  render(
+    <CrashReportContext value={report}>
+      <Zone
+        state={{ kind: "ready", data: ["a"] }}
+        loading={null}
+        empty={null}
+        failed={<span>Unavailable</span>}
+      >
+        {() => <Broken />}
+      </Zone>
+    </CrashReportContext>,
+  );
+
+  expect(screen.getByText("Unavailable")).toBeInTheDocument();
+  expect(report).toHaveBeenCalledTimes(1);
+  expect(report).toHaveBeenCalledWith(
+    "zone-crashed",
+    expect.objectContaining({ message: "render failed" }),
+    { component: "Broken" },
+  );
 });
 
 function Broken(): never {

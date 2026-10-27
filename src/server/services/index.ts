@@ -3,6 +3,7 @@ import { err, ok, type Result } from "@/domain/result";
 import type {
   AccountSettings,
   CalendarEvent,
+  ClientError,
   LocationRequest,
   Note,
   Photo,
@@ -10,6 +11,7 @@ import type {
   Tag,
 } from "@/domain/schemas";
 import { GB } from "@/domain/storage";
+import { createRateLimiter, type RateLimiter } from "../auth/rateLimit";
 import { announce, syncBus } from "../bus";
 import { database } from "../db";
 import { env } from "../env";
@@ -17,6 +19,7 @@ import { photoStore } from "../storage";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
 import type { Coordinates } from "../weather/provider";
+import * as clientErrors from "./clientErrors";
 import type { ServiceDeps } from "./deps";
 import * as displays from "./displays";
 import * as events from "./events";
@@ -27,6 +30,10 @@ import * as settings from "./settings";
 import * as sync from "./sync";
 import * as tags from "./tags";
 import * as weather from "./weather";
+
+const CLIENT_ERROR_LIMIT = { limit: 30, windowMs: 10 * 60 * 1000 };
+
+const shared = globalThis as typeof globalThis & { glanceClientErrors?: RateLimiter };
 
 export async function putTag(accountId: string, tag: Tag) {
   return announce(syncBus(), accountId, await tags.putTag(deps(), accountId, tag));
@@ -127,6 +134,16 @@ export function locatePlace(position: Coordinates) {
     position,
   );
 }
+export function logClientError(sender: clientErrors.ClientErrorSender, report: ClientError) {
+  shared.glanceClientErrors ??= createRateLimiter(CLIENT_ERROR_LIMIT);
+
+  return clientErrors.logClientError(
+    { limiter: shared.glanceClientErrors, now: () => new Date() },
+    sender,
+    report,
+  );
+}
+
 export type { WeatherError } from "./weather";
 
 function deps(): ServiceDeps {

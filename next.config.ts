@@ -8,6 +8,7 @@ const DEV_PAGE_EXTENSIONS = ["dev.tsx", ...PAGE_EXTENSIONS];
 
 export default function nextConfig(phase: string): NextConfig {
   return withSerwist({
+    productionBrowserSourceMaps: true,
     pageExtensions: phase === PHASE_DEVELOPMENT_SERVER ? DEV_PAGE_EXTENSIONS : PAGE_EXTENSIONS,
     redirects: async () => [{ source: "/", destination: "/today", permanent: false }],
   });
