@@ -67,3 +67,12 @@ test("KB-03 focusing a button does not scroll", () => {
 
   expect(area.scrollTop).toBe(50);
 });
+
+test("KB-02 a field lands below the area's scroll padding, so a sticky bar does not cover it", () => {
+  const { area } = setUp(300);
+
+  area.style.scrollPaddingTop = "64px";
+  screen.getByRole("textbox", { name: "First" }).focus();
+
+  expect(area.scrollTop).toBe(50 + 400 - 100 - 24 - 64);
+});
