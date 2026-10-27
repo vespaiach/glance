@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v2.97 |
-| Date | 2026-10-25 |
+| Status | v2.98 |
+| Date | 2026-10-26 |
 | Inputs | [`product-spec.md`](product-spec.md) (v0.95) · [`design/handoff/`](design/handoff/README.md) (v17) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
@@ -344,7 +344,7 @@ type Mailer = { send(message: MailMessage): Promise<Result<void, "mail-failed">>
 ```
 
 - **Sign-in email**: `signInMessage(to, code, season)` (`mailer.ts`) → `{ to, subject, text, html }`, with the HTML in `signInHtml.ts`: `emails/sign-in-code.html` as a template string (tables, inline styles, Arial and Courier New), every word from `copy.signIn.email`, the email HTML-escaped. `season` is the account's fixed season, else `seasonOf(now)` in the request's time zone; it picks the hero and page colors (Spring `#dceeb1`/`#f4ecd6`, Summer `#f6e3a1`/`#f4ecd6`, Fall `#f0c987`/`#f4ecd6`, Winter `#d5e4f1`/`#e9edf3`).
-- **Contract** (`mailer.ts`): the sender is bound from `MAIL_FROM` when the mailer is built, so messages carry no `from`. Any failure (a non-2xx answer, a network or SMTP error) is `mail-failed`, never a throw. One attempt, no retry. A failure is logged once (`mailFailed`) with the provider and the status or error, never the message or the provider's answer (they hold the sign-in code). `parseAddress` splits `MAIL_FROM` into `{ email, name? }` and is the env check for it.
+- **Contract** (`mailer.ts`): the sender is bound from `MAIL_FROM` when the mailer is built, so messages carry no `from`. Any failure (a non-2xx answer, a network or SMTP error) is `mail-failed`, never a throw. One attempt, no retry. A failure is logged once (`mailFailed`, `mail/send-failed`, §6.6) with the provider and the status or error, never the message or the provider's answer (they hold the sign-in code). `parseAddress` splits `MAIL_FROM` into `{ email, name? }` and is the env check for it.
 - **Adapters**: `createResendMailer(config, from, fetch)` (`resend.ts`) → `POST https://api.resend.com/emails`, Bearer key, JSON `{ from, to, subject, text, html }`. `createMailtrapMailer` (`mailtrap.ts`) → `POST https://send.api.mailtrap.io/api/send`, or `https://sandbox.api.mailtrap.io/api/send/{inboxId}` when an inbox is set, Bearer token, JSON with `from: { email, name }` and `to: [{ email }]` (`parseAddress` splits `MAIL_FROM`). `createMailgunMailer` (`mailgun.ts`) → `POST https://api.mailgun.net/v3/{domain}/messages` (`api.eu.mailgun.net` for `eu`), Basic `api:{key}`, form-encoded fields. The three share one `postMail` step (`http.ts`). `createSmtpMailer(transport, from)` (`smtp.ts`) calls `transport.sendMail({ from, ...message })` on a minimal `SmtpTransport` type, so tests pass a fake; the factory passes `nodemailer.createTransport({ host, port, secure, auth })`. The `mailpit` provider reuses it with `secure: false` and no auth.
 - **Factory** (`index.ts`): `createMailer(config, from, fetch = globalThis.fetch)` switches on `config.provider`. `mailer()` builds it once from `env().mail` and `env().MAIL_FROM` and is shared by auth.
 - **Tests**: one contract suite (`contract.ts`: an accepted message → `ok`; a rejected message and an unreachable provider → `mail-failed` without throwing; logs never hold the message text) runs against the HTTP adapters on a fake `fetch` and the SMTP adapter on a fake transport. Each adapter's tests check the URL, auth header and body encoding, plus Mailtrap's sandbox URL and Mailgun's EU host. The factory is checked to reach each provider.
@@ -371,10 +371,10 @@ type PhotoStore = {
 - **Tests**: one contract suite (`contract.ts`: put then get, missing key → `not-found`, idempotent `remove`) runs against the disk store on a temp dir and the S3 store on a fake `fetch` (`fakeS3.ts`, an in-memory bucket); the R2 config is checked to reach the R2 endpoint.
 
 ### 6.4 Jobs
-`bootServer()` (from `instrumentation.ts`) prepares the database (`prepareDatabase()`: PostgreSQL migrates), exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day; a second `unref` timer runs the reminder job every minute. A failing job is logged and doesn't stop the others: `createJobTick({ hourly, daily: [signIns, photos] })` guards each one. Jobs run across accounts.
+`bootServer()` (from `instrumentation.ts`) prepares the database (`prepareDatabase()`: PostgreSQL migrates), exits on failure, then `startJobs()`: an hourly `unref` timer plus a tick at boot; daily jobs run on the first tick of each UTC day; a second `unref` timer runs the reminder job every minute. A failing job is logged with its name (`job/job-failed`, §6.6) and doesn't stop the others: `createJobTick({ hourly, daily: [signIns, photos] })` guards each one. Jobs run across accounts.
 - **Note expiry** (hourly): tombstones notes older than the account's `noteExpiry.days` while it is on, using the screens' `noteExpired` rule, then publishes each account's version on the bus.
 - **Code and link cleanup** (daily, `cleanupSignIns`): deletes `sign_in_codes` and `magic_links` expired more than 24 h ago, and `revoked_sessions` older than 400 days (the cookie's life).
-- **Deleted photo files** (daily): removes the stored objects of tombstoned photos not yet marked `files_removed`, and marks each one removed, then the files listed in `photo_file_cleanup` (deleted accounts, D31), deleting each row once removed; one photo's failure doesn't stop the rest, and the job then throws so it is logged.
+- **Deleted photo files** (daily): removes the stored objects of tombstoned photos not yet marked `files_removed`, and marks each one removed, then the files listed in `photo_file_cleanup` (deleted accounts, D31), deleting each row once removed; one photo's failure doesn't stop the rest and is logged on its own (`job/cleanup-failed` with the `photoId`, §6.6).
 - **Reminder pushes** (every minute, D30): sends each due reminder once to the account's push subscriptions and prunes gone ones. Reminder sends older than a day are deleted by the daily cleanup.
 
 `accountTimeZone(db, accountId)` = the saved place's `timeZone`, else the account's; the upload-day fallback reads it. Backups belong to the PostgreSQL host.
@@ -404,6 +404,69 @@ type PhotoStore = {
 Bad config names the variables (not their values) and exits. `next build` needs no env. `.env.development` points at a local PostgreSQL, `.data/` and a local Mailpit (`MAIL_PROVIDER=mailpit`); sign-in emails are read at `http://localhost:8025`.
 
 **`next dev`** signs in, syncs and sends mail through the server like production, without the service worker. Dev-only routes are `page.dev.tsx` (`/dev/gallery`), added to `pageExtensions` for `next dev` only.
+
+### 6.6 Error logging
+Every server error is **one JSON line on stderr**, written only by `logError(source, event, error, context?)` in `server/log.ts`. It is the only file in `src/server` and `src/app/api` that may use `console` (Biome `noConsole`, with an override for `log.ts`). No log service: the server runs under systemd, so the journal stores, stamps and rotates the lines.
+
+**Where errors are logged.** Once, at the step that turns a thrown error or a bad answer into a `Result` error code (`getJson`, `mailFailed`, the push sender, the photo store calls); code that only passes the `Result` on never logs it again. Uncaught throws are logged by three catch points only: `onRequestError` in `instrumentation.ts` (Route Handlers), `runSafely` in `jobs/schedule.ts` (jobs, with the job function's `name`) and `bootServer` (start-up, then exit). The `pg.Pool` has an `error` listener (`db/pool-error`), so a dropped idle connection is logged instead of ending the process, and a failed `ROLLBACK` is logged (`db/rollback-failed`) while the original error is rethrown. Next.js also prints its own plain-text line for an uncaught route error; the `jq` recipes below skip it.
+
+**Line format.** Keys in this order:
+
+| Key | | Value |
+|---|---|---|
+| `level` | always | `"error"` |
+| `time` | always | ISO 8601 UTC with ms, `2026-10-26T14:03:11.482Z` |
+| `source` | always | from the table below |
+| `event` | always | kebab-case, from the table below; never renamed, so searches keep working |
+| context | optional | only the keys below |
+| `error` | always | `{ name, message, code?, stack?, cause? }`; `cause` has the same shape, at most 2 levels; a string becomes `{ name: "Error", message }` |
+
+| `source` | `event` | Context |
+|---|---|---|
+| `route` | `request-failed` | `method`, `route` |
+| `job` | `job-failed`, `cleanup-failed` | `job`, `photoId` (cleanup) |
+| `boot` | `start-failed` | — |
+| `db` | `pool-error`, `rollback-failed` | — |
+| `mail` | `send-failed` | `provider`, `status` |
+| `weather` | `fetch-failed`, `bad-status`, `bad-response` | `host`, `status` |
+| `push` | `send-failed` | `status` |
+| `storage` | `remove-failed` | `accountId`, `photoId` |
+| `photos` | `decode-failed` | `accountId` |
+
+A new failure kind adds its row here first. Context keys (the `logError` type allows no others): `method`; `route` (Next's `routePath`, `/api/events/[id]`, never the real path, whose query can hold a sign-in token); `job`; `provider`; `host` (never the full URL, which holds the family's coordinates); `status` (the upstream HTTP status); `accountId`, `photoId` (UUIDs).
+
+**Privacy.** `error` is copied field by field from the list above, so pg's `detail` (row values), a `WebPushError`'s `endpoint`, `headers` and `body`, and provider answers never reach the log. Email addresses in `message` and `stack` become `[email]` (SMTP errors name the recipient), and `message` is cut at 500 characters. Never logged: emails, sign-in codes, session or QR tokens, push endpoints or keys, mail content, coordinates, event, note or photo text, request bodies, query strings.
+
+```json
+{"level":"error","time":"2026-10-26T14:03:11.482Z","source":"route","event":"request-failed","method":"PUT","route":"/api/events/[id]","error":{"name":"Error","message":"Connection terminated unexpectedly","stack":"Error: Connection terminated…"}}
+{"level":"error","time":"2026-10-26T14:05:00.019Z","source":"weather","event":"bad-status","host":"api.open-meteo.com","status":503,"error":{"name":"Error","message":"status 503"}}
+```
+
+**Reading the log** on the server (the unit is called `glance` here; use yours). systemd sends stdout and stderr to the journal; `-o cat` drops the journal's own prefix, and `jq -R 'fromjson?'` keeps only the JSON lines, so Next's plain-text lines and anything else are skipped. Pick the time with `--since` / `--until` (`"1 hour ago"`, `"2026-10-26 08:00"`, `today`) or `-b` for since the last boot.
+
+```bash
+# One readable line per error
+journalctl -u glance -o cat --since today | jq -Rr 'fromjson? | select(.level == "error") | "\(.time)  \(.source)/\(.event)  \(.route // .job // .provider // .host // "-")  \(.error.message)"'
+
+# Follow new errors live
+journalctl -u glance -o cat -f | jq -Rr --unbuffered 'fromjson? | select(.level == "error") | "\(.time)  \(.source)/\(.event)  \(.error.message)"'
+
+# Full entries, pretty-printed, for one source or event
+journalctl -u glance -o cat --since "1 hour ago" | jq -R 'fromjson? | select(.level == "error" and .source == "weather")'
+
+# A stack trace with real line breaks
+journalctl -u glance -o cat --since today | jq -Rr 'fromjson? | select(.event == "request-failed") | .time, .route, .error.stack, ""'
+
+# Count errors by source/event
+journalctl -u glance -o cat --since "7 days ago" | jq -Rn '[inputs | fromjson? | select(.level == "error") | "\(.source)/\(.event)"] | group_by(.) | map({key: .[0], value: length}) | from_entries'
+
+# One household's errors
+journalctl -u glance -o cat --since today | jq -R --arg id "<accountId>" 'fromjson? | select(.level == "error" and .accountId == $id)'
+```
+
+How long the journal keeps lines is set by `SystemMaxUse=` (size) or `MaxRetentionSec=` (age) in `/etc/systemd/journald.conf`.
+
+**Tests**: `log.ts` has one suite: key order, the error fields copied and nothing else, `cause` depth, emails masked, the 500-character cut, a string error.
 
 ---
 
