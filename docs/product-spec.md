@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.13 |
+| Status | v1.14 |
 | Date | 2026-10-28 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -443,7 +443,7 @@ Used by Calendar (any day, filtered) and Today (today, filtered) on large and no
 | TL-03.2 | Example: 9:00–10:00, two 9:00–9:30 plans and 9:30–10:00 → three columns; the 9:30 plan widens over the two columns the 9:00–9:30 plans free (from 1/3, 2/3 wide). *(tested)* |
 | TL-03.3 | Example: A 3:00–3:15 PM plan in a short hour → still the minimum height. *(tested)* |
 | TL-03.4 | Example: A plan that overlaps nothing → the full width. *(tested)* |
-| TL-04 | **Plan cards** (a button named "{title}, {range}"): content follows the card's real size: time + title, then a second title line, then "{who} · {location}", then the first line of Notes (`file-text`). Too short for that → one line: start time (hidden under 200 px wide; on the title line from 170 px), title, person dots. Under 260 px wide → the start time only, with AM/PM. A plan that started before 5 AM shows "Until {end}" for its time. Lines end in "…", never wrap. |
+| TL-04 | **Plan cards** (a button named "{title}, {range}"): content follows the card's real size: time + title, then a second title line, then "{who} · {location}", then the first line of Notes (`file-text`). Too short for that → one line: start time (hidden under 200 px wide), title, person dots. Under 260 px wide → the start time only, with AM/PM. A plan that started before 5 AM shows "Until {end}" for its time. Lines end in "…", never wrap. |
 | TL-05 | **Colors:** the event's color (§7); past (STATUS-01) and now each have their own look (see `Glance States - Calendar`, frame A); past is never struck through; now has no NOW pill. Other days are never now. |
 | TL-06 | **24 hours** (Calendar only): 12 AM to 12 AM; night hours (before 5 AM, from 9 PM) without plans weigh half, night hours with plans are elastic as TL-02. Hour labels and hairlines thin out when rows get tight. |
 | TL-07 | **Hour weather:** each hour label in the gutter shows that hour's weather under it (an icon named by condition + temperature) when the hour is at least 46 px tall and clear of the now marker. Calendar shows every hour; Today only where it says something new: the first hour on the timeline, an icon change, rain starting or stopping (50% or more), else every 3 hours. No weather lane: plans use the full width. On Calendar, plans that aren't past and overlap an hour with rain ≥ 50% get a "{p}% rain" chip on the time line of cards at least 180 px wide (not on one-line cards; the chance stays in the plan's name). Only with a location and an hourly forecast for that day; covers all 24 hours when TL-06 is on. |
@@ -576,7 +576,7 @@ One full-screen button, text on deep. No sidebar and no wordmark; the rows sprea
 - An unchanged sheet closes at once on scrim, Cancel, ✕ or Escape.
 - **Discard changes?** When the draft changed, those replace the footer with "Discard changes?", a line ("This note won’t be posted." · "Your edits to this photo won’t be saved."), secondary "Keep editing" (focused) and `danger` "Discard". While shown, the scrim is ignored and ✕ or Escape discards. An edit or "Keep editing" brings the footer back. The idle timeout discards without asking. The event page asks in its task bar instead (EVT-05).
 - Sticky action row (Photo details): Delete left, Cancel + primary right. Note details has Delete and Edit; the note composer has no Cancel (NOTE-05).
-- Offline banner "You're offline" on note sheets: "The note saves on this screen and posts when the connection is back." The event page has no banner; its Save reads "Save for later" (EVT-05).
+- Offline banner "You're offline" on note sheets: "The note saves on this screen and posts when the connection is back." On Photo details: "Changes save on this screen and sync when the connection is back." The event page has no banner; its Save reads "Save for later" (EVT-05).
 - Focus is trapped; opening focuses the sheet itself (no keyboard pops up), closing returns focus to the opener.
 
 ### 8.10 Event notifications — `NOTIF`
