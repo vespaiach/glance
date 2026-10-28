@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.01 |
+| Status | v1.02 |
 | Date | 2026-10-28 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -271,31 +271,7 @@ interface Display { id: string; accountId: string } // kind, browser and lastSee
 **Tags** are the family's people: a name with a color that marks events; they never sign in. They work like tags: there is no list to manage, a tag exists because an event's Who picker created it (FAM-04), it can be removed from Settings (FAM-08), and tags are never renamed or recolored. A new account gets one tag named after the account (SIGNIN-06), with the first color. An event's people are **everyone** (the flag, set when every tag is on it; a tag added later joins it), a set of tags, or **nobody**; "who" reads "Everyone", the names in tag order joined by ", ", or nothing. An event's color: one tag → that tag's color; more than one, everyone or nobody → the season soft color with person dots (no dots for everyone or nobody).
 
 ### 7.0 Database
-PostgreSQL, from `db-migrations/`:
-
-| Table | Columns |
-|---|---|
-| `accounts` | `id`, `email citext UNIQUE`, `name`, `time_zone` (the first browser's zone), `setup_done_at` (first-run location step ended), `created_at` |
-| `displays` | `id`, `account_id`, `last_seen_at`, `kind` (`monitor` default), `browser` |
-| `sessions` | `token_hash`, `display_id`, `created_at` |
-| `revoked_sessions` | `token_hash`, `revoked_at`: sessions ended by Sign out all devices or Delete account, so their device learns it was revoked (SIGNIN-18) |
-| `sign_in_codes` | `email citext` (one live code per email), `code_hash`, `time_zone`, `attempts` (0–5), `expires_at`, `created_at` |
-| `magic_links` | `token_hash`, `account_id`, `display_id` (QR links, SIGNIN-15), `expires_at`, `used_at` |
-| `tags` | `id`, `account_id`, `name`, `color`, `created_at`, `updated_at`, `deleted_at`, `version` |
-| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `tag_ids text[]` (empty when `everyone`; empty and not `everyone` = nobody), `notes`, `notify` (default `true`), `updated_at`, `deleted_at`, `version` |
-| `notes` | `id`, `account_id`, `text`, `author`, `rotation`, `created_at`, `updated_at`, `deleted_at`, `version` |
-| `photos` | `id`, `account_id`, `title`, `taken_on date`, `place`, `title_source`, `date_source`, `place_source`, `checked`, `file_path`, `file_name`, `bytes` (stored size of its copies, SET-13), `created_at`, `updated_at`, `deleted_at`, `version` |
-| `settings` | `account_id`, `json jsonb` (AccountSettings), `updated_at`, `version` |
-| `push_subscriptions` | `id`, `account_id`, `display_id`, `endpoint` (unique), `p256dh`, `auth`, `created_at` (NOTIF-07) |
-| `reminder_sends` | `event_id`, `kind` (the lead it fired at: `15min`, `30min`), `fire_at`, `sent_at`: pushes already sent, so each goes once (NOTIF-07) |
-| `photo_file_cleanup` | `file_path`, `created_at`: files of a deleted account still to remove (SET-14) |
-| `weather_cache` | `account_id`, `location` ("lat,lon"), `json`, `fetched_at` |
-| `sync_state` | the one global `version` counter |
-
-- IDs are UUIDv7 made on the client, so offline creates keep their id.
-- Timestamps are `timestamptz` and ISO-8601 UTC strings everywhere else; `taken_on` is `YYYY-MM-DD`.
-- The server stamps `updated_at` and `version`; every write bumps `sync_state.version` in the same transaction. Deletes are soft (`deleted_at`) so other screens receive them.
-- Photo files are stored as `{account}/{id}.{display|thumb}` (the uploaded original isn't kept) under `{DATA_DIR}/photos` or in an S3 or R2 bucket, served through an authenticated route. Deleting a photo deletes its files.
+The tables and storage rules: [tech-design §6.7](tech-design.md#67-database).
 
 ### 7.1 Event status (STATUS-01)
 For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcoming`. No end → `now` from its start to the end of its day. Recomputed every minute. Past days → `past`, future days → `upcoming`. **All-day events have no status:** never the hero, never now or next.
