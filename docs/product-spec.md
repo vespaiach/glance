@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.00 |
+| Status | v1.01 |
 | Date | 2026-10-28 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -76,63 +76,45 @@ Next.js (App Router) as a single-page app, TypeScript strict, Biome, StyleX, Val
 ## 4. Design system
 
 ### 4.1 Tokens and seasons
-The handoff tokens are ported verbatim as StyleX vars. Season roles: **block-1 = Now panel, block-3 = weather, block-4 = highlight**, soft = warm neutral and the notes' paper, deep = Ambient, accent = alerts (at most one accent action per screen). A season change cross-fades 600 ms.
-
-| Season | 1 | 2 | 3 | 4 | soft | deep | accent | Icon |
-|---|---|---|---|---|---|---|---|---|
-| Spring | Lime | Pink | Mint | Lilac | Cream | Navy | Magenta | `flower-2` |
-| Summer | Sun | Coral | Sky | Lime | Cream | Sea | Tangerine | `sun` |
-| Fall | Amber | Rust | Sage | Coral | Cream | Bark | Ember | `leaf` |
-| Winter | Ice | Lilac | Glacier | Mint | Frost | Midnight | Cobalt | `snowflake` |
+The handoff tokens (`docs/design/handoff/_ds/…/tokens/*.css`) are ported verbatim as StyleX vars in `src/theme`. Season palettes: `seasons.css`; season icons: the prototype's Season setting. Season roles: **block-1 = Now panel, block-3 = weather, block-4 = highlight**, soft = warm neutral and the notes' paper, deep = Ambient, accent = alerts (at most one accent action per screen). A season change cross-fades (§4.4).
 
 ### 4.2 Components
-Typed components in `src/ui` (the calendar controls in `features/calendar/components`), styled with StyleX only; most take an optional `xstyle`. Words come in as props.
+Typed components in `src/ui` (the calendar controls in `features/calendar/components`), styled with StyleX only; most take an optional `xstyle`. Words come in as props. Appearance: see `Glance States - Components` and the tokens file.
 
 | Component | Notes |
 |---|---|
 | `Clock` | Tabular numerals, date line "Friday, October 9". The colon blinks every 0.6 s, and stays on with reduced motion. Takes the time from the screen; no timer of its own |
 | `DayTimeline` | The elastic day timeline (§8.3.2): hour gutter with hour weather, plan cards, long-plan strips, the "+N MORE" tile, free slots, now marker, rain chips (Calendar) |
-| `WeekStrip`, `CalendarHeader`, `DayList`, `DatePicker` (calendar feature) | CAL-01, CAL-02, CAL-10, CAL-03. Day buttons named by the full date; selected = black circle (`aria-pressed`), today = soft circle (`aria-current="date"`) |
+| `WeekStrip`, `CalendarHeader`, `DayList`, `DatePicker` (calendar feature) | CAL-01, CAL-02, CAL-10, CAL-03. Day buttons named by the full date; selected `aria-pressed`, today `aria-current="date"` |
 | `WhoStack`, `WhoSheet` | CAL-05, TODAY-04: the person filter's avatar stack and its "Show plans for" modal |
 | `MonthGrid` | The design system's month grid, in the small date picker only (CAL-03) |
-| `PersonDot` | A tag's color dot (6–12 px). Plan cards build their dot rows and Who suggestions their pills from it |
-| `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (`--danger`, white text, every season: delete and discard confirms) |
-| `IconButton` | `md` 40, `touch` 56, `lg` 72 px; `active` = black; `current="page"` |
-| `PillTabs` | Segmented control, a group of `aria-pressed` buttons. `lg` (56 px) wraps onto more rows |
-| `Radio`, `Switch`, `Slider` | §8.7. Radio: 24 px black ring, 12 px dot when selected, label 18 px (540 selected, 330 not), 56 px tap height. Switch: 56×32 track, 24 px white knob; on = black track, knob right; off = soft track with hairline; 180 ms; `role="switch"`. Slider: 44 px tall, black, mono end labels; disabled = gray |
+| `PersonDot` | A tag's color dot. Plan cards build their dot rows and Who suggestions their pills from it |
+| `Button` | Pill. Variants primary, secondary, ghost, accent, inverse, **danger** (the same in every season: delete and discard confirms) |
+| `IconButton` | Sizes `md`, `touch`, `lg`; `active`; `current="page"` |
+| `PillTabs` | Segmented control, a group of `aria-pressed` buttons. `lg` wraps onto more rows |
+| `Radio`, `Switch`, `Slider` | §8.7. Radio: 56 px tap height. Switch: `role="switch"`. Slider: mono end labels; a disabled state |
 | `CodeField` | SIGNIN-04: six cells over one numeric input |
-| `TextInput` | 2 px black focus ring, error below, optional mono caption right of the label, `type="date"` |
+| `TextInput` | Focus ring, error below, optional mono caption right of the label, `type="date"` |
 | `ColorBlock`, `Card`, `Banner`, `Eyebrow`, `Icon` | As in the design system. Blocks are never shadowed |
 | `WeatherNow`, `ForecastDay` | Values arrive in the display unit; no unit letter |
-| `StickyNote`, `NoteComposer` | Radius 6, shadow-2, tilted, on the paper tone (§8.5); the composer is NOTE-02 |
-| `TimeField`, `TimePicker` | Ambient screen times (SET-10): a 56 px button (radius 8, hairline; time in 22 px tabular numerals, mono AM/PM, chevron; open = black border + 2 px ring; named "{label}, {time}. Change") that opens a `surface-soft` picker tile below it (radius 24): a header with a sliding AM/PM toggle (12-hour only), then "Hour" and "Minutes" rows of 44 px pill cells (selected black), one at a time, closed by tapping the field again or "Done" |
+| `StickyNote`, `NoteComposer` | On the paper tone (§8.5); the composer is NOTE-02 |
+| `TimeField`, `TimePicker` | Ambient screen times (SET-10): a button named "{label}, {time}. Change" that opens a picker tile below it: a sliding AM/PM toggle (12-hour only), then "Hour" and "Minutes" rows of pill cells, one at a time, closed by tapping the field again or "Done" |
 | `EventTaskBar`, `EventSentence`, `EventPicker` | The event page's task bar, sentence card and picker card (EVT-*, TPK-*) |
 | `Skeleton`, `EmptyState`, `SourceFailure`, `Zone` | §9.3–9.4. `Zone` renders loading / empty / ready / failed in its own error boundary |
 | `Sheet` | §8.9 |
-| `ColorSwatchPicker` | 44 px round swatches named by color; selected = white + black ring. Tags use the 12 tag colors; notes have none |
+| `ColorSwatchPicker` | Round swatches named by color. Tags use the 12 tag colors; notes have none |
 | `OfflinePill`, `SettingsRow`, `AllDayTile` | OFF-01, §8.7, TODAY-12 |
 | `BackLink`, `DiscardPrompt`, `PhotoBackdrop`, `QrCode` | §8.7 "‹ Settings" link, "Discard changes?" (§8.9), photo background (BG-*), SIGNIN-15 and "Add from your phone" QR (PHOTO-03) |
-| `ReminderStrip`, `Toast`, `Dialog` | NOTIF-03; the black pill toast at the bottom center (SIGNIN-11, SET-14); the centered confirm dialog over the scrim (480–520 px, radius 32: SIGNIN-11, SET-14) |
+| `ReminderStrip`, `Toast`, `Dialog` | NOTIF-03; the black pill toast at the bottom center (SIGNIN-11, SET-14); the centered confirm dialog over the scrim (SIGNIN-11, SET-14) |
 
 **DS-01:** `/dev/gallery` (dev server only) shows every component in all 4 seasons and every state the States pages show, at the three sizes.
 
 ### 4.3 Fluid type and gutters
-```css
---type-clock-size: clamp(84px, 6.8vw, 128px);   --type-clock-ls: -4px;
---type-temp-size:  clamp(76px, 6.4vw, 96px);    --type-temp-ls:  -3px;
---type-display-xl-size: clamp(36px, 3.6vw, 52px); --type-display-xl-ls: -1px;
---type-display-lg-size: clamp(28px, 2.6vw, 40px);
---type-headline-size: 20px; --type-headline-ls: -0.2px;
---type-body-lg-size: 18px; --type-body-size: 16px; --type-body-sm-size: 15px;
---type-button-size: 17px; --type-eyebrow-size: 14px; --type-caption-size: 14px;
---kiosk-gutter: clamp(20px, 2.6vw, 40px);
-```
-Ambient: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls: -8px; --type-eyebrow-size: clamp(14px, 1.4vw, 20px)`. Today's type grows past 1920×1080 (TODAY-14).
+Type sizes and the gutter are the prototype's overrides of the design-system tokens (smaller fluid `clamp()` sizes, and Ambient's own clock and eyebrow sizes), ported in `src/theme`. Today's type grows past 1920×1080 (TODAY-14).
 
 ### 4.4 Motion and feedback
-- Touch first: no hover states. Press scales to 0.97 over 120 ms ease-out. Fills never darken. No bounces, no blur.
-- Tab/tile state 180 ms · screen change 280 ms fade (to and from Ambient: AMB-10) · season and background cross-fade 600 ms · keyboard resize 280 ms.
-- **Reduced motion:** every 280 ms and 600 ms change happens at once. Press, tab and tile feedback stay.
+- Touch first: no hover states. Press scales down. Fills never darken. No bounces, no blur. Durations and curves: the tokens file (`--dur-*`, `--ease-*`, `--press-scale`); to and from Ambient: AMB-10. The keyboard resize takes 280 ms.
+- **Reduced motion:** screen changes, slides, the season and background cross-fades and the keyboard resize happen at once. Press, tab and tile feedback stay.
 
 ---
 
@@ -149,36 +131,28 @@ Ambient: `--type-clock-size: clamp(84px, 19vw, 300px); --type-clock-ls: -8px; --
 The sidebar narrows the page but doesn't change the size. "Large" in a requirement covers normal too unless normal is named.
 
 ### 5.2 Shell
-- Root `100vh`, season theme, background = season canvas or photo layer (BG-06). `<main>` scrolls, padding = gutter, 16 px at the bottom.
+- Season theme, background = season canvas or photo layer (BG-06). `<main>` scrolls, padding = gutter, 16 px at the bottom.
 - **SHELL-01 Nav:** a left sidebar with seven items in a `nav` named "Main": **Today** `house`, **Calendar** `calendar-days`, **Weather** `cloud-sun`, **Notes** `sticky-note`, **Photos** `image`, then pinned to the bottom **Ambient** `moon` (named "Ambient screen") and **Settings** `settings`.
 - **SHELL-02:** the active view is black with `aria-current="page"`. Settings stays active on its sub-pages. Ambient is never active: it opens the Ambient screen at once (AMB-08).
 - **SHELL-03:** no sidebar on Sign in, Ambient, Terms of Service and the Guide; the page takes the full width.
 - **SHELL-04:** changing view closes any open sheet and scrolls `main` to the top.
-- **SHELL-05:** on a photo background every zone with text sits on a white panel (radius 24). Color blocks and the sidebar stay solid.
+- **SHELL-05:** on a photo background every zone with text sits on a white panel. Color blocks and the sidebar stay solid.
 - **SHELL-08 Sidebar states:** Hidden → Rail → Expanded → Hidden, plus Rail → Hidden with the rail's ✕. A load on Today starts Hidden, on any other view Rail. Opening any view but Today brings the Rail back; going to Today leaves it as it is. On small there is no Rail: Hidden ⇄ Expanded only, and any view change returns to Hidden. The state belongs to this tab and isn't saved.
-  - **Hidden:** the grip, a white tab flush with the left edge, 36×112 px (24×96 on small), 24 px radius on its inner side, level 1 + 2 shadow, a 22 px `chevron-right` (stroke 2), in a 44×144 touch area, 0.97 press: "Show sidebar" → Rail. Every view, Today included, keeps a 36 px left inset (24 on small) while Hidden, so the grip never covers content.
-  - **Rail:** 80 px white, full height, hairline inner edge, 16 px padding, 8 px gap: the five views as 56 px IconButtons, a flexible gap, Ambient and Settings, then a 56 px ✕ "Hide sidebar" as a fixed footer (the items above scroll on short windows). Page inset 80 px. **Expand handle:** the same pill on the rail's inner edge, vertically centered, 56×96 touch area, "Expand menu" → Expanded. It fades out (180 ms) while the drawer is open and in full-screen Photos.
-  - **Expanded:** a 320 px white panel 12 px from the top, bottom and left, radius 24, `shadow-1`, no scrim. Header "Glance" (Geist 540, 24 px). The five views as 64 px pill rows (icon + 20 px label, weight 480; current = black fill), a gap, a hairline, Ambient and Settings, then a fixed "Close" row (named "Close sidebar") → Hidden. The rail fades out (180 ms). The page is pushed 332 px and stays usable: a tap on it doesn't close the drawer. Picking a row, or any view change, returns to Rail.
-  - **Small (≤ 768):** no Rail. The page takes the full width with only the grip (24×96, "Open menu") on the edge; it opens the Expanded drawer directly, and closing it (Close, scrim or picking a view) returns to the grip. Drawer 248 px with 48 px rows, 16 px labels, 20 px icons and a 20 px "Glance" header. The drawer slides **over** the page with a 60% scrim; a scrim tap closes it and focuses the grip.
-  - **Motion:** slides over 280 ms `cubic-bezier(0.2, 0, 0, 1)`; at once with reduced motion.
+  - Sizes, shadows and placement: the prototype's sidebar (§2); small: see `Glance States - System`, Small-screen drawer, frame A.
+  - **Hidden:** the grip, a tab flush with the left edge with a `chevron-right`, in a 44×144 touch area, with press feedback: "Show sidebar" → Rail. Every view, Today included, keeps a left inset the grip's width while Hidden, so the grip never covers content.
+  - **Rail:** full height: the five views as IconButtons, a flexible gap, Ambient and Settings, then a ✕ "Hide sidebar" as a fixed footer (the items above scroll on short windows). **Expand handle:** on the rail's inner edge, vertically centered, a 56×96 touch area, "Expand menu" → Expanded. It fades out while the drawer is open and in full-screen Photos.
+  - **Expanded:** a floating panel, no scrim. Header "Glance". The five views as pill rows (icon + label; current = black fill), a gap, a hairline, Ambient and Settings, then a fixed "Close" row (named "Close sidebar") → Hidden. The rail fades out. The page is pushed aside and stays usable: a tap on it doesn't close the drawer. Picking a row, or any view change, returns to Rail.
+  - **Small (≤ 768):** no Rail. The page takes the full width with only the grip ("Open menu") on the edge; it opens the Expanded drawer directly, and closing it (Close, scrim or picking a view) returns to the grip. The drawer slides **over** the page with a scrim; a scrim tap closes it and focuses the grip.
+  - **Motion:** the sidebar slides; at once with reduced motion.
 - **SHELL-09 Keyboard and focus:** the grip and Expand menu carry `aria-expanded`. Escape in Expanded → Rail. Opening the drawer focuses the current view's row. Escape or a row → focus to Expand menu; Close or ✕ → the grip; the grip → Expand menu. A view change that brings the rail back, and a page load, move no focus. Parts not shown are `inert`. No focus trap.
-- **SHELL-10 Offsets:** the sidebar inset (Hidden 36 px, Rail 80, Expanded 332; small 24 px, the drawer overlays the page) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
+- **SHELL-10 Offsets:** the sidebar's inset for its state (the grip, the rail or the drawer and its margin; on small only the grip, as the drawer overlays the page) pads the shell, so the views and the offline pill follow it. Sheet scrims and full-screen Photos cover the sidebar.
 - **SHELL-11 Hides when idle** (when `hideSidebarWhenIdle` is on, SET-05): after 15 s with no touch or key press, Rail or Expanded → Hidden (the drawer closes and the rail slides away). The timer doesn't run while a sheet is open, the keyboard is up or a text field is focused. Tapping the grip → Rail and restarts the 15 s. No focus moves. Off: the sidebar stays as it is.
 
 ### 5.3 Grid templates
-
-| View | large and normal | small |
-|---|---|---|
-| Today | TODAY-14 | TODAY-14 |
-| Calendar | week strip, then `1fr` (CAL-04) | header card, then the day list (CAL-02, CAL-10) |
-| Weather | `minmax(340px,.85fr) 1.4fr` | 1 col |
-| Photos | `1.6fr minmax(300px,1fr)`, featured min-h 200, thumbs 2 col, fits the screen | 1 col, featured 260, thumbs 2 col |
-| Settings, Location, Ambient screen | `1.4fr minmax(320px,1fr)` | 1 col |
-| Background | `1.4fr minmax(320px,1fr)`, thumbs `auto-fill minmax(160px,1fr)` | 1 col, thumbs 2 col |
-| Sign in | `1fr 1fr` | 1 col |
+Each view's columns are the prototype's layout for that view; see the feature's States page. Today: TODAY-14. Calendar: the week strip then the day (CAL-04); small: the header card then the day list (CAL-02, CAL-10). Photos fits the screen on large and normal.
 
 ### 5.4 Small (≤ 768)
-- One column everywhere. Hourly `repeat(8, 64px)` and 7-day `repeat(7, 64px)` scroll sideways.
+- One column everywhere. The hourly and 7-day forecast rows scroll sideways.
 - Today: the compact Now panel with no Clock (TODAY-01), and the day list as the schedule (TODAY-11).
 - Calendar: the header card and the day list (CAL-02, CAL-10); no timeline, 24 hours link or rain chips.
 - Photos: Upload opens the file picker; no QR panel (PHOTO-03).
