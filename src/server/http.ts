@@ -37,6 +37,14 @@ export function setCookie(response: NextResponse, name: CookieName, value: strin
   });
 }
 
+export function renewSession(request: NextRequest, response: NextResponse): NextResponse {
+  const token = request.cookies.get("session")?.value;
+
+  if (token) setCookie(response, "session", token);
+
+  return response;
+}
+
 export function clearCookie(response: NextResponse, name: CookieName): void {
   response.cookies.delete(name);
 }

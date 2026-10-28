@@ -24,7 +24,6 @@ export function createErrorReporter({
 }: ErrorReporterDeps = {}): ReportError {
   const seen = new Set<string>();
 
-  // shortcut: reports waiting offline live in memory and are lost on reload; persist them if lost crashes ever matter.
   const waiting: ClientError[] = [];
 
   const send = (report: ClientError) => {

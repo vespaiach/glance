@@ -102,6 +102,20 @@ describe("CalendarEventSchema", () => {
     expect(accepts(CalendarEventSchema, { ...event, title: "   " })).toBe(false);
   });
 
+  it("EVT-12 caps the title at 140, the place at 60 and the notes at 280 characters", () => {
+    expect(
+      accepts(CalendarEventSchema, {
+        ...event,
+        title: "a".repeat(140),
+        location: "a".repeat(60),
+        notes: "a".repeat(280),
+      }),
+    ).toBe(true);
+    expect(accepts(CalendarEventSchema, { ...event, title: "a".repeat(141) })).toBe(false);
+    expect(accepts(CalendarEventSchema, { ...event, location: "a".repeat(61) })).toBe(false);
+    expect(accepts(CalendarEventSchema, { ...event, notes: "a".repeat(281) })).toBe(false);
+  });
+
   it("D6 rejects a start that isn't an ISO timestamp", () => {
     expect(accepts(CalendarEventSchema, { ...event, startAt: "10:30" })).toBe(false);
   });
@@ -225,6 +239,11 @@ describe("TagSchema", () => {
 
   it("FAM-04 rejects a blank name", () => {
     expect(accepts(TagSchema, { ...tag, name: "  " })).toBe(false);
+  });
+
+  it("§7 caps the name at 32 characters", () => {
+    expect(accepts(TagSchema, { ...tag, name: "a".repeat(32) })).toBe(true);
+    expect(accepts(TagSchema, { ...tag, name: "a".repeat(33) })).toBe(false);
   });
 
   it("§7 accepts each of the 12 block colors and nothing else", () => {

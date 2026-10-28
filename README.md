@@ -58,7 +58,7 @@ src/server/     server-only: db, auth, services, weather, mail, jobs, SSE bus
 src/fixtures/   shared test data
 src/copy.ts     every user-facing string
 db-migrations/  PostgreSQL schema
-docs/           spec, technical design, plan, design handoff and prompts
+docs/           spec, technical design, plan and design handoff
 ```
 
 ## Development
@@ -98,7 +98,7 @@ The service worker and the offline cold start only run in a production build. Ru
 | `npm run build` | Production build |
 | `npm start` | Serve the production build (needs `DATABASE_URL`, `DATA_DIR`, `APP_URL`, `MAIL_FROM` and the mail provider's variables) |
 
-CI runs `check` → `typecheck` → `test` → `build`. A pre-commit hook in `.githooks/` is installed by `npm ci`.
+CI (run by hand from the Actions tab) runs `check` → `typecheck` → `test` → `build`. A pre-commit hook in `.githooks/` is installed by `npm ci`.
 
 ## Documentation
 

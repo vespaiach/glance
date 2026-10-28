@@ -26,7 +26,7 @@ import {
   withMinute,
 } from "@/domain/eventTimes";
 import { monthCells, monthOf, monthTitle, stepMonth } from "@/domain/quickDate";
-import type { Tag, TagColor } from "@/domain/schemas";
+import { EVENT_LIMITS, TAG_NAME_LIMIT, type Tag, type TagColor } from "@/domain/schemas";
 import { suggestTags } from "@/domain/tagMatch";
 import { exactTag, nextFreeColor, pickWho } from "@/domain/tags";
 import {
@@ -89,14 +89,6 @@ type TextField = HTMLInputElement | HTMLTextAreaElement;
 const words = copy.events.picker;
 
 const fields = copy.events.page.fields;
-
-const MAX_TITLE = 140;
-
-const MAX_PLACE = 60;
-
-const MAX_NOTES = 280;
-
-const MAX_NAME = 32;
 
 const WEEK = 7;
 
@@ -502,7 +494,7 @@ function TitleBody({ breakpoint, draft, recentTitles, onAction }: BodyProps) {
         aria-label={fields.title}
         value={draft.title}
         rows={2}
-        maxLength={MAX_TITLE}
+        maxLength={EVENT_LIMITS.title}
         placeholder={words.titlePlaceholder}
         onChange={(event) =>
           onAction({ type: "title", value: event.target.value.replace(/\n/g, " ") })
@@ -731,7 +723,7 @@ function WhoBody({ draft, tags, onAction, onCreateTag }: BodyProps) {
         aria-label={words.addPerson}
         autoComplete="off"
         value={input}
-        maxLength={MAX_NAME}
+        maxLength={TAG_NAME_LIMIT}
         placeholder={words.addPerson}
         onChange={(event) => setInput(event.target.value)}
         onKeyDown={onKeyDown}
@@ -760,7 +752,7 @@ function WhereBody({ breakpoint, draft, recentPlaces, onAction }: BodyProps) {
         type="text"
         aria-label={fields.where}
         value={draft.location}
-        maxLength={MAX_PLACE}
+        maxLength={EVENT_LIMITS.location}
         placeholder={words.wherePlaceholder}
         onChange={(event) => onAction({ type: "location", value: event.target.value })}
         onKeyDown={enterIsNext(onAction)}
@@ -785,7 +777,7 @@ function NotesBody({ draft, onAction }: BodyProps) {
       aria-label={fields.notes}
       value={draft.notes}
       rows={4}
-      maxLength={MAX_NOTES}
+      maxLength={EVENT_LIMITS.notes}
       placeholder={words.notesPlaceholder}
       onChange={(event) => onAction({ type: "notes", value: event.target.value })}
       {...stylex.props(styles.input, styles.notes)}

@@ -19,7 +19,7 @@ import type { Breakpoint } from "@/domain/breakpoint";
 import { dayRibbon } from "@/domain/dayRibbon";
 import { slotTimes } from "@/domain/eventTimes";
 import type { AccountSettings, CalendarEvent, Photo, Tag, Weather } from "@/domain/schemas";
-import { filterTagIds, liveFilter } from "@/domain/tags";
+import { filterTagIds, liveFilter, matchesFilter } from "@/domain/tags";
 import { hasEvent, todayHero } from "@/domain/todayHero";
 import { comingUp } from "@/domain/todaySchedule";
 import type { TodaysPhotoPick } from "@/domain/todaysPhoto";
@@ -52,8 +52,6 @@ import { todayAreas, todayGrids, todayLayout, todayPhotoFrames, todayType } from
 import { firstUpload, momentsLine, photoText } from "./todaysPhoto";
 
 const TEXT_ACTIONS_MIN_WIDTH = 1440;
-
-const COMING_UP_READ = 5;
 
 const NO_TAGS: Tag[] = [];
 
@@ -123,7 +121,7 @@ export function TodayScreen() {
 
   const events = useSyncedZone(useEventsOnDay(day, tz));
 
-  const later = useEventsAfter(day, tz, COMING_UP_READ);
+  const later = useEventsAfter(day, tz);
 
   const tags = useTags() ?? NO_TAGS;
 
@@ -134,6 +132,8 @@ export function TodayScreen() {
   const selected = liveFilter(who.filter, allIds);
 
   const people = filterTagIds(selected, allIds);
+
+  const laterShown = later?.filter((event) => matchesFilter(event, selected, allIds));
 
   const notes = useSyncedZone<ShownNote>(useNotes(now));
 
@@ -193,7 +193,7 @@ export function TodayScreen() {
         breakpoint={breakpoint}
         iconActions={width < TEXT_ACTIONS_MIN_WIDTH}
         weather={gutterWeather(weather.state, day, tz, settings.tempUnit)}
-        upcoming={later && comingUp(later, now, tz)}
+        upcoming={laterShown && comingUp(laterShown, now, tz)}
         onOpenEvent={openEvent}
         onAddEvent={() => sheets.open({ kind: "newevent", day, who: people })}
         onAddSlot={(slot) =>

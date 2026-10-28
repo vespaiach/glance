@@ -209,7 +209,7 @@ describe("event hooks", () => {
     await waitFor(() => expect(result.current?.id).toBe(NEXT_DAY.id));
   });
 
-  it("TODAY-06 useEventsAfter reads up to the limit of live timed and all-day events after the day", async () => {
+  it("TODAY-06 useEventsAfter reads every live timed and all-day event after the day", async () => {
     const trip = { ...event(5, "2026-10-12T00:00:00.000Z"), allDay: true as const };
 
     const removed = { ...synced(event(6, at(9, 10, 8))), deletedAt: TEST_NOW.toISOString() };
@@ -225,12 +225,17 @@ describe("event hooks", () => {
       removed,
     ]);
 
-    const { result } = renderHook(() => useEventsAfter("2026-10-09", tz, 2), {
+    const { result } = renderHook(() => useEventsAfter("2026-10-09", tz), {
       wrapper: wrapperFor(store),
     });
 
     await waitFor(() =>
-      expect(result.current?.map((row) => row.id)).toEqual([trip.id, NEXT_DAY.id, later.id]),
+      expect(result.current?.map((row) => row.id)).toEqual([
+        trip.id,
+        NEXT_DAY.id,
+        later.id,
+        NEXT_MONTH.id,
+      ]),
     );
   });
 

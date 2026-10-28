@@ -74,22 +74,18 @@ export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | nul
   }, [db, dayKey, tz]);
 }
 
-export function useEventsAfter(
-  dayKey: string,
-  tz: string,
-  limit: number,
-): StoredEvent[] | undefined {
+export function useEventsAfter(dayKey: string, tz: string): StoredEvent[] | undefined {
   const { db } = useRepoStore();
 
   return useLiveQuery(async () => {
     const next = addDays(dayKey, 1);
 
-    const allDay = await firstFrom(db, allDayStart(next), true, limit);
+    const allDay = await startingFrom(db, allDayStart(next), true);
 
-    const timed = await firstFrom(db, isoDayStart(next, tz), false, limit);
+    const timed = await startingFrom(db, isoDayStart(next, tz), false);
 
     return [...allDay, ...timed];
-  }, [db, dayKey, tz, limit]);
+  }, [db, dayKey, tz]);
 }
 
 export function useUpcomingEvent(now: Date): StoredEvent | null | undefined {
@@ -152,6 +148,10 @@ async function eventsOnDays(
 
 function isoDayStart(key: string, tz: string): string {
   return dayStart(key, tz).toISOString();
+}
+
+function startingFrom(db: GlanceDb, from: string, allDay: boolean): Promise<StoredEvent[]> {
+  return db.events.where("startAt").aboveOrEqual(from).filter(isKind(allDay)).toArray();
 }
 
 function firstFrom(
