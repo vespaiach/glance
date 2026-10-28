@@ -551,7 +551,7 @@ Settings apply instantly, with no Save button. The main panel uses `Radio`, `Swi
 | BG-03 | In Season color, thumbs are faded (see `Glance States - Settings`, frame B); tapping one switches to Photo. |
 | BG-04 | Right: Preview (mini layout on the current background), "Dim photo" Off · Light · Strong (0, 0.2, 0.4), "Change photo" Hourly · Daily · Weekly (Slideshow only). |
 | BG-05 | Caption: "Screens use a plain light gray background. Pick a photo to switch." / "{title} is the background on every screen. Panels stay solid on top." / "Showing {title}. The photo changes {interval}; panels stay solid on top." |
-| BG-06 | Photo background = the photo cropped to cover the screen under a black layer at the dim value, cross-fading (§4.4). Slideshow goes in upload order, the next photo at each local hour, midnight or Sunday midnight. A tapped thumb shows now and the rotation continues from it; mode or interval changes keep the photo on screen. Photo mode with none picked shows the oldest upload. |
+| BG-06 | Photo background = the photo cropped to cover the screen under two stacked black layers, each at the dim value, cross-fading (§4.4). Slideshow goes in upload order, the next photo at each local hour, midnight or Sunday midnight. A tapped thumb shows now and the rotation continues from it; mode or interval changes keep the photo on screen. Photo mode with none picked shows the oldest upload. |
 
 ### 8.8 Ambient — `AMB`
 One full-screen button, text on deep. No sidebar and no wordmark; the rows spread over the full height.
