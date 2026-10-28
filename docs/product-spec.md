@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.07 |
+| Status | v1.08 |
 | Date | 2026-10-28 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -473,16 +473,16 @@ Used by Calendar (any day, filtered) and Today (today, filtered) on large and no
 
 | ID | Requirement |
 |---|---|
-| WX-01 | Read-only. Left: `WeatherNow` "{city}, {state code} · Now" with "H {h}° · L {l}° · Feels like {f}°" under the condition, then the four details, Wind ("8 mph NW"), Humidity, UV index and Sunset, in a 2 × 2 grid under a white divider on every size (a mono caption label with a 16 px icon, the value 28 px / 480), so labels and values never wrap word by word. Right: Banner, "Next 8 hours" (time, icon, temp°), "7-day forecast" (today highlighted, rain % from 10%). |
+| WX-01 | Read-only. Left: `WeatherNow` "{city}, {state code} · Now" with "H {h}° · L {l}° · Feels like {f}°" under the condition, then the four details, Wind ("8 mph NW"), Humidity, UV index and Sunset, under a divider (see `Glance States - Weather`, frame A); their labels and values never wrap word by word. Right: Banner, "Next 8 hours" (time, icon, temp°), "7-day forecast" (today highlighted, rain % from 10%). |
 | WX-02 | Values follow the unit setting, no unit letter. With °C wind is km/h. |
 | WX-03 | Rain banner (cloud-rain) "Rain moving in after {time}" / "Grab an umbrella if you're heading out." when any of the next 8 hours is ≥ 50%, at the first such hour. Offline and the forecast over an hour old: "Forecast from {time}" / "Updates when the screen is back online. Conditions may have changed." |
-| WX-04 | **Setup card** (no location): block-3, eyebrow "Weather · setup", "Where is this screen?", "The forecast and the clock’s time zone follow this place. You can change it later in Settings.", field "City or ZIP code" ("Portland, OR"), primary "Show weather" and secondary "Use my location" (LOC-01). Empty → "Enter a city or ZIP code". The same card is used by SET-09 (primary "Search") and SIGNIN-14 ("Continue"). |
+| WX-04 | **Setup card** (no location; see `Glance States - Weather`, frame E): eyebrow "Weather · setup", "Where is this screen?", "The forecast and the clock’s time zone follow this place. You can change it later in Settings.", field "City or ZIP code" ("Portland, OR"), primary "Show weather" and secondary "Use my location" (LOC-01). Empty → "Enter a city or ZIP code". The same card is used by SET-09 (primary "Search") and SIGNIN-14 ("Continue"). |
 | WX-05 | Loading skeleton; failure "Weather unavailable" / "The forecast service isn't responding. Trying again in {n} min." + "Try again". |
 | WX-06 | Refreshes every 15 min. The location is changed in Settings › Location. |
-| WX-07 | **Searching:** the buttons become "Looking for {query}…" with a pulsing search icon. Typing cancels. A failed search: "Place search isn’t responding. Try again in a moment." (text kept, cleared on the next keystroke). |
+| WX-07 | **Searching:** the buttons become "Looking for {query}…" with a search icon (see `Glance States - Weather`, frame B). Typing cancels. A failed search: "Place search isn’t responding. Try again in a moment." (text kept, cleared on the next keystroke). |
 | WX-08 | Unknown place: "We couldn't find that place. Try a city and state, like Austin, TX". |
-| WX-09 | **Several matches:** "{n} places called {city}", one 64 px row each (city, "{state}, United States · {time zone name}"). A tap sets the place and its time zone. Typing clears the list. A single match is set at once. US only; city, "City, ST" or ZIP; at most 5, largest first. |
-| WX-10 | **Attribution** (Open-Meteo's CC BY 4.0 license): under the 7-day forecast, "Weather data by Open-Meteo.com" (mono 12 px, centered, underlined, 44 px hit target), a link to `https://open-meteo.com/` that opens in a new tab (`rel="noopener"`). Shown whenever forecast data shows; not in the setup or failed state. |
+| WX-09 | **Several matches:** "{n} places called {city}", one row each (see `Glance States - Weather`, frame D; city, "{state}, United States · {time zone name}"). A tap sets the place and its time zone. Typing clears the list. A single match is set at once. US only; city, "City, ST" or ZIP; at most 5, largest first. |
+| WX-10 | **Attribution** (Open-Meteo's CC BY 4.0 license): under the 7-day forecast, "Weather data by Open-Meteo.com" (underlined, 44 px hit target), a link to `https://open-meteo.com/` that opens in a new tab (`rel="noopener"`). Shown whenever forecast data shows; not in the setup or failed state. |
 
 ### 8.5 Notes — `NOTE`
 White panel: the count eyebrow (NOTE-06), "Notice board", "Add note" (`square-pen`; the lg 64 px Button on large, md 44 px on normal and small). Grid `auto-fill minmax(clamp(220px, 17vw, 340px), 1fr)`, gaps 36–48 px (four columns at 1920), notes at least 280 px tall on large and 200 px otherwise, note text 24–32 px (1.6vw). No caption under the board. Every note is one paper tone, the season soft color (cream in spring, summer and fall; frost in winter), so color on Today always means a person.
