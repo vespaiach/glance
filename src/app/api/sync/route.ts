@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { errorJson, readCursor, syncReader } from "@/server/http";
+import { errorJson, readCursor, renewSession, syncReader } from "@/server/http";
 import { pullChanges } from "@/server/services";
 
 export const runtime = "nodejs";
@@ -13,5 +13,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (!since.ok) return errorJson(since.error, 400);
 
-  return NextResponse.json(await pullChanges(display.value.accountId, since.value));
+  return renewSession(
+    request,
+    NextResponse.json(await pullChanges(display.value.accountId, since.value)),
+  );
 }

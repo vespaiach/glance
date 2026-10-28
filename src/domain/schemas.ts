@@ -43,6 +43,10 @@ const serverEntries = {
   deletedAt: v.optional(IsoTimestampSchema),
 };
 
+export const EVENT_LIMITS = { title: 140, location: 60, notes: 280 } as const;
+
+export const TAG_NAME_LIMIT = 32;
+
 export const ServerFieldsSchema = v.object(serverEntries);
 export type Synced<T> = T & v.InferOutput<typeof ServerFieldsSchema>;
 
@@ -50,12 +54,12 @@ const eventEntries = {
   id: IdSchema,
   startAt: IsoTimestampSchema,
   endAt: v.optional(IsoTimestampSchema),
-  title: RequiredTextSchema,
-  location: v.optional(v.string()),
+  title: v.pipe(RequiredTextSchema, v.maxLength(EVENT_LIMITS.title)),
+  location: v.optional(v.pipe(v.string(), v.maxLength(EVENT_LIMITS.location))),
   allDay: v.optional(v.literal(true)),
   everyone: v.boolean(),
   tagIds: v.array(IdSchema),
-  notes: v.optional(v.string()),
+  notes: v.optional(v.pipe(v.string(), v.maxLength(EVENT_LIMITS.notes))),
   notify: v.optional(v.boolean()),
 };
 
@@ -82,7 +86,7 @@ export const SyncedEventSchema = v.pipe(
 
 export const TagSchema = v.object({
   id: IdSchema,
-  name: RequiredTextSchema,
+  name: v.pipe(RequiredTextSchema, v.maxLength(TAG_NAME_LIMIT)),
   color: TagColorSchema,
   createdAt: IsoTimestampSchema,
 });

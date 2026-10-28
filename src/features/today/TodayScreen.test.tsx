@@ -280,6 +280,35 @@ test("TODAY-04 the filter is Calendar's: it starts from the shared filter and Ad
   );
 });
 
+test("TODAY-06 under the person filter Coming up shows the next plan for the people shown past five plans for others", async () => {
+  const dadRuns = [1, 2, 3, 4, 5].map((n) => ({
+    ...DAD_RUN,
+    id: `0195f0a0-0000-7000-8000-00000000010${n}`,
+    startAt: new Date(2026, 9, 9 + n, 8, 0).toISOString(),
+    endAt: new Date(2026, 9, 9 + n, 9, 0).toISOString(),
+  }));
+
+  const momLunch: CalendarEvent = {
+    ...TOMORROW,
+    id: "0195f0a0-0000-7000-8000-000000000110",
+    title: "Mom’s lunch",
+    startAt: new Date(2026, 9, 20, 12, 0).toISOString(),
+    endAt: new Date(2026, 9, 20, 13, 0).toISOString(),
+    everyone: false,
+    tagIds: [MOM.id],
+  };
+
+  await store.db.tags.bulkPut([synced(MOM), synced(DAD)]);
+  await store.db.events.bulkPut([...dadRuns, momLunch].map((event) => synced(event)));
+
+  await markSynced(store);
+
+  renderToday({ who: [MOM.id] });
+
+  expect(await screen.findByRole("button", { name: /^Mom’s lunch, / })).toBeVisible();
+  expect(screen.queryByRole("button", { name: /^Dad’s run, / })).not.toBeInTheDocument();
+});
+
 test("TODAY-04 below 1440 px Add event and Full calendar are icon-only", async () => {
   await store.db.events.put(synced(CALL));
   vi.stubGlobal("innerWidth", 1439);
