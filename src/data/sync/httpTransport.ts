@@ -1,4 +1,5 @@
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
+import type { ImportReview } from "@/domain/imports";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account, Weather, WeatherLocation } from "@/domain/schemas";
@@ -10,6 +11,7 @@ import type {
   Change,
   CodeError,
   Coordinates,
+  ImportError,
   LocateError,
   PullResponse,
   QrCode,
@@ -32,6 +34,8 @@ const JSON_TYPE = "application/json";
 
 const CODE_ERRORS: readonly string[] = ["wrong-code", "code-locked", "code-expired"];
 
+const ICS_ERRORS: readonly string[] = ["not-ics", "no-upcoming"];
+
 export function createHttpTransport({
   fetch = globalThis.fetch.bind(globalThis),
   createXhr = () => new XMLHttpRequest(),
@@ -39,6 +43,10 @@ export function createHttpTransport({
   const send = sender(fetch, transportError);
 
   const sendLocate = sender(fetch, locateError);
+
+  const sendImport = sender(fetch, importError);
+
+  const sendStaged = sender(fetch, stagedError);
 
   return {
     push: pushWith(send),
@@ -52,6 +60,17 @@ export function createHttpTransport({
     issueQr: (opens) =>
       send<QrCode>("/api/auth/qr", opens ? jsonBody("POST", { opens }) : { method: "POST" }),
     voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),
+    imports: {
+      upload: (file, forDisplay) =>
+        sendImport<ImportReview>(importPath(forDisplay), fileBody(file)),
+      staged: async () => {
+        const answer = await sendStaged<ImportReview>("/api/imports/staged");
+
+        if (answer.ok) return answer;
+
+        return answer.error === "not-found" ? ok(undefined) : err(answer.error);
+      },
+    },
     webPush: {
       key: async () => {
         const answer = await send<{ key: string }>("/api/push/key");
@@ -101,6 +120,22 @@ function uploadError(status: number, body: string): UploadError {
   return transportError(status, body);
 }
 
+function importError(status: number, body: string): ImportError {
+  if (status === 413) return "too-large";
+
+  const answer = readJson<{ error?: unknown }>(body);
+
+  const error = answer.ok ? String(answer.value?.error) : "";
+
+  if (status === 400 && ICS_ERRORS.includes(error)) return error as ImportError;
+
+  return transportError(status, body);
+}
+
+function stagedError(status: number, body: string): TransportError | "not-found" {
+  return status === 404 ? "not-found" : transportError(status, body);
+}
+
 function locateError(status: number, body: string): LocateError {
   return status === 404 ? "outside" : transportError(status, body);
 }
@@ -141,6 +176,20 @@ function sender<E>(
 
 function jsonBody(method: string, body: unknown): RequestInit {
   return { method, headers: { "content-type": JSON_TYPE }, body: JSON.stringify(body) };
+}
+
+function fileBody(file: File): RequestInit {
+  return {
+    method: "POST",
+    headers: { "content-type": file.type, [FILE_NAME_HEADER]: encodeURIComponent(file.name) },
+    body: file,
+  };
+}
+
+function importPath(forDisplay: string | undefined): string {
+  return forDisplay === undefined
+    ? "/api/imports"
+    : `/api/imports?forDisplay=${encodeURIComponent(forDisplay)}`;
 }
 
 function verifyCodeWith(fetch: typeof globalThis.fetch): Transport["auth"]["verifyCode"] {

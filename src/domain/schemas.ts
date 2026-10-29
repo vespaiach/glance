@@ -287,6 +287,9 @@ export const QrVoidRequestSchema = v.object({
 });
 export type QrVoidRequest = v.InferOutput<typeof QrVoidRequestSchema>;
 
+export const ImportUploadQuerySchema = v.object({ forDisplay: v.optional(IdSchema) });
+export type ImportUploadQuery = v.InferOutput<typeof ImportUploadQuerySchema>;
+
 export const NameRequestSchema = v.object({
   name: v.pipe(RequiredTextSchema, v.maxLength(100)),
 });

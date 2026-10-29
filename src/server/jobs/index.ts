@@ -6,6 +6,7 @@ import { logError } from "../log";
 import { createWebPush } from "../push";
 import type { ServiceDeps } from "../services/deps";
 import { photoStore } from "../storage";
+import { removeStagedImports } from "./imports";
 import { expireNotes } from "./notes";
 import { backfillPhotoBytes, removeDeletedPhotoFiles, removePhotoOriginals } from "./photos";
 import { cleanupReminderSends, sendReminderPushes } from "./reminders";
@@ -18,7 +19,7 @@ const HOUR_MS = 60 * MINUTE_MS;
 
 export function startJobs(): void {
   const tick = createJobTick({
-    hourly: { expireNotes: runHourly },
+    hourly: { expireNotes: runHourly, removeStagedImports: runStagedImportCleanup },
     daily: {
       cleanupSignIns: runSignInCleanup,
       removeDeletedPhotoFiles: runPhotoCleanup,
@@ -58,6 +59,10 @@ async function runHourly(): Promise<void> {
   const bus = syncBus();
 
   for (const { accountId, version } of await expireNotes(deps())) bus.publish(accountId, version);
+}
+
+async function runStagedImportCleanup(): Promise<void> {
+  await removeStagedImports(deps());
 }
 
 async function runSignInCleanup(): Promise<void> {

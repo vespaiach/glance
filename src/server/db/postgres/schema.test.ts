@@ -40,6 +40,7 @@ describe("001_init", () => {
       "accounts",
       "displays",
       "events",
+      "imports",
       "magic_links",
       "notes",
       "photo_file_cleanup",
@@ -810,5 +811,20 @@ describe("019_event_exdates", () => {
     await insertEvent(NOW, null);
 
     expect(await db().one("SELECT exdates FROM events")).toEqual({ exdates: [] });
+  });
+});
+
+describe("020_imports", () => {
+  it("D39 an import is staged, done or undone", async () => {
+    await insertAccount("a1");
+
+    const insert = (status: string) =>
+      db().run(
+        "INSERT INTO imports (id, account_id, status, file_name, bytes, first_day, last_day, created_at) VALUES ($1, 'a1', $1, 'a.ics', 1, '2026-10-09', '2026-10-09', $2)",
+        [status, NOW],
+      );
+
+    await insert("staged");
+    await expect(insert("lost")).rejects.toThrow(/check constraint/);
   });
 });

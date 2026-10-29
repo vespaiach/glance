@@ -5,7 +5,7 @@ import * as v from "valibot";
 import { BUILD_HEADER, isSupportedBuild } from "@/domain/build";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
-import { IsoDateSchema, WeatherLocationSchema } from "@/domain/schemas";
+import { ImportUploadQuerySchema, IsoDateSchema, WeatherLocationSchema } from "@/domain/schemas";
 import {
   appUrl,
   isAllowedOrigin,
@@ -13,7 +13,14 @@ import {
   type SessionError,
   type SignedInDisplay,
 } from "./auth";
-import { PHOTO_VARIANTS, type PhotoUpload, type PhotoVariant } from "./services/photos";
+import { ICS_LIMITS } from "./services/imports/parse";
+import type { IcsUpload } from "./services/imports/stage";
+import {
+  PHOTO_VARIANTS,
+  type PhotoUpload,
+  type PhotoVariant,
+  readLimited,
+} from "./services/photos";
 import type { StoredObject } from "./storage/store";
 import type { Coordinates } from "./weather/provider";
 
@@ -162,6 +169,29 @@ export function readUpload(request: NextRequest): Result<PhotoUpload, "invalid">
     type: request.headers.get("content-type") ?? "",
     size: length === null ? undefined : Number(length),
     body: request.body ?? Readable.from([]),
+  });
+}
+
+export async function readIcsUpload(
+  request: NextRequest,
+): Promise<Result<IcsUpload, "invalid" | "too-large">> {
+  const fileName = decodedName(request.headers.get(FILE_NAME_HEADER));
+
+  const query = v.safeParse(ImportUploadQuerySchema, {
+    forDisplay: request.nextUrl.searchParams.get("forDisplay") ?? undefined,
+  });
+
+  if (fileName === undefined || !query.success) return err("invalid");
+
+  const bytes = await readLimited(request.body ?? Readable.from([]), ICS_LIMITS.bytes);
+
+  if (!bytes) return err("too-large");
+
+  return ok({
+    fileName,
+    text: new TextDecoder().decode(bytes),
+    size: bytes.length,
+    ...query.output,
   });
 }
 

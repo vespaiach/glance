@@ -1,3 +1,4 @@
+import type { ImportReview } from "@/domain/imports";
 import type { UploadProblem } from "@/domain/photoUpload";
 import type { QrOpens } from "@/domain/qrSignIn";
 import type { Result } from "@/domain/result";
@@ -28,6 +29,8 @@ export type TransportError =
   | "server";
 
 export type UploadError = TransportError | UploadProblem;
+
+export type ImportError = TransportError | "not-ics" | "no-upcoming" | "too-large";
 
 export type LocateError = TransportError | "outside";
 
@@ -71,6 +74,10 @@ export interface Transport {
   photoUsage(): Answer<PhotoUsage>;
   issueQr(opens?: QrOpens): Answer<QrCode>;
   voidQr(url: string): Answer<void>;
+  imports: {
+    upload(file: File, forDisplay?: string): Answer<ImportReview, ImportError>;
+    staged(): Answer<ImportReview | undefined>;
+  };
   webPush: {
     key(): Answer<string>;
     subscribe(subscription: PushSubscription): Answer<void>;

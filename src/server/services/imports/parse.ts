@@ -1,15 +1,11 @@
 import ICAL from "ical.js";
 import { copy } from "@/copy";
 import { allDayStart, eventDayKey } from "@/domain/allDay";
+import type { ImportedEvent } from "@/domain/imports";
 import { nextOccurrence } from "@/domain/repeat";
 import { err, ok, type Result } from "@/domain/result";
-import { type CalendarEvent, EVENT_LIMITS } from "@/domain/schemas";
+import { EVENT_LIMITS } from "@/domain/schemas";
 import { addDays, dateKey, dayStart, zonedInstant } from "@/domain/zone";
-
-export type ImportedEvent = Pick<
-  CalendarEvent,
-  "title" | "startAt" | "endAt" | "allDay" | "location" | "notes" | "repeat" | "exdates"
->;
 
 export interface ParsedIcs {
   events: ImportedEvent[];

@@ -248,6 +248,52 @@ describe("HttpTransport", () => {
     expect(calls[0]?.init.body).toBe(JSON.stringify({ opens: "photos" }));
   });
 
+  it("D39 imports.upload posts the raw file with its encoded name and the screen it's for", async () => {
+    const review = { id: "i1", newCount: 2 };
+    const { calls, fetch } = fakeFetch(json(review, 201));
+    const file = new File(["BEGIN:VCALENDAR"], "school year.ics", { type: "text/calendar" });
+
+    const answer = await transport(fetch).imports.upload(file, "d1");
+
+    expect(answer).toEqual({ ok: true, value: review });
+    expect(calls[0]?.url).toBe("/api/imports?forDisplay=d1");
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(calls[0]?.init.body).toBe(file);
+    expect(headersOf(calls[0]).get(FILE_NAME_HEADER)).toBe("school%20year.ics");
+    expect(headersOf(calls[0]).get(BUILD_HEADER)).toBe(String(CLIENT_BUILD));
+  });
+
+  it("IMP-06 imports.upload answers not-ics, no-upcoming and too-large", async () => {
+    const { fetch } = fakeFetch(
+      json({ error: "not-ics" }, 400),
+      json({ error: "no-upcoming" }, 400),
+      json({ error: "too-large" }, 413),
+      json({ error: "invalid" }, 400),
+    );
+    const file = new File(["x"], "a.ics");
+    const imports = transport(fetch).imports;
+
+    const errors = [];
+    for (let i = 0; i < 4; i++) errors.push(await imports.upload(file));
+
+    expect(errors.map((answer) => !answer.ok && answer.error)).toEqual([
+      "not-ics",
+      "no-upcoming",
+      "too-large",
+      "invalid",
+    ]);
+  });
+
+  it("IMP-04 imports.staged reads this screen's staged import and answers nothing on a 404", async () => {
+    const review = { id: "i1", newCount: 2 };
+    const { calls, fetch } = fakeFetch(json(review), json({ error: "not-found" }, 404));
+    const imports = transport(fetch).imports;
+
+    expect(await imports.staged()).toEqual({ ok: true, value: review });
+    expect(await imports.staged()).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/imports/staged");
+  });
+
   it("SIGNIN-15 voidQr deletes the code by its link and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
     const url = "https://glance.example.com/api/auth/verify?t=abc";

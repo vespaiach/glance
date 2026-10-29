@@ -23,6 +23,7 @@ import * as clientErrors from "./clientErrors";
 import type { ServiceDeps } from "./deps";
 import * as displays from "./displays";
 import * as events from "./events";
+import * as imports from "./imports/stage";
 import * as notes from "./notes";
 import * as photos from "./photos";
 import * as push from "./push";
@@ -97,6 +98,14 @@ export function photoFile(accountId: string, id: string, variant: photos.PhotoVa
 
 export function photoUsage(accountId: string) {
   return photos.photoUsage(photoDeps(), accountId);
+}
+
+export function stageImport(accountId: string, displayId: string, upload: imports.IcsUpload) {
+  return imports.stageImport(deps(), accountId, displayId, upload);
+}
+
+export function stagedImport(accountId: string, displayId: string) {
+  return imports.stagedImport(deps(), accountId, displayId);
 }
 
 export function listDisplays(accountId: string, displayId: string) {

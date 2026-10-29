@@ -124,6 +124,16 @@ async function fillAccount(email: string): Promise<SignedInDisplay & { sessionTo
     keys: { p256dh: "p256dh-key", auth: "auth-secret" },
     createdAt: START.toISOString(),
   });
+  await db.imports.insert({
+    id: randomUUID(),
+    accountId: display.accountId,
+    forDisplayId: display.displayId,
+    fileName: "school.ics",
+    bytes: 10,
+    events: [],
+    range: { first: "2026-10-09", last: "2026-10-09" },
+    createdAt: START.toISOString(),
+  });
   await addPhoto(display.accountId);
   await addPhoto(display.accountId, { deleted: true });
 

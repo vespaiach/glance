@@ -1,4 +1,5 @@
 import "server-only";
+import type { ImportedEvent } from "@/domain/imports";
 import type {
   AccountSettings,
   CalendarEvent,
@@ -73,6 +74,17 @@ export type PushSubscriptionRecord = {
 };
 
 export type ReminderSendRecord = { eventId: string; kind: "15min" | "30min"; fireAt: string };
+
+export type StagedImport = {
+  id: string;
+  accountId: string;
+  forDisplayId: string;
+  fileName: string;
+  bytes: number;
+  events: ImportedEvent[];
+  range: { first: string; last: string };
+  createdAt: string;
+};
 
 type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
 
@@ -171,6 +183,15 @@ export type Repos = {
   reminderSends: {
     insert(sends: readonly ReminderSendRecord[], sentAt: string): Promise<ReminderSendRecord[]>;
     removeSentBefore(at: string): Promise<void>;
+  };
+  imports: {
+    insert(staged: StagedImport): Promise<void>;
+    newestStaged(
+      accountId: string,
+      forDisplayId: string,
+      after: string,
+    ): Promise<StagedImport | undefined>;
+    removeStagedBefore(before: string): Promise<void>;
   };
   weatherCache: {
     get(accountId: string): Promise<WeatherCacheRecord | undefined>;

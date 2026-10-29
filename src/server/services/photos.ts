@@ -215,7 +215,7 @@ async function removeObjectsLogged(
   }
 }
 
-async function readLimited(
+export async function readLimited(
   body: AsyncIterable<Uint8Array>,
   max: number,
 ): Promise<Uint8Array<ArrayBuffer> | undefined> {

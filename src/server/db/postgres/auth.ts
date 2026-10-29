@@ -12,6 +12,7 @@ import type { Sql } from "./sql";
 const ERASE_ACCOUNT = [
   "DELETE FROM reminder_sends r USING events e WHERE e.id = r.event_id AND e.account_id = $1",
   "DELETE FROM events WHERE account_id = $1",
+  "DELETE FROM imports WHERE account_id = $1",
   "DELETE FROM notes WHERE account_id = $1",
   "DELETE FROM tags WHERE account_id = $1",
   "DELETE FROM photos WHERE account_id = $1",
