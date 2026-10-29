@@ -281,13 +281,13 @@ test("TODAY-11 the Earlier pill is hidden when nothing has ended", () => {
 });
 
 test("TODAY-03 tapping a plan opens that event", async () => {
-  const onOpenEvent = vi.fn<(id: string) => void>();
+  const onOpenEvent = vi.fn<(event: CalendarEvent) => void>();
 
   renderSchedule(ready, { onOpenEvent });
 
   await userEvent.click(screen.getByRole("button", { name: /^Lunch with Aunt Rosa, / }));
 
-  expect(onOpenEvent).toHaveBeenCalledWith("lunch");
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "lunch" }));
 });
 
 test("TODAY-03 tapping a free slot adds an event at that slot", async () => {
@@ -321,13 +321,13 @@ test("TODAY-06 a day with no plans lists what's coming up instead of a timeline"
 });
 
 test("TODAY-06 tapping a coming-up plan opens it", async () => {
-  const onOpenEvent = vi.fn<(id: string) => void>();
+  const onOpenEvent = vi.fn<(event: CalendarEvent) => void>();
 
   renderSchedule({ kind: "empty" }, { upcoming: UPCOMING, onOpenEvent });
 
   await userEvent.click(screen.getByRole("button", { name: /^Dentist, / }));
 
-  expect(onOpenEvent).toHaveBeenCalledWith("dentist");
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "dentist" }));
 });
 
 test("TODAY-06 with nothing ahead it shows the empty timeline", () => {
@@ -402,13 +402,13 @@ test("TODAY-04 all-day events count as left in the eyebrow", () => {
 });
 
 test("TODAY-12 tapping an all-day tile opens that event", async () => {
-  const onOpenEvent = vi.fn<(id: string) => void>();
+  const onOpenEvent = vi.fn<(event: CalendarEvent) => void>();
 
   renderSchedule(withAllDay, { onOpenEvent });
 
   await userEvent.click(screen.getByRole("button", { name: /Grandpa staying over/ }));
 
-  expect(onOpenEvent).toHaveBeenCalledWith("grandpa");
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "grandpa" }));
 });
 
 test("TODAY-11 the schedule has no See all row", () => {

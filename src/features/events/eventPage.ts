@@ -1,10 +1,13 @@
 import { type DefaultWord, type EventWord, nextWord } from "@/domain/eventSentence";
 import { defaultEnd, endForLength, moveStart, pickEnd } from "@/domain/eventTimes";
+import { addDays, daysBetween } from "@/domain/zone";
 import { type EventDraft, isDirty } from "./eventDraft";
 
-export type PageDraft = EventDraft & { day: string };
+export type PageDraft = EventDraft & { day: string; firstDay?: string };
 
-export type Asking = "none" | "discard" | "delete";
+export type Asking = "none" | "discard" | "delete" | "deleteScope" | "saveScope";
+
+export type SeriesScope = "one" | "all";
 
 export type EventPageFields = {
   draft: PageDraft;
@@ -40,9 +43,10 @@ export type EventPageAction =
   | { type: "keepEditing" }
   | { type: "discard" }
   | { type: "askDelete" }
+  | { type: "askSave" }
   | { type: "keep" }
   | { type: "deleted" }
-  | { type: "saved" }
+  | { type: "saved"; scope?: SeriesScope }
   | { type: "edit"; word: EventWord; ended: boolean };
 
 const ALL_SET: readonly DefaultWord[] = ["day", "start", "end", "who"];
@@ -65,6 +69,40 @@ export function canSave(draft: Pick<PageDraft, "title">): boolean {
 
 export function isPageDirty({ draft, opened }: EventPageFields): boolean {
   return draft.day !== opened.day || isDirty(draft, opened);
+}
+
+export function asksSaveScope(state: EventPageFields): boolean {
+  return isSeries(state) && isPageDirty(state);
+}
+
+export function seriesDraft({
+  draft,
+  opened,
+}: Pick<EventPageFields, "draft" | "opened">): PageDraft {
+  if (draft.repeat !== "weekly" || opened.firstDay === undefined) return draft;
+
+  const shift = daysBetween(opened.day, draft.day);
+
+  const firstDay = addDays(opened.firstDay, shift);
+
+  const exdates = draft.exdates?.map((day) => addDays(day, shift));
+
+  return { ...draft, day: firstDay, firstDay, ...(exdates ? { exdates } : {}) };
+}
+
+export function skippedWeek(opened: PageDraft): PageDraft {
+  const exdates = [...(opened.exdates ?? []), opened.day];
+
+  return { ...opened, day: opened.firstDay ?? opened.day, exdates };
+}
+
+export function detachedWeek({
+  repeat: _,
+  exdates: __,
+  firstDay: ___,
+  ...draft
+}: PageDraft): PageDraft {
+  return draft;
 }
 
 export function eventPageReducer(state: EventPageState, action: EventPageAction): EventPageState {
@@ -129,11 +167,15 @@ function editReducer(state: EventPageEditState, action: EventPageAction): EventP
     case "discard":
       return leave(state);
     case "askDelete":
-      return state.mode === "edit" ? { ...state, asking: "delete" } : state;
+      return state.mode === "edit" ? { ...state, asking: deleteAsk(state) } : state;
+    case "askSave":
+      return asksSaveScope(state) ? { ...state, asking: "saveScope" } : state;
     case "deleted":
       return CLOSED;
     case "saved":
-      return state.fromDetails ? { mode: "view", opened: draft } : CLOSED;
+      return state.fromDetails && action.scope !== "one"
+        ? { mode: "view", opened: savedDraft(state) }
+        : CLOSED;
     case "edit":
       return state;
   }
@@ -148,6 +190,20 @@ function editState(
   const touched = mode === "edit" ? ALL_SET : [];
 
   return { mode, draft, opened: draft, word, touched, asking: "none", fromDetails };
+}
+
+function isSeries({ opened }: EventPageFields): boolean {
+  return opened.repeat === "weekly";
+}
+
+function deleteAsk(state: EventPageEditState): Asking {
+  return isSeries(state) ? "deleteScope" : "delete";
+}
+
+function savedDraft(state: EventPageEditState): PageDraft {
+  const { firstDay, exdates } = seriesDraft(state);
+
+  return { ...state.draft, ...(firstDay ? { firstDay } : {}), ...(exdates ? { exdates } : {}) };
 }
 
 function atWord(state: EventPageEditState, word: EventWord): EventPageEditState {

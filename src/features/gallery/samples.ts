@@ -239,6 +239,8 @@ export const gallery = {
     past: "Event details · ended",
     previewLabel: "Fri, Oct 9 · 12:00 PM – 1:00 PM",
     viewAllDay: "Event details · all day",
+    weeklyDelete: "Weekly · Delete asks which",
+    weeklySave: "Weekly · Save asks which",
     factsDay: "Fri, Oct 9",
   },
   importPage: {

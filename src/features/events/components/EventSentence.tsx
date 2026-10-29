@@ -468,7 +468,7 @@ function ViewLines({ breakpoint, draft, locked }: EventSentenceProps) {
       {draft.repeat === "weekly" && (
         <div {...stylex.props(styles.line)}>
           <Icon icon={Repeat} size={18} />
-          {words.repeatsFrom(dayText(draft.day))}
+          {words.repeatsFrom(dayText(draft.firstDay ?? draft.day))}
         </div>
       )}
       {locked && (

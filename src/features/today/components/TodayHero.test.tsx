@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { CalendarEvent } from "@/domain/schemas";
 import { deviceTimeZone } from "@/domain/zone";
 import { clockTime } from "@/ui/testClock";
 import { HeroSummary } from "./HeroSummary";
@@ -146,7 +147,7 @@ test("TODAY-02 an event with no place shows only its time", () => {
 });
 
 test("TODAY-02 tapping the hero event opens it", async () => {
-  const onOpenEvent = vi.fn<(id: string) => void>();
+  const onOpenEvent = vi.fn<(event: CalendarEvent) => void>();
 
   render(
     <HeroSummary
@@ -158,5 +159,5 @@ test("TODAY-02 tapping the hero event opens it", async () => {
 
   await userEvent.click(screen.getByRole("button", { name: /Grandma’s video call/ }));
 
-  expect(onOpenEvent).toHaveBeenCalledWith("call");
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "call" }));
 });

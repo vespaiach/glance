@@ -2,11 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
+import { eventDayKey } from "@/domain/allDay";
 import type { EventTimes } from "@/domain/eventTimes";
+import type { CalendarEvent } from "@/domain/schemas";
 import type { EventWho } from "@/domain/tags";
 
 export type SheetRequest = (
-  | { kind: "event"; id: string; edit?: true }
+  | { kind: "event"; id: string; edit?: true; day?: string }
   | {
       kind: "newevent";
       day: string;
@@ -46,6 +48,10 @@ export function SheetHost({ initial = null, children }: SheetHostProps) {
   const host = useMemo(() => ({ sheet, open: setSheet, close: () => setSheet(null) }), [sheet]);
 
   return <SheetHostContext value={host}>{children}</SheetHostContext>;
+}
+
+export function eventSheet(event: CalendarEvent, tz: string): SheetRequest {
+  return { kind: "event", id: event.id, day: eventDayKey(event, tz) };
 }
 
 export function useSheetHost(): SheetHostValue {

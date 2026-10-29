@@ -35,7 +35,7 @@ type CalendarDayProps = {
   weather?: TimelineWeather;
   retryIn: number;
   onRetry: () => void;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
   onAddEvent: (slot: { start: Date; end: Date }) => void;
 };
 
