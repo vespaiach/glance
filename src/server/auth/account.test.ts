@@ -134,6 +134,13 @@ async function fillAccount(email: string): Promise<SignedInDisplay & { sessionTo
     range: { first: "2026-10-09", last: "2026-10-09" },
     createdAt: START.toISOString(),
   });
+  await db.apiKeys.insert({
+    accountId: display.accountId,
+    keyHash: `hash-${display.accountId}`,
+    tail: "x9Q2",
+    createdAt: START.toISOString(),
+    lastUsedAt: null,
+  });
   await addPhoto(display.accountId);
   await addPhoto(display.accountId, { deleted: true });
 
@@ -175,11 +182,12 @@ async function savedRows(accountId: string) {
     weather: await db.weatherCache.get(accountId),
     displays: await db.displays.forAccount(accountId),
     push: await db.pushSubscriptions.forAccount(accountId),
+    apiKey: await db.apiKeys.get(accountId),
   };
 }
 
 describe("deleteAccount", () => {
-  it("SET-14 erases the account's events, notes, photos, family members, settings, screens and push subscriptions", async () => {
+  it("SET-14 erases the account's events, notes, photos, family members, settings, screens, push subscriptions and API key", async () => {
     const maria = await fillAccount("maria@example.com");
 
     await deleteAccount(deleteDeps(), maria.accountId);
@@ -194,6 +202,7 @@ describe("deleteAccount", () => {
       weather: undefined,
       displays: [],
       push: [],
+      apiKey: undefined,
     });
   });
 

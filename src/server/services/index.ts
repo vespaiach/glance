@@ -19,6 +19,7 @@ import { photoStore } from "../storage";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
 import type { Coordinates } from "../weather/provider";
+import * as apiKeys from "./apiKeys";
 import * as clientErrors from "./clientErrors";
 import type { ServiceDeps } from "./deps";
 import * as displays from "./displays";
@@ -145,6 +146,18 @@ export function subscribePush(
 
 export function unsubscribePush(accountId: string, displayId: string) {
   return push.unsubscribePush(deps(), accountId, displayId);
+}
+
+export function apiKey(accountId: string) {
+  return apiKeys.apiKey(deps(), accountId);
+}
+
+export function createApiKey(accountId: string) {
+  return apiKeys.createApiKey(deps(), accountId);
+}
+
+export function revokeApiKey(accountId: string) {
+  return apiKeys.revokeApiKey(deps(), accountId);
 }
 
 export function accountWeather(accountId: string) {

@@ -19,6 +19,7 @@ const ERASE_ACCOUNT = [
   "DELETE FROM settings WHERE account_id = $1",
   "DELETE FROM weather_cache WHERE account_id = $1",
   "DELETE FROM push_subscriptions WHERE account_id = $1",
+  "DELETE FROM api_keys WHERE account_id = $1",
   "DELETE FROM magic_links WHERE account_id = $1",
   "DELETE FROM accounts WHERE id = $1",
 ];

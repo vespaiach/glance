@@ -1,5 +1,6 @@
 import "server-only";
 import type { Database, OpenedDatabase, Repos } from "../database";
+import { apiKeysRepo } from "./apiKeys";
 import { accountsRepo, displaysRepo, magicLinksRepo, sessionsRepo, signInCodesRepo } from "./auth";
 import { eventsRepo } from "./events";
 import { importsRepo } from "./imports";
@@ -66,6 +67,7 @@ function repos(sql: Sql): Repos {
     pushSubscriptions: pushSubscriptionsRepo(sql),
     reminderSends: reminderSendsRepo(sql),
     imports: importsRepo(sql),
+    apiKeys: apiKeysRepo(sql),
     weatherCache: weatherCacheRepo(sql),
   };
 }

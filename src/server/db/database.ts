@@ -93,6 +93,14 @@ export type ImportRecord = StagedImport & {
   importedAt: string | null;
 };
 
+export type ApiKeyRecord = {
+  accountId: string;
+  keyHash: string;
+  tail: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+};
+
 export type ImportDone = { who: string; count: number; importedAt: string };
 
 type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
@@ -206,6 +214,11 @@ export type Repos = {
     newestImported(accountId: string): Promise<ImportRecord | undefined>;
     markDone(id: string, done: ImportDone): Promise<boolean>;
     markUndone(id: string): Promise<boolean>;
+  };
+  apiKeys: {
+    insert(key: ApiKeyRecord): Promise<boolean>;
+    get(accountId: string): Promise<ApiKeyRecord | undefined>;
+    remove(accountId: string): Promise<boolean>;
   };
   weatherCache: {
     get(accountId: string): Promise<WeatherCacheRecord | undefined>;
