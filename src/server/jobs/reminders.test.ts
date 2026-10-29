@@ -220,6 +220,23 @@ describe("sendReminderPushes", () => {
     ]);
   });
 
+  it("NOTIF-01 a weekly event doesn't remind in an excepted week", async () => {
+    await addEvents(MARIA, [
+      event(1, { title: "Swim", repeat: "weekly", exdates: ["2026-10-16"] }),
+    ]);
+
+    await run();
+    harness.advance(WEEK);
+    await run();
+    harness.advance(WEEK);
+    await run();
+
+    expect(messages()).toEqual([
+      expect.objectContaining({ title: "Swim in 15 min" }),
+      expect.objectContaining({ title: "Swim in 15 min" }),
+    ]);
+  });
+
   it("NOTIF-01 a weekly event keeps its local time across DST", async () => {
     await addEvents(MARIA, [
       event(1, { title: "Swim", startAt: "2026-10-30T14:15:00.000Z", repeat: "weekly" }),

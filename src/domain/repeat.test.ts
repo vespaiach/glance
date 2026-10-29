@@ -54,6 +54,28 @@ describe("occurrencesBetween", () => {
     ]);
   });
 
+  it("EVT-14 a series with an exception date doesn't show that week and shows the next", () => {
+    const shown = occurrencesBetween(
+      [{ ...SWIM, exdates: ["2026-10-16"] }],
+      "2026-10-10",
+      "2026-10-24",
+      NY,
+    );
+
+    expect(shown.map((event) => event.startAt)).toEqual(["2026-10-23T20:00:00.000Z"]);
+  });
+
+  it("EVT-14 an exception on the first day leaves out the first week", () => {
+    const shown = occurrencesBetween(
+      [{ ...TRASH, repeat: "weekly" as const, exdates: ["2026-10-09"] }],
+      "2026-10-01",
+      "2026-10-17",
+      NY,
+    );
+
+    expect(shown.map((event) => event.startAt)).toEqual([allDayStart("2026-10-16")]);
+  });
+
   it("EVT-14 an event that doesn't repeat shows only on its day", () => {
     expect(occurrencesBetween([TRASH], "2026-10-01", "2026-10-31", NY)).toEqual([TRASH]);
     expect(occurrencesBetween([TRASH], "2026-10-10", "2026-10-31", NY)).toEqual([]);
@@ -65,6 +87,12 @@ describe("nextOccurrence", () => {
     expect(nextOccurrence(SWIM, "2026-10-10", NY)?.startAt).toBe("2026-10-16T20:00:00.000Z");
     expect(nextOccurrence(SWIM, "2026-10-16", NY)?.startAt).toBe("2026-10-16T20:00:00.000Z");
     expect(nextOccurrence(SWIM, "2026-10-01", NY)).toBe(SWIM);
+  });
+
+  it("EVT-14 the next occurrence skips excepted weeks", () => {
+    const series = { ...SWIM, exdates: ["2026-10-09", "2026-10-16", "2026-10-23"] };
+
+    expect(nextOccurrence(series, "2026-10-01", NY)?.startAt).toBe("2026-10-30T20:00:00.000Z");
   });
 
   it("TODAY-06 an event that doesn't repeat has none after its day", () => {
