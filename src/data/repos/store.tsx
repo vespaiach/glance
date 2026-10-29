@@ -17,6 +17,7 @@ export type RepoStore = {
   startedAt: Date;
   nudge: () => unknown;
   refreshWeather: () => unknown;
+  refreshNow: () => Promise<boolean>;
   photoSrc: (photoId: string, variant: PhotoVariant) => string;
   upload: Transport["upload"];
   places: Transport["places"];

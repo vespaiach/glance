@@ -645,6 +645,23 @@ export const copy = {
       forWho: (names: string) => `For: ${names}`,
       everyone: "Everyone",
     },
+    dataAndApp: {
+      title: "Data and app",
+      refresh: {
+        title: "Refresh data",
+        body: "Gets the latest events, notes, photos and weather from the server now.",
+        button: "Refresh",
+        busyButton: "Refreshing",
+        busy: "Getting the latest data",
+        failed: "Couldn’t reach the server. Try again.",
+        updated: (minutes: number) =>
+          minutes < 1 ? "Updated just now" : `Updated ${minutes} min ago`,
+        offline: (minutes: number | undefined) =>
+          minutes === undefined
+            ? "Offline"
+            : `Offline · ${minutes < 1 ? "updated just now" : `updated ${minutes} min ago`}`,
+      },
+    },
     apiKey: {
       title: "API key",
       body: "Lets other apps read, add and update events · one key per account",

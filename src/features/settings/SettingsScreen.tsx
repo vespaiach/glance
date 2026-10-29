@@ -33,6 +33,7 @@ import { members } from "./members";
 import { SIGN_OUT_CLOSED, signOutDialog } from "./signOutDialog";
 import { useApiKeyRow } from "./useApiKeyRow";
 import { useQrTile } from "./useQrTile";
+import { useRefreshData } from "./useRefreshData";
 import { useThisPhone } from "./useThisPhone";
 
 const BACKGROUND_PATH = "/settings/background";
@@ -114,6 +115,8 @@ export function SettingsScreen() {
 
   const apiKey = useApiKeyRow(online, now, tz);
 
+  const refreshData = useRefreshData(now);
+
   const tags = useTags();
 
   const events = useLiveEvents();
@@ -187,6 +190,7 @@ export function SettingsScreen() {
       onAskRemoveMember={setAskingMember}
       onCancelRemoveMember={() => setAskingMember(null)}
       onRemoveMember={removeMember}
+      refreshData={refreshData}
     />
   );
 }

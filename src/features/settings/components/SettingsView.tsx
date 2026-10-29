@@ -10,8 +10,10 @@ import type { DeleteAccountDialog as DeleteAccountState } from "../deleteAccount
 import { settingsLayout } from "../layout";
 import type { SignOutDialog as SignOutDialogState } from "../signOutDialog";
 import type { ThisPhone } from "../thisPhone";
+import type { RefreshDataRow } from "../useRefreshData";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
 import type { ApiKeyRowProps } from "./ApiKeyRow";
+import { DataAndAppCard } from "./DataAndAppCard";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { type Member, MemberList } from "./MemberList";
 import type { QrTileShown } from "./QrSignInTile";
@@ -62,6 +64,7 @@ type SettingsViewProps = {
   onAskRemoveMember: (id: string) => void;
   onCancelRemoveMember: () => void;
   onRemoveMember: (id: string) => void;
+  refreshData: RefreshDataRow;
 };
 
 const styles = stylex.create({
@@ -121,6 +124,7 @@ export function SettingsView({
   onAskRemoveMember,
   onCancelRemoveMember,
   onRemoveMember,
+  refreshData,
 }: SettingsViewProps) {
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
@@ -167,6 +171,7 @@ export function SettingsView({
           onSignOut={onSignOut}
           onDeleteAccount={onDeleteAccount}
         />
+        <DataAndAppCard {...refreshData} />
       </div>
       {signOut.kind !== "closed" && (
         <SignOutDialog

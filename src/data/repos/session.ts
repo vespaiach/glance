@@ -217,6 +217,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     startedAt: now(),
     nudge: host.nudge,
     refreshWeather: host.refreshWeather,
+    refreshNow: host.refreshNow,
     photoSrc: apiPhotoSrc,
     upload: transport.upload,
     places: transport.places,

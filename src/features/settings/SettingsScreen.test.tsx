@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
+import { type Harness, openHarness, putSyncStatus, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
@@ -537,4 +537,80 @@ test("SET-19 offline Revoke is disabled", async () => {
   renderSettings();
 
   expect(await screen.findByRole("button", { name: "Revoke" })).toBeDisabled();
+});
+
+const INITIAL_STATUS = { online: true, weather: { state: "idle" } } as const;
+
+const FOUR_MIN_AGO = new Date(NOW.getTime() - 4 * 60_000).toISOString();
+
+function refreshStatus() {
+  return within(screen.getByRole("region", { name: "Data and app" })).getByRole("status");
+}
+
+test("SET-20 the Data and app card shows the time since the last sync", async () => {
+  await putSyncStatus(store, { ...INITIAL_STATUS, lastSyncedAt: FOUR_MIN_AGO });
+
+  renderSettings();
+
+  await waitFor(() => expect(refreshStatus()).toHaveTextContent("Updated 4 min ago"));
+});
+
+test("SET-20 a tap starts one refresh and a second tap while it runs doesn't", async () => {
+  let answer: (refreshed: boolean) => void = () => {};
+  store.refreshNow.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+  await putSyncStatus(store, { ...INITIAL_STATUS, lastSyncedAt: FOUR_MIN_AGO });
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Refresh" }));
+  await userEvent.click(screen.getByRole("button", { name: "Refreshing" }));
+
+  expect(store.refreshNow).toHaveBeenCalledOnce();
+  expect(refreshStatus()).toHaveTextContent("Getting the latest data");
+
+  await putSyncStatus(store, { ...INITIAL_STATUS, lastSyncedAt: NOW.toISOString() });
+  answer(true);
+
+  await waitFor(() => expect(refreshStatus()).toHaveTextContent("Updated just now"));
+  expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
+});
+
+test("SET-20 a failed refresh shows the error and keeps the data", async () => {
+  store.refreshNow.mockResolvedValue(false);
+  await store.db.events.put(
+    synced({
+      id: "0195f0a0-0000-7000-8002-000000000009",
+      title: "Piano",
+      startAt: "2026-10-12T16:00:00.000Z",
+      everyone: true,
+      tagIds: [],
+      notify: true,
+    }),
+  );
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Refresh" }));
+
+  await waitFor(() =>
+    expect(refreshStatus()).toHaveTextContent("Couldn’t reach the server. Try again."),
+  );
+  expect(screen.getByText("1 upcoming event")).toBeInTheDocument();
+});
+
+test("SET-20 offline Refresh is disabled", async () => {
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  await putSyncStatus(store, { ...INITIAL_STATUS, lastSyncedAt: FOUR_MIN_AGO });
+
+  renderSettings();
+
+  expect(await screen.findByRole("button", { name: "Refresh" })).toBeDisabled();
+  await waitFor(() => expect(refreshStatus()).toHaveTextContent("Offline · updated 4 min ago"));
+});
+
+test("SET-20 Refresh stays on when the last sync couldn't reach the server", async () => {
+  await putSyncStatus(store, { ...INITIAL_STATUS, online: false, lastSyncedAt: FOUR_MIN_AGO });
+
+  renderSettings();
+
+  await waitFor(() => expect(refreshStatus()).toHaveTextContent("Updated 4 min ago"));
+  expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
 });

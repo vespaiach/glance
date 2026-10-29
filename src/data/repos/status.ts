@@ -2,7 +2,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import { CURSOR_KEY, type GlanceDb } from "../db";
 import { INITIAL_STATUS, STATUS_KEY, type SyncStatus, type WeatherStatus } from "../sync/status";
-import { useRepoStore } from "./store";
+import { type RepoStore, useRepoStore } from "./store";
 
 export type { SyncStatus, WeatherStatus };
 
@@ -52,6 +52,10 @@ export function useRetry(): Retry {
     () => ({ sync: () => void nudge(), weather: () => void refreshWeather() }),
     [nudge, refreshWeather],
   );
+}
+
+export function useRefreshNow(): RepoStore["refreshNow"] {
+  return useRepoStore().refreshNow;
 }
 
 async function readStatus(db: GlanceDb): Promise<SyncStatus> {
