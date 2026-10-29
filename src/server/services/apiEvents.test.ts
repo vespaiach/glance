@@ -194,7 +194,8 @@ describe("changeApiEvent", () => {
   it("NOTIF-09 keeps the event's notification setting", async () => {
     const event = await created(SWIM);
     const stored = await readStored(event.id);
-    await harness.deps().db.events.save(MARIA, { ...(stored as never), notify: false });
+    if (!stored) throw new Error("not saved");
+    await harness.deps().db.events.save(MARIA, { ...stored, notify: false });
 
     await changeApiEvent(harness.deps(), MARIA, event.id, { title: "Swim" });
 
