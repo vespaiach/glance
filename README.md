@@ -22,6 +22,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Validation | [Valibot](https://valibot.dev) schemas shared by client and server |
 | Server | Next.js Route Handlers; storage behind a `Database` port: PostgreSQL via `pg` (raw SQL + numbered migrations; PGlite in tests) or PGlite in the process (`DB=memory`) |
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
+| Calendar import | [`ical.js`](https://github.com/kewisch/ical.js) reads `.ics` files on the server |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
 | Email | Sign-in links through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, any SMTP server via `nodemailer`, or a local Mailpit |
 | Tooling | npm, Node 24, [Biome](https://biomejs.dev) (lint + format), Vitest + Testing Library + `fake-indexeddb` |
