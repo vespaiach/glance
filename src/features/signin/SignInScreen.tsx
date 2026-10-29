@@ -13,11 +13,16 @@ import { useNow, useNowStore } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
-import { viewPath } from "@/shell/routes";
 import { useAmbientRoot } from "@/shell/useAmbientNavigate";
 import { Toast } from "@/ui/Toast";
 import { SignInView } from "./components/SignInView";
-import { initialSignIn, openedLinkFrom, openedViewFrom, type SignInAction } from "./signIn";
+import {
+  initialSignIn,
+  openedLinkFrom,
+  openedPath,
+  openedViewFrom,
+  type SignInAction,
+} from "./signIn";
 import { useScan } from "./useScan";
 import { useSignIn } from "./useSignIn";
 
@@ -44,7 +49,7 @@ export function SignInScreen() {
     initialSetup: initialWeatherSetup,
     auth,
     clock,
-    onSignedIn: () => router.replace(viewPath(opens)),
+    onSignedIn: () => router.replace(openedPath(window.location.search)),
   });
 
   const online = useBrowserOnline();

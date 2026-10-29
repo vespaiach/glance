@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
@@ -89,6 +89,7 @@ afterEach(async () => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 
   await store.close();
 });
@@ -121,7 +122,7 @@ test("IMP-06 picking a file uploads it and shows its review", async () => {
   await pickFile();
 
   expect(await screen.findByRole("heading", { name: "3 events found" })).toBeInTheDocument();
-  expect(store.imports.upload).toHaveBeenCalledWith(ICS);
+  expect(store.imports.upload).toHaveBeenCalledWith(ICS, undefined);
   expect(screen.getByText("soccer.ics")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Import 2 events" })).toBeInTheDocument();
 });
@@ -236,4 +237,75 @@ test("IMP-10 offline Source hides Undo", async () => {
 
   expect(await screen.findByText("Last import · Oct 28")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Undo" })).not.toBeInTheDocument();
+});
+
+const CODE = "https://glance.example.com/api/auth/verify?t=1&to=import";
+
+async function waitingForPhone() {
+  vi.useFakeTimers({ now: NOW, shouldAdvanceTime: true });
+  store.issueQr.mockResolvedValue(ok({ url: CODE }));
+  store.voidQr.mockResolvedValue(ok(undefined));
+  store.imports.staged.mockResolvedValue(ok(undefined));
+
+  renderImport();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Send from phone/ }));
+  await screen.findByText("Waiting for a file · code ends in 10:00");
+}
+
+async function poll() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(3000);
+  });
+}
+
+test("IMP-04 Send from phone shows a 10-minute import code and waits for a file", async () => {
+  await waitingForPhone();
+
+  expect(store.issueQr).toHaveBeenCalledWith("import");
+  await poll();
+
+  expect(store.imports.staged).toHaveBeenCalled();
+  expect(screen.getByText(/Waiting for a file/)).toBeInTheDocument();
+});
+
+test("IMP-04 the phone's file moves this screen to its review", async () => {
+  await waitingForPhone();
+
+  store.imports.staged.mockResolvedValue(ok(REVIEW));
+  await poll();
+
+  expect(await screen.findByRole("heading", { name: "3 events found" })).toBeInTheDocument();
+  expect(store.voidQr).toHaveBeenCalledWith(CODE);
+});
+
+test("IMP-04 New code asks for a new import code", async () => {
+  await waitingForPhone();
+
+  await userEvent.click(screen.getByRole("button", { name: "New code" }));
+
+  await waitFor(() => expect(store.issueQr).toHaveBeenCalledTimes(2));
+  expect(store.issueQr).toHaveBeenLastCalledWith("import");
+});
+
+test("IMP-04 waiting ignores the file this screen chose itself", async () => {
+  vi.useFakeTimers({ now: NOW, shouldAdvanceTime: true });
+  store.issueQr.mockResolvedValue(ok({ url: CODE }));
+  store.imports.staged.mockResolvedValue(ok(REVIEW));
+  await pickFile();
+  await userEvent.click(await screen.findByRole("button", { name: "Change" }));
+
+  await userEvent.click(await screen.findByRole("button", { name: /Send from phone/ }));
+  await poll();
+
+  expect(screen.getByText(/Waiting for a file/)).toBeInTheDocument();
+});
+
+test("IMP-04 a phone opened from the code uploads its file for the issuing screen", async () => {
+  window.history.replaceState(null, "", "/settings/import?forDisplay=wall-1");
+
+  await pickFile();
+
+  expect(store.imports.upload).toHaveBeenCalledWith(ICS, "wall-1");
+  window.history.replaceState(null, "", "/");
 });

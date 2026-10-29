@@ -2,7 +2,7 @@
 
 import { useEffect, useEffectEvent, useReducer, useRef } from "react";
 import { useQrCodes } from "@/data/repos";
-import { QR_CODE_TTL_MS, type QrOpens, qrSecondsLeft } from "@/domain/qrSignIn";
+import { type QrOpens, qrSecondsLeft, qrTtlMs } from "@/domain/qrSignIn";
 import { useNow, useNowStore } from "@/shell/providers/now";
 import { type QrTile, qrTile } from "./qrTile";
 
@@ -10,10 +10,9 @@ export type QrSignIn = {
   tile: QrTile;
   secondsLeft: number;
   show(): void;
+  renew(): void;
   close(): void;
 };
-
-const TTL_S = QR_CODE_TTL_MS / 1000;
 
 const CLOSED: QrTile = { kind: "closed" };
 
@@ -60,15 +59,19 @@ export function useQrTile(opens?: QrOpens): QrSignIn {
     if (latest.current.kind === "open") void voidQr(latest.current.url);
   };
 
-  const secondsLeft = tile.kind === "open" ? qrSecondsLeft(tile.issuedAt, now) : TTL_S;
+  const secondsLeft =
+    tile.kind === "open" ? qrSecondsLeft(tile.issuedAt, now, opens) : qrTtlMs(opens) / 1000;
 
   const expired = tile.kind === "open" && secondsLeft === 0;
 
-  const onExpired = useEffectEvent(() => {
+  const renew = () => {
+    dispatch({ type: "show" });
     dispatch({ type: "expire" });
 
     void issue();
-  });
+  };
+
+  const onExpired = useEffectEvent(renew);
 
   const onOpened = useEffectEvent(() => {
     if (latest.current.kind === "issuing") void issue();
@@ -90,6 +93,7 @@ export function useQrTile(opens?: QrOpens): QrSignIn {
 
       void issue();
     },
+    renew,
     close: () => {
       forget();
 

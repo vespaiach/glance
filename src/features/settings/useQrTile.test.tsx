@@ -26,8 +26,8 @@ afterEach(async () => {
   await store.close();
 });
 
-async function renderTile() {
-  const rendered = renderHook(() => useQrTile(), { wrapper: shellWrapper(store) });
+async function renderTile(opens?: "import") {
+  const rendered = renderHook(() => useQrTile(opens), { wrapper: shellWrapper(store) });
 
   await waitFor(() => expect(rendered.result.current).not.toBeNull());
 
@@ -55,6 +55,30 @@ describe("useQrTile", () => {
     expect(result.current.tile).toMatchObject({ kind: "open", url: LINKS[0] });
     expect(result.current.secondsLeft).toBe(180);
     expect(store.issueQr).toHaveBeenCalledTimes(1);
+  });
+
+  it("IMP-04 an import code starts at 10:00 and is renewed at 0:00", async () => {
+    const { result } = await renderTile("import");
+    await shown(result);
+
+    expect(result.current.secondsLeft).toBe(600);
+    expect(store.issueQr).toHaveBeenCalledWith("import");
+
+    await advance(600_000);
+
+    await waitFor(() => expect(result.current.tile).toMatchObject({ url: LINKS[1] }));
+    expect(result.current.secondsLeft).toBe(600);
+  });
+
+  it("IMP-04 New code replaces the open code and restarts the countdown", async () => {
+    const { result } = await renderTile("import");
+    await shown(result);
+    await advance(65_000);
+
+    act(() => result.current.renew());
+
+    await waitFor(() => expect(result.current.tile).toMatchObject({ url: LINKS[1] }));
+    expect(result.current.secondsLeft).toBe(600);
   });
 
   it("SIGNIN-15 counts down each second", async () => {

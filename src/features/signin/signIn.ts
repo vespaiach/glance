@@ -2,6 +2,9 @@ import type { AuthStatus, CodeError, SignedIn, TransportError } from "@/data/rep
 import { QR_OPENS, type QrOpens } from "@/domain/qrSignIn";
 import type { Account } from "@/domain/schemas";
 import { CODE_LENGTH, codeDigits, codeExpired, isValidEmail } from "@/domain/signIn";
+import { viewPath } from "@/shell/routes";
+
+const IMPORT_PATH = "/settings/import";
 
 export type SignInState =
   | { step: "opening" }
@@ -99,6 +102,16 @@ export function openedViewFrom(search: string): "today" | QrOpens {
   const opened = query.get("link") === "opened";
 
   return (opened && QR_OPENS.find((view) => view === query.get("to"))) || "today";
+}
+
+export function openedPath(search: string): string {
+  const view = openedViewFrom(search);
+
+  if (view !== "import") return viewPath(view);
+
+  const forDisplay = new URLSearchParams(search).get("forDisplay");
+
+  return forDisplay ? `${IMPORT_PATH}?${new URLSearchParams({ forDisplay })}` : IMPORT_PATH;
 }
 
 export function initialSignIn(link?: OpenedLink, signedOut?: { email: string }): SignInState {

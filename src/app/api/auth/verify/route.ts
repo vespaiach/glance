@@ -4,6 +4,8 @@ import { LinkVerifySchema } from "@/domain/schemas";
 import { appUrl, verifyQrLink } from "@/server/auth";
 import { crossOrigin, errorJson, readBody, setCookie } from "@/server/http";
 
+type Opened = { opens?: QrOpens; forDisplay?: string };
+
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -14,11 +16,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     userAgent: request.headers.get("user-agent") ?? undefined,
   });
 
-  const opens = verified.ok ? qrOpens(searchParams.get("to")) : undefined;
+  if (!verified.ok) return NextResponse.redirect(signInUrl("stale"), 303);
 
-  const response = NextResponse.redirect(signInUrl(verified.ok ? "opened" : "stale", opens), 303);
+  const opened = openedFor(qrOpens(searchParams.get("to")), verified.value.forDisplay);
 
-  if (verified.ok) setCookie(response, "session", verified.value.sessionToken);
+  const response = NextResponse.redirect(signInUrl("opened", opened), 303);
+
+  setCookie(response, "session", verified.value.sessionToken);
 
   return response;
 }
@@ -50,12 +54,18 @@ function qrOpens(to: string | null): QrOpens | undefined {
   return QR_OPENS.find((view) => view === to);
 }
 
-function signInUrl(link: "opened" | "stale", opens: QrOpens | undefined): URL {
+function openedFor(opens: QrOpens | undefined, forDisplay: string): Opened {
+  return opens === "import" ? { opens, forDisplay } : { opens };
+}
+
+function signInUrl(link: "opened" | "stale", { opens, forDisplay }: Opened = {}): URL {
   const url = new URL("/signin", appUrl());
 
   url.searchParams.set("link", link);
 
   if (opens) url.searchParams.set("to", opens);
+
+  if (forDisplay) url.searchParams.set("forDisplay", forDisplay);
 
   return url;
 }

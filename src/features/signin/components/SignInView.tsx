@@ -535,7 +535,7 @@ function DoneStep({
     <>
       <Icon icon={CircleCheck} size={56} strokeWidth={1.25} />
       <Heading eyebrow={done.eyebrow} title={welcome(firstName(state.name))}>
-        {opens === "photos" ? done.bodyPhotos : done.body}
+        {opensBody(opens)}
       </Heading>
     </>
   );
@@ -563,4 +563,12 @@ function SignInStep({ time, ...props }: StepProps & { time: Date }) {
     case "done":
       return <DoneStep state={state} opens={props.opens} />;
   }
+}
+
+function opensBody(opens: QrOpens | undefined): string {
+  const { done } = copy.signIn;
+
+  if (opens === "photos") return done.bodyPhotos;
+
+  return opens === "import" ? done.bodyImport : done.body;
 }

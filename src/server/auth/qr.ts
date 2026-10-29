@@ -1,5 +1,5 @@
 import "server-only";
-import { QR_CODE_TTL_MS, type QrOpens } from "@/domain/qrSignIn";
+import { type QrOpens, qrTtlMs } from "@/domain/qrSignIn";
 import { err, ok, type Result } from "@/domain/result";
 import type { Database, MagicLinkRecord } from "../db";
 import type { AuthDeps, Clocked } from "./deps";
@@ -8,6 +8,8 @@ import { type SessionSignIn, signedIn } from "./status";
 import { hashToken, newToken } from "./tokens";
 
 export type QrCode = { url: string };
+
+export type QrSignIn = SessionSignIn & { forDisplay: string };
 
 export type QrVerifyInput = { token: string; userAgent?: string };
 
@@ -20,7 +22,7 @@ export async function issueQrLink(
 
   const token = newToken();
 
-  await storeQrLink(deps, display, token);
+  await storeQrLink(deps, display, token, qrTtlMs(opens));
 
   return ok({ url: verifyUrl(deps.appUrl, token, opens) });
 }
@@ -28,10 +30,10 @@ export async function issueQrLink(
 export async function verifyQrLink(
   { db, now }: Clocked,
   { token, userAgent }: QrVerifyInput,
-): Promise<Result<SessionSignIn, "stale">> {
+): Promise<Result<QrSignIn, "stale">> {
   const at = now().toISOString();
 
-  return db.tx(async (tx): Promise<Result<SessionSignIn, "stale">> => {
+  return db.tx(async (tx): Promise<Result<QrSignIn, "stale">> => {
     const link = await tx.magicLinks.get(hashToken(token));
 
     const account = link && (await tx.accounts.byId(link.accountId));
@@ -42,7 +44,7 @@ export async function verifyQrLink(
 
     const sessionToken = await openDisplay(tx, link.accountId, { at, userAgent });
 
-    return ok({ status: signedIn(account, true), sessionToken });
+    return ok({ status: signedIn(account, true), sessionToken, forDisplay: link.displayId });
   });
 }
 
@@ -66,8 +68,9 @@ async function storeQrLink(
   { db, now }: AuthDeps,
   { accountId, displayId }: SignedInDisplay,
   token: string,
+  ttlMs: number,
 ): Promise<void> {
-  const expiresAt = new Date(now().getTime() + QR_CODE_TTL_MS).toISOString();
+  const expiresAt = new Date(now().getTime() + ttlMs).toISOString();
 
   await db.tx(async (tx) => {
     await tx.magicLinks.removeUnusedFor(displayId);
