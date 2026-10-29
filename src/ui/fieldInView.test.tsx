@@ -76,3 +76,17 @@ test("KB-02 a field lands below the area's scroll padding, so a sticky bar does 
 
   expect(area.scrollTop).toBe(50 + 400 - 100 - 24 - 64);
 });
+
+test("KB-02 a field lands below a page top bar that wrapped taller than the scroll padding", () => {
+  const { area } = setUp(300);
+
+  const bar = document.createElement("div");
+
+  bar.dataset.pageTopBar = "";
+  bar.getBoundingClientRect = () => ({ height: 159 }) as DOMRect;
+  area.prepend(bar);
+  area.style.scrollPaddingTop = "88px";
+  screen.getByRole("textbox", { name: "First" }).focus();
+
+  expect(area.scrollTop).toBe(50 + 400 - 100 - 24 - 159);
+});

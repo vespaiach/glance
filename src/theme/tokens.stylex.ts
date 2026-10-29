@@ -105,11 +105,3 @@ export const motion = stylex.defineVars({
   pressScale: ".97",
   pressScaleRow: ".98",
 });
-
-export const glass = stylex.defineVars({
-  fill: "rgba(255,255,255,.72)",
-  edge: "rgba(255,255,255,.7)",
-  blur: "blur(24px) saturate(180%)",
-  shadow:
-    "inset 0 1px 0 rgba(255,255,255,.9), 0 8px 28px rgba(0,0,0,.12), 0 0 0 0.5px rgba(0,0,0,.08)",
-});

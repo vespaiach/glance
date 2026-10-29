@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { initialEventPage, type OpenEventPage, type PageDraft } from "../eventPage";
 import { EventPage } from "./EventPage";
 
@@ -13,9 +14,7 @@ const DRAFT: PageDraft = {
   notify: true,
 };
 
-const SCROLLED = "EventTaskBar__styles.scrolled";
-
-function renderPage() {
+function renderPage(dispatch = vi.fn()) {
   render(
     <EventPage
       breakpoint="normal"
@@ -27,7 +26,7 @@ function renderPage() {
       online
       recentTitles={[]}
       recentPlaces={[]}
-      dispatch={() => {}}
+      dispatch={dispatch}
       onSave={() => {}}
       onDelete={() => {}}
       onLeft={() => {}}
@@ -36,25 +35,12 @@ function renderPage() {
   );
 }
 
-function scrollTo(top: number) {
-  const page = screen.getByRole("dialog");
+test("EVT-05 the top bar's Back closes the page", async () => {
+  const dispatch = vi.fn();
 
-  page.scrollTop = top;
-  fireEvent.scroll(page);
-}
+  renderPage(dispatch);
 
-test("EVT-05 the task bar gets the scrolled state after a scroll and loses it back at the top", () => {
-  renderPage();
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
-  const bar = screen.getByRole("button", { name: "Close" }).parentElement;
-
-  expect(bar).not.toHaveClass(SCROLLED);
-
-  scrollTo(120);
-
-  expect(bar).toHaveClass(SCROLLED);
-
-  scrollTo(0);
-
-  expect(bar).not.toHaveClass(SCROLLED);
+  expect(dispatch).toHaveBeenCalledWith({ type: "close" });
 });
