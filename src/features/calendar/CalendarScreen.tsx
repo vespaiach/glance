@@ -34,7 +34,7 @@ import { useNow } from "@/shell/providers/now";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { useWhoFilter } from "@/shell/providers/whoFilter";
-import { useSheetHost } from "@/shell/SheetHost";
+import { eventSheet, useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import type { TimelineWeather } from "@/ui/DayTimeline";
 import { calendarView, initialCalendarView } from "./calendarView";
@@ -148,7 +148,7 @@ export function CalendarScreen() {
         breakpoint={breakpoint}
         span24={view.span24}
         weather={timelineWeather(forecast, day, tz, settings.tempUnit)}
-        onOpenEvent={(id) => sheets.open({ kind: "event", id })}
+        onOpenEvent={(event) => sheets.open(eventSheet(event, tz))}
         onAddEvent={(slot) =>
           sheets.open({
             ...newEvent(day, filterTagIds(filter, allIds)),

@@ -29,7 +29,7 @@ type DayListProps = {
   weather?: TimelineWeather;
   earlierOpen: boolean;
   onToggleEarlier: () => void;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
   onAddEvent: (slot: Slot) => void;
 };
 
@@ -364,12 +364,12 @@ function AllDayRow({
 }: {
   event: CalendarEvent;
   tags: readonly Tag[];
-  onOpen: (id: string) => void;
+  onOpen: (event: CalendarEvent) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onOpen(event.id)}
+      onClick={() => onOpen(event)}
       {...stylex.props(styles.tile, styles.allDay, press.scale)}
     >
       <span {...stylex.props(styles.allDayLabel)}>{copy.events.allDay}</span>
@@ -411,7 +411,7 @@ function PlanRow({
     <button
       type="button"
       aria-label={copy.timeline.planName(event.title, time)}
-      onClick={() => shared.onOpenEvent(event.id)}
+      onClick={() => shared.onOpenEvent(event)}
       {...stylex.props(
         styles.tile,
         styles.plan,

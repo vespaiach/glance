@@ -68,6 +68,10 @@ export function addDays(key: string, n: number): string {
   return new Date(parseDateKey(key).getTime() + n * DAY_MS).toISOString().slice(0, 10);
 }
 
+export function daysBetween(from: string, to: string): number {
+  return (parseDateKey(to).getTime() - parseDateKey(from).getTime()) / DAY_MS;
+}
+
 export function calendarDate(key: string): CalendarDate {
   const date = parseDateKey(key);
 

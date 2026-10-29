@@ -353,6 +353,20 @@ export const copy = {
       editAction: "Edit",
       back: "Back",
     },
+    series: {
+      eyebrow: (weekday: string) => `Repeats every ${weekday}`,
+      deleteTitle: "Delete a repeating event?",
+      saveTitle: "Save changes to a repeating event?",
+      deleteBody: (title: string, weekday: string, date: string) =>
+        `${title} repeats every ${weekday}. Delete only the one on ${date}, or every event in the series.`,
+      saveBody: (title: string, weekday: string, date: string) =>
+        `${title} repeats every ${weekday}. Apply your changes to ${date} only, or to every event in the series.`,
+      untitled: "This event",
+      one: "This event only",
+      all: "All events in the series",
+      keepEvent: "Keep event",
+      keepEditing: "Keep editing",
+    },
     picker: {
       next: "Next",
       nextTo: (field: string) => `Next: ${field}`,

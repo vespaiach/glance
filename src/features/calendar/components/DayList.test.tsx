@@ -113,7 +113,7 @@ test("CAL-10 a plan opens Event details", async () => {
 
   await userEvent.click(planButton("Lunch with Aunt Rosa") as HTMLElement);
 
-  expect(onOpenEvent).toHaveBeenCalledWith("lunch");
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "lunch" }));
 });
 
 test("CAL-10 all-day tiles sit above the groups and open Event details", async () => {
@@ -122,7 +122,7 @@ test("CAL-10 all-day tiles sit above the groups and open Event details", async (
 
   await userEvent.click(screen.getByRole("button", { name: /Grandpa staying over/ }));
 
-  expect(onOpenEvent).toHaveBeenCalledWith("grandpa");
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: "grandpa" }));
 });
 
 test("CAL-10 an empty day says Nothing scheduled. and its free tile adds an event there", async () => {

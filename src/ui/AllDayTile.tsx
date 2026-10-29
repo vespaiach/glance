@@ -73,7 +73,7 @@ type AllDayTilesProps = {
   tags: readonly Tag[];
   label: string;
   everyoneLabel: string;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
 };
 
 export function AllDayTile({ label, title, who, location, dot, onClick }: AllDayTileProps) {
@@ -102,7 +102,7 @@ export function AllDayTiles({ events, tags, label, everyoneLabel, onOpenEvent }:
           who={whoLabel(event, tags, everyoneLabel)}
           location={event.location}
           dot={eventColor(event, tags)}
-          onClick={() => onOpenEvent(event.id)}
+          onClick={() => onOpenEvent(event)}
         />
       ))}
     </div>

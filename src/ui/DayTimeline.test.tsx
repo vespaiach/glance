@@ -104,7 +104,7 @@ test("TL-10 tapping a plan opens it", async () => {
 
   await userEvent.click(screen.getByRole("button", { name: /^Soccer game/ }));
 
-  expect(onOpenEvent).toHaveBeenCalledWith(SOCCER.id);
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: SOCCER.id }));
 });
 
 test("TL-04 a plan that started before 5 AM reads Until its end", () => {
@@ -170,7 +170,7 @@ test("TL-12 the +N MORE tile on Calendar opens the earliest folded plan", async 
 
   expect(more).toHaveTextContent("+2");
   expect(screen.queryByRole("button", { name: /^Chess/ })).not.toBeInTheDocument();
-  expect(onOpenMore).toHaveBeenCalledWith(plans[3]?.id);
+  expect(onOpenMore).toHaveBeenCalledWith(expect.objectContaining({ id: plans[3]?.id }));
 });
 
 test("TL-12 on Today the +N MORE tile says it opens the calendar", () => {
@@ -189,7 +189,7 @@ test("TL-13 a plan over 3 hours is a strip button that opens it", async () => {
   await userEvent.click(within(strips).getByRole("button", { name: /^School/ }));
 
   expect(within(strips).getByRole("button", { name: /^School/ })).toHaveTextContent("8:15");
-  expect(onOpenEvent).toHaveBeenCalledWith(school.id);
+  expect(onOpenEvent).toHaveBeenCalledWith(expect.objectContaining({ id: school.id }));
 });
 
 test("TL-09 today shows the now time in the gutter and other days don't", () => {

@@ -14,6 +14,7 @@ import { sameTimeClashes } from "@/domain/dayPreview";
 import { type StatusTitle, statusTitle } from "@/domain/eventStatus";
 import type { EventTimes } from "@/domain/eventTimes";
 import { uuidv7 } from "@/domain/id";
+import { nextOccurrence } from "@/domain/repeat";
 import type { CalendarEvent, Tag, TagColor } from "@/domain/schemas";
 import { EVERYONE, type EventWho, whoIds } from "@/domain/tags";
 import { minutesOfDay } from "@/domain/time";
@@ -30,20 +31,24 @@ import type { SameTime } from "./components/EventSentence";
 import { DayPreviewPanel, EventFactsPanel } from "./DayPreviewPanel";
 import { draftFromEvent, eventFromDraft, newEventDraft } from "./eventDraft";
 import {
+  detachedWeek,
   type EventPageState,
   eventPageReducer,
   initialEventPage,
   type OpenEventPage,
   type PageDraft,
+  type SeriesScope,
+  seriesDraft,
+  skippedWeek,
 } from "./eventPage";
 
 type FrameProps = { id: string; initial: EventPageState; tags: readonly Tag[] };
 
 type NewProps = { day: string; who?: EventWho; times?: EventTimes; tags: readonly Tag[] };
 
-type LoadedProps = { id: string; edit?: true; tags: readonly Tag[] };
+type LoadedProps = { id: string; edit?: true; day?: string; tags: readonly Tag[] };
 
-type EditProps = { event: CalendarEvent; edit?: true; tags: readonly Tag[] };
+type EditProps = { event: CalendarEvent; edit?: true; day?: string; tags: readonly Tag[] };
 
 export function EventSheetScreen() {
   const { sheet } = useSheetHost();
@@ -53,7 +58,9 @@ export function EventSheetScreen() {
   if (!tags) return null;
 
   if (sheet?.kind === "event")
-    return <LoadedEventPage key={sheet.id} id={sheet.id} edit={sheet.edit} tags={tags} />;
+    return (
+      <LoadedEventPage key={sheet.id} id={sheet.id} edit={sheet.edit} day={sheet.day} tags={tags} />
+    );
 
   if (sheet?.kind === "newevent")
     return (
@@ -87,12 +94,15 @@ function LoadedEventPage({ id, ...props }: LoadedProps) {
   return event ? <EditEventPage event={event} {...props} /> : null;
 }
 
-function EditEventPage({ event, edit, tags }: EditProps) {
+function EditEventPage({ event, edit, day, tags }: EditProps) {
   const now = useNow("minute");
 
   const tz = useTimeZone();
 
-  const draft = { ...draftFromEvent(event, tz, now, tagIds(tags)), day: eventDayKey(event, tz) };
+  const draft = {
+    ...draftFromEvent(event, tz, now, tagIds(tags)),
+    ...openedDays(event, day, now, tz),
+  };
 
   const ended = statusTitle(event, now, tz).kind === "ended";
 
@@ -114,7 +124,7 @@ function EventPageFrame({ id, initial, tags }: FrameProps) {
 
   const shown = useLastOpen(state);
 
-  const [deleted, setDeleted] = useState(false);
+  const [deleted, setDeleted] = useState<SeriesScope>();
 
   const draft = shown.mode === "view" ? shown.opened : shown.draft;
 
@@ -130,14 +140,22 @@ function EventPageFrame({ id, initial, tags }: FrameProps) {
 
   const sameTime = useSameTime(draft, id, tags);
 
-  const onSave = () => {
-    void events.put(eventFromDraft(draft, draft.day, id, tz, tagIds(tags)));
+  const toEvent = (page: PageDraft, eventId = id) =>
+    eventFromDraft(page, page.day, eventId, tz, tagIds(tags));
 
-    dispatch({ type: "saved" });
+  const onSave = (scope?: SeriesScope) => {
+    if (shown.mode === "view") return;
+
+    if (scope === "one") {
+      void events.put(toEvent(skippedWeek(shown.opened)));
+      void events.put(toEvent(detachedWeek(shown.draft), uuidv7(currentTime())));
+    } else void events.put(toEvent(seriesDraft(shown)));
+
+    dispatch({ type: "saved", scope });
   };
 
-  const onDelete = () => {
-    setDeleted(true);
+  const onDelete = (scope: SeriesScope = "all") => {
+    setDeleted(scope);
 
     dispatch({ type: "deleted" });
   };
@@ -145,7 +163,10 @@ function EventPageFrame({ id, initial, tags }: FrameProps) {
   const onLeft = () => {
     close();
 
-    if (deleted) void events.remove(id);
+    if (deleted === "all") void events.remove(id);
+
+    if (deleted === "one" && shown.mode !== "view")
+      void events.put(toEvent(skippedWeek(shown.opened)));
   };
 
   const onCreateTag = (name: string, color: TagColor) => {
@@ -191,6 +212,16 @@ function EventPageFrame({ id, initial, tags }: FrameProps) {
       onCreateTag={onCreateTag}
     />
   );
+}
+
+function openedDays(event: CalendarEvent, day: string | undefined, now: Date, tz: string) {
+  if (event.repeat !== "weekly") return { day: eventDayKey(event, tz) };
+
+  const firstDay = eventDayKey(event, tz);
+
+  const next = nextOccurrence(event, dateKey(now, tz), tz) ?? event;
+
+  return { day: day ?? eventDayKey(next, tz), firstDay };
 }
 
 function useLastOpen(state: EventPageState): OpenEventPage {

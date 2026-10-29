@@ -242,7 +242,7 @@ test("TODAY-02 tapping the hero event opens Event details", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /Happening now/ }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "event", id: CALL.id }),
+    JSON.stringify({ kind: "event", id: CALL.id, day: "2026-10-09" }),
   );
 });
 
@@ -383,7 +383,7 @@ test("TODAY-03 tapping a plan opens Event details", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /^Grandma’s video call, / }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "event", id: CALL.id }),
+    JSON.stringify({ kind: "event", id: CALL.id, day: "2026-10-09" }),
   );
 });
 
@@ -395,7 +395,7 @@ test("TODAY-03 tapping an all-day tile opens Event details", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /Grandpa staying over/ }));
 
   expect(screen.getByRole("status", { name: "Open sheet" })).toHaveTextContent(
-    JSON.stringify({ kind: "event", id: GRANDPA.id }),
+    JSON.stringify({ kind: "event", id: GRANDPA.id, day: "2026-10-09" }),
   );
 });
 

@@ -519,7 +519,21 @@ test("TL-10 tapping a plan opens Event details", async () => {
 
   await userEvent.click(await screen.findByRole("button", { name: /^Grandma’s video call, / }));
 
-  expect(openSheet()).toHaveTextContent(JSON.stringify({ kind: "event", id: CALL.id }));
+  expect(openSheet()).toHaveTextContent(
+    JSON.stringify({ kind: "event", id: CALL.id, day: "2026-10-09" }),
+  );
+});
+
+test("EVT-14 tapping a later week of a weekly plan opens that week", async () => {
+  await seed({ ...CALL, startAt: at(9, 2, 13), endAt: at(9, 2, 14), repeat: "weekly" });
+
+  renderCalendar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Grandma’s video call, / }));
+
+  expect(openSheet()).toHaveTextContent(
+    JSON.stringify({ kind: "event", id: CALL.id, day: "2026-10-09" }),
+  );
 });
 
 test("TL-08 tapping a free slot opens New event at the slot", async () => {

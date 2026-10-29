@@ -10,6 +10,7 @@ type DialogProps = {
   alert?: boolean;
   busy?: boolean;
   bottom?: boolean;
+  xstyle?: stylex.StyleXStyles;
   onClose: () => void;
   children: ReactNode;
 };
@@ -64,6 +65,7 @@ export function Dialog({
   alert = false,
   busy,
   bottom = false,
+  xstyle,
   onClose,
   children,
 }: DialogProps) {
@@ -90,7 +92,7 @@ export function Dialog({
         aria-busy={busy}
         tabIndex={-1}
         onKeyDown={dialogKeyDown(onClose)}
-        {...stylex.props(styles.card, alert && styles.alert)}
+        {...stylex.props(styles.card, alert && styles.alert, xstyle)}
       >
         {children}
       </div>

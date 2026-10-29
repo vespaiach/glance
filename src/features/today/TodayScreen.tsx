@@ -37,7 +37,7 @@ import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { useWhoFilter } from "@/shell/providers/whoFilter";
 import { type View, viewPath } from "@/shell/routes";
-import { useSheetHost } from "@/shell/SheetHost";
+import { eventSheet, useSheetHost } from "@/shell/SheetHost";
 import { useSyncedZone, useWeatherZone } from "@/shell/sourceZone";
 import { sizes, space } from "@/theme/tokens.stylex";
 import type { TimelineWeather } from "@/ui/DayTimeline";
@@ -72,7 +72,7 @@ type HeroProps = {
   clock: AccountSettings["clock"];
   now: Date;
   tz: string;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
 };
 
 type NowPanelProps = {
@@ -143,10 +143,10 @@ export function TodayScreen() {
 
   const go = (view: View) => router.push(viewPath(view));
 
-  const openEvent = (id: string) => sheets.open({ kind: "event", id });
+  const openEvent = (event: CalendarEvent) => sheets.open(eventSheet(event, tz));
 
   usePushLink((id) => {
-    if (id) openEvent(id);
+    if (id) sheets.open({ kind: "event", id });
 
     router.replace(viewPath("today"));
   });

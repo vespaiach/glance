@@ -17,7 +17,7 @@ type HeroSummaryProps = {
   tags: readonly Tag[];
   clock: Clock;
   tz: string;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
 };
 
 const styles = stylex.create({
@@ -87,7 +87,7 @@ export function HeroSummary({ hero, tags, clock, tz, onOpenEvent }: HeroSummaryP
   return (
     <button
       type="button"
-      onClick={() => onOpenEvent(hero.event.id)}
+      onClick={() => onOpenEvent(hero.event)}
       {...stylex.props(styles.root, styles.button, press.scale)}
     >
       <span {...stylex.props(styles.eyebrow)}>
