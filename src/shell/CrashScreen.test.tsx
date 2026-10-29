@@ -36,7 +36,17 @@ describe("CrashScreen", () => {
     wait(3);
 
     expect(report).toHaveBeenCalledTimes(1);
-    expect(report).toHaveBeenCalledWith("page-crashed", error);
+    expect(report).toHaveBeenCalledWith("page-crashed", error, {});
+  });
+
+  it("FAIL-04 reports the digest of a server render error", () => {
+    const report = vi.fn();
+
+    const error = Object.assign(new Error("render failed"), { digest: "1234567890" });
+
+    render(<CrashScreen error={error} report={report} reload={vi.fn()} />);
+
+    expect(report).toHaveBeenCalledWith("page-crashed", error, { digest: "1234567890" });
   });
 
   it("FAIL-04 shows the message and counts down from 60 s", () => {

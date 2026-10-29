@@ -10,7 +10,13 @@ type LogEvents = {
   push: "send-failed";
   storage: "remove-failed";
   photos: "decode-failed";
-  client: "zone-crashed" | "page-crashed" | "uncaught" | "worker-crashed" | "outbox-watch-failed";
+  client:
+    | "zone-crashed"
+    | "page-crashed"
+    | "uncaught"
+    | "worker-crashed"
+    | "outbox-watch-failed"
+    | "sw-crashed";
 };
 
 export type LogSource = keyof LogEvents;
@@ -28,6 +34,7 @@ export type LogContext = {
   page?: string;
   build?: number;
   component?: string;
+  digest?: string;
 };
 
 type LoggedError = {

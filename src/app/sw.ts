@@ -9,6 +9,7 @@ import {
   type SerwistGlobalConfig,
   type SerwistPlugin,
 } from "serwist";
+import { createErrorReporter } from "@/data/sw/errors";
 import { openPush, showPush } from "@/data/sw/push";
 import {
   CACHES,
@@ -58,6 +59,8 @@ const photos = new CacheFirst({
   plugins: [new ExpirationPlugin({ maxEntries: PHOTO_CACHE_ENTRIES })],
 });
 
+const report = createErrorReporter({ events: self });
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   precacheOptions: { cleanupOutdatedCaches: true, plugins: [keepRequestUrl] },
@@ -97,6 +100,10 @@ const serwist = new Serwist({
     },
   ],
 });
+
+self.addEventListener("error", (event) => report("sw-crashed", event.error ?? event.message));
+
+self.addEventListener("unhandledrejection", (event) => report("sw-crashed", event.reason));
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(cachePages());

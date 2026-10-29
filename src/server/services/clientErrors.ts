@@ -18,11 +18,11 @@ export function logClientError(
 
   if (!limiter.allow(key, now())) return err("rate-limited");
 
-  const { page, build, component } = report;
+  const { page, build, component, digest } = report;
 
   const ids = "ip" in sender ? {} : { accountId: sender.accountId, displayId: sender.displayId };
 
-  logError("client", report.event, report.error, { page, build, component, ...ids });
+  logError("client", report.event, report.error, { page, build, component, digest, ...ids });
 
   return ok(undefined);
 }

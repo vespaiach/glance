@@ -329,6 +329,7 @@ export const CLIENT_ERROR_LIMITS = {
   stack: 4000,
   page: 200,
   component: 200,
+  digest: 100,
 } as const;
 
 const ClientErrorEventSchema = v.picklist([
@@ -337,6 +338,7 @@ const ClientErrorEventSchema = v.picklist([
   "uncaught",
   "worker-crashed",
   "outbox-watch-failed",
+  "sw-crashed",
 ]);
 export type ClientErrorEvent = v.InferOutput<typeof ClientErrorEventSchema>;
 
@@ -350,6 +352,7 @@ export const ClientErrorSchema = v.object({
   page: v.optional(v.pipe(cappedText(CLIENT_ERROR_LIMITS.page), v.startsWith("/"))),
   build: v.pipe(v.number(), v.integer(), v.minValue(0)),
   component: v.optional(cappedText(CLIENT_ERROR_LIMITS.component)),
+  digest: v.optional(cappedText(CLIENT_ERROR_LIMITS.digest)),
 });
 export type ClientError = v.InferOutput<typeof ClientErrorSchema>;
 

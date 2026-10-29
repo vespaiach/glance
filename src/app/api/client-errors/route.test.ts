@@ -55,6 +55,15 @@ describe("POST /api/client-errors", () => {
     expect(mocks.logClientError).toHaveBeenCalledWith({ ip: "203.0.113.5" }, REPORT);
   });
 
+  it("tech§6.6 accepts a service worker crash with a digest", async () => {
+    const report = { ...REPORT, event: "sw-crashed", digest: "1234567890" };
+
+    const response = await POST(post(report));
+
+    expect(response.status).toBe(204);
+    expect(mocks.logClientError).toHaveBeenCalledWith({ ip: "203.0.113.5" }, report);
+  });
+
   it("tech§6.6 logs a signed-in report with the session's ids, never the body's", async () => {
     mocks.requireDisplay.mockResolvedValue(ok(MARIA));
 

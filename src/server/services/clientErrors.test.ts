@@ -61,6 +61,14 @@ describe("logClientError", () => {
     ]);
   });
 
+  it("tech§6.6 logs the digest and a service worker crash", () => {
+    const { deps, lines } = setup();
+
+    logClientError(deps, MARIA, { ...REPORT, event: "sw-crashed", digest: "1234567890" });
+
+    expect(lines()[0]).toMatchObject({ event: "sw-crashed", digest: "1234567890" });
+  });
+
   it("tech§6.6 ignores an account or display id in the body; the session's win", () => {
     const { deps, lines } = setup();
 
