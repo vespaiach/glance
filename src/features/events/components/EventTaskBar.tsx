@@ -4,7 +4,7 @@ import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { StatusTitle } from "@/domain/eventStatus";
 import { formatLength } from "@/domain/time";
-import { colors, motion, shadows } from "@/theme/tokens.stylex";
+import { colors, glass, motion, radii, shadows } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
@@ -35,25 +35,54 @@ const discard = copy.discard;
 const ICON_SIZE: Record<Breakpoint, number> = { large: 32, normal: 28, small: 22 };
 
 const styles = stylex.create({
-  bar: {
+  row: {
     position: "sticky",
-    top: 0,
+    top: 8,
     zIndex: 20,
     flexShrink: 0,
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+  },
+  surface: {
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: colors.white,
+    backgroundColor: colors.white,
+    boxShadow: shadows.shadow0,
+    transitionProperty: "box-shadow, background-color, border-color",
+    transitionDuration: motion.durFast,
+    transitionTimingFunction: "ease-out",
+  },
+  scrolled: {
+    borderColor: glass.edge,
+    backgroundColor: glass.fill,
+    backdropFilter: glass.blur,
+    WebkitBackdropFilter: glass.blur,
+    boxShadow: glass.shadow,
+  },
+  bar: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: "auto",
     minWidth: 0,
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
     gap: "12px 16px",
-    backgroundColor: colors.surfaceSoft,
     color: colors.textPrimary,
-    boxShadow: shadows.shadow0,
-    transitionProperty: "box-shadow",
-    transitionDuration: motion.durFast,
-    transitionTimingFunction: "ease-out",
   },
-  scrolled: {
-    boxShadow: shadows.shadow2,
+  closeSurface: {
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  close: {
+    width: 48,
+    height: 48,
+    backgroundColor: "transparent",
   },
   save: {
     gap: 6,
@@ -80,10 +109,22 @@ const styles = stylex.create({
   },
 });
 
+const rowSizes = stylex.create({
+  large: { gap: 12, margin: "8px 0 -8px" },
+  normal: { gap: 10, margin: "6px 0 -6px" },
+  small: { gap: 8, margin: "4px 0 -4px" },
+});
+
 const barSizes = stylex.create({
-  large: { minHeight: 48, margin: "0 -48px -20px", padding: "8px 48px" },
-  normal: { minHeight: 44, margin: "0 -24px -12px", padding: "6px 24px" },
-  small: { minHeight: 40, margin: "2px -12px -10px", padding: "6px 12px" },
+  large: { minHeight: 48, padding: "8px 8px 8px 28px" },
+  normal: { minHeight: 44, padding: "6px 6px 6px 22px" },
+  small: { minHeight: 40, padding: "6px 6px 6px 18px" },
+});
+
+const closeSizes = stylex.create({
+  large: { width: 64, height: 64 },
+  normal: { width: 56, height: 56 },
+  small: { width: 52, height: 52 },
 });
 
 const titleSizes = stylex.create({
@@ -103,17 +144,29 @@ export function EventTaskBar(props: EventTaskBarProps) {
 
   const asksDiscard = asking === "discard";
 
+  const surface = [styles.surface, scrolled && styles.scrolled];
+
   return (
-    <div {...stylex.props(styles.bar, barSizes[breakpoint], scrolled && styles.scrolled)}>
-      {!(asksDiscard && breakpoint === "small") && (
-        <span {...stylex.props(styles.title, titleSizes[breakpoint])}>
-          {mode === "view" && <Icon icon={Clock} size={ICON_SIZE[breakpoint]} />}
-          {taskBarTitle(mode, status)}
-        </span>
-      )}
-      {asksDiscard ? <DiscardAsk {...props} /> : <Actions {...props} />}
+    <div {...stylex.props(styles.row, rowSizes[breakpoint])}>
+      <div {...stylex.props(surface, styles.bar, barSizes[breakpoint])}>
+        {!(asksDiscard && breakpoint === "small") && (
+          <span {...stylex.props(styles.title, titleSizes[breakpoint])}>
+            {mode === "view" && <Icon icon={Clock} size={ICON_SIZE[breakpoint]} />}
+            {taskBarTitle(mode, status)}
+          </span>
+        )}
+        {asksDiscard ? <DiscardAsk {...props} /> : <Actions {...props} />}
+      </div>
       {!asksDiscard && (
-        <IconButton icon={X} label={words.close} variant="canvas" onClick={onClose} />
+        <div {...stylex.props(surface, styles.closeSurface, closeSizes[breakpoint])}>
+          <IconButton
+            icon={X}
+            label={words.close}
+            size="lg"
+            onClick={onClose}
+            xstyle={styles.close}
+          />
+        </div>
       )}
     </div>
   );

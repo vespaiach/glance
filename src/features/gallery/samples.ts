@@ -192,6 +192,7 @@ export const gallery = {
     deleteAsking: "Delete asking",
     discardAsking: "Discard asking",
     offline: "Offline",
+    scrolled: "Scrolled · glass",
     longTitleText: "Grandma’s 80th birthday dinner with the cousins from Lyon",
     clashTitle: "Soccer practice",
     notes: "Bring the birthday card and the candles",
