@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v1.22 |
-| Date | 2026-10-28 |
+| Status | v1.23 |
+| Date | 2026-10-29 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
 
@@ -25,7 +25,7 @@ Requirement IDs (`TODAY-03`, `NOTE-05` …) are cited in tasks, PRs and tests. A
 3. The screen stays useful offline, when a source fails, and during quiet hours (Ambient).
 
 ### 1.2 Out of scope
-Calendar sync (Google/Outlook) · recurring events other than weekly, multi-day events · renaming or recoloring tags · note moderation · photo albums · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming screens or signing out one other screen · roles and permissions · changing the account name or email · session expiry, kiosk lock · reminder dismiss, snooze, per-person reminders and per-event lead times (NOTIF-10).
+Calendar sync and subscriptions (Google/Outlook; an .ics file can be imported once, §8.13) · recurring events other than weekly, multi-day events · renaming or recoloring tags · note moderation · photo albums · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming screens or signing out one other screen · roles and permissions · changing the account name or email · session expiry, kiosk lock · reminder dismiss, snooze, per-person reminders and per-event lead times (NOTIF-10).
 
 ### 1.3 Open questions
 None.
@@ -45,6 +45,7 @@ The **prototype** (`Glance.dc.html`) wins on layout, copy, states and component 
 - The event page keeps the 24-hour Clock and the offline "Save for later" label (TPK-09), which Glance Notes leave out.
 - Photo storage is 5 GB per account by default and set per server (SET-13), not a fixed constant.
 - Sign in another device's code lasts 3 minutes (SIGNIN-15), not the 5:00 in Glance Notes.
+- The Import events phone code lasts 10 minutes, as Glance Notes say (IMP-04); the Sign in another device and Add from your phone codes keep 3.
 
 Where Glance departs from the design system:
 
@@ -174,7 +175,7 @@ Each view's columns are the prototype's layout for that view; see the feature's 
 | `/calendar` | Calendar (`?date=YYYY-MM-DD`) |
 | `/weather` · `/notes` | Weather · Notes |
 | `/photos` | Photos (`?photo={id}`, PHOTO-01) |
-| `/settings` · `/settings/background` · `/settings/location` · `/settings/ambient` | Settings · Background · Location (SET-09) · Ambient screen (SET-10) |
+| `/settings` · `/settings/background` · `/settings/location` · `/settings/ambient` · `/settings/import` | Settings · Background · Location (SET-09) · Ambient screen (SET-10) · Import events (IMP-01) |
 | `/ambient` | Ambient |
 | `/terms` | Terms of Service (TERMS-01; public, no sign-in, no sidebar) |
 | `/guide` | Guide (GUIDE-01; public, no sign-in, no sidebar) |
@@ -211,6 +212,7 @@ interface CalendarEvent {
   notes?: string;      // free text, trimmed
   notify?: boolean;    // NOTIF-09: the event's Notification; missing = on. Ignored for all-day events
   repeat?: 'weekly';   // EVT-14: every week from its day, no end date; missing = one day
+  importId?: string;   // IMP-10: the import that added it; set by the server, never changed
 }
 
 interface Note {
@@ -549,6 +551,7 @@ Settings apply instantly, with no Save button. The main panel uses `Radio`, `Swi
 | SET-14 | **Delete account:** a row below its own hairline: "Delete account" and "Erases every event, note, photo and family member for everyone, and signs out all screens." on the left, secondary "Delete account" (`trash-2`, label and icon in `--danger`) on the right. It opens a centered `alertdialog` over the scrim (a scrim tap or Escape cancels unless deleting): a `trash-2` on a `--danger` disc, the signed-in email as eyebrow, title "Delete account?", body "Everything saved to this account is erased for the whole family. This can’t be undone.", a tile listing what gets erased with live counts (Events, Notes, Photos, Family members, Signed-in screens), then a checkbox row "I understand everything will be erased for good." Buttons: `danger` "Delete account" (`trash-2`), disabled until the box is checked, and ghost "Keep account". **Deleting:** the checkbox row becomes "Erasing events, notes and photos. Keep this screen on.", the button reads "Deleting…", and both buttons and the scrim are locked. **Done:** the server erases the account's events, notes, photos and their files, family members, settings, screens and push subscriptions, and signs out every device (SIGNIN-18); this screen goes to the empty email form with the `Toast` "Account deleted. Everything on it has been erased." for 5 s. The same email can later sign up again as a new, empty account (SIGNIN-12). **Failed:** the deleting state ends and the dialog shows the Banner error "Couldn’t delete the account" · "Nothing was erased. Try again." with "Try again". Offline, the row's button is disabled. States U, V, W, X. |
 | SET-15 | **Guide and Terms of Service:** the last two rows of the Account card, each below a hairline: "Guide" then "Terms of Service" on the left and `arrow-up-right` on the right; each whole row (at least 44 px) is a link that opens `/guide` (GUIDE-01) or `/terms` (TERMS-01) in a new tab. |
 | SET-16 | **Family:** the Remove a member card (FAM-08) is in the right column, between the Schedule card and the Account card (SET-08). |
+| SET-17 | **Import events** row, right under Location (SET-09): "Import events" · "Add events from an .ics calendar file", summary "Last: {Oct 29}" when the account has a last import (IMP-10; none offline) → the Import events page (IMP-01). |
 | BG-01 | "‹ Settings", "Background", Season · Photo · Slideshow · Blank. |
 | BG-02 | "Season drawings · select one": four 16:9 thumbs (Spring, Summer, Fall, Winter; the current season's reads "{Season} · now"), each named "Use {Season} drawing as background", ring on the one shown. Below it a thumb grid (see `Glance States - Settings`, frame B) + "Upload photo" tile; uploads behave as PHOTO-06/08. Offline: "Upload when online", disabled. Label "Family photos · select one" / "Family photos · all {n} in rotation". |
 | BG-03 | Tapping a drawing picks it (`drawing`) and switches to Season. Tapping a family photo in Season or Blank switches to Photo; in Slideshow it stays Slideshow. The thumbs of the group not shown are at 50% (see `Glance States - Settings`, frame B). |
@@ -609,6 +612,23 @@ Reminders for upcoming events: a strip on the screen over any view, quietly on A
 | ID | Requirement |
 |---|---|
 | GUIDE-01 | **`/guide`** renders `Glance Guide` for everyone, signed in or not, with no sidebar: the header ("Glance" wordmark, the page's section links Get started · Using Glance · Screen sizes · FAQ, then the "Back to Glance" pill (`arrow-left`, at least 44 px tall) that opens `/` in the same tab (sign in when signed out, Today when signed in)), the hero ("Guide for families", "Your family’s day, at a glance." and its static preview), the 11 numbered sections from "Get started with one email" to "One app, any screen", then "Questions" (the first question open; each question is a button with `aria-expanded` that shows or hides its answer), and the footer ("Glance" and a "Terms of Service" link to `/terms`). Words exactly as the page, from `copy.ts`, except that 09 Reminders' first line reads "Choose when reminders come in Settings › Notifications: 15 or 30 minutes before, or off." (NOTIF-08; the page still has the old choices). Colors follow the month's season (Auto, by the UTC date), and 07's Season card shows Auto selected with "Follows the month · now {Season}". Text uses the app's type scale (§4.3), so body copy is 16 px and eyebrows 14 px where the page has 18. One readable column at the three sizes; the page scrolls. Linked from the sign-in form (SIGNIN-19) and Settings › Account (SET-15), both opening it in a new tab. |
+
+### 8.13 Import events — `IMP`
+
+A one-time copy of an `.ics` calendar file into the calendar. Imported events become normal events (edit, delete and reminders as usual); later changes to the file don't sync, and there are no calendar subscriptions. Frames: `Glance States - Settings` I1–I7.
+
+| ID | Requirement |
+|---|---|
+| IMP-01 | **Settings row** (SET-17) → the **Import events page** (`/settings/import`). Any signed-in screen of the account can import. |
+| IMP-02 | **Page:** full screen like the event page, sliding in from the right (280 ms `cubic-bezier(.2,.7,.2,1)`) and out to the right (280 ms `cubic-bezier(.6,0,.8,.3)`); soft canvas; white panels (radius 24) in two columns, one on small. It scrolls with the browser's scrollbar (at least one screen tall) under the sticky top bar: 88 px, surface-soft, a 56 px canvas Back IconButton (`chevron-left`), the title 28 px / 540, the step's actions on the right. Opening, closing and every step change scroll to the top. |
+| IMP-03 | **1 · Source** (I1), title "Import events", Back "Back to settings" → Settings. Left panel: eyebrow "Step 1 of 2", "Add events from a file", "Use an .ics file from a school, team or other calendar app. Events are copied in once; later changes to the file don’t sync.", with a last import (IMP-10) a soft tile "Last import · {Oct 29}" / "{n} events for {who}" and a ghost "Undo" while undo is open, then the mono line ".ics only · up to 5 MB · 1,000 events". Right: two tiles, "Send from phone" · "Scan a code, then pick the file on your phone" (season block 1, first: a wall screen usually has no file) → IMP-04, and "Choose file" · "From this device" → the file picker (`.ics`, `text/calendar`), then the upload (IMP-06). |
+| IMP-04 | **2 · Send from phone** (I2), title "Send from phone", Back → Source. A block-1 panel with the QR code on white and "Waiting for a file · code ends in {m:ss}" (accent dot); a right panel "Scan to send a file" with the steps "Scan the code with your phone camera", "Pick the .ics file on the page that opens", "Review the events here on the screen", and a secondary "New code". The code is a one-time sign-in link (SIGNIN-15's rules, except it lasts **10 minutes**) that opens Import events on the phone, where Choose file uploads the file for this screen. When it arrives, this screen moves to Review; the phone shows the same Review and can import from there too. |
+| IMP-05 | **Reading the file** (on the server, for both paths): VEVENTs with their time zones. SUMMARY, LOCATION and DESCRIPTION become title, place and notes, cut to 140, 60 and 280 characters (an empty title reads "Untitled event"). Timed events keep their moment and show in the location's zone (LOC-06). A plain weekly repeat with no end (`FREQ=WEEKLY`, no `UNTIL` or `COUNT`, at most its own weekday) becomes a weekly series (EVT-14), its `EXDATE`s skipped weeks; every other repeat becomes one-time events for the next 12 months, without its `EXDATE`s and with its changed weeks (`RECURRENCE-ID`). A multi-day all-day event becomes one all-day event per day; a timed event past midnight ends at its start day's midnight. Events that ended before now are left out (one still running is kept). |
+| IMP-06 | **Limits and errors** (they replace the page body; the top bar keeps Back → Source): a file over 5 MB, not a calendar, or with over 1,000 events after IMP-05 → "This isn’t a calendar file", "Choose a file that ends in .ics. Export one from the calendar app’s settings.", "Choose again" (`file-x`, I5); nothing left after IMP-05 → "No upcoming events in this file", "Every event in it has already happened, so there’s nothing to add.", "Choose another file" (`calendar-x`, I6). Both → Source. |
+| IMP-07 | **3 · Review** (I3), title "Review import". Left: "Step 2 of 2", "{n} events found", the file tile (name, mono "{Oct 31} – {Dec 12} · {12 KB}", ghost "Change" → Source), "Who these are for" chips (Everyone + each member, one pick, default Everyone), then "{d} are already on the calendar and will be skipped. Past events aren’t imported." ("1 is already…"; with none, only "Past events aren’t imported."). Right: "All events · {n}", every event in date order (mono date, title, time; all day reads "All day"; a series shows its first week and "Every week"); duplicates read "{title} · already added" at weight 330. **Duplicate** = same title (ignoring case), start and end as an event, or a week of a series, already on the calendar, or as an earlier event in the file. Top bar: primary "Import {n} events" (md, 44 px) counting only what will be added; "Import 1 event". |
+| IMP-08 | **Importing:** the button reads "Importing…" and every button on the page is disabled. Each new event gets the chosen who and Notification on at the account's lead (NOTIF-01). Offline, or a failed request → "Couldn’t import", "The screen is offline. Nothing was added. Try again when it’s back online.", "Try again" → Review (`wifi-off`, I7). It adds all or nothing. |
+| IMP-09 | **4 · Imported** (I4), title "Imported", the back button is a ✕ ("Close") → Settings. A block-3 panel: a check in a black circle, "{n} events added" ("1 event added"), "For {who} · {Oct 31} – {Dec 12}. {d} duplicates skipped." (the last sentence left out with none; "1 duplicate skipped."), mono "Undo stays in Settings › Import events for 24 hours". Top bar: ghost "Undo import" (removes this import's events, IMP-10, and closes) and primary "Open calendar" (closes, then Calendar). |
+| IMP-10 | **Last import and Undo:** the account keeps its latest import (date, count, who); a new import replaces it. Undo is offered for 24 hours after an import, on Imported and on Source, and deletes every event that still came from it, edited or not; deleted ones stay deleted. After Undo there is no last import to show until the next. Offline, Undo is hidden. |
 
 ---
 
