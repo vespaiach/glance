@@ -55,9 +55,9 @@ const styles = stylex.create({
 });
 
 const sizes = stylex.create({
-  large: { paddingInline: 48, gap: 24, scrollPaddingTop: 64 },
-  normal: { paddingInline: 24, gap: 16, scrollPaddingTop: 56 },
-  small: { paddingInline: 12, gap: 12, scrollPaddingTop: 54 },
+  large: { paddingInline: 48, gap: 24, scrollPaddingTop: 72 },
+  normal: { paddingInline: 24, gap: 16, scrollPaddingTop: 64 },
+  small: { paddingInline: 12, gap: 12, scrollPaddingTop: 60 },
 });
 
 export function Page({

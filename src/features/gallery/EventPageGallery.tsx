@@ -91,6 +91,7 @@ const DEMOS: readonly Demo[] = [
   { label: words.deleteAsking, draft: LUNCH, bar: { asking: "delete" } },
   { label: words.discardAsking, draft: LUNCH, bar: { asking: "discard" } },
   { label: words.offline, draft: LUNCH, bar: { mode: "new", online: false } },
+  { label: words.scrolled, draft: LUNCH, bar: { mode: "new", scrolled: true } },
 ];
 
 const picks = gallery.eventPicker;
