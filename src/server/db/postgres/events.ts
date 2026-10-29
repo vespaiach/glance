@@ -17,6 +17,7 @@ type EventRow = ServerColumns & {
   notify: boolean;
   repeat: "weekly" | null;
   exdates: string[];
+  import_id: string | null;
 };
 
 export function eventsRepo(sql: Sql): Repos["events"] {
@@ -58,6 +59,14 @@ export function eventsRepo(sql: Sql): Repos["events"] {
 
       return rows.map(toEvent);
     },
+    liveFromImport: async (accountId, importId) => {
+      const rows = await sql.all<EventRow>(
+        "SELECT * FROM events WHERE account_id = $1 AND import_id = $2 AND deleted_at IS NULL ORDER BY version",
+        [accountId, importId],
+      );
+
+      return rows.map(toEvent);
+    },
   };
 }
 
@@ -79,6 +88,7 @@ function toEvent(row: EventRow): StoredEvent {
     notify: row.notify,
     ...(row.repeat ? { repeat: row.repeat } : {}),
     ...(row.exdates.length > 0 ? { exdates: row.exdates } : {}),
+    ...optional("importId", row.import_id),
     ...serverFields(row),
   };
 }
@@ -86,8 +96,8 @@ function toEvent(row: EventRow): StoredEvent {
 async function saveEvent(sql: Sql, accountId: string, event: StoredEvent): Promise<void> {
   await sql.run(
     `INSERT INTO events (id, account_id, title, start_at, end_at, location, all_day, everyone,
-       tag_ids, notes, notify, repeat, exdates, updated_at, deleted_at, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       tag_ids, notes, notify, repeat, exdates, import_id, updated_at, deleted_at, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
      ON CONFLICT (id) DO UPDATE SET title = excluded.title, start_at = excluded.start_at,
        end_at = excluded.end_at, location = excluded.location, all_day = excluded.all_day,
        everyone = excluded.everyone, tag_ids = excluded.tag_ids, notes = excluded.notes,
@@ -108,6 +118,7 @@ async function saveEvent(sql: Sql, accountId: string, event: StoredEvent): Promi
       event.notify !== false,
       event.repeat ?? null,
       event.exdates ?? [],
+      event.importId ?? null,
       event.updatedAt,
       event.deletedAt ?? null,
       event.version,

@@ -1,4 +1,4 @@
-import type { ImportReview } from "@/domain/imports";
+import type { ImportResult, ImportReview, ImportWho, LastImport } from "@/domain/imports";
 import type { UploadProblem } from "@/domain/photoUpload";
 import type { QrOpens } from "@/domain/qrSignIn";
 import type { Result } from "@/domain/result";
@@ -77,6 +77,9 @@ export interface Transport {
   imports: {
     upload(file: File, forDisplay?: string): Answer<ImportReview, ImportError>;
     staged(): Answer<ImportReview | undefined>;
+    commit(id: string, who: ImportWho): Answer<ImportResult>;
+    last(): Answer<LastImport | undefined>;
+    undo(id: string): Answer<void>;
   };
   webPush: {
     key(): Answer<string>;

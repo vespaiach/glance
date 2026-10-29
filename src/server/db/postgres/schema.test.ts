@@ -828,3 +828,13 @@ describe("020_imports", () => {
     await expect(insert("lost")).rejects.toThrow(/check constraint/);
   });
 });
+
+describe("021_event_import_id", () => {
+  it("D39 an event has no import unless it names one of the imports", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    expect(await db().one("SELECT import_id FROM events")).toEqual({ import_id: null });
+    await expect(db().run("UPDATE events SET import_id = 'nope'")).rejects.toThrow(/foreign key/);
+  });
+});

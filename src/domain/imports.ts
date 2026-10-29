@@ -29,6 +29,22 @@ export type ImportReview = {
   duplicates: number;
 };
 
+export type ImportWho = "everyone" | string;
+
+export type ImportResult = {
+  count: number;
+  range: { first: string; last: string };
+  who: ImportWho;
+};
+
+export type LastImport = {
+  id: string;
+  importedAt: string;
+  count: number;
+  who: ImportWho;
+  undoUntil: string;
+};
+
 export function markDuplicates<T extends Comparable>(
   events: readonly T[],
   calendar: readonly Comparable[],

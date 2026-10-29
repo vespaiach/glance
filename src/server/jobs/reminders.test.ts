@@ -3,6 +3,8 @@ import { err, ok, type Result } from "@/domain/result";
 import type { AccountSettings, CalendarEvent, Tag } from "@/domain/schemas";
 import type { PushMessage, PushSender, PushTarget } from "../push";
 import { deleteEvent, putEvent } from "../services/events";
+import { commitImport } from "../services/imports/commit";
+import { stageImport } from "../services/imports/stage";
 import { subscribePush } from "../services/push";
 import { putSettings } from "../services/settings";
 import { putTag } from "../services/tags";
@@ -202,6 +204,33 @@ describe("sendReminderPushes", () => {
     await run();
 
     expect(sent).toEqual([]);
+  });
+
+  it("NOTIF-01 an imported event reminds at its lead time", async () => {
+    const file = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Glance//Test//EN",
+      "BEGIN:VEVENT",
+      "UID:piano",
+      "DTSTAMP:20260901T000000Z",
+      "DTSTART:20261009T141500Z",
+      "DTEND:20261009T151500Z",
+      "SUMMARY:Piano",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const review = await stageImport(harness.deps(), MARIA, "maria-phone", {
+      fileName: "piano.ics",
+      text: file,
+      size: file.length,
+    });
+    if (!review.ok) throw new Error(review.error);
+    await commitImport(harness.deps(), MARIA, review.value.id, "everyone");
+
+    await run();
+
+    expect(messages()).toEqual([expect.objectContaining({ title: "Piano in 15 min" })]);
   });
 
   it("NOTIF-01 a weekly event reminds every week at its lead time", async () => {

@@ -23,6 +23,7 @@ import * as clientErrors from "./clientErrors";
 import type { ServiceDeps } from "./deps";
 import * as displays from "./displays";
 import * as events from "./events";
+import * as importCommits from "./imports/commit";
 import * as imports from "./imports/stage";
 import * as notes from "./notes";
 import * as photos from "./photos";
@@ -106,6 +107,22 @@ export function stageImport(accountId: string, displayId: string, upload: import
 
 export function stagedImport(accountId: string, displayId: string) {
   return imports.stagedImport(deps(), accountId, displayId);
+}
+
+export async function commitImport(accountId: string, id: string, who: string) {
+  return announce(
+    syncBus(),
+    accountId,
+    await importCommits.commitImport(deps(), accountId, id, who),
+  );
+}
+
+export async function undoImport(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await importCommits.undoImport(deps(), accountId, id));
+}
+
+export function lastImport(accountId: string) {
+  return importCommits.lastImport(deps(), accountId);
 }
 
 export function listDisplays(accountId: string, displayId: string) {
