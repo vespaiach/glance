@@ -436,3 +436,105 @@ test("SET-17 offline the Import events row has no summary", async () => {
 
   expect(row).not.toHaveTextContent("Last:");
 });
+
+const NEW_KEY = {
+  tail: "2345",
+  createdAt: NOW.toISOString(),
+  lastUsedAt: null,
+  key: "glc_live_abcdefghijklmnopqrstuvwxyz012345",
+};
+
+const SAVED_KEY = {
+  tail: "7f2c",
+  createdAt: "2026-09-14T17:00:00.000Z",
+  lastUsedAt: new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+};
+
+test("SET-19 the API key row shows the saved key masked with its last use", async () => {
+  store.apiKey.get.mockResolvedValue(ok(SAVED_KEY));
+
+  renderSettings();
+
+  expect(await screen.findByText("glc_live_••••7f2c")).toBeInTheDocument();
+  expect(screen.getByText("· Used 2 hr ago")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Create key" })).not.toBeInTheDocument();
+});
+
+test("SET-19 Create shows the key once, and Done leaves only the masked key", async () => {
+  store.apiKey.get.mockResolvedValue(ok(undefined));
+  store.apiKey.create.mockResolvedValue(ok(NEW_KEY));
+
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Create key" }));
+
+  expect(await screen.findByText(NEW_KEY.key)).toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+  expect(screen.queryByText(NEW_KEY.key)).not.toBeInTheDocument();
+  expect(screen.getByText("glc_live_••••2345")).toBeInTheDocument();
+  expect(screen.getByText("· Never used")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Create key" })).not.toBeInTheDocument();
+});
+
+test("SET-19 Copy writes the new key to the clipboard", async () => {
+  store.apiKey.get.mockResolvedValue(ok(undefined));
+  store.apiKey.create.mockResolvedValue(ok(NEW_KEY));
+  const user = userEvent.setup();
+
+  renderSettings();
+
+  await user.click(await screen.findByRole("button", { name: "Create key" }));
+  await user.click(await screen.findByRole("button", { name: "Copy" }));
+
+  expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+  expect(await navigator.clipboard.readText()).toBe(NEW_KEY.key);
+});
+
+test("SET-19 a failed create keeps Create key", async () => {
+  store.apiKey.get.mockResolvedValue(ok(undefined));
+  store.apiKey.create.mockResolvedValue(err("network"));
+
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Create key" }));
+
+  await waitFor(() => expect(screen.getByRole("button", { name: "Create key" })).toBeEnabled());
+  expect(screen.queryByText("Copy this key now")).not.toBeInTheDocument();
+});
+
+test("SET-19 Revoke asks first and Cancel keeps the key", async () => {
+  store.apiKey.get.mockResolvedValue(ok(SAVED_KEY));
+
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Revoke" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(store.apiKey.revoke).not.toHaveBeenCalled();
+  expect(screen.getByText("glc_live_••••7f2c")).toBeInTheDocument();
+});
+
+test("SET-19 Revoke key deletes the key and brings back Create key", async () => {
+  store.apiKey.get.mockResolvedValue(ok(SAVED_KEY));
+  store.apiKey.revoke.mockResolvedValue(ok(undefined));
+
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Revoke" }));
+  await userEvent.click(screen.getByRole("button", { name: "Revoke key" }));
+
+  expect(await screen.findByRole("button", { name: "Create key" })).toBeEnabled();
+  expect(store.apiKey.revoke).toHaveBeenCalledOnce();
+  expect(screen.queryByText("glc_live_••••7f2c")).not.toBeInTheDocument();
+});
+
+test("SET-19 offline Revoke is disabled", async () => {
+  store.apiKey.get.mockResolvedValue(ok(SAVED_KEY));
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+  renderSettings();
+
+  expect(await screen.findByRole("button", { name: "Revoke" })).toBeDisabled();
+});

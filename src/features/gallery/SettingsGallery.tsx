@@ -46,6 +46,26 @@ const QR_OPEN = {
 
 const STORAGE_LIMIT = 5 * GB;
 
+const API_KEY: SettingsProps["apiKey"] = {
+  host: "glance.app",
+  saved: { tail: "7f2c", used: "· Used 2 hr ago" },
+  row: { kind: "idle" },
+  onCreate: ignore,
+  onCopy: ignore,
+  onDone: ignore,
+  onAsk: ignore,
+  onCancel: ignore,
+  onRevoke: ignore,
+};
+
+const NEW_KEY = { tail: "Q7mZ", used: "· Never used" };
+
+const SHOWN_KEY = {
+  kind: "shown",
+  key: "glc_live_8fK2pR4vXn9TbLw3HsY6cJd1MqAeQ7mZ",
+  copied: false,
+} as const;
+
 const [AN, HY, MOM, DAD] = GALLERY_FAMILY;
 
 const FAMILY_PLANS = [[AN], [AN], [AN, HY], [HY, DAD], [DAD]].map((who, index) => ({
@@ -264,6 +284,21 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "offline", online: false },
     { key: "export-none", upcomingEvents: 0 },
     { key: "export-saved", savedEvents: 12 },
+    { key: "api-none", apiKey: { ...API_KEY, saved: null } },
+    { key: "api-creating", apiKey: { ...API_KEY, saved: null, row: { kind: "creating" } } },
+    { key: "api-none-offline", online: false, apiKey: { ...API_KEY, saved: null } },
+    { key: "api-shown", apiKey: { ...API_KEY, saved: NEW_KEY, row: SHOWN_KEY } },
+    {
+      key: "api-copied",
+      apiKey: { ...API_KEY, saved: NEW_KEY, row: { ...SHOWN_KEY, copied: true } },
+    },
+    { key: "api-asking", apiKey: { ...API_KEY, row: { kind: "asking" } } },
+    {
+      key: "small-api-shown",
+      small: true,
+      breakpoint: "small",
+      apiKey: { ...API_KEY, saved: NEW_KEY, row: SHOWN_KEY },
+    },
     { key: "phone-ask", phone: { kind: "ask" } },
     { key: "phone-asking", phone: { kind: "asking" } },
     { key: "phone-denied", phone: { kind: "denied" } },
@@ -326,6 +361,7 @@ function settingsBase(season: Season): SettingsProps {
     onOpenImport: ignore,
     upcomingEvents: 12,
     onExportEvents: ignore,
+    apiKey: API_KEY,
     onOpenAmbient: ignore,
     signOut: { kind: "closed" },
     onSignOut: ignore,

@@ -645,6 +645,25 @@ export const copy = {
       forWho: (names: string) => `For: ${names}`,
       everyone: "Everyone",
     },
+    apiKey: {
+      title: "API key",
+      body: "Lets other apps read, add and update events · one key per account",
+      endpoint: (host: string) => `GET · POST · PATCH · DELETE ${host}/api/v1/events`,
+      create: "Create key",
+      masked: (tail: string) => `glc_live_••••${tail}`,
+      used: (stamp: ActiveStamp | null) => `· ${usedText(stamp)}`,
+      revoke: "Revoke",
+      offline: "Offline · needs a connection",
+      ask: "Apps using this key stop working right away.",
+      cancel: "Cancel",
+      confirm: "Revoke key",
+      shownTitle: "Copy this key now",
+      shownBody:
+        "It’s shown only once. Anyone with it can see, add and change events on this calendar.",
+      copy: "Copy",
+      copied: "Copied",
+      done: "Done",
+    },
     season: {
       title: "Season",
       autoLabel: "Auto",
@@ -1655,8 +1674,28 @@ export const copy = {
         ],
       },
       {
+        id: "events-data",
+        eyebrow: "08 · Import, export and API",
+        title: "Bring events in and out",
+        intro: "Import, Export and API key need a connection.",
+        steps: [
+          [
+            { strong: "Import events" },
+            " adds events from an .ics calendar file, up to 5 MB and 1,000 events. Send the file from your phone by scanning the code, or choose a file on this screen. Pick who the events are for, then tap Import. Events already on the calendar and past events are skipped. Imported events are a one-time copy: later changes to the file don’t show up. Undo removes the whole import for 24 hours.",
+          ],
+          [
+            { strong: "Export events" },
+            " saves every upcoming event as an .ics file that other calendar apps can open. Past events are left out.",
+          ],
+          [
+            { strong: "API key" },
+            " lets another app read, add and update events on your calendar. Tap Create key and copy it right away; it’s shown only once. One key per account. Revoke it to stop the app, then create a new one if needed.",
+          ],
+        ],
+      },
+      {
         id: "ambient",
-        eyebrow: "08 · Ambient",
+        eyebrow: "09 · Ambient",
         title: "A calm screen for quiet hours",
         intro:
           "Ambient dims the screen to a large clock, the weather and the next event. Good for evenings and overnight.",
@@ -1672,7 +1711,7 @@ export const copy = {
       },
       {
         id: "notifications",
-        eyebrow: "09 · Reminders",
+        eyebrow: "10 · Reminders",
         title: "Never miss the next thing",
         steps: [
           [
@@ -1689,7 +1728,7 @@ export const copy = {
       },
       {
         id: "phone",
-        eyebrow: "10 · Phone and tablet",
+        eyebrow: "11 · Phone and tablet",
         title: "Take Glance with you",
         intro:
           "Glance runs on phones and tablets too, with the same calendar, notes and photos. Add it to your home screen, then sign in one of two ways.",
@@ -1777,6 +1816,23 @@ export const copy = {
         following: (season: string) => `Follows the month · now ${season}`,
         auto: "Auto",
       },
+      eventsData: [
+        {
+          title: "Import events",
+          body: "Add events from an .ics calendar file",
+          end: "Last: Oct 20",
+        },
+        {
+          title: "Export events",
+          body: "Saves upcoming events as an .ics file",
+          end: "Download .ics",
+        },
+        {
+          title: "API key",
+          body: "Lets other apps read, add and update events",
+          end: "Create key",
+        },
+      ],
       ambient: {
         place: "Portland, OR",
         time: "9:48",
@@ -1906,6 +1962,21 @@ function activeText(stamp: ActiveStamp): string {
       return "Active yesterday";
     case "on":
       return `Active ${stamp.date}`;
+  }
+}
+
+function usedText(stamp: ActiveStamp | null): string {
+  if (stamp === null) return "Never used";
+
+  switch (stamp.kind) {
+    case "minutes":
+      return `Used ${stamp.count} min ago`;
+    case "hours":
+      return `Used ${stamp.count} hr ago`;
+    case "yesterday":
+      return "Used yesterday";
+    case "on":
+      return `Used ${stamp.date}`;
   }
 }
 

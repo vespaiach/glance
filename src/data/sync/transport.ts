@@ -1,3 +1,4 @@
+import type { ApiKey, NewApiKey } from "@/domain/apiKeys";
 import type { ImportResult, ImportReview, ImportWho, LastImport } from "@/domain/imports";
 import type { UploadProblem } from "@/domain/photoUpload";
 import type { QrOpens } from "@/domain/qrSignIn";
@@ -80,6 +81,11 @@ export interface Transport {
     commit(id: string, who: ImportWho): Answer<ImportResult>;
     last(): Answer<LastImport | undefined>;
     undo(id: string): Answer<void>;
+  };
+  apiKey: {
+    get(): Answer<ApiKey | undefined>;
+    create(): Answer<NewApiKey>;
+    revoke(): Answer<void>;
   };
   webPush: {
     key(): Answer<string>;

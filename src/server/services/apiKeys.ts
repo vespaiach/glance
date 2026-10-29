@@ -1,13 +1,10 @@
 import "server-only";
 import { randomInt } from "node:crypto";
+import type { ApiKey, NewApiKey } from "@/domain/apiKeys";
 import { err, ok, type Result } from "@/domain/result";
 import { hashToken } from "../auth/tokens";
 import type { ApiKeyRecord } from "../db";
 import type { ServiceDeps } from "./deps";
-
-export type ApiKey = { tail: string; createdAt: string; lastUsedAt: string | null };
-
-export type NewApiKey = ApiKey & { key: string };
 
 const KEY_PREFIX = "glc_live_";
 

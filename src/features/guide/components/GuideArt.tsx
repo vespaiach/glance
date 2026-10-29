@@ -11,12 +11,14 @@ import {
   CloudDrizzle,
   CloudRain,
   CloudSun,
+  Download,
   Image,
   type LucideIcon,
   MapPin,
   Maximize,
   Moon,
   Pause,
+  Plus,
   QrCode,
   Sun,
   Users,
@@ -58,6 +60,8 @@ const FORECAST_ICONS: readonly LucideIcon[] = [
 ];
 
 const NOTE_TILTS = [-2, 1.5, 1, -1.5];
+
+const EVENTS_DATA_BUTTONS: readonly (LucideIcon | null)[] = [null, Download, Plus];
 
 const ACTIVE_DIGIT = 4;
 
@@ -410,6 +414,27 @@ const s = stylex.create({
     aspectRatio: "1",
   },
 
+  dataCard: { borderRadius: 24, paddingInline: 24, paddingBlock: 4 },
+  dataRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px 24px",
+    paddingBlock: 20,
+  },
+  dataRule: { boxShadow: `inset 0 -1px 0 ${colors.borderHairlineSoft}` },
+  dataWords: { gap: 4, minWidth: 160, flex: "1 1 200px" },
+  dataTitle: { fontSize: 20, fontWeight: 540, lineHeight: 1.2, letterSpacing: "-0.2px" },
+  dataBody: { fontSize: 15, fontWeight: 330, lineHeight: 1.4, textWrap: "pretty" },
+  dataLink: { display: "flex", alignItems: "center", gap: 8, fontSize: 17, fontWeight: 330 },
+  dataButton: {
+    minHeight: 44,
+    paddingInline: 20,
+    fontSize: 16,
+    boxShadow: `inset 0 0 0 1px ${colors.black}`,
+  },
+
   ambient: {
     backgroundColor: seasonVars.deep,
     color: colors.ambientInkMedium,
@@ -575,6 +600,7 @@ const ART: Record<Exclude<GuideSectionId, "settings">, () => ReactNode> = {
   weather: WeatherArt,
   notes: NotesArt,
   photos: PhotosArt,
+  "events-data": EventsDataArt,
   ambient: AmbientArt,
   notifications: ReminderArt,
   phone: PhoneArt,
@@ -945,6 +971,45 @@ function SettingsArt({ season }: { season: Season }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function EventsDataArt() {
+  return (
+    <div aria-hidden {...stylex.props(s.panel, s.panelPadLg, s.block3)}>
+      <div {...stylex.props(s.column, s.dataCard, s.white)}>
+        {art.eventsData.map((row, index) => (
+          <div
+            key={row.title}
+            {...stylex.props(s.dataRow, index < art.eventsData.length - 1 && s.dataRule)}
+          >
+            <span {...stylex.props(s.column, s.dataWords)}>
+              <span {...stylex.props(s.dataTitle)}>{row.title}</span>
+              <span {...stylex.props(s.dataBody)}>{row.body}</span>
+            </span>
+            <DataEnd icon={EVENTS_DATA_BUTTONS[index] ?? null} label={row.end} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DataEnd({ icon, label }: { icon: LucideIcon | null; label: string }) {
+  if (icon === null) {
+    return (
+      <span {...stylex.props(s.dataLink)}>
+        {label}
+        <Icon icon={ChevronRight} size={22} />
+      </span>
+    );
+  }
+
+  return (
+    <span {...stylex.props(s.pill, s.dataButton)}>
+      <Icon icon={icon} size={18} />
+      {label}
+    </span>
   );
 }
 

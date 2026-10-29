@@ -347,6 +347,34 @@ describe("HttpTransport", () => {
     expect(calls[2]?.init.method).toBe("POST");
   });
 
+  it("SET-19 apiKey.get answers the masked key, or nothing on a 404", async () => {
+    const saved = { tail: "7f2c", createdAt: "2026-10-09T14:00:00.000Z", lastUsedAt: null };
+    const { calls, fetch } = fakeFetch(json(saved), json({ error: "not-found" }, 404));
+    const apiKey = transport(fetch).apiKey;
+
+    expect(await apiKey.get()).toEqual({ ok: true, value: saved });
+    expect(await apiKey.get()).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/api-key");
+  });
+
+  it("SET-19 apiKey.create posts and answers the new key, and apiKey.revoke deletes it", async () => {
+    const created = {
+      tail: "2345",
+      createdAt: "2026-10-09T14:00:00.000Z",
+      lastUsedAt: null,
+      key: "glc_live_abcdefghijklmnopqrstuvwxyz012345",
+    };
+    const { calls, fetch } = fakeFetch(json(created, 201), new Response(null, { status: 204 }));
+    const apiKey = transport(fetch).apiKey;
+
+    expect(await apiKey.create()).toEqual({ ok: true, value: created });
+    expect(await apiKey.revoke()).toEqual({ ok: true, value: undefined });
+    expect(calls.map((call) => [call.url, call.init.method])).toEqual([
+      ["/api/api-key", "POST"],
+      ["/api/api-key", "DELETE"],
+    ]);
+  });
+
   it("SIGNIN-15 voidQr deletes the code by its link and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
     const url = "https://glance.example.com/api/auth/verify?t=abc";

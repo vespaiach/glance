@@ -68,6 +68,17 @@ function renderView(overrides: Partial<Props> = {}) {
     onOpenImport: vi.fn(),
     upcomingEvents: 3,
     onExportEvents: vi.fn(),
+    apiKey: {
+      host: "glance.example",
+      saved: null,
+      row: { kind: "idle" },
+      onCreate: vi.fn(),
+      onCopy: vi.fn(),
+      onDone: vi.fn(),
+      onAsk: vi.fn(),
+      onCancel: vi.fn(),
+      onRevoke: vi.fn(),
+    },
     onOpenAmbient: vi.fn(),
     signOut: { kind: "closed" },
     onSignOut: vi.fn(),
@@ -124,7 +135,7 @@ function notesSlider() {
 
 function rowsText() {
   return screen.getAllByText(
-    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle|Import events|Export events)$/,
+    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle|Import events|Export events|API key)$/,
   );
 }
 
@@ -226,6 +237,7 @@ test("SET-05 NOTIF-08 the Notifications rows sit between Temperature and Hide si
     "Hide sidebar when idle",
     "Import events",
     "Export events",
+    "API key",
   ]);
 });
 
@@ -243,6 +255,12 @@ test("SET-18 Export events is the row after Import events", () => {
   const names = rowsText().map((row) => row.textContent);
 
   expect(names.indexOf("Export events")).toBe(names.indexOf("Import events") + 1);
+});
+
+test("SET-19 API key is the last row of the left card", () => {
+  renderView();
+
+  expect(rowsText().at(-1)).toHaveTextContent("API key");
 });
 
 test("SET-18 the status counts upcoming events and Download .ics exports them", async () => {
