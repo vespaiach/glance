@@ -333,6 +333,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 | `GET /api/photos/usage` | `{ used, limit }` in bytes (D32) |
 | `GET /api/push/key`, `PUT/DELETE /api/push/subscription` | VAPID public key (404 when push is off); this display's subscription `{ endpoint, keys: { p256dh, auth } }` (D30) |
 | `GET/POST/DELETE /api/api-key` | The account's API key (D40). `GET` → `{ tail, createdAt, lastUsedAt }` or 404; `POST` → 201 `{ key, tail, createdAt, lastUsedAt }` with the full key, the only time it is sent, or 409 `exists`; `DELETE` revokes it → 204, 404 when there is none |
+| `/api/v1/events`, `/api/v1/events/{id}` | The public events API (D40, API-*), §6.8 |
 | `DELETE /api/account` | Deletes the account and revokes every device (D31); 204 |
 | `/api/auth/*` | §6.2 |
 | `POST /api/imports`, `GET /api/imports/staged`, `GET /api/imports/last`, `POST /api/imports/{id}/commit`, `POST /api/imports/{id}/undo` | Import events (D39). `POST` takes the raw `.ics` as the body with a URI-encoded `x-file-name`, like a photo (`readIcsUpload` stops reading past 5 MB → 413), and an optional `?forDisplay=` (`ImportUploadQuerySchema`; a display of another account → 404); answers 201 with the review `{ id, fileName, size, range, events: [{ title, startAt, endAt, allDay, repeat, duplicate }], newCount, duplicates }` or 400 `not-ics` \| `no-upcoming`. `staged` → the newest import staged for this display in the last hour (404 when none). `commit { who: "everyone" \| tagId }` (`ImportCommitSchema`) → `{ count, range, who }`; 409 when not staged, 400 `unknown-tag` for a tag the account doesn't have, 404 for another account's import. `last` → `{ id, importedAt, count, who, undoUntil }` or 404. `undo` → 204; 409 after 24 h (`too-late`) or when not done (`not-done`), 404 for another account's import |
@@ -522,6 +523,21 @@ PostgreSQL, from `db-migrations/`:
 - Timestamps are `timestamptz` and ISO-8601 UTC strings everywhere else; `taken_on` is `YYYY-MM-DD`.
 - The server stamps `updated_at` and `version`; every write bumps `sync_state.version` in the same transaction. Deletes are soft (`deleted_at`) so other screens receive them.
 - Photo files are stored as `{account}/{id}.{display|thumb}` (the uploaded original isn't kept) under `{DATA_DIR}/photos` or in an S3 or R2 bucket, served through an authenticated route. Deleting a photo deletes its files.
+
+### 6.8 Public events API (API-*)
+Bearer key instead of the session: no Origin check (no cookies to ride on) and no build check. Steps: `apiAccount` (`server/http.ts`) → `requireApiKey(authorization)` (`server/auth/apiKeys.ts`): the header must be `Bearer glc_live_` + 32 base62, else 401; the key's SHA-256 is counted on the auth deps' `apiKey` limiter (60 per minute per key, in memory, `createRateLimiter`; over it → 429 `limited` with `Retry-After` = `ceil(retryAfterMs / 1000)` seconds, the key's window left); then `apiKeys.use(keyHash, now)` sets `last_used_at` and answers the account id in one `UPDATE … RETURNING` (no row → 401 `unauthorized`, so a revoked key fails at once). Body and query parse with `ApiEventInputSchema`, `ApiEventPatchSchema` (`v.partial`) and `ApiRangeSchema` (`domain/schemas.ts`); a body failure → 400 `{ error: "invalid", field }` with the first issue's top-level key.
+
+`server/services/apiEvents.ts` maps between the API's event JSON (`ApiEvent`, API-03) and `CalendarEvent`, and saves through `events.putEvent` / `events.deleteEvent`, announced on the sync bus like any write, so screens, sync and reminders see it as a normal event:
+
+| Function | Route | Notes |
+|---|---|---|
+| `listApiEvents(accountId, { from?, to? })` | `GET /api/v1/events` → `{ events }` | Live events of the account (`events.changedSince(accountId, 0)`), local day by `eventDayKey` in `accountTimeZone` (the location's zone, else `accounts.time_zone`, LOC-07); a series is kept while its first day ≤ `to`; sorted by `startAt` |
+| `readApiEvent(accountId, id)` | `GET /api/v1/events/{id}` | 404 for a deleted id or another account's |
+| `createApiEvent(accountId, input)` | `POST /api/v1/events` → 201 | New UUIDv7 id, `notify: true` |
+| `changeApiEvent(accountId, id, patch)` | `PATCH /api/v1/events/{id}` | The stored event as API JSON, the patch spread over it (`null` clears an optional field), then built as a create; keeps `notify` and `importId` |
+| `deleteApiEvent(accountId, id)` | `DELETE /api/v1/events/{id}` → 204 | 404 when already deleted |
+
+Building checks what the schema can't, answering the field as the error (→ 400 `{ error: "invalid", field }`): `start` must be a `YYYY-MM-DD` date exactly when `allDay` (stored as UTC midnight, `allDayStart`); `end` must be after `start` on the same local day and absent for all-day (`end`); every `who` name must match a live tag of the account ignoring case (`who`); `who` absent → `everyone`, `[]` → no one, names → their tag ids in tag order (`created_at`). Timed `start`/`end` are stored and answered as UTC ISO strings.
 
 ---
 

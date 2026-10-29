@@ -296,6 +296,51 @@ export const ImportUploadQuerySchema = v.object({ forDisplay: v.optional(IdSchem
 export type ImportUploadQuery = v.InferOutput<typeof ImportUploadQuerySchema>;
 
 export const ImportCommitSchema = v.object({ who: v.union([v.literal("everyone"), IdSchema]) });
+
+const apiEventEntries = {
+  title: v.pipe(
+    v.string(),
+    v.trim(),
+    v.nonEmpty(),
+    v.maxLength(EVENT_LIMITS.title),
+    v.regex(/^[^\r\n]*$/),
+  ),
+  start: v.union([IsoTimestampSchema, IsoDateSchema]),
+  end: v.nullish(IsoTimestampSchema),
+  allDay: v.nullish(v.boolean()),
+  who: v.nullish(v.array(v.string())),
+  place: v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(EVENT_LIMITS.location))),
+  notes: v.nullish(v.pipe(v.string(), v.trim(), v.maxLength(EVENT_LIMITS.notes))),
+  repeat: v.nullish(v.literal("weekly")),
+  exdates: v.nullish(v.array(IsoDateSchema)),
+};
+
+export const ApiEventInputSchema = v.object(apiEventEntries);
+export type ApiEventInput = v.InferOutput<typeof ApiEventInputSchema>;
+
+export const ApiEventPatchSchema = v.partial(ApiEventInputSchema);
+export type ApiEventPatch = v.InferOutput<typeof ApiEventPatchSchema>;
+
+export const ApiRangeSchema = v.pipe(
+  v.object({ from: v.optional(IsoDateSchema), to: v.optional(IsoDateSchema) }),
+  v.check(({ from, to }) => from === undefined || to === undefined || from <= to),
+);
+export type ApiRange = v.InferOutput<typeof ApiRangeSchema>;
+
+export type ApiEvent = {
+  id: string;
+  title: string;
+  start: string;
+  end?: string;
+  allDay?: true;
+  who?: string[];
+  place?: string;
+  notes?: string;
+  repeat?: "weekly";
+  exdates?: string[];
+};
+
+export type ApiEventField = keyof ApiEventInput;
 export type ImportCommit = v.InferOutput<typeof ImportCommitSchema>;
 
 export const NameRequestSchema = v.object({

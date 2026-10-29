@@ -51,4 +51,19 @@ describe("createRateLimiter", () => {
     expect(limiter.allow("a", at(999))).toBe(false);
     expect(limiter.allow("a", at(1000))).toBe(true);
   });
+
+  it("API-02 answers the time left in the key's window", () => {
+    const limiter = createRateLimiter({ limit: 1, windowMs: 60_000 });
+    limiter.allow("a", at(0));
+
+    expect(limiter.retryAfterMs("a", at(15_000))).toBe(45_000);
+  });
+
+  it("API-02 answers 0 for a key with no open window", () => {
+    const limiter = createRateLimiter({ limit: 1, windowMs: 60_000 });
+    limiter.allow("a", at(0));
+
+    expect(limiter.retryAfterMs("b", at(0))).toBe(0);
+    expect(limiter.retryAfterMs("a", at(60_000))).toBe(0);
+  });
 });

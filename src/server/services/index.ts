@@ -2,6 +2,9 @@ import "server-only";
 import { err, ok, type Result } from "@/domain/result";
 import type {
   AccountSettings,
+  ApiEventInput,
+  ApiEventPatch,
+  ApiRange,
   CalendarEvent,
   ClientError,
   LocationRequest,
@@ -19,6 +22,7 @@ import { photoStore } from "../storage";
 import { createCensusGeocoder } from "../weather/census";
 import { createOpenMeteo } from "../weather/openMeteo";
 import type { Coordinates } from "../weather/provider";
+import * as apiEvents from "./apiEvents";
 import * as apiKeys from "./apiKeys";
 import * as clientErrors from "./clientErrors";
 import type { ServiceDeps } from "./deps";
@@ -158,6 +162,30 @@ export function createApiKey(accountId: string) {
 
 export function revokeApiKey(accountId: string) {
   return apiKeys.revokeApiKey(deps(), accountId);
+}
+
+export function listApiEvents(accountId: string, range: ApiRange) {
+  return apiEvents.listApiEvents(deps(), accountId, range);
+}
+
+export function readApiEvent(accountId: string, id: string) {
+  return apiEvents.readApiEvent(deps(), accountId, id);
+}
+
+export async function createApiEvent(accountId: string, input: ApiEventInput) {
+  return announce(syncBus(), accountId, await apiEvents.createApiEvent(deps(), accountId, input));
+}
+
+export async function changeApiEvent(accountId: string, id: string, patch: ApiEventPatch) {
+  return announce(
+    syncBus(),
+    accountId,
+    await apiEvents.changeApiEvent(deps(), accountId, id, patch),
+  );
+}
+
+export async function deleteApiEvent(accountId: string, id: string) {
+  return announce(syncBus(), accountId, await apiEvents.deleteApiEvent(deps(), accountId, id));
 }
 
 export function accountWeather(accountId: string) {
