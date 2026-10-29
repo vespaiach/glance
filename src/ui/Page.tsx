@@ -1,7 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { type ReactNode, type RefObject, type UIEvent, useEffect, useRef } from "react";
+import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { colors, motion } from "@/theme/tokens.stylex";
 import { dialogKeyDown, useFocusOnOpen } from "./dialogFocus";
@@ -14,7 +14,7 @@ type PageProps = {
   leaving?: boolean;
   onLeft: () => void;
   keyboardInset?: number;
-  onScroll?: (event: UIEvent<HTMLDivElement>) => void;
+  topBar?: ReactNode;
   children: ReactNode;
 };
 
@@ -48,6 +48,13 @@ const styles = stylex.create({
     transitionDuration: motion.durBase,
     transitionTimingFunction: motion.easeOut,
   },
+  content: {
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: "auto",
+    display: "flex",
+    flexDirection: "column",
+  },
   aboveKeyboard: (padding: number, inset: number) => ({ paddingBottom: padding + inset }),
   leaving: {
     pointerEvents: "none",
@@ -55,9 +62,15 @@ const styles = stylex.create({
 });
 
 const sizes = stylex.create({
-  large: { paddingInline: 48, gap: 24, scrollPaddingTop: 74 },
-  normal: { paddingInline: 24, gap: 16, scrollPaddingTop: 66 },
-  small: { paddingInline: 12, gap: 12, scrollPaddingTop: 62 },
+  large: { gap: 24, scrollPaddingTop: 88 },
+  normal: { gap: 16, scrollPaddingTop: 88 },
+  small: { gap: 12, scrollPaddingTop: 88 },
+});
+
+const contentSizes = stylex.create({
+  large: { paddingInline: 48, gap: 24 },
+  normal: { paddingInline: 24, gap: 16 },
+  small: { paddingInline: 12, gap: 12 },
 });
 
 export function Page({
@@ -67,7 +80,7 @@ export function Page({
   leaving = false,
   onLeft,
   keyboardInset = 0,
-  onScroll,
+  topBar,
   children,
 }: PageProps) {
   const page = useRef<HTMLDivElement>(null);
@@ -86,7 +99,6 @@ export function Page({
       aria-label={label}
       tabIndex={-1}
       onKeyDown={dialogKeyDown(onEscape)}
-      onScroll={onScroll}
       {...stylex.props(
         styles.root,
         sizes[breakpoint],
@@ -94,7 +106,8 @@ export function Page({
         leaving && styles.leaving,
       )}
     >
-      {children}
+      {topBar}
+      <div {...stylex.props(styles.content, contentSizes[breakpoint])}>{children}</div>
     </div>
   );
 }

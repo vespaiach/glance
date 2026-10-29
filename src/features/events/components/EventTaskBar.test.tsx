@@ -33,14 +33,14 @@ function renderBar(props: Partial<Props> = {}) {
 }
 
 describe("EventTaskBar", () => {
-  it("EVT-05 a new event reads New event with Save event and Close", async () => {
+  it("EVT-05 a new event reads New event with Save event and Back", async () => {
     const { onSave, onClose } = renderBar();
 
     expect(screen.getByText("New event")).toBeVisible();
 
     await userEvent.click(screen.getByRole("button", { name: "Save event" }));
 
-    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
     expect(onSave).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe("EventTaskBar", () => {
 
     expect(screen.getByText("Discard changes?")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Close" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
 
@@ -123,6 +123,6 @@ describe("EventTaskBar", () => {
 
     expect(screen.getByText("Ended")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Close" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Back" })).toBeVisible();
   });
 });

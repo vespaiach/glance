@@ -34,7 +34,13 @@ function reveal(area: HTMLElement) {
 
   const offset = target.getBoundingClientRect().top - area.getBoundingClientRect().top;
 
-  area.scrollTop += offset - FIELD_GAP - scrollPaddingTop(area);
+  area.scrollTop += offset - FIELD_GAP - topClearance(area);
+}
+
+function topClearance(area: HTMLElement): number {
+  const bar = area.querySelector(":scope > [data-page-top-bar]");
+
+  return Math.max(bar?.getBoundingClientRect().height ?? 0, scrollPaddingTop(area));
 }
 
 function scrollPaddingTop(area: HTMLElement): number {

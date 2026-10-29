@@ -243,19 +243,19 @@ test("EVT-06 Delete, then Delete event, removes the event and closes the page", 
   await waitFor(async () => expect((await store.db.events.get(LUNCH.id))?.deletedAt).toBeDefined());
 });
 
-test("EVT-05 × with no changes closes the page at once", async () => {
+test("EVT-05 Back with no changes closes the page at once", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-09" });
 
-  await userEvent.click(await screen.findByRole("button", { name: "Close" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Back" }));
 
   expect(openSheet()).toHaveTextContent("");
 });
 
-test("EVT-05 × with changes asks, and Keep editing brings the actions back", async () => {
+test("EVT-05 Back with changes asks, and Keep editing brings the actions back", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-09" });
 
   await typeTitle("Picnic");
-  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
   expect(screen.getByText("Discard changes?")).toBeInTheDocument();
 
@@ -270,14 +270,14 @@ test("EVT-05 Discard closes the page without saving", async () => {
   renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await typeTitle("!");
-  await userEvent.click(screen.getByRole("button", { name: "Close" }));
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
   await userEvent.click(screen.getByRole("button", { name: "Discard" }));
 
   expect(openSheet()).toHaveTextContent("");
   expect((await store.db.events.get(LUNCH.id))?.title).toBe(LUNCH.title);
 });
 
-test("EVT-05 Escape is the ×", async () => {
+test("EVT-05 Escape is Back", async () => {
   renderSheet({ kind: "newevent", day: "2026-10-09" });
 
   await typeTitle("Picnic");
@@ -561,7 +561,7 @@ describe("Event details", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
     await typeTitle("!");
-    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
     await userEvent.click(screen.getByRole("button", { name: "Discard" }));
 
     expect(screen.getByRole("dialog", { name: "In 1 hr 19 min" })).toBeInTheDocument();
@@ -570,21 +570,21 @@ describe("Event details", () => {
     ).toBeInTheDocument();
   });
 
-  test("EVT-10 × with no changes returns to details", async () => {
+  test("EVT-10 Back with no changes returns to details", async () => {
     await store.db.events.put(synced(LUNCH));
     renderSheet({ kind: "event", id: LUNCH.id });
 
     await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
-    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
 
     expect(screen.getByRole("dialog", { name: "In 1 hr 19 min" })).toBeInTheDocument();
   });
 
-  test("EVT-09 × on details closes the page", async () => {
+  test("EVT-09 Back on details closes the page", async () => {
     await store.db.events.put(synced(LUNCH));
     renderSheet({ kind: "event", id: LUNCH.id });
 
-    await userEvent.click(await screen.findByRole("button", { name: "Close" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Back" }));
 
     await waitFor(() => expect(openSheet()).toBeEmptyDOMElement());
   });

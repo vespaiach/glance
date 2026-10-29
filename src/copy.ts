@@ -351,7 +351,7 @@ export const copy = {
       deleteEvent: "Delete event",
       keep: "Keep",
       editAction: "Edit",
-      close: "Close",
+      back: "Back",
     },
     picker: {
       next: "Next",

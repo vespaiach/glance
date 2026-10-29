@@ -98,7 +98,6 @@ const DEMOS: readonly Demo[] = [
   { label: words.deleteAsking, draft: LUNCH, bar: { asking: "delete" } },
   { label: words.discardAsking, draft: LUNCH, bar: { asking: "discard" } },
   { label: words.offline, draft: LUNCH, bar: { mode: "new", online: false } },
-  { label: words.scrolled, draft: LUNCH, bar: { mode: "new", scrolled: true } },
 ];
 
 const picks = gallery.eventPicker;
@@ -140,6 +139,25 @@ const styles = stylex.create({
     borderRadius: radii.md,
     backgroundColor: colors.surfaceSoft,
   },
+  page: {
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceSoft,
+  },
+});
+
+const pages = stylex.create({
+  large: { width: 1920, maxWidth: "100%", gap: 24 },
+  normal: { width: 1024, maxWidth: "100%", gap: 16 },
+  small: { width: 390, gap: 12 },
+});
+
+const pageContent = stylex.create({
+  large: { padding: "0 48px 48px" },
+  normal: { padding: "0 24px 24px" },
+  small: { padding: "0 12px 12px" },
 });
 
 const frames = stylex.create({
@@ -197,7 +215,7 @@ export function EventPickerGallery() {
 
 function Frame({ demo, breakpoint }: { demo: Demo; breakpoint: Breakpoint }) {
   return (
-    <div {...stylex.props(styles.frame, frames[breakpoint])}>
+    <div {...stylex.props(styles.page, pages[breakpoint])}>
       <EventTaskBar
         breakpoint={breakpoint}
         mode="edit"
@@ -214,19 +232,21 @@ function Frame({ demo, breakpoint }: { demo: Demo; breakpoint: Breakpoint }) {
         onDiscard={ignore}
         {...demo.bar}
       />
-      <EventSentence
-        breakpoint={breakpoint}
-        mode="edit"
-        draft={demo.draft}
-        tags={GALLERY_FAMILY}
-        touched={ALL_SET}
-        word="title"
-        clock="12h"
-        onSelect={ignore}
-        onAddEnd={ignore}
-        onNotify={ignore}
-        {...demo.sentence}
-      />
+      <div {...stylex.props(pageContent[breakpoint])}>
+        <EventSentence
+          breakpoint={breakpoint}
+          mode="edit"
+          draft={demo.draft}
+          tags={GALLERY_FAMILY}
+          touched={ALL_SET}
+          word="title"
+          clock="12h"
+          onSelect={ignore}
+          onAddEnd={ignore}
+          onNotify={ignore}
+          {...demo.sentence}
+        />
+      </div>
     </div>
   );
 }
