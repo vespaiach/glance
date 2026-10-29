@@ -1,6 +1,6 @@
 import "server-only";
 import type { ImportedEvent } from "@/domain/imports";
-import type { Repos, StagedImport } from "../database";
+import type { ImportRecord, Repos, StagedImport } from "../database";
 import type { Sql } from "./sql";
 
 type ImportRow = {
@@ -9,10 +9,14 @@ type ImportRow = {
   for_display_id: string;
   file_name: string;
   bytes: number;
-  parsed: ImportedEvent[];
+  status: ImportRecord["status"];
+  parsed: ImportedEvent[] | null;
+  who: string | null;
+  count: number | null;
   first_day: string;
   last_day: string;
   created_at: string;
+  imported_at: string | null;
 };
 
 export function importsRepo(sql: Sql): Repos["imports"] {
@@ -48,6 +52,37 @@ export function importsRepo(sql: Sql): Repos["imports"] {
     removeStagedBefore: async (before) => {
       await sql.run("DELETE FROM imports WHERE status = 'staged' AND created_at <= $1", [before]);
     },
+    find: async (id) => {
+      const row = await sql.one<ImportRow>("SELECT * FROM imports WHERE id = $1", [id]);
+
+      return row && toRecord(row);
+    },
+    newestImported: async (accountId) => {
+      const row = await sql.one<ImportRow>(
+        `SELECT * FROM imports WHERE account_id = $1 AND status <> 'staged'
+         ORDER BY imported_at DESC, id DESC LIMIT 1`,
+        [accountId],
+      );
+
+      return row && toRecord(row);
+    },
+    markDone: async (id, done) => {
+      const changed = await sql.run(
+        `UPDATE imports SET status = 'done', parsed = NULL, who = $2, count = $3, imported_at = $4
+         WHERE id = $1 AND status = 'staged'`,
+        [id, done.who, done.count, done.importedAt],
+      );
+
+      return changed === 1;
+    },
+    markUndone: async (id) => {
+      const changed = await sql.run(
+        "UPDATE imports SET status = 'undone' WHERE id = $1 AND status = 'done'",
+        [id],
+      );
+
+      return changed === 1;
+    },
   };
 }
 
@@ -58,8 +93,18 @@ function toStaged(row: ImportRow): StagedImport {
     forDisplayId: row.for_display_id,
     fileName: row.file_name,
     bytes: row.bytes,
-    events: row.parsed,
+    events: row.parsed ?? [],
     range: { first: row.first_day, last: row.last_day },
     createdAt: row.created_at,
+  };
+}
+
+function toRecord(row: ImportRow): ImportRecord {
+  return {
+    ...toStaged(row),
+    status: row.status,
+    who: row.who,
+    count: row.count,
+    importedAt: row.imported_at,
   };
 }

@@ -294,6 +294,42 @@ describe("HttpTransport", () => {
     expect(calls[0]?.url).toBe("/api/imports/staged");
   });
 
+  it("IMP-08 imports.commit posts the picked who and answers the count, range and who", async () => {
+    const done = { count: 2, range: { first: "2026-10-16", last: "2026-10-18" }, who: "everyone" };
+    const { calls, fetch } = fakeFetch(json(done));
+
+    expect(await transport(fetch).imports.commit("i1", "everyone")).toEqual({
+      ok: true,
+      value: done,
+    });
+    expect(calls[0]?.url).toBe("/api/imports/i1/commit");
+    expect(calls[0]?.init.method).toBe("POST");
+    expect(calls[0]?.init.body).toBe(JSON.stringify({ who: "everyone" }));
+  });
+
+  it("IMP-10 imports.last answers nothing on a 404, and imports.undo posts on 204", async () => {
+    const last = {
+      id: "i1",
+      importedAt: "2026-10-09T14:00:00.000Z",
+      count: 2,
+      who: "everyone",
+      undoUntil: "2026-10-10T14:00:00.000Z",
+    };
+    const { calls, fetch } = fakeFetch(
+      json(last),
+      json({ error: "not-found" }, 404),
+      new Response(null, { status: 204 }),
+    );
+    const imports = transport(fetch).imports;
+
+    expect(await imports.last()).toEqual({ ok: true, value: last });
+    expect(await imports.last()).toEqual({ ok: true, value: undefined });
+    expect(await imports.undo("i1")).toEqual({ ok: true, value: undefined });
+    expect(calls[0]?.url).toBe("/api/imports/last");
+    expect(calls[2]?.url).toBe("/api/imports/i1/undo");
+    expect(calls[2]?.init.method).toBe("POST");
+  });
+
   it("SIGNIN-15 voidQr deletes the code by its link and answers on 204", async () => {
     const { calls, fetch } = fakeFetch(new Response(null, { status: 204 }));
     const url = "https://glance.example.com/api/auth/verify?t=abc";

@@ -78,13 +78,18 @@ export const CalendarEventSchema = v.pipe(
 );
 export type CalendarEvent = v.InferOutput<typeof CalendarEventSchema>;
 
-const SyncedEventObjectSchema = v.object({ ...eventEntries, ...serverEntries });
+const SyncedEventObjectSchema = v.object({
+  ...eventEntries,
+  ...serverEntries,
+  importId: v.optional(IdSchema),
+});
 
 export const SyncedEventSchema = v.pipe(
   SyncedEventObjectSchema,
   v.check<v.InferOutput<typeof SyncedEventObjectSchema>>(spanIsValid),
   v.check<v.InferOutput<typeof SyncedEventObjectSchema>>(whoIsValid),
 );
+export type SyncedEvent = v.InferOutput<typeof SyncedEventSchema>;
 
 export const TagSchema = v.object({
   id: IdSchema,
@@ -289,6 +294,9 @@ export type QrVoidRequest = v.InferOutput<typeof QrVoidRequestSchema>;
 
 export const ImportUploadQuerySchema = v.object({ forDisplay: v.optional(IdSchema) });
 export type ImportUploadQuery = v.InferOutput<typeof ImportUploadQuerySchema>;
+
+export const ImportCommitSchema = v.object({ who: v.union([v.literal("everyone"), IdSchema]) });
+export type ImportCommit = v.InferOutput<typeof ImportCommitSchema>;
 
 export const NameRequestSchema = v.object({
   name: v.pipe(RequiredTextSchema, v.maxLength(100)),

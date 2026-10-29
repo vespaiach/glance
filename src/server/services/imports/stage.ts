@@ -1,6 +1,11 @@
 import "server-only";
 import { uuidv7 } from "@/domain/id";
-import { type ImportReview, markDuplicates } from "@/domain/imports";
+import {
+  type ImportedEvent,
+  type ImportReview,
+  type Marked,
+  markDuplicates,
+} from "@/domain/imports";
 import { err, ok, type Result } from "@/domain/result";
 import type { Database, StagedImport } from "../../db";
 import type { ServiceDeps } from "../deps";
@@ -56,6 +61,17 @@ export async function stagedImport(
   return ok(await reviewOf(db, staged));
 }
 
+export async function markedEvents(
+  db: Database,
+  staged: StagedImport,
+): Promise<Marked<ImportedEvent>[]> {
+  const calendar = (await db.events.changedSince(staged.accountId, 0)).filter((e) => !e.deletedAt);
+
+  const tz = await accountTimeZone(db, staged.accountId);
+
+  return markDuplicates(staged.events, calendar, tz);
+}
+
 async function isAccountDisplay(db: Database, accountId: string, displayId: string) {
   const displays = await db.displays.forAccount(accountId);
 
@@ -63,20 +79,16 @@ async function isAccountDisplay(db: Database, accountId: string, displayId: stri
 }
 
 async function reviewOf(db: Database, staged: StagedImport): Promise<ImportReview> {
-  const calendar = (await db.events.changedSince(staged.accountId, 0)).filter((e) => !e.deletedAt);
+  const marked = await markedEvents(db, staged);
 
-  const tz = await accountTimeZone(db, staged.accountId);
-
-  const events = markDuplicates(staged.events, calendar, tz).map(
-    ({ title, startAt, endAt, allDay, repeat, duplicate }) => ({
-      title,
-      startAt,
-      ...(endAt && { endAt }),
-      ...(allDay && { allDay }),
-      ...(repeat && { repeat }),
-      duplicate,
-    }),
-  );
+  const events = marked.map(({ title, startAt, endAt, allDay, repeat, duplicate }) => ({
+    title,
+    startAt,
+    ...(endAt && { endAt }),
+    ...(allDay && { allDay }),
+    ...(repeat && { repeat }),
+    duplicate,
+  }));
 
   const duplicates = events.filter((event) => event.duplicate).length;
 

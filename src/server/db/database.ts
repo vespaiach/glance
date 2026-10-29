@@ -2,10 +2,10 @@ import "server-only";
 import type { ImportedEvent } from "@/domain/imports";
 import type {
   AccountSettings,
-  CalendarEvent,
   Note,
   Photo,
   Synced,
+  SyncedEvent,
   Tag,
   Weather,
 } from "@/domain/schemas";
@@ -17,7 +17,7 @@ export type OpenedDatabase = { db: Database; prepare: () => Promise<void> };
 
 export type Owned<T> = { accountId: string; value: T };
 
-export type StoredEvent = Synced<CalendarEvent>;
+export type StoredEvent = SyncedEvent;
 
 export type StoredNote = Synced<Note>;
 
@@ -86,6 +86,15 @@ export type StagedImport = {
   createdAt: string;
 };
 
+export type ImportRecord = StagedImport & {
+  status: "staged" | "done" | "undone";
+  who: string | null;
+  count: number | null;
+  importedAt: string | null;
+};
+
+export type ImportDone = { who: string; count: number; importedAt: string };
+
 type WeatherCacheRecord = { location: string; weather: Weather; fetchedAt: string };
 
 export type Repos = {
@@ -137,6 +146,7 @@ export type Repos = {
     liveStarting(after: string, until: string): Promise<Owned<StoredEvent>[]>;
     liveWeekly(): Promise<Owned<StoredEvent>[]>;
     liveWithTag(accountId: string, tagId: string): Promise<StoredEvent[]>;
+    liveFromImport(accountId: string, importId: string): Promise<StoredEvent[]>;
   };
   notes: {
     find(id: string): Promise<Owned<StoredNote> | undefined>;
@@ -192,6 +202,10 @@ export type Repos = {
       after: string,
     ): Promise<StagedImport | undefined>;
     removeStagedBefore(before: string): Promise<void>;
+    find(id: string): Promise<ImportRecord | undefined>;
+    newestImported(accountId: string): Promise<ImportRecord | undefined>;
+    markDone(id: string, done: ImportDone): Promise<boolean>;
+    markUndone(id: string): Promise<boolean>;
   };
   weatherCache: {
     get(accountId: string): Promise<WeatherCacheRecord | undefined>;

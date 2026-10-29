@@ -1,15 +1,15 @@
 import Dexie, { type EntityTable, type Transaction } from "dexie";
 import type {
   AccountSettings,
-  CalendarEvent,
   Note,
   Photo,
   Synced,
+  SyncedEvent,
   Tag,
   Weather,
 } from "@/domain/schemas";
 
-export type StoredEvent = Synced<CalendarEvent>;
+export type StoredEvent = SyncedEvent;
 
 export type StoredTag = Synced<Tag>;
 

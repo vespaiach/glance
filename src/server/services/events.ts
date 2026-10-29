@@ -1,11 +1,11 @@
 import "server-only";
 import { err, ok, type Result } from "@/domain/result";
-import type { CalendarEvent, Synced } from "@/domain/schemas";
-import type { Database } from "../db";
+import type { CalendarEvent } from "@/domain/schemas";
+import type { Database, StoredEvent } from "../db";
 import type { ServiceDeps } from "./deps";
 import { stamp } from "./rows";
 
-export type SyncedEvent = Synced<CalendarEvent>;
+export type SyncedEvent = StoredEvent;
 
 export function putEvent(
   { db, now }: ServiceDeps,
@@ -23,7 +23,9 @@ export function putEvent(
 
     const stamped = await stamp(tx, now());
 
-    const saved = { ...kept, ...stamped };
+    const importId = existing?.value.importId;
+
+    const saved = { ...kept, ...(importId && { importId }), ...stamped };
 
     await tx.events.save(accountId, saved);
 

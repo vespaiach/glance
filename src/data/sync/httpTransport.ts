@@ -1,5 +1,5 @@
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
-import type { ImportReview } from "@/domain/imports";
+import type { ImportResult, ImportReview, LastImport } from "@/domain/imports";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, uploadProblem } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
 import type { Account, Weather, WeatherLocation } from "@/domain/schemas";
@@ -63,13 +63,14 @@ export function createHttpTransport({
     imports: {
       upload: (file, forDisplay) =>
         sendImport<ImportReview>(importPath(forDisplay), fileBody(file)),
-      staged: async () => {
-        const answer = await sendStaged<ImportReview>("/api/imports/staged");
-
-        if (answer.ok) return answer;
-
-        return answer.error === "not-found" ? ok(undefined) : err(answer.error);
-      },
+      staged: () => orNothing(sendStaged<ImportReview>("/api/imports/staged")),
+      commit: (id, who) =>
+        send<ImportResult>(
+          `/api/imports/${encodeURIComponent(id)}/commit`,
+          jsonBody("POST", { who }),
+        ),
+      last: () => orNothing(sendStaged<LastImport>("/api/imports/last")),
+      undo: (id) => send<void>(`/api/imports/${encodeURIComponent(id)}/undo`, { method: "POST" }),
     },
     webPush: {
       key: async () => {
@@ -130,6 +131,16 @@ function importError(status: number, body: string): ImportError {
   if (status === 400 && ICS_ERRORS.includes(error)) return error as ImportError;
 
   return transportError(status, body);
+}
+
+async function orNothing<T>(
+  sent: Promise<Result<T, TransportError | "not-found">>,
+): Promise<Result<T | undefined, TransportError>> {
+  const answer = await sent;
+
+  if (answer.ok) return answer;
+
+  return answer.error === "not-found" ? ok(undefined) : err(answer.error);
 }
 
 function stagedError(status: number, body: string): TransportError | "not-found" {
