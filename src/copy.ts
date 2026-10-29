@@ -762,6 +762,95 @@ export const copy = {
       },
     },
   },
+  import: {
+    everyone: "Everyone",
+    back: "Back",
+    backToSettings: "Back to settings",
+    close: "Close",
+    range: (from: string, to: string) => `${from} – ${to}`,
+    source: {
+      title: "Import events",
+      eyebrow: "Step 1 of 2",
+      headline: "Add events from a file",
+      body: "Use an .ics file from a school, team or other calendar app. Events are copied in once; later changes to the file don’t sync.",
+      last: (date: string) => `Last import · ${date}`,
+      lastLine: (count: number, who: string) =>
+        `${count} ${count === 1 ? "event" : "events"} for ${who}`,
+      undo: "Undo",
+      limits: ".ics only · up to 5 MB · 1,000 events",
+      phone: "Send from phone",
+      phoneHint: "Scan a code, then pick the file on your phone",
+      file: "Choose file",
+      fileHint: "From this device",
+    },
+    phone: {
+      title: "Send from phone",
+      code: "QR code to send a file from your phone",
+      waiting: (endsIn: string) => `Waiting for a file · code ends in ${endsIn}`,
+      headline: "Scan to send a file",
+      steps: [
+        "Scan the code with your phone camera",
+        "Pick the .ics file on the page that opens",
+        "Review the events here on the screen",
+      ],
+      newCode: "New code",
+    },
+    review: {
+      title: "Review import",
+      eyebrow: "Step 2 of 2",
+      found: (count: number) => `${count} ${count === 1 ? "event" : "events"} found`,
+      file: (range: string, bytes: number) =>
+        `${range} · ${Math.max(1, Math.round(bytes / 1024))} KB`,
+      change: "Change",
+      who: "Who these are for",
+      skipped: (duplicates: number) => {
+        const past = "Past events aren’t imported.";
+
+        if (duplicates === 0) return past;
+
+        const are = duplicates === 1 ? "is" : "are";
+
+        return `${duplicates} ${are} already on the calendar and will be skipped. ${past}`;
+      },
+      all: (count: number) => `All events · ${count}`,
+      allDay: "All day",
+      weekly: (time: string) => `${time} · Every week`,
+      duplicate: (title: string) => `${title} · already added`,
+      run: (count: number) => (count === 1 ? "Import 1 event" : `Import ${count} events`),
+      running: "Importing…",
+    },
+    done: {
+      title: "Imported",
+      added: (count: number) => (count === 1 ? "1 event added" : `${count} events added`),
+      line: (who: string, range: string, duplicates: number) => {
+        const lead = `For ${who} · ${range}.`;
+
+        if (duplicates === 0) return lead;
+
+        return `${lead} ${duplicates} ${duplicates === 1 ? "duplicate" : "duplicates"} skipped.`;
+      },
+      undoNote: "Undo stays in Settings › Import events for 24 hours",
+      undo: "Undo import",
+      openCalendar: "Open calendar",
+    },
+    errors: {
+      type: {
+        title: "This isn’t a calendar file",
+        body: "Choose a file that ends in .ics. Export one from the calendar app’s settings.",
+        action: "Choose again",
+      },
+      empty: {
+        title: "No upcoming events in this file",
+        body: "Every event in it has already happened, so there’s nothing to add.",
+        action: "Choose another file",
+      },
+      offline: {
+        title: "Couldn’t import",
+        body: "The screen is offline. Nothing was added. Try again when it’s back online.",
+        action: "Try again",
+      },
+    },
+  },
   ambientSchedule: {
     back: "Settings",
     title: "Ambient screen",
