@@ -451,6 +451,9 @@ export const copy = {
       ],
     },
   },
+  imports: {
+    untitled: "Untitled event",
+  },
   notes: {
     justNow: "Just now",
     waitingToPost: "Waiting to post",
