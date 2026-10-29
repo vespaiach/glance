@@ -49,6 +49,7 @@ import { CalendarGallery } from "./CalendarGallery";
 import { EventFullPageGallery } from "./EventFullPageGallery";
 import { EventPageGallery, EventPickerGallery } from "./EventPageGallery";
 import { GalleryGroup } from "./GalleryGroup";
+import { ImportGallery } from "./ImportGallery";
 import { NotesGallery } from "./NotesGallery";
 import { PersonFilterGallery } from "./PersonFilterGallery";
 import { PhotosGallery } from "./PhotosGallery";
@@ -154,6 +155,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <EventPageGallery />
       <EventPickerGallery />
       <EventFullPageGallery />
+      <ImportGallery />
       <WeatherGallery />
       <NotesGallery />
       <PhotosGallery />

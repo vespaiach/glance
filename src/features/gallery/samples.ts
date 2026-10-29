@@ -12,6 +12,7 @@ import type {
 import type { SignedInScreen } from "@/domain/screens";
 import { zonedInstant } from "@/domain/zone";
 import type { ZoneState } from "@/domain/zoneState";
+import type { ImportReview } from "@/features/import";
 import type { UploadTile } from "@/features/photos";
 import type { WeatherSetupFlow, WeatherSetupState } from "@/features/weather";
 
@@ -65,6 +66,7 @@ export const gallery = {
     today: "Today",
     calendarView: "Calendar view",
     eventSheet: "Event page",
+    importPage: "Import events page",
     eventPage: "Sentence card and task bar",
     eventPicker: "Picker card",
     weatherView: "Weather view",
@@ -240,6 +242,17 @@ export const gallery = {
     weeklyDelete: "Weekly · Delete asks which",
     weeklySave: "Weekly · Save asks which",
     factsDay: "Fri, Oct 9",
+  },
+  importPage: {
+    source: "I1 · Source",
+    sourceLast: "I1 · Source with a last import",
+    phone: "I2 · Send from phone",
+    review: "I3 · Review",
+    importing: "Importing",
+    done: "I4 · Imported",
+    type: "I5 · Not an .ics file",
+    empty: "I6 · No upcoming events",
+    offline: "I7 · Couldn’t import",
   },
   switchLabel: "All day",
   button: "Add event",
@@ -728,3 +741,41 @@ export function gallerySetup(state: WeatherSetupState, canLocate = true): Weathe
     skip: ignoreSetup,
   };
 }
+
+const IMPORT_ROWS: readonly (readonly [string, string, string | undefined, boolean?])[] = [
+  ["Sat, Oct 31", "U10 game vs. Eastside", "9:00 AM"],
+  ["Tue, Nov 3", "Practice", "5:30 PM"],
+  ["Thu, Nov 5", "Practice", "5:30 PM"],
+  ["Sat, Nov 7", "U10 game at Lincoln Park", "10:30 AM"],
+  ["Tue, Nov 10", "Practice", "5:30 PM"],
+  ["Thu, Nov 12", "Practice", "5:30 PM"],
+  ["Sat, Nov 14", "U10 game vs. Westview", "9:00 AM", true],
+  ["Tue, Nov 17", "Practice", "5:30 PM"],
+  ["Thu, Nov 19", "Practice", "5:30 PM"],
+  ["Sat, Nov 21", "Picture day", undefined],
+  ["Tue, Nov 24", "Practice", "5:30 PM"],
+  ["Sat, Nov 28", "U10 game vs. Oak Hill", "9:00 AM"],
+  ["Tue, Dec 1", "Practice", "5:30 PM"],
+  ["Thu, Dec 3", "Practice", "5:30 PM", true],
+  ["Sat, Dec 5", "U10 game at Riverside", "10:30 AM"],
+  ["Tue, Dec 8", "Practice", "5:30 PM"],
+  ["Thu, Dec 10", "Practice", "5:30 PM"],
+  ["Sat, Dec 12", "End-of-season party", "12:00 PM"],
+];
+
+export const IMPORT_REVIEW: ImportReview = {
+  fileName: "riverside-u10-soccer-fall.ics",
+  size: 12_288,
+  range: { from: "Oct 31", to: "Dec 12" },
+  rows: IMPORT_ROWS.map(([date, title, time, duplicate = false], index) => ({
+    id: String(index),
+    date,
+    title,
+    time,
+    duplicate,
+  })),
+  newCount: 16,
+  duplicates: 2,
+};
+
+export const IMPORT_PHONE_LINK = "https://glance.example/q/import-sample";
