@@ -64,7 +64,7 @@ test("BG-05 Season shows the current season's drawing with its dim", async () =>
 test("BG-05 a picked drawing shows in another season", async () => {
   const { result } = renderBackground({ mode: "season", drawing: "summer" });
 
-  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/summer.svg", dim: 0.2 }));
+  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/summer.svg", dim: 0.4 }));
 });
 
 test("BG-05 Blank shows no image and ignores dim", async () => {
@@ -125,5 +125,5 @@ test("BG-06 an hourly Slideshow shows the next photo each hour, in upload order"
 test("BG-06 Photo mode with no photos shows the drawing", async () => {
   const { result } = renderBackground({ mode: "photo", photoId: CHOSEN.id });
 
-  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/fall.svg", dim: 0.2 }));
+  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/fall.svg", dim: 0.4 }));
 });

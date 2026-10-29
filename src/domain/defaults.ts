@@ -4,7 +4,7 @@ export const DEFAULT_SETTINGS: AccountSettings = {
   season: "auto",
   clock: "12h",
   tempUnit: "F",
-  background: { mode: "season", dim: 0.2, rotate: "daily" },
+  background: { mode: "season", dim: 0.4, rotate: "daily" },
   idleTimeout: { on: true, minutes: 3 },
   noteExpiry: { on: true, days: 7 },
   hideSidebarWhenIdle: true,
