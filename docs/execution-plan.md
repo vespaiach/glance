@@ -41,3 +41,28 @@ The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ 
 | I17 | ⬜ | **Import events page (pure)**: `features/import/components` for IMP-02..IMP-09: Source (with and without a last import), Send from phone, Review, Importing, Imported and the three errors, inside `PageTopBar` with each step's actions; a reducer `step: source · phone · review · importing · done · error(type \| empty \| offline)`; slide in and out; scroll to top on each step. Copy in `copy.ts` | I11 | Tests: `IMP-*` reducer transitions (review → importing → done; importing offline → error → Try again → review; Change → source); "Import {n} events" / "Import 1 event", disabled while importing; Who is a single pick; the skip and done lines with 0, 1 and n; every frame in `/dev/gallery` in four seasons; matches `Glance States - Settings` I1–I7 at the three sizes | IMP-02..09 |
 | I18 | ⬜ | **Import from this screen**: the SET-17 row and route `/settings/import` → `ImportScreen`, connecting I17 to the transport: Choose file uploads, Review commits, Imported → Open calendar / Undo import, Source's Undo tile from `last`, Back → Settings, offline at Import → the offline error. Guide text for import | I16, I17 | Tests: `SET-17` the row shows "Last: {date}" after an import; `IMP-*` picking a file shows its review; Import shows "{n} events added" and the events reach Calendar after sync; Undo removes them and closes; matches `Glance States - Settings` I1, I3, I4 in the real app at the three sizes | SET-17, IMP-01..10 |
 | I19 | ⬜ | **Send from phone**: `POST /api/auth/qr { opens: "import" }` (10-minute link, `to=import`, §6.2); the phone opens `/settings/import` and its upload carries `forDisplay`; the waiting screen polls `GET /api/imports/staged` every 3 s and moves to Review when its file arrives; "New code" and 0:00 renew the code | I18 | Tests: `IMP-04` the import link lasts 10 minutes and opens Import; a phone upload for screen A moves A to its review and leaves screen B waiting; New code voids the old link; another account's upload never reaches this screen; matches `Glance States - Settings` I2 at the three sizes | IMP-04, SIGNIN-15 |
+
+## Dependency map
+
+```mermaid
+graph LR
+  I10 --> I11
+  I11 --> I13
+  I12 --> I13
+  I12 --> I14
+  I14 --> I15
+  I15 --> I16
+  I11 --> I17
+  I16 --> I18
+  I17 --> I18
+  I18 --> I19
+```
+
+| Wave | Tasks (run in parallel) |
+|---|---|
+| 1 | I10, I12 |
+| 2 | I11, I14 |
+| 3 | I13, I15, I17 |
+| 4 | I16 |
+| 5 | I18 |
+| 6 | I19 |
