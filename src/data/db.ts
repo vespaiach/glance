@@ -119,6 +119,8 @@ export function openGlanceDb(name: string): GlanceDb {
     await mapNotifyOutbox(tx);
   });
 
+  db.version(8).stores({ events: "id, startAt, deletedAt, repeat" });
+
   return db;
 }
 

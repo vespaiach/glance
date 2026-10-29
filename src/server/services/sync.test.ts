@@ -161,6 +161,18 @@ describe("pullChanges", () => {
     });
   });
 
+  it("tech§5 never returns another account's weekly series", async () => {
+    await putEvent(harness.deps(), OMAR, { ...EVENT, repeat: "weekly" });
+
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toEqual({
+      cursor: "1",
+      changes: [],
+    });
+    expect(await pullChanges(harness.deps(), OMAR, undefined)).toMatchObject({
+      changes: [{ entity: "events", row: { repeat: "weekly" } }],
+    });
+  });
+
   it("tech§5 never returns another account's rows", async () => {
     await putTag(harness.deps(), OMAR, MEMBER);
     await putEvent(harness.deps(), OMAR, EVENT);

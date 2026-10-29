@@ -230,6 +230,17 @@ export function databaseContract(open: () => Database): void {
       expect(await db().events.find("e2")).toMatchObject({ value: { notify: true } });
     });
 
+    it("EVT-14 keeps a weekly series, and reads an event saved without a repeat as one-off", async () => {
+      await db().events.save(MARIA, { ...EVENT, repeat: "weekly" });
+      await db().events.save(MARIA, { ...EVENT, id: "e2" });
+
+      expect(await db().events.find(EVENT.id)).toEqual({
+        accountId: MARIA,
+        value: { ...EVENT, repeat: "weekly" },
+      });
+      expect((await db().events.find("e2"))?.value).not.toHaveProperty("repeat");
+    });
+
     it("SYNC-03 replaces an event and keeps its tombstone", async () => {
       await db().events.save(MARIA, EVENT);
 

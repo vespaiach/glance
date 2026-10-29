@@ -203,6 +203,20 @@ describe("CalendarEventSchema notify", () => {
   });
 });
 
+describe("CalendarEventSchema repeat", () => {
+  it("tech§6.1 accepts a weekly event and one that doesn't repeat", () => {
+    expect(v.parse(CalendarEventSchema, { ...event, repeat: "weekly" })).toEqual({
+      ...event,
+      repeat: "weekly",
+    });
+    expect(v.parse(CalendarEventSchema, event)).toEqual(event);
+  });
+
+  it.each(["daily", "monthly", null, true])("tech§6.1 rejects the repeat %s", (repeat) => {
+    expect(accepts(CalendarEventSchema, { ...event, repeat })).toBe(false);
+  });
+});
+
 describe("SyncedEventSchema", () => {
   it("D10 accepts server fields and a tombstone", () => {
     const row = { ...event, updatedAt: "2026-10-09T17:00:00.000Z", version: 7 };

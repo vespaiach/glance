@@ -247,6 +247,36 @@ describe("putEvent all day", () => {
   });
 });
 
+describe("putEvent repeat", () => {
+  const SERIES: CalendarEvent = { ...EVENT, repeat: "weekly" };
+
+  it("EVT-14 saves a weekly series and its tombstone keeps the repeat", async () => {
+    expect(await putEvent(harness.deps(), MARIA, SERIES)).toMatchObject({
+      ok: true,
+      value: { repeat: "weekly" },
+    });
+
+    const deleted = await deleteEvent(harness.deps(), MARIA, SERIES.id);
+
+    expect(deleted.ok && deleted.value.repeat).toBe("weekly");
+  });
+
+  it("tech§5 refuses to change or delete another account's weekly series", async () => {
+    await putEvent(harness.deps(), MARIA, SERIES);
+
+    expect(await putEvent(harness.deps(), OMAR, EVENT)).toEqual({ ok: false, error: "not-found" });
+    expect(await deleteEvent(harness.deps(), OMAR, SERIES.id)).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+
+    expect(await deleteEvent(harness.deps(), MARIA, SERIES.id)).toMatchObject({
+      ok: true,
+      value: { repeat: "weekly", version: 2 },
+    });
+  });
+});
+
 describe("deleteEvent", () => {
   it("SYNC-03 keeps a tombstone stamped with the delete time and the next version", async () => {
     await putEvent(harness.deps(), MARIA, EVENT);
