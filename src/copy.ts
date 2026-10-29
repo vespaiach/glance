@@ -483,8 +483,7 @@ export const copy = {
     uploadPhotos: "Upload photos",
     picker: "Choose photos",
     emptyTitle: "No photos yet",
-    emptyBody:
-      "Upload family photos to show them here, as the picture of the day and as a background.",
+    emptyBody: "Upload family photos to show them here, as Today’s photo and as a background.",
     waitingForUploads: "Your photos show here once they finish uploading.",
     setBackground: "Set as background",
     backgroundNow: "Background now · Change",
@@ -612,8 +611,9 @@ export const copy = {
     },
     background: {
       title: "Background",
-      body: "Photo, slideshow or the plain season palette",
-      season: "Season color",
+      body: "Season drawing, photo, slideshow or blank",
+      season: (season: string) => `Season drawing · ${season}`,
+      blank: "Blank",
       photo: (title: string) => `Photo · ${title}`,
       slideshow: (interval: string) => `Slideshow · ${interval}`,
     },
@@ -839,10 +839,15 @@ export const copy = {
     back: "Settings",
     title: "Background",
     modes: [
-      { value: "season", label: "Season color" },
+      { value: "season", label: "Season" },
       { value: "photo", label: "Photo" },
       { value: "slideshow", label: "Slideshow" },
+      { value: "blank", label: "Blank" },
     ],
+    drawings: "Season drawings",
+    selectDrawing: "Season drawings · select one",
+    drawingNow: (season: string) => `${season} · now`,
+    pickDrawing: (season: string) => `Use ${season} drawing as background`,
     selectOne: "Family photos · select one",
     inRotation: (count: number) => `Family photos · all ${count} in rotation`,
     list: "Family photos",
@@ -868,7 +873,11 @@ export const copy = {
     },
     interval: { hourly: "hourly", daily: "daily", weekly: "weekly" },
     caption: {
-      season: "Screens use a plain light gray background. Pick a photo to switch.",
+      following: (season: string) =>
+        `The ${season.toLowerCase()} drawing is the background. It changes with the season until you pick one; panels stay solid on top.`,
+      picked: (season: string) =>
+        `The ${season.toLowerCase()} drawing is the background on every screen. Panels stay solid on top.`,
+      blank: "Screens use a plain light gray background. Pick a photo to switch.",
       photo: (title: string) =>
         `${title} is the background on every screen. Panels stay solid on top.`,
       slideshow: (title: string, interval: string) =>
@@ -1506,7 +1515,10 @@ export const copy = {
             { strong: "Season" },
             " sets the screen’s colors. Auto follows the month: spring from March, summer from June, fall from September, winter from December.",
           ],
-          [{ strong: "Background" }, " can be the season color, one photo or a slideshow."],
+          [
+            { strong: "Background" },
+            " shows a drawing for the current season unless you pick your own photo or a slideshow. Choose Blank for a plain background.",
+          ],
           [{ strong: "Clock and temperature:" }, " 12- or 24-hour, Fahrenheit or Celsius."],
         ],
       },

@@ -265,8 +265,9 @@ function backgroundSummary(background: ShownBackground): string {
 
   switch (background.mode) {
     case "season":
+      return text.season(copy.season[background.drawing]);
     case "blank":
-      return text.season;
+      return text.blank;
     case "photo":
       return text.photo(background.photo.title);
     case "slideshow":

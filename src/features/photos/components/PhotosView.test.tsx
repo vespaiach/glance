@@ -290,7 +290,7 @@ test("PHOTO-05 with no photos the view explains and offers Upload photos", async
   expect(screen.getByText("No photos yet")).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Upload family photos to show them here, as the picture of the day and as a background.",
+      "Upload family photos to show them here, as Today’s photo and as a background.",
     ),
   ).toBeInTheDocument();
 

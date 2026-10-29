@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
@@ -75,7 +75,7 @@ test("BG-02 the newest upload is listed first", async () => {
   await screen.findByRole("button", { name: "Use Cannon Beach as background" });
 
   expect(
-    screen
+    within(screen.getByRole("list", { name: "Family photos" }))
       .getAllByRole("button", { name: /^Use .* as background$/ })
       .map((thumb) => thumb.ariaLabel),
   ).toEqual(["Use Cannon Beach as background", "Use Forest Park trail as background"]);

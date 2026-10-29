@@ -243,8 +243,9 @@ test("BG-04 changing the dim leaves the photo alone", () => {
   });
 });
 
-test("BG-03 picking a photo in Season color switches to Photo", () => {
+test("BG-03 picking a photo in Season or Blank switches to Photo", () => {
   expect(pickPhoto("season", APPLES.id)).toEqual({ mode: "photo", photoId: APPLES.id });
+  expect(pickPhoto("blank", APPLES.id)).toEqual({ mode: "photo", photoId: APPLES.id });
 });
 
 test("BG-03 picking a photo keeps Photo or Slideshow mode", () => {
