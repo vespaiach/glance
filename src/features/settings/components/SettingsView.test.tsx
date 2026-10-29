@@ -65,6 +65,7 @@ function renderView(overrides: Partial<Props> = {}) {
     onChange: vi.fn(),
     onOpenBackground: vi.fn(),
     onOpenLocation: vi.fn(),
+    onOpenImport: vi.fn(),
     onOpenAmbient: vi.fn(),
     signOut: { kind: "closed" },
     onSignOut: vi.fn(),

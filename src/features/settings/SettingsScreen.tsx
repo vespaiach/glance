@@ -6,6 +6,7 @@ import {
   useAccount,
   useAccountCounts,
   useDeleteAccount,
+  useLastImport,
   useLiveEvents,
   usePhotos,
   usePhotoUsage,
@@ -17,6 +18,7 @@ import {
   useTagsRepo,
 } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
+import { formatMonthDay } from "@/domain/time";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
@@ -35,6 +37,8 @@ const BACKGROUND_PATH = "/settings/background";
 const LOCATION_PATH = "/settings/location";
 
 const AMBIENT_PATH = "/settings/ambient";
+
+const IMPORT_PATH = "/settings/import";
 
 const SIGN_IN_PATH = "/signin";
 
@@ -101,6 +105,8 @@ export function SettingsScreen() {
 
   const thisPhone = useThisPhone();
 
+  const lastImport = useLastImport();
+
   const tags = useTags();
 
   const events = useLiveEvents();
@@ -133,6 +139,10 @@ export function SettingsScreen() {
       onChange={(change) => repo.update(change)}
       onOpenBackground={() => router.push(BACKGROUND_PATH)}
       onOpenLocation={() => router.push(LOCATION_PATH)}
+      lastImport={
+        online && lastImport ? formatMonthDay(new Date(lastImport.importedAt), tz) : undefined
+      }
+      onOpenImport={() => router.push(IMPORT_PATH)}
       onOpenAmbient={() => router.push(AMBIENT_PATH)}
       signOut={signOutState}
       onSignOut={() => dispatchSignOut({ type: "open" })}

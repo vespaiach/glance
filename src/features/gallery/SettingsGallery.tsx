@@ -320,6 +320,8 @@ function settingsBase(season: Season): SettingsProps {
     onChange: ignore,
     onOpenBackground: ignore,
     onOpenLocation: ignore,
+    lastImport: "Oct 29",
+    onOpenImport: ignore,
     onOpenAmbient: ignore,
     signOut: { kind: "closed" },
     onSignOut: ignore,

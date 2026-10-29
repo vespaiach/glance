@@ -35,6 +35,8 @@ type SettingsViewProps = {
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
   onOpenLocation: () => void;
+  lastImport?: string;
+  onOpenImport: () => void;
   onOpenAmbient: () => void;
   signOut: SignOutDialogState;
   onSignOut: () => void;
@@ -88,6 +90,8 @@ export function SettingsView({
   onChange,
   onOpenBackground,
   onOpenLocation,
+  lastImport,
+  onOpenImport,
   onOpenAmbient,
   signOut,
   onSignOut,
@@ -119,6 +123,8 @@ export function SettingsView({
         onChange={onChange}
         onOpenBackground={onOpenBackground}
         onOpenLocation={onOpenLocation}
+        lastImport={lastImport}
+        onOpenImport={onOpenImport}
         phone={phone}
         onAllowPush={onAllowPush}
         onTurnOffPush={onTurnOffPush}

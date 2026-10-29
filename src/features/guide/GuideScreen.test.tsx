@@ -65,6 +65,18 @@ test("GUIDE-01 the reminder step names the lead times of Settings › Notificati
   expect(screen.getByText(/: 15 or 30 minutes before, or off\./)).toBeInTheDocument();
 });
 
+test("GUIDE-01 a question explains importing an .ics file from Settings › Import events", async () => {
+  render(<GuideScreen season="fall" />);
+
+  await userEvent.click(
+    screen.getByRole("button", { name: "Can I add a school or team calendar?" }),
+  );
+
+  expect(
+    screen.getByText(/Go to Settings › Import events and choose its \.ics file/),
+  ).toBeInTheDocument();
+});
+
 test("GUIDE-01 the first question starts open and each question toggles its answer", async () => {
   render(<GuideScreen season="fall" />);
 

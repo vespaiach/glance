@@ -26,6 +26,7 @@ export type RepoStore = {
   issueQr: Transport["issueQr"];
   voidQr: Transport["voidQr"];
   webPush: Transport["webPush"];
+  imports: Transport["imports"];
   signOut: () => Promise<void>;
   signOutAll: () => Promise<Result<void, TransportError>>;
   deleteAccount: () => Promise<Result<void, TransportError>>;

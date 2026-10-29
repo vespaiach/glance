@@ -405,3 +405,34 @@ test("FAM-08 removing a member deletes their only plans and takes them off share
   expect((await store.db.events.get(shared.id))?.tagIds).toEqual([tin.id]);
   expect(await screen.findByText("Family · 1 member")).toBeInTheDocument();
 });
+
+const LAST_IMPORT = {
+  id: "imp-1",
+  importedAt: "2026-10-08T17:00:00.000Z",
+  count: 16,
+  who: "everyone",
+  undoUntil: "2026-10-09T17:00:00.000Z",
+};
+
+test("SET-17 the Import events row shows Last: {date} after an import and opens Import events", async () => {
+  store.imports.last.mockResolvedValue(ok(LAST_IMPORT));
+
+  renderSettings();
+
+  const row = await screen.findByRole("button", { name: /Import events.*Last: Oct 8/ });
+  await userEvent.click(row);
+
+  expect(navigation.push).toHaveBeenCalledWith("/settings/import");
+});
+
+test("SET-17 offline the Import events row has no summary", async () => {
+  store.imports.last.mockResolvedValue(ok(LAST_IMPORT));
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+  renderSettings();
+
+  const row = await screen.findByRole("button", { name: /Import events/ });
+  await waitFor(() => expect(store.imports.last).toHaveBeenCalled());
+
+  expect(row).not.toHaveTextContent("Last:");
+});
