@@ -785,13 +785,31 @@
 </div>
 <div style="display:flex;flex-direction:column">
 <button onClick="{{ go.location }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Location</span><span style="font-size:15px;font-weight:330">Sets the weather and the time zone</span></div><div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-size:17px;font-weight:330">{{ locInfo.summary }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
-<button onClick="{{ imp.open }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Import events</span><span style="font-size:15px;font-weight:330">Add events from an .ics calendar file</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:330">{{ imp.sum }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px;padding-top:12px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Season</span><span style="font-size:15px;font-weight:330">{{ seasonSub }}</span></div><div style="max-width:100%;display:flex"><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Season" style="display:flex;flex-direction:column;align-items:flex-start;gap:0;min-width:0"><sc-for list="{{ seasonR }}" as="o" hint-placeholder-count="5"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="{{ o.icon }}" size="20" hint-size="20px,20px"></x-import></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div></div>
 <button onClick="{{ go.background }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Background</span><span style="font-size:15px;font-weight:330">Season drawing, photo, slideshow or blank</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:330">{{ bgSummary }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Clock</span><span style="font-size:15px;font-weight:330">Used for every time on the screen</span></div><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Clock format" style="display:flex;flex-wrap:nowrap;align-items:center;gap:8px 24px;flex:none"><sc-for list="{{ clockR }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div>
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Temperature</span><span style="font-size:15px;font-weight:330">Weather is shown without a unit letter</span></div><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Temperature unit" style="display:flex;flex-wrap:nowrap;align-items:center;gap:8px 24px;flex:none"><sc-for list="{{ tempT.opts }}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div>
 <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Notifications</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ notifT.sub }}</span></div><div data-ds-new="UnitRadios" role="radiogroup" aria-label="Notifications for everyone" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 24px;min-width:0"><sc-for list="{{ notifT.opts }}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{ o.on }}" onClick="{{ o.pick }}" style="min-height:56px;display:flex;align-items:center;gap:10px;padding:0 4px;border:0;background:transparent;font-family:inherit;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><span style="width:24px;height:24px;flex:none;box-sizing:border-box;border-radius:9999px;border:2px solid var(--black);display:grid;place-items:center"><span style="width:12px;height:12px;border-radius:9999px;background:var(--black);transform:scale({{ o.dot }});transition:transform 180ms ease"></span></span><span style="font-size:18px;font-weight:{{ o.w }}">{{ o.label }}</span></button></sc-for></div></div>
-<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Hide sidebar when idle</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ barT.sub }}</span></div><button data-ds-new="SettingSwitch" type="button" role="switch" aria-checked="{{ barT.on }}" aria-label="Hide sidebar when idle" onClick="{{ barT.toggle }}" style="min-height:56px;display:flex;align-items:center;padding:0 4px;border:0;background:transparent;cursor:pointer"><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ barT.track }};box-shadow:{{ barT.ring }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ barT.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ barT.ring }};transition:left 180ms ease"></span></span></button></div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Hide sidebar when idle</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ barT.sub }}</span></div><button data-ds-new="SettingSwitch" type="button" role="switch" aria-checked="{{ barT.on }}" aria-label="Hide sidebar when idle" onClick="{{ barT.toggle }}" style="min-height:56px;display:flex;align-items:center;padding:0 4px;border:0;background:transparent;cursor:pointer"><span style="width:56px;height:32px;flex:none;position:relative;border-radius:9999px;background:{{ barT.track }};box-shadow:{{ barT.ring }};transition:background 180ms ease"><span style="position:absolute;top:4px;left:{{ barT.knobL }};width:24px;height:24px;border-radius:9999px;background:var(--white);box-shadow:{{ barT.ring }};transition:left 180ms ease"></span></span></button></div>
+<button onClick="{{ imp.open }}" style="border:0;background:transparent;font-family:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Import events</span><span style="font-size:15px;font-weight:330">Add events from an .ics calendar file</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:17px;font-weight:330">{{ imp.sum }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></div></button>
+<div id="gl-export" data-ds-new="ExportEvents" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px;padding:20px 0;box-shadow:inset 0 -1px 0 var(--border-hairline-soft)"><div style="display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1 1 240px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Export events</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">Saves upcoming events as an .ics file · past events are left out</span><span role="status" aria-live="polite" style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;line-height:1.3">{{ exp.status }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="download" disabled="{{ exp.off }}" on-click="{{ exp.run }}" dc-props="{{ sx.ring }}" hint-size="150px,44px">Download .ics</x-import></div>
+<div id="gl-api" data-ds-new="ApiKey" style="display:flex;flex-direction:column;gap:16px;padding:20px 0">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px 24px">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:180px;flex:1 1 240px"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">API key</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">Lets other apps add and update events · one key per account</span><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;line-height:1.3;overflow-wrap:anywhere">POST · PATCH  api.glance.app/v1/events</span></div>
+<sc-if value="{{ api.showNew }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="plus" disabled="{{ off }}" on-click="{{ api.create }}" dc-props="{{ sx.ring }}" hint-size="150px,44px">Create key</x-import></sc-if>
+<sc-if value="{{ api.showKey }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;line-height:1.3"><span>{{ api.mask }}</span><span style="text-transform:uppercase">{{ api.meta }}</span></span><sc-if value="{{ api.canRevoke }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="trash-2" disabled="{{ off }}" on-click="{{ api.ask }}" dc-props="{{ sx.ring }}" hint-size="110px,44px">Revoke</x-import></sc-if></div></sc-if>
+</div>
+<sc-if value="{{ api.offMsg }}" hint-placeholder-val="{{ false }}"><span style="font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase">Offline · needs a connection</span></sc-if>
+<sc-if value="{{ api.asking }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;background:var(--surface-soft);border-radius:8px;padding:12px 12px 12px 16px;box-sizing:border-box"><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty;flex:1 1 200px">Apps using this key stop working right away.</span><div style="display:flex;flex-wrap:wrap;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ api.keep }}" hint-size="90px,44px">Cancel</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" icon="trash-2" on-click="{{ api.revoke }}" hint-size="150px,44px">Revoke key</x-import></div></div></sc-if>
+<sc-if value="{{ api.shown }}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display:flex;flex-direction:column;gap:12px;background:var(--season-block-1);border-radius:8px;padding:20px;box-sizing:border-box">
+<span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Copy this key now</span>
+<span style="font-size:15px;font-weight:330;line-height:1.45;text-wrap:pretty">It’s shown only once. Anyone with it can add and change events on this calendar.</span>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--surface-canvas);border-radius:8px;padding:8px 8px 8px 16px"><span aria-label="API key" style="flex:1 1 200px;min-width:0;font-family:var(--font-mono);font-size:15px;letter-spacing:0.2px;line-height:1.4;overflow-wrap:anywhere;user-select:all">{{ api.key }}</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="{{ api.copyIcon }}" on-click="{{ api.copy }}" dc-props="{{ sx.ring }}" hint-size="110px,44px">{{ api.copyLbl }}</x-import></div>
+<div style="display:flex"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" icon="x" on-click="{{ api.done }}" dc-props="{{ sx.ml16 }}" hint-size="100px,44px">Done</x-import></div>
+</div>
+</sc-if>
+</div>
 </div>
 </div>
 <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
@@ -911,6 +929,26 @@
 </div>
 <a href="Glance%20Guide.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Guide</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
 <a href="Glance%20Terms%20of%20Service.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Terms of Service</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
+</div>
+<div id="gl-data" data-ds-new="DataAndApp" style="background:var(--surface-canvas);border-radius:24px;box-shadow:var(--shadow-1);padding:clamp(20px,2.4vw,32px);box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="140px,20px">Data and app</x-import>
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 240px">
+<span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Refresh data</span>
+<span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">Gets the latest events, notes, photos and weather from the server now.</span>
+<span role="status" aria-live="polite" style="display:flex;align-items:center;gap:8px;min-height:18px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;line-height:1.3"><sc-if value="{{ rf.fail }}" hint-placeholder-val="{{ false }}"><span style="display:flex;flex:none;color:var(--danger)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="triangle-alert" size="18" hint-size="18px,18px"></x-import></span></sc-if><sc-if value="{{ rf.fresh }}" hint-placeholder-val="{{ false }}"><span style="display:flex;flex:none"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="18" hint-size="18px,18px"></x-import></span></sc-if><span>{{ rf.status }}</span></span>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="{{ rf.icon }}" disabled="{{ rf.off }}" on-click="{{ rf.tap }}" dc-props="{{ sx.ring }}" hint-size="140px,44px">{{ rf.label }}</x-import>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 16px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 240px">
+<span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Reload app</span>
+<span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">Restarts the app from the server, for example to load a new version. Settings, events and notes stay.</span>
+<span style="display:flex;align-items:center;gap:8px;min-height:18px;font-family:var(--font-mono);font-size:14px;letter-spacing:0.6px;text-transform:uppercase;line-height:1.3"><sc-if value="{{ ap.upd }}" hint-placeholder-val="{{ false }}"><span style="width:10px;height:10px;flex:none;border-radius:9999px;background:var(--season-accent)"></span></sc-if><span>{{ ap.status }}</span></span>
+</div>
+<sc-if value="{{ ap.idle }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="{{ ap.variant }}" icon="power" disabled="{{ off }}" on-click="{{ ap.ask }}" dc-props="{{ ap.btnP }}" hint-size="120px,44px">Reload</x-import></sc-if>
+<sc-if value="{{ ap.asking }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;flex:1 1 100%;min-width:0;background:var(--surface-soft);border-radius:8px;padding:12px 12px 12px 16px;box-sizing:border-box"><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty;flex:1 1 200px">The screen goes blank for a few seconds, then opens on Today.</span><div style="display:flex;flex-wrap:wrap;gap:8px"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ ap.cancel }}" hint-size="90px,44px">Cancel</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" icon="rotate-cw" on-click="{{ ap.reload }}" hint-size="150px,44px">Reload now</x-import></div></div></sc-if>
+</div>
 </div>
 </div>
 </div>
@@ -1245,6 +1283,18 @@
 <sc-for list="{{ wf.rows }}" as="r" hint-placeholder-count="10"><button type="button" role="checkbox" aria-checked="{{ r.checked }}" onClick="{{ r.toggle }}" style="width:100%;min-height:56px;border:0;background:transparent;box-shadow:{{ r.bd }};display:flex;align-items:center;gap:14px;padding:0 4px;font-family:inherit;color:var(--text-primary);text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.98)"><span style="flex:none;width:32px;height:32px;border-radius:9999px;background:{{ r.c }};display:grid;place-items:center;font-size:12px;font-weight:540"><sc-if value="{{ r.isAll }}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="users" size="16" stroke-width="1.75" hint-size="16px,16px"></x-import></sc-if>{{ r.ini }}</span><span style="flex:1;min-width:0;font-size:18px;font-weight:{{ r.fw }};letter-spacing:-0.2px">{{ r.name }}</span><span style="flex:none;width:28px;height:28px;border-radius:8px;background:{{ r.cbBg }};box-shadow:{{ r.cbRing }};color:var(--on-action-primary);display:grid;place-items:center"><sc-if value="{{ r.on }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="check" size="18" stroke-width="2.5" hint-size="18px,18px"></x-import></sc-if></span></button></sc-for>
 </div>
 <div style="flex:none;display:flex;padding:16px 24px 24px;box-shadow:inset 0 1px 0 var(--border-hairline-soft)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" full-width="{{ true }}" on-click="{{ wf.close }}" hint-size="100%,56px">Done</x-import></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ ap.reloading }}" hint-placeholder-val="{{ false }}">
+<div role="alert" aria-busy="true" style="position:fixed;inset:0;z-index:60;background:var(--surface-canvas);display:grid;place-items:center;padding:24px;box-sizing:border-box">
+<div style="display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;max-width:420px">
+<span style="display:grid;place-items:center;width:80px;height:80px;border-radius:9999px;background:var(--season-block-1)"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="rotate-cw" size="34" stroke-width="1.5" hint-size="34px,34px"></x-import></span>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+<div style="font-size:var(--type-display-lg-size);font-weight:340;letter-spacing:-0.8px;line-height:1.1">Reloading Glance</div>
+<span style="font-size:17px;font-weight:330;line-height:1.45;text-wrap:pretty">Getting the latest version from the server. This takes a few seconds.</span>
+</div>
+<x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">{{ ap.target }}</x-import>
 </div>
 </div>
 </sc-if>
@@ -1731,6 +1781,8 @@ class Component extends DCLogic {
     let net = q.get('net') || 'online'; if (siq === 'offline' || upq === 'offline') net = 'offline';
     return {
       net, kb: q.get('kb') === '1', vh: window.innerHeight,
+      appUpd: q.get('app') === 'update' || q.get('sync') === 'update', rfSt: { refreshing: 'busy', done: 'done', fail: 'fail' }[q.get('sync')] || 'idle', rfAt: q.get('sync') === 'done' ? Date.now() : 0,
+      apSt: { reload: 'ask', reloading: 'reloading' }[q.get('sync')] || 'idle',
       amb: { mode: { split: 'Weekends differ', off: 'Off' }[q.get('amb')] || 'Every night', all: { s: 1080, e: 450 }, wknd: { s: 1260, e: 540 }, ...(q.get('amb') === 'same' ? { all: { s: 1080, e: 1080 } } : {}) }, ambPick: q.get('pick') || null, ambBright: { full: 'Full', low: 'Low' }[q.get('bright')] || 'Medium', ambShiftI: 0,
       view: view0, vw: window.innerWidth, geo, geoOff: false, wxPending: '',
       scan: { ask: 'ask', blocked: 'blocked', nocam: 'nocam', on: 'on', found: 'found', wrong: 'wrong' }[q.get('scan')] || '', scanErr: q.get('scan') === 'expired' ? 'That code has expired or was already used. Sign in with your email instead.' : '', signinStep: SIS[siq] || 'form', code: { code: (q.get('code') || '').replace(/\D/g, '').slice(0, 6), checking: '482913', wrong: '' }[siq] ?? '', codeBusy: siq === 'checking', codeTries: siq === 'locked' ? 5 : siq === 'wrong' ? 1 : 0, codeErr: { wrong: 'That code isn’t right. Try again.', locked: 'Too many tries. Send a new code.' }[siq] || '', codeFocus: false, acctNew: q.get('acct') !== 'returning', userName: 'Maria', nameDraft: '', nameErr: '',
@@ -1840,6 +1892,8 @@ class Component extends DCLogic {
   static PHOTO_TIPS = ['Sunday pancakes', 'the first snow', 'a birthday cake', 'pizza night', 'the first day of school', 'a day at the beach', 'camping by the lake'];
   state = Component.init();
   componentDidMount() {
+    { const sq = new URLSearchParams(location.search).get('sync'); this._rfFail = sq === 'fail';
+      if (sq) setTimeout(() => { const el = document.getElementById('gl-data'); let p = el && el.parentElement; while (p && !(p.scrollHeight > p.clientHeight && /auto|scroll/.test(getComputedStyle(p).overflowY))) p = p.parentElement; if (el && p) p.scrollTop += el.getBoundingClientRect().top - p.getBoundingClientRect().top - 24; }, 900); }
     this.driftTimer = setInterval(() => { if (this.state.view === 'ambient') this.setState((s) => ({ ambShiftI: s.ambShiftI + 1 })); }, 120000);
     this._lastView = this.state.view; this._lastSheet = this.state.sheet;
     setTimeout(() => this.syncTl(), 0);
@@ -2044,6 +2098,38 @@ class Component extends DCLogic {
     this.setState({ ...clear, wxLoc: loc });
   }
   shiftMonth(d) { this.setState((s) => { const ym = s.calYM + d; return { calYM: ym, selDay: ym === 2026 * 12 + 9 ? 9 : 1 }; }); }
+  expUpcoming(S) {
+    const DEF = 2026 * 12 + 9, now = 9 * 1440 + Component.NOW;
+    const key = (e) => { const ym = e.ym != null ? e.ym : DEF; return (ym - DEF) * 31 * 1440 + e.day * 1440 + (e.allDay ? 1439 : e.end != null ? e.end : e.start); };
+    return S.events.filter((e) => key(e) > now).sort((a, b) => key(a) - key(b));
+  }
+  expVals(S) {
+    const up = this.expUpcoming(S), n = up.length;
+    const status = S.expDone ? `Saved ${S.expDone} events · glance-events.ics` : n ? `${n} upcoming events` : 'No upcoming events';
+    return { off: n === 0, status, run: () => this.expRun() };
+  }
+  expRun() {
+    const up = this.expUpcoming(this.state); if (!up.length) return;
+    const p2 = (v) => String(v).padStart(2, '0'), DEF = 2026 * 12 + 9;
+    const ymd = (e) => { const ym = e.ym != null ? e.ym : DEF; return `${Math.floor(ym / 12)}${p2((ym % 12) + 1)}${p2(e.day)}`; };
+    const t = (m) => `T${p2(Math.floor(m / 60) % 24)}${p2(m % 60)}00`;
+    const esc = (s) => String(s || '').replace(/[\\;,]/g, (c) => '\\' + c).replace(/\n/g, '\\n');
+    const nm = (w) => (w || []).map((k) => (this.state.people.find((p) => p[0] === k) || [k, k])[1]).join(', ');
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Glance//Calendar//EN', 'CALSCALE:GREGORIAN'];
+    up.forEach((e) => {
+      const d = ymd(e), desc = [e.notes, e.who && e.who.length ? 'For: ' + nm(e.who) : ''].filter(Boolean).join('\n');
+      L.push('BEGIN:VEVENT', `UID:${e.id}@glance.app`, 'DTSTAMP:20261009T000000Z');
+      if (e.allDay) L.push(`DTSTART;VALUE=DATE:${d}`); else { L.push(`DTSTART:${d}${t(e.start)}`); if (e.end != null) L.push(`DTEND:${d}${t(e.end)}`); }
+      L.push(`SUMMARY:${esc(e.title)}`); if (e.location) L.push(`LOCATION:${esc(e.location)}`); if (desc) L.push(`DESCRIPTION:${esc(desc)}`);
+      if (e.repeat === 'weekly') L.push('RRULE:FREQ=WEEKLY');
+      L.push('END:VEVENT');
+    });
+    L.push('END:VCALENDAR');
+    const url = URL.createObjectURL(new Blob([L.join('\r\n') + '\r\n'], { type: 'text/calendar' }));
+    const a = document.createElement('a'); a.href = url; a.download = 'glance-events.ics'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.setState({ expDone: up.length });
+  }
   impSet(st, x) { clearTimeout(this._impT); window.scrollTo(0, 0); this.setState({ imp: st, ...(x || {}) }); }
   impOpen() { clearTimeout(this._impT); window.scrollTo(0, 0); this.setState({ imp: 'source', impIn: false }, () => requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ impIn: true })))); }
   impClose(then) { clearTimeout(this._impT); this.setState({ impIn: false }); this._impT = setTimeout(() => { this.setState({ imp: '' }); window.scrollTo(0, 0); if (then) then(); }, 280); }
@@ -2281,6 +2367,24 @@ class Component extends DCLogic {
       case 'signin': return { cols: SM ? one : 'minmax(0,1fr) minmax(0,1fr)' };
       default: return {};
     }
+  }
+  static API_SEED = { tail: '7f2c', scope: 'write', made: 'Sep 14', used: 'Used 2h ago' };
+  apiVals(S, off) {
+    const k = S.apiKey === undefined ? Component.API_SEED : S.apiKey, st = S.apiSt || 'idle';
+    const set = (o) => this.setState(o);
+    const create = () => {
+      const A = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = Array.from({ length: 32 }, () => A[Math.floor(Math.random() * A.length)]).join('');
+      set(() => ({ apiKey: { tail: r.slice(-4), made: 'Oct 29', used: 'Never used' }, apiSt: 'shown', apiNew: 'glc_live_' + r, apiCopied: false }));
+    };
+    return {
+      showNew: !k && st === 'idle', showKey: !!k && st !== 'shown', asking: !!k && st === 'ask', shown: st === 'shown', offMsg: off && st === 'idle',
+      mask: k ? `glc_live_••••${k.tail}` : '', meta: k ? ` · ${k.used}` : '', canRevoke: st !== 'ask',
+      create,
+      ask: () => set({ apiSt: 'ask' }), keep: () => set({ apiSt: 'idle' }), revoke: () => set({ apiKey: null, apiSt: 'idle' }),
+      key: S.apiNew || '', copyLbl: S.apiCopied ? 'Copied' : 'Copy', copyIcon: S.apiCopied ? 'check' : 'copy',
+      copy: () => { try { navigator.clipboard && navigator.clipboard.writeText(this.state.apiNew || ''); } catch (e) {} set({ apiCopied: true }); },
+      done: () => set({ apiSt: 'idle', apiNew: '', apiCopied: false }),
+    };
   }
   renderVals() {
     const S = this.state, NS = window.KioskDisplayDesignSystem_21b0bf || {}, h = React.createElement;
@@ -2813,6 +2917,17 @@ class Component extends DCLogic {
         { icon: 'smartphone', name: 'Maria’s phone', meta: 'Active Oct 2' }
       ].map((d, i) => ({ ...d, div: i ? 'inset 0 1px 0 var(--border-hairline-soft)' : 'none' })),
       deviceCount: '4 screens signed in',
+      rf: (() => { const st = S.rfSt || 'idle', busy = st === 'busy', mins = S.rfAt ? Math.floor((Date.now() - S.rfAt) / 60000) : 4;
+        const ago = mins < 1 ? 'Updated just now' : `Updated ${mins} min ago`;
+        return { fail: st === 'fail' && !off, fresh: st === 'done' && !off, off: off || busy, icon: busy ? 'loader-circle' : 'refresh-cw', label: busy ? 'Refreshing' : 'Refresh',
+          status: off ? 'Offline · ' + ago.toLowerCase() : busy ? 'Getting the latest data' : st === 'fail' ? 'Couldn’t reach the server. Try again.' : ago,
+          tap: () => { if (this.state.rfSt === 'busy') return; this.setState({ rfSt: 'busy' }); clearTimeout(this._rfT); this._rfT = setTimeout(() => this.setState(this._rfFail ? { rfSt: 'fail' } : { rfSt: 'done', rfAt: Date.now() }), 1600); } }; })(),
+      ap: (() => { const upd = !!S.appUpd, st = S.apSt || 'idle';
+        return { upd, idle: st !== 'ask', asking: st === 'ask', reloading: st === 'reloading', variant: upd ? 'primary' : 'secondary', btnP: upd ? {} : { style: { boxShadow: 'inset 0 0 0 1px var(--border-hairline)' } },
+          status: off ? 'Offline · needs a connection' : upd ? 'Version 3.3.0 is ready · this screen runs 3.2.0' : 'Version 3.2.0 · up to date', target: upd ? 'Version 3.3.0' : 'Version 3.2.0',
+          ask: () => this.setState({ apSt: 'ask' }), cancel: () => this.setState({ apSt: 'idle' }),
+          reload: () => { this.setState({ apSt: 'reloading' }); clearTimeout(this._apT); this._apT = setTimeout(() => { this.setState({ apSt: 'idle', appUpd: false, rfSt: 'idle', rfAt: Date.now() }); this.go('today'); }, 2600); } }; })(),
+      api: this.apiVals(S, off),
       mem: (() => { const pl = (n) => `${n} plan${n === 1 ? '' : 's'}`;
         return { eyebrow: `Family · ${PPL.length} member${PPL.length === 1 ? '' : 's'}`, solo: PPL.length === 1, rows: PPL.map(([k, name, c], i) => {
           const mine = S.events.filter((e) => (e.who || []).includes(k)), solo = mine.filter((e) => e.who.length === 1).length, shared = mine.length - solo, ask = S.rmM === k;
@@ -2857,7 +2972,7 @@ class Component extends DCLogic {
       hour12: S.clockFmt === '12-hour',
       is: { quiet: view === 'quiet', location: view === 'location', signin: view === 'signin', ambient: view === 'ambient', app: view !== 'signin' && view !== 'ambient',
         today: view === 'today', calendar: view === 'calendar', weather: view === 'weather', notes: view === 'notes', photos: view === 'photos', settings: view === 'settings', background: view === 'background' },
-      imp: this.impVals(S, SM), L: FL, go, bar, barCenter, barH, sx: { ring: { style: { boxShadow: 'var(--shadow-1)' } }, ml16: { style: { marginLeft: -16 } }, ml12: { style: { marginLeft: -12 } }, ml8: { style: { marginLeft: -8 } }, pillSoft: { style: { background: 'var(--surface-soft)', flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, bar: { style: { flex: 'none', gap: 0, marginTop: 'auto', position: BM === 'docked' ? 'sticky' : 'fixed', ...(BM === 'docked' ? {} : { left: 0, right: 0 }), bottom: 0, zIndex: 5, boxShadow: BM === 'float' ? 'inset 0 1px 0 var(--border-hairline-soft), 0 -4px 16px rgba(0,0,0,.06)' : 'inset 0 1px 0 var(--border-hairline-soft)', transform: BM === 'hidden' ? 'translateY(100%)' : 'none', opacity: BM === 'hidden' ? 0 : 1, pointerEvents: BM === 'hidden' ? 'none' : 'auto', transition: 'transform 280ms cubic-bezier(0.2, 0, 0, 1), opacity 280ms ease-out' } } }, pillWrap: { style: { flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, dangerBtn: { style: { background: 'var(--danger)', color: '#fff' } },
+      imp: this.impVals(S, SM), exp: this.expVals(S), L: FL, go, bar, barCenter, barH, sx: { ring: { style: { boxShadow: 'var(--shadow-1)' } }, ml16: { style: { marginLeft: -16 } }, ml12: { style: { marginLeft: -12 } }, ml8: { style: { marginLeft: -8 } }, pillSoft: { style: { background: 'var(--surface-soft)', flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, bar: { style: { flex: 'none', gap: 0, marginTop: 'auto', position: BM === 'docked' ? 'sticky' : 'fixed', ...(BM === 'docked' ? {} : { left: 0, right: 0 }), bottom: 0, zIndex: 5, boxShadow: BM === 'float' ? 'inset 0 1px 0 var(--border-hairline-soft), 0 -4px 16px rgba(0,0,0,.06)' : 'inset 0 1px 0 var(--border-hairline-soft)', transform: BM === 'hidden' ? 'translateY(100%)' : 'none', opacity: BM === 'hidden' ? 0 : 1, pointerEvents: BM === 'hidden' ? 'none' : 'auto', transition: 'transform 280ms cubic-bezier(0.2, 0, 0, 1), opacity 280ms ease-out' } } }, pillWrap: { style: { flexWrap: 'wrap', maxWidth: '100%', boxSizing: 'border-box', borderRadius: 32 } }, dangerBtn: { style: { background: 'var(--danger)', color: '#fff' } },
       email: S.email, emailErr: S.emailErr || undefined, emailShown: S.email || 'maria@example.com',
       setEmail: (v) => { if (this.state.signinStep !== 'sending') this.setState({ email: v, emailErr: '', scanErr: '' }); },
       sendCode: () => this.sendLink(),

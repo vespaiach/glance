@@ -73,10 +73,10 @@ function DiscardAsk({ breakpoint, onKeepEditing, onDiscard }: EventTaskBarProps)
   return (
     <>
       <span {...stylex.props(styles.ask, askSizes[breakpoint])}>{discard.title}</span>
-      <Button variant="secondary" onClick={onKeepEditing}>
+      <Button variant="secondary" size="lg" onClick={onKeepEditing}>
         {discard.keepEditing}
       </Button>
-      <Button variant="danger" onClick={onDiscard}>
+      <Button variant="danger" size="lg" onClick={onDiscard}>
         {discard.discard}
       </Button>
     </>
@@ -90,7 +90,7 @@ function Actions(props: EventTaskBarProps) {
     if (status?.kind === "ended") return null;
 
     return (
-      <Button variant="secondary" icon={Pencil} onClick={onEdit}>
+      <Button variant="secondary" icon={Pencil} size="lg" onClick={onEdit}>
         {words.editAction}
       </Button>
     );
@@ -109,7 +109,7 @@ function Actions(props: EventTaskBarProps) {
 function DeleteActions({ asking, onAskDelete, onKeep, onDelete }: EventTaskBarProps) {
   if (asking !== "delete") {
     return (
-      <Button variant="ghost" icon={Trash2} onClick={onAskDelete}>
+      <Button variant="ghost" icon={Trash2} size="lg" onClick={onAskDelete}>
         {words.delete}
       </Button>
     );
@@ -117,10 +117,10 @@ function DeleteActions({ asking, onAskDelete, onKeep, onDelete }: EventTaskBarPr
 
   return (
     <>
-      <Button variant="ghost" onClick={onKeep}>
+      <Button variant="ghost" size="lg" onClick={onKeep}>
         {words.keep}
       </Button>
-      <Button variant="danger" icon={Trash2} onClick={onDelete}>
+      <Button variant="danger" icon={Trash2} size="lg" onClick={onDelete}>
         {words.deleteEvent}
       </Button>
     </>
