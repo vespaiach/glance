@@ -31,6 +31,7 @@ import { SettingsView } from "./components/SettingsView";
 import { DELETE_CLOSED, deleteAccountDialog } from "./deleteAccountDialog";
 import { members } from "./members";
 import { SIGN_OUT_CLOSED, signOutDialog } from "./signOutDialog";
+import { useApiKeyRow } from "./useApiKeyRow";
 import { useQrTile } from "./useQrTile";
 import { useThisPhone } from "./useThisPhone";
 
@@ -111,6 +112,8 @@ export function SettingsScreen() {
 
   const lastImport = useLastImport();
 
+  const apiKey = useApiKeyRow(online, now, tz);
+
   const tags = useTags();
 
   const events = useLiveEvents();
@@ -163,6 +166,7 @@ export function SettingsScreen() {
       upcomingEvents={upcoming.length}
       savedEvents={savedEvents}
       onExportEvents={exportEvents}
+      apiKey={apiKey}
       onOpenAmbient={() => router.push(AMBIENT_PATH)}
       signOut={signOutState}
       onSignOut={() => dispatchSignOut({ type: "open" })}

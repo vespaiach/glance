@@ -32,6 +32,11 @@ export type Harness = RepoStore & {
     last: Mock<Transport["imports"]["last"]>;
     undo: Mock<Transport["imports"]["undo"]>;
   };
+  apiKey: {
+    get: Mock<Transport["apiKey"]["get"]>;
+    create: Mock<Transport["apiKey"]["create"]>;
+    revoke: Mock<Transport["apiKey"]["revoke"]>;
+  };
   signOut: Mock<() => Promise<void>>;
   signOutAll: Mock<() => Promise<Result<void, TransportError>>>;
   deleteAccount: Mock<() => Promise<Result<void, TransportError>>>;
@@ -70,6 +75,11 @@ export function openHarness(name: string): Harness {
       commit: vi.fn<Transport["imports"]["commit"]>(async () => err("network")),
       last: vi.fn<Transport["imports"]["last"]>(async () => err("network")),
       undo: vi.fn<Transport["imports"]["undo"]>(async () => err("network")),
+    },
+    apiKey: {
+      get: vi.fn<Transport["apiKey"]["get"]>(async () => err("network")),
+      create: vi.fn<Transport["apiKey"]["create"]>(async () => err("network")),
+      revoke: vi.fn<Transport["apiKey"]["revoke"]>(async () => err("network")),
     },
     signOut: vi.fn<() => Promise<void>>(async () => {}),
     signOutAll: vi.fn<() => Promise<Result<void, TransportError>>>(async () => err("network")),

@@ -1,3 +1,4 @@
+import type { ApiKey, NewApiKey } from "@/domain/apiKeys";
 import { BUILD_HEADER, CLIENT_BUILD } from "@/domain/build";
 import type { ImportResult, ImportReview, LastImport } from "@/domain/imports";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER, uploadProblem } from "@/domain/photoUpload";
@@ -38,6 +39,8 @@ const CODE_ERRORS: readonly string[] = ["wrong-code", "code-locked", "code-expir
 
 const ICS_ERRORS: readonly string[] = ["not-ics", "no-upcoming"];
 
+const API_KEY_PATH = "/api/api-key";
+
 export function createHttpTransport({
   fetch = globalThis.fetch.bind(globalThis),
   createXhr = () => new XMLHttpRequest(),
@@ -73,6 +76,11 @@ export function createHttpTransport({
         ),
       last: () => orNothing(sendStaged<LastImport>("/api/imports/last")),
       undo: (id) => send<void>(`/api/imports/${encodeURIComponent(id)}/undo`, { method: "POST" }),
+    },
+    apiKey: {
+      get: () => orNothing(sendStaged<ApiKey>(API_KEY_PATH)),
+      create: () => send<NewApiKey>(API_KEY_PATH, { method: "POST" }),
+      revoke: () => send<void>(API_KEY_PATH, { method: "DELETE" }),
     },
     webPush: {
       key: async () => {

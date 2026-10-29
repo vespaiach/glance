@@ -11,6 +11,7 @@ import { settingsLayout } from "../layout";
 import type { SignOutDialog as SignOutDialogState } from "../signOutDialog";
 import type { ThisPhone } from "../thisPhone";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
+import type { ApiKeyRowProps } from "./ApiKeyRow";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { type Member, MemberList } from "./MemberList";
 import type { QrTileShown } from "./QrSignInTile";
@@ -40,6 +41,7 @@ type SettingsViewProps = {
   upcomingEvents: number;
   savedEvents?: number;
   onExportEvents: () => void;
+  apiKey: Omit<ApiKeyRowProps, "online">;
   onOpenAmbient: () => void;
   signOut: SignOutDialogState;
   onSignOut: () => void;
@@ -98,6 +100,7 @@ export function SettingsView({
   upcomingEvents,
   savedEvents,
   onExportEvents,
+  apiKey,
   onOpenAmbient,
   signOut,
   onSignOut,
@@ -135,6 +138,7 @@ export function SettingsView({
         upcomingEvents={upcomingEvents}
         savedEvents={savedEvents}
         onExportEvents={onExportEvents}
+        apiKey={apiKey}
         phone={phone}
         onAllowPush={onAllowPush}
         onTurnOffPush={onTurnOffPush}

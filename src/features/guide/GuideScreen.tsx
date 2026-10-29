@@ -3,9 +3,12 @@ import {
   ArrowLeft,
   Bell,
   CalendarDays,
+  CalendarPlus,
   Clock,
   CloudSun,
+  Download,
   Image,
+  KeyRound,
   Leaf,
   type LucideIcon,
   Monitor,
@@ -52,6 +55,7 @@ const CHIPS: readonly { icon: LucideIcon; label: string }[] = [
 
 const BULLETS: Partial<Record<GuideSectionId, readonly LucideIcon[]>> = {
   settings: [Leaf, Image, Clock],
+  "events-data": [CalendarPlus, Download, KeyRound],
   notifications: [Bell, Monitor, Smartphone, Volume2],
 };
 

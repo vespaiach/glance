@@ -6,6 +6,7 @@ export type {
   TransportError,
 } from "../sync/transport";
 export { type AccountCounts, useAccountCounts } from "./account";
+export { type ApiKeyRepo, useApiKey } from "./apiKey";
 export {
   SignedOutAccountProvider,
   SignInAuthProvider,

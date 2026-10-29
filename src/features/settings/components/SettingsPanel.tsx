@@ -13,6 +13,7 @@ import { seasonIcons } from "@/ui/seasonIcons";
 import { locationSummary } from "../location";
 import type { ThisPhone } from "../thisPhone";
 import type { SettingsAccount } from "./AccountCard";
+import { ApiKeyRow, type ApiKeyRowProps } from "./ApiKeyRow";
 
 type SettingsPanelProps = {
   account: SettingsAccount;
@@ -28,6 +29,7 @@ type SettingsPanelProps = {
   upcomingEvents: number;
   savedEvents?: number;
   onExportEvents: () => void;
+  apiKey: Omit<ApiKeyRowProps, "online">;
   phone: ThisPhone;
   onAllowPush: () => void;
   onTurnOffPush: () => void;
@@ -113,6 +115,7 @@ export function SettingsPanel({
   upcomingEvents,
   savedEvents,
   onExportEvents,
+  apiKey,
   phone,
   onAllowPush,
   onTurnOffPush,
@@ -194,7 +197,6 @@ export function SettingsPanel({
           title={text.exportEvents.title}
           description={text.exportEvents.body}
           status={exportStatus(online, upcomingEvents, savedEvents)}
-          divider={false}
         >
           <Button
             variant="secondary"
@@ -206,6 +208,7 @@ export function SettingsPanel({
             {text.exportEvents.download}
           </Button>
         </SettingsRow>
+        <ApiKeyRow {...apiKey} online={online} />
       </div>
     </div>
   );

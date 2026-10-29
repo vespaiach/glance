@@ -10,6 +10,7 @@ const SECTIONS = [
   "Leave a note for the family",
   "Share photos on the screen",
   "Make it yours",
+  "Bring events in and out",
   "A calm screen for quiet hours",
   "Never miss the next thing",
   "Take Glance with you",
@@ -51,7 +52,7 @@ test("GUIDE-01 the header ends with Back to Glance, opening / in the same tab", 
   expect(back).not.toHaveAttribute("target");
 });
 
-test("GUIDE-01 lists the 11 sections and Questions in order", () => {
+test("GUIDE-01 lists the 12 sections and Questions in order", () => {
   render(<GuideScreen season="fall" />);
 
   const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
@@ -63,6 +64,21 @@ test("GUIDE-01 the reminder step names the lead times of Settings › Notificati
   render(<GuideScreen season="fall" />);
 
   expect(screen.getByText(/: 15 or 30 minutes before, or off\./)).toBeInTheDocument();
+});
+
+test("GUIDE-01 section 08 covers import, export and the read-and-write API key", () => {
+  render(<GuideScreen season="fall" />);
+
+  const heading = screen.getByRole("heading", { level: 2, name: "Bring events in and out" });
+  const section = within(heading.closest("article") as HTMLElement);
+
+  expect(section.getByText("08 · Import, export and API")).toBeInTheDocument();
+  expect(section.getByText("Import, Export and API key need a connection.")).toBeInTheDocument();
+  expect(
+    section.getByText(/lets another app read, add and update events on your calendar\./),
+  ).toBeInTheDocument();
+  expect(section.getByText("Download .ics")).toBeInTheDocument();
+  expect(section.getByText("Create key")).toBeInTheDocument();
 });
 
 test("GUIDE-01 a question explains importing an .ics file from Settings › Import events", async () => {
