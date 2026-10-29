@@ -61,6 +61,7 @@ const eventEntries = {
   tagIds: v.array(IdSchema),
   notes: v.optional(v.pipe(v.string(), v.maxLength(EVENT_LIMITS.notes))),
   notify: v.optional(v.boolean()),
+  repeat: v.optional(v.literal("weekly")),
 };
 
 type EventSpan = { startAt: string; endAt?: string; allDay?: true };

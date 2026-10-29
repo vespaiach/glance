@@ -783,3 +783,23 @@ async function migratedTo(version: number) {
 
   return { client, old };
 }
+
+describe("018_event_repeat", () => {
+  it("EVT-14 an event is one-off unless it repeats weekly", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    expect(await db().one("SELECT repeat FROM events")).toEqual({ repeat: null });
+  });
+
+  it("tech§6.7 rejects a repeat other than weekly", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    await expect(db().run("UPDATE events SET repeat = 'daily'")).rejects.toThrow(
+      /check constraint/,
+    );
+    await db().run("UPDATE events SET repeat = 'weekly'");
+    expect(await db().one("SELECT repeat FROM events")).toEqual({ repeat: "weekly" });
+  });
+});

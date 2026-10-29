@@ -128,6 +128,13 @@ describe("event from draft", () => {
     });
   });
 
+  it("EVT-14 editing a weekly series saves it weekly, and a one-off stays one-off", () => {
+    const series = draftFromEvent({ ...LUNCH, repeat: "weekly" }, tz, NOW, FAMILY);
+
+    expect(eventFromDraft(series, DAY, ID, tz, FAMILY).repeat).toBe("weekly");
+    expect(eventFromDraft(DRAFT, DAY, ID, tz, FAMILY)).not.toHaveProperty("repeat");
+  });
+
   it("NOTIF-09 the saved event keeps the draft's notification", () => {
     expect(eventFromDraft({ ...DRAFT, notify: false }, DAY, ID, tz, FAMILY).notify).toBe(false);
   });

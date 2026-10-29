@@ -11,6 +11,7 @@ export type EventDraft = EventTimes & {
   notes: string;
   notify: boolean;
   allDay?: true;
+  repeat?: "weekly";
 };
 
 export function draftFromEvent(
@@ -26,6 +27,7 @@ export function draftFromEvent(
     tagIds: [...whoIds(event, allIds)],
     notes: event.notes ?? "",
     notify: event.notify !== false,
+    ...(event.repeat ? { repeat: event.repeat } : {}),
   };
 }
 
@@ -51,6 +53,7 @@ export function eventFromDraft(
     tagIds: [...who.tagIds],
     ...(notes === "" ? {} : { notes }),
     notify: draft.notify,
+    ...(draft.repeat ? { repeat: draft.repeat } : {}),
   };
 }
 

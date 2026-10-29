@@ -454,3 +454,93 @@ describe("all-day events in the hooks", () => {
     await waitFor(() => expect(result.current?.id).toBe(NEXT_MONTH.id));
   });
 });
+
+describe("weekly series in the hooks", () => {
+  const NY = "America/New_York";
+
+  const SWIM: CalendarEvent = {
+    ...event(30, "2026-10-09T20:00:00.000Z", "Swim"),
+    endAt: "2026-10-09T21:00:00.000Z",
+    repeat: "weekly",
+  };
+
+  const TRASH: CalendarEvent = {
+    ...event(31, "2026-10-08T00:00:00.000Z", "Trash day"),
+    allDay: true,
+    repeat: "weekly",
+  };
+
+  const MOVIE = event(32, "2026-10-16T14:00:00.000Z", "Movie");
+
+  it("EVT-14 a later day shows the series at its local time, in start order", async () => {
+    await store.db.events.bulkPut([synced(SWIM), synced(MOVIE)]);
+
+    const { result } = renderHook(() => useEventsOnDay("2026-10-16", NY), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => [row.id, row.startAt])).toEqual([
+        [MOVIE.id, MOVIE.startAt],
+        [SWIM.id, "2026-10-16T20:00:00.000Z"],
+      ]),
+    );
+  });
+
+  it("EVT-14 a day before the first shows no occurrence, nor a removed series", async () => {
+    await store.db.events.bulkPut([
+      synced(SWIM),
+      { ...synced(TRASH), deletedAt: TEST_NOW.toISOString() },
+    ]);
+
+    const before = renderHook(() => useEventsBetween("2026-10-01", "2026-10-09", NY), {
+      wrapper: wrapperFor(store),
+    });
+    const after = renderHook(() => useEventsOnDay("2026-10-15", NY), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(before.result.current).toEqual([]));
+    await waitFor(() => expect(after.result.current).toEqual([]));
+  });
+
+  it("CAL-01 a week shows one occurrence of each series", async () => {
+    await store.db.events.bulkPut([synced(SWIM), synced(TRASH)]);
+
+    const { result } = renderHook(() => useEventsInWeek("2026-11-01", NY), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.startAt)).toEqual([
+        "2026-11-05T00:00:00.000Z",
+        "2026-11-06T21:00:00.000Z",
+      ]),
+    );
+  });
+
+  it("TODAY-06 useEventsAfter lists the next occurrence of each series", async () => {
+    await store.db.events.bulkPut([synced(SWIM), synced(TRASH)]);
+
+    const { result } = renderHook(() => useEventsAfter("2026-10-20", NY), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() =>
+      expect(result.current?.map((row) => row.startAt)).toEqual([
+        "2026-10-22T00:00:00.000Z",
+        "2026-10-23T20:00:00.000Z",
+      ]),
+    );
+  });
+
+  it("AMB-03 useNextEventAfter reads the series' next occurrence", async () => {
+    await store.db.events.bulkPut([synced(SWIM), synced(NEXT_MONTH)]);
+
+    const { result } = renderHook(() => useNextEventAfter("2026-10-20", NY), {
+      wrapper: wrapperFor(store),
+    });
+
+    await waitFor(() => expect(result.current?.startAt).toBe("2026-10-23T20:00:00.000Z"));
+  });
+});

@@ -2,6 +2,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import { allDayStart, eventDayKey } from "@/domain/allDay";
 import { recentPlaces, recentTitles } from "@/domain/recent";
+import { nextOccurrence, occurrencesBetween } from "@/domain/repeat";
 import type { CalendarEvent } from "@/domain/schemas";
 import { addDays, dayStart } from "@/domain/zone";
 import type { GlanceDb, StoredEvent } from "../db";
@@ -70,7 +71,9 @@ export function useNextEventAfter(dayKey: string, tz: string): StoredEvent | nul
 
     const [timed] = await firstFrom(db, isoDayStart(next, tz), false, 1);
 
-    return earlierDay(allDay, timed, tz);
+    const series = await nextOfSeries(db, next, tz);
+
+    return firstByDay([allDay, timed, ...series], tz);
   }, [db, dayKey, tz]);
 }
 
@@ -84,7 +87,9 @@ export function useEventsAfter(dayKey: string, tz: string): StoredEvent[] | unde
 
     const timed = await startingFrom(db, isoDayStart(next, tz), false);
 
-    return [...allDay, ...timed];
+    const series = await nextOfSeries(db, next, tz);
+
+    return [...allDay, ...timed, ...series].sort(byAllDayThenStart);
   }, [db, dayKey, tz]);
 }
 
@@ -94,7 +99,7 @@ export function useUpcomingEvent(now: Date): StoredEvent | null | undefined {
   const after = now.toISOString();
 
   return useLiveQuery(async () => {
-    const first = await db.events.where("startAt").above(after).filter(isKind(false)).first();
+    const first = await db.events.where("startAt").above(after).filter(isTimed).first();
 
     return first ?? null;
   }, [db, after]);
@@ -122,8 +127,13 @@ export function useEventRecents(): EventRecents | undefined {
   }, [db]);
 }
 
+function isTimed(row: StoredEvent): boolean {
+  return isLive(row) && row.allDay !== true;
+}
+
 function isKind(allDay: boolean) {
-  return (row: StoredEvent) => isLive(row) && (row.allDay === true) === allDay;
+  return (row: StoredEvent) =>
+    isLive(row) && row.repeat === undefined && (row.allDay === true) === allDay;
 }
 
 function startingBetween(
@@ -143,7 +153,25 @@ async function eventsOnDays(
 
   const timed = await startingBetween(db, [isoDayStart(first, tz), isoDayStart(end, tz)], false);
 
-  return [...allDay, ...timed];
+  const series = occurrencesBetween(await liveSeries(db), first, end, tz);
+
+  return [...allDay, ...timed, ...series].sort(byAllDayThenStart);
+}
+
+function liveSeries(db: GlanceDb): Promise<StoredEvent[]> {
+  return db.events.where("repeat").equals("weekly").filter(isLive).toArray();
+}
+
+async function nextOfSeries(db: GlanceDb, from: string, tz: string): Promise<StoredEvent[]> {
+  const series = await liveSeries(db);
+
+  return series.flatMap((event) => nextOccurrence(event, from, tz) ?? []);
+}
+
+function byAllDayThenStart(a: StoredEvent, b: StoredEvent): number {
+  return (
+    Number(b.allDay === true) - Number(a.allDay === true) || a.startAt.localeCompare(b.startAt)
+  );
 }
 
 function isoDayStart(key: string, tz: string): string {
@@ -168,12 +196,10 @@ function firstFrom(
     .toArray();
 }
 
-function earlierDay(
-  allDay: StoredEvent | undefined,
-  timed: StoredEvent | undefined,
-  tz: string,
-): StoredEvent | null {
-  if (!allDay || !timed) return allDay ?? timed ?? null;
+function firstByDay(events: (StoredEvent | undefined)[], tz: string): StoredEvent | null {
+  const days = events.flatMap((event) => (event ? [{ event, day: eventDayKey(event, tz) }] : []));
 
-  return eventDayKey(timed, tz) < eventDayKey(allDay, tz) ? timed : allDay;
+  days.sort((a, b) => a.day.localeCompare(b.day) || byAllDayThenStart(a.event, b.event));
+
+  return days[0]?.event ?? null;
 }
