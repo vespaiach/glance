@@ -36,8 +36,15 @@ export function eventsRepo(sql: Sql): Repos["events"] {
     },
     liveStarting: async (after, until) => {
       const rows = await sql.all<EventRow>(
-        "SELECT * FROM events WHERE deleted_at IS NULL AND start_at > $1 AND start_at <= $2 ORDER BY start_at",
+        "SELECT * FROM events WHERE deleted_at IS NULL AND repeat IS NULL AND start_at > $1 AND start_at <= $2 ORDER BY start_at",
         [after, until],
+      );
+
+      return rows.map(owned);
+    },
+    liveWeekly: async () => {
+      const rows = await sql.all<EventRow>(
+        "SELECT * FROM events WHERE deleted_at IS NULL AND repeat = 'weekly' ORDER BY start_at",
       );
 
       return rows.map(owned);

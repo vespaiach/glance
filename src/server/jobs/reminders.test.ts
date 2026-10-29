@@ -13,6 +13,12 @@ const harness = serviceHarnessPerTest();
 
 const MINUTE = 60_000;
 
+const HOUR = 60 * MINUTE;
+
+const DAY = 24 * HOUR;
+
+const WEEK = 7 * DAY;
+
 const MOM: Tag = {
   id: "0192f3a0-3333-7000-8000-000000000001",
   name: "Mom",
@@ -193,6 +199,55 @@ describe("sendReminderPushes", () => {
     ]);
     await deleteEvent(harness.deps(), MARIA, event(3).id);
 
+    await run();
+
+    expect(sent).toEqual([]);
+  });
+
+  it("NOTIF-01 a weekly event reminds every week at its lead time", async () => {
+    await addEvents(MARIA, [event(1, { title: "Swim", repeat: "weekly" })]);
+
+    await run();
+    harness.advance(WEEK);
+    await run();
+    harness.advance(WEEK);
+    await run();
+
+    expect(messages()).toEqual([
+      expect.objectContaining({ title: "Swim in 15 min", body: "10:15 AM · Everyone" }),
+      expect.objectContaining({ title: "Swim in 15 min", body: "10:15 AM · Everyone" }),
+      expect.objectContaining({ title: "Swim in 15 min", body: "10:15 AM · Everyone" }),
+    ]);
+  });
+
+  it("NOTIF-01 a weekly event keeps its local time across DST", async () => {
+    await addEvents(MARIA, [
+      event(1, { title: "Swim", startAt: "2026-10-30T14:15:00.000Z", repeat: "weekly" }),
+    ]);
+
+    harness.advance(28 * DAY + HOUR);
+    await run();
+
+    expect(messages()).toEqual([
+      expect.objectContaining({ title: "Swim in 15 min", body: "10:15 AM · Everyone" }),
+    ]);
+  });
+
+  it("NOTIF-01 a weekly event never reminds before its first day", async () => {
+    await addEvents(MARIA, [event(1, { startAt: "2026-10-16T14:15:00.000Z", repeat: "weekly" })]);
+
+    await run();
+
+    expect(sent).toEqual([]);
+  });
+
+  it("NOTIF-09 a weekly event with the notification off is silent every week", async () => {
+    await addEvents(MARIA, [
+      event(1, { startAt: "2026-10-02T14:15:00.000Z", repeat: "weekly", notify: false }),
+    ]);
+
+    await run();
+    harness.advance(WEEK);
     await run();
 
     expect(sent).toEqual([]);

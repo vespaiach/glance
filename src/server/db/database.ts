@@ -123,6 +123,7 @@ export type Repos = {
     save(accountId: string, event: StoredEvent): Promise<void>;
     changedSince(accountId: string, version: number): Promise<StoredEvent[]>;
     liveStarting(after: string, until: string): Promise<Owned<StoredEvent>[]>;
+    liveWeekly(): Promise<Owned<StoredEvent>[]>;
     liveWithTag(accountId: string, tagId: string): Promise<StoredEvent[]>;
   };
   notes: {

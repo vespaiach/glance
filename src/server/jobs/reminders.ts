@@ -2,9 +2,11 @@ import "server-only";
 import { copy } from "@/copy";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { type NotifyLead, type ReminderGroup, reminderKey, remindersDue } from "@/domain/reminders";
+import { occurrencesBetween } from "@/domain/repeat";
 import type { AccountSettings, Tag } from "@/domain/schemas";
 import { whoLabel } from "@/domain/tags";
 import { type Clock, clockAt } from "@/domain/time";
+import { addDays, dateKey } from "@/domain/zone";
 import type { Database, Owned, ReminderSendRecord, StoredEvent } from "../db";
 import type { PushMessage, PushSender } from "../push";
 import type { ServiceDeps } from "../services/deps";
@@ -45,7 +47,7 @@ async function eventsFiringNow(db: Database, at: Date): Promise<Owned<StoredEven
     db.events.liveStarting(isoAt(at, (lead - 1) * MINUTE), isoAt(at, lead * MINUTE)),
   );
 
-  return (await Promise.all(windows)).flat();
+  return (await Promise.all([...windows, db.events.liveWeekly()])).flat();
 }
 
 async function sendAccountReminders(
@@ -60,7 +62,9 @@ async function sendAccountReminders(
 
   if (lead === "off") return;
 
-  const firing = events.filter((event) => startsAtLead(event, lead, at));
+  const tz = await accountTimeZone(db, accountId);
+
+  const firing = occurrencesNear(events, at, tz).filter((event) => startsAtLead(event, lead, at));
 
   const due = remindersDue(firing, lead, at, new Set());
 
@@ -73,7 +77,7 @@ async function sendAccountReminders(
 
   if (groups.length === 0) return;
 
-  const wording = await accountWording(db, accountId, settings, lead);
+  const wording = await accountWording(db, accountId, settings, { tz, lead });
 
   const messages = groups.map((group) => pushMessage(group, wording));
 
@@ -93,14 +97,14 @@ async function accountWording(
   db: Database,
   accountId: string,
   settings: AccountSettings | undefined,
-  lead: Lead,
+  { tz, lead }: Pick<Wording, "tz" | "lead">,
 ): Promise<Wording> {
   const tags = await db.tags.changedSince(accountId, 0);
 
   return {
     tags: tags.filter((tag) => tag.deletedAt === undefined),
     clock: settings?.clock ?? DEFAULT_SETTINGS.clock,
-    tz: await accountTimeZone(db, accountId),
+    tz,
     lead,
   };
 }
@@ -138,6 +142,12 @@ function byAccount(events: Owned<StoredEvent>[]): Map<string, StoredEvent[]> {
   }
 
   return accounts;
+}
+
+function occurrencesNear(events: StoredEvent[], at: Date, tz: string): StoredEvent[] {
+  const today = dateKey(at, tz);
+
+  return occurrencesBetween(events, today, addDays(today, 2), tz);
 }
 
 function sendsOf(group: ReminderGroup, lead: Lead): ReminderSendRecord[] {
