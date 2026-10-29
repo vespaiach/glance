@@ -62,6 +62,11 @@ export function createHttpTransport({
     locate: (position) => sendLocate<WeatherLocation>(locatePath(position)),
     displays: () => send<SignedInScreen[]>("/api/displays"),
     photoUsage: () => send<PhotoUsage>("/api/photos/usage"),
+    version: async () => {
+      const answer = await send<{ version: string }>("/api/version");
+
+      return answer.ok ? ok(answer.value.version) : answer;
+    },
     issueQr: (opens) =>
       send<QrCode>("/api/auth/qr", opens ? jsonBody("POST", { opens }) : { method: "POST" }),
     voidQr: (url) => send<void>("/api/auth/qr", jsonBody("DELETE", { url })),

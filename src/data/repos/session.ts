@@ -224,6 +224,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     locate: transport.locate,
     displays: transport.displays,
     photoUsage: transport.photoUsage,
+    serverVersion: transport.version,
     issueQr: transport.issueQr,
     voidQr: transport.voidQr,
     webPush: transport.webPush,

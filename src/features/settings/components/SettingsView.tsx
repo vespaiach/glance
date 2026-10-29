@@ -11,6 +11,7 @@ import { settingsLayout } from "../layout";
 import type { SignOutDialog as SignOutDialogState } from "../signOutDialog";
 import type { ThisPhone } from "../thisPhone";
 import type { RefreshDataRow } from "../useRefreshData";
+import type { ReloadAppRow } from "../useReloadApp";
 import { AccountCard, type SettingsAccount } from "./AccountCard";
 import type { ApiKeyRowProps } from "./ApiKeyRow";
 import { DataAndAppCard } from "./DataAndAppCard";
@@ -65,6 +66,7 @@ type SettingsViewProps = {
   onCancelRemoveMember: () => void;
   onRemoveMember: (id: string) => void;
   refreshData: RefreshDataRow;
+  reloadApp: ReloadAppRow;
 };
 
 const styles = stylex.create({
@@ -125,6 +127,7 @@ export function SettingsView({
   onCancelRemoveMember,
   onRemoveMember,
   refreshData,
+  reloadApp,
 }: SettingsViewProps) {
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
@@ -171,7 +174,7 @@ export function SettingsView({
           onSignOut={onSignOut}
           onDeleteAccount={onDeleteAccount}
         />
-        <DataAndAppCard {...refreshData} />
+        <DataAndAppCard {...refreshData} reloadApp={reloadApp} />
       </div>
       {signOut.kind !== "closed" && (
         <SignOutDialog

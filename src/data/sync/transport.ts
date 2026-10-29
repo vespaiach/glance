@@ -73,6 +73,7 @@ export interface Transport {
   locate(position: Coordinates): Answer<WeatherLocation, LocateError>;
   displays(): Answer<SignedInScreen[]>;
   photoUsage(): Answer<PhotoUsage>;
+  version(): Answer<string>;
   issueQr(opens?: QrOpens): Answer<QrCode>;
   voidQr(url: string): Answer<void>;
   imports: {

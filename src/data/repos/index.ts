@@ -98,4 +98,5 @@ export {
   useTags,
   useTagsRepo,
 } from "./tags";
+export { useServerVersion } from "./version";
 export { createWeatherRepo, useWeather, useWeatherRepo, type WeatherRepo } from "./weather";

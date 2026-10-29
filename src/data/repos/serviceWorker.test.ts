@@ -36,7 +36,7 @@ function fakeContainer() {
 async function registered() {
   const fake = fakeContainer();
 
-  const sw = createAppServiceWorker(fake.container);
+  const sw = createAppServiceWorker(fake.container, load);
 
   sw.register();
 
@@ -47,8 +47,11 @@ async function registered() {
   return { ...fake, sw };
 }
 
+const load = vi.fn<(path: string) => void>();
+
 afterEach(() => {
   vi.useRealTimers();
+  load.mockReset();
 });
 
 describe("registration", () => {
@@ -123,6 +126,43 @@ describe("updates", () => {
     takeOver();
 
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("reload", () => {
+  it("SET-21 asks for a new version, applies the waiting one, then loads the page", async () => {
+    const { sw, registration, takeOver } = await registered();
+
+    const waiting = fakeWorker();
+
+    registration.update.mockImplementation(async () => {
+      registration.waiting = waiting;
+    });
+
+    sw.reload("/today");
+
+    await vi.waitFor(() =>
+      expect(waiting.postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" }),
+    );
+    expect(load).not.toHaveBeenCalled();
+
+    takeOver();
+
+    expect(load).toHaveBeenCalledExactlyOnceWith("/today");
+  });
+
+  it("SET-21 without a new version it loads the page from the server", async () => {
+    const { sw } = await registered();
+
+    sw.reload("/today");
+
+    await vi.waitFor(() => expect(load).toHaveBeenCalledExactlyOnceWith("/today"));
+  });
+
+  it("SET-21 without service worker support it still loads the page", () => {
+    createAppServiceWorker(undefined, load).reload("/today");
+
+    expect(load).toHaveBeenCalledExactlyOnceWith("/today");
   });
 });
 

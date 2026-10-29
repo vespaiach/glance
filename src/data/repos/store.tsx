@@ -24,6 +24,7 @@ export type RepoStore = {
   locate: Transport["locate"];
   displays: Transport["displays"];
   photoUsage: Transport["photoUsage"];
+  serverVersion: Transport["version"];
   issueQr: Transport["issueQr"];
   voidQr: Transport["voidQr"];
   webPush: Transport["webPush"];

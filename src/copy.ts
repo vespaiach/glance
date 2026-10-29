@@ -661,6 +661,21 @@ export const copy = {
             ? "Offline"
             : `Offline · ${minutes < 1 ? "updated just now" : `updated ${minutes} min ago`}`,
       },
+      reload: {
+        title: "Reload app",
+        body: "Restarts the app from the server, for example to load a new version. Settings, events and notes stay.",
+        button: "Reload",
+        upToDate: (version: string) => `Version ${version} · up to date`,
+        ready: (next: string, current: string) =>
+          `Version ${next} is ready · this screen runs ${current}`,
+        offline: "Offline · needs a connection",
+        confirm: "The screen goes blank for a few seconds, then opens on Today.",
+        cancel: "Cancel",
+        reloadNow: "Reload now",
+        coverTitle: "Reloading Glance",
+        coverBody: "Getting the latest version from the server. This takes a few seconds.",
+        version: (version: string) => `Version ${version}`,
+      },
     },
     apiKey: {
       title: "API key",

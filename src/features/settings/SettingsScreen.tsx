@@ -34,6 +34,7 @@ import { SIGN_OUT_CLOSED, signOutDialog } from "./signOutDialog";
 import { useApiKeyRow } from "./useApiKeyRow";
 import { useQrTile } from "./useQrTile";
 import { useRefreshData } from "./useRefreshData";
+import { useReloadApp } from "./useReloadApp";
 import { useThisPhone } from "./useThisPhone";
 
 const BACKGROUND_PATH = "/settings/background";
@@ -117,6 +118,8 @@ export function SettingsScreen() {
 
   const refreshData = useRefreshData(now);
 
+  const reloadApp = useReloadApp();
+
   const tags = useTags();
 
   const events = useLiveEvents();
@@ -191,6 +194,7 @@ export function SettingsScreen() {
       onCancelRemoveMember={() => setAskingMember(null)}
       onRemoveMember={removeMember}
       refreshData={refreshData}
+      reloadApp={reloadApp}
     />
   );
 }

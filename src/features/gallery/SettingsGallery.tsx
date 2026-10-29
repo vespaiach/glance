@@ -65,6 +65,17 @@ const REFRESH: SettingsProps["refreshData"] = {
   onRefresh: ignore,
 };
 
+const RELOAD: SettingsProps["reloadApp"] = {
+  current: "3.2.0",
+  next: "3.2.0",
+  reload: { kind: "idle" },
+  onAsk: ignore,
+  onCancel: ignore,
+  onReload: ignore,
+};
+
+const UPDATE = { ...RELOAD, next: "3.3.0" };
+
 const NEW_KEY = { tail: "Q7mZ", used: "· Never used" };
 
 const SHOWN_KEY = {
@@ -213,7 +224,8 @@ export function SettingsGallery({ season }: { season: Season }) {
             key={key}
             {...stylex.props(
               small ? styles.small : styles.view,
-              (demo.signOut || demo.deleteAccount) && styles.dialog,
+              (demo.signOut || demo.deleteAccount || demo.reloadApp?.reload.kind === "reloading") &&
+                styles.dialog,
             )}
           >
             <SettingsView {...settingsBase(season)} {...demo} />
@@ -318,6 +330,15 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
       breakpoint: "small",
       refreshData: { ...REFRESH, refresh: { kind: "fail" } },
     },
+    { key: "reload-ready", reloadApp: UPDATE },
+    { key: "reload-confirm", reloadApp: { ...UPDATE, reload: { kind: "asking" } } },
+    {
+      key: "small-reload-confirm",
+      small: true,
+      breakpoint: "small",
+      reloadApp: { ...UPDATE, reload: { kind: "asking" } },
+    },
+    { key: "reload-reloading", reloadApp: { ...UPDATE, reload: { kind: "reloading" } } },
     { key: "phone-ask", phone: { kind: "ask" } },
     { key: "phone-asking", phone: { kind: "asking" } },
     { key: "phone-denied", phone: { kind: "denied" } },
@@ -402,5 +423,6 @@ function settingsBase(season: Season): SettingsProps {
     onCancelRemoveMember: ignore,
     onRemoveMember: ignore,
     refreshData: REFRESH,
+    reloadApp: RELOAD,
   };
 }
