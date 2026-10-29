@@ -1,18 +1,10 @@
 import { addDays, dateKey, parseDateKey } from "./zone";
 
-export type QuickDays = { today: string; tomorrow: string; nextWeek: string };
-
-const WEEK = 7;
-
 const monthYear = new Intl.DateTimeFormat("en-US", {
   month: "long",
   year: "numeric",
   timeZone: "UTC",
 });
-
-export function quickDays(selected: string, today: string): QuickDays {
-  return { today, tomorrow: addDays(today, 1), nextWeek: addDays(selected, WEEK) };
-}
 
 export function monthOf(day: string): string {
   return day.slice(0, 7);

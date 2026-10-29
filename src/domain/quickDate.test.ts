@@ -1,18 +1,4 @@
-import { monthCells, monthOf, monthTitle, quickDays, stepMonth } from "./quickDate";
-
-describe("quickDays", () => {
-  it("EVT-12 Today and Tomorrow follow today and Next week is seven days after the selected day", () => {
-    expect(quickDays("2026-10-14", "2026-10-09")).toEqual({
-      today: "2026-10-09",
-      tomorrow: "2026-10-10",
-      nextWeek: "2026-10-21",
-    });
-  });
-
-  it("EVT-12 Next week crosses a month end on the same weekday", () => {
-    expect(quickDays("2026-10-29", "2026-10-09").nextWeek).toBe("2026-11-05");
-  });
-});
+import { monthCells, monthOf, monthTitle, stepMonth } from "./quickDate";
 
 describe("monthCells", () => {
   it("EVT-12 the grid pads the first week to its Sunday-first weekday", () => {
