@@ -214,6 +214,27 @@ describe("EventSentence", () => {
     expect(screen.getByText("Notification off")).toBeVisible();
   });
 
+  it('EVT-02 the sentence reads "every Friday" with repeat on', () => {
+    renderSentence({ draft: { ...LUNCH, repeat: "weekly" } });
+
+    expect(screen.getByLabelText("Event summary")).toHaveTextContent(
+      "Lunch with Aunt Rosa every Friday from 12:00 PM",
+    );
+    expect(screen.getByRole("button", { name: "Day: every Friday. Change" })).toBeVisible();
+  });
+
+  it('EVT-09 details show "Every week · from Fri, Oct 9" for a weekly event', () => {
+    renderSentence({ mode: "view", word: null, draft: { ...LUNCH, repeat: "weekly" } });
+
+    expect(screen.getByText("Every week · from Fri, Oct 9")).toBeVisible();
+  });
+
+  it("EVT-09 details of a one-day event have no repeat line", () => {
+    renderSentence({ mode: "view", word: null });
+
+    expect(screen.queryByText(/Every week/)).toBeNull();
+  });
+
   it("EVT-09 an ended event has no tappable words and shows the lock line", () => {
     renderSentence({ mode: "view", word: null, locked: true });
 

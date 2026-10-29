@@ -34,7 +34,7 @@ export type EventPageAction =
   | { type: "length"; minutes: number }
   | { type: "noEnd" }
   | { type: "addEnd" }
-  | { type: "allDay" | "notify"; value: boolean }
+  | { type: "allDay" | "notify" | "repeat"; value: boolean }
   | { type: "who"; tagIds: string[] }
   | { type: "close" }
   | { type: "keepEditing" }
@@ -117,6 +117,8 @@ function editReducer(state: EventPageEditState, action: EventPageAction): EventP
       return edited(state, withAllDay(draft, action.value));
     case "notify":
       return edited(state, { ...draft, notify: action.value });
+    case "repeat":
+      return touch(edited(state, withRepeat(draft, action.value)), "day");
     case "who":
       return touch(edited(state, { ...draft, tagIds: action.tagIds }), "who");
     case "close":
@@ -180,4 +182,8 @@ function withoutEnd({ end: _, ...draft }: PageDraft): PageDraft {
 
 function withAllDay({ allDay: _, ...draft }: PageDraft, allDay: boolean): PageDraft {
   return allDay ? { ...draft, allDay: true } : draft;
+}
+
+function withRepeat({ repeat: _, ...draft }: PageDraft, weekly: boolean): PageDraft {
+  return weekly ? { ...draft, repeat: "weekly" } : draft;
 }

@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { Bell, BellOff, Lock, Plus } from "lucide-react";
+import { Bell, BellOff, Lock, Plus, Repeat } from "lucide-react";
 import { Fragment, type KeyboardEvent } from "react";
 import { copy } from "@/copy";
 import type { Breakpoint } from "@/domain/breakpoint";
@@ -12,7 +12,13 @@ import {
   whoText,
 } from "@/domain/eventSentence";
 import type { Tag, TagColor } from "@/domain/schemas";
-import { type Clock, formatClock, formatMonthDay, formatWeekday } from "@/domain/time";
+import {
+  type Clock,
+  formatClock,
+  formatLongWeekday,
+  formatMonthDay,
+  formatWeekday,
+} from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
 import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
@@ -290,6 +296,7 @@ export function EventSentence(props: EventSentenceProps) {
     hasEnd: draft.end !== undefined,
     hasPlace: draft.location.trim() !== "",
     view,
+    weekly: draft.repeat === "weekly",
   });
 
   return (
@@ -458,6 +465,12 @@ function ViewLines({ breakpoint, draft, locked }: EventSentenceProps) {
           {words.notificationOff}
         </div>
       )}
+      {draft.repeat === "weekly" && (
+        <div {...stylex.props(styles.line)}>
+          <Icon icon={Repeat} size={18} />
+          {words.repeatsFrom(dayText(draft.day))}
+        </div>
+      )}
       {locked && (
         <div {...stylex.props(styles.line)}>
           <Icon icon={Lock} size={18} />
@@ -481,7 +494,7 @@ function wordPieces(word: SentenceWord, props: EventSentenceProps): (Piece | str
     case "title":
       return [free(draft.title.trim() || words.titlePlaceholder)];
     case "day":
-      return [fixed(dayText(draft.day))];
+      return [fixed(draft.repeat === "weekly" ? everyText(draft.day) : dayText(draft.day))];
     case "start":
       return [fixed(draft.allDay ? words.allDay : formatClock(draft.start, clock))];
     case "end":
@@ -555,4 +568,8 @@ function dayText(day: string): string {
   const date = parseDateKey(day);
 
   return `${formatWeekday(date, "UTC")}, ${formatMonthDay(date, "UTC")}`;
+}
+
+function everyText(day: string): string {
+  return words.every(formatLongWeekday(parseDateKey(day), "UTC"));
 }

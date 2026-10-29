@@ -10,6 +10,8 @@ export interface TimeParts {
 
 const WEEKDAY: Intl.DateTimeFormatOptions = { weekday: "short" };
 
+const LONG_WEEKDAY: Intl.DateTimeFormatOptions = { weekday: "long" };
+
 const MONTH_DAY: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
 
 const MONTH: Intl.DateTimeFormatOptions = { month: "long" };
@@ -99,6 +101,10 @@ export function formatDuration(minutes: number): string {
 
 export function formatWeekday(date: Date, tz: string): string {
   return formatIn(WEEKDAY, tz).format(date);
+}
+
+export function formatLongWeekday(date: Date, tz: string): string {
+  return formatIn(LONG_WEEKDAY, tz).format(date);
 }
 
 export function formatMonthDay(date: Date, tz: string): string {
