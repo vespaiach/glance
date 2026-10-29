@@ -95,6 +95,15 @@ async function renderHost(
   await screen.findByText("no sheet");
 }
 
+function weekly(days: number): CalendarEvent {
+  return {
+    ...SHIFT,
+    startAt: new Date(2026, 9, 9 + days, 11, 0).toISOString(),
+    endAt: new Date(2026, 9, 9 + days, 12, 0).toISOString(),
+    repeat: "weekly",
+  };
+}
+
 const seconds = (n: number) => act(() => vi.advanceTimersByTime(n * 1000));
 
 const strip = () => screen.queryByRole("status", { name: "Reminder" });
@@ -147,6 +156,30 @@ describe("ReminderHost", () => {
 
   it("NOTIF-09 an event with its notification off shows no strip", async () => {
     await renderHost(at(10, 44, 59), [{ ...SHIFT, notify: false }]);
+
+    await seconds(2);
+
+    expect(strip()).not.toBeInTheDocument();
+  });
+
+  it("NOTIF-01 a weekly event shows the strip 15 min before this week's occurrence", async () => {
+    await renderHost(at(10, 44, 59), [weekly(-7)]);
+
+    await seconds(1);
+
+    expect(await screen.findByText("In 15 min · 11:00 AM · Everyone · Food bank")).toBeVisible();
+  });
+
+  it("NOTIF-01 a weekly event shows no strip before its first day", async () => {
+    await renderHost(at(10, 44, 59), [weekly(7)]);
+
+    await seconds(2);
+
+    expect(strip()).not.toBeInTheDocument();
+  });
+
+  it("NOTIF-09 a weekly event with its notification off shows no strip for any week", async () => {
+    await renderHost(at(10, 44, 59), [{ ...weekly(-7), notify: false }]);
 
     await seconds(2);
 
