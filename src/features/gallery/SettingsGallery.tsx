@@ -86,6 +86,8 @@ const styles = stylex.create({
 
 const BACKGROUND_DEMOS: readonly Demo<BackgroundProps>[] = [
   { key: "season" },
+  { key: "drawing", background: { ...PHOTO, mode: "season", drawing: "winter" } },
+  { key: "blank", background: { ...PHOTO, mode: "blank" } },
   { key: "photo", background: PHOTO },
   { key: "slideshow", background: { ...SLIDESHOW, dim: 0.4 } },
   { key: "uploading", background: PHOTO, uploads: UPLOAD_SAMPLES.several },
