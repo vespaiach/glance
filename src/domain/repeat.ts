@@ -3,7 +3,7 @@ import type { CalendarEvent } from "./schemas";
 import { atMinute, minutesOfDay } from "./time";
 import { addDays, parseDateKey } from "./zone";
 
-type SeriesEvent = Pick<CalendarEvent, "startAt" | "endAt" | "allDay" | "repeat">;
+type SeriesEvent = Pick<CalendarEvent, "startAt" | "endAt" | "allDay" | "repeat" | "exdates">;
 
 const WEEK = 7;
 
@@ -25,11 +25,13 @@ export function nextOccurrence<T extends SeriesEvent>(
 ): T | undefined {
   const day = eventDayKey(event, tz);
 
-  if (day >= from) return event;
+  if (event.repeat !== "weekly") return day >= from ? event : undefined;
 
-  if (event.repeat !== "weekly") return undefined;
+  const first = day > from ? day : from;
 
-  return occurrences(event, from, addDays(from, WEEK), tz)[0];
+  const weeks = (event.exdates?.length ?? 0) + 1;
+
+  return occurrences(event, first, addDays(first, weeks * WEEK), tz)[0];
 }
 
 function occurrences<T extends SeriesEvent>(event: T, first: string, end: string, tz: string): T[] {
@@ -40,10 +42,14 @@ function occurrences<T extends SeriesEvent>(event: T, first: string, end: string
   const shown: T[] = [];
 
   for (let week = firstWeek(day, first); addDays(day, week * WEEK) < end; week++) {
-    shown.push(movedBy(event, day, week, tz));
+    if (!isExcepted(event, addDays(day, week * WEEK))) shown.push(movedBy(event, day, week, tz));
   }
 
   return shown;
+}
+
+function isExcepted(event: SeriesEvent, day: string): boolean {
+  return event.exdates?.includes(day) === true;
 }
 
 function firstWeek(day: string, first: string): number {

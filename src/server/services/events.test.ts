@@ -1,6 +1,7 @@
 import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { deleteEvent, putEvent } from "./events";
 import { putNote } from "./notes";
+import { pullChanges } from "./sync";
 import { putTag } from "./tags";
 import { MARIA, OMAR, serviceHarnessPerTest } from "./testServices";
 
@@ -259,6 +260,19 @@ describe("putEvent repeat", () => {
     const deleted = await deleteEvent(harness.deps(), MARIA, SERIES.id);
 
     expect(deleted.ok && deleted.value.repeat).toBe("weekly");
+  });
+
+  it("tech§5 another account can't read or change a series' exception dates", async () => {
+    await putEvent(harness.deps(), MARIA, { ...SERIES, exdates: ["2026-10-16"] });
+
+    expect(await putEvent(harness.deps(), OMAR, { ...SERIES, exdates: ["2026-10-23"] })).toEqual({
+      ok: false,
+      error: "not-found",
+    });
+    expect(await pullChanges(harness.deps(), OMAR, undefined)).toMatchObject({ changes: [] });
+    expect(await pullChanges(harness.deps(), MARIA, undefined)).toMatchObject({
+      changes: [{ entity: "events", row: { exdates: ["2026-10-16"] } }],
+    });
   });
 
   it("tech§5 refuses to change or delete another account's weekly series", async () => {

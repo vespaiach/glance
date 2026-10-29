@@ -135,6 +135,20 @@ describe("event from draft", () => {
     expect(eventFromDraft(DRAFT, DAY, ID, tz, FAMILY)).not.toHaveProperty("repeat");
   });
 
+  it("EVT-14 editing a series keeps its exception dates, and making it one-off drops them", () => {
+    const series = draftFromEvent(
+      { ...LUNCH, repeat: "weekly", exdates: ["2026-10-16"] },
+      tz,
+      NOW,
+      FAMILY,
+    );
+
+    const { repeat: _, ...oneOff } = series;
+
+    expect(eventFromDraft(series, DAY, ID, tz, FAMILY).exdates).toEqual(["2026-10-16"]);
+    expect(eventFromDraft(oneOff, DAY, ID, tz, FAMILY)).not.toHaveProperty("exdates");
+  });
+
   it("NOTIF-09 the saved event keeps the draft's notification", () => {
     expect(eventFromDraft({ ...DRAFT, notify: false }, DAY, ID, tz, FAMILY).notify).toBe(false);
   });

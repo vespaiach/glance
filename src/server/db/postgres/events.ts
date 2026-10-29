@@ -16,6 +16,7 @@ type EventRow = ServerColumns & {
   notes: string | null;
   notify: boolean;
   repeat: "weekly" | null;
+  exdates: string[];
 };
 
 export function eventsRepo(sql: Sql): Repos["events"] {
@@ -77,6 +78,7 @@ function toEvent(row: EventRow): StoredEvent {
     ...optional("notes", row.notes),
     notify: row.notify,
     ...(row.repeat ? { repeat: row.repeat } : {}),
+    ...(row.exdates.length > 0 ? { exdates: row.exdates } : {}),
     ...serverFields(row),
   };
 }
@@ -84,12 +86,13 @@ function toEvent(row: EventRow): StoredEvent {
 async function saveEvent(sql: Sql, accountId: string, event: StoredEvent): Promise<void> {
   await sql.run(
     `INSERT INTO events (id, account_id, title, start_at, end_at, location, all_day, everyone,
-       tag_ids, notes, notify, repeat, updated_at, deleted_at, version)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       tag_ids, notes, notify, repeat, exdates, updated_at, deleted_at, version)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
      ON CONFLICT (id) DO UPDATE SET title = excluded.title, start_at = excluded.start_at,
        end_at = excluded.end_at, location = excluded.location, all_day = excluded.all_day,
        everyone = excluded.everyone, tag_ids = excluded.tag_ids, notes = excluded.notes,
-       notify = excluded.notify, repeat = excluded.repeat, updated_at = excluded.updated_at,
+       notify = excluded.notify, repeat = excluded.repeat, exdates = excluded.exdates,
+       updated_at = excluded.updated_at,
        deleted_at = excluded.deleted_at, version = excluded.version`,
     [
       event.id,
@@ -104,6 +107,7 @@ async function saveEvent(sql: Sql, accountId: string, event: StoredEvent): Promi
       event.notes ?? null,
       event.notify !== false,
       event.repeat ?? null,
+      event.exdates ?? [],
       event.updatedAt,
       event.deletedAt ?? null,
       event.version,
