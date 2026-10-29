@@ -28,6 +28,8 @@ export type HttpTransportOptions = {
 
 type Send<E = TransportError> = <T>(path: string, init?: RequestInit) => Promise<Result<T, E>>;
 
+export const REQUEST_TIMEOUT_MS = 60_000;
+
 const BUILD = String(CLIENT_BUILD);
 
 const JSON_TYPE = "application/json";
@@ -179,9 +181,17 @@ function sender<E>(
 
     headers.set(BUILD_HEADER, BUILD);
 
-    const response = await fetch(path, { ...init, headers }).catch(() => undefined);
+    const controller = new AbortController();
 
-    return response === undefined ? err("network") : readAnswer<T, E>(response, toError);
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    const answer = await fetch(path, { ...init, headers, signal: controller.signal })
+      .then((response) => readAnswer<T, E>(response, toError))
+      .catch((): Result<T, E | TransportError> => err("network"));
+
+    clearTimeout(timer);
+
+    return answer;
   };
 }
 

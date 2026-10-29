@@ -18,6 +18,7 @@ export type SyncWorkerApi = {
   nudge(): Promise<void>;
   resync(): Promise<void>;
   refreshWeather(): Promise<void>;
+  ping(): Promise<void>;
   stop(): Promise<void>;
 };
 
@@ -59,6 +60,7 @@ export function createSyncWorker(deps: WorkerDeps): SyncWorkerApi {
     nudge: () => run((engine) => engine.nudge()),
     resync: () => run((engine) => engine.resync()),
     refreshWeather: () => run((engine) => engine.refreshWeather()),
+    ping: async () => {},
     stop: async () => {
       session?.stop();
 

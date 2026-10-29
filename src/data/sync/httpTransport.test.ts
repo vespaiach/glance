@@ -174,6 +174,23 @@ describe("HttpTransport", () => {
     expect(answer).toEqual({ ok: false, error: "network" });
   });
 
+  it("tech§4.6 a request that never answers fails as network after 60 s", async () => {
+    vi.useFakeTimers();
+
+    const fetch = (async (_url: string, init: RequestInit = {}) =>
+      new Promise<Response>((_answer, fail) =>
+        init.signal?.addEventListener("abort", () => fail(init.signal?.reason)),
+      )) as unknown as typeof globalThis.fetch;
+
+    const answer = transport(fetch).pull(undefined);
+
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(await answer).toEqual({ ok: false, error: "network" });
+
+    vi.useRealTimers();
+  });
+
   it("tech§4.2 answers server when a success body isn't JSON", async () => {
     const { fetch } = fakeFetch(new Response("<html>proxy</html>", { status: 200 }));
 

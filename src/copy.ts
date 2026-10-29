@@ -29,6 +29,7 @@ export const copy = {
   crash: {
     title: "Something went wrong",
     body: (seconds: number) => `Glance will reload in ${seconds} s.`,
+    stuck: "Glance keeps running into this problem. Tap Reload to try again.",
     reload: "Reload",
   },
   season: {

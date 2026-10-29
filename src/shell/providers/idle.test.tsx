@@ -229,6 +229,32 @@ describe("IdleProvider", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
+  it("FAIL-05 an idle move a day after the page loaded reloads into its target", async () => {
+    const reload = vi.fn<(path: string) => void>();
+
+    await renderIdle("10:41:00", {}, { reload });
+
+    act(() => vi.setSystemTime(new Date("2026-10-10T10:41:00")));
+
+    seconds(1);
+
+    expect(reload).toHaveBeenCalledExactlyOnceWith("/today");
+    expect(navigation.push).not.toHaveBeenCalled();
+  });
+
+  it("FAIL-05 an idle move within a day of loading only navigates", async () => {
+    const reload = vi.fn<(path: string) => void>();
+
+    await renderIdle("10:41:00", {}, { reload });
+
+    act(() => vi.setSystemTime(new Date("2026-10-10T10:40:00")));
+
+    seconds(1);
+
+    expect(navigation.push).toHaveBeenCalledWith("/today");
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it("IDLE-01 a touch restarts the timer", async () => {
     await renderIdle("10:41:00");
 

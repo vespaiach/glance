@@ -2,6 +2,10 @@ import { proxy, wrap } from "comlink";
 import type { GlanceDb } from "../db";
 import { createSyncWorker, liveWorkerDeps, type SyncWorkerApi } from "./worker";
 
+export const PING_MS = 60_000;
+
+export const PING_TIMEOUT_MS = 10_000;
+
 export type SyncHost = {
   start(accountId: string): Promise<void>;
   nudge(): Promise<void>;
@@ -35,16 +39,34 @@ export function createWorkerSyncHost({ db, spawn, photosChanged }: WorkerHostOpt
 
   let accountId: string | undefined;
 
+  let watchdog: ReturnType<typeof setInterval> | undefined;
+
   const halt = () => {
+    clearInterval(watchdog);
+
     worker?.terminate();
 
     worker = undefined;
   };
 
   const launch = (id: string) => {
-    worker = spawn();
+    const spawned = spawn();
 
-    return worker.api.start(id, proxy({ restart, photosChanged }));
+    worker = spawned;
+
+    watchdog = setInterval(() => void restartUnless(spawned), PING_MS);
+
+    return spawned.api.start(id, proxy({ restart, photosChanged }));
+  };
+
+  const restartUnless = async (watched: SpawnedWorker) => {
+    if (await answers(watched.api.ping())) return;
+
+    if (worker !== watched) return;
+
+    halt();
+
+    relaunch();
   };
 
   const relaunch = () => {
@@ -78,4 +100,16 @@ export function createWorkerSyncHost({ db, spawn, photosChanged }: WorkerHostOpt
       accountId = undefined;
     },
   };
+}
+
+function answers(ping: Promise<void>): Promise<boolean> {
+  const silence = new Promise<boolean>((done) => setTimeout(() => done(false), PING_TIMEOUT_MS));
+
+  return Promise.race([
+    ping.then(
+      () => true,
+      () => false,
+    ),
+    silence,
+  ]);
 }
