@@ -1,6 +1,9 @@
 import "server-only";
 
-export type RateLimiter = { allow(key: string, now: Date): boolean };
+export type RateLimiter = {
+  allow(key: string, now: Date): boolean;
+  retryAfterMs(key: string, now: Date): number;
+};
 
 type Window = { start: number; count: number };
 
@@ -28,6 +31,13 @@ export function createRateLimiter({ limit, windowMs }: { limit: number; windowMs
       current.count += 1;
 
       return current.count <= limit;
+    },
+    retryAfterMs: (key: string, now: Date): number => {
+      const current = windows.get(key);
+
+      if (current === undefined) return 0;
+
+      return Math.max(0, current.start + windowMs - now.getTime());
     },
   } satisfies RateLimiter;
 }

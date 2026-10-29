@@ -5,10 +5,17 @@ import * as v from "valibot";
 import { BUILD_HEADER, isSupportedBuild } from "@/domain/build";
 import { FILE_MODIFIED_HEADER, FILE_NAME_HEADER } from "@/domain/photoUpload";
 import { err, ok, type Result } from "@/domain/result";
-import { ImportUploadQuerySchema, IsoDateSchema, WeatherLocationSchema } from "@/domain/schemas";
+import {
+  type ApiRange,
+  ApiRangeSchema,
+  ImportUploadQuerySchema,
+  IsoDateSchema,
+  WeatherLocationSchema,
+} from "@/domain/schemas";
 import {
   appUrl,
   isAllowedOrigin,
+  requireApiKey,
   requireDisplay,
   type SessionError,
   type SignedInDisplay,
@@ -113,6 +120,48 @@ export async function syncWriter(
 
 export function savedJson<T>(saved: Result<T, "not-found">): NextResponse {
   return saved.ok ? NextResponse.json(saved.value) : errorJson(saved.error, 404);
+}
+
+export async function apiAccount(request: NextRequest): Promise<Result<string, NextResponse>> {
+  const account = await requireApiKey(request.headers.get("authorization"));
+
+  if (account.ok) return account;
+
+  if (account.error.error === "unauthorized") return err(errorJson("unauthorized", 401));
+
+  const limited = errorJson("limited", 429);
+
+  limited.headers.set("retry-after", String(account.error.retryAfterS));
+
+  return err(limited);
+}
+
+export async function readApiBody<T>(
+  request: NextRequest,
+  schema: v.GenericSchema<unknown, T>,
+): Promise<Result<T, NextResponse>> {
+  const body = await request.json().catch(() => undefined);
+
+  const parsed = v.safeParse(schema, body);
+
+  if (parsed.success) return ok(parsed.output);
+
+  return err(invalidField(v.getDotPath(parsed.issues[0])?.split(".")[0]));
+}
+
+export function invalidField(field: string | undefined): NextResponse {
+  return NextResponse.json({ error: "invalid", ...(field && { field }) }, { status: 400 });
+}
+
+export function readApiRange(request: NextRequest): Result<ApiRange, "invalid"> {
+  const params = request.nextUrl.searchParams;
+
+  const parsed = v.safeParse(ApiRangeSchema, {
+    from: params.get("from") ?? undefined,
+    to: params.get("to") ?? undefined,
+  });
+
+  return parsed.success ? ok(parsed.output) : err("invalid");
 }
 
 export function readCursor(request: NextRequest): Result<number | undefined, "invalid"> {

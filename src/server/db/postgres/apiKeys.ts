@@ -27,6 +27,14 @@ export function apiKeysRepo(sql: Sql): Repos["apiKeys"] {
     },
     remove: async (accountId) =>
       (await sql.run("DELETE FROM api_keys WHERE account_id = $1", [accountId])) > 0,
+    use: async (keyHash, at) => {
+      const row = await sql.one<Pick<ApiKeyRow, "account_id">>(
+        "UPDATE api_keys SET last_used_at = $2 WHERE key_hash = $1 RETURNING account_id",
+        [keyHash, at],
+      );
+
+      return row?.account_id;
+    },
   };
 }
 

@@ -219,6 +219,7 @@ export type Repos = {
     insert(key: ApiKeyRecord): Promise<boolean>;
     get(accountId: string): Promise<ApiKeyRecord | undefined>;
     remove(accountId: string): Promise<boolean>;
+    use(keyHash: string, at: string): Promise<string | undefined>;
   };
   weatherCache: {
     get(accountId: string): Promise<WeatherCacheRecord | undefined>;
