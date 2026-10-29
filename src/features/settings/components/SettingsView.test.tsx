@@ -168,10 +168,12 @@ test("SET-02 choosing a season saves it", async () => {
 });
 
 test.each([
-  [{ mode: "season", drawing: "fall" }, "Season color"],
+  [{ mode: "season", drawing: "fall" }, "Season drawing · Fall"],
+  [{ mode: "season", drawing: "spring" }, "Season drawing · Spring"],
+  [{ mode: "blank" }, "Blank"],
   [{ mode: "photo", photo: COAST }, "Photo · Cannon Beach"],
   [{ mode: "slideshow", photo: COAST, rotate: "daily" }, "Slideshow · daily"],
-] as const)("SET-03 the Background row summarizes %o as %s", (background, summary) => {
+] as const)("BG-05 the Background row summarizes %o as %s", (background, summary) => {
   renderView({ background });
 
   expect(screen.getByRole("button", { name: /^Background/ })).toHaveTextContent(summary);

@@ -87,7 +87,7 @@ export function backgroundAfterDelete(background: Background, photoId: string): 
 }
 
 export function pickPhoto(mode: Background["mode"], photoId: string): Partial<Background> {
-  return { mode: mode === "season" ? "photo" : mode, photoId };
+  return { mode: mode === "slideshow" ? "slideshow" : "photo", photoId };
 }
 
 function uploadOrder(photos: readonly Photo[]): Photo[] {

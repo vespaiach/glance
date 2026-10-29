@@ -2,8 +2,8 @@ import * as stylex from "@stylexjs/stylex";
 import { Upload, WifiOff } from "lucide-react";
 import { copy } from "@/copy";
 import type { PhotoVariant } from "@/data/repos";
-import type { ShownBackground } from "@/domain/background";
-import type { Photo } from "@/domain/schemas";
+import { drawingSrc, type ShownBackground } from "@/domain/background";
+import type { Photo, Season } from "@/domain/schemas";
 import { PendingUpload, type UploadTile } from "@/features/photos";
 import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { Icon } from "@/ui/Icon";
@@ -21,6 +21,15 @@ type BackgroundThumbsProps = {
   onRetry: (id: string) => void;
   onRemove: (id: string) => void;
 };
+
+type DrawingThumbsProps = {
+  shown: ShownBackground;
+  season: Season;
+  columns: stylex.StyleXStyles;
+  onPick: (drawing: Season) => void;
+};
+
+const DRAWINGS: readonly Season[] = ["spring", "summer", "fall", "winter"];
 
 const styles = stylex.create({
   grid: {
@@ -100,7 +109,8 @@ const styles = stylex.create({
 });
 
 type ThumbProps = {
-  photo: Photo;
+  label: string;
+  title: string;
   src: string;
   selected: boolean;
   faded: boolean;
@@ -132,10 +142,11 @@ export function BackgroundThumbs({
       {photos.map((photo) => (
         <li key={photo.id} {...stylex.props(styles.item)}>
           <Thumb
-            photo={photo}
+            label={copy.background.use(photo.title)}
+            title={photo.title}
             src={photoSrc(photo.id, "thumb")}
             selected={photo.id === selected}
-            faded={shown.mode === "season"}
+            faded={!("photo" in shown)}
             onPick={() => onPick(photo.id)}
           />
         </li>
@@ -149,18 +160,39 @@ export function BackgroundThumbs({
   );
 }
 
-function Thumb({ photo, src, selected, faded, onPick }: ThumbProps) {
+export function DrawingThumbs({ shown, season, columns, onPick }: DrawingThumbsProps) {
+  const text = copy.background;
+
+  return (
+    <ul aria-label={text.drawings} {...stylex.props(styles.grid, columns)}>
+      {DRAWINGS.map((drawing) => (
+        <li key={drawing} {...stylex.props(styles.item)}>
+          <Thumb
+            label={text.pickDrawing(copy.season[drawing])}
+            title={drawingTitle(drawing, season)}
+            src={drawingSrc(drawing)}
+            selected={shown.mode === "season" && shown.drawing === drawing}
+            faded={shown.mode !== "season"}
+            onPick={() => onPick(drawing)}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Thumb({ label, title, src, selected, faded, onPick }: ThumbProps) {
   return (
     <button
       type="button"
-      aria-label={copy.background.use(photo.title)}
+      aria-label={label}
       aria-pressed={selected}
       onClick={onPick}
       {...stylex.props(styles.tile, faded && styles.faded)}
     >
       {/* biome-ignore lint/performance/noImgElement: photos come pre-sized from the authenticated file route and the service worker cache, not the Next image optimizer */}
       <img src={src} alt="" {...stylex.props(styles.image, selected && styles.ring)} />
-      <span {...stylex.props(styles.title, selected && styles.selectedTitle)}>{photo.title}</span>
+      <span {...stylex.props(styles.title, selected && styles.selectedTitle)}>{title}</span>
     </button>
   );
 }
@@ -181,6 +213,12 @@ function UploadPhoto({ online, onUpload }: { online: boolean; onUpload: () => vo
       </span>
     </button>
   );
+}
+
+function drawingTitle(drawing: Season, season: Season): string {
+  const name = copy.season[drawing];
+
+  return drawing === season ? copy.background.drawingNow(name) : name;
 }
 
 function selectedId(shown: ShownBackground): string | undefined {

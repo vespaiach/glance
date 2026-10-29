@@ -17,7 +17,7 @@ import { SourceFailure } from "@/ui/SourceFailure";
 import { Zone } from "@/ui/Zone";
 import { backgroundLayout } from "../layout";
 import { BackgroundOptions } from "./BackgroundOptions";
-import { BackgroundThumbs } from "./BackgroundThumbs";
+import { BackgroundThumbs, DrawingThumbs } from "./BackgroundThumbs";
 
 type Background = AccountSettings["background"];
 
@@ -117,6 +117,15 @@ export function BackgroundView({
             value={background.mode}
             onChange={(mode) => onChange({ mode })}
             size="lg"
+          />
+        </div>
+        <div {...stylex.props(styles.photos)}>
+          <Eyebrow>{copy.background.selectDrawing}</Eyebrow>
+          <DrawingThumbs
+            shown={shown}
+            season={season}
+            columns={layout.thumbs}
+            onPick={(drawing) => onChange({ mode: "season", drawing })}
           />
         </div>
         <Zone

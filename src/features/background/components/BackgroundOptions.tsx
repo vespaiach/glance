@@ -117,18 +117,21 @@ export function BackgroundOptions({
           />
         </div>
       )}
-      <p {...stylex.props(styles.caption)}>{caption(shown)}</p>
+      <p {...stylex.props(styles.caption)}>{caption(shown, background.drawing)}</p>
     </ColorBlock>
   );
 }
 
-function caption(shown: ShownBackground): string {
+function caption(shown: ShownBackground, picked: Background["drawing"]): string {
   const text = copy.background.caption;
 
   switch (shown.mode) {
     case "season":
+      return picked
+        ? text.picked(copy.season[shown.drawing])
+        : text.following(copy.season[shown.drawing]);
     case "blank":
-      return text.season;
+      return text.blank;
     case "photo":
       return text.photo(shown.photo.title);
     case "slideshow":

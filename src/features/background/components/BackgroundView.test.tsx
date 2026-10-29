@@ -71,6 +71,10 @@ function selectedPill(name: string) {
     .find((pill) => pill.ariaPressed === "true")?.textContent;
 }
 
+function drawing(season: string) {
+  return screen.getByRole("button", { name: `Use ${season} drawing as background` });
+}
+
 function thumb(title: string) {
   return screen.getByRole("button", { name: `Use ${title} as background` });
 }
@@ -83,6 +87,17 @@ test("BG-01 the back link returns to Settings", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Settings" }));
 
   expect(props.onBack).toHaveBeenCalled();
+});
+
+test("BG-01 the mode tabs are Season, Photo, Slideshow and Blank", () => {
+  renderView();
+
+  expect(
+    pills("Background")
+      .getAllByRole("button")
+      .map((pill) => pill.textContent),
+  ).toEqual(["Season", "Photo", "Slideshow", "Blank"]);
+  expect(selectedPill("Background")).toBe("Season");
 });
 
 test("BG-01 the mode tabs show the saved mode and save a new one", async () => {
@@ -138,25 +153,65 @@ test("spec§5.4 on small the Upload photo tile is hidden", () => {
   expect(screen.queryByRole("button", { name: "Upload photo" })).not.toBeInTheDocument();
 });
 
-test("BG-02 the background photo's thumb is pressed, none in Season color", () => {
+test("BG-02 the background photo's thumb is pressed, none in Season", () => {
   renderView({ background: background({ mode: "photo", photoId: APPLES.id }) });
 
   expect(thumb("Apple picking")).toHaveAttribute("aria-pressed", "true");
   expect(thumb("Cannon Beach")).toHaveAttribute("aria-pressed", "false");
 });
 
-test("BG-03 in Season color no thumb is pressed", () => {
+test("BG-03 in Season no thumb is pressed", () => {
   renderView();
 
   expect(thumb("Cannon Beach")).toHaveAttribute("aria-pressed", "false");
 });
 
-test("BG-03 tapping a thumb in Season color picks it in Photo mode", async () => {
+test("BG-03 tapping a thumb in Season picks it in Photo mode", async () => {
   const props = renderView();
 
   await userEvent.click(thumb("Apple picking"));
 
   expect(props.onChange).toHaveBeenCalledWith({ mode: "photo", photoId: APPLES.id });
+});
+
+test("BG-03 tapping a photo in Blank switches to Photo", async () => {
+  const props = renderView({ background: background({ mode: "blank" }) });
+
+  await userEvent.click(thumb("Apple picking"));
+
+  expect(props.onChange).toHaveBeenCalledWith({ mode: "photo", photoId: APPLES.id });
+});
+
+test("BG-03 the drawings row lists the four seasons and labels the current one now", () => {
+  renderView({ season: "fall" });
+
+  expect(screen.getByText("Season drawings · select one")).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("list", { name: "Season drawings" }))
+      .getAllByRole("button")
+      .map((each) => each.textContent),
+  ).toEqual(["Spring", "Summer", "Fall · now", "Winter"]);
+});
+
+test("BG-03 the drawing in use is pressed, none outside Season", () => {
+  renderView({ background: background({ mode: "season", drawing: "winter" }) });
+
+  expect(drawing("Winter")).toHaveAttribute("aria-pressed", "true");
+  expect(drawing("Fall")).toHaveAttribute("aria-pressed", "false");
+
+  cleanup();
+
+  renderView({ background: background({ mode: "blank", drawing: "winter" }) });
+
+  expect(drawing("Winter")).toHaveAttribute("aria-pressed", "false");
+});
+
+test("BG-03 tapping a drawing picks it and switches to Season", async () => {
+  const props = renderView({ background: background({ mode: "photo" }) });
+
+  await userEvent.click(drawing("Spring"));
+
+  expect(props.onChange).toHaveBeenCalledWith({ mode: "season", drawing: "spring" });
 });
 
 test("BG-04 the Dim photo tabs save Off, Light or Strong", async () => {
@@ -186,7 +241,15 @@ test("BG-04 Change photo shows only in Slideshow and saves the interval", async 
 });
 
 test.each([
-  [{ mode: "season" }, "Screens use a plain light gray background. Pick a photo to switch."],
+  [
+    { mode: "season" },
+    "The fall drawing is the background. It changes with the season until you pick one; panels stay solid on top.",
+  ],
+  [
+    { mode: "season", drawing: "spring" },
+    "The spring drawing is the background on every screen. Panels stay solid on top.",
+  ],
+  [{ mode: "blank" }, "Screens use a plain light gray background. Pick a photo to switch."],
   [{ mode: "photo" }, "Cannon Beach is the background on every screen. Panels stay solid on top."],
   [
     { mode: "slideshow", rotate: "weekly" },
