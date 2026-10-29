@@ -104,3 +104,30 @@ describe("statusTitle", () => {
     expect(statusTitle(event, now, tz)).toEqual(expected);
   });
 });
+
+describe("statusTitle of a weekly event", () => {
+  it.each([
+    [
+      "that started last week runs now",
+      { startAt: iso(2, 10, 0), endAt: iso(2, 11, 0), repeat: "weekly" },
+      { kind: "now" },
+    ],
+    [
+      "over today is next week",
+      { startAt: iso(2, 8, 0), endAt: iso(2, 9, 0), repeat: "weekly" },
+      { kind: "inDays", days: 7 },
+    ],
+    [
+      "from an earlier weekday is next on its weekday",
+      { startAt: iso(5, 8, 0), repeat: "weekly" },
+      { kind: "inDays", days: 3 },
+    ],
+    [
+      "all day from last week is today",
+      { startAt: allDayStart("2026-10-02"), allDay: true, repeat: "weekly" },
+      { kind: "today" },
+    ],
+  ] as const)("EVT-14 a weekly event %s, never ended", (_, event, expected) => {
+    expect(statusTitle(event, now, tz)).toEqual(expected);
+  });
+});

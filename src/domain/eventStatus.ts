@@ -1,6 +1,7 @@
 import { eventDayKey } from "./allDay";
+import { nextOccurrence } from "./repeat";
 import type { CalendarEvent } from "./schemas";
-import { dateKey, parseDateKey } from "./zone";
+import { addDays, dateKey, parseDateKey } from "./zone";
 
 export type EventStatus = "past" | "now" | "upcoming" | "allDay";
 
@@ -15,6 +16,8 @@ export type StatusTitle =
   | { kind: "ended" };
 
 type EventSpan = Pick<CalendarEvent, "startAt" | "endAt" | "allDay">;
+
+type SeriesSpan = EventSpan & Pick<CalendarEvent, "repeat">;
 
 const MINUTE_MS = 60_000;
 
@@ -44,7 +47,23 @@ export function detailsStatus(event: EventSpan, now: Date, tz: string): DetailsS
   return status === "now" ? "now" : null;
 }
 
-export function statusTitle(event: EventSpan, now: Date, tz: string): StatusTitle {
+export function statusTitle(event: SeriesSpan, now: Date, tz: string): StatusTitle {
+  if (event.repeat === "weekly") return weeklyTitle(event, now, tz);
+
+  return spanTitle(event, now, tz);
+}
+
+function weeklyTitle(event: SeriesSpan, now: Date, tz: string): StatusTitle {
+  const today = dateKey(now, tz);
+
+  const title = spanTitle(nextOccurrence(event, today, tz) ?? event, now, tz);
+
+  if (title.kind !== "ended") return title;
+
+  return spanTitle(nextOccurrence(event, addDays(today, 1), tz) ?? event, now, tz);
+}
+
+function spanTitle(event: EventSpan, now: Date, tz: string): StatusTitle {
   const days = daysBetween(dateKey(now, tz), eventDayKey(event, tz));
 
   if (days < 0) return { kind: "ended" };
