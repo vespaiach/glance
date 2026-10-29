@@ -160,13 +160,18 @@ export function locatePlace(position: Coordinates) {
     position,
   );
 }
-export function logClientError(sender: clientErrors.ClientErrorSender, report: ClientError) {
+export function logClientError(
+  sender: clientErrors.ClientErrorSender,
+  report: ClientError,
+  client: clientErrors.ClientInfo,
+) {
   shared.glanceClientErrors ??= createRateLimiter(CLIENT_ERROR_LIMIT);
 
   return clientErrors.logClientError(
     { limiter: shared.glanceClientErrors, now: () => new Date() },
     sender,
     report,
+    client,
   );
 }
 

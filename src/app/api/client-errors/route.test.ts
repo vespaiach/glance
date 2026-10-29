@@ -20,6 +20,10 @@ vi.mock("@/server/auth", async (importOriginal) => ({
 
 vi.mock("@/server/services", () => ({ logClientError: mocks.logClientError }));
 
+const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) Chrome/130.0 Safari/537.36";
+
+const CLIENT = { ip: "203.0.113.5", userAgent: USER_AGENT };
+
 const REPORT = {
   event: "page-crashed",
   error: { name: "TypeError", message: "boom", stack: "TypeError: boom" },
@@ -35,6 +39,7 @@ function post(body: unknown = REPORT, { origin = APP_URL, cookie = "" } = {}): N
       cookie,
       "content-type": "application/json",
       "x-forwarded-for": "203.0.113.5",
+      "user-agent": USER_AGENT,
     },
     body: JSON.stringify(body),
   });
@@ -52,7 +57,7 @@ describe("POST /api/client-errors", () => {
     const response = await POST(post());
 
     expect(response.status).toBe(204);
-    expect(mocks.logClientError).toHaveBeenCalledWith({ ip: "203.0.113.5" }, REPORT);
+    expect(mocks.logClientError).toHaveBeenCalledWith({ ip: "203.0.113.5" }, REPORT, CLIENT);
   });
 
   it("tech§6.6 accepts a service worker crash with a digest", async () => {
@@ -61,7 +66,7 @@ describe("POST /api/client-errors", () => {
     const response = await POST(post(report));
 
     expect(response.status).toBe(204);
-    expect(mocks.logClientError).toHaveBeenCalledWith({ ip: "203.0.113.5" }, report);
+    expect(mocks.logClientError).toHaveBeenCalledWith({ ip: "203.0.113.5" }, report, CLIENT);
   });
 
   it("tech§6.6 logs a signed-in report with the session's ids, never the body's", async () => {
@@ -73,7 +78,7 @@ describe("POST /api/client-errors", () => {
 
     expect(response.status).toBe(204);
     expect(mocks.requireDisplay).toHaveBeenCalledWith("token");
-    expect(mocks.logClientError).toHaveBeenCalledWith(MARIA, REPORT);
+    expect(mocks.logClientError).toHaveBeenCalledWith(MARIA, REPORT, CLIENT);
   });
 
   it("tech§6.6 answers 204 when the report is rate limited, so the screen never retries", async () => {

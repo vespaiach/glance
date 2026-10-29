@@ -330,6 +330,7 @@ export const CLIENT_ERROR_LIMITS = {
   page: 200,
   component: 200,
   digest: 100,
+  timeZone: 64,
 } as const;
 
 const ClientErrorEventSchema = v.picklist([
@@ -353,6 +354,8 @@ export const ClientErrorSchema = v.object({
   build: v.pipe(v.number(), v.integer(), v.minValue(0)),
   component: v.optional(cappedText(CLIENT_ERROR_LIMITS.component)),
   digest: v.optional(cappedText(CLIENT_ERROR_LIMITS.digest)),
+  occurredAt: v.optional(IsoTimestampSchema),
+  timeZone: v.optional(cappedText(CLIENT_ERROR_LIMITS.timeZone)),
 });
 export type ClientError = v.InferOutput<typeof ClientErrorSchema>;
 

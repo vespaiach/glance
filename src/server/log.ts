@@ -35,6 +35,12 @@ export type LogContext = {
   build?: number;
   component?: string;
   digest?: string;
+  occurredAt?: string;
+  timeZone?: string;
+  ip?: string;
+  browser?: string;
+  device?: string;
+  userAgent?: string;
 };
 
 type LoggedError = {

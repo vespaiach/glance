@@ -19,6 +19,7 @@ function setup(overrides: Partial<ErrorReporterDeps> = {}) {
     events,
     online: () => online,
     now: () => now,
+    timeZone: () => "America/Chicago",
     ...overrides,
   });
 
@@ -66,8 +67,26 @@ describe("reportError", () => {
         page: "/today",
         build: CLIENT_BUILD,
         component: "TodaySchedule",
+        occurredAt: "1970-01-01T00:00:00.000Z",
+        timeZone: "America/Chicago",
       },
     ]);
+  });
+
+  it("tech§6.6 sends when the error happened, not when the report goes out", () => {
+    const { report, sent, later, goOffline, goOnline } = setup();
+
+    later(Date.parse("2026-10-29T08:00:00.000Z"));
+
+    goOffline();
+
+    report("uncaught", thrown("boom"));
+
+    later(600_000);
+
+    goOnline();
+
+    expect(sent()[0]).toMatchObject({ occurredAt: "2026-10-29T08:00:00.000Z" });
   });
 
   it("tech§6.6 sends no page from the worker", () => {

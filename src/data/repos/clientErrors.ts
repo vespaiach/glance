@@ -11,6 +11,7 @@ export type ErrorReporterDeps = {
   online?: () => boolean;
   page?: () => string;
   now?: () => number;
+  timeZone?: () => string;
 };
 
 const PATH = "/api/client-errors";
@@ -25,6 +26,7 @@ export function createErrorReporter({
   online = () => navigator.onLine,
   page,
   now = Date.now,
+  timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone,
 }: ErrorReporterDeps = {}): ReportError {
   const seen = new Set<string>();
 
@@ -57,7 +59,11 @@ export function createErrorReporter({
     quietly(() => {
       startNewWindow();
 
-      const report = clientError(event, error, page?.(), extra);
+      const report = {
+        ...clientError(event, error, page?.(), extra),
+        occurredAt: new Date(now()).toISOString(),
+        timeZone: timeZone().slice(0, CLIENT_ERROR_LIMITS.timeZone),
+      };
 
       const key = `${report.error.message}\n${report.error.stack?.split("\n")[1] ?? ""}`;
 
