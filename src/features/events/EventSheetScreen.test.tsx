@@ -321,6 +321,29 @@ test("NOTIF-09 a new event saves with its notification on, whatever the lead tim
   expect((await store.db.events.toArray())[0]?.notify).toBe(true);
 });
 
+test("EVT-12 Every week saves the event as weekly and One day saves it without repeat", async () => {
+  await store.db.events.put(synced(LUNCH));
+
+  const first = renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Day: / }));
+  await userEvent.click(screen.getByRole("tab", { name: "Every week" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () => expect((await store.db.events.get(LUNCH.id))?.repeat).toBe("weekly"));
+
+  first.unmount();
+  renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+  await userEvent.click(await screen.findByRole("button", { name: /^Day: every / }));
+  await userEvent.click(screen.getByRole("tab", { name: "One day" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+  await waitFor(async () =>
+    expect(await store.db.events.get(LUNCH.id)).not.toHaveProperty("repeat"),
+  );
+});
+
 test("TPK-09 offline Save reads Save for later", async () => {
   await putSyncStatus(store, { online: false, weather: { state: "idle" } });
 

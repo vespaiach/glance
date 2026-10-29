@@ -196,6 +196,28 @@ describe("eventPage", () => {
     expect(editing(state).asking).toBe("discard");
   });
 
+  it("EVT-12 Every week sets repeat, marks the day as set and counts as a change", () => {
+    const state = editing(
+      run(initialEventPage("new", BLANK, "day"), { type: "repeat", value: true }),
+    );
+
+    expect(state.draft.repeat).toBe("weekly");
+    expect(state.touched).toContain("day");
+    expect(editing(run(state, { type: "close" })).asking).toBe("discard");
+  });
+
+  it("EVT-12 One day leaves repeat out of the draft", () => {
+    const state = editing(
+      run(
+        initialEventPage("new", BLANK, "day"),
+        { type: "repeat", value: true },
+        { type: "repeat", value: false },
+      ),
+    );
+
+    expect(state.draft).not.toHaveProperty("repeat");
+  });
+
   it("EVT-05 Keep editing brings the actions back with the draft kept", () => {
     const state = editing(
       run(

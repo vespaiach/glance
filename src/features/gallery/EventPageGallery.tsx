@@ -57,6 +57,7 @@ const DEMOS: readonly Demo[] = [
   { label: words.filled, draft: LUNCH, sentence: { word: "where" }, bar: { mode: "new" } },
   { label: words.allDay, draft: { ...LUNCH, allDay: true }, sentence: { word: "start" } },
   { label: words.noEnd, draft: { ...LUNCH, end: undefined }, sentence: { word: "start" } },
+  { label: words.weekly, draft: { ...LUNCH, repeat: "weekly" }, sentence: { word: "day" } },
   {
     label: words.longTitle,
     draft: { ...LUNCH, title: words.longTitleText, notes: words.notes },
@@ -65,6 +66,12 @@ const DEMOS: readonly Demo[] = [
   {
     label: words.view,
     draft: { ...LUNCH, notes: words.notes, notify: false },
+    sentence: VIEW,
+    bar: { mode: "view", status: { kind: "in", minutes: 169 } },
+  },
+  {
+    label: words.viewWeekly,
+    draft: { ...LUNCH, repeat: "weekly" },
     sentence: VIEW,
     bar: { mode: "view", status: { kind: "in", minutes: 169 } },
   },
@@ -102,6 +109,7 @@ const PICKER_DEMOS: readonly PickerDemo[] = [
   { label: picks.titleEmpty, picker: { word: "title", draft: BLANK } },
   { label: picks.title, picker: { word: "title" } },
   { label: picks.day, picker: { word: "day" } },
+  { label: picks.dayWeekly, picker: { word: "day", draft: { ...LUNCH, repeat: "weekly" } } },
   { label: picks.start, picker: { word: "start" } },
   { label: picks.allDay, picker: { word: "start", draft: { ...LUNCH, allDay: true } } },
   { label: picks.start24, picker: { word: "start", clock: "24h" } },

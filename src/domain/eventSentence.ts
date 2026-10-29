@@ -6,11 +6,17 @@ export type SentenceWord = Exclude<EventWord, "notes">;
 
 export type DefaultWord = "day" | "start" | "end" | "who";
 
-export type SentenceJoin = "on" | "from" | "at" | "to" | "for" | "comma" | "commaFor";
+export type SentenceJoin = "on" | "space" | "from" | "at" | "to" | "for" | "comma" | "commaFor";
 
 export type SentenceToken = { word: SentenceWord; join: SentenceJoin | null };
 
-export type SentenceShape = { allDay?: boolean; hasEnd: boolean; hasPlace: boolean; view: boolean };
+export type SentenceShape = {
+  allDay?: boolean;
+  hasEnd: boolean;
+  hasPlace: boolean;
+  view: boolean;
+  weekly?: boolean;
+};
 
 export type WordShape = Pick<SentenceShape, "allDay" | "hasEnd">;
 
@@ -30,7 +36,7 @@ export function sentenceTokens(shape: SentenceShape): SentenceToken[] {
 
   const tokens: (SentenceToken | false)[] = [
     { word: "title", join: null },
-    { word: "day", join: "on" },
+    { word: "day", join: shape.weekly ? "space" : "on" },
     { word: "start", join: startJoin(shape) },
     timed && shape.hasEnd && { word: "end", join: "to" },
     { word: "who", join: timed ? "for" : "commaFor" },

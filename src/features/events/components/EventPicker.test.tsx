@@ -111,6 +111,39 @@ describe("EventPicker", () => {
     expect(onAction).toHaveBeenCalledWith({ type: "day", value: "2026-10-10" });
   });
 
+  it("EVT-12 the How often tabs start on One day and toggle repeat", async () => {
+    const { onAction } = renderPicker({ word: "day" });
+
+    const tabs = screen.getByRole("tablist", { name: "How often" });
+
+    expect(within(tabs).getByRole("tab", { name: "One day" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.queryByRole("button", { name: /repeats$/ })).toBeNull();
+
+    await userEvent.click(within(tabs).getByRole("tab", { name: "Every week" }));
+
+    expect(onAction).toHaveBeenCalledWith({ type: "repeat", value: true });
+  });
+
+  it("EVT-12 with repeat on the later same-weekday cells are marked as repeats", async () => {
+    const { onAction } = renderPicker({ word: "day", draft: { ...DRAFT, repeat: "weekly" } });
+
+    expect(screen.getByRole("tab", { name: "Every week" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "Fri, October 9, today" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Fri, October 16, repeats" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Fri, October 30, repeats" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Sat, October 17" })).toBeVisible();
+
+    await userEvent.click(screen.getByRole("tab", { name: "One day" }));
+
+    expect(onAction).toHaveBeenCalledWith({ type: "repeat", value: false });
+  });
+
   it("EVT-12 the month grid disables past days and starts at this month", async () => {
     const { onAction } = renderPicker({ word: "day" });
 

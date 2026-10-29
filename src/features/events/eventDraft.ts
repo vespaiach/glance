@@ -82,6 +82,7 @@ export function isDirty(draft: EventDraft, opened: EventDraft): boolean {
     draft.start !== opened.start ||
     draft.end !== opened.end ||
     draft.allDay !== opened.allDay ||
+    draft.repeat !== opened.repeat ||
     draft.notify !== opened.notify
   );
 }

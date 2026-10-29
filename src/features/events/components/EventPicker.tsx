@@ -31,6 +31,7 @@ import { suggestTags } from "@/domain/tagMatch";
 import { exactTag, nextFreeColor, pickWho } from "@/domain/tags";
 import { type Clock, formatDayName, formatHour, formatLength } from "@/domain/time";
 import { parseDateKey } from "@/domain/zone";
+import { season } from "@/theme/seasons.stylex";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
@@ -272,6 +273,49 @@ const styles = stylex.create({
     transitionProperty: "background-color",
     transitionDuration: motion.durFast,
   },
+  repeats: { backgroundColor: season.block1 },
+  tabs: {
+    position: "relative",
+    flexShrink: 0,
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    boxSizing: "border-box",
+    width: 272,
+    height: 44,
+    padding: 4,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceSoft,
+  },
+  thumb: {
+    position: "absolute",
+    top: 4,
+    bottom: 4,
+    left: 4,
+    width: "calc(50% - 4px)",
+    borderRadius: radii.pill,
+    backgroundColor: colors.actionPrimary,
+    transform: "none",
+    transitionProperty: "transform",
+    transitionDuration: { default: "220ms", "@media (prefers-reduced-motion: reduce)": "0ms" },
+    transitionTimingFunction: motion.easeSlide,
+  },
+  thumbOn: { transform: "translateX(100%)" },
+  tab: {
+    position: "relative",
+    padding: 0,
+    borderWidth: 0,
+    borderRadius: radii.pill,
+    backgroundColor: "transparent",
+    color: colors.textPrimary,
+    fontFamily: "inherit",
+    fontSize: 16,
+    fontWeight: 480,
+    whiteSpace: "nowrap",
+    cursor: "pointer",
+    transitionProperty: "color",
+    transitionDuration: "220ms",
+  },
+  tabOn: { color: colors.onActionPrimary, fontWeight: 540 },
   today: {
     boxShadow: `inset 0 0 0 2px ${colors.black}`,
     fontWeight: 540,
@@ -404,7 +448,11 @@ function Header({
 
   return (
     <div {...stylex.props(styles.header)}>
-      <Eyebrow xstyle={styles.eyebrow}>{label}</Eyebrow>
+      {word === "day" ? (
+        <RepeatTabs weekly={draft.repeat === "weekly"} onAction={onAction} />
+      ) : (
+        <Eyebrow xstyle={styles.eyebrow}>{label}</Eyebrow>
+      )}
       {timed && clock === "12h" && (
         <MeridiemToggle
           label={words.meridiem}
@@ -447,6 +495,34 @@ function AllDayChip({ on, onAction }: { on: boolean; onAction: EventPickerProps[
   );
 }
 
+function RepeatTabs({
+  weekly,
+  onAction,
+}: {
+  weekly: boolean;
+  onAction: EventPickerProps["onAction"];
+}) {
+  const tab = (on: boolean, name: string) => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={weekly === on}
+      onClick={() => onAction({ type: "repeat", value: on })}
+      {...stylex.props(styles.tab, weekly === on && styles.tabOn)}
+    >
+      {name}
+    </button>
+  );
+
+  return (
+    <div role="tablist" aria-label={words.howOften} {...stylex.props(styles.tabs)}>
+      <span aria-hidden="true" {...stylex.props(styles.thumb, weekly && styles.thumbOn)} />
+      {tab(false, words.oneDay)}
+      {tab(true, words.everyWeek)}
+    </div>
+  );
+}
+
 function TitleBody({ breakpoint, draft, recentTitles, onAction }: BodyProps) {
   const ref = useFocusAtEnd<HTMLTextAreaElement>();
 
@@ -485,6 +561,8 @@ function DayBody({ draft, today, onAction }: BodyProps) {
 
   const pick = (day: string) => onAction({ type: "day", value: day });
 
+  const repeats = (day: string) => draft.repeat === "weekly" && isLaterSameWeekday(day, draft.day);
+
   return (
     <div {...stylex.props(styles.monthGrid)}>
       <span {...stylex.props(styles.prev)}>
@@ -520,7 +598,11 @@ function DayBody({ draft, today, onAction }: BodyProps) {
           <button
             key={day}
             type="button"
-            aria-label={words.dayCell(formatDayName(parseDateKey(day), "UTC"), day === today)}
+            aria-label={words.dayCell(
+              formatDayName(parseDateKey(day), "UTC"),
+              day === today,
+              repeats(day),
+            )}
             aria-pressed={day === draft.day}
             aria-current={day === today ? "date" : undefined}
             disabled={day < today}
@@ -528,6 +610,7 @@ function DayBody({ draft, today, onAction }: BodyProps) {
             {...stylex.props(
               styles.date,
               day === today && day !== draft.day && styles.today,
+              repeats(day) && styles.repeats,
               day === draft.day && styles.picked,
             )}
           >
@@ -869,4 +952,8 @@ function meridiemOf(minutes: number): Meridiem {
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
+}
+
+function isLaterSameWeekday(day: string, first: string): boolean {
+  return day > first && parseDateKey(day).getUTCDay() === parseDateKey(first).getUTCDay();
 }
