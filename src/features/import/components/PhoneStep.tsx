@@ -18,7 +18,7 @@ type PhoneStepProps = {
 
 const words = copy.import.phone;
 
-const QR_PX = 280;
+const QR_PX: Record<Breakpoint, number> = { large: 316, normal: 220, small: 196 };
 
 const styles = stylex.create({
   code: {
@@ -74,7 +74,7 @@ export function PhoneStep({ breakpoint, code, onNewCode }: PhoneStepProps) {
   return (
     <div {...stylex.props(panel.grid, columns[breakpoint])}>
       <section {...stylex.props(panel.card, styles.code)}>
-        <QrCode value={code?.link} label={words.code} size={breakpoint === "small" ? 220 : QR_PX} />
+        <QrCode value={code?.link} label={words.code} size={QR_PX[breakpoint]} />
         {code && (
           <span role="status" {...stylex.props(styles.waiting)}>
             <span {...stylex.props(styles.dot)} />
