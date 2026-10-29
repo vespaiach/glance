@@ -62,6 +62,7 @@ const eventEntries = {
   notes: v.optional(v.pipe(v.string(), v.maxLength(EVENT_LIMITS.notes))),
   notify: v.optional(v.boolean()),
   repeat: v.optional(v.literal("weekly")),
+  exdates: v.optional(v.array(IsoDateSchema)),
 };
 
 type EventSpan = { startAt: string; endAt?: string; allDay?: true };

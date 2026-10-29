@@ -217,6 +217,21 @@ describe("CalendarEventSchema repeat", () => {
   });
 });
 
+describe("CalendarEventSchema exdates", () => {
+  it("tech§6.1 accepts a series' exception dates", () => {
+    const series = { ...event, repeat: "weekly", exdates: ["2026-10-16", "2026-10-23"] };
+
+    expect(v.parse(CalendarEventSchema, series)).toEqual(series);
+  });
+
+  it.each([["2026-10-16T00:00:00.000Z"], ["Oct 16"], [null], "2026-10-16"])(
+    "tech§6.1 rejects the exdates %j",
+    (exdates) => {
+      expect(accepts(CalendarEventSchema, { ...event, repeat: "weekly", exdates })).toBe(false);
+    },
+  );
+});
+
 describe("SyncedEventSchema", () => {
   it("D10 accepts server fields and a tombstone", () => {
     const row = { ...event, updatedAt: "2026-10-09T17:00:00.000Z", version: 7 };

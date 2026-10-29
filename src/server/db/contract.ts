@@ -230,6 +230,19 @@ export function databaseContract(open: () => Database): void {
       expect(await db().events.find("e2")).toMatchObject({ value: { notify: true } });
     });
 
+    it("EVT-14 keeps a series' exception dates, and reads a series saved without any as having none", async () => {
+      const series = { ...EVENT, repeat: "weekly" as const };
+
+      await db().events.save(MARIA, { ...series, exdates: ["2026-10-16", "2026-10-23"] });
+      await db().events.save(MARIA, { ...series, id: "e2" });
+
+      expect((await db().events.find(EVENT.id))?.value).toEqual({
+        ...series,
+        exdates: ["2026-10-16", "2026-10-23"],
+      });
+      expect((await db().events.find("e2"))?.value).not.toHaveProperty("exdates");
+    });
+
     it("EVT-14 keeps a weekly series, and reads an event saved without a repeat as one-off", async () => {
       await db().events.save(MARIA, { ...EVENT, repeat: "weekly" });
       await db().events.save(MARIA, { ...EVENT, id: "e2" });

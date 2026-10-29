@@ -170,6 +170,14 @@ describe("ReminderHost", () => {
     expect(await screen.findByText("In 15 min · 11:00 AM · Everyone · Food bank")).toBeVisible();
   });
 
+  it("NOTIF-01 a weekly event shows no strip in an excepted week", async () => {
+    await renderHost(at(10, 44, 59), [{ ...weekly(-7), exdates: ["2026-10-09"] }]);
+
+    await seconds(2);
+
+    expect(strip()).not.toBeInTheDocument();
+  });
+
   it("NOTIF-01 a weekly event shows no strip before its first day", async () => {
     await renderHost(at(10, 44, 59), [weekly(7)]);
 

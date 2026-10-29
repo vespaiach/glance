@@ -803,3 +803,12 @@ describe("018_event_repeat", () => {
     expect(await db().one("SELECT repeat FROM events")).toEqual({ repeat: "weekly" });
   });
 });
+
+describe("019_event_exdates", () => {
+  it("EVT-14 an event has no exception dates unless saved with some", async () => {
+    await insertAccount("a1");
+    await insertEvent(NOW, null);
+
+    expect(await db().one("SELECT exdates FROM events")).toEqual({ exdates: [] });
+  });
+});

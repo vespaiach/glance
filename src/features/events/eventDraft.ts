@@ -12,6 +12,7 @@ export type EventDraft = EventTimes & {
   notify: boolean;
   allDay?: true;
   repeat?: "weekly";
+  exdates?: string[];
 };
 
 export function draftFromEvent(
@@ -28,6 +29,7 @@ export function draftFromEvent(
     notes: event.notes ?? "",
     notify: event.notify !== false,
     ...(event.repeat ? { repeat: event.repeat } : {}),
+    ...(event.exdates ? { exdates: event.exdates } : {}),
   };
 }
 
@@ -54,6 +56,7 @@ export function eventFromDraft(
     ...(notes === "" ? {} : { notes }),
     notify: draft.notify,
     ...(draft.repeat ? { repeat: draft.repeat } : {}),
+    ...(draft.repeat && draft.exdates ? { exdates: draft.exdates } : {}),
   };
 }
 
