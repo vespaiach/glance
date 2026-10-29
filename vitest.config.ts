@@ -3,6 +3,7 @@ import babel from "@rolldown/plugin-babel";
 import styleXPlugin from "@stylexjs/babel-plugin";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
+import { version } from "./package.json";
 
 const root = import.meta.dirname;
 
@@ -37,6 +38,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     passWithNoTests: true,
+    env: { NEXT_PUBLIC_APP_VERSION: version },
     projects: [{ extends: true, test: { name: "app", include: ["src/**/*.test.{ts,tsx}"] } }],
   },
 });

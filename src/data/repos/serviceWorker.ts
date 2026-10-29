@@ -9,6 +9,7 @@ export type AppServiceWorker = {
   updateWaiting(): boolean;
   checkForUpdate(): void;
   applyUpdate(then: () => void): void;
+  reload(path: string): void;
   warmPhotos(ids: string[]): void;
 };
 
@@ -17,6 +18,7 @@ const INERT: AppServiceWorker = {
   updateWaiting: () => false,
   checkForUpdate: () => {},
   applyUpdate: () => {},
+  reload: () => {},
   warmPhotos: () => {},
 };
 
@@ -24,8 +26,9 @@ let shared: AppServiceWorker | undefined;
 
 export function createAppServiceWorker(
   container: ServiceWorkerContainer | undefined,
+  load: (path: string) => void = loadPage,
 ): AppServiceWorker {
-  if (container === undefined) return INERT;
+  if (container === undefined) return { ...INERT, reload: load };
 
   let registration: ServiceWorkerRegistration | undefined;
 
@@ -35,6 +38,27 @@ export function createAppServiceWorker(
 
   const checkForUpdate = () => {
     registration?.update().catch(() => {});
+  };
+
+  const applyUpdate = (then: () => void) => {
+    const waiting = registration?.waiting;
+
+    if (applying || !waiting) return;
+
+    applying = true;
+
+    container.addEventListener("controllerchange", then, { once: true });
+
+    waiting.postMessage(SKIP_WAITING);
+  };
+
+  const reload = async (path: string) => {
+    await registration?.update().catch(() => {});
+
+    await installed(registration?.installing);
+
+    if (registration?.waiting) applyUpdate(() => load(path));
+    else load(path);
   };
 
   const registered = (found: ServiceWorkerRegistration) => {
@@ -55,17 +79,8 @@ export function createAppServiceWorker(
     },
     updateWaiting: () => Boolean(registration?.waiting),
     checkForUpdate,
-    applyUpdate: (then) => {
-      const waiting = registration?.waiting;
-
-      if (applying || !waiting) return;
-
-      applying = true;
-
-      container.addEventListener("controllerchange", then, { once: true });
-
-      waiting.postMessage(SKIP_WAITING);
-    },
+    applyUpdate,
+    reload: (path) => void reload(path),
     warmPhotos: (ids) => {
       container.ready.then((ready) => ready.active?.postMessage({ type: WARM_PHOTOS, ids }));
     },
@@ -84,4 +99,18 @@ export function serviceWorkerContainer(): ServiceWorkerContainer | undefined {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return undefined;
 
   return navigator.serviceWorker;
+}
+
+function installed(worker: ServiceWorker | null | undefined): Promise<void> | undefined {
+  if (!worker) return undefined;
+
+  return new Promise((resolve) => {
+    worker.addEventListener("statechange", () => {
+      if (worker.state !== "installing") resolve();
+    });
+  });
+}
+
+function loadPage(path: string) {
+  window.location.assign(path);
 }

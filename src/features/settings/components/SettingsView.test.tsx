@@ -108,6 +108,13 @@ function renderView(overrides: Partial<Props> = {}) {
     onCancelRemoveMember: vi.fn(),
     onRemoveMember: vi.fn(),
     refreshData: { online: true, refresh: { kind: "idle" }, onRefresh: vi.fn() },
+    reloadApp: {
+      current: "1.0.0",
+      reload: { kind: "idle" },
+      onAsk: vi.fn(),
+      onCancel: vi.fn(),
+      onReload: vi.fn(),
+    },
     ...overrides,
   };
 

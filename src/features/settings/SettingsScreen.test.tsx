@@ -1,7 +1,9 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import { appServiceWorker } from "@/data/repos";
 import { type Harness, openHarness, putSyncStatus, synced } from "@/data/repos/testHarness";
+import { APP_VERSION } from "@/domain/build";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { err, ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
@@ -544,7 +546,7 @@ const INITIAL_STATUS = { online: true, weather: { state: "idle" } } as const;
 const FOUR_MIN_AGO = new Date(NOW.getTime() - 4 * 60_000).toISOString();
 
 function refreshStatus() {
-  return within(screen.getByRole("region", { name: "Data and app" })).getByRole("status");
+  return within(screen.getByRole("region", { name: "Data and app" })).getAllByRole("status")[0];
 }
 
 test("SET-20 the Data and app card shows the time since the last sync", async () => {
@@ -613,4 +615,60 @@ test("SET-20 Refresh stays on when the last sync couldn't reach the server", asy
 
   await waitFor(() => expect(refreshStatus()).toHaveTextContent("Updated 4 min ago"));
   expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
+});
+
+function reloadStatus() {
+  return within(screen.getByRole("region", { name: "Data and app" })).getAllByRole("status")[1];
+}
+
+test("SET-21 a newer server version is ready to load", async () => {
+  store.serverVersion.mockResolvedValue(ok("99.0.0"));
+
+  renderSettings();
+
+  await waitFor(() =>
+    expect(reloadStatus()).toHaveTextContent(
+      `Version 99.0.0 is ready · this screen runs ${APP_VERSION}`,
+    ),
+  );
+});
+
+test("SET-21 the same server version reads up to date", async () => {
+  store.serverVersion.mockResolvedValue(ok(APP_VERSION));
+
+  renderSettings();
+
+  await waitFor(() => expect(store.serverVersion).toHaveBeenCalled());
+  expect(reloadStatus()).toHaveTextContent(`Version ${APP_VERSION} · up to date`);
+});
+
+test("SET-21 Reload asks first and Cancel doesn't reload", async () => {
+  const reload = vi.spyOn(appServiceWorker(), "reload").mockImplementation(() => {});
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Reload" }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+  expect(reload).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Reload" })).toBeEnabled();
+});
+
+test("SET-21 Reload now covers the screen and reloads the app onto Today", async () => {
+  const reload = vi.spyOn(appServiceWorker(), "reload").mockImplementation(() => {});
+  renderSettings();
+
+  await userEvent.click(await screen.findByRole("button", { name: "Reload" }));
+  await userEvent.click(screen.getByRole("button", { name: "Reload now" }));
+
+  expect(screen.getByRole("alert")).toHaveTextContent("Reloading Glance");
+  expect(reload).toHaveBeenCalledExactlyOnceWith("/today");
+});
+
+test("SET-21 offline Reload is disabled", async () => {
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+  renderSettings();
+
+  expect(await screen.findByRole("button", { name: "Reload" })).toBeDisabled();
+  expect(reloadStatus()).toHaveTextContent("Offline · needs a connection");
 });
