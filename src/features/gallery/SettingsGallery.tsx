@@ -58,6 +58,13 @@ const API_KEY: SettingsProps["apiKey"] = {
   onRevoke: ignore,
 };
 
+const REFRESH: SettingsProps["refreshData"] = {
+  online: true,
+  refresh: { kind: "idle" },
+  updatedMinutes: 4,
+  onRefresh: ignore,
+};
+
 const NEW_KEY = { tail: "Q7mZ", used: "· Never used" };
 
 const SHOWN_KEY = {
@@ -281,7 +288,7 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
     { key: "storage-almost", storage: { used: 4.6 * GB, limit: STORAGE_LIMIT } },
     { key: "storage-full", storage: { used: STORAGE_LIMIT, limit: STORAGE_LIMIT } },
     { key: "storage-unread", storage: undefined },
-    { key: "offline", online: false },
+    { key: "offline", online: false, refreshData: { ...REFRESH, online: false } },
     { key: "export-none", upcomingEvents: 0 },
     { key: "export-saved", savedEvents: 12 },
     { key: "api-none", apiKey: { ...API_KEY, saved: null } },
@@ -298,6 +305,18 @@ function settingsDemos(season: Season): readonly Demo<SettingsProps>[] {
       small: true,
       breakpoint: "small",
       apiKey: { ...API_KEY, saved: NEW_KEY, row: SHOWN_KEY },
+    },
+    { key: "data-refreshing", refreshData: { ...REFRESH, refresh: { kind: "busy" } } },
+    {
+      key: "data-done",
+      refreshData: { ...REFRESH, refresh: { kind: "done" }, updatedMinutes: 0 },
+    },
+    { key: "data-fail", refreshData: { ...REFRESH, refresh: { kind: "fail" } } },
+    {
+      key: "small-data-fail",
+      small: true,
+      breakpoint: "small",
+      refreshData: { ...REFRESH, refresh: { kind: "fail" } },
     },
     { key: "phone-ask", phone: { kind: "ask" } },
     { key: "phone-asking", phone: { kind: "asking" } },
@@ -382,5 +401,6 @@ function settingsBase(season: Season): SettingsProps {
     onAskRemoveMember: ignore,
     onCancelRemoveMember: ignore,
     onRemoveMember: ignore,
+    refreshData: REFRESH,
   };
 }

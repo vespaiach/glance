@@ -1,6 +1,6 @@
 import Dexie from "dexie";
 import { err, ok } from "@/domain/result";
-import { FIXTURE_ACCOUNT, FIXTURE_WEATHER } from "@/fixtures/data";
+import { FIXTURE_ACCOUNT, FIXTURE_SETTINGS, FIXTURE_WEATHER } from "@/fixtures/data";
 import { deleteGlanceDb, type OutboxEntry, openGlanceDb } from "../db";
 import type { Transport, TransportError } from "./transport";
 import {
@@ -330,6 +330,44 @@ describe("triggers", () => {
 
     expect(transport.pull).toHaveBeenCalledTimes(3);
     expect(transport.pull).toHaveBeenLastCalledWith(undefined);
+  });
+});
+
+describe("refresh now", () => {
+  it("SET-20 refreshNow pushes, pulls and refetches weather, and answers true", async () => {
+    const db = openGlanceDb(DB_NAME);
+
+    await db.settings.put({
+      ...FIXTURE_SETTINGS,
+      accountId: ACCOUNT_ID,
+      updatedAt: NOW.toISOString(),
+      version: 1,
+    });
+
+    db.close();
+
+    const { worker, transport } = await started();
+
+    await vi.waitFor(() => expect(transport.weather).toHaveBeenCalledTimes(1));
+
+    expect(await worker.refreshNow()).toBe(true);
+
+    expect(transport.pull).toHaveBeenCalledTimes(2);
+    expect(transport.weather).toHaveBeenCalledTimes(2);
+  });
+
+  it("SET-20 refreshNow answers false when the server can't be reached", async () => {
+    const { worker, transport } = await started();
+
+    transport.pull.mockResolvedValue(err("network"));
+
+    expect(await worker.refreshNow()).toBe(false);
+  });
+
+  it("SET-20 refreshNow answers false before the worker starts", async () => {
+    const { worker } = setup();
+
+    expect(await worker.refreshNow()).toBe(false);
   });
 });
 

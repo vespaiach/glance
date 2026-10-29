@@ -23,6 +23,7 @@ function fakeWorker() {
     nudge: vi.fn(async () => {}),
     resync: vi.fn(async () => {}),
     refreshWeather: vi.fn(async () => {}),
+    refreshNow: vi.fn(async () => true),
     ping: vi.fn(async () => {}),
     stop: vi.fn(async () => {}),
   };
@@ -69,6 +70,17 @@ describe("worker sync host", () => {
     expect(api?.nudge).toHaveBeenCalledTimes(1);
     expect(api?.resync).toHaveBeenCalledTimes(1);
     expect(api?.refreshWeather).toHaveBeenCalledTimes(1);
+  });
+
+  it("SET-20 refreshNow answers the worker's result, and false with no worker", async () => {
+    const { host, spawned } = workerHost();
+
+    expect(await host.refreshNow()).toBe(false);
+
+    await host.start(FIXTURE_ACCOUNT.id);
+
+    expect(await host.refreshNow()).toBe(true);
+    expect(spawned[0]?.api.refreshNow).toHaveBeenCalledTimes(1);
   });
 
   it("tech§4.6 calls before start or after stop do nothing", async () => {

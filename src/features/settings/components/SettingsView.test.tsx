@@ -107,6 +107,7 @@ function renderView(overrides: Partial<Props> = {}) {
     onAskRemoveMember: vi.fn(),
     onCancelRemoveMember: vi.fn(),
     onRemoveMember: vi.fn(),
+    refreshData: { online: true, refresh: { kind: "idle" }, onRefresh: vi.fn() },
     ...overrides,
   };
 
@@ -266,7 +267,7 @@ test("SET-19 API key is the last row of the left card", () => {
 test("SET-18 the status counts upcoming events and Download .ics exports them", async () => {
   const props = renderView({ upcomingEvents: 1 });
 
-  expect(screen.getByRole("status")).toHaveTextContent("1 upcoming event");
+  expect(exportStatus()).toHaveTextContent("1 upcoming event");
 
   await userEvent.click(screen.getByRole("button", { name: "Download .ics" }));
 
@@ -276,20 +277,20 @@ test("SET-18 the status counts upcoming events and Download .ics exports them", 
 test("SET-18 after a download the status says what was saved", () => {
   renderView({ upcomingEvents: 4, savedEvents: 4 });
 
-  expect(screen.getByRole("status")).toHaveTextContent("Saved 4 events · glance-events.ics");
+  expect(exportStatus()).toHaveTextContent("Saved 4 events · glance-events.ics");
 });
 
 test("SET-18 the button is disabled with no upcoming events", () => {
   renderView({ upcomingEvents: 0 });
 
-  expect(screen.getByRole("status")).toHaveTextContent("No upcoming events");
+  expect(exportStatus()).toHaveTextContent("No upcoming events");
   expect(screen.getByRole("button", { name: "Download .ics" })).toBeDisabled();
 });
 
 test("SET-18 the button is disabled offline", () => {
   renderView({ online: false });
 
-  expect(screen.getByRole("status")).toHaveTextContent("Offline · needs a connection");
+  expect(exportStatus()).toHaveTextContent("Offline · needs a connection");
   expect(screen.getByRole("button", { name: "Download .ics" })).toBeDisabled();
 });
 
@@ -765,4 +766,20 @@ test("SET-13 offline the tile is hidden", () => {
   renderView({ online: false, storage: { used: GB, limit: 5 * GB } });
 
   expect(screen.queryByRole("meter")).not.toBeInTheDocument();
+});
+
+function exportStatus() {
+  const [leftCardStatus] = screen.getAllByRole("status");
+
+  return leftCardStatus;
+}
+
+test("SET-16 the Data and app card comes last in the right column, below Account", () => {
+  renderView();
+
+  const account = screen.getByRole("region", { name: "Account" });
+  const data = screen.getByRole("region", { name: "Data and app" });
+
+  expect(account.nextElementSibling).toBe(data);
+  expect(data.nextElementSibling).toBeNull();
 });

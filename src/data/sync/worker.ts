@@ -18,6 +18,7 @@ export type SyncWorkerApi = {
   nudge(): Promise<void>;
   resync(): Promise<void>;
   refreshWeather(): Promise<void>;
+  refreshNow(): Promise<boolean>;
   ping(): Promise<void>;
   stop(): Promise<void>;
 };
@@ -60,6 +61,15 @@ export function createSyncWorker(deps: WorkerDeps): SyncWorkerApi {
     nudge: () => run((engine) => engine.nudge()),
     resync: () => run((engine) => engine.resync()),
     refreshWeather: () => run((engine) => engine.refreshWeather()),
+    refreshNow: async () => {
+      const engine = session?.engine();
+
+      if (!engine) return false;
+
+      const [synced] = await Promise.all([engine.nudge(), engine.refreshWeather()]);
+
+      return synced.ok;
+    },
     ping: async () => {},
     stop: async () => {
       session?.stop();

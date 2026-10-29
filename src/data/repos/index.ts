@@ -72,6 +72,7 @@ export {
   type SourceStatus,
   type SyncStatus,
   useOutboxEmpty,
+  useRefreshNow,
   useRetry,
   useSignedOut,
   useSourceStatus,

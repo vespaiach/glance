@@ -11,6 +11,7 @@ export type SyncHost = {
   nudge(): Promise<void>;
   resync(): Promise<void>;
   refreshWeather(): Promise<void>;
+  refreshNow(): Promise<boolean>;
   stop(): void;
 };
 
@@ -94,6 +95,7 @@ export function createWorkerSyncHost({ db, spawn, photosChanged }: WorkerHostOpt
     nudge: () => run((api) => api.nudge()),
     resync: () => run((api) => api.resync()),
     refreshWeather: () => run((api) => api.refreshWeather()),
+    refreshNow: async () => (worker ? worker.api.refreshNow().catch(() => false) : false),
     stop: () => {
       halt();
 
