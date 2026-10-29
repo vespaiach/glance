@@ -11,6 +11,7 @@ export { EventSentence, type SameTime } from "./components/EventSentence";
 export { EventTaskBar } from "./components/EventTaskBar";
 export { EventSheetScreen } from "./EventSheetScreen";
 export {
+  type EventPageAction,
   type EventPageState,
   eventPageReducer,
   initialEventPage,
