@@ -6,6 +6,7 @@ import {
   eventPageReducer,
   initialEventPage,
   type PageDraft,
+  seriesDraft,
 } from "./eventPage";
 
 const tz = "UTC";
@@ -24,6 +25,14 @@ const LUNCH: PageDraft = {
   start: at(12),
   end: at(13),
   location: "Café",
+};
+
+const WEEKLY: PageDraft = {
+  ...LUNCH,
+  repeat: "weekly",
+  day: "2026-10-16",
+  firstDay: DAY,
+  exdates: ["2026-10-23"],
 };
 
 const run = (state: EventPageState, ...actions: EventPageAction[]) =>
@@ -339,5 +348,71 @@ describe("eventPage", () => {
 
   it("EVT-06 a new event has no Delete", () => {
     expect(editing(run(initialEventPage("new", BLANK), { type: "askDelete" })).asking).toBe("none");
+  });
+
+  it("EVT-14 Delete on a weekly event opens the series dialog instead of the inline step", () => {
+    const asking = run(initialEventPage("edit", WEEKLY), { type: "askDelete" });
+
+    expect(editing(asking).asking).toBe("deleteScope");
+    expect(editing(run(asking, { type: "keep" })).asking).toBe("none");
+  });
+
+  it("EVT-14 Save on a changed weekly event asks this event or the series", () => {
+    const asking = run(
+      initialEventPage("edit", WEEKLY),
+      { type: "title", value: "Lunch!" },
+      { type: "askSave" },
+    );
+
+    expect(editing(asking).asking).toBe("saveScope");
+    expect(editing(run(asking, { type: "keepEditing" })).asking).toBe("none");
+  });
+
+  it("EVT-14 the dialog doesn't open for one-time events or for Save with no changes", () => {
+    const oneTime = run(initialEventPage("edit", LUNCH), { type: "title", value: "Lunch!" });
+
+    expect(editing(run(oneTime, { type: "askSave" })).asking).toBe("none");
+    expect(editing(run(oneTime, { type: "askDelete" })).asking).toBe("delete");
+    expect(editing(run(initialEventPage("edit", WEEKLY), { type: "askSave" })).asking).toBe("none");
+  });
+
+  it("EVT-14 saving This event only from details closes the page", () => {
+    const state = run(
+      initialEventPage("view", WEEKLY),
+      { type: "edit", word: "title", ended: false },
+      { type: "title", value: "Lunch!" },
+      { type: "saved", scope: "one" },
+    );
+
+    expect(state).toEqual({ mode: "closed" });
+  });
+
+  it("EVT-14 All events keeps the series' first day and moves it, and its skipped weeks, with the day", () => {
+    const opened = initialEventPage("edit", WEEKLY);
+
+    expect(seriesDraft(editing(run(opened, { type: "title", value: "Lunch!" })))).toMatchObject({
+      title: "Lunch!",
+      day: DAY,
+      exdates: ["2026-10-23"],
+    });
+    expect(seriesDraft(editing(run(opened, { type: "day", value: "2026-10-17" })))).toMatchObject({
+      day: "2026-10-10",
+      firstDay: "2026-10-10",
+      exdates: ["2026-10-24"],
+    });
+  });
+
+  it("EVT-14 details after an All events save read the series' new first day", () => {
+    const state = run(
+      initialEventPage("view", WEEKLY),
+      { type: "edit", word: "day", ended: false },
+      { type: "day", value: "2026-10-17" },
+      { type: "saved", scope: "all" },
+    );
+
+    expect(state).toMatchObject({
+      mode: "view",
+      opened: { day: "2026-10-17", firstDay: "2026-10-10" },
+    });
   });
 });

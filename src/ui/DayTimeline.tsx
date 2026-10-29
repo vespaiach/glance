@@ -85,8 +85,8 @@ type DayTimelineProps = {
   grow?: boolean;
   nowDot?: boolean;
   labels: DayTimelineLabels;
-  onOpenEvent: (id: string) => void;
-  onOpenMore: (earliestId: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
+  onOpenMore: (earliest: CalendarEvent) => void;
   onAddEvent: (slot: { start: Date; end: Date }) => void;
   xstyle?: stylex.StyleXStyles;
 };
@@ -631,7 +631,7 @@ export function DayTimeline({
                 key={strip.plan.id}
                 strip={strip}
                 shared={shared}
-                onClick={() => onOpenEvent(strip.plan.id)}
+                onClick={() => onOpenEvent(strip.plan)}
               />
             ))}
           </fieldset>
@@ -655,7 +655,7 @@ export function DayTimeline({
               shared={shared}
               width={placed.width * columnsWidth}
               rain={planRain(placed.start, placed.end, rain, placed.width * columnsWidth)}
-              onClick={() => onOpenEvent(placed.plan.id)}
+              onClick={() => onOpenEvent(placed.plan)}
             />
           ))}
           {layout.more.map((tile) => (
@@ -665,7 +665,7 @@ export function DayTimeline({
               opensCalendar={variant === "today"}
               clock={clock}
               labels={labels}
-              onClick={() => onOpenMore(tile.first.id)}
+              onClick={() => onOpenMore(tile.first)}
             />
           ))}
         </div>

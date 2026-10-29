@@ -18,7 +18,7 @@ type ComingUpProps = {
   clock: Clock;
   tz: string;
   small: boolean;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
 };
 
 type RowProps = Omit<ComingUpProps, "events" | "small"> & { event: CalendarEvent };
@@ -152,7 +152,7 @@ function ComingUpRow({
     <button
       type="button"
       aria-label={copy.today.schedule.upcomingName(event.title, day, time, who)}
-      onClick={() => onOpenEvent(event.id)}
+      onClick={() => onOpenEvent(event)}
       {...stylex.props(styles.row(column), press.row)}
     >
       <span {...stylex.props(styles.when)}>

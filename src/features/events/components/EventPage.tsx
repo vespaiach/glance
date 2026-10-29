@@ -8,15 +8,18 @@ import type { Tag, TagColor } from "@/domain/schemas";
 import type { Clock } from "@/domain/time";
 import { Page } from "@/ui/Page";
 import {
+  asksSaveScope,
   canSave,
   type EventPageAction,
   type EventPageEditState,
   type OpenEventPage,
   type PageDraft,
+  type SeriesScope,
 } from "../eventPage";
 import { EventPicker } from "./EventPicker";
 import { EventSentence, type SameTime } from "./EventSentence";
 import { EventTaskBar, taskBarTitle } from "./EventTaskBar";
+import { SeriesDialog } from "./SeriesDialog";
 
 type EventPageProps = {
   breakpoint: Breakpoint;
@@ -34,8 +37,8 @@ type EventPageProps = {
   facts?: ReactNode;
   keyboardInset?: number;
   dispatch: (action: EventPageAction) => void;
-  onSave: () => void;
-  onDelete: () => void;
+  onSave: (scope?: SeriesScope) => void;
+  onDelete: (scope?: SeriesScope) => void;
   onLeft: () => void;
   onCreateTag: (name: string, color: TagColor) => string;
 };
@@ -73,39 +76,64 @@ export function EventPage(props: EventPageProps) {
 
   const draft = state.mode === "view" ? state.opened : state.draft;
 
+  const save = () =>
+    state.mode !== "view" && asksSaveScope(state) ? dispatch({ type: "askSave" }) : props.onSave();
+
   return (
-    <Page
-      label={taskBarTitle(state.mode, status)}
-      breakpoint={breakpoint}
-      onEscape={close}
-      leaving={leaving}
-      onLeft={onLeft}
-      keyboardInset={keyboardInset}
-      topBar={
-        <EventTaskBar
-          breakpoint={breakpoint}
-          mode={state.mode}
-          status={status}
-          asking={state.mode === "view" ? "none" : state.asking}
-          canSave={canSave(draft)}
-          online={online}
-          onSave={props.onSave}
-          onClose={close}
-          onEdit={() => dispatch({ type: "edit", word: "title", ended: isEnded(status) })}
-          onAskDelete={() => dispatch({ type: "askDelete" })}
-          onKeep={() => dispatch({ type: "keep" })}
-          onDelete={props.onDelete}
-          onKeepEditing={() => dispatch({ type: "keepEditing" })}
-          onDiscard={() => dispatch({ type: "discard" })}
-        />
-      }
-    >
-      {state.mode === "view" ? (
-        <ViewBody {...props} draft={state.opened} />
-      ) : (
-        <EditBody {...props} state={state} />
-      )}
-    </Page>
+    <>
+      <Page
+        label={taskBarTitle(state.mode, status)}
+        breakpoint={breakpoint}
+        onEscape={close}
+        leaving={leaving}
+        onLeft={onLeft}
+        keyboardInset={keyboardInset}
+        topBar={
+          <EventTaskBar
+            breakpoint={breakpoint}
+            mode={state.mode}
+            status={status}
+            asking={state.mode === "view" ? "none" : state.asking}
+            canSave={canSave(draft)}
+            online={online}
+            onSave={save}
+            onClose={close}
+            onEdit={() => dispatch({ type: "edit", word: "title", ended: isEnded(status) })}
+            onAskDelete={() => dispatch({ type: "askDelete" })}
+            onKeep={() => dispatch({ type: "keep" })}
+            onDelete={() => props.onDelete()}
+            onKeepEditing={() => dispatch({ type: "keepEditing" })}
+            onDiscard={() => dispatch({ type: "discard" })}
+          />
+        }
+      >
+        {state.mode === "view" ? (
+          <ViewBody {...props} draft={state.opened} />
+        ) : (
+          <EditBody {...props} state={state} />
+        )}
+      </Page>
+      {state.mode !== "view" && <ScopeDialog {...props} state={state} />}
+    </>
+  );
+}
+
+function ScopeDialog({ state, dispatch, onSave, onDelete }: BodyProps) {
+  if (state.asking !== "deleteScope" && state.asking !== "saveScope") return null;
+
+  const deleting = state.asking === "deleteScope";
+
+  const run = (scope: SeriesScope) => (deleting ? onDelete(scope) : onSave(scope));
+
+  return (
+    <SeriesDialog
+      kind={deleting ? "delete" : "save"}
+      title={state.opened.title}
+      day={state.opened.day}
+      onOne={() => run("one")}
+      onAll={() => run("all")}
+      onCancel={() => dispatch({ type: deleting ? "keep" : "keepEditing" })}
+    />
   );
 }
 

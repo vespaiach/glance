@@ -338,6 +338,7 @@ test("EVT-12 Every week saves the event as weekly and One day saves it without r
   await userEvent.click(await screen.findByRole("button", { name: /^Day: every / }));
   await userEvent.click(screen.getByRole("tab", { name: "One day" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await userEvent.click(screen.getByRole("button", { name: "All events in the series" }));
 
   await waitFor(async () =>
     expect(await store.db.events.get(LUNCH.id)).not.toHaveProperty("repeat"),
@@ -669,5 +670,162 @@ describe("day preview and Same time", () => {
 
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     expect(screen.queryByText("Same time:")).not.toBeInTheDocument();
+  });
+});
+
+describe("EVT-14 this event or the series", () => {
+  const WEEKLY: CalendarEvent = { ...LUNCH, repeat: "weekly" };
+
+  const WEEK_2 = "2026-10-16";
+
+  async function editWeek() {
+    await store.db.events.put(synced(WEEKLY));
+
+    renderSheet({ kind: "event", id: WEEKLY.id, edit: true, day: WEEK_2 });
+
+    await screen.findByRole("dialog", { name: "Edit event" });
+  }
+
+  function seriesDialog() {
+    return screen.getByRole("dialog", { name: /repeating event\?$/ });
+  }
+
+  function noSeriesDialog() {
+    expect(screen.queryByRole("dialog", { name: /repeating event\?$/ })).not.toBeInTheDocument();
+  }
+
+  test("EVT-14 Event details open the tapped week, not the first", async () => {
+    await store.db.events.put(synced(WEEKLY));
+
+    renderSheet({ kind: "event", id: WEEKLY.id, day: WEEK_2 });
+
+    expect(await screen.findByRole("dialog", { name: "In 7 days" })).toBeInTheDocument();
+    expect(screen.getByText("Every week · from Fri, Oct 9")).toBeInTheDocument();
+  });
+
+  test("EVT-14 Delete on a weekly event asks which, as written", async () => {
+    await editWeek();
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    const dialog = seriesDialog();
+
+    expect(within(dialog).getByText("Repeats every Friday")).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading")).toHaveTextContent("Delete a repeating event?");
+    expect(dialog).toHaveTextContent(
+      "Lunch with Aunt Rosa repeats every Friday. Delete only the one on Fri, Oct 16, or every event in the series.",
+    );
+    expect(screen.queryByRole("button", { name: "Delete event" })).not.toBeInTheDocument();
+  });
+
+  test("EVT-14 deleting This event only hides only that week", async () => {
+    await editWeek();
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await userEvent.click(within(seriesDialog()).getByRole("button", { name: "This event only" }));
+
+    expect(openSheet()).toHaveTextContent("");
+    await waitFor(async () =>
+      expect(await store.db.events.get(WEEKLY.id)).toMatchObject({ ...WEEKLY, exdates: [WEEK_2] }),
+    );
+    expect((await store.db.events.get(WEEKLY.id))?.deletedAt).toBeUndefined();
+    expect(await store.db.outbox.count()).toBe(1);
+  });
+
+  test("EVT-14 deleting All events in the series removes every week", async () => {
+    await editWeek();
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await userEvent.click(
+      within(seriesDialog()).getByRole("button", { name: "All events in the series" }),
+    );
+
+    await waitFor(async () =>
+      expect((await store.db.events.get(WEEKLY.id))?.deletedAt).toBeDefined(),
+    );
+  });
+
+  test("EVT-14 Keep event and the scrim close the dialog and keep the page", async () => {
+    await editWeek();
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await userEvent.click(within(seriesDialog()).getByRole("button", { name: "Keep event" }));
+
+    noSeriesDialog();
+
+    await typeTitle("!");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByTestId("dialog-scrim"));
+
+    noSeriesDialog();
+    expect(screen.getByRole("dialog", { name: "Edit event" })).toBeInTheDocument();
+    expect((await store.db.events.get(WEEKLY.id))?.title).toBe(WEEKLY.title);
+  });
+
+  test("EVT-14 saving This event only leaves the series and adds a one-time event on that date", async () => {
+    await editWeek();
+
+    await typeTitle("!");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(seriesDialog()).toHaveTextContent(
+      "Lunch with Aunt Rosa repeats every Friday. Apply your changes to Fri, Oct 16 only, or to every event in the series.",
+    );
+
+    await userEvent.click(within(seriesDialog()).getByRole("button", { name: "This event only" }));
+
+    expect(openSheet()).toHaveTextContent("");
+    await waitFor(async () => expect(await store.db.outbox.count()).toBe(2));
+    expect(await store.db.events.get(WEEKLY.id)).toMatchObject({ ...WEEKLY, exdates: [WEEK_2] });
+
+    const [detached] = (await store.db.events.toArray()).filter((e) => e.id !== WEEKLY.id);
+
+    expect(detached).toMatchObject({
+      title: "Lunch with Aunt Rosa!",
+      startAt: new Date(2026, 9, 16, 12, 0).toISOString(),
+      endAt: new Date(2026, 9, 16, 13, 0).toISOString(),
+    });
+    expect(detached).not.toHaveProperty("repeat");
+    expect(detached).not.toHaveProperty("exdates");
+  });
+
+  test("EVT-14 saving All events in the series changes every week from its first day", async () => {
+    await editWeek();
+
+    await typeTitle("!");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(
+      within(seriesDialog()).getByRole("button", { name: "All events in the series" }),
+    );
+
+    await waitFor(async () =>
+      expect(await store.db.events.get(WEEKLY.id)).toMatchObject({
+        ...WEEKLY,
+        title: "Lunch with Aunt Rosa!",
+      }),
+    );
+    expect(await store.db.events.count()).toBe(1);
+  });
+
+  test("EVT-14 Save with no changes on a weekly event saves without asking and keeps its first day", async () => {
+    await editWeek();
+
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    noSeriesDialog();
+    expect(openSheet()).toHaveTextContent("");
+    await waitFor(async () => expect(await store.db.outbox.count()).toBe(1));
+    expect((await store.db.events.get(WEEKLY.id))?.startAt).toBe(WEEKLY.startAt);
+  });
+
+  test("EVT-14 the dialog doesn't open for a one-time event", async () => {
+    await store.db.events.put(synced(LUNCH));
+    renderSheet({ kind: "event", id: LUNCH.id, edit: true });
+
+    await typeTitle("!");
+    await userEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    noSeriesDialog();
+    expect(screen.getByRole("button", { name: "Delete event" })).toBeInTheDocument();
   });
 });

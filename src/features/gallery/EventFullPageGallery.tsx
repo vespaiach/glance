@@ -8,6 +8,7 @@ import {
   DayPreview,
   EventFacts,
   EventPage,
+  type EventPageAction,
   eventPageReducer,
   initialEventPage,
   type PageDraft,
@@ -25,6 +26,7 @@ type Demo = {
   word?: EventWord;
   status?: StatusTitle;
   offline?: true;
+  actions?: readonly EventPageAction[];
 };
 
 const words = gallery.eventFullPage;
@@ -44,6 +46,8 @@ const LUNCH: PageDraft = {
   notify: true,
 };
 
+const WEEKLY: PageDraft = { ...LUNCH, day: "2026-10-16", firstDay: LUNCH.day, repeat: "weekly" };
+
 const BLANK: PageDraft = { ...LUNCH, title: "", location: "", start: 660, end: 720 };
 
 const DEMOS: readonly Demo[] = [
@@ -59,6 +63,18 @@ const DEMOS: readonly Demo[] = [
   { label: words.offline, mode: "new", draft: BLANK, offline: true },
   { label: words.view, mode: "view", draft: LUNCH, status: { kind: "in", minutes: 169 } },
   { label: words.past, mode: "view", draft: LUNCH, status: { kind: "ended" } },
+  {
+    label: words.weeklyDelete,
+    mode: "edit",
+    draft: WEEKLY,
+    actions: [{ type: "askDelete" }],
+  },
+  {
+    label: words.weeklySave,
+    mode: "edit",
+    draft: WEEKLY,
+    actions: [{ type: "start", value: 750 }, { type: "askSave" }],
+  },
   {
     label: words.viewAllDay,
     mode: "view",
@@ -95,10 +111,7 @@ export function EventFullPageGallery() {
 }
 
 function DemoPage({ demo, onLeft }: { demo: Demo; onLeft: () => void }) {
-  const [state, dispatch] = useReducer(
-    eventPageReducer,
-    initialEventPage(demo.mode, demo.draft, demo.word),
-  );
+  const [state, dispatch] = useReducer(eventPageReducer, demo, initialDemo);
 
   const [shown, setShown] = useState(state);
 
@@ -156,4 +169,8 @@ function DemoPage({ demo, onLeft }: { demo: Demo; onLeft: () => void }) {
       onCreateTag={createTag}
     />
   );
+}
+
+function initialDemo({ mode, draft, word, actions = [] }: Demo) {
+  return actions.reduce(eventPageReducer, initialEventPage(mode, draft, word));
 }

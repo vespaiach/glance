@@ -51,7 +51,7 @@ type TodayScheduleProps = {
   iconActions: boolean;
   weather?: TimelineWeather;
   upcoming: readonly CalendarEvent[] | undefined;
-  onOpenEvent: (id: string) => void;
+  onOpenEvent: (event: CalendarEvent) => void;
   onAddEvent: () => void;
   onAddSlot: (slot: Slot) => void;
   onOpenCalendar: () => void;
