@@ -1,7 +1,7 @@
 "use client";
 
 import * as stylex from "@stylexjs/stylex";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import type { Breakpoint } from "@/domain/breakpoint";
 import type { StatusTitle } from "@/domain/eventStatus";
 import type { Tag, TagColor } from "@/domain/schemas";
@@ -73,8 +73,6 @@ export function EventPage(props: EventPageProps) {
 
   const draft = state.mode === "view" ? state.opened : state.draft;
 
-  const [scrolled, setScrolled] = useState(false);
-
   return (
     <Page
       label={taskBarTitle(state.mode, status)}
@@ -83,25 +81,25 @@ export function EventPage(props: EventPageProps) {
       leaving={leaving}
       onLeft={onLeft}
       keyboardInset={keyboardInset}
-      onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
+      topBar={
+        <EventTaskBar
+          breakpoint={breakpoint}
+          mode={state.mode}
+          status={status}
+          asking={state.mode === "view" ? "none" : state.asking}
+          canSave={canSave(draft)}
+          online={online}
+          onSave={props.onSave}
+          onClose={close}
+          onEdit={() => dispatch({ type: "edit", word: "title", ended: isEnded(status) })}
+          onAskDelete={() => dispatch({ type: "askDelete" })}
+          onKeep={() => dispatch({ type: "keep" })}
+          onDelete={props.onDelete}
+          onKeepEditing={() => dispatch({ type: "keepEditing" })}
+          onDiscard={() => dispatch({ type: "discard" })}
+        />
+      }
     >
-      <EventTaskBar
-        breakpoint={breakpoint}
-        mode={state.mode}
-        status={status}
-        asking={state.mode === "view" ? "none" : state.asking}
-        scrolled={scrolled}
-        canSave={canSave(draft)}
-        online={online}
-        onSave={props.onSave}
-        onClose={close}
-        onEdit={() => dispatch({ type: "edit", word: "title", ended: isEnded(status) })}
-        onAskDelete={() => dispatch({ type: "askDelete" })}
-        onKeep={() => dispatch({ type: "keep" })}
-        onDelete={props.onDelete}
-        onKeepEditing={() => dispatch({ type: "keepEditing" })}
-        onDiscard={() => dispatch({ type: "discard" })}
-      />
       {state.mode === "view" ? (
         <ViewBody {...props} draft={state.opened} />
       ) : (
