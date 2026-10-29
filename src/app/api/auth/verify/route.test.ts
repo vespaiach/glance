@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { vi } from "vitest";
 import { err, ok } from "@/domain/result";
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 const APP_URL = "https://glance.example.com";
 
@@ -70,5 +70,32 @@ describe("POST /api/auth/verify", () => {
 
     expect(response.status).toBe(403);
     expect(auth.verifyQrLink).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/auth/verify", () => {
+  function opened(to: string) {
+    return new NextRequest(`${APP_URL}/api/auth/verify?t=abc123&to=${to}`);
+  }
+
+  beforeEach(() => {
+    auth.verifyQrLink.mockResolvedValue(
+      ok({ status: SIGNED_IN, sessionToken: "token", forDisplay: "wall-1" }),
+    );
+  });
+
+  it("IMP-04 an import link opens Import for the issuing screen", async () => {
+    const response = await GET(opened("import"));
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      `${APP_URL}/signin?link=opened&to=import&forDisplay=wall-1`,
+    );
+  });
+
+  it("PHOTO-03 a Photos link opens Photos and names no screen", async () => {
+    const response = await GET(opened("photos"));
+
+    expect(response.headers.get("location")).toBe(`${APP_URL}/signin?link=opened&to=photos`);
   });
 });

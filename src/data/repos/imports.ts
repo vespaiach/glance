@@ -3,7 +3,7 @@ import type { LastImport } from "@/domain/imports";
 import type { Transport } from "../sync/transport";
 import { useRepoStore } from "./store";
 
-export type ImportsRepo = Pick<Transport["imports"], "upload" | "commit" | "undo">;
+export type ImportsRepo = Pick<Transport["imports"], "upload" | "staged" | "commit" | "undo">;
 
 export function useImportsRepo(): ImportsRepo {
   const { imports, nudge } = useRepoStore();
@@ -11,6 +11,7 @@ export function useImportsRepo(): ImportsRepo {
   return useMemo(
     () => ({
       upload: imports.upload,
+      staged: imports.staged,
       commit: (id, who) => thenNudge(imports.commit(id, who), nudge),
       undo: (id) => thenNudge(imports.undo(id), nudge),
     }),

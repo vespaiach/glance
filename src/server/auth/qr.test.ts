@@ -61,6 +61,19 @@ describe("issueQrLink", () => {
     expect(url.searchParams.get("to")).toBe("photos");
   });
 
+  it("IMP-04 an import code lasts 10 minutes and asks the verify link to open Import", async () => {
+    const maria = await signIn("maria@example.com");
+
+    const issued = await issueQrLink(harness.deps(), maria, "import");
+
+    const url = new URL(issued.ok ? issued.value.url : "");
+    const token = url.searchParams.get("t") ?? "";
+    expect(url.searchParams.get("to")).toBe("import");
+    expect(
+      await harness.deps().db.magicLinks.get(createHash("sha256").update(token).digest("hex")),
+    ).toMatchObject({ expiresAt: "2026-10-09T14:10:00.000Z" });
+  });
+
   it("SIGNIN-15 stores the account, the display and a 3-minute expiry", async () => {
     const maria = await signIn("maria@example.com");
 
@@ -163,6 +176,26 @@ describe("verifyQrLink", () => {
     harness.advance(THREE_MINUTES - 1000);
 
     expect(await scan(token)).toMatchObject({ accountId: maria.accountId });
+  });
+
+  it("IMP-04 an import link still works at 9 minutes and answers the issuing screen", async () => {
+    const maria = await signIn("maria@example.com");
+    const issued = await issueQrLink(harness.deps(), maria, "import");
+    const token = new URL(issued.ok ? issued.value.url : "").searchParams.get("t") ?? "";
+    harness.advance(9 * 60 * 1000);
+
+    const verified = await verifyQrLink(harness.deps(), { token });
+
+    expect(verified.ok && verified.value.forDisplay).toBe(maria.displayId);
+  });
+
+  it("IMP-04 New code voids the old import link", async () => {
+    const maria = await signIn("maria@example.com");
+    const older = await issueQrLink(harness.deps(), maria, "import");
+    await issueQrLink(harness.deps(), maria, "import");
+
+    const token = new URL(older.ok ? older.value.url : "").searchParams.get("t") ?? "";
+    expect(await scan(token)).toEqual({ ok: false, error: "stale" });
   });
 
   it("SIGNIN-15 a newer code voids the older one", async () => {

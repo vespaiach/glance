@@ -1263,6 +1263,7 @@ export const copy = {
       welcomeBack: (firstName: string) => `Welcome back, ${firstName}`,
       body: "Opening Today…",
       bodyPhotos: "Opening Photos…",
+      bodyImport: "Opening Import events…",
     },
   },
   terms: {

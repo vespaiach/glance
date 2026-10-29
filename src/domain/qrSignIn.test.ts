@@ -1,4 +1,4 @@
-import { linkToken, QR_CODE_TTL_MS, qrSecondsLeft } from "./qrSignIn";
+import { linkToken, QR_CODE_TTL_MS, qrSecondsLeft, qrTtlMs } from "./qrSignIn";
 
 const ISSUED = "2026-10-09T17:41:00.000Z";
 
@@ -28,6 +28,16 @@ describe("qrSecondsLeft", () => {
 
   it("SIGNIN-15 a clock set back never shows more than 3:00", () => {
     expect(qrSecondsLeft(ISSUED, later(-60_000))).toBe(180);
+  });
+
+  it("IMP-04 an import code counts down from 10:00 and ends at 10 minutes", () => {
+    expect(qrTtlMs("import")).toBe(10 * 60 * 1000);
+    expect(qrSecondsLeft(ISSUED, later(0), "import")).toBe(600);
+    expect(qrSecondsLeft(ISSUED, later(qrTtlMs("import")), "import")).toBe(0);
+  });
+
+  it("PHOTO-03 a Photos code keeps the 3 minutes", () => {
+    expect(qrTtlMs("photos")).toBe(QR_CODE_TTL_MS);
   });
 });
 
