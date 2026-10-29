@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.23 |
+| Status | v1.24 |
 | Date | 2026-10-29 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -272,7 +272,7 @@ interface Account { id: string; email: string; name: string | null } // name nul
 interface Display { id: string; accountId: string } // kind, browser and lastSeenAt are server columns, read through the screens list (SET-12)
 ```
 
-**Defaults:** season Auto, 12-hour, °F, background Season drawing (the current season's; dim Light, rotate Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle on, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM), ambient brightness Medium, notifications 15 min before, chime on. Push is on or off per device, never in settings (NOTIF-08). Photo storage: SET-13.
+**Defaults:** season Auto, 12-hour, °F, background Season drawing (the current season's; dim Strong, rotate Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle on, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM), ambient brightness Medium, notifications 15 min before, chime on. Push is on or off per device, never in settings (NOTIF-08). Photo storage: SET-13.
 
 **Account model:** one family = one account = one email. Sign-up and sign-in are the same email-code flow (SIGNIN-12). Events, tags, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
 

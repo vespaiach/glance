@@ -217,11 +217,11 @@ test("BG-03 tapping a drawing picks it and switches to Season", async () => {
 test("BG-04 the Dim photo tabs save Off, Light or Strong", async () => {
   const props = renderView();
 
-  expect(selectedPill("Dim photo")).toBe("Light");
+  expect(selectedPill("Dim photo")).toBe("Strong");
 
-  await userEvent.click(pills("Dim photo").getByRole("button", { name: "Strong" }));
+  await userEvent.click(pills("Dim photo").getByRole("button", { name: "Light" }));
 
-  expect(props.onChange).toHaveBeenCalledWith({ dim: 0.4 });
+  expect(props.onChange).toHaveBeenCalledWith({ dim: 0.2 });
 });
 
 test("BG-04 Change photo shows only in Slideshow and saves the interval", async () => {
