@@ -220,7 +220,7 @@ test("EVT-12 a day picked in the Day picker moves the event and keeps its times"
   renderSheet({ kind: "event", id: LUNCH.id, edit: true });
 
   await userEvent.click(await screen.findByRole("button", { name: "Day: Fri, Oct 9. Change" }));
-  await userEvent.click(screen.getByRole("button", { name: /Tomorrow/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Sat, October 10" }));
   await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
   await waitFor(async () => {

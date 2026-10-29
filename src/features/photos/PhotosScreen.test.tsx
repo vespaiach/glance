@@ -370,7 +370,7 @@ test("PHOTO-05 with no photos on large the empty card shows the code; on small U
 
   expect(await screen.findByRole("group", { name: ADD_FROM_PHONE })).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Upload photos" })).not.toBeInTheDocument();
-  expect(store.issueQr).toHaveBeenCalledWith("photos");
+  await vi.waitFor(() => expect(store.issueQr).toHaveBeenCalledWith("photos"));
 
   unmount();
   smallScreen();

@@ -101,16 +101,14 @@ describe("EventPicker", () => {
     expect(screen.getByRole("button", { name: "Next: Who it’s for" })).toBeVisible();
   });
 
-  it("EVT-12 day chips pick today, tomorrow and next week", async () => {
+  it("EVT-12 the Day picker shows no Today, Tomorrow or Next week buttons and a day cell still sets the date", async () => {
     const { onAction } = renderPicker({ word: "day" });
 
-    await userEvent.click(screen.getByRole("button", { name: /Tomorrow/ }));
+    expect(screen.queryByRole("button", { name: /^(Today|Tomorrow|Next week)/ })).toBeNull();
 
-    await userEvent.click(screen.getByRole("button", { name: /Next week/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Sat, October 10" }));
 
     expect(onAction).toHaveBeenCalledWith({ type: "day", value: "2026-10-10" });
-    expect(onAction).toHaveBeenCalledWith({ type: "day", value: "2026-10-16" });
-    expect(screen.getByRole("button", { name: /^Today/ })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("EVT-12 the month grid disables past days and starts at this month", async () => {

@@ -29,15 +29,8 @@ import { monthCells, monthOf, monthTitle, stepMonth } from "@/domain/quickDate";
 import { EVENT_LIMITS, TAG_NAME_LIMIT, type Tag, type TagColor } from "@/domain/schemas";
 import { suggestTags } from "@/domain/tagMatch";
 import { exactTag, nextFreeColor, pickWho } from "@/domain/tags";
-import {
-  type Clock,
-  formatDayName,
-  formatHour,
-  formatLength,
-  formatMonthDay,
-  formatWeekday,
-} from "@/domain/time";
-import { addDays, parseDateKey } from "@/domain/zone";
+import { type Clock, formatDayName, formatHour, formatLength } from "@/domain/time";
+import { parseDateKey } from "@/domain/zone";
 import { colors, motion, radii } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
@@ -89,8 +82,6 @@ type TextField = HTMLInputElement | HTMLTextAreaElement;
 const words = copy.events.picker;
 
 const fields = copy.events.page.fields;
-
-const WEEK = 7;
 
 const styles = stylex.create({
   card: {
@@ -226,35 +217,22 @@ const styles = stylex.create({
     paddingInlineEnd: 22,
     fontSize: 17,
   },
-  day: {
-    minHeight: 52,
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  dayLabel: { fontSize: 17, fontWeight: 540 },
   mono: {
     fontFamily: type.fontMono,
     fontSize: type.captionSize,
     letterSpacing: type.captionLs,
     textTransform: "uppercase",
   },
-  dayColumns: {
-    display: "grid",
-    alignItems: "start",
+  prev: { gridColumn: 1, justifySelf: "center", display: "flex" },
+  next: { gridColumn: 7, justifySelf: "center", display: "flex" },
+  monthTitle: {
+    gridColumn: "2 / 7",
+    textAlign: "center",
+    fontSize: 17,
+    fontWeight: 540,
+    whiteSpace: "nowrap",
   },
-  month: {
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: 8,
-  },
-  monthHead: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  monthTitle: { fontSize: 17, fontWeight: 540 },
+  headGap: { gridColumn: "1 / -1", height: 8 },
   arrow: {
     width: 44,
     height: 44,
@@ -268,9 +246,11 @@ const styles = stylex.create({
     cursor: { default: "pointer", ":disabled": "default" },
   },
   monthGrid: {
+    maxWidth: 480,
     display: "grid",
     gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-    gap: 2,
+    alignItems: "center",
+    gap: 4,
   },
   weekday: {
     paddingBottom: 4,
@@ -365,18 +345,6 @@ const inputSizes = stylex.create({
   large: { minHeight: 72, fontSize: 32 },
   normal: { minHeight: 64, fontSize: 28 },
   small: { minHeight: 56, fontSize: 22 },
-});
-
-const dayColumnSizes = stylex.create({
-  large: { gridTemplateColumns: "300px minmax(0, 480px)", gap: 56 },
-  normal: { gridTemplateColumns: "260px minmax(0, 440px)", gap: 48 },
-  small: { gridTemplateColumns: "minmax(0, 1fr)", gap: 20 },
-});
-
-const quickSizes = stylex.create({
-  large: { flexDirection: "column", flexWrap: "nowrap" },
-  normal: { flexDirection: "column", flexWrap: "nowrap" },
-  small: { flexDirection: "row" },
 });
 
 const rowSizes = stylex.create({
@@ -512,81 +480,61 @@ function TitleBody({ breakpoint, draft, recentTitles, onAction }: BodyProps) {
   );
 }
 
-function DayBody({ breakpoint, draft, today, onAction }: BodyProps) {
+function DayBody({ draft, today, onAction }: BodyProps) {
   const [month, setMonth] = useState(monthOf(draft.day));
 
   const pick = (day: string) => onAction({ type: "day", value: day });
 
-  const quick = [
-    { label: words.today, day: today },
-    { label: words.tomorrow, day: addDays(today, 1) },
-    { label: words.nextWeek, day: addDays(today, WEEK) },
-  ];
-
   return (
-    <div {...stylex.props(styles.dayColumns, dayColumnSizes[breakpoint])}>
-      <div {...stylex.props(styles.chips, quickSizes[breakpoint])}>
-        {quick.map(({ label, day }) => (
-          <Chip
-            key={label}
-            selected={draft.day === day}
+    <div {...stylex.props(styles.monthGrid)}>
+      <span {...stylex.props(styles.prev)}>
+        <MonthArrow
+          icon={ChevronLeft}
+          label={words.previousMonth}
+          disabled={month <= monthOf(today)}
+          onClick={() => setMonth(stepMonth(month, -1))}
+        />
+      </span>
+      <span aria-live="polite" {...stylex.props(styles.monthTitle)}>
+        {monthTitle(month)}
+      </span>
+      <span {...stylex.props(styles.next)}>
+        <MonthArrow
+          icon={ChevronRight}
+          label={words.nextMonth}
+          onClick={() => setMonth(stepMonth(month, 1))}
+        />
+      </span>
+      <span aria-hidden="true" {...stylex.props(styles.headGap)} />
+      {words.weekdays.map((letter, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: the seven weekday letters repeat and never reorder
+        <span key={index} aria-hidden="true" {...stylex.props(styles.mono, styles.weekday)}>
+          {letter}
+        </span>
+      ))}
+      {monthCells(month).map((day, index) =>
+        day === null ? (
+          // biome-ignore lint/suspicious/noArrayIndexKey: blank leading cells have no other identity
+          <span key={index} />
+        ) : (
+          <button
+            key={day}
+            type="button"
+            aria-label={words.dayCell(formatDayName(parseDateKey(day), "UTC"), day === today)}
+            aria-pressed={day === draft.day}
+            aria-current={day === today ? "date" : undefined}
+            disabled={day < today}
             onClick={() => pick(day)}
-            xstyle={styles.day}
+            {...stylex.props(
+              styles.date,
+              day === today && day !== draft.day && styles.today,
+              day === draft.day && styles.picked,
+            )}
           >
-            <span {...stylex.props(styles.dayLabel)}>{label}</span>
-            <span {...stylex.props(styles.mono)}>{shortDay(day)}</span>
-          </Chip>
-        ))}
-      </div>
-      <div {...stylex.props(styles.month)}>
-        <div {...stylex.props(styles.monthHead)}>
-          <MonthArrow
-            icon={ChevronLeft}
-            label={words.previousMonth}
-            disabled={month <= monthOf(today)}
-            onClick={() => setMonth(stepMonth(month, -1))}
-          />
-          <span aria-live="polite" {...stylex.props(styles.monthTitle)}>
-            {monthTitle(month)}
-          </span>
-          <MonthArrow
-            icon={ChevronRight}
-            label={words.nextMonth}
-            onClick={() => setMonth(stepMonth(month, 1))}
-          />
-        </div>
-        <div {...stylex.props(styles.monthGrid)}>
-          {words.weekdays.map((letter, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: the seven weekday letters repeat and never reorder
-            <span key={index} aria-hidden="true" {...stylex.props(styles.mono, styles.weekday)}>
-              {letter}
-            </span>
-          ))}
-          {monthCells(month).map((day, index) =>
-            day === null ? (
-              // biome-ignore lint/suspicious/noArrayIndexKey: blank leading cells have no other identity
-              <span key={index} />
-            ) : (
-              <button
-                key={day}
-                type="button"
-                aria-label={words.dayCell(formatDayName(parseDateKey(day), "UTC"), day === today)}
-                aria-pressed={day === draft.day}
-                aria-current={day === today ? "date" : undefined}
-                disabled={day < today}
-                onClick={() => pick(day)}
-                {...stylex.props(
-                  styles.date,
-                  day === today && day !== draft.day && styles.today,
-                  day === draft.day && styles.picked,
-                )}
-              >
-                {parseDateKey(day).getUTCDate()}
-              </button>
-            ),
-          )}
-        </div>
-      </div>
+            {parseDateKey(day).getUTCDate()}
+          </button>
+        ),
+      )}
     </div>
   );
 }
@@ -917,12 +865,6 @@ function hourCell(hour: number, clock: Clock) {
 
 function meridiemOf(minutes: number): Meridiem {
   return minutes >= 12 * 60 ? "PM" : "AM";
-}
-
-function shortDay(day: string): string {
-  const date = parseDateKey(day);
-
-  return `${formatWeekday(date, "UTC")}, ${formatMonthDay(date, "UTC")}`;
 }
 
 function pad(n: number): string {
