@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v3.17 |
+| Status | v3.18 |
 | Date | 2026-10-29 |
 | Inputs | [`product-spec.md`](product-spec.md) (v1.27) · [`design/handoff/`](design/handoff/README.md) (v20) |
 
