@@ -10,6 +10,7 @@ export const OFFLINE_PAGES = [
   "/settings/background",
   "/settings/location",
   "/settings/ambient",
+  "/settings/import",
   "/ambient",
   "/signin",
 ] as const;
