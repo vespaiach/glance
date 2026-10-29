@@ -4,7 +4,7 @@
 |---|---|
 | Version | v6.0 |
 | Date | 2026-10-29 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.33) · [`tech-design.md`](tech-design.md) (v3.26) · design handoff v21 (`Kiosk display mockups.zip`, 2026-10-29) |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.34) · [`tech-design.md`](tech-design.md) (v3.27) · design handoff v21 (`Kiosk display mockups.zip`, 2026-10-29) |
 | Checks | `npm run check` → `npm run typecheck` → `npm test` → `npm run build` |
 
 The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ row whose dependencies are ✅, does it in one PR, merges it and moves on until every row is ✅.

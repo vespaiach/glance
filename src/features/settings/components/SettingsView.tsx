@@ -37,6 +37,9 @@ type SettingsViewProps = {
   onOpenLocation: () => void;
   lastImport?: string;
   onOpenImport: () => void;
+  upcomingEvents: number;
+  savedEvents?: number;
+  onExportEvents: () => void;
   onOpenAmbient: () => void;
   signOut: SignOutDialogState;
   onSignOut: () => void;
@@ -92,6 +95,9 @@ export function SettingsView({
   onOpenLocation,
   lastImport,
   onOpenImport,
+  upcomingEvents,
+  savedEvents,
+  onExportEvents,
   onOpenAmbient,
   signOut,
   onSignOut,
@@ -125,6 +131,10 @@ export function SettingsView({
         onOpenLocation={onOpenLocation}
         lastImport={lastImport}
         onOpenImport={onOpenImport}
+        online={online}
+        upcomingEvents={upcomingEvents}
+        savedEvents={savedEvents}
+        onExportEvents={onExportEvents}
         phone={phone}
         onAllowPush={onAllowPush}
         onTurnOffPush={onTurnOffPush}

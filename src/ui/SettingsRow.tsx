@@ -9,6 +9,7 @@ import { SwitchTrack } from "./Switch";
 type SettingsRowProps = {
   title: ReactNode;
   description?: ReactNode;
+  status?: ReactNode;
   children?: ReactNode;
   onClick?: () => void;
   checked?: boolean;
@@ -62,6 +63,13 @@ const styles = stylex.create({
     fontWeight: type.bodySmWeight,
     textWrap: "pretty",
   },
+  status: {
+    fontFamily: type.fontMono,
+    fontSize: 14,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    lineHeight: 1.3,
+  },
   control: {
     maxWidth: "100%",
     display: "flex",
@@ -78,6 +86,7 @@ const styles = stylex.create({
 export function SettingsRow({
   title,
   description,
+  status,
   children,
   onClick,
   checked,
@@ -98,6 +107,11 @@ export function SettingsRow({
       {description && (
         <span id={`${id}-description`} {...stylex.props(styles.description)}>
           {description}
+        </span>
+      )}
+      {status !== undefined && (
+        <span role="status" aria-live="polite" {...stylex.props(styles.status)}>
+          {status}
         </span>
       )}
     </span>
