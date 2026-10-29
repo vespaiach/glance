@@ -2,6 +2,7 @@ import "server-only";
 import type { Database, OpenedDatabase, Repos } from "../database";
 import { accountsRepo, displaysRepo, magicLinksRepo, sessionsRepo, signInCodesRepo } from "./auth";
 import { eventsRepo } from "./events";
+import { importsRepo } from "./imports";
 import { MIGRATIONS_DIR, migrate, readMigrations } from "./migrate";
 import { notesRepo } from "./notes";
 import { newPglite, pgliteSql } from "./pglite";
@@ -64,6 +65,7 @@ function repos(sql: Sql): Repos {
     settings: settingsRepo(sql),
     pushSubscriptions: pushSubscriptionsRepo(sql),
     reminderSends: reminderSendsRepo(sql),
+    imports: importsRepo(sql),
     weatherCache: weatherCacheRepo(sql),
   };
 }
