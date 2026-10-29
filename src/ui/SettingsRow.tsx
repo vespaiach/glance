@@ -50,6 +50,9 @@ const styles = stylex.create({
     gap: space.xxs,
     minWidth: 180,
   },
+  textGrow: {
+    flex: "1 1 240px",
+  },
   textStart: {
     paddingTop: 12,
   },
@@ -100,7 +103,13 @@ export function SettingsRow({
   const rowStyles = [styles.root, align === "start" && styles.start, divider && styles.divider];
 
   const text = (
-    <span {...stylex.props(styles.text, align === "start" && styles.textStart)}>
+    <span
+      {...stylex.props(
+        styles.text,
+        align === "start" && styles.textStart,
+        status !== undefined && styles.textGrow,
+      )}
+    >
       <span id={`${id}-title`} {...stylex.props(styles.title)}>
         {title}
       </span>
