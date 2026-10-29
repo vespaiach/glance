@@ -226,6 +226,7 @@ async function openAccountDisplay(now: () => Date): Promise<OpenedDisplay> {
     issueQr: transport.issueQr,
     voidQr: transport.voidQr,
     webPush: transport.webPush,
+    imports: transport.imports,
     signOut,
     signOutAll: () => thenSignOut(transport.auth.signoutAll(), signOut),
     deleteAccount: () => thenSignOut(transport.auth.deleteAccount(), signOut),

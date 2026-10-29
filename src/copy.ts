@@ -627,6 +627,11 @@ export const copy = {
       notSet: "Not set",
       summary: (place: string, zone: string) => `${place} · ${zone}`,
     },
+    importEvents: {
+      title: "Import events",
+      body: "Add events from an .ics calendar file",
+      last: (date: string) => `Last: ${date}`,
+    },
     season: {
       title: "Season",
       autoLabel: "Auto",
@@ -1818,6 +1823,10 @@ export const copy = {
         {
           q: "How do I change or delete an event?",
           a: "Tap the event to open its details, then tap Edit, or tap the word you want to change. Delete is on the Edit page: tap it once, then tap Delete event to confirm. Events that have ended can’t be changed.",
+        },
+        {
+          q: "Can I add a school or team calendar?",
+          a: "Yes, once. Go to Settings › Import events and choose its .ics file, or send it from your phone. The events become normal Glance events; later changes to the file don’t sync. Undo removes them for 24 hours.",
         },
         {
           q: "What happens if the internet drops?",

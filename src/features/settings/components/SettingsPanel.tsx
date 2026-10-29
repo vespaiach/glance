@@ -22,6 +22,8 @@ type SettingsPanelProps = {
   onChange: (change: Partial<AccountSettings>) => void;
   onOpenBackground: () => void;
   onOpenLocation: () => void;
+  lastImport?: string;
+  onOpenImport: () => void;
   phone: ThisPhone;
   onAllowPush: () => void;
   onTurnOffPush: () => void;
@@ -101,6 +103,8 @@ export function SettingsPanel({
   onChange,
   onOpenBackground,
   onOpenLocation,
+  lastImport,
+  onOpenImport,
   phone,
   onAllowPush,
   onTurnOffPush,
@@ -121,6 +125,13 @@ export function SettingsPanel({
           onClick={onOpenLocation}
         >
           {locationSummary(settings.weatherLocation)}
+        </SettingsRow>
+        <SettingsRow
+          title={text.importEvents.title}
+          description={text.importEvents.body}
+          onClick={onOpenImport}
+        >
+          {lastImport && text.importEvents.last(lastImport)}
         </SettingsRow>
         <SettingsRow
           title={text.season.title}

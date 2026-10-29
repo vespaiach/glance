@@ -30,6 +30,7 @@ export {
   useNextEventAfter,
   useUpcomingEvent,
 } from "./events";
+export { type ImportsRepo, useImportsRepo, useLastImport } from "./imports";
 export {
   createNotesRepo,
   type NotesRepo,

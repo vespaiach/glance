@@ -25,6 +25,13 @@ export type Harness = RepoStore & {
     subscribe: Mock<Transport["webPush"]["subscribe"]>;
     unsubscribe: Mock<Transport["webPush"]["unsubscribe"]>;
   };
+  imports: {
+    upload: Mock<Transport["imports"]["upload"]>;
+    staged: Mock<Transport["imports"]["staged"]>;
+    commit: Mock<Transport["imports"]["commit"]>;
+    last: Mock<Transport["imports"]["last"]>;
+    undo: Mock<Transport["imports"]["undo"]>;
+  };
   signOut: Mock<() => Promise<void>>;
   signOutAll: Mock<() => Promise<Result<void, TransportError>>>;
   deleteAccount: Mock<() => Promise<Result<void, TransportError>>>;
@@ -56,6 +63,13 @@ export function openHarness(name: string): Harness {
       key: vi.fn<Transport["webPush"]["key"]>(async () => err("network")),
       subscribe: vi.fn<Transport["webPush"]["subscribe"]>(async () => err("network")),
       unsubscribe: vi.fn<Transport["webPush"]["unsubscribe"]>(async () => err("network")),
+    },
+    imports: {
+      upload: vi.fn<Transport["imports"]["upload"]>(async () => err("network")),
+      staged: vi.fn<Transport["imports"]["staged"]>(async () => err("network")),
+      commit: vi.fn<Transport["imports"]["commit"]>(async () => err("network")),
+      last: vi.fn<Transport["imports"]["last"]>(async () => err("network")),
+      undo: vi.fn<Transport["imports"]["undo"]>(async () => err("network")),
     },
     signOut: vi.fn<() => Promise<void>>(async () => {}),
     signOutAll: vi.fn<() => Promise<Result<void, TransportError>>>(async () => err("network")),
