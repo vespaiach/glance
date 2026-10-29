@@ -633,6 +633,18 @@ export const copy = {
       body: "Add events from an .ics calendar file",
       last: (date: string) => `Last: ${date}`,
     },
+    exportEvents: {
+      title: "Export events",
+      body: "Saves upcoming events as an .ics file · past events are left out",
+      upcoming: (n: number) =>
+        n === 0 ? "No upcoming events" : `${n} upcoming ${n === 1 ? "event" : "events"}`,
+      saved: (n: number) => `Saved ${n} ${n === 1 ? "event" : "events"} · glance-events.ics`,
+      offline: "Offline · needs a connection",
+      download: "Download .ics",
+      fileName: "glance-events.ics",
+      forWho: (names: string) => `For: ${names}`,
+      everyone: "Everyone",
+    },
     season: {
       title: "Season",
       autoLabel: "Auto",

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useReducer, useState } from "react";
+import { copy } from "@/copy";
 import {
   useAccount,
   useAccountCounts,
@@ -18,6 +19,7 @@ import {
   useTagsRepo,
 } from "@/data/repos";
 import { shownBackground } from "@/domain/background";
+import { exportableEvents, toIcs } from "@/domain/exportEvents";
 import { formatMonthDay } from "@/domain/time";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useNetwork } from "@/shell/providers/network";
@@ -41,6 +43,8 @@ const AMBIENT_PATH = "/settings/ambient";
 const IMPORT_PATH = "/settings/import";
 
 const SIGN_IN_PATH = "/signin";
+
+const REVOKE_AFTER_MS = 1000;
 
 const SIGNED_OUT_ALL_PATH = "/signin?toast=signed-out-all";
 
@@ -115,6 +119,19 @@ export function SettingsScreen() {
 
   const [askingMember, setAskingMember] = useState<string | null>(null);
 
+  const [savedEvents, setSavedEvents] = useState<number>();
+
+  const upcoming = exportableEvents(events ?? [], now, tz);
+
+  const exportEvents = () => {
+    saveFile(
+      copy.settings.exportEvents.fileName,
+      toIcs(upcoming, tags ?? [], now, tz, copy.settings.exportEvents),
+    );
+
+    setSavedEvents(upcoming.length);
+  };
+
   const removeMember = (id: string) => {
     setAskingMember(null);
 
@@ -143,6 +160,9 @@ export function SettingsScreen() {
         online && lastImport ? formatMonthDay(new Date(lastImport.importedAt), tz) : undefined
       }
       onOpenImport={() => router.push(IMPORT_PATH)}
+      upcomingEvents={upcoming.length}
+      savedEvents={savedEvents}
+      onExportEvents={exportEvents}
       onOpenAmbient={() => router.push(AMBIENT_PATH)}
       signOut={signOutState}
       onSignOut={() => dispatchSignOut({ type: "open" })}
@@ -165,4 +185,14 @@ export function SettingsScreen() {
       onRemoveMember={removeMember}
     />
   );
+}
+
+function saveFile(name: string, text: string) {
+  const url = URL.createObjectURL(new Blob([text], { type: "text/calendar" }));
+
+  const link = Object.assign(document.createElement("a"), { href: url, download: name });
+
+  link.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);
 }

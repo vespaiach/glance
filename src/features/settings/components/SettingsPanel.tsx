@@ -1,5 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
-import { Bell, CalendarDays } from "lucide-react";
+import { Bell, CalendarDays, Download } from "lucide-react";
 import { copy } from "@/copy";
 import type { ShownBackground } from "@/domain/background";
 import type { AccountSettings, Season } from "@/domain/schemas";
@@ -24,6 +24,10 @@ type SettingsPanelProps = {
   onOpenLocation: () => void;
   lastImport?: string;
   onOpenImport: () => void;
+  online: boolean;
+  upcomingEvents: number;
+  savedEvents?: number;
+  onExportEvents: () => void;
   phone: ThisPhone;
   onAllowPush: () => void;
   onTurnOffPush: () => void;
@@ -105,6 +109,10 @@ export function SettingsPanel({
   onOpenLocation,
   lastImport,
   onOpenImport,
+  online,
+  upcomingEvents,
+  savedEvents,
+  onExportEvents,
   phone,
   onAllowPush,
   onTurnOffPush,
@@ -179,9 +187,24 @@ export function SettingsPanel({
           title={text.importEvents.title}
           description={text.importEvents.body}
           onClick={onOpenImport}
-          divider={false}
         >
           {lastImport && text.importEvents.last(lastImport)}
+        </SettingsRow>
+        <SettingsRow
+          title={text.exportEvents.title}
+          description={text.exportEvents.body}
+          status={exportStatus(online, upcomingEvents, savedEvents)}
+          divider={false}
+        >
+          <Button
+            variant="secondary"
+            icon={Download}
+            disabled={!online || upcomingEvents === 0}
+            onClick={onExportEvents}
+            xstyle={styles.ring}
+          >
+            {text.exportEvents.download}
+          </Button>
         </SettingsRow>
       </div>
     </div>
@@ -261,6 +284,14 @@ function ThisPhoneControl({
         </span>
       );
   }
+}
+
+function exportStatus(online: boolean, upcoming: number, saved: number | undefined): string {
+  const text = copy.settings.exportEvents;
+
+  if (!online) return text.offline;
+
+  return saved === undefined ? text.upcoming(upcoming) : text.saved(saved);
 }
 
 function seasonSubtitle(setting: AccountSettings["season"], season: Season): string {

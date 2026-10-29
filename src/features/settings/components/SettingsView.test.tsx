@@ -66,6 +66,8 @@ function renderView(overrides: Partial<Props> = {}) {
     onOpenBackground: vi.fn(),
     onOpenLocation: vi.fn(),
     onOpenImport: vi.fn(),
+    upcomingEvents: 3,
+    onExportEvents: vi.fn(),
     onOpenAmbient: vi.fn(),
     signOut: { kind: "closed" },
     onSignOut: vi.fn(),
@@ -122,7 +124,7 @@ function notesSlider() {
 
 function rowsText() {
   return screen.getAllByText(
-    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle|Import events)$/,
+    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle|Import events|Export events)$/,
   );
 }
 
@@ -223,6 +225,7 @@ test("SET-05 NOTIF-08 the Notifications rows sit between Temperature and Hide si
     "Chime",
     "Hide sidebar when idle",
     "Import events",
+    "Export events",
   ]);
 });
 
@@ -232,6 +235,44 @@ test("SET-17 Import events is the row after Hide sidebar when idle", () => {
   const names = rowsText().map((row) => row.textContent);
 
   expect(names.indexOf("Import events")).toBe(names.indexOf("Hide sidebar when idle") + 1);
+});
+
+test("SET-18 Export events is the row after Import events", () => {
+  renderView();
+
+  const names = rowsText().map((row) => row.textContent);
+
+  expect(names.indexOf("Export events")).toBe(names.indexOf("Import events") + 1);
+});
+
+test("SET-18 the status counts upcoming events and Download .ics exports them", async () => {
+  const props = renderView({ upcomingEvents: 1 });
+
+  expect(screen.getByRole("status")).toHaveTextContent("1 upcoming event");
+
+  await userEvent.click(screen.getByRole("button", { name: "Download .ics" }));
+
+  expect(props.onExportEvents).toHaveBeenCalledOnce();
+});
+
+test("SET-18 after a download the status says what was saved", () => {
+  renderView({ upcomingEvents: 4, savedEvents: 4 });
+
+  expect(screen.getByRole("status")).toHaveTextContent("Saved 4 events · glance-events.ics");
+});
+
+test("SET-18 the button is disabled with no upcoming events", () => {
+  renderView({ upcomingEvents: 0 });
+
+  expect(screen.getByRole("status")).toHaveTextContent("No upcoming events");
+  expect(screen.getByRole("button", { name: "Download .ics" })).toBeDisabled();
+});
+
+test("SET-18 the button is disabled offline", () => {
+  renderView({ online: false });
+
+  expect(screen.getByRole("status")).toHaveTextContent("Offline · needs a connection");
+  expect(screen.getByRole("button", { name: "Download .ics" })).toBeDisabled();
 });
 
 test("SET-05 the Hide sidebar when idle switch shows and saves the setting", async () => {
