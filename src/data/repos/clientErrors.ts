@@ -1,7 +1,7 @@
 import { CLIENT_BUILD } from "@/domain/build";
 import { CLIENT_ERROR_LIMITS, type ClientError, type ClientErrorEvent } from "@/domain/schemas";
 
-export type ReportExtra = { component?: string };
+export type ReportExtra = { component?: string; digest?: string };
 
 export type ReportError = (event: ClientErrorEvent, error: unknown, extra?: ReportExtra) => void;
 
@@ -10,19 +10,27 @@ export type ErrorReporterDeps = {
   events?: EventTarget;
   online?: () => boolean;
   page?: () => string;
+  now?: () => number;
+  timeZone?: () => string;
 };
 
 const PATH = "/api/client-errors";
 
 const MAX_REPORTS = 20;
 
+const WINDOW_MS = 3_600_000;
+
 export function createErrorReporter({
   fetch = globalThis.fetch.bind(globalThis),
   events = globalThis,
   online = () => navigator.onLine,
   page,
+  now = Date.now,
+  timeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone,
 }: ErrorReporterDeps = {}): ReportError {
   const seen = new Set<string>();
+
+  let windowStart = now();
 
   const waiting: ClientError[] = [];
 
@@ -39,9 +47,23 @@ export function createErrorReporter({
     for (const report of waiting.splice(0)) quietly(() => send(report));
   });
 
+  const startNewWindow = () => {
+    if (now() - windowStart < WINDOW_MS) return;
+
+    seen.clear();
+
+    windowStart = now();
+  };
+
   return (event, error, extra = {}) =>
     quietly(() => {
-      const report = clientError(event, error, page?.(), extra);
+      startNewWindow();
+
+      const report = {
+        ...clientError(event, error, page?.(), extra),
+        occurredAt: new Date(now()).toISOString(),
+        timeZone: timeZone().slice(0, CLIENT_ERROR_LIMITS.timeZone),
+      };
 
       const key = `${report.error.message}\n${report.error.stack?.split("\n")[1] ?? ""}`;
 
@@ -58,7 +80,7 @@ function clientError(
   event: ClientErrorEvent,
   value: unknown,
   page: string | undefined,
-  { component }: ReportExtra,
+  { component, digest }: ReportExtra,
 ): ClientError {
   const error = reportedError(value);
 
@@ -70,6 +92,7 @@ function clientError(
     ...(component !== undefined && {
       component: component.slice(0, CLIENT_ERROR_LIMITS.component),
     }),
+    ...(digest !== undefined && { digest: digest.slice(0, CLIENT_ERROR_LIMITS.digest) }),
   };
 }
 

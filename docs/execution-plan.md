@@ -4,7 +4,7 @@
 |---|---|
 | Version | v5.0 |
 | Date | 2026-10-29 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.30) · [`tech-design.md`](tech-design.md) (v3.22) · design handoff v20 (`Kiosk display mockups.zip`, 2026-10-29) |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.31) · [`tech-design.md`](tech-design.md) (v3.24) · design handoff v20 (`Kiosk display mockups.zip`, 2026-10-29) |
 | Checks | `npm run check` → `npm run typecheck` → `npm test` → `npm run build` |
 
 The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ row whose dependencies are ✅, does it in one PR, merges it and moves on until every row is ✅.
@@ -41,6 +41,7 @@ The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ 
 | I17 | ✅ ([#202](https://github.com/vespaiach/glance/pull/202)) | **Import events page (pure)**: `features/import/components` for IMP-02..IMP-09: Source (with and without a last import), Send from phone, Review, Importing, Imported and the three errors, inside `PageTopBar` with each step's actions; a reducer `step: source · phone · review · importing · done · error(type \| empty \| offline)`; slide in and out; scroll to top on each step. Copy in `copy.ts` | I11 | Tests: `IMP-*` reducer transitions (review → importing → done; importing offline → error → Try again → review; Change → source); "Import {n} events" / "Import 1 event", disabled while importing; Who is a single pick; the skip and done lines with 0, 1 and n; every frame in `/dev/gallery` in four seasons; matches `Glance States - Settings` I1–I7 at the three sizes | IMP-02..09 |
 | I18 | ✅ ([#205](https://github.com/vespaiach/glance/pull/205)) | **Import from this screen**: the SET-17 row and route `/settings/import` → `ImportScreen`, connecting I17 to the transport: Choose file uploads, Review commits, Imported → Open calendar / Undo import, Source's Undo tile from `last`, Back → Settings, offline at Import → the offline error. Guide text for import | I16, I17 | Tests: `SET-17` the row shows "Last: {date}" after an import; `IMP-*` picking a file shows its review; Import shows "{n} events added" and the events reach Calendar after sync; Undo removes them and closes; matches `Glance States - Settings` I1, I3, I4 in the real app at the three sizes | SET-17, IMP-01..10 |
 | I19 | ✅ ([#206](https://github.com/vespaiach/glance/pull/206)) | **Send from phone**: `POST /api/auth/qr { opens: "import" }` (10-minute link, `to=import`, §6.2); the phone opens `/settings/import` and its upload carries `forDisplay`; the waiting screen polls `GET /api/imports/staged` every 3 s and moves to Review when its file arrives; "New code" and 0:00 renew the code | I18 | Tests: `IMP-04` the import link lasts 10 minutes and opens Import; a phone upload for screen A moves A to its review and leaves screen B waiting; New code voids the old link; another account's upload never reaches this screen; matches `Glance States - Settings` I2 at the three sizes | IMP-04, SIGNIN-15 |
+| I20 | ✅ ([#207](https://github.com/vespaiach/glance/pull/207)) | **Client error reporting gaps**: the reporter allows 20 reports per hour instead of per page load, and reports a known error again in a new hour, so a display that runs for weeks keeps reporting; `app/error.tsx` and `app/global-error.tsx` send the error's `digest`, and `onRequestError` logs it, so a screen's report of a server render error matches the server's line; the service worker reports its own `error` and `unhandledrejection` as `sw-crashed`; each report adds `occurredAt` and `timeZone` from the screen, and the server adds a masked IP, `browser`, `device` and `userAgent` from the request; Terms (TERMS-01) say what a report holds (D37, §6.6) | — | Tests: `tech§6.6` after an hour the same error is reported again and the cap starts over; `FAIL-04` the crash screen reports the digest; `tech§6.6` the route logs `digest`; the route accepts `sw-crashed`; `tech§6.6` the log line has a masked IPv4/IPv6, browser, device, user agent, time zone and `occurredAt`; `TERMS-01` the Terms list what a report holds; all Checks pass | FAIL-04, TERMS-01 |
 
 ## Dependency map
 
@@ -56,11 +57,12 @@ graph LR
   I16 --> I18
   I17 --> I18
   I18 --> I19
+  I20
 ```
 
 | Wave | Tasks (run in parallel) |
 |---|---|
-| 1 | I10, I12 |
+| 1 | I10, I12, I20 |
 | 2 | I11, I14 |
 | 3 | I13, I15, I17 |
 | 4 | I16 |

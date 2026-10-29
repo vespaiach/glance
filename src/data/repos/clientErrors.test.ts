@@ -1,6 +1,8 @@
 import { CLIENT_BUILD } from "@/domain/build";
 import { createErrorReporter, type ErrorReporterDeps } from "./clientErrors";
 
+const HOUR_MS = 3_600_000;
+
 function setup(overrides: Partial<ErrorReporterDeps> = {}) {
   const fetch = vi.fn(
     async (_url: string, _init: RequestInit) => new Response(null, { status: 204 }),
@@ -10,10 +12,14 @@ function setup(overrides: Partial<ErrorReporterDeps> = {}) {
 
   let online = true;
 
+  let now = 0;
+
   const report = createErrorReporter({
     fetch: fetch as unknown as typeof globalThis.fetch,
     events,
     online: () => online,
+    now: () => now,
+    timeZone: () => "America/Chicago",
     ...overrides,
   });
 
@@ -29,7 +35,11 @@ function setup(overrides: Partial<ErrorReporterDeps> = {}) {
     events.dispatchEvent(new Event("online"));
   };
 
-  return { report, fetch, sent, goOffline, goOnline };
+  const later = (ms: number) => {
+    now += ms;
+  };
+
+  return { report, fetch, sent, goOffline, goOnline, later };
 }
 
 function thrown(message: string, line = 1) {
@@ -57,8 +67,26 @@ describe("reportError", () => {
         page: "/today",
         build: CLIENT_BUILD,
         component: "TodaySchedule",
+        occurredAt: "1970-01-01T00:00:00.000Z",
+        timeZone: "America/Chicago",
       },
     ]);
+  });
+
+  it("tech§6.6 sends when the error happened, not when the report goes out", () => {
+    const { report, sent, later, goOffline, goOnline } = setup();
+
+    later(Date.parse("2026-10-29T08:00:00.000Z"));
+
+    goOffline();
+
+    report("uncaught", thrown("boom"));
+
+    later(600_000);
+
+    goOnline();
+
+    expect(sent()[0]).toMatchObject({ occurredAt: "2026-10-29T08:00:00.000Z" });
   });
 
   it("tech§6.6 sends no page from the worker", () => {
@@ -86,6 +114,44 @@ describe("reportError", () => {
     for (let index = 0; index < 25; index += 1) report("uncaught", thrown(`boom ${index}`));
 
     expect(fetch).toHaveBeenCalledTimes(20);
+  });
+
+  it("tech§6.6 starts the cap of 20 over each hour", () => {
+    const { report, fetch, later } = setup();
+
+    for (let index = 0; index < 25; index += 1) report("uncaught", thrown(`boom ${index}`));
+
+    later(HOUR_MS - 1);
+
+    report("uncaught", thrown("still capped"));
+
+    expect(fetch).toHaveBeenCalledTimes(20);
+
+    later(1);
+
+    report("uncaught", thrown("next hour"));
+
+    expect(fetch).toHaveBeenCalledTimes(21);
+  });
+
+  it("tech§6.6 reports a known error again in a new hour", () => {
+    const { report, sent, later } = setup();
+
+    report("uncaught", thrown("boom"));
+
+    later(HOUR_MS);
+
+    report("uncaught", thrown("boom"));
+
+    expect(sent().map((line) => line.error.message)).toEqual(["boom", "boom"]);
+  });
+
+  it("tech§6.6 sends the digest of a server render error", () => {
+    const { report, sent } = setup();
+
+    report("page-crashed", thrown("boom"), { digest: "1234567890" });
+
+    expect(sent()[0]).toMatchObject({ event: "page-crashed", digest: "1234567890" });
   });
 
   it("tech§6.6 waits while offline and sends on online", () => {

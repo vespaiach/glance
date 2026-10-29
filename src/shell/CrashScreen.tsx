@@ -4,7 +4,7 @@ import * as stylex from "@stylexjs/stylex";
 import { RotateCw, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { copy } from "@/copy";
-import type { ReportError } from "@/data/repos";
+import type { ReportError, ReportExtra } from "@/data/repos";
 import { colors, space } from "@/theme/tokens.stylex";
 import { Button } from "@/ui/Button";
 import { EmptyState } from "@/ui/EmptyState";
@@ -40,7 +40,7 @@ export function CrashScreen({
   report = reportPageError,
   reload = reloadPage,
 }: CrashScreenProps) {
-  useEffect(() => report("page-crashed", error), [report, error]);
+  useEffect(() => report("page-crashed", error, digestOf(error)), [report, error]);
 
   return (
     <NowProvider>
@@ -76,6 +76,12 @@ function Countdown({ reload }: { reload: () => void }) {
       }
     />
   );
+}
+
+function digestOf(error: unknown): ReportExtra {
+  if (typeof error !== "object" || error === null || !("digest" in error)) return {};
+
+  return typeof error.digest === "string" ? { digest: error.digest } : {};
 }
 
 function reloadPage() {

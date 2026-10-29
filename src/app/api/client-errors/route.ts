@@ -17,11 +17,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const display = await signedInDisplay(request);
 
-  const sender = display.ok
-    ? display.value
-    : { ip: clientIp(request.headers.get("x-forwarded-for")) };
+  const ip = clientIp(request.headers.get("x-forwarded-for"));
 
-  logClientError(sender, report.value);
+  const userAgent = request.headers.get("user-agent") ?? undefined;
+
+  logClientError(display.ok ? display.value : { ip }, report.value, { ip, userAgent });
 
   return new NextResponse(null, { status: 204 });
 }

@@ -12,6 +12,9 @@ const MARIA = {
 
 const OMAR_ACCOUNT = "0192a000-0000-7000-8000-000000000002";
 
+const IPAD_SAFARI =
+  "Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+
 const REPORT: ClientError = {
   event: "zone-crashed",
   error: {
@@ -61,6 +64,65 @@ describe("logClientError", () => {
     ]);
   });
 
+  it("tech§6.6 logs the digest and a service worker crash", () => {
+    const { deps, lines } = setup();
+
+    logClientError(deps, MARIA, { ...REPORT, event: "sw-crashed", digest: "1234567890" });
+
+    expect(lines()[0]).toMatchObject({ event: "sw-crashed", digest: "1234567890" });
+  });
+
+  it("tech§6.6 logs the browser, device, user agent, masked IP, time zone and time", () => {
+    const { deps, lines } = setup();
+
+    const report = {
+      ...REPORT,
+      occurredAt: "2026-10-26T14:07:40.000Z",
+      timeZone: "America/Chicago",
+    };
+
+    logClientError(deps, MARIA, report, { ip: "203.0.113.5", userAgent: IPAD_SAFARI });
+
+    expect(lines()[0]).toMatchObject({
+      occurredAt: "2026-10-26T14:07:40.000Z",
+      timeZone: "America/Chicago",
+      ip: "203.0.113.0",
+      browser: "Safari",
+      device: "tablet",
+      userAgent: IPAD_SAFARI,
+    });
+  });
+
+  it("tech§6.6 masks IPv4, IPv4-mapped and IPv6 addresses", () => {
+    const { deps, lines } = setup();
+
+    for (const ip of [
+      "198.51.100.7",
+      "::ffff:198.51.100.7",
+      "2001:db8:85a3::8a2e:370:7334",
+      "::1",
+    ]) {
+      logClientError(deps, { ip }, REPORT, { ip });
+    }
+
+    expect(lines().map((line) => line.ip)).toEqual([
+      "198.51.100.0",
+      "198.51.100.0",
+      "2001:db8:85a3::",
+      "0:0:0::",
+    ]);
+  });
+
+  it("tech§6.6 cuts the user agent to 300 characters and logs no browser it doesn't know", () => {
+    const { deps, lines } = setup();
+
+    logClientError(deps, MARIA, REPORT, { userAgent: "x".repeat(400) });
+
+    expect(lines()[0]?.userAgent).toHaveLength(300);
+    expect(lines()[0]).toMatchObject({ device: "monitor" });
+    expect(lines()[0]).not.toHaveProperty("browser");
+  });
+
   it("tech§6.6 ignores an account or display id in the body; the session's win", () => {
     const { deps, lines } = setup();
 
@@ -80,7 +142,6 @@ describe("logClientError", () => {
 
     expect(lines()[0]).not.toHaveProperty("accountId");
     expect(lines()[0]).not.toHaveProperty("displayId");
-    expect(lines()[0]).not.toHaveProperty("ip");
   });
 
   it("tech§6.6 allows 30 reports per 10 min per display", () => {

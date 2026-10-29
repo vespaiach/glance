@@ -93,12 +93,12 @@ test("TERMS-01 links Source on GitHub and shows the footer", () => {
   expect(screen.getByText("MIT License")).toBeInTheDocument();
 });
 
-test("TERMS-01 How your data is stored says error reports never hold what you enter", () => {
+test("TERMS-01 How your data is stored says what an error report holds, never what you enter", () => {
   render(<TermsScreen />);
 
   expect(
     screen.getByText(
-      /A report holds the error, the page and the app version, never what you enter/,
+      /A report holds the error, the page, the app version, when it happened and your time zone, your browser and device, and your IP address with its last part removed, never what you enter/,
     ),
   ).toBeInTheDocument();
 });
