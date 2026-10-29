@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.14 |
+| Status | v1.15 |
 | Date | 2026-10-28 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -25,7 +25,7 @@ Requirement IDs (`TODAY-03`, `NOTE-05` …) are cited in tasks, PRs and tests. A
 3. The screen stays useful offline, when a source fails, and during quiet hours (Ambient).
 
 ### 1.2 Out of scope
-Calendar sync (Google/Outlook) · recurring and multi-day events · renaming or recoloring tags · note moderation · photo albums · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming screens or signing out one other screen · roles and permissions · changing the account name or email · session expiry, kiosk lock · reminder dismiss, snooze, per-person reminders and per-event lead times (NOTIF-10).
+Calendar sync (Google/Outlook) · recurring events other than weekly, multi-day events · renaming or recoloring tags · note moderation · photo albums · weather alerts, forecast-day detail · places outside the US, more than one location per account, per-screen locations · guided setup, renaming screens or signing out one other screen · roles and permissions · changing the account name or email · session expiry, kiosk lock · reminder dismiss, snooze, per-person reminders and per-event lead times (NOTIF-10).
 
 ### 1.3 Open questions
 None.
@@ -38,7 +38,7 @@ The **prototype** (`Glance.dc.html`) wins on layout, copy, states and component 
 
 **Settled conflicts:**
 - Today’s photo frame is capped at `25dvh − 24px` on large, none on normal and small (TODAY-07); the prototype has no cap.
-- The event page scrolls as a whole under its sticky task bar (EVT-01, EVT-05), as the mockup and the v18 task bar note show, not Glance Notes' older "The page never scrolls" lines.
+- The event page scrolls as a whole under its sticky task bar (EVT-01, EVT-05), as the mockup and the v19 task bar note show, not Glance Notes' older "The page never scrolls" lines.
 - The event page's ✕ with changes asks "Discard changes?" in the task bar, and from Event details ✕, Discard and Save return to details (EVT-05), not Glance Notes' "× always closes at once".
 - One reminder per event, at the lead time only: no reminder at the start (NOTIF-01, NOTIF-03, NOTIF-04, NOTIF-07); Ambient's Next slot still reads "Now · {start} – {end}" while the event runs (NOTIF-06).
 - New members are still added from the event page's Who picker (EVT-11, FAM-04), which Glance Notes leave without an entry point.
