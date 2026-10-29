@@ -1,11 +1,13 @@
 import * as stylex from "@stylexjs/stylex";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { colors } from "@/theme/tokens.stylex";
 import { IconButton } from "./IconButton";
 
 type PageTopBarProps = {
   backLabel: string;
+  backIcon?: LucideIcon;
+  backDisabled?: boolean;
   onBack?: () => void;
   title?: ReactNode;
   children?: ReactNode;
@@ -43,15 +45,23 @@ const styles = stylex.create({
   },
 });
 
-export function PageTopBar({ backLabel, onBack, title, children }: PageTopBarProps) {
+export function PageTopBar({
+  backLabel,
+  backIcon = ChevronLeft,
+  backDisabled,
+  onBack,
+  title,
+  children,
+}: PageTopBarProps) {
   return (
     <div data-page-top-bar {...stylex.props(styles.bar)}>
       {onBack && (
         <IconButton
-          icon={ChevronLeft}
+          icon={backIcon}
           label={backLabel}
           variant="canvas"
           size="touch"
+          disabled={backDisabled}
           onClick={onBack}
         />
       )}
