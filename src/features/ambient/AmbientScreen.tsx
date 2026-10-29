@@ -9,13 +9,12 @@ import {
   useTags,
   useWeather,
 } from "@/data/repos";
-import { ambientDim } from "@/domain/ambient";
 import { ambientReminder } from "@/domain/reminders";
 import type { AccountSettings, CalendarEvent } from "@/domain/schemas";
 import { whoLabel } from "@/domain/tags";
 import { addDays, dateKey } from "@/domain/zone";
 import { placeLabel } from "@/features/settings";
-import { useBackgroundPhoto } from "@/shell/background";
+import { useBackgroundImage } from "@/shell/background";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow } from "@/shell/providers/now";
 import { useSeason } from "@/shell/providers/season";
@@ -57,7 +56,7 @@ export function AmbientScreen() {
 
   const reminder = useReminderLines(today, time, settings, tz);
 
-  const photo = useBackgroundPhoto();
+  const backdrop = useBackgroundImage("ambient");
 
   const signedOut = useSignedOut();
 
@@ -74,8 +73,8 @@ export function AmbientScreen() {
       unit={settings.tempUnit}
       nextEvent={nextEvent.state}
       reminder={reminder}
-      photoSrc={photo?.src}
-      dim={ambientDim(settings.background.dim)}
+      photoSrc={backdrop?.src}
+      dim={backdrop?.dim ?? 0}
       brightness={settings.ambientBrightness}
       onWake={() => navigate(signedOut ? SIGN_IN : viewPath("today"))}
       wakeRef={wakeRef}

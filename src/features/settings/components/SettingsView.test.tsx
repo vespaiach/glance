@@ -60,7 +60,7 @@ function renderView(overrides: Partial<Props> = {}) {
     account: { name: "Maria", email: "maria@example.com" },
     settings: DEFAULT_SETTINGS,
     season: "fall",
-    background: { mode: "season" },
+    background: { mode: "season", drawing: "fall" },
     breakpoint: "large",
     onChange: vi.fn(),
     onOpenBackground: vi.fn(),
@@ -168,7 +168,7 @@ test("SET-02 choosing a season saves it", async () => {
 });
 
 test.each([
-  [{ mode: "season" }, "Season color"],
+  [{ mode: "season", drawing: "fall" }, "Season color"],
   [{ mode: "photo", photo: COAST }, "Photo · Cannon Beach"],
   [{ mode: "slideshow", photo: COAST, rotate: "daily" }, "Slideshow · daily"],
 ] as const)("SET-03 the Background row summarizes %o as %s", (background, summary) => {

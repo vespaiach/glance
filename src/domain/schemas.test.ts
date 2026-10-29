@@ -381,6 +381,21 @@ describe("AccountSettingsSchema", () => {
     );
   });
 
+  it("tech§6.1 the settings schema accepts Blank and a picked drawing", () => {
+    const blank = { ...settings.background, mode: "blank" };
+
+    const drawing = { ...settings.background, drawing: "winter" };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, background: blank })).toBe(true);
+    expect(accepts(AccountSettingsSchema, { ...settings, background: drawing })).toBe(true);
+  });
+
+  it("tech§6.1 the settings schema rejects an unknown drawing season", () => {
+    const background = { ...settings.background, drawing: "monsoon" };
+
+    expect(accepts(AccountSettingsSchema, { ...settings, background })).toBe(false);
+  });
+
   it("BG-04 rejects a dim outside Off, Light and Strong", () => {
     const background = { ...settings.background, dim: 0.5 };
 

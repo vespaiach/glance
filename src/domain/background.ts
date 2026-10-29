@@ -1,10 +1,11 @@
-import type { AccountSettings, Photo } from "./schemas";
+import type { AccountSettings, Photo, Season } from "./schemas";
 import { dayNumber, wallTime } from "./zone";
 
 type Background = AccountSettings["background"];
 
 export type ShownBackground =
-  | { mode: "season" }
+  | { mode: "season"; drawing: Season }
+  | { mode: "blank" }
   | { mode: "photo"; photo: Photo }
   | { mode: "slideshow"; photo: Photo; rotate: Background["rotate"] };
 
@@ -28,19 +29,38 @@ export function shownBackground(
   photos: readonly Photo[],
   now: Date,
   tz: string,
+  season: Season,
 ): ShownBackground {
+  if (background.mode === "blank") return { mode: "blank" };
+
+  const photo = backgroundPhoto(background, photos, now, tz);
+
+  if (photo === undefined) return { mode: "season", drawing: background.drawing ?? season };
+
+  if (background.mode === "photo") return { mode: "photo", photo };
+
+  return { mode: "slideshow", photo, rotate: background.rotate };
+}
+
+export function backgroundPhoto(
+  background: Background,
+  photos: readonly Photo[],
+  now: Date,
+  tz: string,
+): Photo | undefined {
   const ordered = uploadOrder(photos);
 
-  if (background.mode === "season" || ordered.length === 0) return { mode: "season" };
+  if (ordered.length === 0) return undefined;
 
-  if (background.mode === "photo")
-    return { mode: "photo", photo: ordered[anchorIndex(ordered, background.photoId)] as Photo };
+  if (background.mode === "photo") return ordered[anchorIndex(ordered, background.photoId)];
 
-  return {
-    mode: "slideshow",
-    photo: slideshowPhoto(ordered, background, now, tz),
-    rotate: background.rotate,
-  };
+  if (background.mode === "slideshow") return slideshowPhoto(ordered, background, now, tz);
+
+  return undefined;
+}
+
+export function drawingSrc(season: Season, night = false): string {
+  return `/backgrounds/${season}${night ? "-night" : ""}.svg`;
 }
 
 export function changeBackground(
@@ -52,7 +72,8 @@ export function changeBackground(
 ): Background {
   const next = { ...background, ...change };
 
-  const photoId = change.photoId ?? photoOnScreen(background, photos, now, tz);
+  const photoId =
+    change.photoId ?? backgroundPhoto(background, photos, now, tz)?.id ?? background.photoId;
 
   if (photoId === undefined || next.mode !== "slideshow") return { ...next, photoId };
 
@@ -93,17 +114,6 @@ function slideshowPhoto(
   const index = anchorIndex(ordered, background.photoId) + rotationStep(background.rotate, now, tz);
 
   return ordered[wrap(index, ordered.length)] as Photo;
-}
-
-function photoOnScreen(
-  background: Background,
-  photos: readonly Photo[],
-  now: Date,
-  tz: string,
-): string | undefined {
-  const shown = shownBackground(background, photos, now, tz);
-
-  return shown.mode === "season" ? background.photoId : shown.photo.id;
 }
 
 function slideshowAnchor(

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.17 |
+| Status | v1.18 |
 | Date | 2026-10-28 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -51,8 +51,8 @@ Where Glance departs from the design system:
 | Topic | Glance does |
 |---|---|
 | Navigation | Left sidebar (SHELL-08), no bottom bar, no Ticker |
-| Canvas | Light grey `--hairline-soft` canvas behind white panels, so one layout works on season color and on a photo |
-| Backgrounds | Season color, Photo or Slideshow, with dim. Text zones sit on white panels |
+| Canvas | Light grey `--hairline-soft` canvas behind white panels, so one layout works on a drawing, on a photo and on Blank |
+| Backgrounds | Season drawing, Photo, Slideshow or Blank, with dim (not on Blank). Text zones sit on white panels |
 | Brand | "Glance", plain Geist 540, no logo |
 | Type | Smaller fluid `clamp()` sizes (§4.3). Mono captions 14 px minimum (16 on Ambient). Text is black on light surfaces and white on black or deep ones; never gray or dimmed by opacity. Only Ambient's Medium and Low brightness use solid light grays (AMB-06) |
 | Spacing | 8 px scale only: 4, 8, 12, 16, 24, 32, 48, 96 |
@@ -131,7 +131,7 @@ Type sizes and the gutter are the prototype's overrides of the design-system tok
 The sidebar narrows the page but doesn't change the size. "Large" in a requirement covers normal too unless normal is named.
 
 ### 5.2 Shell
-- Season theme, background = season canvas or photo layer (BG-06). `<main>` scrolls, padding = gutter, 16 px at the bottom.
+- Season theme, background = season drawing, photo layer or the Blank canvas (BG-06). `<main>` scrolls, padding = gutter, 16 px at the bottom.
 - **SHELL-01 Nav:** a left sidebar with seven items in a `nav` named "Main": **Today** `house`, **Calendar** `calendar-days`, **Weather** `cloud-sun`, **Notes** `sticky-note`, **Photos** `image`, then pinned to the bottom **Ambient** `moon` (named "Ambient screen") and **Settings** `settings`.
 - **SHELL-02:** the active view is black with `aria-current="page"`. Settings stays active on its sub-pages. Ambient is never active: it opens the Ambient screen at once (AMB-08).
 - **SHELL-03:** no sidebar on Sign in, Ambient, Terms of Service and the Guide; the page takes the full width.
@@ -250,7 +250,8 @@ interface AccountSettings {            // per account: every screen of the famil
   season: 'auto' | Season;             // Auto: Mar–May Spring, Jun–Aug Summer, Sep–Nov Fall, Dec–Feb Winter
   clock: '12h' | '24h';
   tempUnit: 'F' | 'C';
-  background: { mode: 'season' | 'photo' | 'slideshow'; photoId?: string;
+  background: { mode: 'season' | 'photo' | 'slideshow' | 'blank'; photoId?: string;
+                drawing?: 'spring' | 'summer' | 'fall' | 'winter';   // picked drawing; unset = the current season's
                 dim: 0 | 0.2 | 0.4; rotate: 'hourly' | 'daily' | 'weekly' };
   idleTimeout: { on: boolean; minutes: number };  // 1–15; off = never, minutes kept for when it turns on
   noteExpiry: { on: boolean; days: number };      // 1–30; off = never, days kept
@@ -268,7 +269,7 @@ interface Account { id: string; email: string; name: string | null } // name nul
 interface Display { id: string; accountId: string } // kind, browser and lastSeenAt are server columns, read through the screens list (SET-12)
 ```
 
-**Defaults:** season Auto, 12-hour, °F, background Season color (dim Light, rotate Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle on, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM), ambient brightness Medium, notifications 15 min before, chime on. Push is on or off per device, never in settings (NOTIF-08). Photo storage: SET-13.
+**Defaults:** season Auto, 12-hour, °F, background Season drawing (the current season's; dim Light, rotate Daily), idle on · 3 min, notes on · 7 days, hide sidebar when idle on, ambient Every night 6:00 PM – 7:30 AM (weekends 9:00 PM – 9:00 AM), ambient brightness Medium, notifications 15 min before, chime on. Push is on or off per device, never in settings (NOTIF-08). Photo storage: SET-13.
 
 **Account model:** one family = one account = one email. Sign-up and sign-in are the same email-code flow (SIGNIN-12). Events, tags, notes, photos and settings belong to the account; a display is one signed-in screen with no settings of its own.
 
@@ -521,9 +522,9 @@ Left: the featured image, name, "{date} · {place}" and the featured actions (PH
 | PHOTO-10.4 | Example: Metadata title "OLYMPUS DIGITAL CAMERA" on "P1010001.JPG", no GPS, no modified date → name "P1010001", date the upload day, no place. *(not tested; the placeholder rule and the file-name fallback are)* |
 | PHOTO-11 | The featured photo shows name and "{date} · {place}" (year outside the current year; "No date" without one). **Featured actions**, one row wrapping when narrow: ghost Set as background (PHOTO-15), "Edit details" (`pencil`; opens Photo details and pauses the slideshow) and "Delete" (PHOTO-13); then IconButtons Previous, Play/Pause, Next and Full screen. |
 | PHOTO-12 | **Photo details** sheet: eyebrow "Family photos", title "Photo details", a preview with "File: {file name}" under it (one line, "…"; see `Glance States - Photos`, frames J, K), **Name** (required), **Date taken** (date field, no future dates), **Place**. Each field has a source caption: "From photo", "From photo location", "Guessed from file name", "Guessed from file date", "Guessed from place", "Not in photo", "File name"; a change reads "Edited" (typing back to the original isn't). Empty name → "Add a name"; a future date → "No future dates". Clearing the date saves "No date". Save updates the photo everywhere and syncs; offline it reads "Save for later". |
-| PHOTO-13 | **Delete** (featured actions, ghost `trash-2`, hidden offline): pauses the slideshow and turns in place into a `danger` "Delete photo" and "Cancel"; moving to another photo cancels. Photo details keeps its own Delete with the same confirm. The photo (or the upload) leaves every list on every screen, the next photo takes its place, and its files are deleted. A deleted background photo turns the background back to Season color. |
+| PHOTO-13 | **Delete** (featured actions, ghost `trash-2`, hidden offline): pauses the slideshow and turns in place into a `danger` "Delete photo" and "Cancel"; moving to another photo cancels. Photo details keeps its own Delete with the same confirm. The photo (or the upload) leaves every list on every screen, the next photo takes its place, and its files are deleted. A deleted background photo turns the background back to the Season drawing. |
 | PHOTO-14 | **Full screen** (tap the photo or `maximize`, with at least one finished photo): black, above everything, photo uncropped. Top: "{n} of {total}", "Exit full screen" (`minimize`). Bottom: name, "{date} · {place}", Previous, Play/Pause, Next as IconButtons (see `Glance States - Photos`, frames L, M). Tapping the photo hides or shows both rows (shown on open). The slideshow keeps its state. Esc exits, ← → step, Space plays/pauses. Closes on Exit, a view change or the idle timeout. A `dialog` named "{name} · full screen". |
-| PHOTO-15 | **Set as background:** a ghost "Set as background" (`image`) under the featured photo's name. Tap → that photo becomes the fixed background on every screen (mode Photo, replacing Season color or Slideshow, dim kept) and the slideshow pauses. When the featured photo is already the Photo-mode background it reads "Background now · Change" (`check`) and opens the Background page. |
+| PHOTO-15 | **Set as background:** a ghost "Set as background" (`image`) under the featured photo's name. Tap → that photo becomes the fixed background on every screen (mode Photo, replacing the Season drawing, Blank or Slideshow, dim kept) and the slideshow pauses. When the featured photo is already the Photo-mode background it reads "Background now · Change" (`check`) and opens the Background page. |
 | PHOTO-16 | **Portrait photos** (taller than wide): thumbs, Today’s photo and backgrounds crop them like any photo; the featured photo shows them whole (contain, white bars at the sides, also for uploads measured on load); full screen always shows the whole photo. |
 
 ### 8.7 Settings & Background — `SET`, `BG`
@@ -551,7 +552,7 @@ Settings apply instantly, with no Save button. The main panel uses `Radio`, `Swi
 | BG-03 | In Season color, thumbs are faded (see `Glance States - Settings`, frame B); tapping one switches to Photo. |
 | BG-04 | Right: Preview (mini layout on the current background), "Dim photo" Off · Light · Strong (0, 0.2, 0.4), "Change photo" Hourly · Daily · Weekly (Slideshow only). |
 | BG-05 | Caption: "Screens use a plain light gray background. Pick a photo to switch." / "{title} is the background on every screen. Panels stay solid on top." / "Showing {title}. The photo changes {interval}; panels stay solid on top." |
-| BG-06 | Photo background = the photo cropped to cover the screen under two stacked black layers, each at the dim value, cross-fading (§4.4). Slideshow goes in upload order, the next photo at each local hour, midnight or Sunday midnight. A tapped thumb shows now and the rotation continues from it; mode or interval changes keep the photo on screen. Photo mode with none picked shows the oldest upload. |
+| BG-06 | Season = the current season's drawing (`public/backgrounds/{season}.svg`), or the picked `drawing`, which then stays in every season; it also shows when Photo or Slideshow has no photos. Blank = the plain `--hairline-soft` canvas, no image, dim ignored. Photo background = the photo cropped to cover the screen under two stacked black layers, each at the dim value, cross-fading (§4.4); a drawing takes the same dim. Slideshow goes in upload order, the next photo at each local hour, midnight or Sunday midnight. A tapped thumb shows now and the rotation continues from it; mode or interval changes keep the photo on screen. Photo mode with none picked shows the oldest upload. |
 
 ### 8.8 Ambient — `AMB`
 One full-screen button, text on deep. No sidebar and no wordmark; the rows spread over the full height.
@@ -563,7 +564,7 @@ One full-screen button, text on deep. No sidebar and no wordmark; the rows sprea
 | AMB-03 | Weather: "{temp}° · {condition}" / "Low {low}° overnight · {day} {p}% rain" ({day} "Tomorrow" or "{Wkd}": the first of the next 6 days at ≥ 50%; none → the low alone); offline, "Updated {time}" under it. No location → no weather block. **Next event:** eyebrow "Next · Tomorrow · {start}" or "Next · {Wkd}, {Mon} {d} · {start}" (all-day reads "All day" and comes first), the title, then the location on its own line. None → eyebrow "Next event", "Nothing scheduled" and "Add events from Today" ("Add events and a location from Today" with no location). A due reminder takes over this slot (NOTIF-06). |
 | AMB-04 | Bottom line "Tap anywhere to wake" ("Tap anywhere to sign in" when signed out), fading out 10 s after Ambient starts. A tap → Today (or the signed-out form). Named "Wake screen". |
 | AMB-05 | Enters at the night's dim time and leaves at its wake time (only if Ambient is showing). Never when Off or "Not set". After a wake tap during hours it returns after the idle timeout; a screen that starts during hours gets there the same way. |
-| AMB-06 | Background: season deep, or the photo background dimmed at least 0.6. **Brightness** (SET-10): text and icons are white (Full), `#dcdcdc` (Medium) or `#a3a3a3` (Low), solid colors, each at least 4.5:1 on every deep color. The backlight dims too only where the platform offers a way; browsers don't, so the text color is the whole effect today. |
+| AMB-06 | Background: a drawing background shows its `-night` version with no dim; a photo background is dimmed at least 0.6; Blank shows season deep. **Brightness** (SET-10): text and icons are white (Full), `#dcdcdc` (Medium) or `#a3a3a3` (Low), solid colors, each at least 4.5:1 on every deep color. The backlight dims too only where the platform offers a way; browsers don't, so the text color is the whole effect today. |
 | AMB-07 | Signed out during Ambient: it stays, with the signed-out status (AMB-01) and hint (AMB-04), the clock and saved weather; the next tap or the end of hours opens the signed-out form. |
 | AMB-08 | The sidebar's Ambient item and SET-10 "Preview" open Ambient at once, outside the schedule too. |
 | AMB-10 | **Transitions** (every way in and out, replacing the 280 ms fade). Entering: the current view dims to 25% brightness and scales to 98.5% (420 ms ease-in), then Ambient brightens in from 30% (700 ms ease-out) while its rows rise 16 px and fade in one after another (600 ms each, 120 ms apart, from 200 ms). Leaving: Ambient's rows fade out and lift 12 px (240 ms, 40 ms apart), then the next view brightens from 25% and 98.5% to full (520 ms). Taps during either transition are ignored. Reduced motion: switches at once. |

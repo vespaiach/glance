@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import { ok } from "@/domain/result";
 import type { Photo } from "@/domain/schemas";
 import { NetworkProvider } from "@/shell/providers/network";
+import { SeasonProvider } from "@/shell/providers/season";
 import { shellWrapper } from "@/shell/providers/testShell";
 import { BackgroundScreen } from "./BackgroundScreen";
 
@@ -57,7 +58,9 @@ function renderBackground() {
 
   const wrapper = ({ children }: { children: ReactNode }) => (
     <Shell>
-      <NetworkProvider>{children}</NetworkProvider>
+      <SeasonProvider>
+        <NetworkProvider>{children}</NetworkProvider>
+      </SeasonProvider>
     </Shell>
   );
 

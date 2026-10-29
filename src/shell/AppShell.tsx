@@ -17,7 +17,7 @@ import { colors, motion, sizes, space } from "@/theme/tokens.stylex";
 import { useFieldInView } from "@/ui/fieldInView";
 import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { photoLayer } from "@/ui/photoLayer";
-import { useBackgroundPhoto } from "./background";
+import { useBackgroundImage } from "./background";
 import { useBreakpoint } from "./breakpoint";
 import { isTextField, useKeyboardInset } from "./keyboard";
 import { OfflineNotice } from "./OfflineNotice";
@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const main = usePageTransition<HTMLElement>(pathname);
 
-  const photo = useBackgroundPhoto();
+  const backdrop = useBackgroundImage();
 
   const view = viewForPath(pathname);
 
@@ -132,7 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         styles.besideSidebar(inset),
       )}
     >
-      <PhotoBackdrop image={photo && photoLayer(photo.dim, photo.src)} />
+      <PhotoBackdrop image={backdrop && photoLayer(backdrop.dim, backdrop.src)} />
       <main ref={main} {...stylex.props(styles.main)}>
         {children}
       </main>

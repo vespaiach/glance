@@ -6,6 +6,7 @@ import { type Harness, openHarness, putSyncStatus } from "@/data/repos/testHarne
 import { AppShell } from "./AppShell";
 import { IdleProvider } from "./providers/idle";
 import { NetworkProvider } from "./providers/network";
+import { SeasonProvider } from "./providers/season";
 import { shellWrapper } from "./providers/testShell";
 import { SheetHost, type SheetRequest } from "./SheetHost";
 
@@ -56,11 +57,13 @@ async function renderShell(
 
   const wrapper = ({ children: shell }: { children: ReactNode }) => (
     <Shell>
-      <SheetHost initial={sheet}>
-        <IdleProvider>
-          <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
-        </IdleProvider>
-      </SheetHost>
+      <SeasonProvider>
+        <SheetHost initial={sheet}>
+          <IdleProvider>
+            <NetworkProvider pillDelayMs={0}>{shell}</NetworkProvider>
+          </IdleProvider>
+        </SheetHost>
+      </SeasonProvider>
     </Shell>
   );
 

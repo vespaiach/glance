@@ -1,8 +1,10 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { type Harness, openHarness, synced } from "@/data/repos/testHarness";
 import { DEFAULT_SETTINGS } from "@/domain/defaults";
 import type { AccountSettings, Photo } from "@/domain/schemas";
-import { useBackgroundPhoto } from "./background";
+import { useBackgroundImage } from "./background";
+import { SeasonProvider } from "./providers/season";
 import { shellWrapper } from "./providers/testShell";
 
 function photo(n: number, createdAt: string): Photo {
@@ -31,27 +33,66 @@ afterEach(() => store.close());
 function renderBackground(
   background: Partial<AccountSettings["background"]>,
   frozenAt = new Date(2026, 9, 9, 10, 30),
+  scene: "day" | "ambient" = "day",
 ) {
-  return renderHook(() => useBackgroundPhoto(), {
-    wrapper: shellWrapper(store, {
-      frozenAt,
-      overrides: { background: { ...DEFAULT_SETTINGS.background, ...background } },
-    }),
+  const Shell = shellWrapper(store, {
+    frozenAt,
+    overrides: { background: { ...DEFAULT_SETTINGS.background, ...background } },
   });
+
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <Shell>
+      <SeasonProvider>{children}</SeasonProvider>
+    </Shell>
+  );
+
+  return renderHook(() => useBackgroundImage(scene), { wrapper });
 }
 
 async function savePhotos() {
   await store.db.photos.bulkPut([synced(FIRST), synced(CHOSEN)]);
 }
 
-test("BG-06 Season color mode shows no photo", async () => {
+test("BG-05 Season shows the current season's drawing with its dim", async () => {
   await savePhotos();
 
-  const { result } = renderBackground({ mode: "season", photoId: CHOSEN.id });
+  const { result } = renderBackground({ mode: "season", photoId: CHOSEN.id, dim: 0.4 });
+
+  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/fall.svg", dim: 0.4 }));
+});
+
+test("BG-05 a picked drawing shows in another season", async () => {
+  const { result } = renderBackground({ mode: "season", drawing: "summer" });
+
+  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/summer.svg", dim: 0.2 }));
+});
+
+test("BG-05 Blank shows no image and ignores dim", async () => {
+  await savePhotos();
+
+  const { result } = renderBackground({ mode: "blank", photoId: CHOSEN.id, dim: 0.4 });
 
   await waitFor(() => expect(result.current).not.toBeNull());
 
   expect(result.current).toBeUndefined();
+});
+
+test("AMB-06 a drawing background is the night file with no dim in Ambient", async () => {
+  const { result } = renderBackground({ mode: "season", dim: 0.4 }, undefined, "ambient");
+
+  await waitFor(() =>
+    expect(result.current).toEqual({ src: "/backgrounds/fall-night.svg", dim: 0 }),
+  );
+});
+
+test("AMB-06 a photo background keeps at least the 0.6 dim in Ambient", async () => {
+  await savePhotos();
+
+  const { result } = renderBackground({ mode: "photo", photoId: CHOSEN.id }, undefined, "ambient");
+
+  await waitFor(() =>
+    expect(result.current).toEqual({ src: `/photos/${CHOSEN.id}/display`, dim: 0.6 }),
+  );
 });
 
 test("BG-06 Photo mode shows the chosen photo's display variant with its dim", async () => {
@@ -81,10 +122,8 @@ test("BG-06 an hourly Slideshow shows the next photo each hour, in upload order"
   );
 });
 
-test("BG-06 Photo mode with no photos keeps the season color", async () => {
+test("BG-06 Photo mode with no photos shows the drawing", async () => {
   const { result } = renderBackground({ mode: "photo", photoId: CHOSEN.id });
 
-  await waitFor(() => expect(result.current).not.toBeNull());
-
-  expect(result.current).toBeUndefined();
+  await waitFor(() => expect(result.current).toEqual({ src: "/backgrounds/fall.svg", dim: 0.2 }));
 });

@@ -162,6 +162,7 @@ const BACKGROUND_BASE: BackgroundProps = {
   background: DEFAULT_SETTINGS.background,
   now: NOW,
   tz: GALLERY_TZ,
+  season: "fall",
   uploads: [],
   online: true,
   canUpload: true,
@@ -207,7 +208,7 @@ export function SettingsGallery({ season }: { season: Season }) {
       <GalleryGroup title={gallery.groups.backgroundView}>
         {BACKGROUND_DEMOS.map(({ key, small, ...demo }) => (
           <div key={key} {...stylex.props(small ? styles.small : styles.view)}>
-            <BackgroundView {...BACKGROUND_BASE} {...demo} />
+            <BackgroundView {...BACKGROUND_BASE} season={season} {...demo} />
           </div>
         ))}
       </GalleryGroup>
@@ -308,7 +309,7 @@ function settingsBase(season: Season): SettingsProps {
     tz: GALLERY_TZ,
     settings: { ...DEFAULT_SETTINGS, ...(PORTLAND && { weatherLocation: PORTLAND }) },
     season,
-    background: { mode: "season" },
+    background: { mode: "season", drawing: season },
     breakpoint: "large",
     online: true,
     qr: { tile: { kind: "closed" }, secondsLeft: 180 },

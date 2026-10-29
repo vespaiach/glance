@@ -2,9 +2,9 @@ import * as stylex from "@stylexjs/stylex";
 import { Image } from "lucide-react";
 import { copy } from "@/copy";
 import type { PhotoVariant } from "@/data/repos";
-import { pickPhoto, shownBackground } from "@/domain/background";
+import { drawingSrc, pickPhoto, type ShownBackground, shownBackground } from "@/domain/background";
 import type { Breakpoint } from "@/domain/breakpoint";
-import type { AccountSettings, Photo } from "@/domain/schemas";
+import type { AccountSettings, Photo, Season } from "@/domain/schemas";
 import type { ZoneState } from "@/domain/zoneState";
 import type { UploadTile } from "@/features/photos";
 import { colors, radii, space } from "@/theme/tokens.stylex";
@@ -28,6 +28,7 @@ type BackgroundViewProps = {
   background: Background;
   now: Date;
   tz: string;
+  season: Season;
   uploads: readonly UploadTile[];
   online: boolean;
   canUpload: boolean;
@@ -98,9 +99,9 @@ export function BackgroundView({
 }: BackgroundViewProps) {
   const layout = backgroundLayout(breakpoint);
 
-  const { background, now, tz, photoSrc, onChange } = picker;
+  const { background, now, tz, season, photoSrc, onChange } = picker;
 
-  const shown = shownBackground(background, readyPhotos(state), now, tz);
+  const shown = shownBackground(background, readyPhotos(state), now, tz, season);
 
   const photos = { ...picker, columns: layout.thumbs };
 
@@ -138,7 +139,7 @@ export function BackgroundView({
       <BackgroundOptions
         background={background}
         shown={shown}
-        previewSrc={shown.mode === "season" ? undefined : photoSrc(shown.photo.id, "display")}
+        previewSrc={previewSrc(shown, photoSrc)}
         onChange={onChange}
       />
     </div>
@@ -159,18 +160,29 @@ function ThumbsSkeleton({ columns }: { columns: stylex.StyleXStyles }) {
   );
 }
 
-function Photos({ photos, background, now, tz, onChange, ...rest }: PhotosProps) {
+function Photos({ photos, background, now, tz, season, onChange, ...rest }: PhotosProps) {
   return (
     <div {...stylex.props(styles.photos)}>
       <Eyebrow>{gridLabel(background.mode, photos.length)}</Eyebrow>
       <BackgroundThumbs
         {...rest}
         photos={photos}
-        shown={shownBackground(background, photos, now, tz)}
+        shown={shownBackground(background, photos, now, tz, season)}
         onPick={(photoId) => onChange(pickPhoto(background.mode, photoId))}
       />
     </div>
   );
+}
+
+function previewSrc(
+  shown: ShownBackground,
+  photoSrc: BackgroundViewProps["photoSrc"],
+): string | undefined {
+  if (shown.mode === "blank") return undefined;
+
+  if (shown.mode === "season") return drawingSrc(shown.drawing);
+
+  return photoSrc(shown.photo.id, "display");
 }
 
 function readyPhotos(state: ZoneState<Photo>): readonly Photo[] {
