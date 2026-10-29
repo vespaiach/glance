@@ -122,7 +122,7 @@ function notesSlider() {
 
 function rowsText() {
   return screen.getAllByText(
-    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle)$/,
+    /^(Location|Season|Background|Clock|Temperature|Notifications|Chime|Hide sidebar when idle|Import events)$/,
   );
 }
 
@@ -210,7 +210,7 @@ test("SET-05 the temperature radios save Fahrenheit or Celsius", async () => {
   expect(props.onChange).toHaveBeenCalledWith({ tempUnit: "C" });
 });
 
-test("SET-05 NOTIF-08 the Notifications rows sit between Temperature and Hide sidebar when idle, the last row", () => {
+test("SET-05 NOTIF-08 the Notifications rows sit between Temperature and Hide sidebar when idle", () => {
   renderView();
 
   expect(rowsText().map((row) => row.textContent)).toEqual([
@@ -222,7 +222,16 @@ test("SET-05 NOTIF-08 the Notifications rows sit between Temperature and Hide si
     "Notifications",
     "Chime",
     "Hide sidebar when idle",
+    "Import events",
   ]);
+});
+
+test("SET-17 Import events is the row after Hide sidebar when idle", () => {
+  renderView();
+
+  const names = rowsText().map((row) => row.textContent);
+
+  expect(names.indexOf("Import events")).toBe(names.indexOf("Hide sidebar when idle") + 1);
 });
 
 test("SET-05 the Hide sidebar when idle switch shows and saves the setting", async () => {

@@ -127,13 +127,6 @@ export function SettingsPanel({
           {locationSummary(settings.weatherLocation)}
         </SettingsRow>
         <SettingsRow
-          title={text.importEvents.title}
-          description={text.importEvents.body}
-          onClick={onOpenImport}
-        >
-          {lastImport && text.importEvents.last(lastImport)}
-        </SettingsRow>
-        <SettingsRow
           title={text.season.title}
           description={seasonSubtitle(settings.season, season)}
           align="start"
@@ -181,8 +174,15 @@ export function SettingsPanel({
           description={text.hideSidebar.body}
           checked={settings.hideSidebarWhenIdle}
           onCheckedChange={(checked) => onChange({ hideSidebarWhenIdle: checked })}
-          divider={false}
         />
+        <SettingsRow
+          title={text.importEvents.title}
+          description={text.importEvents.body}
+          onClick={onOpenImport}
+          divider={false}
+        >
+          {lastImport && text.importEvents.last(lastImport)}
+        </SettingsRow>
       </div>
     </div>
   );
