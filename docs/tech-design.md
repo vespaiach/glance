@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v3.09 |
+| Status | v3.10 |
 | Date | 2026-10-28 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.18) · [`design/handoff/`](design/handoff/README.md) (v19) |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.20) · [`design/handoff/`](design/handoff/README.md) (v19) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -51,6 +51,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 | D35 | Guide page | `/guide` is built like `/terms` (D34): a static page outside `(display)` with no session or providers, `app/guide/page.tsx` rendering `features/guide/GuideScreen`, every word in `copy.guide`. The page passes `season={seasonFor("auto", new Date(), "UTC")}` and is regenerated daily (`revalidate = 86400`), so its colors follow the month without a client clock; `GuideScreen` applies that season's theme. The illustrations are decorative (`aria-hidden`) in `features/guide/components/GuideArt`; the FAQ (`GuideFaq`) is the only client component, with the open questions as local state (the first open). Not in `OFFLINE_PAGES`. The sign-in Guide line (`GuideLine`) and the Settings › Account Guide row link to it with `target="_blank"` and `rel="noopener"`. |
 | D36 | Analytics | The root layout loads the Google tag (`gtag.js`, `next/script` `afterInteractive`) on every page when `NEXT_PUBLIC_GOOGLE_TAG_ID` is set at build time; unset (dev, tests) means no tag. Only Google's automatic page views are collected; no custom events, and no app content is ever passed to `gtag`. Disclosed in the Terms (TERMS-01, §"How your data is stored"). |
 | D37 | Client error reporting | Screens never log to the console. Five catch points (a zone's boundary, `app/error.tsx` and `app/global-error.tsx`, the window's `error` and `unhandledrejection`, the sync worker's) call `reportError`, which sends the error to `POST /api/client-errors`; the server logs it as `source: "client"` in the same journal and format as its own errors (§6.6). No third-party error service and no SDK in the bundle. A crash outside a zone shows the crash screen, which reloads on its own (FAIL-04). |
+| D38 | Weekly repeat | `CalendarEvent.repeat` (`v.optional(v.literal("weekly"))`; missing = one day) makes the event a series: one stored row, its `startAt` the first day, no end date (EVT-14). Occurrences are never stored: `domain/repeat.ts` `occurrencesBetween(events, first, end, tz)` expands each series into copies with the series' `id` on every same weekday in `[first, end)` from its first day on (timed: the same local minute in `tz` via `atMinute`, so DST keeps the wall time, and the same length; all-day: the date's UTC midnight, D21), and `nextOccurrence(event, from, tz)` gives the first on or after a day. The event hooks read one-off rows by `startAt` as before and series through the Dexie `repeat` index (§4.1), so every screen gets occurrences. Since an occurrence keeps the series' `id`, tapping one opens the series and Edit and Delete change every week; the event page's draft carries `repeat` so an edit keeps it. Server: migration `018_event_repeat.sql` adds `events.repeat text CHECK (repeat IN ('weekly'))` (null = one day); `CLIENT_BUILD` and `MIN_CLIENT_BUILD` go up (§4.5). |
 
 ---
 
@@ -154,8 +155,8 @@ db-migrations/NNN_*.sql
 
 ### 4.1 Local store (Dexie)
 ```ts
-db.version(7).stores({
-  events:   'id, startAt, deletedAt',   // + everyone, tagIds, notes, notify
+db.version(8).stores({
+  events:   'id, startAt, deletedAt, repeat',   // + everyone, tagIds, notes, notify
   tags:     'id, createdAt, deletedAt',
   members:  null,
   notes:    'id, createdAt, deletedAt',
@@ -166,7 +167,7 @@ db.version(7).stores({
   meta:     'key',                        // cursor, status, lastAuthor
 });
 ```
-- The v3 upgrade copies `members` into `tags` (live rows) and renames each event's `memberIds` to `tagIds`, also in waiting outbox payloads; waiting member puts become tag puts and member deletes are dropped; the v4 upgrade rewrites the stored settings, and any waiting settings put, as `010_settings_values.sql` does; the v5 upgrade deletes `tone` from stored notes and waiting note puts, as `011_note_tone.sql` does (D27); the v6 upgrade sets `reminder: "15min"` on stored events and waiting event puts without one, as `013_event_reminder.sql` did; the v7 upgrade replaces each event's `reminder` with `notify` (`off` → `false`, else `true`) and the settings' `defaultReminder` with `notifyLead` (`off` → `"off"`, else 15), in stored rows and waiting puts, as `017_notify.sql` does (D29). The server migrations do the same, so both sides agree before the first pull.
+- The v3 upgrade copies `members` into `tags` (live rows) and renames each event's `memberIds` to `tagIds`, also in waiting outbox payloads; waiting member puts become tag puts and member deletes are dropped; the v4 upgrade rewrites the stored settings, and any waiting settings put, as `010_settings_values.sql` does; the v5 upgrade deletes `tone` from stored notes and waiting note puts, as `011_note_tone.sql` does (D27); the v6 upgrade sets `reminder: "15min"` on stored events and waiting event puts without one, as `013_event_reminder.sql` did; the v7 upgrade replaces each event's `reminder` with `notify` (`off` → `false`, else `true`) and the settings' `defaultReminder` with `notifyLead` (`off` → `"off"`, else 15), in stored rows and waiting puts, as `017_notify.sql` does (D29); v8 only adds the `repeat` index (D38). The server migrations do the same, so both sides agree before the first pull.
 - **One database per account** (`glance-{accountId}`), deleted on sign-out.
 - Rows keep the server's soft delete (`deletedAt`); hooks filter it out.
 - Pending ("Waiting to post") is derived from the outbox, never stored.
@@ -176,7 +177,7 @@ db.version(7).stores({
 ### 4.2 Repository pattern
 Each repo has a small interface and one Dexie implementation (`createXRepo(store)` + a `useXRepo()` hook). A write is **one Dexie transaction** — the row plus an outbox entry — then `nudge()` once it commits. A put keeps the stored server fields (a new row gets version 0); a remove sets `deletedAt` locally and queues a delete. Settings are one row keyed by `accountId`, merged over defaults. Photo uploads skip the outbox (§6.3); photo edits and deletes use it.
 
-Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day, week or span (`useEventsOnDay`, `useEventsInWeek`, `useEventsBetween`) in `tz`, `useEvent`, `useNextEventAfter`, `useEventsAfter(day, tz, limit)` (the first `limit` all-day and the first `limit` timed events after the day), `useUpcomingEvent`, `useHasEvents`, `useLiveEvents` (every live event, past ones too; the Settings member counts, FAM-08), `useEventRecents` (`recentTitles` / `recentPlaces` of the live events, EVT-12), `useTags` (oldest first), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePhotoSrc`, `useTodaysPhoto(day, tz, skip)`, `useSettings`, `useWeather`, `useSyncStatus`, `useSourceStatus`, `useRetry`, `useSignedOut`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `TagsRepo.add(tag)` and `TagsRepo.remove(id)` (D24) are the tag writes; Settings builds the FAM-08 rows with `features/settings/members.ts` (`memberRemoval` + `removalLine` per tag) for the pure `MemberList`, and keeps which row asks in local state; `outbox.ts` `queued(store, tables, write)` runs several row writes and their outbox entries together.
+Hooks are `useLiveQuery` reads (`undefined` while loading, deleted rows filtered): events by day, week or span (`useEventsOnDay`, `useEventsInWeek`, `useEventsBetween`) in `tz`, with every weekly occurrence in the span (D38), all-day first, then by start, `useEvent` (the stored row, so a series opens as itself), `useNextEventAfter` (a series counts at its next occurrence), `useEventsAfter(day, tz)` (every all-day and timed event after the day, and each series once at its next occurrence), `useUpcomingEvent`, `useHasEvents`, `useLiveEvents` (every live event, past ones too; the Settings member counts, FAM-08), `useEventRecents` (`recentTitles` / `recentPlaces` of the live events, EVT-12), `useTags` (oldest first), `useNote`, `useNotes(now)` (newest first, expired hidden, `waiting` derived), `usePhotos`, `usePhoto`, `usePhotoSrc`, `useTodaysPhoto(day, tz, skip)`, `useSettings`, `useWeather`, `useSyncStatus`, `useSourceStatus`, `useRetry`, `useSignedOut`, `useOutboxEmpty`. So every view updates by itself after any write (EVT-07, FAM-05). `TagsRepo.add(tag)` and `TagsRepo.remove(id)` (D24) are the tag writes; Settings builds the FAM-08 rows with `features/settings/members.ts` (`memberRemoval` + `removalLine` per tag) for the pure `MemberList`, and keeps which row asks in local state; `outbox.ts` `queued(store, tables, write)` runs several row writes and their outbox entries together.
 
 `RepoProvider` takes a `RepoStore` (`db`, `accountId`, `account`, `now`, `startedAt`, `nudge`, `refreshWeather`, `photoSrc`, `upload`, `places`, `locate`, `displays`, `photoUsage`, `issueQr`/`voidQr`, `webPush`, `signOut`, `signOutAll`, `deleteAccount`, `markSignedOut`, `markRevoked`). The shell builds it; tests inject one.
 
@@ -495,7 +496,7 @@ PostgreSQL, from `db-migrations/`:
 | `sign_in_codes` | `email` (primary key: one live code per email), `code_hash`, `time_zone`, `tries` (0–5), `expires_at` |
 | `magic_links` | `token_hash`, `account_id`, `display_id` (QR links, SIGNIN-15), `expires_at`, `used_at` |
 | `tags` | `id`, `account_id`, `name`, `color`, `created_at`, `updated_at`, `deleted_at`, `version` |
-| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `tag_ids text[]` (empty when `everyone`; empty and not `everyone` = nobody), `notes`, `notify` (default `true`), `updated_at`, `deleted_at`, `version` |
+| `events` | `id`, `account_id`, `title`, `start_at`, `end_at` (`> start_at`), `all_day` (no `end_at` when true), `location`, `everyone`, `tag_ids text[]` (empty when `everyone`; empty and not `everyone` = nobody), `notes`, `notify` (default `true`), `repeat` (`weekly` or null, D38), `updated_at`, `deleted_at`, `version` |
 | `notes` | `id`, `account_id`, `text`, `author`, `rotation`, `created_at`, `updated_at`, `deleted_at`, `version` |
 | `photos` | `id`, `account_id`, `title`, `taken_on date`, `place`, `title_source`, `date_source`, `place_source`, `checked`, `file_path`, `files_removed` (D12), `file_name`, `bytes` (stored size of its copies, SET-13), `created_at`, `updated_at`, `deleted_at`, `version` |
 | `settings` | `account_id`, `json jsonb` (AccountSettings), `updated_at`, `version` |
