@@ -38,6 +38,7 @@ describe("001_init", () => {
 
     expect(rows.map((row) => row.name)).toEqual([
       "accounts",
+      "api_keys",
       "displays",
       "events",
       "imports",
@@ -836,5 +837,20 @@ describe("021_event_import_id", () => {
 
     expect(await db().one("SELECT import_id FROM events")).toEqual({ import_id: null });
     await expect(db().run("UPDATE events SET import_id = 'nope'")).rejects.toThrow(/foreign key/);
+  });
+});
+
+describe("022_api_keys", () => {
+  it("D40 an account has at most one key", async () => {
+    await insertAccount("a1");
+
+    const insert = (hash: string) =>
+      db().run(
+        "INSERT INTO api_keys (account_id, key_hash, tail, created_at) VALUES ('a1', $1, 'x9Q2', $2)",
+        [hash, NOW],
+      );
+
+    await insert("h1");
+    await expect(insert("h2")).rejects.toThrow(/duplicate key/);
   });
 });
