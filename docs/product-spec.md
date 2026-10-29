@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.31 |
+| Status | v1.32 |
 | Date | 2026-10-29 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -655,7 +655,8 @@ A one-time copy of an `.ics` calendar file into the calendar. Imported events be
 - FAIL-01: only the failing zone changes: icon, "{Source} unavailable", "The Glance server isn’t responding. Trying again in {n} min." (weather: WX-05), "Try again". On a calendar failure the Now panel shows the clock and weather only. Ambient's failed zones stay blank.
 - FAIL-02: with saved data, keep showing it and add "Updated {time}".
 - FAIL-03: retry after 1, 2 and 5 min, then every 5 min.
-- FAIL-04: **Crash screen:** when a view, Ambient, Sign in, the Guide or the Terms crashes outside a zone, the whole screen shows "Something went wrong", "Glance will reload in {n} s." (counting down from 60) and a "Reload" button, and it reloads on its own at 0. A crash inside a zone shows only that zone's failure (FAIL-01). Every crash is reported to the Glance server with no content the family entered; a report carries the error, the page, the app version, when it happened, the screen's time zone, browser and device, and its IP address with the last part removed (TERMS-01 says so).
+- FAIL-04: **Crash screen:** when a view, Ambient, Sign in, the Guide or the Terms crashes outside a zone, the whole screen shows "Something went wrong", "Glance will reload in {n} s." (counting down from 60) and a "Reload" button, and it reloads on its own at 0. The third crash within 10 minutes stops the countdown: the body reads "Glance keeps running into this problem. Tap Reload to try again." and only Reload reloads. A crash inside a zone shows only that zone's failure (FAIL-01). Every crash is reported to the Glance server with no content the family entered; a report carries the error, the page, the app version, when it happened, the screen's time zone, browser and device, and its IP address with the last part removed (TERMS-01 says so).
+- FAIL-05: **Daily reload:** a screen open for 24 hours or more reloads at its next idle move (IDLE-01, IDLE-03, or Ambient starting or ending) into the view it was moving to; waiting changes are kept. With "Back to Today after" off and no ambient hours, it never reloads on its own.
 
 ### 9.5 Offline — `OFF`
 - OFF-01: black pill bottom-left, 24 px up, at the gutter plus the sidebar inset: wifi-off "Offline · showing saved data" + "Saved {time}" (time hidden on small and on Weather). Appears after 30 s offline.

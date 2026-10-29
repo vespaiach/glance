@@ -12,6 +12,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  vi.useRealTimers();
   db.close();
   await deleteGlanceDb(DB_NAME);
 });
@@ -22,6 +23,7 @@ function fakeWorker() {
     nudge: vi.fn(async () => {}),
     resync: vi.fn(async () => {}),
     refreshWeather: vi.fn(async () => {}),
+    ping: vi.fn(async () => {}),
     stop: vi.fn(async () => {}),
   };
 
@@ -108,5 +110,43 @@ describe("worker sync host", () => {
     expect(spawned[1]?.api.start).toHaveBeenCalledWith(FIXTURE_ACCOUNT.id, expect.anything());
 
     host.stop();
+  });
+
+  it("tech§4.6 respawns a worker that doesn't answer its ping within 10 s", async () => {
+    vi.useFakeTimers();
+
+    const { host, spawned } = workerHost();
+
+    await host.start(FIXTURE_ACCOUNT.id);
+
+    spawned[0]?.api.ping.mockReturnValue(new Promise<void>(() => {}));
+
+    await vi.advanceTimersByTimeAsync(70_000);
+
+    expect(spawned).toHaveLength(2);
+    expect(spawned[0]?.terminate).toHaveBeenCalledTimes(1);
+    expect(spawned[1]?.api.start).toHaveBeenCalledWith(FIXTURE_ACCOUNT.id, expect.anything());
+
+    host.stop();
+    vi.useRealTimers();
+  });
+
+  it("tech§4.6 keeps a worker that answers its ping, and stops pinging after stop", async () => {
+    vi.useFakeTimers();
+
+    const { host, spawned } = workerHost();
+
+    await host.start(FIXTURE_ACCOUNT.id);
+
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+
+    host.stop();
+
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+
+    expect(spawned).toHaveLength(1);
+    expect(spawned[0]?.api.ping).toHaveBeenCalledTimes(5);
+
+    vi.useRealTimers();
   });
 });

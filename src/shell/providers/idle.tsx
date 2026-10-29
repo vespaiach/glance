@@ -18,6 +18,7 @@ import {
   useSyncStatus,
 } from "@/data/repos";
 import { idleDue, idleTimeoutSeconds, inAmbient } from "@/domain/idle";
+import { reloadDue } from "@/domain/recovery";
 import { isTextField } from "../keyboard";
 import { useSheetHost } from "../SheetHost";
 import { useAmbientNavigate } from "../useAmbientNavigate";
@@ -79,6 +80,8 @@ export function IdleProvider({
 
   const [listeners] = useState<IdleListeners>(() => new Set());
 
+  const [loadedAt] = useState(() => store.get());
+
   const current = {
     pathname,
     close,
@@ -114,7 +117,7 @@ export function IdleProvider({
 
       if (updateDue(latest.current)) return updates.applyUpdate(() => reload(path));
 
-      if (latest.current.outdated) return reload(path);
+      if (latest.current.outdated || reloadDue(loadedAt, store.get())) return reload(path);
 
       if (latest.current.pathname === path) return;
 
@@ -161,7 +164,7 @@ export function IdleProvider({
       stopWatching();
       unsubscribe();
     };
-  }, [store, idleSeconds, schedule, tz, listeners]);
+  }, [store, idleSeconds, schedule, tz, listeners, loadedAt]);
 
   return <IdleListenersContext value={listeners}>{children}</IdleListenersContext>;
 }

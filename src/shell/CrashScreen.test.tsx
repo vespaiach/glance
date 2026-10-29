@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { CrashScreen } from "./CrashScreen";
 
 beforeEach(() => {
+  sessionStorage.clear();
   vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
 });
 
@@ -80,4 +81,46 @@ describe("CrashScreen", () => {
 
     expect(reload).toHaveBeenCalledTimes(1);
   });
+
+  it("FAIL-04 the third crash within 10 minutes stops the countdown and waits for Reload", () => {
+    crashAndReload();
+    crashAndReload();
+
+    const { reload } = renderCrash();
+
+    expect(
+      screen.getByText("Glance keeps running into this problem. Tap Reload to try again."),
+    ).toBeInTheDocument();
+
+    wait(120);
+
+    expect(reload).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reload" }));
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it("FAIL-04 a crash 10 minutes after the earlier ones counts down again", () => {
+    crashAndReload();
+    crashAndReload();
+
+    wait(600);
+
+    const { reload } = renderCrash();
+
+    expect(screen.getByText("Glance will reload in 60 s.")).toBeInTheDocument();
+
+    wait(60);
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });
+
+function crashAndReload() {
+  const { view } = renderCrash();
+
+  wait(60);
+
+  view.unmount();
+}
