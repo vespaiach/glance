@@ -14,6 +14,7 @@ export type AuthDeps = {
     ip: RateLimiter;
     verify: RateLimiter;
     qr: RateLimiter;
+    apiKey: RateLimiter;
   };
 };
 

@@ -7,6 +7,7 @@ import { env } from "../env";
 import { mailer } from "../mail";
 import { photoStore } from "../storage";
 import * as account from "./account";
+import * as apiKeys from "./apiKeys";
 import * as codes from "./codes";
 import type { AuthDeps } from "./deps";
 import * as qr from "./qr";
@@ -16,10 +17,13 @@ import * as sessions from "./sessions";
 import * as status from "./status";
 import { newCode } from "./tokens";
 
+export type { ApiKeyRefusal } from "./apiKeys";
 export type { CodeError } from "./codes";
 export { clientIp, isAllowedOrigin } from "./guards";
 export type { QrCode } from "./qr";
 export type { SessionError, SignedInDisplay } from "./sessions";
+
+const ONE_MINUTE = 60 * 1000;
 
 const TEN_MINUTES = 10 * 60 * 1000;
 
@@ -57,6 +61,10 @@ export function authStatus(sessionToken: string | undefined) {
 
 export function requireDisplay(sessionToken: string | undefined) {
   return sessions.requireDisplay(deps(), sessionToken);
+}
+
+export function requireApiKey(authorization: string | null) {
+  return apiKeys.requireApiKey(deps(), authorization);
 }
 
 export function signOut(sessionToken: string | undefined): Promise<void> {
@@ -101,6 +109,7 @@ function deps(): AuthDeps {
       ip: createRateLimiter({ limit: 20, windowMs: TEN_MINUTES }),
       verify: createRateLimiter({ limit: 30, windowMs: TEN_MINUTES }),
       qr: createRateLimiter({ limit: 30, windowMs: ONE_HOUR }),
+      apiKey: createRateLimiter({ limit: 60, windowMs: ONE_MINUTE }),
     },
   };
 

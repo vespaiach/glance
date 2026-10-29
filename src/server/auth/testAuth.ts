@@ -63,6 +63,7 @@ export function authHarnessPerTest(): AuthHarness {
           ip: createRateLimiter({ limit: 20, windowMs: 600_000 }),
           qr: createRateLimiter({ limit: 30, windowMs: 3_600_000 }),
           verify: createRateLimiter({ limit: 30, windowMs: 600_000 }),
+          apiKey: createRateLimiter({ limit: 60, windowMs: 60_000 }),
         },
       };
 
