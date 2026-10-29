@@ -127,6 +127,7 @@ function caption(shown: ShownBackground): string {
 
   switch (shown.mode) {
     case "season":
+    case "blank":
       return text.season;
     case "photo":
       return text.photo(shown.photo.title);

@@ -1,6 +1,8 @@
 import {
   backgroundAfterDelete,
+  backgroundPhoto,
   changeBackground,
+  drawingSrc,
   pickPhoto,
   rotationStep,
   shownBackground,
@@ -41,31 +43,56 @@ const slideshow = (rotate: Background["rotate"], photoId = TRAIL.id) =>
   background({ mode: "slideshow", rotate, photoId });
 
 const shownTitle = (bg: Background, photos: readonly Photo[], now: Date) => {
-  const shown = shownBackground(bg, photos, now, tz);
-
-  return shown.mode === "season" ? undefined : shown.photo.title;
+  return backgroundPhoto(bg, photos, now, tz)?.title;
 };
 
-test("BG-05 Season color mode shows the season palette", () => {
+test("BG-05 Season shows the current season's drawing", () => {
   expect(
-    shownBackground(background({ mode: "season", photoId: COAST.id }), PHOTOS, NOW, tz),
-  ).toEqual({
+    shownBackground(background({ mode: "season", photoId: COAST.id }), PHOTOS, NOW, tz, "fall"),
+  ).toEqual({ mode: "season", drawing: "fall" });
+});
+
+test("BG-05 a picked drawing stays in every season", () => {
+  const picked = background({ mode: "season", drawing: "spring" });
+
+  expect(
+    (["spring", "summer", "fall", "winter"] as const).map((season) =>
+      shownBackground(picked, PHOTOS, NOW, tz, season),
+    ),
+  ).toEqual(Array(4).fill({ mode: "season", drawing: "spring" }));
+});
+
+test("BG-05 with no photos Photo and Slideshow show the drawing", () => {
+  expect(shownBackground(background({ mode: "photo" }), [], NOW, tz, "winter")).toEqual({
     mode: "season",
+    drawing: "winter",
+  });
+  expect(shownBackground(background({ mode: "slideshow" }), [], NOW, tz, "winter")).toEqual({
+    mode: "season",
+    drawing: "winter",
   });
 });
 
-test("BG-05 with no photos every mode shows the season palette", () => {
-  expect(shownBackground(background({ mode: "photo" }), [], NOW, tz)).toEqual({ mode: "season" });
-  expect(shownBackground(background({ mode: "slideshow" }), [], NOW, tz)).toEqual({
-    mode: "season",
-  });
+test("BG-05 Blank shows no image, with photos or without", () => {
+  const blank = background({ mode: "blank", photoId: COAST.id, drawing: "summer", dim: 0.4 });
+
+  expect(shownBackground(blank, PHOTOS, NOW, tz, "fall")).toEqual({ mode: "blank" });
+  expect(shownBackground(blank, [], NOW, tz, "fall")).toEqual({ mode: "blank" });
+});
+
+test("BG-05 drawingSrc names the season's drawing and its night version", () => {
+  expect(drawingSrc("winter")).toBe("/backgrounds/winter.svg");
+  expect(drawingSrc("winter", true)).toBe("/backgrounds/winter-night.svg");
 });
 
 test("BG-05 Photo mode shows the chosen photo at any time", () => {
   const chosen = background({ mode: "photo", photoId: APPLES.id });
 
-  expect(shownBackground(chosen, PHOTOS, NOW, tz)).toEqual({ mode: "photo", photo: APPLES });
-  expect(shownBackground(chosen, PHOTOS, new Date(2026, 11, 25, 3), tz)).toEqual({
+  expect(shownBackground(chosen, PHOTOS, NOW, tz, "fall")).toEqual({
+    mode: "photo",
+    photo: APPLES,
+  });
+  expect(shownBackground(chosen, PHOTOS, new Date(2026, 11, 25, 3), tz, "winter")).toEqual({
     mode: "photo",
     photo: APPLES,
   });
@@ -74,12 +101,12 @@ test("BG-05 Photo mode shows the chosen photo at any time", () => {
 test("BG-05 a missing or unknown photo falls back to the oldest upload, whatever the list order", () => {
   const newestFirst = [COAST, APPLES, TRAIL];
 
-  expect(shownBackground(background({ mode: "photo" }), newestFirst, NOW, tz)).toEqual({
+  expect(shownBackground(background({ mode: "photo" }), newestFirst, NOW, tz, "fall")).toEqual({
     mode: "photo",
     photo: TRAIL,
   });
   expect(
-    shownBackground(background({ mode: "photo", photoId: "gone" }), newestFirst, NOW, tz),
+    shownBackground(background({ mode: "photo", photoId: "gone" }), newestFirst, NOW, tz, "fall"),
   ).toEqual({ mode: "photo", photo: TRAIL });
 });
 
@@ -94,10 +121,16 @@ test("PHOTO-13 deleting the background photo falls back to the oldest upload in 
   );
 });
 
-test("PHOTO-13 deleting the Photo-mode background photo turns the background back to Season color", () => {
+test("PHOTO-13 deleting the Photo-mode background photo returns to the drawing", () => {
   const chosen = background({ mode: "photo", photoId: APPLES.id, dim: 0.4 });
 
-  expect(backgroundAfterDelete(chosen, APPLES.id)).toEqual({ ...chosen, mode: "season" });
+  const after = backgroundAfterDelete(chosen, APPLES.id);
+
+  expect(after).toEqual({ ...chosen, mode: "season" });
+  expect(shownBackground(after, [TRAIL, COAST], NOW, tz, "fall")).toEqual({
+    mode: "season",
+    drawing: "fall",
+  });
 });
 
 test("PHOTO-13 deleting another photo, or a photo in Slideshow, keeps the background", () => {
@@ -122,7 +155,7 @@ test("BG-06 rotationStep counts local hours, days and Sunday-start weeks", () =>
 test("SET-03 Slideshow mode carries the shown photo and its interval", () => {
   const anchored = changeBackground(slideshow("weekly"), PHOTOS, { photoId: APPLES.id }, NOW, tz);
 
-  expect(shownBackground(anchored, PHOTOS, NOW, tz)).toEqual({
+  expect(shownBackground(anchored, PHOTOS, NOW, tz, "fall")).toEqual({
     mode: "slideshow",
     photo: APPLES,
     rotate: "weekly",

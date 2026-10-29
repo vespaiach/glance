@@ -167,8 +167,9 @@ export const AccountSettingsSchema = v.object({
   clock: v.picklist(["12h", "24h"]),
   tempUnit: v.picklist(["F", "C"]),
   background: v.object({
-    mode: v.picklist(["season", "photo", "slideshow"]),
+    mode: v.picklist(["season", "photo", "slideshow", "blank"]),
     photoId: v.optional(IdSchema),
+    drawing: v.optional(SeasonSchema),
     dim: v.picklist([0, 0.2, 0.4]),
     rotate: v.picklist(["hourly", "daily", "weekly"]),
   }),

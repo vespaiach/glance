@@ -14,7 +14,7 @@ import {
   useTodaysPhoto,
   useWeather,
 } from "@/data/repos";
-import { shownBackground } from "@/domain/background";
+import { backgroundPhoto } from "@/domain/background";
 import type { Breakpoint } from "@/domain/breakpoint";
 import { dayRibbon } from "@/domain/dayRibbon";
 import { slotTimes } from "@/domain/eventTimes";
@@ -353,9 +353,7 @@ function backgroundId(
   now: Date,
   tz: string,
 ): string | undefined {
-  const shown = shownBackground(background, photos, now, tz);
-
-  return shown.mode === "season" ? undefined : shown.photo.id;
+  return backgroundPhoto(background, photos, now, tz)?.id;
 }
 
 function shownPhoto({ state, pick, thisYear, photoSrc }: PickInput): ZoneState<ShownPhoto> {

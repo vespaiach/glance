@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { copy } from "@/copy";
+import { drawingSrc } from "@/domain/background";
 import { IDLE_MINUTES, type Season, type Tone } from "@/domain/schemas";
 import type { Clock as ClockFormat } from "@/domain/time";
 import { colors, space } from "@/theme/tokens.stylex";
@@ -27,8 +28,10 @@ import { ForecastDay } from "@/ui/ForecastDay";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
 import { OfflinePill } from "@/ui/OfflinePill";
+import { PhotoBackdrop } from "@/ui/PhotoBackdrop";
 import { PillLink } from "@/ui/PillLink";
 import { PillTabs } from "@/ui/PillTabs";
+import { photoLayer } from "@/ui/photoLayer";
 import { Radio } from "@/ui/Radio";
 import { SettingsRow } from "@/ui/SettingsRow";
 import { Sheet } from "@/ui/Sheet";
@@ -109,6 +112,15 @@ const styles = stylex.create({
     borderRadius: 24,
     backgroundColor: colors.surfaceSoft,
   },
+  backdrop: {
+    position: "relative",
+    isolation: "isolate",
+    width: 280,
+    aspectRatio: "16 / 9",
+    borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: colors.hairlineSoft,
+  },
   forecast: {
     display: "flex",
     gap: space.xs,
@@ -134,6 +146,7 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <TimeGroup />
       <SharedGroup />
       <ZoneGroup />
+      <BackdropGroup season={season} />
       <TodayGallery season={season} />
       <CalendarGallery />
       <PersonFilterGallery />
@@ -149,6 +162,27 @@ export function SeasonGallery({ season }: SeasonGalleryProps) {
       <SignInGallery season={season} />
       <ReminderGallery />
     </>
+  );
+}
+
+function BackdropGroup({ season }: SeasonGalleryProps) {
+  const tiles = [
+    [gallery.backdrop.drawing, photoLayer(0.2, drawingSrc(season))],
+    [gallery.backdrop.night, photoLayer(0, drawingSrc(season, true))],
+    [gallery.backdrop.blank, undefined],
+  ] as const;
+
+  return (
+    <GalleryGroup title={gallery.groups.backdrop}>
+      {tiles.map(([label, image]) => (
+        <div key={label} {...stylex.props(styles.tile)}>
+          <Eyebrow>{label}</Eyebrow>
+          <div {...stylex.props(styles.backdrop)}>
+            <PhotoBackdrop image={image} />
+          </div>
+        </div>
+      ))}
+    </GalleryGroup>
   );
 }
 

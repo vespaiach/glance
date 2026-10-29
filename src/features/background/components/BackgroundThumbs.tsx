@@ -184,5 +184,5 @@ function UploadPhoto({ online, onUpload }: { online: boolean; onUpload: () => vo
 }
 
 function selectedId(shown: ShownBackground): string | undefined {
-  return shown.mode === "season" ? undefined : shown.photo.id;
+  return "photo" in shown ? shown.photo.id : undefined;
 }

@@ -8,6 +8,7 @@ import { newestFirst, usePhotoPicker, useUploads } from "@/features/photos";
 import { useBreakpoint } from "@/shell/breakpoint";
 import { useNetwork } from "@/shell/providers/network";
 import { useNow, useNowStore } from "@/shell/providers/now";
+import { useSeason } from "@/shell/providers/season";
 import { useAccountSettings } from "@/shell/providers/settings";
 import { useTimeZone } from "@/shell/providers/timeZone";
 import { useSyncedZone } from "@/shell/sourceZone";
@@ -55,6 +56,7 @@ export function BackgroundScreen() {
         background={background}
         now={now}
         tz={tz}
+        season={useSeason()}
         uploads={uploads.tiles}
         online={online}
         canUpload={breakpoint !== "small"}

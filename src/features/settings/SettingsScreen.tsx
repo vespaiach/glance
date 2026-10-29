@@ -124,7 +124,7 @@ export function SettingsScreen() {
       tz={tz}
       settings={settings}
       season={season}
-      background={shownBackground(settings.background, photos ?? [], now, tz)}
+      background={shownBackground(settings.background, photos ?? [], now, tz, season)}
       breakpoint={breakpoint}
       online={online}
       qr={qr}

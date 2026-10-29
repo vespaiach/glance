@@ -265,6 +265,7 @@ function backgroundSummary(background: ShownBackground): string {
 
   switch (background.mode) {
     case "season":
+    case "blank":
       return text.season;
     case "photo":
       return text.photo(background.photo.title);

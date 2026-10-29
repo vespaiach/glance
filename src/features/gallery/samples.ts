@@ -78,6 +78,7 @@ export const gallery = {
     fullScreen: "Full screen photos",
     settingsView: "Settings view",
     backgroundView: "Background view",
+    backdrop: "Backdrop",
     locationView: "Location view",
     ambientScheduleView: "Ambient screen view",
     ambientView: "Ambient view",
@@ -90,6 +91,11 @@ export const gallery = {
     expanded: "Expanded",
     large: "large",
     small: "small",
+  },
+  backdrop: {
+    drawing: "Drawing · dim Light",
+    night: "Night drawing · Ambient",
+    blank: "Blank",
   },
   fullScreen: {
     shown: "Controls shown",

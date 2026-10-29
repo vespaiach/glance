@@ -42,6 +42,7 @@ function renderView(overrides: Partial<Props> = {}) {
     background: background(),
     now: new Date(2026, 9, 9, 10, 41),
     tz,
+    season: "fall",
     uploads: [],
     online: true,
     canUpload: true,
