@@ -87,18 +87,41 @@ export function createAppServiceWorker(
   };
 }
 
+export function createDevServiceWorker(
+  container: ServiceWorkerContainer | undefined,
+): AppServiceWorker {
+  return { ...createAppServiceWorker(undefined), register: () => unregisterAll(container) };
+}
+
 export function appServiceWorker(): AppServiceWorker {
-  shared ??= createAppServiceWorker(serviceWorkerContainer());
+  shared ??= isDevelopment()
+    ? createDevServiceWorker(browserContainer())
+    : createAppServiceWorker(serviceWorkerContainer());
 
   return shared;
 }
 
 export function serviceWorkerContainer(): ServiceWorkerContainer | undefined {
-  if (process.env.NODE_ENV === "development") return undefined;
+  if (isDevelopment()) return undefined;
 
+  return browserContainer();
+}
+
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === "development";
+}
+
+function browserContainer(): ServiceWorkerContainer | undefined {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return undefined;
 
   return navigator.serviceWorker;
+}
+
+function unregisterAll(container: ServiceWorkerContainer | undefined) {
+  container
+    ?.getRegistrations()
+    .then((found) => Promise.all(found.map((registration) => registration.unregister())))
+    .catch(() => {});
 }
 
 function installed(worker: ServiceWorker | null | undefined): Promise<void> | undefined {

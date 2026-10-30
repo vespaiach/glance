@@ -1,5 +1,5 @@
 import { SW_URL, WARM_PHOTOS } from "../sw/rules";
-import { createAppServiceWorker, UPDATE_CHECK_MS } from "./serviceWorker";
+import { createAppServiceWorker, createDevServiceWorker, UPDATE_CHECK_MS } from "./serviceWorker";
 
 function fakeWorker() {
   return { postMessage: vi.fn() } as unknown as ServiceWorker & {
@@ -75,6 +75,21 @@ describe("registration", () => {
     await vi.advanceTimersByTimeAsync(UPDATE_CHECK_MS);
 
     expect(registration.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("D16 in development unregisters a worker a production build left behind", async () => {
+    const leftover = { unregister: vi.fn(async () => true) };
+
+    const container = {
+      register: vi.fn(),
+      getRegistrations: vi.fn(async () => [leftover]),
+    } as unknown as ServiceWorkerContainer;
+
+    createDevServiceWorker(container).register();
+
+    await vi.waitFor(() => expect(leftover.unregister).toHaveBeenCalledTimes(1));
+
+    expect(container.register).not.toHaveBeenCalled();
   });
 
   it("D16 without service worker support every call does nothing", () => {
