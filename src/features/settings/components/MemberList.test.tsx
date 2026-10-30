@@ -60,6 +60,13 @@ test("FAM-08 each Remove button is named after its member", () => {
     expect(screen.getByRole("button", { name: `Remove ${name}` })).toBeInTheDocument();
 });
 
+test("FAM-08 each Remove button is an icon with no visible text", () => {
+  renderList();
+
+  for (const name of ["Mom", "Tin", "Ba"])
+    expect(screen.getByRole("button", { name: `Remove ${name}` })).toHaveTextContent(/^$/);
+});
+
 test("FAM-08 the first tap asks and swaps the count for the result line", async () => {
   const onRemove = renderList();
 
