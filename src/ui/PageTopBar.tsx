@@ -10,6 +10,7 @@ type PageTopBarProps = {
   backDisabled?: boolean;
   onBack?: () => void;
   title?: ReactNode;
+  compact?: boolean;
   children?: ReactNode;
 };
 
@@ -43,6 +44,15 @@ const styles = stylex.create({
     lineHeight: 1.1,
     whiteSpace: "nowrap",
   },
+  compactBar: {
+    minHeight: 56,
+    gap: 8,
+    paddingBlock: 8,
+    paddingInline: 12,
+  },
+  compactTitle: {
+    fontSize: 20,
+  },
 });
 
 export function PageTopBar({
@@ -51,21 +61,24 @@ export function PageTopBar({
   backDisabled,
   onBack,
   title,
+  compact,
   children,
 }: PageTopBarProps) {
   return (
-    <div data-page-top-bar {...stylex.props(styles.bar)}>
+    <div data-page-top-bar {...stylex.props(styles.bar, compact && styles.compactBar)}>
       {onBack && (
         <IconButton
           icon={backIcon}
           label={backLabel}
           variant="canvas"
-          size="touch"
+          size={compact ? "md" : "touch"}
           disabled={backDisabled}
           onClick={onBack}
         />
       )}
-      {title && <span {...stylex.props(styles.title)}>{title}</span>}
+      {title && (
+        <span {...stylex.props(styles.title, compact && styles.compactTitle)}>{title}</span>
+      )}
       {children}
     </div>
   );
