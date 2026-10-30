@@ -129,7 +129,7 @@ test("SHEET focus returns to the opener when the sheet closes", () => {
   expect(screen.getByRole("button", { name: "Open" })).toHaveFocus();
 });
 
-test("KB-02 with the keyboard up, the sheet scrolls inside to the focused field", () => {
+test("KB-02 with the keyboard up, the sheet body scrolls the focused field 16 px above its bottom", () => {
   render(
     <Sheet title="New note" closeLabel="Close" onClose={() => {}} keyboardInset={300}>
       <TextInput label="Message" value="" onChange={() => {}} multiline />
@@ -137,12 +137,16 @@ test("KB-02 with the keyboard up, the sheet scrolls inside to the focused field"
   );
 
   const body = sheetBody();
-  body.getBoundingClientRect = () => ({ top: 140 }) as DOMRect;
-  screen.getByText("Message").getBoundingClientRect = () => ({ top: 300 }) as DOMRect;
+  const field = screen.getByRole("textbox", { name: "Message" });
+  vi.stubGlobal("visualViewport", Object.assign(new EventTarget(), { offsetTop: 0, height: 500 }));
+  body.getBoundingClientRect = () => ({ top: 140, bottom: 480 }) as DOMRect;
+  screen.getByText("Message").getBoundingClientRect = () => ({ top: 300, bottom: 320 }) as DOMRect;
+  field.getBoundingClientRect = () => ({ top: 330, bottom: 600 }) as DOMRect;
 
-  screen.getByRole("textbox", { name: "Message" }).focus();
+  field.focus();
 
-  expect(body.scrollTop).toBe(300 - 140 - 24);
+  expect(body.scrollTop).toBe(600 - (480 - 16));
+  vi.unstubAllGlobals();
 });
 
 test("§8.9 the header and the actions sit outside the scrolling body", () => {
