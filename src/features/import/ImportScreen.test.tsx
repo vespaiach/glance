@@ -56,6 +56,7 @@ const REVIEW: ImportReview = {
   ],
   newCount: 2,
   duplicates: 1,
+  matched: 0,
 };
 
 const LAST = {
@@ -148,7 +149,9 @@ test("IMP-06 a file with only past events shows No upcoming events in this file"
 });
 
 test("IMP-08 Import commits for the picked person, shows the events added and syncs them in", async () => {
-  store.imports.commit.mockResolvedValue(ok({ count: 2, range: REVIEW.range, who: MIA.id }));
+  store.imports.commit.mockResolvedValue(
+    ok({ count: 2, range: REVIEW.range, who: MIA.id, matched: 0 }),
+  );
   await pickFile();
 
   await userEvent.click(await screen.findByRole("radio", { name: "Mia" }));
@@ -183,7 +186,9 @@ test("IMP-08 a failed commit shows Couldn’t import, and Try again returns to t
 });
 
 async function imported() {
-  store.imports.commit.mockResolvedValue(ok({ count: 2, range: REVIEW.range, who: "everyone" }));
+  store.imports.commit.mockResolvedValue(
+    ok({ count: 2, range: REVIEW.range, who: "everyone", matched: 0 }),
+  );
   store.imports.undo.mockResolvedValue(ok(undefined));
   await pickFile();
 

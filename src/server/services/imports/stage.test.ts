@@ -1,5 +1,6 @@
-import type { CalendarEvent } from "@/domain/schemas";
+import type { CalendarEvent, Tag } from "@/domain/schemas";
 import { putEvent } from "../events";
+import { putTag, removeTag } from "../tags";
 import { MARIA, OMAR, START, serviceHarnessPerTest } from "../testServices";
 import { stagedImport, stageImport } from "./stage";
 
@@ -21,6 +22,12 @@ const SWIM: CalendarEvent = {
   everyone: true,
   tagIds: [],
 };
+
+const MOM = tag("0192f3a0-3333-7000-8000-000000000001", "Mom");
+
+const LEO = tag("0192f3a0-3333-7000-8000-000000000002", "Leo");
+
+const MIA = tag("0192f3a0-3333-7000-8000-000000000003", "Mia");
 
 const FILE = calendar(
   vevent("swim", "20261016T200000Z", "20261016T210000Z", "Swim"),
@@ -48,6 +55,16 @@ function vevent(uid: string, start: string, end: string, title: string): string 
     `SUMMARY:${title}`,
     "END:VEVENT",
   ].join("\r\n");
+}
+
+function attending(event: string, ...names: string[]): string {
+  const attendees = names.map((name) => `ATTENDEE;CN=${name}:mailto:${name.trim()}@example.com`);
+
+  return event.replace("END:VEVENT", [...attendees, "END:VEVENT"].join("\r\n"));
+}
+
+function tag(id: string, name: string): Tag {
+  return { id, name, color: "coral", createdAt: "2026-10-01T15:00:00.000Z" };
 }
 
 function upload(text = FILE, forDisplay?: string) {
@@ -98,7 +115,24 @@ describe("stageImport", () => {
       ],
       newCount: 1,
       duplicates: 2,
+      matched: 0,
     });
+  });
+
+  it("IMP-07 matched counts the new events whose attendees match a live tag", async () => {
+    await putEvent(harness.deps(), MARIA, SWIM);
+    for (const tag of [MOM, LEO, MIA]) await putTag(harness.deps(), MARIA, tag);
+    await removeTag(harness.deps(), MARIA, LEO.id);
+    const text = calendar(
+      attending(vevent("swim", "20261016T200000Z", "20261016T210000Z", "Swim"), "Mom"),
+      attending(vevent("piano", "20261017T150000Z", "20261017T160000Z", "Piano"), "Leo"),
+      attending(vevent("chess", "20261018T150000Z", "20261018T160000Z", "Chess"), " mom", "Dan"),
+      vevent("art", "20261019T150000Z", "20261019T160000Z", "Art"),
+    );
+
+    const review = await stageImport(harness.deps(), MARIA, WALL, upload(text));
+
+    expect(review.ok && review.value).toMatchObject({ newCount: 3, duplicates: 1, matched: 1 });
   });
 
   it("IMP-06 a .txt file is not-ics and nothing is staged", async () => {

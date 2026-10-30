@@ -1,6 +1,7 @@
 import { eventDayKey } from "./allDay";
 import { occurrencesBetween } from "./repeat";
-import type { CalendarEvent } from "./schemas";
+import type { CalendarEvent, Tag } from "./schemas";
+import { exactTag } from "./tags";
 import { addDays } from "./zone";
 
 export type ImportedEvent = Pick<
@@ -27,6 +28,7 @@ export type ImportReview = {
   events: ReviewEvent[];
   newCount: number;
   duplicates: number;
+  matched: number;
 };
 
 export type ImportWho = "everyone" | string;
@@ -35,6 +37,7 @@ export type ImportResult = {
   count: number;
   range: { first: string; last: string };
   who: ImportWho;
+  matched: number;
 };
 
 export type LastImport = {
@@ -59,6 +62,12 @@ export function markDuplicates<T extends Comparable>(
 
     return { ...event, duplicate };
   });
+}
+
+export function attendeeTags(attendees: readonly string[] = [], tags: readonly Tag[]): string[] {
+  const matched = new Set(attendees.map((name) => exactTag(tags, name)?.id));
+
+  return tags.filter((tag) => matched.has(tag.id)).map((tag) => tag.id);
 }
 
 function isSameEvent(event: Comparable, other: Comparable, tz: string): boolean {

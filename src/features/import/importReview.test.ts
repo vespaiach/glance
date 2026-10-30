@@ -26,6 +26,7 @@ const REVIEW: ServerReview = {
   ],
   newCount: 2,
   duplicates: 1,
+  matched: 0,
 };
 
 const LAST: ServerLast = {
