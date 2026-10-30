@@ -36,6 +36,7 @@ const REVIEW: ImportReview = {
   ],
   newCount: 3,
   duplicates: 1,
+  matched: 0,
 };
 
 const review = (over: Partial<ImportReview> = {}): OpenImportPage => ({
@@ -44,9 +45,9 @@ const review = (over: Partial<ImportReview> = {}): OpenImportPage => ({
   who: "everyone",
 });
 
-const done = (count: number, duplicates: number): OpenImportPage => ({
+const done = (count: number, duplicates: number, matched = 0): OpenImportPage => ({
   step: "done",
-  done: { count, who: "mia", range: REVIEW.range, duplicates },
+  done: { count, who: "mia", range: REVIEW.range, duplicates, matched },
 });
 
 function renderPage(state: OpenImportPage, overrides: Partial<Props> = {}): Props {
@@ -207,6 +208,28 @@ test("IMP-07 the skip line with 0, 1 and n duplicates", () => {
   ).toBeInTheDocument();
 });
 
+test("IMP-07 the matched line shows under Who with matches, singular, and hides with none", () => {
+  const first = render(<Live start={review({ matched: 2 })} />);
+
+  expect(
+    screen.getByText("2 matched to people in the file; the rest are for your pick."),
+  ).toBeInTheDocument();
+
+  first.unmount();
+
+  const second = render(<Live start={review({ matched: 1 })} />);
+
+  expect(
+    screen.getByText("1 matched to people in the file; the rest are for your pick."),
+  ).toBeInTheDocument();
+
+  second.unmount();
+
+  render(<Live start={review()} />);
+
+  expect(screen.queryByText(/matched to people/)).not.toBeInTheDocument();
+});
+
 test("IMP-07 Who is a single pick, Everyone by default", async () => {
   render(<Live start={review()} />);
 
@@ -264,6 +287,24 @@ test("IMP-09 Imported with 0, 1 and n duplicates", () => {
   render(<Live start={done(3, 0)} />);
 
   expect(screen.getByText("For Mia · Oct 31 – Dec 12.")).toBeInTheDocument();
+});
+
+test("IMP-09 Imported adds the matched count with matches, singular, and leaves it out with none", () => {
+  const first = render(<Live start={done(16, 2, 5)} />);
+
+  expect(
+    screen.getByText(
+      "For Mia · Oct 31 – Dec 12. 2 duplicates skipped. 5 matched to people in the file.",
+    ),
+  ).toBeInTheDocument();
+
+  first.unmount();
+
+  render(<Live start={done(3, 0, 1)} />);
+
+  expect(
+    screen.getByText("For Mia · Oct 31 – Dec 12. 1 matched to people in the file."),
+  ).toBeInTheDocument();
 });
 
 test("IMP-09 Imported closes with ✕, undoes, or opens the calendar", async () => {

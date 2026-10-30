@@ -50,7 +50,9 @@ export function DoneStep({ done, who }: DoneStepProps) {
         <Icon icon={Check} size={40} />
       </span>
       <h2 {...stylex.props(styles.added)}>{words.done.added(done.count)}</h2>
-      <p {...stylex.props(styles.line)}>{words.done.line(who, range, done.duplicates)}</p>
+      <p {...stylex.props(styles.line)}>
+        {words.done.line(who, range, done.duplicates, done.matched)}
+      </p>
       <span {...stylex.props(panel.mono)}>{words.done.undoNote}</span>
     </section>
   );

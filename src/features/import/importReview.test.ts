@@ -55,6 +55,10 @@ test("IMP-07 a review reads each event's day and time, all day and weekly, in th
   expect(shown).toMatchObject({ fileName: "soccer.ics", size: 12_288, newCount: 2, duplicates: 1 });
 });
 
+test("IMP-07 a review carries the matched count", () => {
+  expect(reviewShown({ ...REVIEW, matched: 1 }, TZ, "12h").matched).toBe(1);
+});
+
 test("IMP-07 the range reads its first and last days as month days", () => {
   expect(rangeShown(REVIEW.range, TZ)).toEqual({ from: "Oct 31", to: "Dec 12" });
 });

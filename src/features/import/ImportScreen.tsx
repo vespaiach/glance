@@ -152,6 +152,7 @@ async function commit(
     type: "imported",
     count: answer.value.count,
     range: rangeShown(answer.value.range, tz),
+    matched: answer.value.matched,
   });
 }
 
