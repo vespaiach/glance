@@ -6,6 +6,7 @@ import { colors, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
+import { IconButton } from "@/ui/IconButton";
 import { tagFills } from "@/ui/tagFills";
 
 export type Member = {
@@ -99,9 +100,6 @@ const styles = stylex.create({
     lineHeight: 1.4,
     textWrap: "pretty",
   },
-  remove: {
-    boxShadow: shadows.shadow1,
-  },
   ask: {
     display: "flex",
     flexWrap: "wrap",
@@ -168,15 +166,13 @@ function MemberRow({
         </div>
       </div>
       {removable && !asking && (
-        <Button
-          variant="secondary"
+        <IconButton
           icon={Trash2}
-          aria-label={label}
+          label={label}
+          variant="canvas"
+          size="touch"
           onClick={() => onAsk(member.id)}
-          xstyle={styles.remove}
-        >
-          {text.remove}
-        </Button>
+        />
       )}
       {asking && (
         <div {...stylex.props(styles.ask)}>

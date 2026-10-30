@@ -775,7 +775,6 @@ export const copy = {
       list: "Family members",
       plans: (count: number) =>
         count === 0 ? "No plans" : `${count} ${count === 1 ? "plan" : "plans"}`,
-      remove: "Remove",
       removeName: (name: string) => `Remove ${name}`,
       cancel: "Cancel",
       lastMember: "The last member can’t be removed.",
