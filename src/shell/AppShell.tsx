@@ -121,14 +121,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   usePrefetchViews();
 
-  useFieldInView(main, keyboardInset);
+  const keyboardPadding = useFieldInView(main, keyboardInset);
 
   return (
     <div
       ref={shell}
       {...stylex.props(
         styles.root,
-        styles.aboveKeyboard(keyboardInset),
+        styles.aboveKeyboard(keyboardPadding),
         styles.besideSidebar(inset),
       )}
     >

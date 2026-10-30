@@ -158,10 +158,13 @@ export function SignInView({
 
   const main = useRef<HTMLElement>(null);
 
-  useFieldInView(main, keyboardInset);
+  const keyboardPadding = useFieldInView(main, keyboardInset);
 
   return (
-    <div ref={rootRef} {...stylex.props(styles.root, styles.aboveKeyboard(keyboardInset), xstyle)}>
+    <div
+      ref={rootRef}
+      {...stylex.props(styles.root, styles.aboveKeyboard(keyboardPadding), xstyle)}
+    >
       <main ref={main} {...stylex.props(styles.main, signInLayout(breakpoint))}>
         <SignInHero
           season={season}

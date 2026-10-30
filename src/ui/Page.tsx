@@ -89,7 +89,7 @@ export function Page({
 
   useSlide(page, leaving, onLeft);
 
-  useFieldInView(page, keyboardInset);
+  const keyboardPadding = useFieldInView(page, keyboardInset);
 
   return (
     <div
@@ -102,7 +102,7 @@ export function Page({
       {...stylex.props(
         styles.root,
         sizes[breakpoint],
-        styles.aboveKeyboard(PADDING[breakpoint], keyboardInset),
+        styles.aboveKeyboard(PADDING[breakpoint], keyboardPadding),
         leaving && styles.leaving,
       )}
     >

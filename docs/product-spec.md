@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.44 |
+| Status | v1.45 |
 | Date | 2026-10-30 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -691,8 +691,8 @@ Other apps read and write the family's events with the account's API key (SET-19
 
 ### 9.6 Keyboard — `KB`
 - KB-01: use the OS keyboard, sized from `visualViewport`.
-- KB-02: sheets shrink above the keyboard (280 ms) and scroll inside; actions stay sticky. On the event page the page pads by the keyboard and scrolls; the top bar stays pinned.
-- KB-03: full-page forms (Sign in email, name, location, Weather setup, Location card) pad by the keyboard and scroll the focused field 24 px below the top.
+- KB-02: sheets shrink above the keyboard (280 ms) and scroll inside; actions stay sticky. On the event page the page pads by the keyboard while a field has focus and scrolls; the top bar stays pinned, and a focused field stays below it.
+- KB-03: full-page forms (Sign in email, name, location, Weather setup, Location card) pad by the keyboard while a field has focus; the padding goes when no field has focus. On focus, again 350 ms later, and on every keyboard resize, the focused field is kept inside the visible area: its bottom 16 px above the keyboard and its top at least 12 px below the top of the visible area, with its label when both fit and the label sits at most 48 px above it. A field already inside doesn't move. The nearest scroll area scrolls first, then outer ones, then the window.
 - KB-04: Return moves to the next field; Message adds a line; in the last field it submits a full-page form, or hides the keyboard in a sheet.
 
 ### 9.7 Sync — `SYNC`
