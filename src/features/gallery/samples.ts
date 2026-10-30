@@ -248,8 +248,10 @@ export const gallery = {
     sourceLast: "I1 · Source with a last import",
     phone: "I2 · Send from phone",
     review: "I3 · Review",
+    reviewMatched: "I3 · Review with matches",
     importing: "Importing",
     done: "I4 · Imported",
+    doneMatched: "I4 · Imported with matches",
     type: "I5 · Not an .ics file",
     empty: "I6 · No upcoming events",
     offline: "I7 · Couldn’t import",
@@ -776,6 +778,7 @@ export const IMPORT_REVIEW: ImportReview = {
   })),
   newCount: 16,
   duplicates: 2,
+  matched: 0,
 };
 
 export const IMPORT_PHONE_LINK = "https://glance.example/q/import-sample";

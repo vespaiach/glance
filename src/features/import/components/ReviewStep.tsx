@@ -205,6 +205,9 @@ export function ReviewStep({ breakpoint, review, who, busy, tags, dispatch }: Re
               />
             ))}
           </div>
+          {review.matched > 0 && (
+            <p {...stylex.props(styles.skipText)}>{words.review.matched(review.matched)}</p>
+          )}
         </div>
         <span {...stylex.props(panel.spacer)} />
         <div {...stylex.props(styles.skip)}>

@@ -10,11 +10,19 @@ import type { LastImport } from "./components/SourceStep";
 import type { ImportRange, ImportReview, ImportRow } from "./importPage";
 
 export function reviewShown(review: ServerReview, tz: string, clock: Clock): ImportReview {
-  const { fileName, size, newCount, duplicates } = review;
+  const { fileName, size, newCount, duplicates, matched } = review;
 
   const rows = review.events.map((event, index) => rowShown(event, String(index), tz, clock));
 
-  return { fileName, size, range: rangeShown(review.range, tz), rows, newCount, duplicates };
+  return {
+    fileName,
+    size,
+    range: rangeShown(review.range, tz),
+    rows,
+    newCount,
+    duplicates,
+    matched,
+  };
 }
 
 export function rangeShown(range: ServerReview["range"], tz: string): ImportRange {

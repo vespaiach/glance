@@ -16,6 +16,7 @@ const REVIEW: ImportReview = {
   ],
   newCount: 1,
   duplicates: 1,
+  matched: 0,
 };
 
 const run = (state: ImportPageState, ...actions: ImportPageAction[]) =>
@@ -38,17 +39,17 @@ describe("importPage", () => {
     expect(state).toMatchObject({ step: "review", who: "leo" });
   });
 
-  it("IMP-08 review → importing → done keeps the pick and the duplicates", () => {
+  it("IMP-08 review → importing → done keeps the pick and the duplicates and takes the matched count", () => {
     const state = run(
       reviewing,
       { type: "who", who: "mia" },
       { type: "importing" },
-      { type: "imported", count: 1, range: REVIEW.range },
+      { type: "imported", count: 1, range: REVIEW.range, matched: 1 },
     );
 
     expect(state).toEqual({
       step: "done",
-      done: { count: 1, who: "mia", range: REVIEW.range, duplicates: 1 },
+      done: { count: 1, who: "mia", range: REVIEW.range, duplicates: 1, matched: 1 },
     });
   });
 
@@ -97,7 +98,7 @@ describe("importPage", () => {
     const done = run(
       reviewing,
       { type: "importing" },
-      { type: "imported", count: 1, range: REVIEW.range },
+      { type: "imported", count: 1, range: REVIEW.range, matched: 0 },
     );
 
     expect(run(initialImportPage(), { type: "back" })).toEqual({ step: "closed" });
@@ -106,6 +107,8 @@ describe("importPage", () => {
 
   it("IMP-08 imported and offline only apply while importing", () => {
     expect(run(reviewing, { type: "offline" })).toBe(reviewing);
-    expect(run(reviewing, { type: "imported", count: 1, range: REVIEW.range })).toBe(reviewing);
+    expect(run(reviewing, { type: "imported", count: 1, range: REVIEW.range, matched: 0 })).toBe(
+      reviewing,
+    );
   });
 });

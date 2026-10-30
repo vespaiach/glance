@@ -898,6 +898,8 @@ export const copy = {
 
         return `${duplicates} ${are} already on the calendar and will be skipped. ${past}`;
       },
+      matched: (matched: number) =>
+        `${matched} matched to people in the file; the rest are for your pick.`,
       all: (count: number) => `All events · ${count}`,
       allDay: "All day",
       weekly: (time: string) => `${time} · Every week`,
@@ -908,12 +910,17 @@ export const copy = {
     done: {
       title: "Imported",
       added: (count: number) => (count === 1 ? "1 event added" : `${count} events added`),
-      line: (who: string, range: string, duplicates: number) => {
+      line: (who: string, range: string, duplicates: number, matched: number) => {
         const lead = `For ${who} · ${range}.`;
 
-        if (duplicates === 0) return lead;
+        const skipped =
+          duplicates === 0
+            ? ""
+            : ` ${duplicates} ${duplicates === 1 ? "duplicate" : "duplicates"} skipped.`;
 
-        return `${lead} ${duplicates} ${duplicates === 1 ? "duplicate" : "duplicates"} skipped.`;
+        const people = matched === 0 ? "" : ` ${matched} matched to people in the file.`;
+
+        return `${lead}${skipped}${people}`;
       },
       undoNote: "Undo stays in Settings › Import events for 24 hours",
       undo: "Undo import",

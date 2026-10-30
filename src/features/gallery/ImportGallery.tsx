@@ -26,6 +26,16 @@ const IMPORTING_MS = 1200;
 
 const REVIEWING = { review: IMPORT_REVIEW, who: "everyone" } as const;
 
+const MATCHED = 5;
+
+const DONE = {
+  count: 16,
+  who: GALLERY_FAMILY[0]?.id ?? "everyone",
+  range: IMPORT_REVIEW.range,
+  duplicates: 2,
+  matched: 0,
+};
+
 const LAST: LastImport = { date: "Oct 29", count: 16, who: "everyone", canUndo: true };
 
 const DEMOS: readonly Demo[] = [
@@ -33,19 +43,13 @@ const DEMOS: readonly Demo[] = [
   { label: words.sourceLast, start: { step: "source" }, last: LAST },
   { label: words.phone, start: { step: "phone" } },
   { label: words.review, start: { step: "review", ...REVIEWING } },
-  { label: words.importing, start: { step: "importing", ...REVIEWING } },
   {
-    label: words.done,
-    start: {
-      step: "done",
-      done: {
-        count: 16,
-        who: GALLERY_FAMILY[0]?.id ?? "everyone",
-        range: IMPORT_REVIEW.range,
-        duplicates: 2,
-      },
-    },
+    label: words.reviewMatched,
+    start: { step: "review", review: { ...IMPORT_REVIEW, matched: MATCHED }, who: "everyone" },
   },
+  { label: words.importing, start: { step: "importing", ...REVIEWING } },
+  { label: words.done, start: { step: "done", done: DONE } },
+  { label: words.doneMatched, start: { step: "done", done: { ...DONE, matched: MATCHED } } },
   { label: words.type, start: { step: "error", error: "type" } },
   { label: words.empty, start: { step: "error", error: "empty" } },
   { label: words.offline, start: { step: "error", error: "offline", ...REVIEWING }, offline: true },
@@ -120,7 +124,7 @@ function useFinishImport(
         dispatch(
           offline
             ? { type: "offline" }
-            : { type: "imported", count: 16, range: IMPORT_REVIEW.range },
+            : { type: "imported", count: 16, range: IMPORT_REVIEW.range, matched: 0 },
         ),
       IMPORTING_MS,
     );

@@ -21,6 +21,7 @@ export type ImportReview = {
   rows: readonly ImportRow[];
   newCount: number;
   duplicates: number;
+  matched: number;
 };
 
 export type ImportDone = {
@@ -28,6 +29,7 @@ export type ImportDone = {
   who: ImportWho;
   range: ImportRange;
   duplicates: number;
+  matched: number;
 };
 
 export type FileError = "type" | "empty";
@@ -55,7 +57,7 @@ export type ImportPageAction =
   | { type: "failed"; error: FileError }
   | { type: "who"; who: ImportWho }
   | { type: "importing" }
-  | { type: "imported"; count: number; range: ImportRange }
+  | { type: "imported"; count: number; range: ImportRange; matched: number }
   | { type: "offline" }
   | { type: "retry" }
   | { type: "back" };
@@ -112,7 +114,13 @@ function importingReducer(
 
   return {
     step: "done",
-    done: { count: action.count, who, range: action.range, duplicates: review.duplicates },
+    done: {
+      count: action.count,
+      who,
+      range: action.range,
+      duplicates: review.duplicates,
+      matched: action.matched,
+    },
   };
 }
 
