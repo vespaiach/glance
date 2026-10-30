@@ -777,6 +777,7 @@
 
 <sc-if value="{{ is.settings }}" hint-placeholder-val="{{ false }}">
 <div style="display:grid;grid-template-columns:{{ L.cols }};gap:24px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:24px;min-width:0">
 <div style="background:var(--surface-canvas);border-radius:24px;padding:clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;gap:16px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:8px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="160px,20px">Screen settings</x-import>
@@ -812,11 +813,16 @@
 </div>
 </div>
 </div>
+<div style="background:var(--surface-canvas);border-radius:24px;padding:8px clamp(20px,2.6vw,40px);box-sizing:border-box;display:flex;flex-direction:column;min-width:0">
+<a href="Glance%20Guide.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Guide</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
+<a href="Glance%20Terms%20of%20Service.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Terms of Service</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
+</div>
+</div>
 <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.ColorBlock" tone="soft" padding="clamp(20px,2.4vw,32px)" dc-props="{{ colGap24 }}" hint-size="100%,360px">
 <div style="display:flex;flex-direction:column;gap:12px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="120px,20px">Schedule</x-import>
-<button type="button" onClick="{{ go.quiet }}" style="border:0;width:100%;min-height:72px;background:var(--surface-canvas);border-radius:8px;padding:16px 20px;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px">Ambient screen</span><span style="font-size:15px;font-weight:330;text-wrap:pretty">{{ ambientHours }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button>
+<button type="button" onClick="{{ go.quiet }}" style="border:0;width:100%;min-height:72px;background:var(--surface-canvas);border-radius:8px;padding:16px 20px;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:12px;font-family:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform 120ms ease-out" style-active="transform:scale(0.97)"><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:20px;font-weight:540;letter-spacing:-0.2px;line-height:1.2">Ambient screen</span><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">{{ ambientHours }}</span></div><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="chevron-right" size="22" hint-size="22px,22px"></x-import></button>
 </div>
 <div style="display:flex;flex-direction:column;gap:12px">
 <div data-ds-new="IdleSlider" style="display:flex;flex-direction:column;gap:8px">
@@ -858,7 +864,7 @@
 <sc-if value="{{ m.ask }}" hint-placeholder-val="{{ false }}"><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">{{ m.body }}</span></sc-if>
 </div>
 </div>
-<sc-if value="{{ m.can }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="trash-2" on-click="{{ m.tap }}" dc-props="{{ m.askP }}" hint-size="120px,44px">Remove</x-import></sc-if>
+<sc-if value="{{ m.can }}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.IconButton" icon="trash-2" variant="canvas" size="touch" label="{{ m.rmLbl }}" on-click="{{ m.tap }}" style="flex:none" hint-size="56px,56px"></x-import></sc-if>
 <sc-if value="{{ m.ask }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;flex:1 1 100%;min-width:0"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="ghost" on-click="{{ m.keep }}" hint-size="90px,44px">Cancel</x-import><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="primary" icon="trash-2" on-click="{{ m.remove }}" dc-props="{{ m.rmP }}" hint-size="150px,44px">{{ m.rmLbl }}</x-import></div></sc-if>
 </div>
 </sc-for>
@@ -927,8 +933,6 @@
 <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 240px"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Delete account</span><span style="font-size:15px;font-weight:330;line-height:1.4;text-wrap:pretty">Erases every event, note, photo and family member for everyone, and signs out all screens.</span></div>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Button" variant="secondary" icon="trash-2" on-click="{{ da.open }}" dc-props="{{ da.openP }}" hint-size="170px,44px">Delete account</x-import>
 </div>
-<a href="Glance%20Guide.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Guide</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
-<a href="Glance%20Terms%20of%20Service.dc.html" target="_blank" style="display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding-top:16px;box-shadow:inset 0 1px 0 var(--border-hairline-soft);color:var(--text-primary);text-decoration:none"><span style="font-size:17px;font-weight:540;letter-spacing:-0.1px">Terms of Service</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="arrow-up-right" size="20" hint-size="20px,20px"></x-import></a>
 </div>
 <div id="gl-data" data-ds-new="DataAndApp" style="background:var(--surface-canvas);border-radius:24px;box-shadow:var(--shadow-1);padding:clamp(20px,2.4vw,32px);box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Eyebrow" hint-size="140px,20px">Data and app</x-import>
@@ -1910,6 +1914,7 @@ class Component extends DCLogic {
       else if (e.key === ' ') { e.preventDefault(); this.setState((s) => ({ playing: !s.playing })); }
     };
     window.addEventListener('keydown', this.onKey);
+    this.initKbFit();
     this.lastTouch = Date.now();
     this.onTouch = () => { this.lastTouch = Date.now(); if (this.state.barMode === 'hidden') this.setState({ barMode: 'float' }); };
     window.addEventListener('pointerdown', this.onTouch, true); window.addEventListener('keydown', this.onTouch, true);
@@ -2028,7 +2033,42 @@ class Component extends DCLogic {
     this._lastSheet = b;
     if (b && b.kind === 'event' && b.endErr && (!a || !a.endErr)) this.queueReveal();
   }
-  componentWillUnmount() { clearInterval(this.driftTimer); clearInterval(this.drawerTimer); clearInterval(this.backTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
+  initKbFit() {
+    const vv = window.visualViewport; if (!vv) return;
+    const isField = (el) => el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|range|button|submit|reset|file|color|hidden)$/.test(el.type)));
+    const canScroll = (p) => p.scrollHeight > p.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(p).overflowY);
+    const unpad = () => { (this._kbPads || []).forEach(([p, v]) => { p.style.paddingBottom = v; }); this._kbPads = []; };
+    const fit = () => {
+      const el = document.activeElement, kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      if (!isField(el)) { unpad(); return; }
+      const lab = el.closest('label'), r = el.getBoundingClientRect(), lr = lab && lab.getBoundingClientRect();
+      const top0 = vv.offsetTop + 12, bot0 = vv.offsetTop + vv.height - 16;
+      const top = lr && lr.top >= r.top - 48 && r.bottom - lr.top < bot0 - top0 ? lr.top : r.top;
+      let d = r.bottom > bot0 ? Math.min(r.bottom - bot0, top - top0) : top < top0 ? top - top0 : 0;
+      if (Math.abs(d) < 1) return;
+      let p = el.parentElement, first = null;
+      while (p && p !== document.documentElement && Math.abs(d) >= 1) {
+        if (/auto|scroll/.test(getComputedStyle(p).overflowY)) {
+          if (!first) first = p;
+          if (p === first && d > 0 && kb > 0 && !(this._kbPads || []).some(([q]) => q === p)) {
+            (this._kbPads = this._kbPads || []).push([p, p.style.paddingBottom]);
+            p.style.paddingBottom = (parseFloat(getComputedStyle(p).paddingBottom) || 0) + kb + 'px';
+          }
+          if (canScroll(p)) { const b = p.scrollTop; p.scrollTop = b + d; d -= p.scrollTop - b; }
+        }
+        p = p.parentElement;
+      }
+      if (Math.abs(d) >= 1) window.scrollBy(0, d);
+    };
+    const run = () => { cancelAnimationFrame(this._kbRaf); this._kbRaf = requestAnimationFrame(fit); };
+    this._kbFocus = (e) => { if (!isField(e.target)) return; run(); clearTimeout(this._kbT); this._kbT = setTimeout(run, 350); };
+    this._kbBlur = () => setTimeout(() => { if (!isField(document.activeElement)) unpad(); }, 0);
+    this._kbVv = () => run();
+    document.addEventListener('focusin', this._kbFocus); document.addEventListener('focusout', this._kbBlur);
+    vv.addEventListener('resize', this._kbVv);
+    this._kbOff = () => { document.removeEventListener('focusin', this._kbFocus); document.removeEventListener('focusout', this._kbBlur); vv.removeEventListener('resize', this._kbVv); clearTimeout(this._kbT); cancelAnimationFrame(this._kbRaf); unpad(); };
+  }
+  componentWillUnmount() { if (this._kbOff) this._kbOff(); clearInterval(this.driftTimer); clearInterval(this.drawerTimer); clearInterval(this.backTimer); window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); window.removeEventListener('pointerdown', this.onTouch, true); window.removeEventListener('keydown', this.onTouch, true); clearInterval(this.barTimer); clearInterval(this.timer); clearInterval(this.upTimer); (this.timers || []).forEach(clearTimeout); if (this.fileIn) this.fileIn.remove(); }
   later(ms, fn) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
   openScan() { const S = this.state; if (S.net === 'offline' || S.signinStep === 'sending') return; if (this._camOk) { this.setState({ scan: 'on', scanErr: '' }); this.runScan(); } else this.setState({ scan: 'ask', scanErr: '' }); }
   allowCam() { this._camOk = true; this.setState({ scan: 'on' }); this.runScan(); }
