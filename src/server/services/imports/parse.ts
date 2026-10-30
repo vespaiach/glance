@@ -32,6 +32,8 @@ interface Context {
 
 const MAX_STEPS = 50_000;
 
+const MAX_ATTENDEES = 20;
+
 const WEEKDAYS = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
 
 export function parseIcs(text: string, now: Date, tz: string): Result<ParsedIcs, IcsError> {
@@ -249,12 +251,29 @@ function upcoming(events: ImportedEvent[], context: Context): ImportedEvent[] {
   );
 }
 
-function fieldsOf(item: Event): Pick<ImportedEvent, "title" | "location" | "notes"> {
+function fieldsOf(item: Event): Pick<ImportedEvent, "title" | "location" | "notes" | "attendees"> {
   return {
     title: cut(item.summary, EVENT_LIMITS.title) || copy.imports.untitled,
     location: cut(item.location, EVENT_LIMITS.location) || undefined,
     notes: cut(item.description, EVENT_LIMITS.notes) || undefined,
+    attendees: attendeesOf(item),
   };
+}
+
+function attendeesOf(item: Event): string[] | undefined {
+  const names = item.component
+    .getAllProperties("attendee")
+    .map((property) => property.getParameter("cn"))
+    .map((name) => cut(typeof name === "string" ? name : undefined, EVENT_LIMITS.title))
+    .filter((name) => name !== "");
+
+  const seen = new Set<string>();
+
+  const distinct = names.filter(
+    (name) => !seen.has(name.toLowerCase()) && seen.add(name.toLowerCase()),
+  );
+
+  return distinct.length > 0 ? distinct.slice(0, MAX_ATTENDEES) : undefined;
 }
 
 function cut(text: string | null | undefined, limit: number): string {

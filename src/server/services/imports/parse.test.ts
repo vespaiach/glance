@@ -233,4 +233,45 @@ describe("parseIcs", () => {
     expect(parseIcs(fixture("past.ics"), NOW, TZ)).toEqual({ ok: false, error: "no-upcoming" });
     expect(parseIcs(calendar(), NOW, TZ)).toEqual({ ok: false, error: "no-upcoming" });
   });
+
+  describe("attendees", () => {
+    const events = parsedEvents(fixture("attendees.ics"));
+
+    function attendeesOf(title: string) {
+      return events.filter((event) => event.title === title).map((event) => event.attendees);
+    }
+
+    it("IMP-05 reads each ATTENDEE's trimmed CN and ignores the ORGANIZER", () => {
+      expect(attendeesOf("Birthday party")).toEqual([["Mia", "Leo"]]);
+    });
+
+    it("IMP-05 skips an attendee with no CN or an empty one", () => {
+      expect(attendeesOf("Birthday party")[0]).not.toContain("");
+    });
+
+    it("IMP-05 keeps names distinct ignoring case, at most 20, each cut to the title limit", () => {
+      const [names] = attendeesOf("School assembly");
+
+      expect(names).toHaveLength(20);
+      expect(names?.[0]).toBe("A".repeat(140));
+      expect(names?.slice(1)).toEqual(Array.from({ length: 19 }, (_, i) => `Kid ${i + 1}`));
+    });
+
+    it("IMP-05 an event with no attendees has none", () => {
+      expect(attendeesOf("Dentist")).toEqual([undefined]);
+    });
+
+    it("IMP-05 every occurrence of an expanded repeat keeps its own VEVENT's names", () => {
+      expect(attendeesOf("Tutor")).toEqual([["Ava"], ["Noah"], ["Ava"]]);
+    });
+
+    it("IMP-05 a weekly series and its changed week keep their own VEVENT's names", () => {
+      const piano = events.filter((event) => event.title === "Piano");
+
+      expect(piano.map(({ repeat, attendees }) => ({ repeat, attendees }))).toEqual([
+        { repeat: "weekly", attendees: ["Ava"] },
+        { repeat: undefined, attendees: ["Leo"] },
+      ]);
+    });
+  });
 });

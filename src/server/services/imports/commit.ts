@@ -102,7 +102,7 @@ async function isLiveWho(db: Database, accountId: string, who: ImportWho): Promi
 async function imported(
   db: Database,
   now: Date,
-  { duplicate: _, ...event }: ImportedEvent & { duplicate: boolean },
+  { duplicate: _, attendees: _attendees, ...event }: ImportedEvent & { duplicate: boolean },
   importId: string,
   who: ImportWho,
 ): Promise<StoredEvent> {

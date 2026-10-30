@@ -6,7 +6,7 @@ import { addDays } from "./zone";
 export type ImportedEvent = Pick<
   CalendarEvent,
   "title" | "startAt" | "endAt" | "allDay" | "location" | "notes" | "repeat" | "exdates"
->;
+> & { attendees?: string[] };
 
 type Comparable = Pick<
   CalendarEvent,
