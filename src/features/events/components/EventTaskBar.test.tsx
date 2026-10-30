@@ -125,4 +125,60 @@ describe("EventTaskBar", () => {
     expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Back" })).toBeVisible();
   });
+  it("EVT-05 on small Delete and Save are icon buttons named by their label", () => {
+    renderBar({ breakpoint: "small", mode: "edit" });
+
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveTextContent(/^$/);
+    expect(screen.getByRole("button", { name: "Save" })).toHaveTextContent(/^$/);
+  });
+
+  it("EVT-05 on small Save is disabled with an empty title", () => {
+    renderBar({ breakpoint: "small", canSave: false });
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("EVT-05 TPK-09 on small offline Save is named Save for later", () => {
+    renderBar({ breakpoint: "small", online: false });
+
+    expect(screen.getByRole("button", { name: "Save for later" })).toHaveTextContent(/^$/);
+  });
+
+  it("EVT-05 on small Edit is an icon button", async () => {
+    const { onEdit } = renderBar({
+      breakpoint: "small",
+      mode: "view",
+      status: { kind: "in", minutes: 169 },
+    });
+
+    const edit = screen.getByRole("button", { name: "Edit" });
+
+    await userEvent.click(edit);
+
+    expect(edit).toHaveTextContent(/^$/);
+    expect(onEdit).toHaveBeenCalled();
+  });
+
+  it("EVT-05 on small the delete confirm is icon buttons named Keep and Delete event", async () => {
+    const { onKeep, onDelete } = renderBar({ breakpoint: "small", mode: "edit", asking: "delete" });
+
+    const keep = screen.getByRole("button", { name: "Keep" });
+    const remove = screen.getByRole("button", { name: "Delete event" });
+
+    await userEvent.click(keep);
+
+    await userEvent.click(remove);
+
+    expect(keep).toHaveTextContent(/^$/);
+    expect(remove).toHaveTextContent(/^$/);
+    expect(onKeep).toHaveBeenCalled();
+    expect(onDelete).toHaveBeenCalled();
+  });
+
+  it("EVT-05 on small Discard changes? keeps its text buttons", () => {
+    renderBar({ breakpoint: "small", mode: "edit", asking: "discard" });
+
+    expect(screen.getByRole("button", { name: "Keep editing" })).toHaveTextContent("Keep editing");
+    expect(screen.getByRole("button", { name: "Discard" })).toHaveTextContent("Discard");
+  });
 });
