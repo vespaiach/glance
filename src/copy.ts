@@ -780,6 +780,11 @@ export const copy = {
       cancel: "Cancel",
       lastMember: "The last member can’t be removed.",
     },
+    links: {
+      label: "Guide and terms",
+      guide: "Guide",
+      terms: "Terms of Service",
+    },
     account: {
       title: "Account",
       screensSignedIn: (count: number) =>
@@ -808,8 +813,6 @@ export const copy = {
         cancel: "Cancel",
         failed: "Couldn’t sign out. Try again.",
       },
-      guide: "Guide",
-      terms: "Terms of Service",
       deleteAccount: {
         title: "Delete account",
         caption:

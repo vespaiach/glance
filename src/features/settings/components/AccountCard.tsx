@@ -1,6 +1,5 @@
 import * as stylex from "@stylexjs/stylex";
 import {
-  ArrowUpRight,
   Info,
   LogOut,
   type LucideIcon,
@@ -15,7 +14,7 @@ import type { Account } from "@/domain/schemas";
 import { activeStamp, type DeviceKind, type SignedInScreen } from "@/domain/screens";
 import type { PhotoUsage } from "@/domain/storage";
 import { season } from "@/theme/seasons.stylex";
-import { colors, motion, radii, shadows, sizes, space } from "@/theme/tokens.stylex";
+import { colors, motion, radii, shadows, space } from "@/theme/tokens.stylex";
 import { type } from "@/theme/type.stylex";
 import { Button } from "@/ui/Button";
 import { Eyebrow } from "@/ui/Eyebrow";
@@ -199,17 +198,6 @@ const styles = stylex.create({
   danger: {
     color: colors.danger,
   },
-  terms: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: space.md,
-    minHeight: sizes.touchMin,
-    paddingTop: space.md,
-    boxShadow: `inset 0 1px 0 ${colors.borderHairlineSoft}`,
-    color: colors.textPrimary,
-    textDecorationLine: "none",
-  },
 });
 
 export function AccountCard({
@@ -283,14 +271,6 @@ export function AccountCard({
           {text.deleteAccount.title}
         </Button>
       </div>
-      <a href="/guide" target="_blank" rel="noopener" {...stylex.props(styles.terms)}>
-        <span {...stylex.props(styles.deleteTitle)}>{text.guide}</span>
-        <Icon icon={ArrowUpRight} size={20} />
-      </a>
-      <a href="/terms" target="_blank" rel="noopener" {...stylex.props(styles.terms)}>
-        <span {...stylex.props(styles.deleteTitle)}>{text.terms}</span>
-        <Icon icon={ArrowUpRight} size={20} />
-      </a>
     </section>
   );
 }

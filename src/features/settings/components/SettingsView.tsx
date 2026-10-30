@@ -16,6 +16,7 @@ import { AccountCard, type SettingsAccount } from "./AccountCard";
 import type { ApiKeyRowProps } from "./ApiKeyRow";
 import { DataAndAppCard } from "./DataAndAppCard";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
+import { GuideTermsCard } from "./GuideTermsCard";
 import { type Member, MemberList } from "./MemberList";
 import type { QrTileShown } from "./QrSignInTile";
 import { ScreenOptions } from "./ScreenOptions";
@@ -131,25 +132,28 @@ export function SettingsView({
 }: SettingsViewProps) {
   return (
     <div {...stylex.props(styles.grid, settingsLayout(breakpoint))}>
-      <SettingsPanel
-        account={account}
-        settings={settings}
-        season={season}
-        background={background}
-        onChange={onChange}
-        onOpenBackground={onOpenBackground}
-        onOpenLocation={onOpenLocation}
-        lastImport={lastImport}
-        onOpenImport={onOpenImport}
-        online={online}
-        upcomingEvents={upcomingEvents}
-        savedEvents={savedEvents}
-        onExportEvents={onExportEvents}
-        apiKey={apiKey}
-        phone={phone}
-        onAllowPush={onAllowPush}
-        onTurnOffPush={onTurnOffPush}
-      />
+      <div {...stylex.props(styles.side)}>
+        <SettingsPanel
+          account={account}
+          settings={settings}
+          season={season}
+          background={background}
+          onChange={onChange}
+          onOpenBackground={onOpenBackground}
+          onOpenLocation={onOpenLocation}
+          lastImport={lastImport}
+          onOpenImport={onOpenImport}
+          online={online}
+          upcomingEvents={upcomingEvents}
+          savedEvents={savedEvents}
+          onExportEvents={onExportEvents}
+          apiKey={apiKey}
+          phone={phone}
+          onAllowPush={onAllowPush}
+          onTurnOffPush={onTurnOffPush}
+        />
+        <GuideTermsCard />
+      </div>
       <div {...stylex.props(styles.side)}>
         <ScreenOptions settings={settings} onChange={onChange} onOpenAmbient={onOpenAmbient} />
         {members && members.length > 0 && (

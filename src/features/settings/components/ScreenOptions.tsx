@@ -56,10 +56,12 @@ const styles = stylex.create({
     fontSize: type.headlineSize,
     fontWeight: type.headlineWeight,
     letterSpacing: type.headlineLs,
+    lineHeight: 1.2,
   },
   tileBody: {
     fontSize: type.bodySmSize,
     fontWeight: type.bodySmWeight,
+    lineHeight: 1.4,
     textWrap: "pretty",
   },
 });

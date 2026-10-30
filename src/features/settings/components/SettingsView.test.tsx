@@ -580,30 +580,24 @@ test("SET-08 the account card shows the initial, name and email and signs out", 
   expect(props.onSignOut).toHaveBeenCalled();
 });
 
-test("SET-15 the account card ends with a Terms of Service link that opens /terms in a new tab", () => {
+test("SET-15 Guide and Terms of Service sit in their own card and open /guide and /terms in a new tab", () => {
   renderView();
 
-  const links = within(screen.getByRole("region", { name: "Account" })).getAllByRole("link");
+  const links = within(screen.getByRole("navigation", { name: "Guide and terms" })).getAllByRole(
+    "link",
+  );
 
-  const terms = links.at(-1);
-
-  expect(terms).toHaveAccessibleName("Terms of Service");
-  expect(terms).toHaveAttribute("href", "/terms");
-  expect(terms).toHaveAttribute("target", "_blank");
-  expect(terms?.getAttribute("rel")).toContain("noopener");
-});
-
-test("SET-15 a Guide row above Terms of Service opens /guide in a new tab", () => {
-  renderView();
-
-  const links = within(screen.getByRole("region", { name: "Account" })).getAllByRole("link");
-
-  const guide = links.at(-2);
-
-  expect(guide).toHaveAccessibleName("Guide");
-  expect(guide).toHaveAttribute("href", "/guide");
-  expect(guide).toHaveAttribute("target", "_blank");
-  expect(guide?.getAttribute("rel")).toContain("noopener");
+  expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+    ["Guide", "/guide"],
+    ["Terms of Service", "/terms"],
+  ]);
+  for (const link of links) {
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  }
+  expect(
+    within(screen.getByRole("region", { name: "Account" })).queryByRole("link"),
+  ).not.toBeInTheDocument();
 });
 
 test("SET-08 with no name yet the card falls back to the email", () => {
