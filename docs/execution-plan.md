@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Version | v6.1 |
-| Date | 2026-10-29 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.41) · [`tech-design.md`](tech-design.md) (v3.35) · design handoff v21 (`Kiosk display mockups.zip`, 2026-10-29) |
+| Version | v6.2 |
+| Date | 2026-10-30 |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.41) · [`tech-design.md`](tech-design.md) (v3.35) · design handoff v22 (`Kiosk display mockups.zip`, 2026-10-30) |
 | Checks | `npm run check` → `npm run typecheck` → `npm test` → `npm run build` |
 
 The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ row whose dependencies are ✅, does it in one PR, merges it and moves on until every row is ✅.
@@ -20,7 +20,7 @@ The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ 
 **Rules**
 - **Order** is the row order of the Tasks table. Put a task below everything it needs.
 - A task is PR-sized (about 0.5–2 days of work), starts with a bold short title (`**Login form**: …`), and has a **Done when** check that can be verified (a test, a command, a page that matches a design).
-- **IDs** are a letter and two digits (`A01`), one letter per batch of work. Never reuse an ID. Every letter A–Z is used, so a new batch reuses a letter and continues after its highest number (this batch: J, from J09).
+- **IDs** are a letter and two digits (`A01`), one letter per batch of work. Never reuse an ID. Every letter A–Z is used, so a new batch reuses a letter and continues after its highest number (this batch: J, from J19).
 - **Depends on** lists hard dependencies only, by ID, and only on rows still in this file, or `—`. A task can start once they are ✅. Two tasks that edit the same files (beyond the plan, docs and lockfile) also get a dependency, even without a logical one, so they never run at the same time.
 - **Dependency map** (below the table) mirrors the Depends on column: a Mermaid graph and the parallel waves. Tasks in one wave have no path between them, so `/dooo` may run them at the same time. Update the map whenever a row or a dependency changes; the table wins if they disagree.
 - One task = one branch (`feat/<ID>-<slug>`) and one PR titled `<ID>: <title>`. The PR's first commit sets the row to 🔄; its last commit before merge sets it to ✅. A closed, unmerged PR resets the row to ⬜.
@@ -40,20 +40,21 @@ The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ 
 
 | ID | Status | Task | Depends on | Done when | Covers |
 |---|---|---|---|---|---|
-| J16 | ✅ ([#220](https://github.com/vespaiach/glance/pull/220)) | **Read ATTENDEE on import**: `parseIcs` reads each VEVENT's `ATTENDEE` display names (`CN`, trimmed; an attendee with no `CN` is skipped; `ORGANIZER` ignored) into an optional `attendees: string[]` on `ImportedEvent` (`domain/imports.ts`), distinct ignoring case, at most 20 per event, each cut to `EVENT_LIMITS.title`; every occurrence of an expanded repeat and each changed week keep their own VEVENT's names. Staged `parsed` JSON carries them; no migration (rows staged before this have none). Spec IMP-05 and tech-design D39 (version bump) updated | — | `parse.test.ts` tests named `IMP-05 …` against a new `fixtures/attendees.ics` (CN read, no-CN skipped, duplicates and cap, repeat occurrences keep names) pass; Checks pass | IMP-05, D39 |
-| J17 | ✅ ([#221](https://github.com/vespaiach/glance/pull/221)) | **Match attendees to people**: pure `attendeeTags(attendees, tags)` in `domain/imports.ts` (a name matches a live tag whose name is the same ignoring case and outer spaces, as FAM-04; returns the matched tag ids in tag order). Commit (`commit.ts`) gives an event with any match those tags (every tag → `everyone`, via `whoValue`), else the chosen who; unmatched names never create tags. The review (`stage.ts`) and the commit result add `matched` (new, non-duplicate events with a match), counted on read against live tags like duplicates and never stored. API table (§6.1) and D39 updated; spec IMP-07/IMP-08 updated | J16 | Tests `IMP-08 …` for `attendeeTags` (case, spaces, no match, every tag) and commit (matched event gets its tags, unmatched gets the chosen who, another account's tags never match) and `IMP-07 …` for `matched` in the review pass; Checks pass | IMP-07, IMP-08, D39 |
-| J18 | ✅ ([#222](https://github.com/vespaiach/glance/pull/222)) | **Show matches in Review and Imported**: `ReviewStep` adds "{m} matched to people in the file; the rest are for your pick." under the Who chips ("1 matched…"; left out with none) and `DoneStep` adds "{m} matched to people in the file." after "For {who} · …" (left out with none); copy in `src/copy.ts`, formatting in `importReview.ts`. Gallery `ImportGallery` shows Review and Imported with and without matches, in all four seasons | J17 | `importReview.test.ts` / `ImportPage.test.tsx` tests `IMP-07 …` / `IMP-09 …` (line shown with matches, singular, hidden with none) pass; gallery states match `Glance States - Settings` (frames I3, I4) at 1920×1080, 1024×768 and 390×844 (owner approves the new line, no design for it); Checks pass | IMP-07, IMP-09 |
+| J19 | ⬜ | **Handoff v22 and the Guide and Terms card**: copy the v22 handoff into `docs/design/handoff/` (changed: `Glance.dc.html`, `Glance New Event.dc.html`, `Glance Notes.dc.html`). Guide and Terms of Service leave the bottom of `SettingsPanel` for their own white card (radius 24, 8 px vertical padding) 24 px under the Settings card in the left column (`SettingsView`; on small it follows the Settings card): two rows, min 56 px, hairline between, label 17/540 left and `arrow-up-right` right, each opening `/guide` / `/terms` in a new tab. Ambient screen tile text gets line-height 1.2 (title) / 1.4 (hours). Spec SET-08, SET-15 updated (version bump). Gallery `SettingsGallery` shows the new card in all four seasons | — | `SettingsView.test.tsx` test `SET-15 …` (both links in their own card, `target="_blank"`, hrefs) passes; Settings matches `Glance.dc.html` (Settings) at 1920×1080, 1024×768 and 390×844; Checks pass | SET-08, SET-15 |
+| J20 | ⬜ | **Remove a member as an icon button**: `MemberList`'s secondary "Remove" button becomes a 56 px canvas `IconButton` (`trash-2`, touch size, no text, named "Remove {name}") on the right of the row; the two-tap confirm row, result line and last-member text don't change. Spec FAM-08 updated. Gallery shows the idle and asking rows in all four seasons | J19 | `MemberList.test.tsx` tests `FAM-08 …` (button named "Remove {name}" with no visible text; first tap still asks; last member has none) pass; card matches `Glance States - Settings` (frame R) and `Glance.dc.html` at the three sizes; Checks pass | FAM-08 |
+| J21 | ⬜ | **Compact event top bar on small**: on small (≤ 768) `EventTaskBar` is min 56 px, padding 8 × 12 px, 8 px gap, 20 px title; Back is a 40 px (md) `IconButton`. Delete, Save, Edit and Add another become 40 px icon-only round buttons (`trash-2` canvas; `check` solid, dimmed to 35% while the title is empty; `pencil` canvas; `plus` solid), named by their old label. Delete confirm: × canvas ("Keep") + `trash-2` on danger ("Delete event"). "Discard changes?" keeps text buttons at md. Large and normal unchanged. Spec EVT-05 updated. `EventPageGallery` shows small in every mode | J19 | `EventTaskBar.test.tsx` tests `EVT-05 …` (on small: icon buttons named Delete / Save / Edit / Add another, Save disabled with an empty title, delete confirm names Keep and Delete event, Discard keeps its text) pass; the event page matches `Glance New Event` (`size` small, every `mode`) at 390×844 and is unchanged at 1920×1080 and 1024×768; Checks pass | EVT-05 |
+| J22 | ⬜ | **Keep the focused field above the keyboard**: pure `revealDelta(field, label, viewport)` in `domain/keyboard.ts` returns how far to scroll so the field (with its label when both fit and the label sits at most 48 px above it) has its bottom 16 px above the keyboard and its top at least 12 px below the top of the visible area; 0 when already inside. `useFieldInView` runs it on focus (again 350 ms later) and on every `visualViewport` resize, scrolling the nearest scroll area first (padded by the keyboard height while it's open), then outer ones, then the window; the padding goes when no field has focus. Replaces the "24 px below the top" rule. Spec KB-02, KB-03 updated | J19 | `keyboard.test.ts` tests `KB-03 …` for `revealDelta` (below the keyboard → up to 16 px above it, above the top → down to 12 px, label kept when it fits, dropped when it doesn't, already visible → 0) and `fieldInView` tests (scroll area scrolls first, the rest goes to the window, padding removed on blur) pass; on a phone, focusing the last field of the event page and the Location card keeps it above the keyboard; Checks pass | KB-02, KB-03 |
 
 ## Dependency map
 
 ```mermaid
 graph LR
-  J16 --> J17
-  J17 --> J18
+  J19 --> J20
+  J19 --> J21
+  J19 --> J22
 ```
 
 | Wave | Tasks (run in parallel) |
 |---|---|
-| 1 | J16 |
-| 2 | J17 |
-| 3 | J18 |
+| 1 | J19 |
+| 2 | J20, J21, J22 |
