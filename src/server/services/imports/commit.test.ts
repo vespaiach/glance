@@ -28,15 +28,36 @@ const SWIM: CalendarEvent = {
   tagIds: [],
 };
 
-const FILE = [
-  "BEGIN:VCALENDAR",
-  "VERSION:2.0",
-  "PRODID:-//Glance//Test//EN",
+const DAD: Tag = {
+  ...MOM,
+  id: "0192f3a0-3333-7000-8000-000000000002",
+  name: "Dad",
+  createdAt: "2026-10-02T15:00:00.000Z",
+};
+
+const COACH: Tag = { ...MOM, id: "0192f3a0-3333-7000-8000-000000000003", name: "Coach" };
+
+const FILE = calendarOf(
   vevent("swim", "20261016T200000Z", "20261016T210000Z", "Swim"),
   vevent("piano", "20261017T150000Z", "20261017T160000Z", "Piano"),
   vevent("chess", "20261018T150000Z", "20261018T160000Z", "Chess"),
-  "END:VCALENDAR",
-].join("\r\n");
+);
+
+function calendarOf(...events: string[]): string {
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Glance//Test//EN",
+    ...events,
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
+function attending(event: string, ...names: string[]): string {
+  const attendees = names.map((name) => `ATTENDEE;CN=${name}:mailto:${name}@example.com`);
+
+  return event.replace("END:VEVENT", [...attendees, "END:VEVENT"].join("\r\n"));
+}
 
 function vevent(uid: string, start: string, end: string, title: string): string {
   return [
@@ -50,11 +71,11 @@ function vevent(uid: string, start: string, end: string, title: string): string 
   ].join("\r\n");
 }
 
-async function stage(): Promise<string> {
+async function stage(text = FILE): Promise<string> {
   const review = await stageImport(harness.deps(), MARIA, WALL, {
     fileName: "school.ics",
-    text: FILE,
-    size: FILE.length,
+    text,
+    size: text.length,
   });
 
   if (!review.ok) throw new Error(review.error);
@@ -108,6 +129,7 @@ describe("commitImport", () => {
       count: 2,
       range: { first: "2026-10-16", last: "2026-10-18" },
       who: MOM.id,
+      matched: 0,
       version: 0,
     });
     const added = (await liveEvents()).filter((event) => event.id !== SWIM.id);
@@ -134,6 +156,32 @@ describe("commitImport", () => {
     expect(added.map(({ everyone, tagIds }) => ({ everyone, tagIds }))).toEqual([
       { everyone: true, tagIds: [] },
       { everyone: true, tagIds: [] },
+    ]);
+  });
+
+  it("IMP-08 an event whose attendees match gets those tags, every tag is everyone, the rest get the pick", async () => {
+    await putTag(harness.deps(), MARIA, DAD);
+    await putTag(harness.deps(), OMAR, COACH);
+    const id = await stage(
+      calendarOf(
+        attending(vevent("piano", "20261017T150000Z", "20261017T160000Z", "Piano"), "mom"),
+        attending(vevent("chess", "20261018T150000Z", "20261018T160000Z", "Chess"), "Dad", "Mom"),
+        attending(vevent("art", "20261019T150000Z", "20261019T160000Z", "Art"), "Coach", "Ana"),
+      ),
+    );
+
+    const done = await commitImport(harness.deps(), MARIA, id, DAD.id);
+
+    expect(done.ok && done.value).toMatchObject({ count: 3, who: DAD.id, matched: 2 });
+    const added = (await liveEvents()).filter((event) => event.importId === id);
+    expect(added.map(({ title, everyone, tagIds }) => ({ title, everyone, tagIds }))).toEqual([
+      { title: "Piano", everyone: false, tagIds: [MOM.id] },
+      { title: "Chess", everyone: true, tagIds: [] },
+      { title: "Art", everyone: false, tagIds: [DAD.id] },
+    ]);
+    expect((await harness.deps().db.tags.changedSince(MARIA, 0)).map((t) => t.name)).toEqual([
+      "Mom",
+      "Dad",
     ]);
   });
 

@@ -1,11 +1,19 @@
 import "server-only";
 import { uuidv7 } from "@/domain/id";
-import type { ImportedEvent, ImportResult, ImportWho, LastImport } from "@/domain/imports";
+import {
+  attendeeTags,
+  type ImportedEvent,
+  type ImportResult,
+  type ImportWho,
+  type LastImport,
+} from "@/domain/imports";
 import { err, ok, type Result } from "@/domain/result";
+import type { Tag } from "@/domain/schemas";
+import { EVERYONE, type EventWho, whoValue } from "@/domain/tags";
 import type { Database, ImportRecord, StoredEvent } from "../../db";
 import type { ServiceDeps } from "../deps";
 import { stamp } from "../rows";
-import { markedEvents } from "./stage";
+import { liveTags, markedEvents } from "./stage";
 
 export type CommitError = "not-found" | "not-staged" | "unknown-tag";
 
@@ -32,19 +40,27 @@ export function commitImport(
 
     const fresh = (await markedEvents(tx, staged)).filter((event) => !event.duplicate);
 
+    const tags = await liveTags(tx, accountId);
+
     const importedAt = now().toISOString();
 
     if (!(await tx.imports.markDone(id, { who, count: fresh.length, importedAt }))) {
       return err("not-staged");
     }
 
-    for (const event of fresh)
-      await tx.events.save(accountId, await imported(tx, now(), event, id, who));
+    const plans = fresh.map((event) => ({ event, matched: attendeeTags(event.attendees, tags) }));
+
+    for (const { event, matched } of plans)
+      await tx.events.save(
+        accountId,
+        await imported(tx, now(), event, id, whoOf(matched, tags, who)),
+      );
 
     return ok({
       count: fresh.length,
       range: staged.range,
       who,
+      matched: plans.filter((plan) => plan.matched.length > 0).length,
       version: await tx.versions.current(),
     });
   });
@@ -104,19 +120,27 @@ async function imported(
   now: Date,
   { duplicate: _, attendees: _attendees, ...event }: ImportedEvent & { duplicate: boolean },
   importId: string,
-  who: ImportWho,
+  who: EventWho,
 ): Promise<StoredEvent> {
-  const everyone = who === "everyone";
-
   return {
     ...event,
     id: uuidv7(now),
-    everyone,
-    tagIds: everyone ? [] : [who],
+    everyone: who.everyone,
+    tagIds: [...who.tagIds],
     notify: true,
     importId,
     ...(await stamp(db, now)),
   };
+}
+
+function whoOf(matched: readonly string[], tags: readonly Tag[], picked: ImportWho): EventWho {
+  if (matched.length > 0)
+    return whoValue(
+      matched,
+      tags.map((tag) => tag.id),
+    );
+
+  return picked === "everyone" ? EVERYONE : { everyone: false, tagIds: [picked] };
 }
 
 function undoUntil(record: ImportRecord): number {

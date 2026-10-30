@@ -1,12 +1,14 @@
 import "server-only";
 import { uuidv7 } from "@/domain/id";
 import {
+  attendeeTags,
   type ImportedEvent,
   type ImportReview,
   type Marked,
   markDuplicates,
 } from "@/domain/imports";
 import { err, ok, type Result } from "@/domain/result";
+import type { Tag } from "@/domain/schemas";
 import type { Database, StagedImport } from "../../db";
 import type { ServiceDeps } from "../deps";
 import { accountTimeZone } from "../rows";
@@ -72,6 +74,12 @@ export async function markedEvents(
   return markDuplicates(staged.events, calendar, tz);
 }
 
+export async function liveTags(db: Database, accountId: string): Promise<Tag[]> {
+  const tags = (await db.tags.changedSince(accountId, 0)).filter((tag) => !tag.deletedAt);
+
+  return tags.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
+}
+
 async function isAccountDisplay(db: Database, accountId: string, displayId: string) {
   const displays = await db.displays.forAccount(accountId);
 
@@ -80,6 +88,8 @@ async function isAccountDisplay(db: Database, accountId: string, displayId: stri
 
 async function reviewOf(db: Database, staged: StagedImport): Promise<ImportReview> {
   const marked = await markedEvents(db, staged);
+
+  const tags = await liveTags(db, staged.accountId);
 
   const events = marked.map(({ title, startAt, endAt, allDay, repeat, duplicate }) => ({
     title,
@@ -92,6 +102,10 @@ async function reviewOf(db: Database, staged: StagedImport): Promise<ImportRevie
 
   const duplicates = events.filter((event) => event.duplicate).length;
 
+  const matched = marked.filter(
+    (event) => !event.duplicate && attendeeTags(event.attendees, tags).length > 0,
+  ).length;
+
   return {
     id: staged.id,
     fileName: staged.fileName,
@@ -100,5 +114,6 @@ async function reviewOf(db: Database, staged: StagedImport): Promise<ImportRevie
     events,
     newCount: events.length - duplicates,
     duplicates,
+    matched,
   };
 }

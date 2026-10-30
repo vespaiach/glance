@@ -1,5 +1,6 @@
 import { allDayStart } from "./allDay";
-import { markDuplicates } from "./imports";
+import { attendeeTags, markDuplicates } from "./imports";
+import type { Tag } from "./schemas";
 
 const NY = "America/New_York";
 
@@ -52,3 +53,24 @@ describe("markDuplicates", () => {
     expect(duplicates([SWIM, { ...SWIM, title: "swim" }])).toEqual([false, true]);
   });
 });
+
+describe("attendeeTags", () => {
+  const TAGS = [tag("t1", "Mom"), tag("t2", "Leo"), tag("t3", "Mia")];
+
+  it("IMP-08 a name matches a tag ignoring case and outer spaces, in tag order", () => {
+    expect(attendeeTags(["  mia ", "MOM"], TAGS)).toEqual(["t1", "t3"]);
+  });
+
+  it("IMP-08 names that match no tag give no tags", () => {
+    expect(attendeeTags(["Coach Dan", "Mi"], TAGS)).toEqual([]);
+    expect(attendeeTags(undefined, TAGS)).toEqual([]);
+  });
+
+  it("IMP-08 every tag matched gives every tag id", () => {
+    expect(attendeeTags(["Leo", "Mia", "Mom", "mom"], TAGS)).toEqual(["t1", "t2", "t3"]);
+  });
+});
+
+function tag(id: string, name: string): Tag {
+  return { id, name, color: "coral", createdAt: "2026-10-01T15:00:00.000Z" };
+}
