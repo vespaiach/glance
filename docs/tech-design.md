@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v3.32 |
+| Status | v3.33 |
 | Date | 2026-10-29 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.37) · [`design/handoff/`](design/handoff/README.md) (v20) |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.38) · [`design/handoff/`](design/handoff/README.md) (v20) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -531,7 +531,7 @@ PostgreSQL, from `db-migrations/`:
 - Photo files are stored as `{account}/{id}.{display|thumb}` (the uploaded original isn't kept) under `{DATA_DIR}/photos` or in an S3 or R2 bucket, served through an authenticated route. Deleting a photo deletes its files.
 
 ### 6.8 Public events API (API-*)
-Bearer key instead of the session: no Origin check (no cookies to ride on) and no build check. Steps: `apiAccount` (`server/http.ts`) → `requireApiKey(authorization)` (`server/auth/apiKeys.ts`): the header must be `Bearer glc_live_` + 32 base62, else 401; the key's SHA-256 is counted on the auth deps' `apiKey` limiter (60 per minute per key, in memory, `createRateLimiter`; over it → 429 `limited` with `Retry-After` = `ceil(retryAfterMs / 1000)` seconds, the key's window left); then `apiKeys.use(keyHash, now)` sets `last_used_at` and answers the account id in one `UPDATE … RETURNING` (no row → 401 `unauthorized`, so a revoked key fails at once). Body and query parse with `ApiEventInputSchema`, `ApiEventPatchSchema` (`v.partial`) and `ApiRangeSchema` (`domain/schemas.ts`); a body failure → 400 `{ error: "invalid", field }` with the first issue's top-level key.
+Bearer key instead of the session: no Origin check (no cookies to ride on) and no build check. Steps: `apiAccount` (`server/http.ts`) → `requireApiKey(authorization)` (`server/auth/apiKeys.ts`): the header must be `Bearer glc_live_` + 32 base62, else 401; the key's SHA-256 is counted on the auth deps' `apiKey` limiter (60 per minute per key, in memory, `createRateLimiter`; over it → 429 `limited` with `Retry-After` = `ceil(retryAfterMs / 1000)` seconds, the key's window left); then `apiKeys.use(keyHash, now)` sets `last_used_at` and answers the account id in one `UPDATE … RETURNING` (no row → 401 `unauthorized`, so a revoked key fails at once). Body and query parse with `ApiEventInputSchema`, `ApiEventPatchSchema` (`v.partial`) and `ApiRangeSchema` (`domain/schemas.ts`); a body failure → 400 `{ error: "invalid", field }` with the first issue's top-level key. CORS (API-09) is set in `next.config.ts` `headers()` for `/api/v1/:path*` (`Access-Control-Allow-Origin: *`, safe since no cookies are used); the preflight `OPTIONS` is Next's automatic 204, so the routes define no `OPTIONS`.
 
 `server/services/apiEvents.ts` maps between the API's event JSON (`ApiEvent`, API-03) and `CalendarEvent`, and saves through `events.putEvent` / `events.deleteEvent`, announced on the sync bus like any write, so screens, sync and reminders see it as a normal event:
 

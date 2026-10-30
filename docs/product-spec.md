@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.37 |
+| Status | v1.38 |
 | Date | 2026-10-29 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Source of truth | [`Glance.dc.html`](design/handoff/Glance.dc.html) (prototype) · [`Glance Notes.dc.html`](design/handoff/Glance%20Notes.dc.html) (behavior) · the `Glance States - …` pages (index: [`Glance States.dc.html`](design/handoff/Glance%20States.dc.html)) · [`Glance New Event.dc.html`](design/handoff/Glance%20New%20Event.dc.html) (the event page) and the other pages in §2 |
@@ -652,6 +652,7 @@ Other apps read and write the family's events with the account's API key (SET-19
 | API-06 | **Create:** `POST /api/v1/events` → 201 with the new event (its `id` included). Body: `title` (required), `start` (required; ISO 8601 with an offset or `Z`, or `YYYY-MM-DD` with `allDay: true`), `end`, `allDay`, `who`, `place`, `notes`, `repeat`, `exdates`. Limits as the event page: title 1–140 characters with no line breaks, place up to 60, notes up to 280 (trimmed); `end` after `start` on the same local day (TPK-07), none for all-day. `who` is a list of member names matched ignoring case; missing = everyone, `[]` = no one, an unknown name → 400 (members are never created through the API). Reminders are on (NOTIF-09). `null` reads as absent. An invalid body → 400 `{ "error": "invalid", "field": "{name}" }`; nothing is saved. |
 | API-07 | **Change:** `PATCH /api/v1/events/{id}` with any of the create fields → 200 with the event; fields left out keep their values, `null` clears an optional one (`end`, `allDay`, `who` back to everyone, `place`, `notes`, `repeat`, `exdates`), and the result is checked as API-06. On a series it changes the whole series. Unknown id → 404. |
 | API-08 | **Delete:** `DELETE /api/v1/events/{id}` → 204; the event is removed from every screen as a delete from the event page is (a series goes whole). Unknown or already deleted → 404. |
+| API-09 | **Browsers:** a web page on any other site can call the API from the browser (CORS): every `/api/v1` answer, the preflight included, allows any origin, the methods above and the `Authorization` and `Content-Type` headers, and exposes `Retry-After`. No cookies are sent or needed. |
 
 ---
 
