@@ -1,0 +1,88 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Glance//Fixture//EN
+BEGIN:VEVENT
+UID:party@fixture
+DTSTAMP:20260901T000000Z
+DTSTART;TZID=America/New_York:20261107T140000
+DTEND;TZID=America/New_York:20261107T160000
+SUMMARY:Birthday party
+ORGANIZER;CN=Mom:mailto:mom@example.com
+ATTENDEE;CN=Mia;PARTSTAT=ACCEPTED:mailto:mia@example.com
+ATTENDEE;CN="  Leo  ":mailto:leo@example.com
+ATTENDEE:mailto:nocn@example.com
+ATTENDEE;CN=:mailto:empty@example.com
+ATTENDEE;CN=MIA:mailto:mia2@example.com
+END:VEVENT
+BEGIN:VEVENT
+UID:assembly@fixture
+DTSTAMP:20260901T000000Z
+DTSTART;VALUE=DATE:20261112
+SUMMARY:School assembly
+ATTENDEE;CN=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:mailto:long@example.com
+ATTENDEE;CN=Kid 1:mailto:kid1@example.com
+ATTENDEE;CN=Kid 2:mailto:kid2@example.com
+ATTENDEE;CN=Kid 3:mailto:kid3@example.com
+ATTENDEE;CN=Kid 4:mailto:kid4@example.com
+ATTENDEE;CN=Kid 5:mailto:kid5@example.com
+ATTENDEE;CN=Kid 6:mailto:kid6@example.com
+ATTENDEE;CN=Kid 7:mailto:kid7@example.com
+ATTENDEE;CN=Kid 8:mailto:kid8@example.com
+ATTENDEE;CN=Kid 9:mailto:kid9@example.com
+ATTENDEE;CN=Kid 10:mailto:kid10@example.com
+ATTENDEE;CN=Kid 11:mailto:kid11@example.com
+ATTENDEE;CN=Kid 12:mailto:kid12@example.com
+ATTENDEE;CN=Kid 13:mailto:kid13@example.com
+ATTENDEE;CN=Kid 14:mailto:kid14@example.com
+ATTENDEE;CN=Kid 15:mailto:kid15@example.com
+ATTENDEE;CN=Kid 16:mailto:kid16@example.com
+ATTENDEE;CN=Kid 17:mailto:kid17@example.com
+ATTENDEE;CN=Kid 18:mailto:kid18@example.com
+ATTENDEE;CN=Kid 19:mailto:kid19@example.com
+ATTENDEE;CN=Kid 20:mailto:kid20@example.com
+ATTENDEE;CN=Kid 21:mailto:kid21@example.com
+END:VEVENT
+BEGIN:VEVENT
+UID:tutor@fixture
+DTSTAMP:20260901T000000Z
+DTSTART;TZID=America/New_York:20261103T170000
+DTEND;TZID=America/New_York:20261103T180000
+RRULE:FREQ=WEEKLY;COUNT=3
+SUMMARY:Tutor
+ATTENDEE;CN=Ava:mailto:ava@example.com
+END:VEVENT
+BEGIN:VEVENT
+UID:tutor@fixture
+DTSTAMP:20260901T000000Z
+RECURRENCE-ID;TZID=America/New_York:20261110T170000
+DTSTART;TZID=America/New_York:20261110T170000
+DTEND;TZID=America/New_York:20261110T180000
+SUMMARY:Tutor
+ATTENDEE;CN=Noah:mailto:noah@example.com
+END:VEVENT
+BEGIN:VEVENT
+UID:piano@fixture
+DTSTAMP:20260901T000000Z
+DTSTART;TZID=America/New_York:20261102T160000
+DTEND;TZID=America/New_York:20261102T163000
+RRULE:FREQ=WEEKLY
+SUMMARY:Piano
+ATTENDEE;CN=Ava:mailto:ava@example.com
+END:VEVENT
+BEGIN:VEVENT
+UID:piano@fixture
+DTSTAMP:20260901T000000Z
+RECURRENCE-ID;TZID=America/New_York:20261109T160000
+DTSTART;TZID=America/New_York:20261109T170000
+DTEND;TZID=America/New_York:20261109T173000
+SUMMARY:Piano
+ATTENDEE;CN=Leo:mailto:leo@example.com
+END:VEVENT
+BEGIN:VEVENT
+UID:dentist@fixture
+DTSTAMP:20260901T000000Z
+DTSTART;TZID=America/New_York:20261105T090000
+DTEND;TZID=America/New_York:20261105T100000
+SUMMARY:Dentist
+END:VEVENT
+END:VCALENDAR
