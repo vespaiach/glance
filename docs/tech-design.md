@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| Status | v3.37 |
-| Date | 2026-10-29 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.44) · [`design/handoff/`](design/handoff/README.md) (v20) |
+| Status | v3.38 |
+| Date | 2026-10-31 |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.46) · [`design/handoff/`](design/handoff/README.md) (v23) |
 
 The spec says **what** the app does (requirement IDs like `SYNC-02`); this document says **how**. On conflict, the spec wins on behavior and this document on implementation.
 
@@ -16,7 +16,7 @@ The spec says **what** the app does (requirement IDs like `SYNC-02`); this docum
 |---|---|---|
 | D1 | Framework | **Next.js App Router, run as a SPA.** A persistent client shell in `(display)/layout.tsx` keeps the clock, idle, slideshow and sync timers alive across views. Views are `'use client'` segments. |
 | D2 | Language / lint | TypeScript `strict`, Biome (lint + format, pre-commit and the §7 checks). |
-| D3 | Styling | **StyleX** via Babel + PostCSS (`useCSSLayers: true`); `globals.css` holds only `@stylex;`. Tokens in `theme/` (`tokens.stylex.ts`, `type.stylex.ts`, `seasons.stylex.ts`), seasons and Ambient as `createTheme` in `themes.ts`. Components use `season.*` roles directly. Geist / Geist Mono are vendored woff2 loaded with `next/font/local`. `ui/Icon` wraps `lucide-react` and takes the glyph component, not a name. |
+| D3 | Styling | **StyleX** via Babel + PostCSS (`useCSSLayers: true`); `globals.css` holds only `@stylex;`. Tokens in `theme/` (`tokens.stylex.ts`, `type.stylex.ts`, `seasons.stylex.ts`), seasons and Ambient as `createTheme` in `themes.ts`. Components use `season.*` roles directly. Geist / Geist Mono are vendored woff2 loaded with `next/font/local`. `ui/Icon` wraps `lucide-react` and takes the glyph component, not a name; stroke 1.75 (1.25–1.5 at ≥ 48 px). |
 | D4 | Client data | **Local-first store on IndexedDB (Dexie).** The UI reads local data only; writes go local first; a sync engine in a Web Worker (D19) talks to the server. |
 | D5 | Shell state | React context + `useSyncExternalStore` stores. No state library. |
 | D6 | Validation | **Valibot** schemas in `domain/schemas.ts` are the single contract for client and server; types come from `v.InferOutput`. `SyncedXSchema` adds `updatedAt`, `version`, optional `deletedAt`. IDs are UUIDs, timestamps ISO-8601, dates `YYYY-MM-DD`. Schemas never transform. The event schema checks `endAt > startAt` and a span under 24 h. Weather icons are a closed set of Lucide kebab names that `ui` maps to components. `DEFAULT_SETTINGS` in `domain/defaults.ts`. |
@@ -237,7 +237,7 @@ Nesting: Now → Repo → Settings → TimeZone → Season → Network → Sheet
 - **Uploads** run one XHR per file through `PhotosRepo.upload`; tiles live in memory, pause offline and resume or restart on reconnect.
 - **Keyboard** (KB-*): `useKeyboardInset()` reads `visualViewport`; sheets shrink above it. `useFieldInView(area, inset)` returns the padding its caller applies (the inset while a field inside `area` has focus, else 0): the event page pads its scrolling page (not the picker card), AppShell and Sign in their root. On `focusin`, again 350 ms later, and on each `visualViewport` resize (next frame, after the padding renders) it takes the focused input or textarea and its first label and calls the pure `domain/keyboard.ts` `revealDelta(field, label, viewport)`: the visible area is `area`'s box inside the visual viewport, its top below the larger of `scroll-padding-top` and a `[data-page-top-bar]` child; the field's bottom goes 16 px above the bottom and its top at least 12 px below the top (a taller field keeps its top), with the label when it sits at most 48 px above the field and both fit; 0 when already inside. The delta scrolls `area` and every `overflow-y: auto | scroll` element between it and the field, nearest first, each taking what it can, then outer scrollers, then `window.scrollBy`. Without `visualViewport` it does nothing. Return in a single-line input moves to the next field or submits.
 - **Accessibility**: `PillTabs` is a `<fieldset>` of `aria-pressed` buttons; `Sheet` and the date picker are `role="dialog"` with focus trap and return (`ui/dialogFocus.ts`: `useFocusOnOpen`, `dialogKeyDown` for Escape and Tab wrap); `onAccent` is black except in Winter (4.5:1, checked by `theme/contrast.test.ts`); reduced motion zeroes `durBase` and `durSeason`.
-- **Gallery** (`/dev/gallery`) shows every `ui` component in the four seasons and every state the States pages show, at the three sizes.
+- **Gallery** (`/dev/gallery`) shows every `ui` component in the four seasons and every state the layout pages show, at the three sizes.
 
 **Zone state** (LOAD-\*, FAIL-\*, OFF-\*). Local reads don't fail, so a zone's state describes freshness. `zoneState({ rows, everSynced, failed, lastSyncedAt, timedOut })` is pure; **ever synced** = a pull cursor exists in `meta`, and `timedOut` comes from `loadingTimedOut(since, now)`.
 
@@ -324,7 +324,7 @@ The worker owns the outbox drain, pull + apply, the SSE stream with 30 s polling
 ## 6. Server design
 
 ### 6.1 Route handlers
-`runtime = 'nodejs'`. Steps: Origin check (writes only) → build check (426; the sign-in routes `code`, `code/verify`, `verify`, `status`, `name`, `signout` and `signout-all`, `DELETE /api/account`, and `client-errors`, skip it) → session (`requireDisplay`, 401; `client-errors` doesn't need one) → Valibot parse (400) → service → map the `Result` to JSON. Errors are `{ error: code }` with 400/401/403/404/409/413/415/426/429/502/507. No middleware for auth. Helpers in `server/http.ts`; handlers import service indexes, never `server/db`. Body schemas live in `domain/schemas.ts` and cap text as the spec does (§7: event `title` 140, `location` 60, `notes` 280 characters, `EVENT_LIMITS`; tag `name` 32, `TAG_NAME_LIMIT`; notes `NOTE_LIMITS`), so the client fields and the server agree; query and header parsers (cursor, `q`, lat/lon, `v=`, upload headers) are in `server/http.ts`.
+`runtime = 'nodejs'`. Steps: Origin check (writes only) → build check (426; the sign-in routes `code`, `code/verify`, `verify`, `status`, `name`, `signout` and `signout-all`, `DELETE /api/account`, and `client-errors`, skip it) → session (`requireDisplay`, 401; `client-errors` doesn't need one) → Valibot parse (400) → service → map the `Result` to JSON. Errors are `{ error: code }` with 400/401/403/404/409/413/415/426/429/502/507. No middleware for auth. Helpers in `server/http.ts`; handlers import service indexes, never `server/db`. Body schemas live in `domain/schemas.ts` and cap text as the spec does (EVT-12, NOTE-02, §7: event `title` 140, `location` 60, `notes` 280 characters, `EVENT_LIMITS`; tag `name` 32, `TAG_NAME_LIMIT`; notes `NOTE_LIMITS`), so the client fields and the server agree; query and header parsers (cursor, `q`, lat/lon, `v=`, upload headers) are in `server/http.ts`.
 
 | Route | Notes |
 |---|---|
@@ -558,4 +558,4 @@ Building checks what the schema can't, answering the field as the error (→ 400
 
 Checks: `biome check` → `tsc --noEmit` → Vitest → `next build`. GitHub CI (`.github/workflows/ci.yml`) runs them on demand only for now; run them locally before each merge to `main`.
 
-**Manual checks** on a production build, before each release and every Next upgrade: visual parity with the States pages and `Glance New Event` at the three sizes (1920×1080, 1024×768, 390×844); offline cold start with every view and synced photo (OFF-06); two screens syncing, offline replay, delete wins, polling fallback (SYNC-01..03); a 401 with a change waiting, then signing in with the same and another email (SIGNIN-13, SIGNIN-11); a new build applied on an idle screen (OFF-07).
+**Manual checks** on a production build, before each release and every Next upgrade: visual parity with the handoff's layout pages (`*-layout.dc.html`) at the three sizes (1920×1080, 1024×768, 390×844); offline cold start with every view and synced photo (OFF-06); two screens syncing, offline replay, delete wins, polling fallback (SYNC-01..03); a 401 with a change waiting, then signing in with the same and another email (SIGNIN-13, SIGNIN-11); a new build applied on an idle screen (OFF-07).
