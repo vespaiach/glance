@@ -2,7 +2,7 @@ export type PushPayload = { title: string; body: string; data: PushData };
 
 export type PushData = { url: string };
 
-type ShowScope = Pick<ServiceWorkerGlobalScope, "clients" | "registration">;
+type ShowScope = Pick<ServiceWorkerGlobalScope, "registration">;
 
 const HOME = "/today";
 
@@ -12,10 +12,6 @@ const WINDOWS: ClientQueryOptions = { type: "window", includeUncontrolled: true 
 
 export async function showPush(scope: ShowScope, payload: unknown): Promise<void> {
   if (!isPushPayload(payload)) return;
-
-  const windows = await scope.clients.matchAll(WINDOWS);
-
-  if (windows.some(isVisible)) return;
 
   await scope.registration.showNotification(payload.title, {
     body: payload.body,
@@ -54,8 +50,4 @@ function isPushData(value: unknown): value is PushData {
   const { url } = value as Partial<PushData>;
 
   return typeof url === "string" && /^\/(?![/\\])/.test(url);
-}
-
-function isVisible(client: Client): boolean {
-  return (client as WindowClient).visibilityState === "visible";
 }
