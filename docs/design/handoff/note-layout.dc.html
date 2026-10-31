@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:20px;max-width:1400px">
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Note Layout</span>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">Screen size</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ sizeOpts }}" as="o" hint-placeholder-count="4">
+<button onClick="{{ o.pick }}" style="font:500 15px var(--font-sans);padding:8px 14px;border-radius:9999px;border:0;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">Screen state</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ stateOpts }}" as="o" hint-placeholder-count="7">
+<button onClick="{{ o.pick }}" style="font:500 15px var(--font-sans);padding:8px 14px;border-radius:9999px;border:0;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+</section>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+<section id="{{ r.id }}" data-screen-label="{{ r.name }}" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">{{ r.name }}</span>
+<div style="display:flex;gap:40px;align-items:flex-start">
+<sc-for list="{{ r.frames }}" as="fr" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.25,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;default&quot;:0.5,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { size: -1, st: -1 };
+  static SIZES = [['Large screen', 1920, 1080], ['Normal screen', 1024, 768], ['Small screen', 390, 844]];
+  static STATES = [["data","Full","view=notes","NOTE-01, NOTE-04, NOTE-06, NOTE-09"],["empty","Empty","view=notes&empty=1","NOTE-07"],["loading","Loading","view=notes&net=loading","NOTE-01"],["newnote","New note","view=notes&sheet=newnote","NOTE-02, NOTE-05"],["details","Note details","view=notes&sheet=note&details=1","NOTE-10"],["edit","Edit note","view=notes&sheet=note","NOTE-02, NOTE-05"]];
+  static SIZE_IDS = {};
+  renderVals() {
+    const k = this.props.frameScale ?? 0.5, { size, st } = this.state;
+    const opt = (key, cur) => ([label, v]) => ({ label, bg: v === cur ? '#1a1a1a' : 'rgba(0,0,0,.06)', fg: v === cur ? '#fff' : '#1a1a1a', pick: () => this.setState({ [key]: v }) });
+    const sizes = Component.SIZES.filter((_, i) => size < 0 || i === size);
+    return {
+      sizeOpts: [['All sizes', -1], ...Component.SIZES.map(([l, w, h], i) => [l + ' · ' + w + '×' + h, i])].map(opt('size', size)),
+      stateOpts: [['All states', -1], ...Component.STATES.map(([, n], i) => [n, i])].map(opt('st', st)),
+      rows: Component.STATES.filter((_, i) => st < 0 || i === st).map(([id, name, q, ids]) => ({
+        id, name: ids ? name + ' (' + ids + ')' : name,
+        frames: sizes.map(([l, w, h]) => { const sz = (Component.SIZE_IDS[id] || {})[w]; return {
+          label: l + ' · ' + w + '×' + h + (sz ? ' (' + sz + ')' : ''), src: 'app.dc.html?' + q, screenLabel: name + ' · ' + l,
+          w: w + 'px', h: h + 'px', boxW: w * k + 'px', boxH: h * k + 'px', tf: 'scale(' + k + ')'
+        }; })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>
