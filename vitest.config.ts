@@ -7,6 +7,8 @@ import { version } from "./package.json";
 
 const root = import.meta.dirname;
 
+const SW_BUILD_TESTS = ["src/app/serwist/**/*.test.ts"];
+
 process.env.TZ = "Asia/Kolkata";
 
 export default defineConfig({
@@ -34,11 +36,21 @@ export default defineConfig({
     alias: { "server-only": path.join(root, "node_modules/server-only/empty.js") },
   },
   test: {
-    environment: "jsdom",
     globals: true,
-    setupFiles: ["./vitest.setup.ts"],
     passWithNoTests: true,
     env: { NEXT_PUBLIC_APP_VERSION: version },
-    projects: [{ extends: true, test: { name: "app", include: ["src/**/*.test.{ts,tsx}"] } }],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "app",
+          environment: "jsdom",
+          setupFiles: ["./vitest.setup.ts"],
+          include: ["src/**/*.test.{ts,tsx}"],
+          exclude: SW_BUILD_TESTS,
+        },
+      },
+      { extends: true, test: { name: "sw-build", environment: "node", include: SW_BUILD_TESTS } },
+    ],
   },
 });

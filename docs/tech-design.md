@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v3.38 |
+| Status | v3.39 |
 | Date | 2026-10-31 |
 | Inputs | [`product-spec.md`](product-spec.md) (v1.46) · [`design/handoff/`](design/handoff/README.md) (v20) |
 
@@ -271,6 +271,7 @@ Not used: Background Sync (no Safari/Firefox support, duplicates the outbox), ca
 
 **Constraints**
 - `@serwist/turbopack` compiles `sw.ts` with esbuild to an IIFE at `/serwist/sw.js`, registered as a classic script by the page itself (not `SerwistProvider`). Turbopack is used for dev and build.
+- That esbuild doesn't get Next's `env` inlining: `serwist/[path]/route.ts` passes each `process.env` value the worker's imports read through `define` (today `NEXT_PUBLIC_APP_VERSION`, from `domain/build`), since a bare `process` throws as the worker loads and it never installs. The `D16` route test fails if the built `sw.js` still reads `process.env`.
 - A plugin rebuilds cached responses (`new Response(body, cached)`) so the Turbopack sync-worker script keeps its `#params` URL.
 - The SW is off in `next dev`; test on `next build && next start` over HTTPS.
 - RSC caching depends on Next internals: pin Next exactly and rerun the offline manual check (§7) on every upgrade.
@@ -555,6 +556,7 @@ Building checks what the schema can't, answering the field as the error (→ 400
 | Component | Vitest + Testing Library | `ui` and feature components: clicks, validation, ARIA |
 | Data / sync | Vitest + `fake-indexeddb`, stubbed `fetch` / `EventSource` | Repos (row + outbox in one transaction), `engine.ts` (push order, backoff, 401 keeps the outbox, `revoked` clears local data, pending rows skipped, tombstones, weather retries), worker lock and restart |
 | Time zone | Vitest with `TZ=Asia/Kolkata` | `zone.ts` across DST in several zones; every rule that reads a day or hour runs in a zone other than the device's |
+| SW build | Vitest `sw-build` project (Node, not jsdom: esbuild refuses jsdom's `TextEncoder`) | `serwist/[path]/route.ts` builds `sw.js` and the output never reads `process.env` (D16) |
 
 Checks: `biome check` → `tsc --noEmit` → Vitest → `next build`. GitHub CI (`.github/workflows/ci.yml`) runs them on demand only for now; run them locally before each merge to `main`.
 
