@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/colors.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/seasons.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/typography.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/tokens/base.css">
+<link rel="stylesheet" href="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/styles.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="_ds/kiosk-display-design-system-21b0bf84-c459-4cd7-9d26-ca6ee702ca6c/_ds_bundle.js"></script>
+<style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
+</helmet>
+<section style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:20px;max-width:1400px">
+<span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Account Layout</span>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">Screen size</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ sizeOpts }}" as="o" hint-placeholder-count="4">
+<button onClick="{{ o.pick }}" style="font:500 15px var(--font-sans);padding:8px 14px;border-radius:9999px;border:0;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span style="font:600 13px ui-monospace,Menlo,monospace;text-transform:uppercase;letter-spacing:.4px">Screen view</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ viewOpts }}" as="o" hint-placeholder-count="12">
+<button onClick="{{ o.pick }}" style="font:500 15px var(--font-sans);padding:8px 14px;border-radius:9999px;border:0;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+</section>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+<section id="{{ r.id }}" data-screen-label="{{ r.name }}" style="padding:32px 56px 48px;border-top:1px solid rgba(0,0,0,.08);display:flex;flex-direction:column;gap:20px">
+<span style="font:600 24px/1.2 var(--font-sans);color:#1a1a1a">{{ r.name }}</span>
+<div style="display:flex;gap:40px;align-items:flex-start">
+<sc-for list="{{ r.frames }}" as="fr" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:8px;flex:none">
+<span style="font:500 13px/1.2 ui-monospace,Menlo,monospace;color:#1a1a1a">{{ fr.label }}</span>
+<div data-screen-label="{{ fr.screenLabel }}" style="width:{{ fr.boxW }};height:{{ fr.boxH }};overflow:hidden;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06)">
+<iframe src="{{ fr.src }}" title="{{ fr.screenLabel }}" loading="lazy" style="width:{{ fr.w }};height:{{ fr.h }};border:0;transform:{{ fr.tf }};transform-origin:0 0;display:block"></iframe>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;frameScale&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.25,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;default&quot;:0.5,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { size: -1, v: -1 };
+  static SIZES = [['Large screen', 1920, 1080], ['Normal screen', 1024, 768], ['Small screen', 390, 844]];
+  static VIEWS = [["form","Email form","signin=form"],["sending","Sending code","signin=sending"],["offline","Offline","signin=offline"],["sendfail","Couldn’t send","signin=sendfail"],["code","Enter code","signin=sent&backin=8&hold=1"],["typed","Code typed","signin=sent&backin=0&code=482"],["checking","Checking code","signin=checking&backin=0"],["wrong","Wrong code","signin=wrong&backin=0"],["locked","Locked","signin=locked"],["expired","Code expired","signin=expired"],["name","Your name","signin=name"],["namekb","Your name · keyboard","signin=name&kb=1"],["location","Where is this screen?","signin=location"],["locfail","Location · couldn’t save","signin=location&wx=savefail"],["lockb","Location · keyboard","signin=location&kb=1"],["done","Signed in · new","signin=done"],["returning","Signed in · returning","signin=done&acct=returning"],["ended","Signed out","signin=ended"],["pending","Signed out · changes waiting","signin=ended&pending=3"],["switch","Signed out · different email","signin=ended&pending=3&switch=1"],["scanask","Scan · camera access","signin=form&scan=ask",1],["scanblocked","Scan · camera blocked","signin=form&scan=blocked",1],["scannocam","Scan · no camera","signin=form&scan=nocam",1],["scanon","Scan · scanning","signin=form&scan=on",1],["scanfound","Scan · code found","signin=form&scan=found",1],["scanwrong","Scan · not a Glance code","signin=form&scan=wrong",1],["scanexpired","Scan · expired code","signin=form&scan=expired",1]];
+  static IDS = {"form":"SIGNIN-01, SIGNIN-11d, SIGNIN-13e, SIGNIN-19","sending":"SIGNIN-03","offline":"SIGNIN-10","sendfail":"SIGNIN-03","code":"SIGNIN-04, SIGNIN-12","typed":"SIGNIN-04","checking":"SIGNIN-04","wrong":"SIGNIN-17","locked":"SIGNIN-17","expired":"SIGNIN-08","name":"SIGNIN-06","namekb":"SIGNIN-06","location":"SIGNIN-14","locfail":"SIGNIN-14","lockb":"SIGNIN-14","done":"SIGNIN-09","returning":"SIGNIN-09","ended":"SIGNIN-13, SIGNIN-13a, SIGNIN-18","pending":"SIGNIN-13b, SIGNIN-13d","switch":"SIGNIN-13c","scanask":"SIGNIN-21","scanblocked":"SIGNIN-21","scannocam":"SIGNIN-21","scanon":"SIGNIN-22, SIGNIN-22a","scanfound":"SIGNIN-22b, SIGNIN-22e","scanwrong":"SIGNIN-22c","scanexpired":"SIGNIN-22d"};
+  static SIZE_IDS = {"form":{"390":"SIGNIN-20","1024":"SIGNIN-20"}};
+  renderVals() {
+    const k = this.props.frameScale ?? 0.5, { size, v } = this.state;
+    const opt = (key, cur) => ([label, val]) => ({ label, bg: val === cur ? '#1a1a1a' : 'rgba(0,0,0,.06)', fg: val === cur ? '#fff' : '#1a1a1a', pick: () => this.setState({ [key]: val }) });
+    const sizes = Component.SIZES.map((s, i) => [...s, i]).filter(([, , , i]) => size < 0 || i === size);
+    return {
+      sizeOpts: [['All sizes', -1], ...Component.SIZES.map(([l, w, h], i) => [l + ' · ' + w + '×' + h, i])].map(opt('size', size)),
+      viewOpts: [['All views', -1], ...Component.VIEWS.map(([, n], i) => [n, i])].map(opt('v', v)),
+      rows: Component.VIEWS.filter((_, i) => v < 0 || i === v).map(([id, name, q, scan]) => ({
+        id, name: (scan ? name + ' · small and normal only' : name) + (Component.IDS[id] ? ' (' + Component.IDS[id] + ')' : ''),
+        frames: sizes.filter(([, , , i]) => !scan || i > 0).map(([l, w, h]) => { const sz = (Component.SIZE_IDS[id] || {})[w]; return {
+          label: l + ' · ' + w + '×' + h + (sz ? ' (' + sz + ')' : ''), src: 'app.dc.html?' + q, screenLabel: name + ' · ' + l,
+          w: w + 'px', h: h + 'px', boxW: w * k + 'px', boxH: h * k + 'px', tf: 'scale(' + k + ')'
+        }; })
+      })).filter((r) => r.frames.length)
+    };
+  }
+}
+</script>
+</body>
+</html>

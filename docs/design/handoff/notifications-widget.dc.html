@@ -21,15 +21,15 @@
 <style>body{margin:0;background:#f0eee9;font-family:var(--font-sans);color:#1a1a1a}a{color:#000;text-underline-offset:3px}a:hover{color:#000;text-decoration-thickness:2px}</style>
 </helmet>
 <section data-season="{{ season }}" style="padding:48px 56px 32px;display:flex;flex-direction:column;gap:16px;max-width:1100px">
-<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="Glance.dc.html">Clickable mockup →</a><a href="Glance%20States.dc.html">States and variants →</a><a href="Glance%20Notes.dc.html">Notes →</a></nav>
+<nav style="display:flex;flex-wrap:wrap;gap:16px;font:500 13px ui-monospace,Menlo,monospace"><a href="app.dc.html">Clickable mockup →</a><a href="today-layout.dc.html">Layouts →</a><a href="app-notes.dc.html">Notes →</a></nav>
 <span style="font:600 34px/1.15 var(--font-sans);letter-spacing:-0.5px">Glance · event notifications</span>
-<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Reminders for upcoming events, shown on the display over any view and as a push notification on phones and tablets when Glance is closed. Each event fires 15 min before, at start, or both; the default comes from Settings. Notifications close by themselves; a tap opens the event. Events with the same reminder time merge into one. During quiet hours the reminder shows quietly on Ambient without waking the screen. The on-display notification is a compact black strip at the top center. Frames are the live mockup at 1920×1080, drawn at 40%. Logic and behavior: <a href="Glance%20Notes.dc.html#notifications">Notes · Notifications</a>.</p>
+<p style="margin:0;font:17px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Reminders for upcoming events, shown on the display over any view and as a push notification on phones and tablets when Glance is closed. Each event fires 15 min before, at start, or both; the default comes from Settings. Notifications close by themselves; a tap opens the event. Events with the same reminder time merge into one. During quiet hours the reminder shows quietly on Ambient without waking the screen. The on-display notification is a compact black strip at the top center. Frames are the live mockup at 1920×1080, drawn at 40%. Logic and behavior: <a href="app-notes.dc.html#notifications">Notes · Notifications</a>.</p>
 </section>
 
 <section id="t2" data-season="{{ season }}" style="padding:40px 56px 32px;border-top:1px solid rgba(0,0,0,.08);scroll-margin-top:16px">
 <div style="display:flex;align-items:baseline;gap:10px;margin:0 0 24px"><a href="#t2" style="font:600 11px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none">2</a><span style="font:600 15px/1.2 var(--font-sans)">On-display notification</span></div>
 <div id="2a" data-screen-label="2a Compact strip" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:16px">
-<div style="display:flex;align-items:baseline;gap:10px"><a href="#2a" style="font:600 12px ui-monospace,Menlo,monospace;padding:3px 8px;background:#000;color:#fff;border-radius:6px;text-decoration:none">2a</a><span style="font:600 20px/1.2 var(--font-sans)">Compact strip</span></div>
+<div style="display:flex;align-items:baseline;gap:10px"><a href="#2a" style="font:600 12px ui-monospace,Menlo,monospace;padding:3px 8px;background:#000;color:#fff;border-radius:6px;text-decoration:none">2a</a><span style="font:600 20px/1.2 var(--font-sans)">Compact strip (NOTIF-03)</span></div>
 <p style="margin:0;font:15px/1.5 var(--font-sans);max-width:900px;text-wrap:pretty">Centered at the top, 960 px wide, 96 px tall (was full width and 128 px). The time left moves into the mono eyebrow above the title, next to the event color dot. Title 28 px, Details is the 44 px button.</p>
 <div style="display:flex;flex-wrap:wrap;gap:32px 48px;align-items:flex-start">
 <sc-for list="{{ strips }}" as="f" hint-placeholder-count="3">
@@ -60,7 +60,7 @@
 <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
 
 <div style="flex:none;width:768px;display:flex;flex-direction:column;gap:12px">
-<span style="font:500 13px ui-monospace,Menlo,monospace">Ambient · quiet hours, 15 min before</span>
+<span style="font:500 13px ui-monospace,Menlo,monospace">Ambient · quiet hours, 15 min before (NOTIF-06)</span>
 <div style="width:768px;height:432px;overflow:hidden;border-radius:12px;position:relative;background:var(--surface-deep)"><div style="width:1920px;height:1080px;transform:scale(0.4);transform-origin:0 0;box-sizing:border-box;padding:112px 120px;display:flex;flex-direction:column;color:#dcdcdc">
 <span style="display:flex;align-items:center;gap:16px;font:400 30px/1 var(--font-mono);text-transform:uppercase"><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.Icon" name="map-pin" size="36" hint-size="36px,36px"></x-import>Portland, OR</span>
 <span style="margin-top:64px;font:400 26px/1 var(--font-mono);text-transform:uppercase">Friday, October 9</span>
@@ -75,7 +75,7 @@
 </div>
 
 <div style="flex:none;width:340px;display:flex;flex-direction:column;gap:12px">
-<span style="font:500 13px ui-monospace,Menlo,monospace">Phone or tablet · Glance closed</span>
+<span style="font:500 13px ui-monospace,Menlo,monospace">Phone or tablet · Glance closed (NOTIF-07)</span>
 <div style="width:340px;height:620px;box-sizing:border-box;border-radius:48px;background:#1a1a1a;padding:12px">
 <div style="height:100%;border-radius:38px;background:var(--surface-deep);display:flex;flex-direction:column;align-items:center;padding:64px 14px 0;gap:10px;box-sizing:border-box">
 <span style="font:300 72px/1 var(--font-sans);color:#fff;letter-spacing:-2px">3:15</span>
@@ -88,7 +88,7 @@
 </div>
 
 <div style="flex:none;width:520px;display:flex;flex-direction:column;gap:12px">
-<span style="font:500 13px ui-monospace,Menlo,monospace">Event page · new Reminder field, under All day</span>
+<span style="font:500 13px ui-monospace,Menlo,monospace">Event page · new Reminder field, under All day (NOTIF-09)</span>
 <div style="background:#fff;border-radius:24px;padding:40px;display:flex;flex-direction:column;gap:12px">
 <span style="font:400 20px/1.2 var(--font-sans)">Reminder</span>
 <x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ remOpts }}" value="15 min" style="background:#f7f7f5;align-self:flex-start" hint-size="420px,48px"></x-import>
@@ -98,7 +98,7 @@
 </div>
 
 <div style="flex:none;width:620px;display:flex;flex-direction:column;gap:12px">
-<span style="font:500 13px ui-monospace,Menlo,monospace">Settings · Notifications</span>
+<span style="font:500 13px ui-monospace,Menlo,monospace">Settings · Notifications (NOTIF-08)</span>
 <div style="background:#fff;border-radius:24px;padding:40px;display:flex;flex-direction:column;gap:24px">
 <span style="font:400 14px/1.3 var(--font-mono);text-transform:uppercase">Notifications</span>
 <div style="display:flex;flex-direction:column;gap:12px"><span style="font:400 20px/1.2 var(--font-sans)">Default reminder</span><x-import component-from-global-scope="KioskDisplayDesignSystem_21b0bf.PillTabs" options="{{ remOpts }}" value="15 min" style="background:#f7f7f5;align-self:flex-start" hint-size="420px,48px"></x-import></div>
@@ -112,18 +112,18 @@
 
 </div>
 
-<p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="Glance%20Notes.dc.html#notifications">Notes · Event notifications</a>.</p>
+<p style="margin:0;font:15px/1.5 var(--font-sans)">Behaviour is written once, in <a href="app-notes.dc.html#notifications">Notes · Event notifications</a>.</p>
 </section>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;season&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;spring&quot;,&quot;summer&quot;,&quot;fall&quot;,&quot;winter&quot;],&quot;default&quot;:&quot;fall&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dismissBar&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
   renderVals() {
     const season = this.props.season ?? 'fall';
-    const src = (v) => `Glance.dc.html?view=${v}&season=${season}`;
+    const src = (v) => `app.dc.html?view=${v}&season=${season}`;
     const strips = [
-      { label: 'Today · 15 min before', src: src('today'), icon: 'bell', dot: 'var(--block-lime)', eyebrow: 'In 15 min · 11:00 AM · Nghe · Food bank', title: 'Volunteer shift', btn: 'Details', pct: '62%' },
-      { label: 'Calendar · at start', src: src('calendar'), icon: 'bell-ring', dot: 'var(--block-lime)', eyebrow: 'Now · 11:00 AM – 12:00 PM · Food bank', title: 'Volunteer shift', btn: 'Details', pct: '30%' },
-      { label: 'Weather · 3 events at once', src: src('weather'), icon: 'bell', dot: 'var(--surface-warm)', eyebrow: 'In 15 min · 3:30 PM · 3 events', title: 'Soccer practice, Piano lesson, Dentist', btn: 'See all', pct: '80%' },
+      { label: 'Today · 15 min before (NOTIF-01)', src: src('today'), icon: 'bell', dot: 'var(--block-lime)', eyebrow: 'In 15 min · 11:00 AM · Nghe · Food bank', title: 'Volunteer shift', btn: 'Details', pct: '62%' },
+      { label: 'Calendar · at start (NOTIF-01)', src: src('calendar'), icon: 'bell-ring', dot: 'var(--block-lime)', eyebrow: 'Now · 11:00 AM – 12:00 PM · Food bank', title: 'Volunteer shift', btn: 'Details', pct: '30%' },
+      { label: 'Weather · 3 events at once (NOTIF-04)', src: src('weather'), icon: 'bell', dot: 'var(--surface-warm)', eyebrow: 'In 15 min · 3:30 PM · 3 events', title: 'Soccer practice, Piano lesson, Dentist', btn: 'See all', pct: '80%' },
     ];
     return {
       strips,
