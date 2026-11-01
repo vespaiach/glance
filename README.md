@@ -5,11 +5,11 @@
 ## What it's for
 
 - **Anyone in the room** can see what's happening now and next, today's weather and the latest family notes at a glance — and tap to add or edit an event or a note. Nobody signs in at the screen.
-- **The account holder** (usually a parent) owns the family's single account (one email, magic-link sign-in), signs screens in, picks the background and uploads photos.
+- **The account holder** (usually a parent) owns the family's single account (one email, email-code sign-in), signs screens in, picks the background and uploads photos.
 - **It keeps working when things go wrong.** Every screen is local-first: it starts and stays usable offline, queues changes until the server is back, and shows each failing zone (calendar, weather, notes, photos) on its own instead of a blank page.
 - **It rests when nobody's looking.** After a period without touch, or during quiet hours, the screen switches to a dimmed Ambient view.
 
-Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings** (with Background) and **Ambient**. Layouts are designed for 1920×1080 and 1280×800 wall screens, laptops, iPad portrait and phones, and the colors follow the four seasons.
+Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings** (with Background) and **Ambient**. Layouts are designed for 1920×1080 wall screens, 1024×768 tablets, laptops, iPad portrait and phones, and the colors follow the four seasons.
 
 ## Stack
 
@@ -24,7 +24,7 @@ Views: **Today**, **Calendar**, **Weather**, **Notes**, **Photos**, **Settings**
 | Photos | `sharp` (display and thumbnail WebP copies), `exif-reader` |
 | Calendar import | [`ical.js`](https://github.com/kewisch/ical.js) reads `.ics` files on the server |
 | Weather | [Open-Meteo](https://open-meteo.com) forecast and geocoding (no API key) |
-| Email | Sign-in links through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, any SMTP server via `nodemailer`, or a local Mailpit |
+| Email | Sign-in codes through [Resend](https://resend.com), [Mailtrap](https://mailtrap.io) or [Mailgun](https://www.mailgun.com) over HTTP, any SMTP server via `nodemailer`, or a local Mailpit |
 | Tooling | npm, Node 24, [Biome](https://biomejs.dev) (lint + format), Vitest + Testing Library + `fake-indexeddb` |
 
 ## Architecture

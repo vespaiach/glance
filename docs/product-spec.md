@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Status | v1.47 |
-| Date | 2026-10-31 |
+| Status | v1.0 |
+| Date | 2026-11-01 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Design | [`design/handoff/`](design/handoff/) (§2) |
 
