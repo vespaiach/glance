@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.46 |
+| Status | v1.47 |
 | Date | 2026-10-31 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Design | [`design/handoff/`](design/handoff/) (§2) |
@@ -452,7 +452,7 @@ Escape closes an unchanged sheet like scrim, Cancel or ✕. While "Discard chang
 | NOTIF-04 | Reminders due in the same minute merge into one strip; See all goes to Today at that time. | Notifications › Weather · 3 events at once |
 | NOTIF-05 | Strip never steals focus, closes anything or resets idle; a new one replaces it; chime rules. | no UI |
 | NOTIF-06 | Reminder on Ambient. An event with no end stays in the slot until its day ends. Only events whose reminder actually fires take the slot: not with the lead time Off or the event's Notification off. | Notifications › Ambient · quiet hours |
-| NOTIF-07 | Push only while Glance is closed or in the background. Title "{event} in {n} min", group "{count} events in {n} min"; group body "{start} · {titles}". Each reminder is pushed once (design notes differ: they also have a "{event} starting now" push). | Notifications › Phone or tablet |
+| NOTIF-07 | Push whether Glance is closed, in the background or open (an open Glance shows the strip too), since Safari on iPhone and iPad turns push off for a site after a few pushes that show nothing. Title "{event} in {n} min", group "{count} events in {n} min"; group body "{start} · {titles}". Each reminder is pushed once (design notes differ: they also have a "{event} starting now" push). | Notifications › Phone or tablet |
 | NOTIF-08 | Settings › Notifications, Chime and This phone. Chime sub-line "Plays once when a reminder shows. Never during quiet hours." This phone shows "Get reminders when Glance is closed.". When the browser blocks it, "Notifications are off for Glance in this browser’s settings." replaces the button. The setting is per device and never synced. | Settings › Full; Notifications › Settings · Notifications |
 | NOTIF-09 | Per-event Notification on/off on the event page. Changing it counts as a change for "Discard changes?". | Event › New event; Notifications › Event page Reminder field |
 | NOTIF-10 | Not included: no list of past notifications, no reminder at the start, and no dismiss, snooze, per-person reminders or per-event lead times (design notes differ: they have an at-start reminder, and their data model lists reminder "off \| at start \| 15 min \| both"). | no UI |

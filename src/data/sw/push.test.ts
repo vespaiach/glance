@@ -37,12 +37,15 @@ function fakeScope(windows: FakeWindow[]) {
 }
 
 describe("showPush", () => {
-  it("NOTIF-07 skips showing when a Glance window is visible", async () => {
+  it("NOTIF-07 shows the notification even when a Glance window is visible", async () => {
     const scope = fakeScope([fakeWindow("hidden"), fakeWindow("visible")]);
 
     await showPush(scope, PAYLOAD);
 
-    expect(scope.registration.showNotification).not.toHaveBeenCalled();
+    expect(scope.registration.showNotification).toHaveBeenCalledWith(
+      PAYLOAD.title,
+      expect.objectContaining({ body: PAYLOAD.body, data: PAYLOAD.data }),
+    );
   });
 
   it("NOTIF-07 shows the title, body and url when every window is hidden or closed", async () => {
