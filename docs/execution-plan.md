@@ -32,7 +32,7 @@ The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ 
 
 | ID | Status | Task | Depends on | Done when | Covers |
 |---|---|---|---|---|---|
-| J25 | ⬜ | **Terms and Guide links on Sign in**: the two sentences under the lock footer become two links, "Terms" and "Guide", in one row pinned to the bottom-right corner on large and normal and at the end of the form on small (`account-layout`, Email form); each opens in a new tab with a 44 px hit target, in every form state. Update `copy.ts` | — | Component tests `SIGNIN-19 …` (both links present in every form state, `href` `/terms` and `/guide`, `target="_blank"`) pass; Sign in matches `account-layout` at the three sizes; Checks pass | SIGNIN-19 |
+| J25 | 🔄 | **Terms and Guide links on Sign in**: the two sentences under the lock footer become two links, "Terms" and "Guide", in one row pinned to the bottom-right corner on large and normal and at the end of the form on small (`account-layout`, Email form); each opens in a new tab with a 44 px hit target, in every form state. Update `copy.ts` | — | Component tests `SIGNIN-19 …` (both links present in every form state, `href` `/terms` and `/guide`, `target="_blank"`) pass; Sign in matches `account-layout` at the three sizes; Checks pass | SIGNIN-19 |
 | J26 | ⬜ | **Terms of Service v2026-10-31**: `copy.ts` takes the handoff's terms (`terms-layout`): effective October 31, 2026, the demo and own-risk sections, contact support@takeaglance.app. Keep the three "How your data is stored" points and fix the Termination cross-reference to the new section numbers | J25 | Component test `TERMS-01 …` (effective date, contact email, Termination cross-reference) passes; `/terms` matches `terms-layout`; Checks pass | TERMS-01 |
 
 ## Dependency map
