@@ -25,12 +25,12 @@ test("TERMS-01 shows the title, the effective date and the In short cards", () =
   render(<TermsScreen />);
 
   expect(screen.getByRole("heading", { level: 1, name: "Terms of service" })).toBeInTheDocument();
-  expect(screen.getByText("Effective October 24, 2026")).toBeInTheDocument();
+  expect(screen.getByText("Effective October 31, 2026")).toBeInTheDocument();
   expect(screen.getByText("In short")).toBeInTheDocument();
   for (const title of [
     "Free and open source",
     "Your data, not encrypted",
-    "Provided as is",
+    "A demo, provided as is",
     "18 and over",
   ]) {
     expect(screen.getByRole("heading", { level: 3, name: title })).toBeInTheDocument();
@@ -101,4 +101,25 @@ test("TERMS-01 How your data is stored says what an error report holds, never wh
       /A report holds the error, the page, the app version, when it happened and your time zone, your browser and device, and your IP address with its last part removed, never what you enter/,
     ),
   ).toBeInTheDocument();
+});
+
+test("TERMS-01 contact is support@takeaglance.app in Deleting your account and Contact", () => {
+  render(<TermsScreen />);
+
+  const links = screen.getAllByRole("link", { name: "support@takeaglance.app" });
+
+  expect(links).toHaveLength(2);
+  for (const link of links) {
+    expect(link).toHaveAttribute("href", "mailto:support@takeaglance.app");
+  }
+});
+
+test("TERMS-01 says Glance is a demo, used at your own risk with no legal liability", () => {
+  render(<TermsScreen />);
+
+  expect(screen.getByText("Glance is a demo web app.")).toBeInTheDocument();
+  expect(
+    screen.getByText(/You use it at your own risk; the operator bears no/),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/You use this demo entirely at your own risk/)).toBeInTheDocument();
 });

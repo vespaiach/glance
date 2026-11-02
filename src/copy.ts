@@ -16,7 +16,7 @@ export type TermsBlock = string | readonly TermsPart[] | { list: readonly string
 const GITHUB = "https://github.com/vespaiach/glance";
 const OPEN_METEO = "https://open-meteo.com/";
 
-const CONTACT = { text: "nta.toan@gmail.com", href: "mailto:nta.toan@gmail.com" };
+const CONTACT = { text: "support@takeaglance.app", href: "mailto:support@takeaglance.app" };
 
 export const copy = {
   appName: "Glance",
@@ -1346,7 +1346,7 @@ export const copy = {
     back: "Back to Glance",
     eyebrow: "Legal",
     title: "Terms of service",
-    effective: "Effective October 24, 2026",
+    effective: "Effective October 31, 2026",
     inShort: "In short",
     cards: [
       { title: "Free and open source", body: "No fees. The code is MIT-licensed and public." },
@@ -1355,8 +1355,8 @@ export const copy = {
         body: "Stored in PostgreSQL on VPS servers without encryption. Keep sensitive information out.",
       },
       {
-        title: "Provided as is",
-        body: "No guarantees of uptime or data safety. The operator is not liable for losses.",
+        title: "A demo, provided as is",
+        body: "Glance is a demo web app. No guarantees of uptime or data safety. You use it at your own risk; the operator bears no legal liability.",
       },
       { title: "18 and over", body: "You must be at least 18 to use Glance." },
     ],
@@ -1381,6 +1381,10 @@ export const copy = {
         title: "The service",
         body: [
           "Glance shows calendar events, notes, photos and weather on a display. The Service is free of charge.",
+          [
+            { strong: "Glance is a demo web app." },
+            " It is offered only to demonstrate the software and for personal trial use. It is not a commercial or production service and is not meant to be relied on.",
+          ],
           "The Operator may change, suspend or discontinue any part of the Service at any time, with or without notice. There is no guarantee of availability, uptime or support.",
         ],
       },
@@ -1502,6 +1506,7 @@ export const copy = {
         body: [
           "TO THE FULLEST EXTENT PERMITTED BY LAW, THE OPERATOR IS NOT LIABLE FOR ANY DAMAGES OR LOSSES ARISING FROM YOUR USE OF, OR INABILITY TO USE, THE SERVICE. THIS INCLUDES LOST OR EXPOSED DATA, SECURITY BREACHES, MISSED EVENTS, SERVICE OUTAGES, AND ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR PUNITIVE DAMAGES, EVEN IF THE OPERATOR WAS TOLD THEY WERE POSSIBLE.",
           "Because the Service is free, the Operator's total liability for any claim is limited to zero US dollars (US $0), or the lowest amount allowed by law.",
+          "You use this demo entirely at your own risk. The Operator bears no legal liability whatsoever to you or anyone else in connection with the Service, its content or its data, under any legal theory, including contract, tort, negligence or statute.",
           "Some jurisdictions do not allow certain limits on liability. In those places, these limits apply as far as the law allows.",
         ],
       },
