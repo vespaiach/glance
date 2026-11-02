@@ -4,7 +4,7 @@
 |---|---|
 | Version | v1.0 |
 | Date | 2026-11-01 |
-| Inputs | [`product-spec.md`](product-spec.md) (v1.0) · [`tech-design.md`](tech-design.md) (v1.0) · design handoff v23 (`Kiosk display mockups.zip`, 2026-10-31) |
+| Inputs | [`product-spec.md`](product-spec.md) (v1.1) · [`tech-design.md`](tech-design.md) (v1.0) · design handoff v23 (`Kiosk display mockups.zip`, 2026-10-31) |
 | Checks | `npm run check` → `npm run typecheck` → `npm test` → `npm run build` |
 
 The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ row whose dependencies are ✅, does it in one PR, merges it and moves on until every row is ✅.
@@ -32,7 +32,7 @@ The backlog of open work. `/dooo` runs it top to bottom: it takes the first ⬜ 
 
 | ID | Status | Task | Depends on | Done when | Covers |
 |---|---|---|---|---|---|
-| J25 | 🔄 | **Terms and Guide links on Sign in**: the two sentences under the lock footer become two links, "Terms" and "Guide", in one row pinned to the bottom-right corner on large and normal and at the end of the form on small (`account-layout`, Email form); each opens in a new tab with a 44 px hit target, in every form state. Update `copy.ts` | — | Component tests `SIGNIN-19 …` (both links present in every form state, `href` `/terms` and `/guide`, `target="_blank"`) pass; Sign in matches `account-layout` at the three sizes; Checks pass | SIGNIN-19 |
+| J25 | ✅ ([#233](https://github.com/vespaiach/glance/pull/233)) | **Terms and Guide links on Sign in**: the two sentences under the lock footer become two links, "Terms" and "Guide", in one row pinned to the bottom-right corner on large and normal and at the end of the form on small (`account-layout`, Email form); each opens in a new tab with a 44 px hit target, in every form state. Update `copy.ts` | — | Component tests `SIGNIN-19 …` (both links present in every form state, `href` `/terms` and `/guide`, `target="_blank"`) pass; Sign in matches `account-layout` at the three sizes; Checks pass | SIGNIN-19 |
 | J26 | ⬜ | **Terms of Service v2026-10-31**: `copy.ts` takes the handoff's terms (`terms-layout`): effective October 31, 2026, the demo and own-risk sections, contact support@takeaglance.app. Keep the three "How your data is stored" points and fix the Termination cross-reference to the new section numbers | J25 | Component test `TERMS-01 …` (effective date, contact email, Termination cross-reference) passes; `/terms` matches `terms-layout`; Checks pass | TERMS-01 |
 
 ## Dependency map
