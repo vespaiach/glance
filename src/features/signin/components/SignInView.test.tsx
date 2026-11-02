@@ -71,26 +71,39 @@ test("SIGNIN-01 the hero shows the wordmark, the date and time, the headline and
   expect(screen.getByText("Soccer cleats are by the door")).toBeInTheDocument();
 });
 
-test("SIGNIN-19 under the lock footer the Terms of Service link opens /terms in a new tab", () => {
-  renderView({ step: "form", email: "" });
+test.each<[string, SignInState, Partial<Props>]>([
+  ["the email form", { step: "form", email: "" }, {}],
+  ["an invalid email", { step: "form", email: "maria@example", error: "invalid" }, {}],
+  ["sending", { step: "sending", email: "maria@example.com" }, {}],
+  ["a failed send", { step: "form", email: "maria@example.com", error: "failed" }, {}],
+  ["offline", { step: "form", email: "maria@example.com" }, { online: false }],
+  [
+    "signed out",
+    { step: "form", email: "maria@example.com" },
+    { signedOut: { email: "maria@example.com", pending: 0 } },
+  ],
+  ["small", { step: "form", email: "" }, { breakpoint: "small" }],
+  ["normal", { step: "form", email: "" }, { breakpoint: "normal" }],
+])("SIGNIN-19 Terms and Guide open /terms and /guide in a new tab on %s", (_name, state, props) => {
+  renderView(state, props);
 
-  const link = screen.getByRole("link", { name: "Terms of Service" });
+  const links = [
+    [screen.getByRole("link", { name: "Terms" }), "/terms"],
+    [screen.getByRole("link", { name: "Guide" }), "/guide"],
+  ] as const;
 
-  expect(link.parentElement?.textContent).toBe("By continuing, you agree to the Terms of Service.");
-  expect(link).toHaveAttribute("href", "/terms");
-  expect(link).toHaveAttribute("target", "_blank");
-  expect(link.getAttribute("rel")).toContain("noopener");
+  for (const [link, href] of links) {
+    expect(link).toHaveAttribute("href", href);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  }
 });
 
-test("SIGNIN-19 under the Terms line the guide link opens /guide in a new tab", () => {
+test("SIGNIN-19 the two sentences under the lock footer are gone", () => {
   renderView({ step: "form", email: "" });
 
-  const link = screen.getByRole("link", { name: "guide" });
-
-  expect(link.parentElement?.textContent).toBe("New to Glance? Read the guide.");
-  expect(link).toHaveAttribute("href", "/guide");
-  expect(link).toHaveAttribute("target", "_blank");
-  expect(link.getAttribute("rel")).toContain("noopener");
+  expect(screen.queryByText(/By continuing/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/New to Glance/)).not.toBeInTheDocument();
 });
 
 test("SIGNIN-01 on small the hero shows the short date and no preview", () => {

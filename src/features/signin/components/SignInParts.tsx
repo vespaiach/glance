@@ -104,18 +104,24 @@ const styles = stylex.create({
     fontWeight: 330,
     lineHeight: 1.45,
   },
-  terms: {
-    marginTop: -16,
-    fontSize: 15,
-    fontWeight: 330,
-    lineHeight: 1.45,
-    textWrap: "pretty",
+  links: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 24,
   },
-  termsLink: {
+  linksPinned: {
+    position: "absolute",
+    right: sizes.kioskGutter,
+    bottom: sizes.kioskGutter,
+    zIndex: 1,
+  },
+  link: {
     display: "inline-flex",
     alignItems: "center",
     minHeight: sizes.touchMin,
     color: colors.textPrimary,
+    fontSize: 15,
     fontWeight: 540,
     textDecorationLine: "underline",
     textUnderlineOffset: 3,
@@ -206,26 +212,15 @@ export function LockFooter() {
   );
 }
 
-export function TermsLine() {
+export function SignInLinks({ pinned }: { pinned: boolean }) {
   return (
-    <div {...stylex.props(styles.terms)}>
-      {copy.signIn.terms.before}
-      <a href="/terms" target="_blank" rel="noopener" {...stylex.props(styles.termsLink)}>
-        {copy.signIn.terms.link}
+    <div {...stylex.props(styles.links, pinned && styles.linksPinned)}>
+      <a href="/terms" target="_blank" rel="noopener" {...stylex.props(styles.link)}>
+        {copy.signIn.terms}
       </a>
-      {copy.signIn.terms.after}
-    </div>
-  );
-}
-
-export function GuideLine() {
-  return (
-    <div {...stylex.props(styles.terms)}>
-      {copy.signIn.guide.before}
-      <a href="/guide" target="_blank" rel="noopener" {...stylex.props(styles.termsLink)}>
-        {copy.signIn.guide.link}
+      <a href="/guide" target="_blank" rel="noopener" {...stylex.props(styles.link)}>
+        {copy.signIn.guide}
       </a>
-      {copy.signIn.guide.after}
     </div>
   );
 }

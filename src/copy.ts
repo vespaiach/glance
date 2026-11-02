@@ -1218,8 +1218,8 @@ export const copy = {
       noteTime: "8:12 AM",
     },
     lock: "Only your family can see its calendar, notes and photos.",
-    terms: { before: "By continuing, you agree to the ", link: "Terms of Service", after: "." },
-    guide: { before: "New to Glance? Read the ", link: "guide", after: "." },
+    terms: "Terms",
+    guide: "Guide",
     form: {
       eyebrow: "One account per family",
       title: "Sign in or get started",

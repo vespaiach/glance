@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1.0 |
+| Status | v1.1 |
 | Date | 2026-11-01 |
 | Technical design | [`tech-design.md`](tech-design.md) |
 | Design | [`design/handoff/`](design/handoff/) (§2) |
@@ -161,7 +161,7 @@ For today: `past` if `end ≤ now`, `now` if `start ≤ now < end`, else `upcomi
 ## 8. Screens
 
 ### 8.1 Sign in & account — `SIGNIN`
-The hero, preview and form follow the design. Under the form, every form state shows the lock footer "Only your family can see its calendar, notes and photos." and the Terms line (SIGNIN-19). Sign-in happens on the screen that asked for the code (no email links), or by scanning a signed-in screen's code (SIGNIN-15, SIGNIN-20).
+The hero, preview and form follow the design. Under the form, every form state shows the lock footer "Only your family can see its calendar, notes and photos." and the Terms and Guide links (SIGNIN-19). Sign-in happens on the screen that asked for the code (no email links), or by scanning a signed-in screen's code (SIGNIN-15, SIGNIN-20).
 
 | ID | Requirement | Frame |
 |---|---|---|
@@ -189,7 +189,7 @@ The hero, preview and form follow the design. Under the form, every form state s
 | SIGNIN-13e | Clears only when a sign-in finishes; same email syncs, another removes the changes. | Account › Email form |
 | SIGNIN-14 | Location step while first setup isn't finished. Also shown on the next sign-in of an account whose location step never ended; saving a place or skipping ends the first setup. After a failed save, editing the field drops the kept place. | Account › Where is this screen?; Account › Location · couldn’t save; Account › Location · keyboard |
 | SIGNIN-18 | Other devices are signed out after Sign out all devices or Delete account. Applies to both actions: at its next request (sync, push or next open) each other screen, tablet and installed app lands on the empty email form, no SIGNIN-13 banner, no toast; its saved data, photo cache and waiting changes are removed, never sent. Timing as SIGNIN-13d: never interrupts an edit; during Ambient as AMB-07. | Account › Signed out |
-| SIGNIN-19 | Two links, "Terms" → `/terms` (TERMS-01) and "Guide" → `/guide` (GUIDE-01), in every form state; each opens in a new tab. | Account › Email form |
+| SIGNIN-19 | Two links, "Terms" → `/terms` (TERMS-01) and "Guide" → `/guide` (GUIDE-01), in one row, in every form state; each opens in a new tab and has a 44 px hit target. The row is pinned to the bottom-right corner on large and normal, and comes at the end of the form on small. The lock footer stays above it. | Account › Email form |
 | SIGNIN-15 | QR code tile in Settings › Account signs another device in. The code lasts 3 minutes, counting down from 3:00; at 0:00 a new one replaces it; a code works once and a new one voids the old. While a code is made the box is empty at 3:00; a failure reads "Couldn’t make a code. Try again." with "Try again" (`rotate-cw`) before "Done". Done or leaving Settings voids the code. Offline the buttons are disabled. A used or expired code opens the email form, never showing the account email (design notes differ: the countdown starts at 5:00). | Settings › Full |
 | SIGNIN-20 | Scan code button on the email form, installed app on small and normal only. Hidden on SIGNIN-13's signed-out form. | Account › Email form (normal, small) |
 | SIGNIN-21 | Camera sheets: ask, blocked, no camera. | Account › Scan · camera access; Account › Scan · camera blocked; Account › Scan · no camera |

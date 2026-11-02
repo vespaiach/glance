@@ -38,12 +38,11 @@ import { SignInHero } from "./SignInHero";
 import {
   Actions,
   Email,
-  GuideLine,
   Heading,
   LockFooter,
+  SignInLinks,
   StatusTile,
   SwitchTile,
-  TermsLine,
 } from "./SignInParts";
 
 type SignedOut = { email: string; pending: number };
@@ -71,10 +70,11 @@ type SignInViewProps = {
 type StepProps = Omit<
   SignInViewProps,
   "season" | "time" | "clock" | "tz" | "breakpoint" | "keyboardInset" | "rootRef" | "xstyle"
->;
+> & { pinnedLinks: boolean };
 
 const styles = stylex.create({
   root: {
+    position: "relative",
     height: "100vh",
     display: "flex",
     flexDirection: "column",
@@ -175,7 +175,12 @@ export function SignInView({
           xstyle={tall && styles.heroTall}
         />
         <div {...stylex.props(styles.panel)}>
-          <SignInStep {...step} {...(breakpoint !== "large" && scan && { scan })} time={time} />
+          <SignInStep
+            {...step}
+            {...(breakpoint !== "large" && scan && { scan })}
+            pinnedLinks={tall}
+            time={time}
+          />
         </div>
       </main>
       {scan && <ScanLayer scan={scan} />}
@@ -253,7 +258,7 @@ function ScanEntry({ scan, disabled }: { scan: ScanControls; disabled: boolean }
   );
 }
 
-function FormStep({ state, signedOut, online, scan, onAction }: StepProps) {
+function FormStep({ state, signedOut, online, scan, pinnedLinks, onAction }: StepProps) {
   const sending = state.step === "sending";
 
   const email = state.step === "form" || sending ? state.email : "";
@@ -329,8 +334,7 @@ function FormStep({ state, signedOut, online, scan, onAction }: StepProps) {
         </StatusTile>
       )}
       <LockFooter />
-      <TermsLine />
-      <GuideLine />
+      <SignInLinks pinned={pinnedLinks} />
     </>
   );
 }
